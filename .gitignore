@@ -1,0 +1,96 @@
+# ============================================================
+# .gitignore — solo trackeamos código necesario para el deploy
+# ============================================================
+
+# Datos sensibles
+.env
+.env.*
+!.env.template
+auth_config.yaml
+.streamlit/secrets.toml
+
+# DB y backups
+data/db/
+*.db
+*.db-journal
+*.bak
+*.bak.*
+
+# Planillas grandes (input no necesario en cloud)
+data/planillas/Raw ventas Y*.xlsx
+data/planillas/Mockup raw Y*.xlsx
+data/planillas/*.xlsx.*
+!data/planillas/Maestra Canales.xlsx
+!data/planillas/Matriz productos.xlsx
+!data/planillas/canal_tipo_negocio.json
+
+# datos_entrada (archivos históricos que no se usan en cloud)
+datos_entrada/
+
+# Outputs generados
+data/outputs/
+data/eerr/
+
+# Otros proyectos del monorepo (no se necesitan en este deploy)
+agente-comex/
+eerr-finanzas/
+finanzas-unionx/frontend/
+
+# Logs
+*.log
+*.log.*
+data/db/sincronizacion_diaria.log*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Scripts diagnóstico (locales)
+_*.py
+!_generar_auth_local.py
+PLAN_*.md
+*.zip
+
+# Excel históricos / EERR
+*.xlsx
+!data/planillas/Maestra Canales.xlsx
+!data/planillas/Matriz productos.xlsx
+
+# PDFs
+*.pdf
+
+# Tests
+test/
+
+# Misc del monorepo
+*.txt
+!requirements.txt
+!.gitignore
+*.bat
+*.sh
+*.ps1
+!actualizar_raw_historico.py
+!actualizar_diario.py
+!cargar_db_desde_excel.py
+!dashboard_ventas.py
+!db_client.py
+!migrar_a_turso.py
+!_generar_auth_local.py

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/andre/Desktop/**)",
+      "Read(//c/Users/andre/**)",
+      "Bash(python3 -c \":*)",
+      "Bash(py --version)",
+      "Bash(node -e \"console.log\\(''Node available:'', process.version\\)\")",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(where python:*)",
+      "Bash(where py:*)",
+      "Bash(\"/c/Users/andre/AppData/Local/Programs/Python/Python312/python.exe\" --version)",
+      "Bash(\"/c/Users/andre/AppData/Local/Programs/Python/Python311/python.exe\" --version)",
+      "Bash(\"/c/Users/andre/AppData/Local/Programs/Python/Python310/python.exe\" --version)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 3; Get-Content 'C:\\\\Users\\\\andre\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\G--Mi-unidad-TRABAJO-RESPALDO-OPERACIONES-UNION-X---IA\\\\e7317cf5-5128-487d-bed5-3c9aade2768f\\\\tasks\\\\bck0q92cv.output'\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 6; Get-Content 'C:\\\\Users\\\\andre\\\\AppData\\\\Local\\\\Temp\\\\streamlit_stock.log' -ErrorAction SilentlyContinue; netstat -ano | Select-String '8501'\")",
+      "Read(//tmp/**)",
+      "Bash(netstat -tlnp)",
+      "Bash(cp \"/g/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/UNION X - IA/.claude/settings.json\" \"/g/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/UNION X - IA/.claude/settings.json.bak\")",
+      "Bash(cp \"/g/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/UNION X - IA/.claude/settings.local.json\" \"/g/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/UNION X - IA/.claude/settings.local.json.bak\")",
+      "PowerShell(python --version)",
+      "PowerShell(py --version)"
+    ]
+  }
+}

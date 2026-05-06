@@ -1,0 +1,84 @@
+# Configuracion de Costo Operativo Total (Fulfillment)
+#
+# Define como se calcula el "Costo Operativo Total" del area Fulfillment
+# a partir del P&L de Planificacion Financiera.
+#
+# Cada concepto tiene:
+#   - row_idx: indice fila en P&L (0-based)
+#   - factor: % de esa cuenta atribuible al area Fulfillment/Operaciones
+#             (1.0 = 100% incluido · 0.5 = solo el 50% · 0.0 = excluido)
+#   - categoria: "fijo" o "variable"
+#   - nota: explicacion para auditoria
+#
+# Para ajustar: editar 'factor' (numero entre 0 y 1).
+# Tambien editable desde el dashboard en Fulfillment > Tab 5 > Configuracion.
+
+componentes:
+  # ============= FIJOS =============
+  sueldos_operaciones:
+    label: "Sueldos Operaciones"
+    row_idx: 21        # P&L r22: Sueldos, honorarios y leyes sociales
+    factor: 0.50       # asumo 50% del total = ops (bodega + COMEX). Ajustar segun headcount real.
+    categoria: fijo
+    nota: "Solo sueldos del equipo de operaciones (bodega + COMEX). Comercial/Admin/Finanzas excluidos."
+
+  arriendo_megacentro:
+    label: "Arriendo y servicios Megacentro"
+    row_idx: 22        # P&L r23: Oficina y arriendos
+    factor: 0.70       # asumo 70% es Megacentro (bodega), 30% oficina central
+    categoria: fijo
+    nota: "Arriendo y servicios de bodega Megacentro. Oficina central excluida."
+
+  capacitacion_operaciones:
+    label: "Capacitacion Operaciones"
+    row_idx: 28        # P&L r29: Capacitacion personal
+    factor: 0.50       # asumo 50% capacitacion = ops
+    categoria: fijo
+    nota: "Capacitacion atribuible al equipo de ops."
+
+  depreciacion:
+    label: "Depreciacion (activos bodega)"
+    row_idx: 37        # P&L r38: Depreciacion
+    factor: 1.00       # incluye 100% asumiendo CAPEX principal es bodega/operaciones
+    categoria: fijo
+    nota: "Depreciacion de equipos bodega, racks, sistema, vehiculos."
+
+  amortizacion:
+    label: "Amortizacion"
+    row_idx: 38        # P&L r39: Amortizacion
+    factor: 1.00
+    categoria: fijo
+    nota: "Amortizacion de intangibles (software operacional, etc)."
+
+  # ============= VARIABLES =============
+  comision_envio_gc:
+    label: "Comision y Envio Grandes Cuentas"
+    row_idx: 12        # P&L r13: Comision y Envio Grandes Cuentas
+    factor: 1.00
+    categoria: variable
+    nota: "100% variable: comision pagada por venta + envio de grandes cuentas."
+
+  flete_insumos:
+    label: "Flete, insumos y combustible"
+    row_idx: 13        # P&L r14: Flete, insumos y combustible
+    factor: 1.00
+    categoria: variable
+    nota: "100% operacion: flete despacho + insumos packing + combustible."
+
+  movilizacion:
+    label: "Movilizacion, transporte y colacion"
+    row_idx: 23        # P&L r24: Movilizacion, transporte y colacion
+    factor: 1.00       # todo se asigna a ops
+    categoria: variable
+    nota: "Movilizacion del equipo de bodega + colaciones."
+
+# ============= REFERENCIAS PARA AJUSTE FUTURO =============
+# Cuentas excluidas hoy (pueden incluirse parcial si se desea):
+#   - r15 Marketing Performance (es comercial)
+#   - r25 Comision Transbank/Pago Facil (es financiero)
+#   - r26 Seguros (incluir % si hay seguro mercaderia)
+#   - r27 Impuestos y patentes (no operativo)
+#   - r28 Asesoria contable (admin)
+#   - r30 Servicios computacionales (incluir % si hay WMS o software ops)
+#   - r31 Cuenta I+D Productos (es comercial/marca)
+#   - r36 Marketing Branding (es marketing)

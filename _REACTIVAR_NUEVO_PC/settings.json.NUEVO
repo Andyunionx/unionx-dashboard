@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Edit(*)",
+      "Write(*)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Agent(*)",
+      "Skill(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "TodoWrite(*)",
+      "NotebookEdit(*)",
+      "mcp__0a621432-b2e5-43c4-a801-c0f2b9f585b2__*",
+      "mcp__597e6aad-bd9c-4738-ab3f-e5d4299d72b9__*",
+      "mcp__bea3cd8d-d3d6-48ad-aec3-67359a5088b3__*",
+      "mcp__Claude_in_Chrome__*",
+      "mcp__Claude_Preview__*",
+      "mcp__mcp-registry__*",
+      "mcp__scheduled-tasks__*",
+      "mcp__claude_ai_Gmail__gmail_create_draft"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\andre\\Desktop\\finanzas-unionx"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+# Configuración de autenticación multi-usuario para el Dashboard Ventas UnionX.
+#
+# Uso local:
+#   cp auth_config.yaml.template auth_config.yaml
+#   Editar auth_config.yaml: agregar usuarios con sus passwords HASHEADAS
+#   Para hashear: python -c "import streamlit_authenticator as s; print(s.Hasher(['mi_pass']).generate())"
+#
+# Uso en Streamlit Cloud:
+#   Streamlit Cloud → Settings → Secrets → Pegar contenido de este archivo bajo [auth]
+
+credentials:
+  usernames:
+    andres:
+      email: andres@unionx.cl
+      name: Andrés Browne
+      password: "$2b$12$REEMPLAZAR_CON_HASH_BCRYPT_DE_LA_PASSWORD"
+    # Agregar más usuarios aquí:
+    # otro_usuario:
+    #   email: persona@unionx.cl
+    #   name: Nombre Apellido
+    #   password: "$2b$12$..."
+
+cookie:
+  expiry_days: 7
+  key: "unionx-cookie-secret-CAMBIAR-EN-PRODUCCION"
+  name: "unionx_dashboard_auth"
+
+preauthorized:
+  emails:
+    - andres@unionx.cl

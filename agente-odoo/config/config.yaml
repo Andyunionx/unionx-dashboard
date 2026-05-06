@@ -1,0 +1,34 @@
+# Config principal del agente Odoo
+# La cuenta Gmail es la misma de agente-comex (token en agente-comex/config/token.json)
+
+gmail:
+  # Reusa el token de agente-comex
+  token_path: "../agente-comex/config/token.json"
+  credentials_path: "../agente-comex/config/credentials.json"
+  poll_interval_seconds: 120
+  # Solo escanea mails recibidos despues de esta fecha (evita procesar historico viejo)
+  scan_from_date: "2026/05/01"
+
+odoo:
+  # Apunta a "test" mientras se valida el flow. Cambiar a "produccion" cuando OK.
+  environment: "test"
+  config_path: "../odoo/odoo_config.json"
+
+# Claude API para clasificacion de intent y generacion de borradores
+claude:
+  model: "claude-opus-4-7"
+  max_tokens: 2048
+
+# Modo de ejecucion del executor
+executor:
+  # false = dry-run (solo simula, log, draft)
+  # true  = ejecuta de verdad en Odoo
+  execute_mode: false
+  # Carpeta donde se persiste el audit trail
+  log_path: "data/odoo_actions_log.jsonl"
+
+# Senders y dominios cuyos mails se consideran candidatos
+allowed_senders:
+  - "@unionx.cl"
+  - "@grupoeter.cl"
+  - "@melollevo.cl"

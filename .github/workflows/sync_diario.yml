@@ -1,0 +1,62 @@
+name: Sync Ventas Diario
+
+on:
+  schedule:
+    # Chile = UTC-4 (sin DST). Cron es UTC.
+    # 09:00 Chile = 13:00 UTC
+    # 14:00 Chile = 18:00 UTC
+    # 18:00 Chile = 22:00 UTC
+    - cron: '0 13 * * *'
+    - cron: '0 18 * * *'
+    - cron: '0 22 * * *'
+  workflow_dispatch:    # Permite trigger manual desde GitHub UI
+    inputs:
+      fecha:
+        description: 'Fecha específica YYYY-MM-DD (vacío = ayer)'
+        required: false
+        default: ''
+      dias:
+        description: 'Cantidad de días a re-extraer (default 1)'
+        required: false
+        default: '1'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar sincronización
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -n "${{ github.event.inputs.fecha }}" ]; then
+            python actualizar_diario.py --fecha "${{ github.event.inputs.fecha }}"
+          else
+            python actualizar_diario.py --dias "${{ github.event.inputs.dias || 1 }}"
+          fi
+
+      - name: Subir log como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-log-${{ github.run_id }}
+          path: data/db/sincronizacion_diaria.log
+          retention-days: 14

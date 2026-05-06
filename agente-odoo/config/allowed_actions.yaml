@@ -1,0 +1,36 @@
+# Whitelist de acciones que el agente PUEDE ejecutar en Odoo.
+# Si un intent detectado NO esta en esta lista, el agente solo genera
+# borrador en modo "consulta" (datos pero sin tocar Odoo).
+#
+# REGLAS:
+#  - Para agregar una accion nueva: implementarla en src/executor/actions/<nombre>.py
+#    y registrarla aca con sus parametros validos
+#  - Cada accion debe soportar dry-run y audit log
+
+actions:
+  # Caso del mail de Yohana (4 may 2026): facturas en Odoo como rechazadas
+  # pero efectivamente aceptadas en SII -> cambiar status DTE
+  sii_status_fix:
+    description: "Cambia l10n_cl_dte_status de facturas rechazadas en Odoo pero aceptadas en SII"
+    odoo_model: "account.move"
+    requires_validation: true
+    max_records_per_run: 20
+    allowed_state_transitions:
+      - from: "rejected"
+        to: "accepted"
+    # Confirmacion humana antes de ejecutar (siempre true mientras estamos en pruebas)
+    require_human_confirmation: true
+
+  # Plantillas para futuras acciones (descomentar cuando se implementen):
+
+  # cancel_draft_invoice:
+  #   description: "Cancela facturas en estado borrador con mas de N dias"
+  #   odoo_model: "account.move"
+  #   requires_validation: true
+  #   max_records_per_run: 5
+
+  # update_product_description:
+  #   description: "Limpia HTML de description_pickingout en productos"
+  #   odoo_model: "product.template"
+  #   requires_validation: true
+  #   max_records_per_run: 50

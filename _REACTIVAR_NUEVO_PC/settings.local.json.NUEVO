@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/andre/Desktop/**)",
+      "Read(//c/Users/andre/**)",
+      "Bash(python3 -c \":*)",
+      "Bash(py --version)",
+      "Bash(node -e \"console.log\\(''Node available:'', process.version\\)\")",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(where python:*)",
+      "Bash(where py:*)",
+      "Bash(\"/c/Users/andre/AppData/Local/Programs/Python/Python312/python.exe\" --version)",
+      "Bash(\"/c/Users/andre/AppData/Local/Programs/Python/Python311/python.exe\" --version)",
+      "Bash(\"/c/Users/andre/AppData/Local/Programs/Python/Python310/python.exe\" --version)",
+      "Read(//tmp/**)",
+      "Bash(netstat -tlnp)"
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+# ============================================================================
+# Fuentes de verdad — UnionX
+# ============================================================================
+# Punto unico de configuracion de paths a planillas master.
+# Cuando cambie la version de una planilla, actualizar aqui.
+# Todos los scripts leen via `shared_paths.py`.
+#
+# Reglas:
+# - Paths relativos al PROJECT_ROOT (la raiz del repo)
+# - Si el archivo no existe, los scripts deben hacer log y NO crashear
+# - Cualquier modificacion debe ir antecedida de un backup automatico
+#   (use `shared_paths.make_backup()`)
+
+planillas:
+  # Planilla maestra historica con TODO: P&L, EEFF, KT, Deuda, Ppto, FCST, Metas
+  # Resolucion DINAMICA: shared_paths toma el archivo mas reciente (mtime) que
+  # matchea el glob. Asi cuando guardes V52, V53, etc, se detecta automatico
+  # sin tocar config.
+  planificacion_financiera:
+    glob: "../Finanzas/Empresa/2026/Planificación Financiera/Planificación Financiera V*.xlsx"
+
+  # Analisis de contribucion mensual por canal/KAM (V06 = current)
+  contribucion: data/planillas/Analisis_Contribucion_2026_V06.xlsx
+
+  # Presupuesto (legacy: hardcoded a febrero 2026, parametrizar a futuro)
+  presupuesto_legacy: data/planillas/Presupuesto_Febrero_2026.xlsx
+
+  # Maestra de canales de venta
+  maestra_canales: data/planillas/Maestra Canales.xlsx
+
+# Carpeta donde se guardan los backups automaticos antes de modificar
+# (formato: <filename>_YYYYMMDD_HHMMSS.xlsx)
+backups_dir: data/planillas/backups
+
+# Carpeta donde se guardan los EERR mensuales descargados
+eerr_dir: data/eerr
+
+# Outputs de los scripts (reportes generados, JSONs clasificados)
+outputs_dir: data/outputs

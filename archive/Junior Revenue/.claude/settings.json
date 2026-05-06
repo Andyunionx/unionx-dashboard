@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHON=\"/c/Users/LENOVO/AppData/Local/Programs/Python/Python312/python.exe\")",
+      "Bash($PYTHON:*)",
+      "Bash(PYTHON=\"/c/Users/LENOVO/AppData/Local/Programs/Python/Python312/python.exe\" cd \"g:/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/UNION X - IA/Junior Revenue\" mkdir -p outputs logs $PYTHON revenue_automation.py --contribucion \"Análisis Contribución 2026 V02.02.xlsx\" --output \"outputs/test_report.md\")",
+      "Bash(PYTHON=\"/c/Users/LENOVO/AppData/Local/Programs/Python/Python312/python.exe\" cd \"g:/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/UNION X - IA/Junior Revenue\" mkdir -p outputs $PYTHON revenue_automation.py --contribucion \"Análisis Contribución 2026 V02.02.xlsx\" --output \"outputs/test_report.md\")"
+    ]
+  }
+}

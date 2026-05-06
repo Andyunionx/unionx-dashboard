@@ -1,0 +1,41 @@
+# Patrones de deteccion de mails Odoo
+# Si CUALQUIERA de las keywords matchea en subject o body, el mail se clasifica como candidato
+
+keywords_subject:
+  - "odoo"
+  - "factura"
+  - "boleta"
+  - "guia de despacho"
+  - "guia despacho"
+  - "nota credito"
+  - "nota debito"
+  - "sii"
+  - "dte"
+  - "pedido"
+  - "stock"
+
+keywords_body:
+  - "odoo"
+  - "no me deja"
+  - "no puedo"
+  - "esta rechazado"
+  - "estan rechazados"
+  - "rechazada en sii"
+  - "cambiar el estado"
+  - "no aparece"
+  - "no se refleja"
+  - "permiso"
+  - "como puedo"
+  - "como podemos"
+
+# Mails con estos labels en Gmail se ignoran (ya procesados)
+skip_labels:
+  - "ODOO_AGENT_PROCESSED"
+  - "ODOO_AGENT_SKIPPED"
+
+# Subjects que NUNCA se procesan (auto-replies, notificaciones automaticas)
+exclude_subject_patterns:
+  - "^Out of Office"
+  - "^Auto-reply"
+  - "^Automatic reply"
+  - "Notificacion automatica"
