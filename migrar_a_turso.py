@@ -1,13 +1,5 @@
 """
-Migra el SQLite local (data/db/maestra_ventas.db) a Turso libSQL.
-Setup previo: crear DB en turso.tech y obtener URL + AUTH_TOKEN.
-
-Uso:
-    set LIBSQL_URL=libsql://tu-db.turso.io
-    set LIBSQL_AUTH_TOKEN=eyJ...
-    python migrar_a_turso.py
-
-Tiempo aprox: 10-20 min para ~377K filas (depende de la red).
+Migra el SQLite local a Turso libSQL usando multi-row INSERT (mucho más rápido).
 """
 import os
 import sqlite3
@@ -22,26 +14,19 @@ URL = os.environ.get('LIBSQL_URL')
 TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
 
 if not URL:
-    print("[ERROR] LIBSQL_URL no está seteado. Setear con:")
-    print('  set LIBSQL_URL=libsql://...')
-    print('  set LIBSQL_AUTH_TOKEN=eyJ...')
+    print("[ERROR] LIBSQL_URL no está seteado.")
     sys.exit(1)
 
-print(f"=== Migración SQLite → Turso ===")
+print(f"=== Migración SQLite → Turso (multi-row INSERT) ===")
 print(f"  Local: {LOCAL_DB}")
-print(f"  Remote: {URL}")
-print()
-
-if not LOCAL_DB.exists():
-    print(f"[ERROR] No existe {LOCAL_DB}")
-    sys.exit(1)
+print(f"  Remote: {URL}\n")
 
 local = sqlite3.connect(str(LOCAL_DB))
 local.row_factory = sqlite3.Row
 remote = libsql_client.create_client_sync(url=URL, auth_token=TOKEN)
 
-# 1. Crear schema en remoto (basado en cargar_db_desde_excel.py)
-print("[1/3] Creando schema en Turso...")
+# 1. Schema
+print("[1/3] Creando schema...")
 schema_sqls = [
     "DROP TABLE IF EXISTS ventas",
     "DROP TABLE IF EXISTS dim_productos",
@@ -78,64 +63,89 @@ schema_sqls = [
         fecha_carga TEXT, fuente TEXT, filas_cargadas INT,
         fecha_min_datos TEXT, fecha_max_datos TEXT, tipo TEXT
     )""",
-    "CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta)",
-    "CREATE INDEX idx_ventas_sku ON ventas(sku)",
-    "CREATE INDEX idx_ventas_canal ON ventas(canal)",
-    "CREATE INDEX idx_ventas_marca ON ventas(marca)",
-    "CREATE INDEX idx_ventas_documento ON ventas(documento)",
-]
+]  # Índices se crean al final (insertar es más rápido sin índices)
 for sql in schema_sqls:
     remote.execute(sql)
-print("      [OK] Schema creado\n")
+print("      [OK] Schema creado (sin índices)\n")
 
-# 2. Migrar tablas
-def migrar_tabla(nombre, batch_size=200):
+
+def migrar_tabla_multi(nombre, rows_per_insert=500):
+    """Multi-row INSERT: 1 statement con N filas."""
     print(f"  Migrando {nombre}...")
     rows = local.execute(f"SELECT * FROM {nombre}").fetchall()
     if not rows:
         print(f"    (vacía)")
         return
-    cols = rows[0].keys()
-    placeholders = ','.join(['?'] * len(cols))
-    sql = f"INSERT OR IGNORE INTO {nombre} ({','.join(cols)}) VALUES ({placeholders})"
 
+    cols = list(rows[0].keys())
+    n_cols = len(cols)
     total = len(rows)
-    inserted = 0
+
     t0 = time.time()
-    for i in range(0, total, batch_size):
-        batch = rows[i:i + batch_size]
-        stmts = [(sql, list(r)) for r in batch]
+    inserted = 0
+
+    for i in range(0, total, rows_per_insert):
+        batch = rows[i:i + rows_per_insert]
+        n_rows = len(batch)
+        # SQL multi-row: INSERT INTO T (c1,c2) VALUES (?,?),(?,?),...
+        placeholders_per_row = '(' + ','.join(['?'] * n_cols) + ')'
+        all_placeholders = ','.join([placeholders_per_row] * n_rows)
+        sql = f"INSERT OR IGNORE INTO {nombre} ({','.join(cols)}) VALUES {all_placeholders}"
+        # Aplanar parámetros
+        flat_params = []
+        for r in batch:
+            flat_params.extend(list(r))
         try:
-            remote.batch(stmts)
-            inserted += len(batch)
+            remote.execute(sql, flat_params)
+            inserted += n_rows
         except Exception as e:
-            # Re-intentar uno por uno (algún row malo)
+            # Si falla por tamaño, dividir
+            print(f"    [WARN] Error batch {i}: {str(e)[:100]}")
+            # Re-intentar con batch pequeño
             for r in batch:
                 try:
-                    remote.execute(sql, list(r))
+                    remote.execute(
+                        f"INSERT OR IGNORE INTO {nombre} ({','.join(cols)}) VALUES ({','.join(['?']*n_cols)})",
+                        list(r)
+                    )
                     inserted += 1
-                except Exception as e2:
-                    pass  # silencio, continuamos
-        if inserted % 5000 == 0 or inserted == total:
+                except Exception:
+                    pass
+
+        if inserted % 10000 == 0 or inserted == total:
             elapsed = time.time() - t0
-            print(f"    {inserted:,}/{total:,} ({elapsed:.0f}s)")
+            rate = inserted / elapsed if elapsed else 0
+            eta = (total - inserted) / rate if rate else 0
+            print(f"    {inserted:,}/{total:,} ({elapsed:.0f}s, {rate:.0f}/s, ETA {eta:.0f}s)")
 
-print("[2/3] Migrando datos...")
-migrar_tabla('ventas', batch_size=200)
-migrar_tabla('dim_productos')
-migrar_tabla('dim_canales')
-migrar_tabla('dim_bodegas')
-migrar_tabla('dim_proveedores')
-migrar_tabla('dim_marcas')
-migrar_tabla('metadata_cargas')
 
-# 3. Verificar
+print("[2/3] Migrando datos (multi-row INSERT)...")
+migrar_tabla_multi('ventas', rows_per_insert=500)
+migrar_tabla_multi('dim_productos', rows_per_insert=500)
+migrar_tabla_multi('dim_canales', rows_per_insert=500)
+migrar_tabla_multi('dim_bodegas', rows_per_insert=500)
+migrar_tabla_multi('dim_proveedores', rows_per_insert=500)
+migrar_tabla_multi('dim_marcas', rows_per_insert=500)
+migrar_tabla_multi('metadata_cargas', rows_per_insert=500)
+
+# 3. Crear índices al final (mucho más rápido que insertar con índices vivos)
+print("\n[2.5/3] Creando índices...")
+for idx_sql in [
+    "CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(fecha_venta)",
+    "CREATE INDEX IF NOT EXISTS idx_ventas_sku ON ventas(sku)",
+    "CREATE INDEX IF NOT EXISTS idx_ventas_canal ON ventas(canal)",
+    "CREATE INDEX IF NOT EXISTS idx_ventas_marca ON ventas(marca)",
+]:
+    remote.execute(idx_sql)
+print("      [OK] Índices creados\n")
+
+# 4. Verificar
 print("\n[3/3] Verificación:")
 for table in ['ventas', 'dim_productos', 'dim_canales', 'dim_bodegas', 'dim_proveedores', 'dim_marcas']:
     local_count = local.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
     remote_count = remote.execute(f"SELECT COUNT(*) FROM {table}").rows[0][0]
-    flag = "✓" if local_count == remote_count else "⚠"
-    print(f"  {flag} {table:20}  local={local_count:>10,}  remote={remote_count:>10,}")
+    flag = "OK" if local_count == remote_count else "DIFF"
+    print(f"  [{flag}] {table:22}  local={local_count:>10,}  remote={remote_count:>10,}")
 
 local.close()
 remote.close()
