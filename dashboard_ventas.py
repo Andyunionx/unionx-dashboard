@@ -21,6 +21,11 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / 'finanzas-unionx' / 'backend'))
 
+# Streamlit Cloud: exponer secretos como env vars (db_client lee de os.environ)
+for _key in ('LIBSQL_URL', 'LIBSQL_AUTH_TOKEN'):
+    if _key in st.secrets and not os.environ.get(_key):
+        os.environ[_key] = str(st.secrets[_key])
+
 from app.services.maestra_service import MaestraService
 from db_client import get_db_path
 
