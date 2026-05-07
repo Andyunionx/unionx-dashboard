@@ -100,10 +100,9 @@ def get_local_db_path(_cache_key: str):
         conn.execute(sql)
     conn.commit()
 
-    # 2. Bajar ventas en chunks (50K filas por chunk)
+    # 2. Bajar ventas en chunks usando rowid (mucho más rápido que OFFSET)
     t0 = _time.time()
-    chunk_size = 50000
-    offset = 0
+    chunk_size = 80000
     cols_v = ['tipo_movimiento','bodega','documento','fecha_documento','pedido','estado_pedido',
               'tipo_despacho','sku','canal','fecha_venta','hora_venta','producto',
               'categoria_macro','categoria_padre','categoria_hijo','categoria_comercial',
@@ -115,16 +114,21 @@ def get_local_db_path(_cache_key: str):
     placeholders = ','.join(['?'] * len(cols_v))
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
+    last_rowid = 0
     while True:
-        result = turso_query(f"SELECT {cols_csv} FROM ventas LIMIT {chunk_size} OFFSET {offset}")
+        result = turso_query(
+            f"SELECT rowid, {cols_csv} FROM ventas WHERE rowid > {last_rowid} ORDER BY rowid LIMIT {chunk_size}"
+        )
         rows = result['rows']
         if not rows:
             break
-        # Cada row es lista de dicts {'value': val, 'type': ...}; aplanar
-        flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+        flat = []
+        for r in rows:
+            vals = [c.get('value') if isinstance(c, dict) else c for c in r]
+            last_rowid = int(vals[0])  # primera columna es rowid
+            flat.append(tuple(vals[1:]))  # resto son las cols reales
         conn.executemany(insert_sql, flat)
         conn.commit()
-        offset += chunk_size
         if len(rows) < chunk_size:
             break
 
