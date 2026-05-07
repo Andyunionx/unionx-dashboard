@@ -16,6 +16,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 import streamlit_authenticator as stauth
+from streamlit_autorefresh import st_autorefresh
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -214,6 +215,10 @@ if auth_config:
     with st.sidebar:
         authenticator.logout('Cerrar sesión', 'sidebar')
         st.write(f"👤 **{st.session_state.get('name', '')}**")
+
+    # Auto-refresh cada 5 min (live mode). Cuando dispara, Streamlit re-corre todo
+    # y los caches con TTL=300s ya están vencidos => carga fresh data de Turso.
+    st_autorefresh(interval=5 * 60 * 1000, key="auto_refresh_5min")
 
 # ===== Helpers =====
 def fmt_money(v):
