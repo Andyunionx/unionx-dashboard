@@ -42,14 +42,21 @@ DB_PATH = get_db_path()
 # en /tmp (cacheado 5 min). Las queries del dashboard corren contra SQLite
 # local (sub-segundo) en lugar de HTTP a Turso (40-200s/query).
 # ============================================================
-@st.cache_resource(show_spinner="Descargando dataset desde Turso (primera vez ~30-60s, después cacheado 5 min)...")
+HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+CUTOFF_HISTORICO = '2026-04-01'  # menor que esto = histórico estático (parquet)
+
+
+@st.cache_resource(show_spinner="Cargando datos (parquet histórico + Turso live, ~5s)...")
 def get_local_db_path(_cache_key: str):
-    """Si LIBSQL_URL está seteado, baja toda la data a un SQLite local y devuelve su path.
-    Si no, usa el SQLite local original (para desarrollo)."""
+    """
+    Construye SQLite local combinando:
+    - Histórico estático (pre-2026-04-01) desde parquet en repo (instantáneo)
+    - Live (2026-04-01+) desde Turso (pocas filas, rápido)
+    """
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
-    print(f"[Local DB] Iniciando descarga desde Turso (cache_key={_cache_key})", flush=True)
+    print(f"[Local DB] Build cache_key={_cache_key} (parquet historico + Turso live)", flush=True)
 
     libsql_url = os.environ['LIBSQL_URL'].rstrip('/')
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
@@ -101,9 +108,6 @@ def get_local_db_path(_cache_key: str):
         conn.execute(sql)
     conn.commit()
 
-    # 2. Bajar ventas en chunks usando rowid (mucho más rápido que OFFSET)
-    t0 = _time.time()
-    chunk_size = 80000
     cols_v = ['tipo_movimiento','bodega','documento','fecha_documento','pedido','estado_pedido',
               'tipo_despacho','sku','canal','fecha_venta','hora_venta','producto',
               'categoria_macro','categoria_padre','categoria_hijo','categoria_comercial',
@@ -115,14 +119,34 @@ def get_local_db_path(_cache_key: str):
     placeholders = ','.join(['?'] * len(cols_v))
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
+    # 2a. Cargar parquet histórico (pre-CUTOFF) en SQLite local (~1-2s)
+    t0 = _time.time()
+    if HISTORICO_PARQUET.exists():
+        df_hist = pd.read_parquet(HISTORICO_PARQUET)
+        # Asegurar columnas en orden esperado
+        df_hist = df_hist[cols_v].where(pd.notna(df_hist[cols_v]), None)
+        rows_hist = list(df_hist.itertuples(index=False, name=None))
+        # Insertar en chunks de 5000 (sqlite local rápido)
+        for i in range(0, len(rows_hist), 5000):
+            conn.executemany(insert_sql, rows_hist[i:i+5000])
+        conn.commit()
+        print(f"[Local DB] Parquet histórico: {len(rows_hist):,} filas en {_time.time()-t0:.1f}s", flush=True)
+    else:
+        print(f"[Local DB] [WARN] Parquet no existe en {HISTORICO_PARQUET}", flush=True)
+
+    # 2b. Bajar live (fecha_venta >= CUTOFF) desde Turso
+    t1 = _time.time()
+    chunk_size = 50000
     last_rowid = 0
-    n_inserted = 0
+    n_live = 0
     chunk_num = 0
     while True:
         chunk_num += 1
         chunk_t = _time.time()
         result = turso_query(
-            f"SELECT rowid, {cols_csv} FROM ventas WHERE rowid > {last_rowid} ORDER BY rowid LIMIT {chunk_size}"
+            f"SELECT rowid, {cols_csv} FROM ventas "
+            f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
+            f"ORDER BY rowid LIMIT {chunk_size}"
         )
         rows = result['rows']
         if not rows:
@@ -130,14 +154,15 @@ def get_local_db_path(_cache_key: str):
         flat = []
         for r in rows:
             vals = [c.get('value') if isinstance(c, dict) else c for c in r]
-            last_rowid = int(vals[0])  # primera columna es rowid
-            flat.append(tuple(vals[1:]))  # resto son las cols reales
+            last_rowid = int(vals[0])
+            flat.append(tuple(vals[1:]))
         conn.executemany(insert_sql, flat)
         conn.commit()
-        n_inserted += len(rows)
-        print(f"[Local DB]   chunk {chunk_num}: {len(rows):,} filas en {_time.time()-chunk_t:.0f}s (total {n_inserted:,})", flush=True)
+        n_live += len(rows)
+        print(f"[Local DB] Live chunk {chunk_num}: {len(rows):,} filas en {_time.time()-chunk_t:.1f}s (total live {n_live:,})", flush=True)
         if len(rows) < chunk_size:
             break
+    print(f"[Local DB] Live total: {n_live:,} filas en {_time.time()-t1:.1f}s", flush=True)
 
     # 3. Bajar dim_productos
     cols_p = ['sku','producto','categoria_macro','categoria_padre','categoria_hijo',
