@@ -132,6 +132,10 @@ desktop.ini
 .claude/worktrees/
 .claude/scheduled_tasks.lock
 
+# ============== BACKUPS DE .git (filter-repo) ==============
+.git.BACKUP_*
+.git.bak*
+
 # ============== ARCHIVOS DE DIAGNOSTICO LOCAL ==============
 _*.py
 !_generar_auth_local.py

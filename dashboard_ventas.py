@@ -22,11 +22,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / 'finanzas-unionx' / 'backend'))
 
 # Streamlit Cloud: exponer secretos como env vars (db_client lee de os.environ)
-for _key in ('LIBSQL_URL', 'LIBSQL_AUTH_TOKEN'):
+for _key in ('LIBSQL_URL', 'LIBSQL_AUTH_TOKEN', 'ANDRES_ODOO_PASSWORD'):
     if _key in st.secrets and not os.environ.get(_key):
         os.environ[_key] = str(st.secrets[_key])
 
 from app.services.maestra_service import MaestraService
+from app.services.stock_advanced_service import StockAdvancedService
+from app.core.odoo_client import OdooClient
+from app.config import Config
 from db_client import get_db_path
 
 import sqlite3
@@ -439,7 +442,12 @@ with col2:
     )
 
 # ============================ TABS ============================
-tab1, tab2, tab3 = st.tabs(["📈 Vista General", "📅 Vista Semanal", "📤 Cargar offline"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📈 Vista General",
+    "📅 Vista Semanal",
+    "📤 Cargar offline",
+    "📦 Stock LIVE",
+])
 
 # =========================================================================
 # TAB 1 — VISTA GENERAL
@@ -672,6 +680,134 @@ with col_d3:
 with tab3:
     from dashboard_carga_offline import render_carga_offline_tab
     render_carga_offline_tab()
+
+# =========================================================================
+# TAB 4 — STOCK LIVE (datos Odoo en tiempo real, cache 5 min)
+# =========================================================================
+with tab4:
+    st.markdown("### 📦 Stock LIVE — Inventario en tiempo real desde Odoo")
+    st.caption("Cache 5 min · Semaforo (target 3 meses) · Ocupacion CA1/Stock · Rotacion 30d/90d")
+
+    # Verificar credenciales
+    if not Config.ODOO_PASSWORD:
+        st.error(
+            "⚠️ Falta `ANDRES_ODOO_PASSWORD` en Streamlit Cloud Secrets. "
+            "Settings → Secrets → agregar: `ANDRES_ODOO_PASSWORD = \"tu-password\"`"
+        )
+        st.stop()
+
+    @st.cache_data(ttl=300, show_spinner="Consultando Odoo (puede tomar 30-60s la primera vez)…")
+    def _stock_live_data():
+        """Cache 5 min: extraccion completa de stock + ventas + ocupacion + semaforo."""
+        odoo_client = OdooClient(Config.ODOO_URL, Config.ODOO_DB, Config.ODOO_USER, Config.ODOO_PASSWORD)
+        service = StockAdvancedService(odoo_client)
+        return service.extract_full(progress_callback=None)
+
+    try:
+        stock_data = _stock_live_data()
+    except Exception as e:
+        st.error(f"❌ Error consultando Odoo: {type(e).__name__}: {e}")
+        st.stop()
+
+    kpis = stock_data.get("kpis", {})
+    ocupacion = stock_data.get("ocupacion", {})
+    semaforo = stock_data.get("semaforo", [])
+    valor_bodega = stock_data.get("valor_bodega", [])
+    skus = stock_data.get("skus", [])
+    metadata = stock_data.get("metadata", {})
+
+    # Botón refresh manual + timestamp
+    cbtn1, cbtn2, cbtn3 = st.columns([1, 1, 3])
+    with cbtn1:
+        if st.button("🔄 Refrescar Odoo", key="stock_live_refresh"):
+            _stock_live_data.clear()
+            st.rerun()
+    with cbtn2:
+        st.markdown("🔴 **LIVE** · auto-refresh cada 5 min")
+    with cbtn3:
+        st.caption(f"Generado en backend: {metadata.get('generado_en', 'N/A')[:19]}")
+
+    st.divider()
+
+    # ---- KPIs principales (semaforo) ----
+    st.markdown("#### 🚦 Semáforo de inventario (target 3 meses)")
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("💰 Valor", f"${kpis.get('valor_total', 0)/1e6:,.1f}M",
+              help=f"{kpis.get('n_skus', 0)} SKUs activos")
+    c2.metric("🔴 Críticos", kpis.get("n_quiebre_critico", 0), help="< 30 días de stock")
+    c3.metric("🟡 Bajo", kpis.get("n_bajo", 0), help="30-89 días")
+    c4.metric("🟢 Óptimo", kpis.get("n_optimo", 0), help="90-180 días")
+    c5.metric("🔵 Sobrestock", kpis.get("n_sobrestock", 0), help="> 180 días")
+    c6.metric("⚪ Sin venta", kpis.get("n_sin_venta", 0), help="30d sin movimiento")
+
+    st.divider()
+
+    # ---- Ocupación CA1/Stock + Distribución ----
+    cocp1, cocp2 = st.columns([1, 1])
+    with cocp1:
+        st.markdown("#### 🏭 Ocupación CA1/Stock")
+        if ocupacion.get("total"):
+            pct = ocupacion.get("pct", 0)
+            color_occ = "🔴" if pct > 85 else ("🟡" if pct > 70 else "🟢")
+            st.metric(f"{color_occ} Ocupación", f"{pct}%",
+                      help=f"{ocupacion.get('occupied', 0)} / {ocupacion.get('total', 0)} posiciones")
+            st.progress(min(pct / 100, 1.0))
+            occ_cols = st.columns(3)
+            occ_cols[0].metric("Total", ocupacion.get("total", 0))
+            occ_cols[1].metric("Ocupadas", ocupacion.get("occupied", 0))
+            occ_cols[2].metric("Vacías", ocupacion.get("empty", 0))
+        else:
+            st.info("Sin datos de ocupación")
+
+    with cocp2:
+        st.markdown("#### 🚦 Distribución por categoría")
+        if semaforo:
+            df_sem = pd.DataFrame(semaforo)
+            df_sem["%"] = (df_sem["SKUs"] / df_sem["SKUs"].sum() * 100).round(1).astype(str) + "%"
+            st.dataframe(df_sem, use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ---- Valor por bodega ----
+    if valor_bodega:
+        st.markdown("#### 💰 Valor por Bodega")
+        df_bod = pd.DataFrame(valor_bodega)
+        df_bod["Valor"] = df_bod["Valor"].apply(lambda v: f"${v/1e6:,.1f}M")
+        df_bod["Unidades"] = df_bod["Unidades"].apply(lambda v: f"{v:,.0f}")
+        df_bod["SKUs"] = df_bod["SKUs"].apply(lambda v: f"{v:,}")
+        st.dataframe(df_bod, use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # ---- Filtros + Tabla SKUs detalle ----
+    st.markdown("#### 🔍 Detalle por SKU")
+    if skus:
+        df_skus = pd.DataFrame(skus)
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            sem_options = ["Todos"] + sorted(df_skus["Semaforo"].dropna().unique().tolist())
+            sem_filter = st.selectbox("Filtrar por semáforo", sem_options, key="stock_sem_filter")
+        with col_f2:
+            bod_options = ["Todas"] + sorted(df_skus["Bodega"].dropna().unique().tolist())
+            bod_filter = st.selectbox("Filtrar por bodega", bod_options, key="stock_bod_filter")
+
+        df_filt = df_skus.copy()
+        if sem_filter != "Todos":
+            df_filt = df_filt[df_filt["Semaforo"] == sem_filter]
+        if bod_filter != "Todas":
+            df_filt = df_filt[df_filt["Bodega"] == bod_filter]
+
+        # Format columnas
+        cols_show = ["SKU", "Producto", "Categoria", "Bodega", "Qty", "Valor",
+                     "Vta 30d Qty", "Dias Stock", "Rot 30d Uds", "Rot 90d Uds", "Semaforo"]
+        df_show = df_filt[cols_show].copy()
+        df_show["Qty"] = df_show["Qty"].round(0).astype(int)
+        df_show["Valor"] = df_show["Valor"].apply(lambda v: f"${v/1e3:,.0f}K")
+        df_show["Vta 30d Qty"] = df_show["Vta 30d Qty"].round(0).astype(int)
+        df_show["Dias Stock"] = df_show["Dias Stock"].apply(lambda v: "∞" if v >= 999 else int(v))
+
+        st.caption(f"Mostrando {len(df_show):,} SKUs (de {len(df_skus):,} totales)")
+        st.dataframe(df_show, use_container_width=True, hide_index=True, height=500)
 
 # Footer
 st.caption(
