@@ -16,7 +16,6 @@ import pandas as pd
 import streamlit as st
 import yaml
 import streamlit_authenticator as stauth
-from streamlit_autorefresh import st_autorefresh
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -43,12 +42,14 @@ DB_PATH = get_db_path()
 # en /tmp (cacheado 5 min). Las queries del dashboard corren contra SQLite
 # local (sub-segundo) en lugar de HTTP a Turso (40-200s/query).
 # ============================================================
-@st.cache_resource(show_spinner="Descargando dataset desde Turso (~60s, una vez cada 5 min)...")
+@st.cache_resource(show_spinner="Descargando dataset desde Turso (primera vez ~30-60s, después cacheado 5 min)...")
 def get_local_db_path(_cache_key: str):
     """Si LIBSQL_URL está seteado, baja toda la data a un SQLite local y devuelve su path.
     Si no, usa el SQLite local original (para desarrollo)."""
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
+
+    print(f"[Local DB] Iniciando descarga desde Turso (cache_key={_cache_key})", flush=True)
 
     libsql_url = os.environ['LIBSQL_URL'].rstrip('/')
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
@@ -115,7 +116,11 @@ def get_local_db_path(_cache_key: str):
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
     last_rowid = 0
+    n_inserted = 0
+    chunk_num = 0
     while True:
+        chunk_num += 1
+        chunk_t = _time.time()
         result = turso_query(
             f"SELECT rowid, {cols_csv} FROM ventas WHERE rowid > {last_rowid} ORDER BY rowid LIMIT {chunk_size}"
         )
@@ -129,6 +134,8 @@ def get_local_db_path(_cache_key: str):
             flat.append(tuple(vals[1:]))  # resto son las cols reales
         conn.executemany(insert_sql, flat)
         conn.commit()
+        n_inserted += len(rows)
+        print(f"[Local DB]   chunk {chunk_num}: {len(rows):,} filas en {_time.time()-chunk_t:.0f}s (total {n_inserted:,})", flush=True)
         if len(rows) < chunk_size:
             break
 
@@ -220,9 +227,11 @@ if auth_config:
         authenticator.logout('Cerrar sesión', 'sidebar')
         st.write(f"👤 **{st.session_state.get('name', '')}**")
 
-    # Auto-refresh cada 5 min (live mode). Cuando dispara, Streamlit re-corre todo
-    # y los caches con TTL=300s ya están vencidos => carga fresh data de Turso.
-    st_autorefresh(interval=5 * 60 * 1000, key="auto_refresh_5min")
+    # Auto-refresh cada 5 min via JS (no requiere paquete extra)
+    st.markdown(
+        """<script>setTimeout(function(){window.location.reload();}, 300000);</script>""",
+        unsafe_allow_html=True
+    )
 
 # ===== Helpers =====
 def fmt_money(v):
