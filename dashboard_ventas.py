@@ -38,10 +38,20 @@ st.set_page_config(
 )
 
 # ===== Autenticación =====
+def _to_plain(obj):
+    """Convierte recursivamente objetos Secrets de Streamlit a dicts/lists planos mutables."""
+    if hasattr(obj, 'items') and not isinstance(obj, dict):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    if isinstance(obj, dict):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_to_plain(v) for v in obj]
+    return obj
+
 def _load_auth_config():
     """Carga config de auth desde st.secrets (cloud) o auth_config.yaml (local)."""
     if 'auth' in st.secrets:
-        return dict(st.secrets['auth'])
+        return _to_plain(st.secrets['auth'])
     cfg_path = PROJECT_ROOT / 'auth_config.yaml'
     if cfg_path.exists():
         with open(cfg_path, encoding='utf-8') as f:
