@@ -450,8 +450,10 @@ class MaestraService:
             SELECT
                 COALESCE(ROUND(SUM(venta_bruta), 0), 0) as venta,
                 COALESCE(ROUND(SUM(venta_neta), 0), 0) as venta_neta,
-                COALESCE(ROUND(SUM(margen_final), 0), 0) as margen,
-                COALESCE(ROUND(100.0 * SUM(margen_final) / NULLIF(SUM(venta_neta), 0), 1), 0) as pct_margen
+                COALESCE(ROUND(SUM(margen_front), 0), 0) as margen_front,
+                COALESCE(ROUND(SUM(margen_final), 0), 0) as margen_final,
+                COALESCE(ROUND(SUM(margen_front), 0), 0) as margen,
+                COALESCE(ROUND(100.0 * SUM(margen_front) / NULLIF(SUM(venta_neta), 0), 1), 0) as pct_margen
             FROM ventas WHERE {where}
         """, values).fetchone()
         row2 = conn.execute(f"""

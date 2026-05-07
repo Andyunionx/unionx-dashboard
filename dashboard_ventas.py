@@ -481,8 +481,9 @@ with tab1:
                   delta=f"{var['venta']}% vs LY ({fmt_money(ly['venta'])})" if var['venta'] is not None else None,
                   help="Con IVA — comparable contra histórico")
     with col2:
-        st.metric("Margen Final", fmt_money(ty['margen']),
-                  delta=f"{var['margen']}% vs LY ({fmt_money(ly['margen'])})" if var['margen'] is not None else None)
+        st.metric("Margen Frontal", fmt_money(ty['margen']),
+                  delta=f"{var['margen']}% vs LY ({fmt_money(ly['margen'])})" if var['margen'] is not None else None,
+                  help="Margen Front (sin descontar comisiones, logística, marketing)")
     with col3:
         st.metric("% Margen", fmt_pct(ty['pct_margen']),
                   delta=f"{var['pct_margen']:+.1f} pts vs LY" if var['pct_margen'] is not None else None,
@@ -591,7 +592,7 @@ with tab2:
             st.metric("Venta Bruta del mes", fmt_money(ty_v),
                       delta=f"{var_v:+.1f}% vs LY ({fmt_money(ly_v)})")
         with c2:
-            st.metric("Margen Final del mes", fmt_money(ty_m),
+            st.metric("Margen Frontal del mes", fmt_money(ty_m),
                       delta=f"{var_m:+.1f}% vs LY")
         with c3:
             st.metric("Unidades del mes", fmt_int(ty_u),
