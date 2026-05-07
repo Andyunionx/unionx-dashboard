@@ -17,10 +17,12 @@ import pandas as pd
 # Backend
 backend_path = Path(__file__).parent / 'finanzas-unionx' / 'backend'
 sys.path.insert(0, str(backend_path))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from app.core.odoo_client import OdooClient
 from app.services.ventas_service import VentasService
 from app.config import Config
+from db_client import get_connection
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent
@@ -75,7 +77,7 @@ RAW_TO_DB = {
 
 
 def insertar_en_maestra(df_raw, db_path):
-    """Inserta DataFrame RAW en la Maestra SQLite."""
+    """Inserta DataFrame RAW en la Maestra (SQLite local o Turso cloud, vía db_client)."""
     df = df_raw.rename(columns=RAW_TO_DB).copy()
 
     # Convertir fechas a string ISO
@@ -85,38 +87,63 @@ def insertar_en_maestra(df_raw, db_path):
 
     df = df.where(pd.notna(df), None)
 
-    conn = sqlite3.connect(str(db_path))
-    cur0 = conn.cursor()
+    conn = get_connection(db_path)
 
     # IDEMPOTENTE: borrar filas previas del mismo período antes de insertar
     fmin_in = df['fecha_venta'].min()
     fmax_in = df['fecha_venta'].max()
     if fmin_in and fmax_in:
-        cur0.execute(
+        cur_del = conn.cursor()
+        cur_del.execute(
             "DELETE FROM ventas WHERE fecha_venta BETWEEN ? AND ?",
             (fmin_in, fmax_in)
         )
-        if cur0.rowcount > 0:
-            print(f"      [DEDUP] Borradas {cur0.rowcount:,} filas previas del período")
+        n_del = cur_del.rowcount or 0
+        if n_del > 0:
+            print(f"      [DEDUP] Borradas {n_del:,} filas previas del período")
         conn.commit()
 
-    # Columnas de la tabla ventas
+    # Columnas de la tabla ventas (manual multi-row INSERT, compatible con libsql)
     ventas_cols = [v for v in RAW_TO_DB.values()]
     cols_disponibles = [c for c in ventas_cols if c in df.columns]
-    df[cols_disponibles].to_sql('ventas', conn, if_exists='append', index=False, chunksize=1000)
+    df_v = df[cols_disponibles]
+    rows_v = list(df_v.itertuples(index=False, name=None))
+    n_total = len(rows_v)
+    chunk_size = 200  # multi-row INSERT en chunks
 
-    # Actualizar dimensiones nuevas (INSERT OR IGNORE evita IntegrityError
-    # si pandas considera un SKU como nuevo por whitespace/case y SQLite lo trata como existente)
+    if rows_v:
+        n_cols = len(cols_disponibles)
+        cols_csv = ",".join(cols_disponibles)
+        for i in range(0, n_total, chunk_size):
+            batch = rows_v[i:i + chunk_size]
+            row_ph = "(" + ",".join(["?"] * n_cols) + ")"
+            all_ph = ",".join([row_ph] * len(batch))
+            sql = f"INSERT INTO ventas ({cols_csv}) VALUES {all_ph}"
+            flat = [v for r in batch for v in r]
+            conn.execute(sql, flat)
+        conn.commit()
+
+    # Dimensiones nuevas (INSERT OR IGNORE para evitar duplicados)
     cursor = conn.cursor()
 
     def _insert_ignore(table, cols, df_dim):
         if df_dim.empty:
             return 0
         rows = list(df_dim.where(pd.notna(df_dim), None).itertuples(index=False, name=None))
+        if not rows:
+            return 0
         placeholders = ",".join(["?"] * len(cols))
         sql = f"INSERT OR IGNORE INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
-        cursor.executemany(sql, rows)
-        return cursor.rowcount
+        # Insertar fila por fila (volúmenes pequeños en dim tables)
+        n_inserted = 0
+        for r in rows:
+            try:
+                conn.execute(sql, list(r))
+                n_inserted += 1
+            except Exception:
+                pass
+        conn.commit()
+        return n_inserted
 
     prod_cols = ['sku', 'producto', 'categoria_macro', 'categoria_padre',
                  'categoria_hijo', 'categoria_comercial', 'estado_sku',
@@ -135,13 +162,14 @@ def insertar_en_maestra(df_raw, db_path):
     # Registrar carga
     fecha_min = df['fecha_venta'].min()
     fecha_max = df['fecha_venta'].max()
-    cursor.execute("""
+    conn.execute("""
         INSERT INTO metadata_cargas (fecha_carga, fuente, filas_cargadas, fecha_min_datos, fecha_max_datos, tipo)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (datetime.now().isoformat(), 'Odoo (extract_to_raw_format)', len(df), fecha_min, fecha_max, 'incremental_odoo'))
+    """, [datetime.now().isoformat(), 'Odoo (extract_to_raw_format)', len(df), fecha_min, fecha_max, 'incremental_odoo'])
     conn.commit()
 
-    total = cursor.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+    total_row = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()
+    total = total_row[0] if total_row else 0
     conn.close()
     return total
 

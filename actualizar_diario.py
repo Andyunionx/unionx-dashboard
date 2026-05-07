@@ -26,7 +26,7 @@ PROJECT_ROOT = Path(__file__).parent
 LOG_DIR = PROJECT_ROOT / 'data' / 'db'
 LOG_FILE = LOG_DIR / 'sincronizacion_diaria.log'
 DB_PATH = PROJECT_ROOT / 'data' / 'db' / 'maestra_ventas.db'
-PYTHON_EXE = r'C:\Users\andre\AppData\Local\Programs\Python\Python312\python.exe'
+PYTHON_EXE = sys.executable
 SCRIPT_RAW = PROJECT_ROOT / 'actualizar_raw_historico.py'
 
 LOG_DIR.mkdir(parents=True, exist_ok=True)
