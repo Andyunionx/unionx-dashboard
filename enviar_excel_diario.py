@@ -140,31 +140,52 @@ def generar_excel(df: pd.DataFrame) -> bytes:
     return data
 
 
+def upload_to_fileio(xlsx_bytes: bytes, fname: str) -> str:
+    """Sube el Excel a file.io (anónimo, gratis, expira 14 días). Devuelve URL de descarga."""
+    print(f"      Subiendo {len(xlsx_bytes)/1024/1024:.1f} MB a file.io...", flush=True)
+    r = requests.post(
+        'https://file.io/?expires=14d',
+        files={'file': (fname, io.BytesIO(xlsx_bytes), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')},
+        timeout=600,
+    )
+    r.raise_for_status()
+    data = r.json()
+    if not data.get('success'):
+        raise RuntimeError(f"file.io rechazó: {data}")
+    return data['link']
+
+
 def enviar_email(xlsx_bytes: bytes, n_filas: int):
-    """Envía email vía Resend con XLSX adjunto."""
+    """Envía email vía Resend con XLSX adjunto (o link si > 25MB)."""
     print(f"[3/3] Enviando email a {EMAIL_TO}...", flush=True)
     fecha = datetime.now().strftime('%Y-%m-%d')
     fname = f"Raw ventas {fecha}.xlsx"
     size_mb = len(xlsx_bytes) / 1024 / 1024
 
-    # Resend tiene límite ~40MB attachments (técnico) y ~25MB recomendado
-    if size_mb > 35:
-        print(f"      [WARN] Adjunto {size_mb:.1f} MB > 35 MB. Enviando solo link al dashboard.", flush=True)
+    if size_mb > 25:
+        # Subir a file.io y enviar link
+        print(f"      Adjunto {size_mb:.1f} MB > 25 MB (límite Gmail). Subiendo a file.io...", flush=True)
+        download_url = upload_to_fileio(xlsx_bytes, fname)
+        print(f"      [OK] Link: {download_url}", flush=True)
         body_html = (
             f"<p>Hola,</p>"
-            f"<p>El archivo Raw Ventas de hoy ({fecha}) supera los 35 MB ({size_mb:.1f} MB) "
-            f"y no puede enviarse adjunto.</p>"
-            f"<p>Por favor descargalo del dashboard: "
+            f"<p>Adjunto Raw Ventas actualizado al <b>{fecha}</b> (con histórico completo).</p>"
+            f"<p><b>📥 Descarga el Excel:</b> <a href='{download_url}'>{fname}</a></p>"
+            f"<p style='color:#888'>(El archivo pesa {size_mb:.1f} MB y supera el límite de adjuntos de Gmail.<br/>"
+            f"El link expira en 14 días o tras 1 descarga, lo que ocurra primero.)</p>"
+            f"<hr/>"
+            f"<p><b>Total filas:</b> {n_filas:,}<br/>"
+            f"<b>Tamaño:</b> {size_mb:.1f} MB</p>"
+            f"<p>Dashboard live: "
             f"<a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
-            f"<p>Total filas: {n_filas:,}</p>"
         )
         attachments = []
     else:
         body_html = (
             f"<p>Hola,</p>"
-            f"<p>Adjunto archivo Raw Ventas actualizado al {fecha}.</p>"
+            f"<p>Adjunto Raw Ventas actualizado al <b>{fecha}</b>.</p>"
             f"<p><b>Total filas:</b> {n_filas:,}<br/>"
-            f"<b>Tamaño archivo:</b> {size_mb:.1f} MB</p>"
+            f"<b>Tamaño:</b> {size_mb:.1f} MB</p>"
             f"<p>Dashboard live: "
             f"<a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
         )

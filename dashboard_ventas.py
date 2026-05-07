@@ -123,14 +123,10 @@ def get_local_db_path(_cache_key: str):
     t0 = _time.time()
     if HISTORICO_PARQUET.exists():
         df_hist = pd.read_parquet(HISTORICO_PARQUET)
-        # Asegurar columnas en orden esperado
-        df_hist = df_hist[cols_v].where(pd.notna(df_hist[cols_v]), None)
-        rows_hist = list(df_hist.itertuples(index=False, name=None))
-        # Insertar en chunks de 5000 (sqlite local rápido)
-        for i in range(0, len(rows_hist), 5000):
-            conn.executemany(insert_sql, rows_hist[i:i+5000])
-        conn.commit()
-        print(f"[Local DB] Parquet histórico: {len(rows_hist):,} filas en {_time.time()-t0:.1f}s", flush=True)
+        # Convertir Int32/Float32 con pd.NA a tipos compatibles con sqlite3
+        # to_sql maneja correctamente NaN/None; pandas convierte tipos automáticamente
+        df_hist[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
+        print(f"[Local DB] Parquet histórico: {len(df_hist):,} filas en {_time.time()-t0:.1f}s", flush=True)
     else:
         print(f"[Local DB] [WARN] Parquet no existe en {HISTORICO_PARQUET}", flush=True)
 
