@@ -66,6 +66,7 @@ Thumbs.db
 # Scripts diagnóstico (locales)
 _*.py
 !_generar_auth_local.py
+!__init__.py
 PLAN_*.md
 *.zip
 
