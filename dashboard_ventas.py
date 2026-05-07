@@ -46,17 +46,18 @@ HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parq
 CUTOFF_HISTORICO = '2026-04-01'  # menor que esto = histórico estático (parquet)
 
 
-@st.cache_resource(show_spinner="Cargando datos (parquet histórico + Turso live, ~5s)...")
-def get_local_db_path(_cache_key: str):
+@st.cache_resource(ttl=300, show_spinner="Cargando datos (parquet histórico + Turso live, ~5s)...")
+def get_local_db_path():
     """
     Construye SQLite local combinando:
     - Histórico estático (pre-2026-04-01) desde parquet en repo (instantáneo)
     - Live (2026-04-01+) desde Turso (pocas filas, rápido)
+    Auto-invalida cada 5 min vía TTL.
     """
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
-    print(f"[Local DB] Build cache_key={_cache_key} (parquet historico + Turso live)", flush=True)
+    print(f"[Local DB] Build (parquet historico + Turso live), {datetime.now()}", flush=True)
 
     libsql_url = os.environ['LIBSQL_URL'].rstrip('/')
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
@@ -193,9 +194,8 @@ def get_local_db_path(_cache_key: str):
 
 
 def get_active_db_path():
-    """Devuelve path a SQLite local (cacheado por intervalos de 5 min)."""
-    cache_key = str(int(_time.time()) // 300)  # cambia cada 5 min
-    return get_local_db_path(cache_key)
+    """Devuelve path a SQLite local (auto-cache 5 min vía TTL)."""
+    return get_local_db_path()
 
 st.set_page_config(
     page_title="Dashboard Ventas UnionX",
