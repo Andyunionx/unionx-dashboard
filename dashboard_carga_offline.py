@@ -142,6 +142,16 @@ def render_carga_offline_tab():
         - Si marcas "Pisar pedidos existentes", se borran filas con esos números de pedido y se reinsertan
         """)
 
+    # Botón descarga template
+    template_bytes = _generar_template()
+    st.download_button(
+        label="📥 Descargar template Excel (con ejemplo)",
+        data=template_bytes,
+        file_name="Template_carga_offline_UnionX.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        help="Excel con las 40 columnas RAW + 2 filas de ejemplo. Las obligatorias están marcadas en la fila de ayuda.",
+    )
+
     col1, col2 = st.columns(2)
     with col1:
         canal_default = st.selectbox(
@@ -274,3 +284,94 @@ def _do_load(df_raw: pd.DataFrame, canal_def: str, tipo_negocio_def: str, pisar:
     st.info("Refrescá el dashboard (botón ⚡ Forzar sync) o esperá 5 min para que aparezca la data nueva en los KPIs.")
     st.cache_resource.clear()
     st.cache_data.clear()
+
+
+def _generar_template() -> bytes:
+    """Genera Excel template con las 40 columnas + 2 filas de ejemplo."""
+    cols_raw = list(RAW_TO_DB.keys())
+
+    # Fila 1: ejemplo CMR (con Pedido cruzando con Shopify)
+    ejemplo_cmr = {
+        'Tipo Movimiento': 'Venta',
+        'Bodega': 'Bodega Principal',
+        'Documento': 'CMR-001234',
+        'Fecha Documento': '2026-04-15',
+        'Pedido': '#SH123456',
+        'Estado Pedido': 'Pagado',
+        'Tipo Despacho': 'Domicilio',
+        'SKU': 'ABC-001',
+        'Canal': 'CMR',
+        'Fecha Venta': '2026-04-15',
+        'Hora Venta': '14:30',
+        'Producto': 'Pala Lhotse',
+        'Categoría macro': 'Outdoor',
+        'Categoría padre': 'Snow',
+        'Categoría hijo': 'Palas',
+        'Categoría comercial': 'Standard',
+        'Estado SKU': 'Activo',
+        'Pack': '1',
+        'Marca': 'Lhotse',
+        'Proveedor': 'Lhotse Chile',
+        'Tipo Marca': 'Propia',
+        'Tipo Compra': 'Importación',
+        'Tipo Negocio': 'Fidelización',
+        'KAM': 'Clau',
+        'Estado Canal': 'Activo',
+        'Año venta': 2026,
+        'Mes venta': 4,
+        'Semana venta': 16,
+        'Día semana': 'Lunes',
+        'Hora venta': 14,
+        'Cantidad': 1,
+        'Venta bruta': 49990,
+        'Venta Neta': 42008,
+        'Costo Unitario': 18000,
+        'Costo Total': 18000,
+        'Margen Front': 24008,
+        'Comision %': 0,
+        'Comisión': 0,
+        'Logística': 2500,
+        'Marketing': 0,
+        'Mg final': 21508,
+    }
+
+    # Fila 2: ejemplo SAWA (carga simple, mínimo de columnas)
+    ejemplo_sawa = {c: None for c in cols_raw}
+    ejemplo_sawa.update({
+        'Tipo Movimiento': 'Venta',
+        'Documento': 'SAWA-04-001',
+        'Pedido': 'SAWA-001',
+        'SKU': 'XYZ-099',
+        'Canal': 'Sawa',
+        'Fecha Venta': '2026-04-10',
+        'Producto': 'Producto ejemplo',
+        'Marca': 'UnionX',
+        'Tipo Negocio': 'Fidelización',
+        'Año venta': 2026,
+        'Mes venta': 4,
+        'Cantidad': 1,
+        'Venta bruta': 19990,
+        'Venta Neta': 16798,
+    })
+
+    df = pd.DataFrame([ejemplo_cmr, ejemplo_sawa], columns=cols_raw)
+
+    # Generar Excel con styling: marcar columnas obligatorias
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Template')
+        ws = writer.sheets['Template']
+        # Marcar headers obligatorios en amarillo
+        from openpyxl.styles import PatternFill, Font
+        amarillo = PatternFill(start_color="FFEB3B", end_color="FFEB3B", fill_type="solid")
+        bold = Font(bold=True)
+        for col_idx, col_name in enumerate(df.columns, start=1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.font = bold
+            if col_name in COLS_OBLIGATORIAS:
+                cell.fill = amarillo
+        # Ancho columnas auto
+        for col_idx in range(1, len(df.columns) + 1):
+            ws.column_dimensions[chr(64 + col_idx) if col_idx <= 26 else f'A{chr(64 + col_idx - 26)}'].width = 18
+
+    return buf.getvalue()
