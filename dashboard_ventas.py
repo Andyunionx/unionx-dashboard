@@ -439,7 +439,7 @@ with col2:
     )
 
 # ============================ TABS ============================
-tab1, tab2 = st.tabs(["📈 Vista General", "📅 Vista Semanal"])
+tab1, tab2, tab3 = st.tabs(["📈 Vista General", "📅 Vista Semanal", "📤 Cargar offline"])
 
 # =========================================================================
 # TAB 1 — VISTA GENERAL
@@ -665,6 +665,13 @@ with col_d3:
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     use_container_width=True,
                 )
+
+# =========================================================================
+# TAB 3 — CARGA OFFLINE (SAWA, Walmart, CMR, etc.)
+# =========================================================================
+with tab3:
+    from dashboard_carga_offline import render_carga_offline_tab
+    render_carga_offline_tab()
 
 # Footer
 st.caption(
