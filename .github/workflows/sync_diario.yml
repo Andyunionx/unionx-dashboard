@@ -2,13 +2,9 @@ name: Sync Ventas Diario
 
 on:
   schedule:
-    # Chile = UTC-4 (sin DST). Cron es UTC.
-    # 09:00 Chile = 13:00 UTC
-    # 14:00 Chile = 18:00 UTC
-    # 18:00 Chile = 22:00 UTC
-    - cron: '0 13 * * *'
-    - cron: '0 18 * * *'
-    - cron: '0 22 * * *'
+    # Cada hora (en punto). PC local cubre intra-hora con Task Scheduler cada 5 min.
+    # GH Actions queda como backup para horas en que el PC esté apagado.
+    - cron: '0 * * * *'
   workflow_dispatch:    # Permite trigger manual desde GitHub UI
     inputs:
       fecha:
