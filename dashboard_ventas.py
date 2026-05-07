@@ -389,6 +389,11 @@ st.sidebar.divider()
 if st.sidebar.button("🔄 Refrescar caché", use_container_width=True):
     st.cache_data.clear()
     st.rerun()
+if st.sidebar.button("⚡ Forzar sync desde Turso", use_container_width=True,
+                     help="Re-descarga datos desde Turso (10-15s). Útil si el header muestra atraso grande."):
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.rerun()
 
 # ============================ Header ============================
 col1, col2 = st.columns([3, 1])
@@ -399,11 +404,39 @@ with col1:
 with col2:
     health = cached_health()
     estado = health.get('estado', 'desconocido')
-    emoji = {'ok': '🟢', 'atrasado': '🟡', 'falla': '🔴', 'desconocido': '⚪'}.get(estado, '⚪')
+
+    # Atraso legible: minutos si < 1h, horas si más
     atraso = health.get('atraso_horas')
-    atraso_txt = f" ({atraso}h)" if atraso else ""
-    st.metric("Estado sincronización", f"{emoji} {estado.upper()}{atraso_txt}",
-              delta=f"DB: {fmt_int(health.get('filas_total', 0))} filas")
+    if atraso is not None:
+        if atraso < 1:
+            atraso_min = max(0, int(round(atraso * 60)))
+            atraso_txt = f"{atraso_min} min"
+            emoji = '🟢'
+        elif atraso < 24:
+            atraso_txt = f"{atraso}h"
+            emoji = '🟢' if atraso < 2 else '🟡'
+        else:
+            atraso_txt = f"{atraso}h"
+            emoji = '🔴'
+    else:
+        atraso_txt = "?"
+        emoji = '⚪'
+
+    # Timestamp legible del último sync
+    ultima = health.get('ultima_carga')
+    ultima_txt = "-"
+    if ultima:
+        try:
+            d = datetime.fromisoformat(ultima)
+            ultima_txt = d.strftime('%H:%M:%S')
+        except Exception:
+            ultima_txt = ultima[:19]
+
+    st.metric(
+        "Última sincronización",
+        f"{emoji} {ultima_txt}",
+        delta=f"hace {atraso_txt} | DB: {fmt_int(health.get('filas_total', 0))} filas",
+    )
 
 # ============================ TABS ============================
 tab1, tab2 = st.tabs(["📈 Vista General", "📅 Vista Semanal"])
