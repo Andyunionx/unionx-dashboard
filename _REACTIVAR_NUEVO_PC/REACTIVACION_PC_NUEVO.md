@@ -82,7 +82,7 @@ cd "G:\Mi unidad\TRABAJO\RESPALDO\OPERACIONES\UNION X - IA"
 python eerr-finanzas\test_odoo_conexion.py
 ```
 
-Resultado esperado: 3 OKs y al final `[OK] CONEXION EXITOSA`. La password está en `.env` (`ANDRES_ODOO_PASSWORD=ROTATED-2026-05-07`).
+Resultado esperado: 3 OKs y al final `[OK] CONEXION EXITOSA`. La password está en `.env` (`ANDRES_ODOO_PASSWORD=<usar env var ANDRES_ODOO_PASSWORD>`).
 
 ### Paso 5 — Validar token Gmail (auto-refresh)
 

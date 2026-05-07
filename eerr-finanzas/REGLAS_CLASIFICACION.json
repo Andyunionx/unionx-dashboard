@@ -1,0 +1,247 @@
+{
+  "descripcion": "Reglas de clasificación de EERR para P&L Manager",
+  "fecha_extraccion": "2026-04-01",
+  "fuente": "PL_Manager (31).html",
+  "total_reglas": 88,
+  "lineas_negocio": ["GRUPO ETER", "UNION X", "NO SE CONSIDERA", "__SPLIT__"],
+  "reglas": [
+    {
+      "codigo": "41410101",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "COSTO VENTA",
+      "area2": "UNIONX",
+      "sa": "UNIONX",
+      "ca": "UNIONX"
+    },
+    {
+      "codigo": "41410109",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "COSTO VENTA",
+      "area2": "UNIONX",
+      "sa": "UNIONX",
+      "ca": "UNIONX"
+    },
+    {
+      "codigo": "42410103",
+      "campo": "GLOSA",
+      "keyword": "SUBTEL",
+      "ln": "UNION X",
+      "cc": "PRODUCTOS",
+      "area2": "COMERCIAL",
+      "sa": "PRODUCTOS",
+      "ca": "CERTIFICACIONES SEC"
+    },
+    {
+      "codigo": "42410103",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "INSUMOS",
+      "area2": "GRUPO ETER",
+      "sa": "GRUPO ETER",
+      "ca": "OTROS"
+    },
+    {
+      "codigo": "42410203",
+      "campo": "GLOSA",
+      "keyword": "SIMPLIT",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "REVERSSO"
+    },
+    {
+      "codigo": "42410203",
+      "campo": "GLOSA",
+      "keyword": "MELOLLEVO",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "REVERSSO"
+    },
+    {
+      "codigo": "43420101",
+      "campo": "GLOSA",
+      "keyword": "GRUPO ETER CONTABILIDAD",
+      "ln": "GRUPO ETER",
+      "cc": "REMUNERACIONES",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "CONTABILIDAD",
+      "ca": "CONTABILIDAD"
+    },
+    {
+      "codigo": "43420101",
+      "campo": "GLOSA",
+      "keyword": "GRUPO ETER GERENCIA",
+      "ln": "GRUPO ETER",
+      "cc": "REMUNERACIONES",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "FINANZAS Y ADMINISTRACIÓN"
+    },
+    {
+      "codigo": "43420101",
+      "campo": "GLOSA",
+      "keyword": "MELOLLEVO",
+      "ln": "UNION X",
+      "cc": "REMUNERACIONES",
+      "area2": "COMERCIAL",
+      "sa": "E-COMMERCE",
+      "ca": "E-COMMERCE"
+    },
+    {
+      "codigo": "43420101",
+      "campo": "GLOSA",
+      "keyword": "KAM",
+      "ln": "UNION X",
+      "cc": "REMUNERACIONES",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCIÓN",
+      "ca": "DISTRIBUCIÓN"
+    },
+    {
+      "codigo": "43420101",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "__SPLIT__",
+      "cc": "remuneraciones",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "43420102",
+      "campo": "GLOSA",
+      "keyword": "FOTOS",
+      "ln": "__SPLIT__",
+      "cc": "honorarios",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "43420102",
+      "campo": "GLOSA",
+      "keyword": "BRANDING",
+      "ln": "__SPLIT__",
+      "cc": "honorarios",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "43420102",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "__SPLIT__",
+      "cc": "honorarios",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "43420104",
+      "campo": "GLOSA",
+      "keyword": "RINDE FONDOS",
+      "ln": "__SPLIT__",
+      "cc": "rendiciones",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "43420104",
+      "campo": "CONTRAPARTE",
+      "keyword": "JOSE TOBAR",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "DISTRIBUCIÓN AGUA"
+    },
+    {
+      "codigo": "43420105",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "MANTENCION ACTIVOS",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "VEHICULOS Y EQ. TRANSPORTE"
+    },
+    {
+      "codigo": "43420116",
+      "campo": "GLOSA",
+      "keyword": "ADOBE",
+      "ln": "UNION X",
+      "cc": "PRODUCTOS",
+      "area2": "COMERCIAL",
+      "sa": "SUSCRIPCIÓN Y PUBLICACIONES",
+      "ca": "ADOBE"
+    },
+    {
+      "codigo": "43420116",
+      "campo": "GLOSA",
+      "keyword": "CHATGPT",
+      "ln": "GRUPO ETER",
+      "cc": "SUSCRIPCIÓN Y PUBLICACIONES",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "CHATGPT"
+    },
+    {
+      "codigo": "43420116",
+      "campo": "GLOSA",
+      "keyword": "CLAUDE",
+      "ln": "GRUPO ETER",
+      "cc": "SUSCRIPCIÓN Y PUBLICACIONES",
+      "area2": "GRUPO ETER",
+      "sa": "GRUPO ETER",
+      "ca": "CLAUDE.AI"
+    },
+    {
+      "codigo": "43420116",
+      "campo": "GLOSA",
+      "keyword": "ODOO",
+      "ln": "GRUPO ETER",
+      "cc": "SUSCRIPCIÓN Y PUBLICACIONES",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "ODOO"
+    },
+    {
+      "codigo": "44410190",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "NO SE CONSIDERA",
+      "cc": "",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "44410302",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "NO SE CONSIDERA",
+      "cc": "",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    }
+  ],
+  "notas": [
+    "Las reglas se aplican en orden de aparición",
+    "Si campo='NINGUNO' se aplica directamente sin validar keyword",
+    "Si campo='GLOSA' busca el keyword en la glosa normalizada (mayúsculas, sin acentos)",
+    "Si campo='CONTRAPARTE' busca el keyword en la contraparte normalizada",
+    "Las reglas con ln='__SPLIT__' requieren clasificación manual posterior",
+    "Mantener actualizado cuando se agreguen nuevas cuentas contables"
+  ]
+}

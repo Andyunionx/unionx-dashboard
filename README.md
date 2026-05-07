@@ -162,7 +162,7 @@ Archivo: `odoo/odoo_config.json`
   "url": "https://unionxb2b.odoo.com",
   "db": "bmya-innovatek-sh-prd-6981800",
   "user": "andres@grupoeter.cl",
-  "password": "ROTATED-2026-05-07"
+  "password": "<usar env var ANDRES_ODOO_PASSWORD>"
 }
 ```
 

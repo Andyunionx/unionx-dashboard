@@ -20,7 +20,7 @@ def hash_password(plain: str) -> str:
 def main():
     if len(sys.argv) < 4:
         print("Uso: python _generar_auth_local.py <email> <password> <nombre>")
-        print("Ej:  python _generar_auth_local.py andres@unionx.cl ROTATED-2026-05-07 'Andrés Browne'")
+        print("Ej:  python _generar_auth_local.py andres@unionx.cl <tu-password> 'Andrés Browne'")
         sys.exit(1)
 
     email, password, nombre = sys.argv[1], sys.argv[2], sys.argv[3]

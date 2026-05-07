@@ -36,7 +36,11 @@ def main():
     with open(CONFIG_PATH, encoding="utf-8") as f:
         cfg = json.load(f)["produccion"]
 
-    client = OdooClient(cfg["url"], cfg["db_name"], cfg["username"], cfg["password"])
+    import os
+    password = cfg.get("password") or os.getenv("ANDRES_ODOO_PASSWORD")
+    if not password:
+        raise RuntimeError("Password no encontrada. Setear env var ANDRES_ODOO_PASSWORD")
+    client = OdooClient(cfg["url"], cfg["db_name"], cfg["username"], password)
     uid = client.authenticate()
     print(f"[OK] Conectado a Odoo produccion | UID={uid}")
     print("=" * 90)

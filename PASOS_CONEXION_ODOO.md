@@ -13,7 +13,7 @@ Los nombres de las bases de datos no son correctos:
 1. Abre: https://unionxb2b.odoo.com
 2. Inicia sesión con:
    - Email: andres@unionx.cl
-   - Contraseña: ROTATED-2026-05-07
+   - Contraseña: <usar env var ANDRES_ODOO_PASSWORD>
 3. Una vez adentro, ve a **Configuración > Información del Sistema**
 4. Busca "Database Name" o "Nombre de BD"
 5. Copia el valor exacto
@@ -51,13 +51,13 @@ Si no lo encuentras, pide al admin que confirme los nombres exactos.
   "produccion": {
     "url": "https://unionxb2b.odoo.com",
     "username": "andres@unionx.cl",
-    "password": "ROTATED-2026-05-07",
+    "password": "<usar env var ANDRES_ODOO_PASSWORD>",
     "db_name": "nombre_correcto_aqui"
   },
   "test": {
     "url": "https://test3-melollevo.odoo.com",
     "username": "andres@unionx.cl",
-    "password": "ROTATED-2026-05-07",
+    "password": "<usar env var ANDRES_ODOO_PASSWORD>",
     "db_name": "nombre_correcto_aqui"
   }
 }

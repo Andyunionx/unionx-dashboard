@@ -7,7 +7,7 @@
 3. Ve a la pestaña **Network** (Red)
 4. Inicia sesión con:
    - Email: andres@grupoeter.cl
-   - Contraseña: ROTATED-2026-05-07
+   - Contraseña: <usar env var ANDRES_ODOO_PASSWORD>
 5. Busca una petición que contenga `jsonrpc` o `execute_kw`
 6. En la pestaña **Request** o **Response**, busca el campo `"db":` o `"database":`
 7. El valor es el nombre que necesitas

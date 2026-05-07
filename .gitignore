@@ -1,22 +1,55 @@
 # ============================================================
-# .gitignore — solo trackeamos código necesario para el deploy
+# .gitignore — solo trackeamos código necesario, NUNCA secretos
+# Verificado por scripts/policia_seguridad.py
 # ============================================================
 
-# Datos sensibles
+# ============== SECRETOS — NUNCA TRACKEAR ==============
+# Variables de entorno
 .env
 .env.*
 !.env.template
-auth_config.yaml
-.streamlit/secrets.toml
 
-# DB y backups
+# Credenciales Google / OAuth
+credentials.json
+**/credentials.json
+!archive/Junior Revenue/credentials.json.placeholder
+client_secret*.json
+**/client_secret*.json
+token.json
+**/token.json
+
+# Auth y secretos varios
+auth_config.yaml
+auth_config.local.yaml
+.streamlit/secrets.toml
+secrets.toml
+
+# Private keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.p12
+*.pfx
+
+# AWS / GCP / Azure
+.aws/
+.gcp/
+.azure/
+service-account*.json
+
+# ============== BASES DE DATOS ==============
 data/db/
 *.db
 *.db-journal
+*.sqlite
+*.sqlite3
 *.bak
 *.bak.*
 
-# Planillas grandes (input no necesario en cloud)
+# ============== PLANILLAS GRANDES / DATOS ==============
 data/planillas/Raw ventas Y*.xlsx
 data/planillas/Mockup raw Y*.xlsx
 data/planillas/*.xlsx.*
@@ -24,24 +57,50 @@ data/planillas/*.xlsx.*
 !data/planillas/Matriz productos.xlsx
 !data/planillas/canal_tipo_negocio.json
 
-# datos_entrada (archivos históricos que no se usan en cloud)
+# datos_entrada (historicos)
 datos_entrada/
 
 # Outputs generados
 data/outputs/
 data/eerr/
+data/kpis_manuales/*.json
+!data/kpis_manuales/.gitkeep
 
-# Otros proyectos del monorepo (no se necesitan en este deploy)
+# Inboxes COMEX (carpetas dinamicas con mails procesados)
+agente-comex/data/inbox/
+agente-comex/data/output/
+
+# ============== OTROS PROYECTOS DEL MONOREPO ==============
+# Agente COMEX: contiene tokens OAuth en config/, no se trackea entero
 agente-comex/
-eerr-finanzas/
-finanzas-unionx/frontend/
 
-# Logs
+# eerr-finanzas: SI se trackea (sistema Streamlit completo)
+# Pero excluir lo que NO debe ir
+eerr-finanzas/credentials.json
+eerr-finanzas/data/
+eerr-finanzas/output.log
+eerr-finanzas/logs/
+eerr-finanzas/__pycache__/
+eerr-finanzas/_*.py
+!eerr-finanzas/_test_*.py
+eerr-finanzas/Análisis Contribución *.xlsx
+eerr-finanzas/drive_download_*.xlsx
+
+# Frontend: trackear código pero NO node_modules ni build
+finanzas-unionx/frontend/node_modules/
+finanzas-unionx/frontend/dist/
+finanzas-unionx/frontend/.vite/
+finanzas-unionx/frontend/.env
+finanzas-unionx/frontend/.env.*
+!finanzas-unionx/frontend/.env.template
+
+# ============== LOGS ==============
 *.log
 *.log.*
+logs/
 data/db/sincronizacion_diaria.log*
 
-# Python
+# ============== PYTHON ==============
 __pycache__/
 *.pyc
 *.pyo
@@ -51,26 +110,35 @@ __pycache__/
 venv/
 env/
 *.egg-info/
+.coverage
+htmlcov/
 
-# Node
+# ============== NODE ==============
 node_modules/
 dist/
+build/
+.parcel-cache/
 
-# IDE / OS
+# ============== IDE / OS ==============
 .vscode/
 .idea/
 *.swp
+*.swo
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Scripts diagnóstico (locales)
+# ============== CLAUDE / WORKTREES ==============
+.claude/worktrees/
+.claude/scheduled_tasks.lock
+
+# ============== ARCHIVOS DE DIAGNOSTICO LOCAL ==============
 _*.py
 !_generar_auth_local.py
 !__init__.py
-PLAN_*.md
 *.zip
 
-# Excel históricos / EERR
+# Excel historicos / EERR (excepto los maestros)
 *.xlsx
 !data/planillas/Maestra Canales.xlsx
 !data/planillas/Matriz productos.xlsx
@@ -78,16 +146,19 @@ PLAN_*.md
 # PDFs
 *.pdf
 
-# Tests
+# Tests con datos sensibles
 test/
+!test/__init__.py
 
-# Misc del monorepo
+# ============== SCRIPTS / DOCS DEL MONOREPO ==============
 *.txt
 !requirements.txt
 !.gitignore
+!.github/**/*.txt
 *.bat
 *.sh
 *.ps1
+*.vbs
 !actualizar_raw_historico.py
 !actualizar_diario.py
 !cargar_db_desde_excel.py
@@ -95,3 +166,8 @@ test/
 !db_client.py
 !migrar_a_turso.py
 !_generar_auth_local.py
+
+# Plan files no productivos
+PLAN_*.md
+ANALISIS_*.md
+AUDITORIA_*.md

@@ -49,10 +49,13 @@ def main():
     with open(CONFIG_PATH, encoding="utf-8") as f:
         cfg = json.load(f)["produccion"]
 
+    import os
     url      = cfg["url"]
     db       = cfg["db_name"]
     username = cfg["username"]
-    password = cfg["password"]
+    password = cfg.get("password") or os.getenv("ANDRES_ODOO_PASSWORD")
+    if not password:
+        raise RuntimeError("Password no encontrada. Setear env var ANDRES_ODOO_PASSWORD")
 
     # Autenticar
     common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common")

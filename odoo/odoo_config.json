@@ -1,14 +1,15 @@
 {
+  "_comment": "Password se carga desde env var ANDRES_ODOO_PASSWORD (NO hardcodear aqui)",
   "produccion": {
     "url": "https://unionxb2b.odoo.com",
     "username": "andres@grupoeter.cl",
-    "password": "ROTATED-2026-05-07",
+    "password": null,
     "db_name": "bmya-innovatek-sh-prd-6981800"
   },
   "test": {
     "url": "https://test3-melollevo.odoo.com",
     "username": "andres@grupoeter.cl",
-    "password": "ROTATED-2026-05-07",
+    "password": null,
     "db_name": "test3-melollevo"
   },
   "usuario": "Andrés Browne"

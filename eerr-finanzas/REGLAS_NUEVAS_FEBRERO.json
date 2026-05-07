@@ -1,0 +1,498 @@
+{
+  "descripcion": "Nuevas reglas agregadas basadas en análisis de EERR Febrero 2026",
+  "fecha": "2026-04-01",
+  "total_nuevas": 45,
+  "notas": "Agregar estas reglas a REGLAS en eerr_classifier.py",
+  "reglas_nuevas": [
+    {
+      "codigo": "42410104",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "COMISIÓN GRANDES CUENTAS",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "COMISIONES"
+    },
+    {
+      "codigo": "42410104",
+      "campo": "GLOSA",
+      "keyword": "MERCADOLIBRE",
+      "ln": "UNION X",
+      "cc": "COMISIÓN GRANDES CUENTAS",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "COMISIONES"
+    },
+    {
+      "codigo": "42410104",
+      "campo": "GLOSA",
+      "keyword": "COMERCIAL ECCSA",
+      "ln": "UNION X",
+      "cc": "COMISIÓN GRANDES CUENTAS",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "COMISIONES"
+    },
+    {
+      "codigo": "42410201",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "FLETES Y GASTOS DE ENVIO",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "FLETES"
+    },
+    {
+      "codigo": "42410201",
+      "campo": "GLOSA",
+      "keyword": "LOGISTICA",
+      "ln": "UNION X",
+      "cc": "FLETES Y GASTOS DE ENVIO",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "FLETES"
+    },
+    {
+      "codigo": "42410201",
+      "campo": "GLOSA",
+      "keyword": "MKP",
+      "ln": "UNION X",
+      "cc": "FLETES Y GASTOS DE ENVIO",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "FLETES"
+    },
+    {
+      "codigo": "44410305",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "NO SE CONSIDERA",
+      "cc": "",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "44410306",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "NO SE CONSIDERA",
+      "cc": "",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "44410307",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "NO SE CONSIDERA",
+      "cc": "",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    },
+    {
+      "codigo": "43420114",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "ARRIENDOS",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "BODEGAS"
+    },
+    {
+      "codigo": "43420114",
+      "campo": "GLOSA",
+      "keyword": "ARRIENDO",
+      "ln": "GRUPO ETER",
+      "cc": "ARRIENDOS",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "BODEGAS"
+    },
+    {
+      "codigo": "43420114",
+      "campo": "CONTRAPARTE",
+      "keyword": "RENTCO",
+      "ln": "GRUPO ETER",
+      "cc": "ARRIENDOS",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "BODEGAS"
+    },
+    {
+      "codigo": "43420103",
+      "campo": "GLOSA",
+      "keyword": "MELOLLEVO COMERCIAL",
+      "ln": "UNION X",
+      "cc": "REMUNERACIONES",
+      "area2": "COMERCIAL",
+      "sa": "E-COMMERCE",
+      "ca": "E-COMMERCE"
+    },
+    {
+      "codigo": "43420103",
+      "campo": "GLOSA",
+      "keyword": "GRUPO ETER GERENCIA",
+      "ln": "GRUPO ETER",
+      "cc": "REMUNERACIONES",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "FINANZAS Y ADMINISTRACIÓN"
+    },
+    {
+      "codigo": "43420103",
+      "campo": "GLOSA",
+      "keyword": "GRUPO ETER OPERACIONES",
+      "ln": "GRUPO ETER",
+      "cc": "REMUNERACIONES",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "OPERACIONES"
+    },
+    {
+      "codigo": "43420108",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "REMUNERACIONES",
+      "area2": "GRUPO ETER",
+      "sa": "POSTVENTA",
+      "ca": "INDEMNIZACIONES"
+    },
+    {
+      "codigo": "43420108",
+      "campo": "GLOSA",
+      "keyword": "FINIQUITO",
+      "ln": "GRUPO ETER",
+      "cc": "REMUNERACIONES",
+      "area2": "GRUPO ETER",
+      "sa": "POSTVENTA",
+      "ca": "INDEMNIZACIONES"
+    },
+    {
+      "codigo": "43420109",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "SEGUROS",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "SEGUROS"
+    },
+    {
+      "codigo": "43420109",
+      "campo": "GLOSA",
+      "keyword": "SEGURO",
+      "ln": "GRUPO ETER",
+      "cc": "SEGUROS",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "SEGUROS"
+    },
+    {
+      "codigo": "43420109",
+      "campo": "CONTRAPARTE",
+      "keyword": "REALE CHILE",
+      "ln": "GRUPO ETER",
+      "cc": "SEGUROS",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "SEGUROS"
+    },
+    {
+      "codigo": "43420115",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "TELEFONO E INTERNET"
+    },
+    {
+      "codigo": "43420115",
+      "campo": "GLOSA",
+      "keyword": "TELEFONO",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "TELEFONO E INTERNET"
+    },
+    {
+      "codigo": "43420115",
+      "campo": "GLOSA",
+      "keyword": "INTERNET",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "TELEFONO E INTERNET"
+    },
+    {
+      "codigo": "43420117",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "SUSCRIPCION Y PUBLICACIONES",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "BUK"
+    },
+    {
+      "codigo": "43420117",
+      "campo": "GLOSA",
+      "keyword": "NUBOX",
+      "ln": "GRUPO ETER",
+      "cc": "SUSCRIPCION Y PUBLICACIONES",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "FINANZAS Y ADMINISTRACIÓN",
+      "ca": "NUBOX"
+    },
+    {
+      "codigo": "43420118",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "ARRIENDOS",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "SEGURIDAD OFICINA"
+    },
+    {
+      "codigo": "43420118",
+      "campo": "GLOSA",
+      "keyword": "MONITOREO",
+      "ln": "GRUPO ETER",
+      "cc": "ARRIENDOS",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "SEGURIDAD OFICINA"
+    },
+    {
+      "codigo": "43420107",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "MOVILIZACION TRANSPORTE Y COLACION",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "AUTOPISTAS"
+    },
+    {
+      "codigo": "43420107",
+      "campo": "GLOSA",
+      "keyword": "PEAJE",
+      "ln": "GRUPO ETER",
+      "cc": "MOVILIZACION TRANSPORTE Y COLACION",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "AUTOPISTAS"
+    },
+    {
+      "codigo": "43420104",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "REVERSSO"
+    },
+    {
+      "codigo": "43420104",
+      "campo": "CONTRAPARTE",
+      "keyword": "PRISA",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "PRISA"
+    },
+    {
+      "codigo": "43420110",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "MEDIOS DE PAGOS",
+      "area2": "COMERCIAL",
+      "sa": "PAGINAS WEB",
+      "ca": "MEDIOS DE PAGOS"
+    },
+    {
+      "codigo": "43420110",
+      "campo": "GLOSA",
+      "keyword": "MERCADOPAGO",
+      "ln": "UNION X",
+      "cc": "MEDIOS DE PAGOS",
+      "area2": "COMERCIAL",
+      "sa": "PAGINAS WEB",
+      "ca": "MEDIOS DE PAGOS"
+    },
+    {
+      "codigo": "43420110",
+      "campo": "GLOSA",
+      "keyword": "TRANSBANK",
+      "ln": "UNION X",
+      "cc": "MEDIOS DE PAGOS",
+      "area2": "COMERCIAL",
+      "sa": "PAGINAS WEB",
+      "ca": "MEDIOS DE PAGOS"
+    },
+    {
+      "codigo": "43420116",
+      "campo": "GLOSA",
+      "keyword": "WAALAXY",
+      "ln": "UNION X",
+      "cc": "SUSCRIPCION Y PUBLICACIONES",
+      "area2": "COMERCIAL",
+      "sa": "UNIONX",
+      "ca": "WAALAXY"
+    },
+    {
+      "codigo": "43420116",
+      "campo": "GLOSA",
+      "keyword": "APIFY",
+      "ln": "UNION X",
+      "cc": "SUSCRIPCION Y PUBLICACIONES",
+      "area2": "OPERACIONES",
+      "sa": "UNIONX",
+      "ca": "APIFY"
+    },
+    {
+      "codigo": "43410124",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "REPRESENTACION Y VIATICOS",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "TRANSPORTE"
+    },
+    {
+      "codigo": "43410124",
+      "campo": "GLOSA",
+      "keyword": "VEHICLE RENTAL",
+      "ln": "UNION X",
+      "cc": "REPRESENTACION Y VIATICOS",
+      "area2": "COMERCIAL",
+      "sa": "DISTRIBUCION",
+      "ca": "TRANSPORTE"
+    },
+    {
+      "codigo": "42420120",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "MOVILIZACION TRANSPORTE Y COLACION",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "MOVILIZACION"
+    },
+    {
+      "codigo": "42420120",
+      "campo": "GLOSA",
+      "keyword": "DIESEL",
+      "ln": "GRUPO ETER",
+      "cc": "MOVILIZACION TRANSPORTE Y COLACION",
+      "area2": "OPERACIONES",
+      "sa": "LOGISTICA",
+      "ca": "MOVILIZACION"
+    },
+    {
+      "codigo": "43420130",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "DEPRECIACION",
+      "area2": "FINANZAS Y ADMINISTRACIÓN",
+      "sa": "GRUPO ETER",
+      "ca": "DEPRECIACION"
+    },
+    {
+      "codigo": "43420141",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "GASTOS OFICINA Y SERVICIOS",
+      "area2": "OPERACIONES",
+      "sa": "OPERACIONES",
+      "ca": "SERVICIOS BASICOS"
+    },
+    {
+      "codigo": "43420137",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "ARRIENDOS",
+      "area2": "COMERCIAL",
+      "sa": "E-COMMERCE",
+      "ca": "GGCC LAS CONDES"
+    },
+    {
+      "codigo": "43420136",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "SUSCRIPCION Y PUBLICACIONES",
+      "area2": "COMERCIAL",
+      "sa": "UNIONX",
+      "ca": "MEIKIFY"
+    },
+    {
+      "codigo": "43420126",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "UNION X",
+      "cc": "REMUNERACIONES",
+      "area2": "COMERCIAL",
+      "sa": "PAGINAS WEB",
+      "ca": "CATALOGO"
+    },
+    {
+      "codigo": "43420134",
+      "campo": "GLOSA",
+      "keyword": "ECOMMERCE",
+      "ln": "UNION X",
+      "cc": "PRODUCTOS",
+      "area2": "COMERCIAL",
+      "sa": "PRODUCTOS",
+      "ca": "HONORARIOS"
+    },
+    {
+      "codigo": "43420134",
+      "campo": "GLOSA",
+      "keyword": "LETRERO",
+      "ln": "UNION X",
+      "cc": "PRODUCTOS",
+      "area2": "COMERCIAL",
+      "sa": "HONORARIOS",
+      "ca": "SESION CREACIONES VIDEOS & FOTOS"
+    },
+    {
+      "codigo": "43510204",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "GRUPO ETER",
+      "cc": "AJUSTE SENCILLO",
+      "area2": "GRUPO ETER",
+      "sa": "GRUPO ETER",
+      "ca": "GRUPO ETER"
+    },
+    {
+      "codigo": "44430105",
+      "campo": "NINGUNO",
+      "keyword": "",
+      "ln": "NO SE CONSIDERA",
+      "cc": "",
+      "area2": "",
+      "sa": "",
+      "ca": ""
+    }
+  ]
+}
