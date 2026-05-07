@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-import requests
 import streamlit as st
+import libsql_client
 
 
 # Mapeo formato RAW (Excel) -> columna DB
@@ -65,59 +65,67 @@ RAW_TO_DB = {
 COLS_OBLIGATORIAS = ['Pedido', 'Fecha Venta', 'SKU', 'Cantidad', 'Venta bruta']
 
 
-def turso_execute(sql, params=None):
-    """Ejecuta SQL contra Turso vía HTTP. Devuelve filas afectadas si aplicable."""
-    url = os.environ.get('LIBSQL_URL', '').rstrip('/')
-    token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
-    body = {"requests": [
-        {"type": "execute", "stmt": {"sql": sql, "args": params or []}},
-        {"type": "close"}
-    ]}
-    r = requests.post(
-        f"{url}/v2/pipeline",
-        json=body,
-        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
-        timeout=300,
+def _get_turso_client():
+    return libsql_client.create_client_sync(
+        url=os.environ.get('LIBSQL_URL', ''),
+        auth_token=os.environ.get('LIBSQL_AUTH_TOKEN', ''),
     )
-    r.raise_for_status()
-    res = r.json()['results'][0]['response']['result']
-    return res
+
+
+def turso_delete_pedidos(pedidos: list[str]) -> int:
+    """Borra filas de ventas con pedido en la lista. Devuelve total filas afectadas."""
+    if not pedidos:
+        return 0
+    client = _get_turso_client()
+    total = 0
+    try:
+        for i in range(0, len(pedidos), 200):
+            chunk = pedidos[i:i + 200]
+            placeholders = ','.join(['?'] * len(chunk))
+            sql = f"DELETE FROM ventas WHERE pedido IN ({placeholders})"
+            res = client.execute(sql, [str(p) for p in chunk])
+            total += getattr(res, 'rows_affected', 0) or 0
+    finally:
+        client.close()
+    return total
 
 
 def turso_batch_insert(rows, db_cols):
-    """Inserta rows (lista de tuplas) en ventas vía multi-row INSERT en chunks."""
+    """Inserta rows (lista de tuplas) en ventas con multi-row INSERT."""
     if not rows:
         return 0
     cols_csv = ','.join(db_cols)
+    n_cols = len(db_cols)
     n_total = 0
     chunk = 200
-    placeholders_per_row = '(' + ','.join(['?'] * len(db_cols)) + ')'
-
-    for i in range(0, len(rows), chunk):
-        batch = rows[i:i + chunk]
-        all_ph = ','.join([placeholders_per_row] * len(batch))
-        sql = f"INSERT INTO ventas ({cols_csv}) VALUES {all_ph}"
-        flat = []
-        for r in batch:
-            flat.extend(r)
-        # Convertir a Hrana args format
-        body = {"requests": [{"type": "execute", "stmt": {
-            "sql": sql,
-            "args": [{"type": "null" if v is None else "text" if isinstance(v, str) else "float" if isinstance(v, (int, float)) else "text",
-                      "value": str(v) if v is not None else None}
-                     for v in flat]
-        }}, {"type": "close"}]}
-        url = os.environ.get('LIBSQL_URL', '').rstrip('/')
-        token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
-        r = requests.post(
-            f"{url}/v2/pipeline",
-            json=body,
-            headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
-            timeout=300,
-        )
-        r.raise_for_status()
-        n_total += len(batch)
+    placeholders_per_row = '(' + ','.join(['?'] * n_cols) + ')'
+    client = _get_turso_client()
+    try:
+        for i in range(0, len(rows), chunk):
+            batch = rows[i:i + chunk]
+            all_ph = ','.join([placeholders_per_row] * len(batch))
+            sql = f"INSERT INTO ventas ({cols_csv}) VALUES {all_ph}"
+            flat = []
+            for r in batch:
+                flat.extend(list(r))
+            client.execute(sql, flat)
+            n_total += len(batch)
+    finally:
+        client.close()
     return n_total
+
+
+def turso_metadata_insert(fuente: str, n_filas: int, fmin, fmax, tipo: str = 'manual_offline'):
+    """Inserta entrada en metadata_cargas."""
+    client = _get_turso_client()
+    try:
+        client.execute(
+            "INSERT INTO metadata_cargas (fecha_carga, fuente, filas_cargadas, fecha_min_datos, fecha_max_datos, tipo) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            [datetime.now().isoformat(), fuente, n_filas, str(fmin) if fmin else None, str(fmax) if fmax else None, tipo],
+        )
+    finally:
+        client.close()
 
 
 def render_carga_offline_tab():
@@ -249,14 +257,7 @@ def _do_load(df_raw: pd.DataFrame, canal_def: str, tipo_negocio_def: str, pisar:
 
     # Pisar si aplica
     if pisar and pedidos_unicos:
-        # En chunks (Turso límite parámetros)
-        n_borradas = 0
-        for i in range(0, len(pedidos_unicos), 200):
-            chunk = pedidos_unicos[i:i + 200]
-            placeholders = ','.join(['?'] * len(chunk))
-            sql = f"DELETE FROM ventas WHERE pedido IN ({placeholders})"
-            res = turso_execute(sql, [{"type": "text", "value": str(p)} for p in chunk])
-            n_borradas += res.get('affected_row_count', 0) or 0
+        n_borradas = turso_delete_pedidos(pedidos_unicos)
         st.write(f"🗑️ Borradas {n_borradas:,} filas previas con esos {n_pedidos} pedidos")
 
     # Insertar
@@ -267,18 +268,7 @@ def _do_load(df_raw: pd.DataFrame, canal_def: str, tipo_negocio_def: str, pisar:
     fecha_min = df['fecha_venta'].min()
     fecha_max = df['fecha_venta'].max()
     fuente = f"Carga manual offline ({canal_def})"
-    turso_execute(
-        "INSERT INTO metadata_cargas (fecha_carga, fuente, filas_cargadas, fecha_min_datos, fecha_max_datos, tipo) "
-        "VALUES (?, ?, ?, ?, ?, ?)",
-        [
-            {"type": "text", "value": datetime.now().isoformat()},
-            {"type": "text", "value": fuente},
-            {"type": "integer", "value": str(n_ins)},
-            {"type": "text", "value": str(fecha_min) if fecha_min else None},
-            {"type": "text", "value": str(fecha_max) if fecha_max else None},
-            {"type": "text", "value": "manual_offline"},
-        ],
-    )
+    turso_metadata_insert(fuente, n_ins, fecha_min, fecha_max, tipo='manual_offline')
 
     st.success(f"✅ {n_ins:,} filas insertadas en Turso (canal: {canal_def}, línea: {tipo_negocio_def})")
     st.info("Refrescá el dashboard (botón ⚡ Forzar sync) o esperá 5 min para que aparezca la data nueva en los KPIs.")
