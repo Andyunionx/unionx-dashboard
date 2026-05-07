@@ -29,7 +29,140 @@ for _key in ('LIBSQL_URL', 'LIBSQL_AUTH_TOKEN'):
 from app.services.maestra_service import MaestraService
 from db_client import get_db_path
 
+import sqlite3
+import tempfile
+import time as _time
+import requests
+
 DB_PATH = get_db_path()
+
+
+# ============================================================
+# PERFORMANCE: si Turso está activo, descargar ventas a un SQLite local
+# en /tmp (cacheado 5 min). Las queries del dashboard corren contra SQLite
+# local (sub-segundo) en lugar de HTTP a Turso (40-200s/query).
+# ============================================================
+@st.cache_resource(show_spinner="Descargando dataset desde Turso (~60s, una vez cada 5 min)...")
+def get_local_db_path(_cache_key: str):
+    """Si LIBSQL_URL está seteado, baja toda la data a un SQLite local y devuelve su path.
+    Si no, usa el SQLite local original (para desarrollo)."""
+    if not os.environ.get('LIBSQL_URL'):
+        return str(DB_PATH)
+
+    libsql_url = os.environ['LIBSQL_URL'].rstrip('/')
+    token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+    headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+
+    def turso_query(sql, params=None):
+        body = {"requests": [
+            {"type": "execute", "stmt": {"sql": sql, "args": params or []}},
+            {"type": "close"}
+        ]}
+        r = requests.post(f"{libsql_url}/v2/pipeline", json=body, headers=headers, timeout=300)
+        r.raise_for_status()
+        return r.json()['results'][0]['response']['result']
+
+    # SQLite local en tempdir (sobrevive entre cargas de la app pero no entre cold restarts)
+    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local.db'
+    if tmp_path.exists():
+        tmp_path.unlink()  # fresh
+
+    conn = sqlite3.connect(str(tmp_path))
+
+    # 1. Crear schema
+    schema_sql = [
+        """CREATE TABLE ventas (
+            tipo_movimiento TEXT, bodega TEXT, documento TEXT, fecha_documento TEXT,
+            pedido TEXT, estado_pedido TEXT, tipo_despacho TEXT, sku TEXT, canal TEXT,
+            fecha_venta TEXT, hora_venta TEXT, producto TEXT,
+            categoria_macro TEXT, categoria_padre TEXT, categoria_hijo TEXT, categoria_comercial TEXT,
+            estado_sku TEXT, pack TEXT, marca TEXT, proveedor TEXT,
+            tipo_marca TEXT, tipo_compra TEXT, tipo_negocio TEXT, kam TEXT,
+            estado_canal TEXT, anio_venta INT, mes_venta INT, semana_venta INT,
+            dia_semana TEXT, hora_venta_num INT,
+            cantidad REAL, venta_bruta REAL, venta_neta REAL, costo_unitario REAL, costo_total REAL,
+            margen_front REAL, comision_pct REAL, comision REAL,
+            logistica REAL, marketing REAL, margen_final REAL
+        )""",
+        """CREATE TABLE dim_productos (
+            sku TEXT PRIMARY KEY, producto TEXT, categoria_macro TEXT, categoria_padre TEXT,
+            categoria_hijo TEXT, categoria_comercial TEXT, estado_sku TEXT, pack TEXT,
+            marca TEXT, proveedor TEXT, tipo_marca TEXT, tipo_compra TEXT
+        )""",
+        "CREATE TABLE metadata_cargas (fecha_carga TEXT, fuente TEXT, filas_cargadas INT, fecha_min_datos TEXT, fecha_max_datos TEXT, tipo TEXT)",
+        "CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta)",
+        "CREATE INDEX idx_ventas_canal ON ventas(canal)",
+        "CREATE INDEX idx_ventas_marca ON ventas(marca)",
+        "CREATE INDEX idx_ventas_sku ON ventas(sku)",
+    ]
+    for sql in schema_sql:
+        conn.execute(sql)
+    conn.commit()
+
+    # 2. Bajar ventas en chunks (50K filas por chunk)
+    t0 = _time.time()
+    chunk_size = 50000
+    offset = 0
+    cols_v = ['tipo_movimiento','bodega','documento','fecha_documento','pedido','estado_pedido',
+              'tipo_despacho','sku','canal','fecha_venta','hora_venta','producto',
+              'categoria_macro','categoria_padre','categoria_hijo','categoria_comercial',
+              'estado_sku','pack','marca','proveedor','tipo_marca','tipo_compra','tipo_negocio',
+              'kam','estado_canal','anio_venta','mes_venta','semana_venta','dia_semana',
+              'hora_venta_num','cantidad','venta_bruta','venta_neta','costo_unitario','costo_total',
+              'margen_front','comision_pct','comision','logistica','marketing','margen_final']
+    cols_csv = ','.join(cols_v)
+    placeholders = ','.join(['?'] * len(cols_v))
+    insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
+
+    while True:
+        result = turso_query(f"SELECT {cols_csv} FROM ventas LIMIT {chunk_size} OFFSET {offset}")
+        rows = result['rows']
+        if not rows:
+            break
+        # Cada row es lista de dicts {'value': val, 'type': ...}; aplanar
+        flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+        conn.executemany(insert_sql, flat)
+        conn.commit()
+        offset += chunk_size
+        if len(rows) < chunk_size:
+            break
+
+    # 3. Bajar dim_productos
+    cols_p = ['sku','producto','categoria_macro','categoria_padre','categoria_hijo',
+              'categoria_comercial','estado_sku','pack','marca','proveedor','tipo_marca','tipo_compra']
+    result = turso_query(f"SELECT {','.join(cols_p)} FROM dim_productos")
+    rows = result['rows']
+    if rows:
+        flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+        conn.executemany(
+            f"INSERT OR IGNORE INTO dim_productos ({','.join(cols_p)}) VALUES ({','.join(['?']*len(cols_p))})",
+            flat
+        )
+        conn.commit()
+
+    # 4. metadata_cargas (para health)
+    cols_m = ['fecha_carga','fuente','filas_cargadas','fecha_min_datos','fecha_max_datos','tipo']
+    result = turso_query(f"SELECT {','.join(cols_m)} FROM metadata_cargas")
+    rows = result['rows']
+    if rows:
+        flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+        conn.executemany(
+            f"INSERT INTO metadata_cargas ({','.join(cols_m)}) VALUES ({','.join(['?']*len(cols_m))})",
+            flat
+        )
+        conn.commit()
+
+    elapsed = _time.time() - t0
+    total = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+    conn.close()
+    print(f"[Local DB] {total:,} ventas descargadas en {elapsed:.0f}s -> {tmp_path}")
+    return str(tmp_path)
+
+
+def get_active_db_path():
+    """Devuelve path a SQLite local (cacheado por intervalos de 5 min)."""
+    cache_key = str(int(_time.time()) // 300)  # cambia cada 5 min
+    return get_local_db_path(cache_key)
 
 st.set_page_config(
     page_title="Dashboard Ventas UnionX",
@@ -95,9 +228,18 @@ def fmt_pct(v, decimals=1):
     if v is None or pd.isna(v): return "-"
     return f"{v:.{decimals}f}%"
 
-@st.cache_resource
 def get_service():
-    return MaestraService(str(DB_PATH))
+    """Service apuntando al SQLite local descargado (sub-segundo)."""
+    local_path = get_active_db_path()
+    svc = MaestraService(local_path)
+
+    # Forzar uso de sqlite3 local (ignorar env LIBSQL_URL)
+    def _force_local_conn(self=svc):
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        return conn
+    svc._conn = _force_local_conn
+    return svc
 
 @st.cache_data(ttl=300)
 def cached_filtros():
