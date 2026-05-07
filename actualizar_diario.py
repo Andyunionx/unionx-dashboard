@@ -135,6 +135,8 @@ def main():
                         help='Cuántos días hacia atrás extraer (default: 1 = ayer)')
     parser.add_argument('--fecha', type=str, default=None,
                         help='Fecha específica YYYY-MM-DD (anula --dias)')
+    parser.add_argument('--hoy', action='store_true',
+                        help='Extraer hoy (live mode, para Task Scheduler cada 5 min)')
     args = parser.parse_args()
 
     logger = setup_logger()
@@ -142,7 +144,11 @@ def main():
     logger.info("ACTUALIZACIÓN DIARIA AUTOMÁTICA")
     logger.info("="*80)
 
-    if args.fecha:
+    if args.hoy:
+        hoy = datetime.now().strftime('%Y-%m-%d')
+        fecha_inicio = hoy
+        fecha_fin = hoy
+    elif args.fecha:
         fecha_inicio = args.fecha
         fecha_fin = args.fecha
     else:
