@@ -1,22 +1,35 @@
 """
-Vista por KAM (Contribución).
+Vista KAM — ranking + drill por canal.
 
-Fuente: Sheet 'Análisis de Contribución' → 'Comparación Resultados Kam'
-Muestra: ranking + drill-down KAM/Canal con margen, comisiones y resultado contribución.
+Fuente: 'Comparación Resultados Kam'.
 """
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
-from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos_K
+from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M
+
+
+COLS_NUM = [
+    'Venta KAM', 'Margen Directo KAM', ' Comisión Venta KAM', 'Comisión Envío KAM',
+    ' Marketing KAM', ' Resultado Contribución KAM',
+    'Resultado Venta Contable', ' Venta Real Contable', ' Margen Front Contable',
+    'Comisión Venta Contable', 'Comisión Logística Contable', 'Marketing Contable',
+    'Total Contribución Contable',
+]
 
 
 def render():
-    st.title("👤 Contribución — Por KAM")
-    st.caption("Ranking de KAMs + drill-down por Canal · venta, margen y resultado contribución")
+    with st.sidebar:
+        st.markdown("### 👤 **Vista KAM**")
+        st.caption("Ranking y drill por KAM/Canal")
+        st.markdown("---")
+        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="ckam_refresh"):
+            st.cache_data.clear()
+            st.rerun()
 
-    if st.button("🔄 Refrescar", key="contrib_kam_refresh"):
-        st.cache_data.clear()
-        st.rerun()
+    st.title("👤 Vista por KAM")
+    st.caption("Ranking de KAMs + drill-down por canal")
 
     try:
         df = cargar_hoja("Comparación Resultados Kam")
@@ -25,78 +38,52 @@ def render():
         return
 
     if df.empty:
-        st.warning("Hoja vacía.")
+        st.warning("Sin datos")
         return
 
-    cols_num = ["Venta KAM", "Margen Directo KAM", " Comisión Venta KAM",
-                "Comisión Envío KAM", " Marketing KAM", " Resultado Contribución KAM",
-                "Resultado Venta Contable", " Venta Real Contable", " Margen Front Contable",
-                "Comisión Venta Contable", "Comisión Logística Contable", "Marketing Contable"]
-    cols_num = [c for c in cols_num if c in df.columns]
-    df = parsear_columnas_numericas(df, cols_num)
+    df = parsear_columnas_numericas(df, COLS_NUM)
 
-    # Forward-fill KAM (en el sheet aparece solo en 1ra fila del grupo)
-    df["KAM"] = df["KAM"].replace("", pd.NA).ffill()
+    # Aggregate por KAM
+    df_kam = df.groupby('KAM').agg({
+        'Venta KAM': 'sum',
+        'Margen Directo KAM': 'sum',
+        ' Resultado Contribución KAM': 'sum',
+    }).reset_index().rename(columns={' Resultado Contribución KAM': 'Contribución KAM'})
+    df_kam = df_kam.sort_values('Venta KAM', ascending=False)
 
-    # Filtros
-    c1, c2 = st.columns(2)
-    with c1:
-        kams = sorted([k for k in df["KAM"].dropna().unique() if k])
-        kam_sel = st.multiselect("KAM", kams, default=kams, key="ckam_kam")
-    with c2:
-        canales = sorted([c for c in df["Canal"].dropna().unique() if c])
-        canal_sel = st.multiselect("Canal", canales, default=canales, key="ckam_canal")
+    # KPIs top 3
+    if len(df_kam) >= 3:
+        c1, c2, c3 = st.columns(3)
+        c1.metric(f"🥇 {df_kam.iloc[0]['KAM']}", fmt_pesos_M(df_kam.iloc[0]['Venta KAM']),
+                  delta=f"Contrib: {fmt_pesos_M(df_kam.iloc[0]['Contribución KAM'])}")
+        c2.metric(f"🥈 {df_kam.iloc[1]['KAM']}", fmt_pesos_M(df_kam.iloc[1]['Venta KAM']),
+                  delta=f"Contrib: {fmt_pesos_M(df_kam.iloc[1]['Contribución KAM'])}")
+        c3.metric(f"🥉 {df_kam.iloc[2]['KAM']}", fmt_pesos_M(df_kam.iloc[2]['Venta KAM']),
+                  delta=f"Contrib: {fmt_pesos_M(df_kam.iloc[2]['Contribución KAM'])}")
+        st.divider()
 
-    df_f = df.copy()
-    if kam_sel:
-        df_f = df_f[df_f["KAM"].isin(kam_sel)]
-    if canal_sel:
-        df_f = df_f[df_f["Canal"].isin(canal_sel)]
+    # Bar chart Ranking
+    st.markdown("### Ranking por Venta")
+    fig = px.bar(df_kam.head(15), x='KAM', y='Venta KAM', text='Venta KAM',
+                 color='Contribución KAM', color_continuous_scale='Blues')
+    fig.update_layout(height=380, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                      xaxis_tickangle=-30, yaxis=dict(tickformat=',.0f'))
+    fig.update_traces(texttemplate='$%{text:,.0f}', textposition='outside', textfont_size=9)
+    st.plotly_chart(fig, use_container_width=True)
 
-    if df_f.empty:
-        st.warning("Sin filas con esos filtros.")
-        return
-
-    # Ranking por KAM (suma)
     st.divider()
-    st.markdown("### 🏆 Ranking de KAMs (por venta total)")
-    rank = df_f.groupby("KAM").agg({
-        "Venta KAM": "sum",
-        "Margen Directo KAM": "sum",
-        " Resultado Contribución KAM": "sum",
-    }).reset_index().sort_values("Venta KAM", ascending=False)
 
-    rank["Margen %"] = rank["Margen Directo KAM"] / rank["Venta KAM"]
-    rank["Contrib %"] = rank[" Resultado Contribución KAM"] / rank["Venta KAM"]
+    # Drill-down por KAM
+    st.markdown("### Drill-down por KAM")
+    kam_sel = st.selectbox("Elegir KAM", sorted(df['KAM'].dropna().unique().tolist()), key="ckam_drill")
+    df_drill = df[df['KAM'] == kam_sel]
 
-    # Render ranking
-    rows_rank = []
-    for i, (_, r) in enumerate(rank.iterrows(), 1):
-        rows_rank.append({
-            "#": i,
-            "KAM": r["KAM"],
-            "Venta": fmt_pesos_M(r["Venta KAM"]),
-            "Margen Directo": fmt_pesos_M(r["Margen Directo KAM"]),
-            "Margen %": f"{r['Margen %']*100:.1f}%" if pd.notna(r['Margen %']) else "—",
-            "Contribución": fmt_pesos_M(r[" Resultado Contribución KAM"]),
-            "Contrib %": f"{r['Contrib %']*100:.1f}%" if pd.notna(r['Contrib %']) else "—",
-        })
-    st.dataframe(pd.DataFrame(rows_rank), use_container_width=True, hide_index=True)
-
-    # Drill-down por canal del KAM seleccionado
-    st.divider()
-    st.markdown("### 🔍 Detalle por KAM y Canal")
-
-    rows_det = []
-    for _, r in df_f.iterrows():
-        rows_det.append({
-            "KAM": r.get("KAM", ""),
-            "Canal": r.get("Canal", ""),
-            "Venta": fmt_pesos_M(r.get("Venta KAM")),
-            "Margen Directo": fmt_pesos_M(r.get("Margen Directo KAM")),
-            "Comis. Venta": fmt_pesos_K(r.get(" Comisión Venta KAM")),
-            "Comis. Envío": fmt_pesos_K(r.get("Comisión Envío KAM")),
-            "Marketing": fmt_pesos_K(r.get(" Marketing KAM")),
-            "Contribución": fmt_pesos_M(r.get(" Resultado Contribución KAM")),
-        })
-    st.dataframe(pd.DataFrame(rows_det), use_container_width=True, hide_index=True, height=500)
+    cols_show = [c for c in [
+        'Canal', 'Venta KAM', 'Margen Directo KAM', ' Comisión Venta KAM',
+        'Comisión Envío KAM', ' Marketing KAM', ' Resultado Contribución KAM',
+    ] if c in df_drill.columns]
+    df_show = df_drill[cols_show].copy()
+    for c in cols_show:
+        if c != 'Canal' and c in df_show.columns:
+            df_show[c] = df_show[c].apply(fmt_pesos_M)
+    st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)

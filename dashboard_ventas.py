@@ -103,7 +103,9 @@ from views.cruce_rotacion import render as render_cruce_rotacion
 from views.contribucion_general import render as render_contrib_general
 from views.contribucion_meta import render as render_contrib_meta
 from views.contribucion_kam import render as render_contrib_kam
-from views.contribucion_detalle import render as render_contrib_detalle
+from views.contribucion_comercial_contable import render as render_contrib_comercial_contable
+from views.contribucion_oportunidades import render as render_contrib_oportunidades
+from views.contribucion_administracion import render as render_contrib_administracion
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
 
@@ -118,10 +120,12 @@ pages = {
         st.Page(render_stock_live, title="Stock LIVE", icon="📦", url_path="stock-live"),
     ],
     "💼 Contribución": [
-        st.Page(render_contrib_general, title="Vista General", icon="📊", url_path="contrib-general"),
-        st.Page(render_contrib_meta, title="Meta vs Resultado", icon="🎯", url_path="contrib-meta"),
-        st.Page(render_contrib_kam, title="Por KAM", icon="👤", url_path="contrib-kam"),
-        st.Page(render_contrib_detalle, title="Análisis detallado", icon="🔬", url_path="contrib-detalle"),
+        st.Page(render_contrib_general, title="Resultados Generales", icon="📊", url_path="contrib-general"),
+        st.Page(render_contrib_meta, title="vs Presupuesto", icon="🎯", url_path="contrib-meta"),
+        st.Page(render_contrib_comercial_contable, title="Comercial vs Contable", icon="⚖️", url_path="contrib-comercial-contable"),
+        st.Page(render_contrib_kam, title="Vista KAM", icon="👤", url_path="contrib-kam"),
+        st.Page(render_contrib_oportunidades, title="Oportunidades", icon="💡", url_path="contrib-oportunidades"),
+        st.Page(render_contrib_administracion, title="Administración", icon="🛠️", url_path="contrib-admin"),
     ],
     "🔄 Análisis cruzado": [
         st.Page(render_cruce_bestsellers, title="Bestsellers", icon="🔥", url_path="cruce-bestsellers"),

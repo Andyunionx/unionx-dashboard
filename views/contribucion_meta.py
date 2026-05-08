@@ -1,102 +1,123 @@
 """
-Vista Meta vs Resultado (Contribución).
+vs Presupuesto — cumplimiento de Meta de Venta y Contribución.
 
-Fuente: Sheet 'Análisis de Contribución' → hoja 'Resumen General Meta - Resultad'
-Muestra: % cumplimiento Venta y Contribución por Trimestre/Mes/Negocio con semáforos.
+Fuente: 'Analisis Meta vs Resultados' (drill por AÑO/Negocio/Canal/KAM/Mes/Trim).
 """
 import pandas as pd
+import plotly.express as px
 import streamlit as st
-import plotly.graph_objects as go
 
-from views.contribucion_loader import (
-    cargar_hoja, parsear_columnas_numericas,
-    fmt_pesos_M, fmt_pct, color_cumplimiento,
-)
+from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M
+
+
+COLS_NUM = ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
 
 
 def render():
-    st.title("🎯 Contribución — Meta vs Resultado")
-    st.caption("Cumplimiento de meta de Venta y Contribución por Trimestre/Mes/Negocio")
+    with st.sidebar:
+        st.markdown("### 🎯 **vs Presupuesto**")
+        st.caption("Cumplimiento de meta")
+        st.markdown("---")
+        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="cmeta_refresh"):
+            st.cache_data.clear()
+            st.rerun()
 
-    if st.button("🔄 Refrescar", key="contrib_meta_refresh"):
-        st.cache_data.clear()
-        st.rerun()
+    st.title("🎯 Contribución vs Presupuesto")
+    st.caption("Cumplimiento de Meta de Venta y Contribución por dimensión")
 
     try:
-        df = cargar_hoja("Resumen General Meta - Resultad")
+        df = cargar_hoja("Analisis Meta vs Resultados")
     except Exception as e:
         st.error(f"❌ Error: {e}")
         return
 
     if df.empty:
-        st.warning("Hoja vacía.")
+        st.warning("Sin datos")
         return
 
-    cols_num = [" Meta Venta", " Resultado Venta", "% Cumplimiento Venta",
-                "Meta Contribución", "Resultado Contribución", " % Cumplimiento Contribución"]
-    cols_num = [c for c in cols_num if c in df.columns]
-    df = parsear_columnas_numericas(df, cols_num)
+    df = parsear_columnas_numericas(df, COLS_NUM)
 
     # Filtros
-    c1, c2 = st.columns(2)
-    with c1:
-        trimestres = sorted([t for t in df["Trimestre"].dropna().unique() if t])
-        trim_sel = st.multiselect("Trimestre", trimestres, default=trimestres, key="cmeta_trim")
-    with c2:
-        negocios = sorted([n for n in df["Negocio"].dropna().unique() if n])
-        neg_sel = st.multiselect("Negocio", negocios, default=negocios, key="cmeta_neg")
+    with st.sidebar:
+        st.markdown("##### Filtros")
+        anios_opt = sorted([a for a in df['AÑO'].dropna().unique() if a])
+        f_anio = st.selectbox("Año", ["Todos"] + anios_opt, key="cmeta_anio")
+        negocios_opt = sorted([n for n in df['Negocio'].dropna().unique() if n])
+        f_negocio = st.multiselect("Negocio", negocios_opt, key="cmeta_neg")
+        canales_opt = sorted([c for c in df['Canal'].dropna().unique() if c])
+        f_canal = st.multiselect("Canal", canales_opt, key="cmeta_canal")
+        kams_opt = sorted([k for k in df['KAM'].dropna().unique() if k])
+        f_kam = st.multiselect("KAM", kams_opt, key="cmeta_kam")
 
     df_f = df.copy()
-    if trim_sel:
-        df_f = df_f[df_f["Trimestre"].isin(trim_sel) | (df_f["Trimestre"] == "")]
-    if neg_sel:
-        df_f = df_f[df_f["Negocio"].isin(neg_sel) | (df_f["Negocio"] == "")]
+    if f_anio != "Todos":
+        df_f = df_f[df_f['AÑO'] == f_anio]
+    if f_negocio:
+        df_f = df_f[df_f['Negocio'].isin(f_negocio)]
+    if f_canal:
+        df_f = df_f[df_f['Canal'].isin(f_canal)]
+    if f_kam:
+        df_f = df_f[df_f['KAM'].isin(f_kam)]
 
-    # Tabla con semáforos
-    st.divider()
-    st.markdown("### Cumplimiento por línea")
-    rows = []
-    for _, r in df_f.iterrows():
-        cump_v = r.get("% Cumplimiento Venta")
-        cump_c = r.get(" % Cumplimiento Contribución")
-        rows.append({
-            "Trimestre": r.get("Trimestre", ""),
-            "Mes": r.get("Mes", ""),
-            "Negocio": r.get("Negocio", ""),
-            "Meta Venta": fmt_pesos_M(r.get(" Meta Venta")),
-            "Real Venta": fmt_pesos_M(r.get(" Resultado Venta")),
-            "🚦 Venta": f"{color_cumplimiento(cump_v)} {fmt_pct(cump_v)}",
-            "Meta Contrib.": fmt_pesos_M(r.get("Meta Contribución")),
-            "Real Contrib.": fmt_pesos_M(r.get("Resultado Contribución")),
-            "🚦 Contrib.": f"{color_cumplimiento(cump_c)} {fmt_pct(cump_c)}",
-        })
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True, height=500)
+    # KPIs consolidados
+    meta_v = df_f['Meta Venta'].sum() if 'Meta Venta' in df_f.columns else 0
+    real_v = df_f['Resultado Venta'].sum() if 'Resultado Venta' in df_f.columns else 0
+    meta_c = df_f['Meta Contribución'].sum() if 'Meta Contribución' in df_f.columns else 0
+    real_c = df_f['Resultado Contribución'].sum() if 'Resultado Contribución' in df_f.columns else 0
 
-    # Gráfico: cumplimiento por Negocio
+    pct_v = (real_v / meta_v * 100) if meta_v else 0
+    pct_c = (real_c / meta_c * 100) if meta_c else 0
+
+    color_v = '🟢' if pct_v >= 100 else ('🟡' if pct_v >= 85 else '🔴')
+    color_c = '🟢' if pct_c >= 100 else ('🟡' if pct_c >= 85 else '🔴')
+
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    c1.metric("Meta Venta", fmt_pesos_M(meta_v))
+    c2.metric("Real Venta", fmt_pesos_M(real_v))
+    c3.metric(f"{color_v} % Cumpl. Venta", f"{pct_v:.1f}%")
+    c4.metric("Meta Contrib", fmt_pesos_M(meta_c))
+    c5.metric("Real Contrib", fmt_pesos_M(real_c))
+    c6.metric(f"{color_c} % Cumpl. Contrib", f"{pct_c:.1f}%")
+
     st.divider()
-    st.markdown("### Cumplimiento promedio por Negocio")
-    df_neg = df_f[df_f["Negocio"] != ""].copy()
-    if not df_neg.empty:
-        agg = df_neg.groupby("Negocio").agg({
-            "% Cumplimiento Venta": "mean",
-            " % Cumplimiento Contribución": "mean",
+
+    # Por Trimestre
+    if 'Trimestre' in df_f.columns:
+        st.markdown("### Por Trimestre")
+        df_t = df_f.groupby('Trimestre').agg({
+            'Meta Venta': 'sum', 'Resultado Venta': 'sum',
+            'Meta Contribución': 'sum', 'Resultado Contribución': 'sum',
         }).reset_index()
+        df_t['% Venta'] = (df_t['Resultado Venta'] / df_t['Meta Venta'] * 100).round(1)
+        df_t['% Contrib'] = (df_t['Resultado Contribución'] / df_t['Meta Contribución'] * 100).round(1)
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=agg["Negocio"], y=agg["% Cumplimiento Venta"] * 100,
-            name="% Cumpl. Venta", marker_color="#1F4E79",
-        ))
-        fig.add_trace(go.Bar(
-            x=agg["Negocio"], y=agg[" % Cumplimiento Contribución"] * 100,
-            name="% Cumpl. Contribución", marker_color="#16A34A",
-        ))
-        fig.add_hline(y=100, line_dash="dash", line_color="#94A3B8",
-                      annotation_text="Meta 100%", annotation_position="top right")
-        fig.update_layout(
-            barmode="group", height=380,
-            margin=dict(l=20, r=20, t=20, b=20),
-            yaxis_title="% Cumplimiento",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            fig_v = px.bar(df_t, x='Trimestre', y=['Meta Venta', 'Resultado Venta'],
+                           barmode='group', title="Meta vs Real — Venta",
+                           color_discrete_map={'Meta Venta': '#94A3B8', 'Resultado Venta': '#1E40AF'})
+            fig_v.update_layout(height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                yaxis=dict(tickformat=',.0f'))
+            st.plotly_chart(fig_v, use_container_width=True)
+        with c2:
+            fig_c = px.bar(df_t, x='Trimestre', y=['Meta Contribución', 'Resultado Contribución'],
+                           barmode='group', title="Meta vs Real — Contribución",
+                           color_discrete_map={'Meta Contribución': '#94A3B8', 'Resultado Contribución': '#10B981'})
+            fig_c.update_layout(height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                                yaxis=dict(tickformat=',.0f'))
+            st.plotly_chart(fig_c, use_container_width=True)
+
+    st.divider()
+
+    # Tabla detalle
+    st.markdown("### Detalle")
+    cols_show = [c for c in ['AÑO', 'Trimestre', 'Mes', 'Negocio', 'Canal', 'KAM',
+                              'Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
+                 if c in df_f.columns]
+    df_show = df_f[cols_show].copy()
+    if 'Meta Venta' in df_show.columns:
+        df_show['% Cumpl V'] = (df_show['Resultado Venta'] / df_show['Meta Venta'].replace(0, 1) * 100).round(1).astype(str) + '%'
+        df_show['% Cumpl C'] = (df_show['Resultado Contribución'] / df_show['Meta Contribución'].replace(0, 1) * 100).round(1).astype(str) + '%'
+        for c in ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']:
+            df_show[c] = df_show[c].apply(fmt_pesos_M)
+    st.dataframe(df_show, use_container_width=True, hide_index=True, height=500)
