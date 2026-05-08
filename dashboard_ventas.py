@@ -104,6 +104,7 @@ from views.contribucion_meta import render as render_contrib_meta
 from views.contribucion_kam import render as render_contrib_kam
 from views.contribucion_detalle import render as render_contrib_detalle
 from views.sistema_alertas import render as render_sistema_alertas
+from views.sistema_seguridad import render as render_sistema_seguridad
 
 pages = {
     "📊 Ventas": [
@@ -129,6 +130,7 @@ pages = {
     ],
     "⚙️ Sistema": [
         st.Page(render_sistema_alertas, title="Alertas", icon="🚨", url_path="sistema-alertas"),
+        st.Page(render_sistema_seguridad, title="Seguridad", icon="🔐", url_path="sistema-seguridad"),
     ],
 }
 
