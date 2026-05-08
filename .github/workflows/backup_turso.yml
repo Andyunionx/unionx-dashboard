@@ -1,0 +1,65 @@
+name: Backup Turso (semanal)
+
+on:
+  schedule:
+    # Domingos 02:00 UTC = sábado 22:00 Chile (baja actividad)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # para crear releases
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests zstandard
+
+      - name: Ejecutar backup
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: python backup_turso.py
+
+      - name: Crear release con backup
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FECHA=$(date -u +'%Y-%m-%d')
+          FILE=$(ls data/backups/turso_backup_*.db.zst | head -1)
+          if [ -z "$FILE" ]; then
+            echo "No se encontró archivo de backup"
+            exit 1
+          fi
+          echo "Subiendo $FILE como release backup-$FECHA"
+          gh release create "backup-$FECHA" "$FILE" \
+            --title "Backup Turso $FECHA" \
+            --notes "Backup automático semanal de Turso (todas las tablas, comprimido con zstd)." \
+            --prerelease
+
+      - name: Limpiar releases antiguos (>12 semanas)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Mantener solo los últimos 12 backups (≈ 3 meses)
+          gh release list --limit 100 --json tagName,createdAt \
+            -q '.[] | select(.tagName | startswith("backup-")) | .tagName' \
+            | sort -r | tail -n +13 \
+            | while read tag; do
+                echo "Borrando release viejo: $tag"
+                gh release delete "$tag" -y --cleanup-tag || true
+              done

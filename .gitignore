@@ -66,6 +66,9 @@ data/eerr/
 data/kpis_manuales/*.json
 !data/kpis_manuales/.gitkeep
 
+# Backups Turso (se suben como Release, no al repo)
+data/backups/
+
 # Inboxes COMEX (carpetas dinamicas con mails procesados)
 agente-comex/data/inbox/
 agente-comex/data/output/
