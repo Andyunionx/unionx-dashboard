@@ -102,19 +102,19 @@ from views.cruce_cobertura import render as render_cruce_cobertura
 
 pages = {
     "📊 Ventas": [
-        st.Page(render_ventas_general, title="Vista General", icon="📈", default=True),
-        st.Page(render_ventas_semanal, title="Vista Semanal", icon="📅"),
-        st.Page(render_ventas_descarga, title="Descargar RAW", icon="⬇️"),
-        st.Page(render_ventas_carga, title="Cargar offline", icon="📤"),
+        st.Page(render_ventas_general, title="Vista General", icon="📈", url_path="ventas-general", default=True),
+        st.Page(render_ventas_semanal, title="Vista Semanal", icon="📅", url_path="ventas-semanal"),
+        st.Page(render_ventas_descarga, title="Descargar RAW", icon="⬇️", url_path="ventas-descarga"),
+        st.Page(render_ventas_carga, title="Cargar offline", icon="📤", url_path="ventas-carga"),
     ],
     "📦 Stock": [
-        st.Page(render_stock_live, title="Stock LIVE", icon="📦"),
+        st.Page(render_stock_live, title="Stock LIVE", icon="📦", url_path="stock-live"),
     ],
     "🔄 Análisis cruzado": [
-        st.Page(render_cruce_bestsellers, title="Bestsellers", icon="🔥"),
-        st.Page(render_cruce_quiebres, title="Quiebres con demanda", icon="🚨"),
-        st.Page(render_cruce_sobrestock, title="Sobrestock", icon="💰"),
-        st.Page(render_cruce_cobertura, title="Cobertura por canal", icon="📊"),
+        st.Page(render_cruce_bestsellers, title="Bestsellers", icon="🔥", url_path="cruce-bestsellers"),
+        st.Page(render_cruce_quiebres, title="Quiebres con demanda", icon="🚨", url_path="cruce-quiebres"),
+        st.Page(render_cruce_sobrestock, title="Sobrestock", icon="💰", url_path="cruce-sobrestock"),
+        st.Page(render_cruce_cobertura, title="Cobertura por canal", icon="📊", url_path="cruce-cobertura"),
     ],
 }
 
