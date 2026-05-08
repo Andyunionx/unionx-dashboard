@@ -27,10 +27,22 @@ class Config:
     CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:3000']
 
     # Odoo XML-RPC
-    ODOO_URL = 'https://unionxb2b.odoo.com'
-    ODOO_DB = 'bmya-innovatek-sh-prd-6981800'
-    ODOO_USER = 'andres@grupoeter.cl'
-    ODOO_PASSWORD = os.getenv('ANDRES_ODOO_PASSWORD', '')
+    # Soporta DUAL credentials: cada app de Streamlit Cloud usa sus propias credenciales.
+    # - App "Ventas": usa ANDRES_ODOO_USER + ANDRES_ODOO_PASSWORD (el actual)
+    # - App "Operaciones": usa OPS_ODOO_USER + OPS_ODOO_PASSWORD
+    # Si no hay OPS_*, fallback a ANDRES_* (compatibilidad backwards)
+    ODOO_URL = os.getenv('ODOO_URL', 'https://unionxb2b.odoo.com')
+    ODOO_DB = os.getenv('ODOO_DB', 'bmya-innovatek-sh-prd-6981800')
+    ODOO_USER = (
+        os.getenv('OPS_ODOO_USER')
+        or os.getenv('ANDRES_ODOO_USER')
+        or 'andres@grupoeter.cl'
+    )
+    ODOO_PASSWORD = (
+        os.getenv('OPS_ODOO_PASSWORD')
+        or os.getenv('ANDRES_ODOO_PASSWORD')
+        or ''
+    )
 
     # Maestra de Ventas (SQLite) — usar copia local si existe para mejor rendimiento
     _LOCAL_DB = Path(os.path.expanduser('~/Desktop/finanzas-unionx-app/maestra_ventas.db'))
