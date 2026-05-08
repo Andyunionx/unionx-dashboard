@@ -104,6 +104,7 @@ SKIP_DIRS = {"node_modules", "__pycache__", ".git", ".venv", "venv",
 ALLOWLIST_FILES = {
     "scripts/policia_seguridad.py",  # este mismo archivo tiene los patterns
     "scripts/configurar_credenciales.py",  # script que pide la password
+    "scripts/setup_app_operaciones.py",  # script asistido para Streamlit Cloud
     ".env.template",
     ".streamlit/secrets.toml.template",
     "SEGURIDAD.md",

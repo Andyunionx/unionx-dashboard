@@ -136,6 +136,12 @@ desktop.ini
 .git.BACKUP_*
 .git.bak*
 
+# ============== Outputs locales del setup (con secretos) ==============
+streamlit_secrets_ops*.toml*
+.streamlit/secrets_ops*.toml*
+pasos_streamlit_cloud*.txt
+*.LOCAL
+
 # ============== ARCHIVOS DE DIAGNOSTICO LOCAL ==============
 _*.py
 !_generar_auth_local.py
