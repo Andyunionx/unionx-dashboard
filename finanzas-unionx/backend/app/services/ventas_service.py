@@ -901,6 +901,11 @@ class VentasService(BaseOdooService):
                 website_name = w[1] if isinstance(w, (list, tuple)) and len(w) > 1 else str(w)
             canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name)
 
+            # FIX: filtrar canales que se cargan manualmente (offline) — no traer de Odoo
+            CANALES_EXCLUIDOS_DE_SYNC = {'Sawa', 'sawa', 'SAWA'}
+            if canal_raw in CANALES_EXCLUIDOS_DE_SYNC:
+                continue
+
             # Resolver Tipo Negocio + KAM por canal (lookup en mapping del histórico)
             tn_info = canal_a_tn.get(canal_raw, {})
             tipo_negocio = tn_info.get('tipo_negocio', '') or tipo_negocio
