@@ -258,15 +258,23 @@ def cached_stock():
     """Stock LIVE desde Odoo, cache 5 min."""
     from app.services.stock_advanced_service import StockAdvancedService
     from app.core.odoo_client import OdooClient
-    from app.config import Config
 
-    if not Config.ODOO_PASSWORD:
-        raise RuntimeError("ANDRES_ODOO_PASSWORD no está seteado en Streamlit Cloud Secrets.")
+    # Leer password directo de st.secrets (no dependemos de Config import-time)
+    odoo_password = (
+        st.secrets.get('ANDRES_ODOO_PASSWORD')
+        or os.environ.get('ANDRES_ODOO_PASSWORD')
+    )
+    if not odoo_password:
+        raise RuntimeError(
+            "ANDRES_ODOO_PASSWORD no está seteado en Streamlit Cloud Secrets. "
+            "Settings → Secrets → agregar: ANDRES_ODOO_PASSWORD = \"...\""
+        )
+
     odoo = OdooClient(
-        url=Config.ODOO_URL,
-        db=Config.ODOO_DB,
-        username=Config.ODOO_USER,
-        password=Config.ODOO_PASSWORD,
+        url='https://unionxb2b.odoo.com',
+        db='bmya-innovatek-sh-prd-6981800',
+        username='andres@grupoeter.cl',
+        password=str(odoo_password),
     )
     return StockAdvancedService(odoo).extract_full(progress_callback=None)
 
