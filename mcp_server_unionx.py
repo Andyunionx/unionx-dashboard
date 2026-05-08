@@ -43,8 +43,24 @@ except ImportError:
     pass
 
 
-URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
-TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+def _user_env_from_registry(name: str) -> str:
+    """Fallback Windows: leer User env var desde HKCU\\Environment.
+
+    Claude Desktop a veces no hereda User env vars en el subproceso que launchea.
+    """
+    if sys.platform != 'win32':
+        return ''
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment') as k:
+            val, _ = winreg.QueryValueEx(k, name)
+            return str(val)
+    except (OSError, FileNotFoundError):
+        return ''
+
+
+URL = (os.environ.get('LIBSQL_URL') or _user_env_from_registry('LIBSQL_URL') or '').rstrip('/')
+TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN') or _user_env_from_registry('LIBSQL_AUTH_TOKEN') or ''
 HEADERS = {'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json'}
 
 
