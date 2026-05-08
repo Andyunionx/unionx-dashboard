@@ -95,8 +95,16 @@ def turso_query(sql, params=None):
 
 
 def descargar_ventas() -> pd.DataFrame:
-    """Descarga toda la tabla ventas en chunks (rowid-based, eficiente)."""
-    print(f"[1/3] Descargando ventas desde Turso...", flush=True)
+    """Descarga ventas SOLO del mes actual (formato RAW 40 cols)."""
+    # Calcular primer y último día del mes actual
+    hoy = datetime.now()
+    primer_dia = hoy.replace(day=1).strftime('%Y-%m-%d')
+    if hoy.month == 12:
+        ultimo_dia = hoy.replace(year=hoy.year + 1, month=1, day=1).strftime('%Y-%m-%d')
+    else:
+        ultimo_dia = hoy.replace(month=hoy.month + 1, day=1).strftime('%Y-%m-%d')
+
+    print(f"[1/3] Descargando ventas del mes actual ({primer_dia} a {hoy.strftime('%Y-%m-%d')})...", flush=True)
     t0 = time.time()
     chunk_size = 80000
     all_rows = []
@@ -104,7 +112,9 @@ def descargar_ventas() -> pd.DataFrame:
 
     while True:
         result = turso_query(
-            f"SELECT rowid, {','.join(DB_COLS)} FROM ventas WHERE rowid > {last_rowid} "
+            f"SELECT rowid, {','.join(DB_COLS)} FROM ventas "
+            f"WHERE fecha_venta >= '{primer_dia}' AND fecha_venta < '{ultimo_dia}' "
+            f"AND rowid > {last_rowid} "
             f"ORDER BY rowid LIMIT {chunk_size}"
         )
         rows = result['rows']
@@ -121,7 +131,6 @@ def descargar_ventas() -> pd.DataFrame:
     print(f"      [OK] {len(all_rows):,} filas en {elapsed:.0f}s", flush=True)
 
     df = pd.DataFrame(all_rows, columns=DB_COLS)
-    # Renombrar columnas a formato RAW
     df = df.rename(columns=DB_TO_RAW)
     return df
 
@@ -158,8 +167,11 @@ def upload_to_fileio(xlsx_bytes: bytes, fname: str) -> str:
 def enviar_email(xlsx_bytes: bytes, n_filas: int):
     """Envía email vía Resend con XLSX adjunto + Top insights del día."""
     print(f"[3/3] Enviando email a {EMAIL_TO}...", flush=True)
-    fecha = datetime.now().strftime('%Y-%m-%d')
-    fname = f"Raw ventas {fecha}.xlsx"
+    hoy = datetime.now()
+    fecha = hoy.strftime('%Y-%m-%d')
+    mes_nombre = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][hoy.month - 1]
+    fname = f"Raw ventas {mes_nombre} {hoy.year}.xlsx"
     size_mb = len(xlsx_bytes) / 1024 / 1024
 
     # Generar insights
@@ -202,7 +214,7 @@ def enviar_email(xlsx_bytes: bytes, n_filas: int):
             f"<h2 style='color:#1E293B;margin:0 0 8px 0;'>📊 Reporte UnionX — {fecha}</h2>"
             f"{body_insights_block}"
             f"<hr style='border:none;border-top:1px solid #E2E8F0;margin:16px 0;'/>"
-            f"<p>Adjunto Raw Ventas actualizado al <b>{fecha}</b>.</p>"
+            f"<p>📎 Adjunto Excel con ventas de <b>{mes_nombre} {hoy.year}</b> (formato RAW 40 columnas).</p>"
             f"<p><b>Total filas:</b> {n_filas:,} · <b>Tamaño:</b> {size_mb:.1f} MB</p>"
             f"<p>Dashboard live: <a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
             f"</div>"
@@ -215,7 +227,7 @@ def enviar_email(xlsx_bytes: bytes, n_filas: int):
     payload = {
         "from": EMAIL_FROM,
         "to": EMAIL_TO,
-        "subject": f"Raw Ventas UnionX — {fecha}",
+        "subject": f"Raw Ventas UnionX — {mes_nombre} {hoy.year} ({fecha})",
         "html": body_html,
     }
     if attachments:
