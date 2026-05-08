@@ -54,10 +54,20 @@ def cargar_hoja(nombre_hoja: str) -> pd.DataFrame:
     if not raw:
         return pd.DataFrame()
 
-    headers = raw[0]
+    # Deduplicar headers (algunas hojas tienen 'NC Aportes' 2 veces)
+    raw_headers = raw[0]
+    seen = {}
+    headers = []
+    for h in raw_headers:
+        if h in seen:
+            seen[h] += 1
+            headers.append(f"{h}_dup{seen[h]}")
+        else:
+            seen[h] = 0
+            headers.append(h)
+
     rows = raw[1:]
     df = pd.DataFrame(rows, columns=headers)
-    # Limpiar filas vacías
     df = df.dropna(how="all").reset_index(drop=True)
     return df
 

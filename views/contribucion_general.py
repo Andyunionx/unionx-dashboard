@@ -14,7 +14,7 @@ from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, f
 
 
 COLS_NUM = [
-    'Venta KAM', 'NC Aportes', 'Venta REAL KAM', 'Costo Venta KAM',
+    'Venta KAM', 'Venta REAL KAM', 'Costo Venta KAM',
     'Margen Directo KAM', 'Comisión Venta KAM', 'Comisión Envío KAM',
     'Marketing KAM', 'Total Comisiones KAM', 'Resultado Contribución KAM',
 ]
