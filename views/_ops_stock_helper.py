@@ -222,54 +222,92 @@ def alertas_operacionales() -> List[Dict]:
     """Heurísticas operacionales sobre el stock actual.
 
     Devuelve lista de alertas con severidad (CRITICA / ALTA / MEDIA).
+
+    NOTA importante (feedback Andrés):
+      - Odoo agrega bien CA1/Stock (las integraciones leen el padre)
+      - Odoo dirige picking automáticamente al slot más cercano
+      - Inventarios se hacen por producto o ubicación → ambos cuadran
+    Por eso las alertas se enfocan en FRAGMENTACIÓN y CAPACIDAD m³,
+    no en "duplicados" cuyo problema operacional ya está resuelto.
     """
     alertas = []
 
-    # 1. SKUs duplicados con valor alto
-    dup = skus_duplicados(min_ubicaciones=2)
-    if dup.get("valor"):
-        top_dup = dup["valor"][:5]
-        valor_total = dup.get("valor_total", 0)
-        if valor_total > 1_000_000:
+    # 1. Fragmentación: SKUs con qty pequeñas en múltiples slots
+    try:
+        from views._ops_capacidad_helper import slots_liberables, disponibilidad_posiciones
+        from views._ops_data_helper import kpi_capacidad_recepcion
+
+        sl = slots_liberables(umbral_qty_chico=5, min_ubicaciones=2)
+        n_lib = sl.get("slots_liberables_total", 0)
+        if n_lib >= 30:
             alertas.append({
                 "severidad": "ALTA",
-                "tipo": "Capital atado",
-                "mensaje": f"{dup.get('total', 0)} SKUs duplicados representan ${valor_total/1e6:,.1f}M de capital potencial a consolidar",
-                "accion": f"Revisar top: {', '.join([d['sku'][:30] for d in top_dup[:3]])}",
+                "tipo": "Fragmentación de slotting",
+                "mensaje": f"{n_lib} posiciones liberables consolidando {sl.get('skus_a_consolidar', 0)} SKUs con fragmentos (qty ≤5)",
+                "accion": "Revisar tab Eficiencia de slotting → exportar plan de consolidación",
             })
-
-    # 2. SKUs en >3 bodegas distintas (caso extremo)
-    if dup.get("valor"):
-        muy_dispersos = [d for d in dup["valor"] if d["n_ubicaciones"] >= 3]
-        if muy_dispersos:
+        elif n_lib >= 10:
             alertas.append({
                 "severidad": "MEDIA",
-                "tipo": "Dispersión extrema",
-                "mensaje": f"{len(muy_dispersos)} SKUs están en 3+ ubicaciones distintas",
-                "accion": "Consolidar prioritariamente — error de picking probable",
+                "tipo": "Fragmentación de slotting",
+                "mensaje": f"{n_lib} posiciones liberables consolidando fragmentos",
+                "accion": "Plan de consolidación semanal recomendado",
             })
 
-    # 3. Tasa de uso de posiciones
+        # 2. Capacidad m³ vs próximos embarques
+        disp = disponibilidad_posiciones()
+        m3_libre = disp.get("totales", {}).get("m3_libre", 0) if disp.get("totales") else 0
+        cap = kpi_capacidad_recepcion(m3_libre)
+        if cap.get("proximo_embarque") and not cap.get("ok"):
+            pe = cap["proximo_embarque"]
+            alertas.append({
+                "severidad": "CRITICA",
+                "tipo": "Capacidad insuficiente embarque",
+                "mensaje": f"Próx embarque {pe.get('eta', '?')} requiere {pe.get('m3', 0):.0f} m³ "
+                           f"(disp actual: {m3_libre:.0f} m³)",
+                "accion": "Liquidar slow movers + consolidar fragmentos YA, o renegociar ETA",
+            })
+
+        # 3. Ocupación general bodega
+        pct_ocup = disp.get("totales", {}).get("pct_ocupacion", 0) if disp.get("totales") else 0
+        if pct_ocup >= 90:
+            alertas.append({
+                "severidad": "CRITICA",
+                "tipo": "Bodega saturada",
+                "mensaje": f"Ocupación {pct_ocup:.0f}% — riesgo bloqueo recepción",
+                "accion": "Plan urgente: liquidar slow movers + consolidación + revisar embarques entrantes",
+            })
+        elif pct_ocup >= 80:
+            alertas.append({
+                "severidad": "ALTA",
+                "tipo": "Bodega cercana al límite",
+                "mensaje": f"Ocupación {pct_ocup:.0f}% — espacio limitado para nuevos embarques",
+                "accion": "Plan de consolidación + revisar liquidación slow movers",
+            })
+    except Exception:
+        pass
+
+    # 4. Posiciones dormidas (SKUs sin rotación ocupando capacidad)
     uso = uso_posiciones(dias=7)
     if uso.get("valor"):
         pct_dormidas = uso["valor"].get("pct_dormidas", 0)
         n_dormidas = uso["valor"].get("dormidas", 0)
-        if pct_dormidas > 0.20:  # más del 20% dormidas
+        if pct_dormidas > 0.20:
             alertas.append({
                 "severidad": "ALTA",
                 "tipo": "Posiciones dormidas",
-                "mensaje": f"{n_dormidas} posiciones ({pct_dormidas*100:.0f}%) tienen stock pero sin movimientos en >30d",
-                "accion": "Revisar SKUs en estas posiciones — candidatas a consolidar o liquidar",
+                "mensaje": f"{n_dormidas} posiciones ({pct_dormidas*100:.0f}%) con stock sin movs >30d",
+                "accion": "Revisar SKUs — candidatos a liquidación / promociones",
             })
 
         n_vacias = uso["valor"].get("vacias", 0)
         pct_vacias = uso["valor"].get("pct_vacias", 0)
-        if pct_vacias < 0.10 and n_vacias < 20:  # bodega saturada
+        if pct_vacias < 0.10 and n_vacias < 20:
             alertas.append({
                 "severidad": "CRITICA",
-                "tipo": "Bodega saturada",
-                "mensaje": f"Solo {n_vacias} posiciones vacías ({pct_vacias*100:.0f}%) — riesgo de no recibir embarques entrantes",
-                "accion": "Liquidar slow movers / consolidar SKUs duplicados YA",
+                "tipo": "Pocas posiciones vacías",
+                "mensaje": f"Solo {n_vacias} posiciones vacías ({pct_vacias*100:.0f}%) — riesgo recepción",
+                "accion": "Liberar capacidad antes del próximo embarque",
             })
 
     return alertas

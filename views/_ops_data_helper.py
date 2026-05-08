@@ -185,3 +185,134 @@ def kpi_merma_operativa() -> Dict:
         "ultimo_mes": meses[0] if meses else None,
         "error": None,
     }
+
+
+# ============================================================
+# Próximos embarques (forecasting de capacidad de recepción)
+# ============================================================
+def add_proximo_embarque(eta: str, m3: float, descripcion: str = "", contenedores: int = 1) -> bool:
+    """Registra un embarque entrante esperado.
+
+    Args:
+        eta: fecha estimada arribo (YYYY-MM-DD)
+        m3: volumen total esperado en m³
+        descripcion: ej. "Steven – plancha pelo + secadores OHNSO"
+        contenedores: cantidad (1 contenedor 40HC ≈ 67 m³ útil)
+    """
+    data = _load()
+    if "proximos_embarques" not in data:
+        data["proximos_embarques"] = []
+    data["proximos_embarques"].append({
+        "eta": eta,
+        "m3": m3,
+        "descripcion": descripcion,
+        "contenedores": contenedores,
+        "ts": datetime.now().isoformat(),
+    })
+    # Ordenar por ETA ascendente
+    data["proximos_embarques"].sort(key=lambda x: x.get("eta", "9999"))
+    return _save(data)
+
+
+def get_proximos_embarques(solo_pendientes: bool = True) -> List[Dict]:
+    data = _load()
+    embarques = data.get("proximos_embarques", [])
+    if solo_pendientes:
+        hoy = datetime.now().strftime("%Y-%m-%d")
+        embarques = [e for e in embarques if e.get("eta", "") >= hoy]
+    return embarques
+
+
+def delete_proximo_embarque(idx: int) -> bool:
+    data = _load()
+    embarques = data.get("proximos_embarques", [])
+    if 0 <= idx < len(embarques):
+        embarques.pop(idx)
+        data["proximos_embarques"] = embarques
+        return _save(data)
+    return False
+
+
+def kpi_capacidad_recepcion(m3_disponible: float) -> Dict:
+    """Compara disponibilidad actual vs próximos embarques.
+
+    Args:
+        m3_disponible: m³ libres en bodega ahora
+
+    Returns:
+        valor: ratio capacidad/embarques próximos 30d
+        ok: bool, True si entra el próximo embarque con buffer 20%
+    """
+    embarques = get_proximos_embarques(solo_pendientes=True)
+    if not embarques:
+        return {
+            "valor": None,
+            "m3_disponible": m3_disponible,
+            "m3_proximos_30d": 0,
+            "proximo_embarque": None,
+            "ok": True,
+            "error": "Sin embarques cargados",
+        }
+    from datetime import timedelta
+    en_30d = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+    proximos = [e for e in embarques if e.get("eta", "") <= en_30d]
+    m3_proximos_30d = sum(e.get("m3", 0) for e in proximos)
+    proximo = embarques[0] if embarques else None
+    proximo_m3 = proximo.get("m3", 0) if proximo else 0
+    # OK si entra con buffer 20%
+    ok = m3_disponible >= proximo_m3 * 1.2 if proximo else True
+    return {
+        "valor": m3_disponible / m3_proximos_30d if m3_proximos_30d > 0 else None,
+        "m3_disponible": m3_disponible,
+        "m3_proximos_30d": m3_proximos_30d,
+        "proximo_embarque": proximo,
+        "ok": ok,
+        "error": None,
+    }
+
+
+# ============================================================
+# Volumen unitario por categoría (fallback cuando Odoo no tiene product.volume)
+# ============================================================
+def set_m3_categoria(categoria: str, m3_unitario: float) -> bool:
+    """Volumen promedio en m³ de una unidad de la categoría."""
+    data = _load()
+    if "m3_por_categoria" not in data:
+        data["m3_por_categoria"] = {}
+    data["m3_por_categoria"][categoria] = {
+        "m3_unitario": m3_unitario,
+        "ts": datetime.now().isoformat(),
+    }
+    return _save(data)
+
+
+def get_m3_categoria(categoria: str) -> float:
+    data = _load().get("m3_por_categoria", {})
+    return data.get(categoria, {}).get("m3_unitario", 0)
+
+
+def get_all_m3_categoria() -> Dict[str, float]:
+    """Devuelve {categoria: m3_unitario} de todas las cargadas."""
+    data = _load().get("m3_por_categoria", {})
+    return {k: v.get("m3_unitario", 0) for k, v in data.items()}
+
+
+# ============================================================
+# Capacidad por slot (m³ por posición)
+# ============================================================
+def set_capacidad_slot_default(m3_por_slot: float) -> bool:
+    """Capacidad m³ default de cada posición individual.
+
+    Cuando no se conoce la capacidad slot por slot, se asume este default.
+    Típico rack industrial UnionX: 1.5–2.5 m³ por posición.
+    """
+    data = _load()
+    if "capacidad_bodega" not in data:
+        data["capacidad_bodega"] = {}
+    data["capacidad_bodega"]["m3_por_slot_default"] = m3_por_slot
+    data["capacidad_bodega"]["fecha_actualizacion"] = datetime.now().isoformat()
+    return _save(data)
+
+
+def get_capacidad_slot_default() -> float:
+    return _load().get("capacidad_bodega", {}).get("m3_por_slot_default", 0)

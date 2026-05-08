@@ -162,7 +162,7 @@ def render():
         "📊 Stock Total",
         "🏭 Por Bodega",
         "🚦 Resumen Operacional",
-        "🔄 SKUs duplicados",
+        "📐 Eficiencia de slotting",
         "📍 Uso de posiciones",
         "🔁 Rotación",
         "⚠️ Alertas operacionales",
@@ -254,33 +254,37 @@ def render():
     # ============================================================
     with tabs[2]:
         # Carga lazy (solo cuando el user entra al tab)
-        from views._ops_stock_helper import (
-            skus_duplicados, uso_posiciones, alertas_operacionales,
+        from views._ops_stock_helper import uso_posiciones, alertas_operacionales
+        from views._ops_capacidad_helper import (
+            slots_liberables, disponibilidad_posiciones,
         )
         with st.spinner("Calculando KPIs operacionales…"):
-            dup = _safe_call(skus_duplicados, min_ubicaciones=2, default={"valor": [], "total": 0, "valor_total": 0})
+            sl = _safe_call(slots_liberables, umbral_qty_chico=5, min_ubicaciones=2,
+                            default={"items": [], "slots_liberables_total": 0, "skus_a_consolidar": 0})
+            disp_t = _safe_call(disponibilidad_posiciones, default={"totales": {}, "config": {}})
             uso = _safe_call(uso_posiciones, dias=7, default={"valor": None, "error": None})
             alertas = _safe_call(alertas_operacionales, default=[]) or []
 
         kpis = data.get("kpis", {}) or {}
-        ocup = data.get("ocupacion", {}) or {}
+        tot_disp = disp_t.get("totales", {}) or {}
 
         c1, c2, c3 = st.columns(3)
         c1.markdown(_kpi_card_simple("SKUs activos", f"{n_skus:,}",
                                       f"${total_val/1e6:,.1f}M valor", "#1F4E79"),
                     unsafe_allow_html=True)
 
-        n_dup = dup.get("total", 0) if dup else 0
-        valor_dup = dup.get("valor_total", 0) if dup else 0
-        c2.markdown(_kpi_card_simple("SKUs duplicados", f"{n_dup:,}",
-                                      f"${valor_dup/1e6:,.1f}M en >1 ubicación",
-                                      "#EA580C" if n_dup > 50 else "#1F4E79"),
+        n_lib = sl.get("slots_liberables_total", 0)
+        n_skus_consolidar = sl.get("skus_a_consolidar", 0)
+        c2.markdown(_kpi_card_simple("Slots liberables", f"{n_lib:,}",
+                                      f"Consolidando {n_skus_consolidar} SKUs (frag ≤5)",
+                                      "#16A34A" if n_lib > 0 else "#94A3B8"),
                     unsafe_allow_html=True)
 
-        ocup_pct = ocup.get("pct", 0) if ocup else 0
+        ocup_pct = tot_disp.get("pct_ocupacion", 0)
         ocup_color = "#DC2626" if ocup_pct > 90 else ("#EA580C" if ocup_pct > 80 else "#16A34A")
-        c3.markdown(_kpi_card_simple("Ocupación CA1/Stock", f"{ocup_pct}%",
-                                      f"{ocup.get('occupied', 0)} / {ocup.get('total', 0)} posiciones",
+        c3.markdown(_kpi_card_simple("Ocupación bodega",
+                                      f"{ocup_pct:.0f}%" if ocup_pct else "—",
+                                      f"{tot_disp.get('m3_ocupado', 0):,.0f} / {tot_disp.get('m3_capacidad', 0):,.0f} m³",
                                       ocup_color),
                     unsafe_allow_html=True)
 
@@ -341,67 +345,367 @@ def render():
                     st.code(e)
 
     # ============================================================
-    # TAB 4 — SKUs DUPLICADOS
+    # TAB 4 — EFICIENCIA DE SLOTTING
+    # (capacidad m³ por posición, slots liberables, slotting subóptimo,
+    #  forecast de capacidad para próximos embarques)
     # ============================================================
     with tabs[3]:
-        from views._ops_stock_helper import skus_duplicados
-        st.markdown("### 🔄 SKUs en múltiples ubicaciones físicas")
-        st.caption(
-            "Detectar SKUs duplicados ayuda a: (1) reducir errores de picking, "
-            "(2) consolidar capital atado, (3) liberar posiciones para nuevos embarques."
+        from views._ops_capacidad_helper import (
+            disponibilidad_posiciones, slots_liberables, slotting_suboptimo,
+        )
+        from views._ops_data_helper import (
+            get_proximos_embarques, kpi_capacidad_recepcion,
         )
 
-        col_n1, col_n2 = st.columns([1, 3])
-        with col_n1:
-            min_ubic = st.selectbox("Filtrar ≥ ubicaciones", [2, 3, 4, 5], index=0, key="ops_dup_minloc")
-        dup_t = _safe_call(skus_duplicados, min_ubicaciones=min_ubic, default={"valor": [], "total": 0, "valor_total": 0})
-        with col_n2:
-            st.markdown(f"**Total SKUs con ≥{min_ubic} ubicaciones:** {dup_t.get('total', 0):,} · "
-                        f"**Valor total:** ${dup_t.get('valor_total', 0)/1e6:,.1f}M")
+        st.markdown("### 📐 Eficiencia de slotting & capacidad de recepción")
+        st.caption(
+            "Disponibilidad real m³ por posición · Consolidación de fragmentos · "
+            "Slotting óptimo SKUs A · Forecast capacidad para próximos embarques"
+        )
 
-        if dup_t.get("error"):
-            st.warning(f"⚠️ {dup_t['error']}")
-        elif dup_t.get("valor"):
-            data_dup = dup_t["valor"]
-            rows = []
-            for d in data_dup[:200]:
-                rows.append({
-                    "SKU": d["sku"][:60],
-                    "# Ubicaciones": d["n_ubicaciones"],
-                    "Qty Total": f"{d['qty_total']:,.0f}",
-                    "Valor": f"${d['valor']/1e3:,.0f} K",
-                    "Ubicaciones": " · ".join(d["ubicaciones"][:5]),
-                    "Sugerencia consolidar": d["principal"],
-                })
-            if rows:
-                df_dup = pd.DataFrame(rows)
-                st.dataframe(df_dup, use_container_width=True, hide_index=True, height=520)
-                st.caption(f"Mostrando {len(rows)} de {len(data_dup)}. Ordenado por valor.")
+        slot_subtabs = st.tabs([
+            "📦 Disponibilidad m³ por posición",
+            "🆓 Slots liberables (consolidar)",
+            "🐢 Slotting subóptimo (relocar SKUs A)",
+            "📥 Capacidad para próximos embarques",
+        ])
 
-                # Descargar
-                out_dup = io.BytesIO()
-                df_dup_full = pd.DataFrame([{
-                    "SKU": d["sku"], "# Ubicaciones": d["n_ubicaciones"],
-                    "Qty Total": d["qty_total"], "Valor": d["valor"],
-                    "Ubicaciones": " · ".join(d["ubicaciones"]),
-                    "Sugerencia consolidar": d["principal"],
-                    "Qty en principal": d.get("qty_principal", 0),
-                } for d in data_dup])
-                with pd.ExcelWriter(out_dup, engine='openpyxl') as w:
-                    df_dup_full.to_excel(w, index=False, sheet_name='SKUs duplicados')
-                out_dup.seek(0)
+        # ── 4.1 Disponibilidad m³ por posición ──────────────────────────
+        with slot_subtabs[0]:
+            disp = _safe_call(disponibilidad_posiciones, default={"posiciones": [], "totales": {}, "config": {}})
+            if disp.get("error"):
+                st.warning(f"⚠️ {disp['error']}")
+            elif not disp.get("posiciones"):
+                st.info("Sin datos de capacidad. Carga `m3_por_slot_default` en la pestaña KPIs WMS · Datos manuales.")
+            else:
+                tot = disp["totales"]
+                cfg = disp.get("config", {})
+
+                # KPI cards
+                kc1, kc2, kc3, kc4 = st.columns(4)
+                kc1.markdown(_kpi_card_simple("Capacidad total", f"{tot['m3_capacidad']:,.0f} m³",
+                                              f"{tot['n_posiciones']} posiciones", "#1F4E79"),
+                             unsafe_allow_html=True)
+                kc2.markdown(_kpi_card_simple("Ocupado actual", f"{tot['m3_ocupado']:,.0f} m³",
+                                              f"{tot['pct_ocupacion']:.1f}% del total",
+                                              "#DC2626" if tot['pct_ocupacion'] > 85 else "#EA580C" if tot['pct_ocupacion'] > 70 else "#16A34A"),
+                             unsafe_allow_html=True)
+                kc3.markdown(_kpi_card_simple("Libre", f"{tot['m3_libre']:,.0f} m³",
+                                              f"{tot['n_disponibles']} posiciones disp.", "#16A34A"),
+                             unsafe_allow_html=True)
+                kc4.markdown(_kpi_card_simple("Posiciones llenas", f"{tot['n_llenas']:,}",
+                                              f"≥90% ocupación", "#EA580C"),
+                             unsafe_allow_html=True)
+
+                # Calidad del dato volumétrico
+                with st.expander("ℹ️ Calidad del dato volumétrico", expanded=False):
+                    fo = cfg.get("fuente_volumen_odoo", 0)
+                    fc = cfg.get("fuente_volumen_categ", 0)
+                    fs = cfg.get("fuente_volumen_sin_dato", 0)
+                    total_p = fo + fc + fs
+                    if total_p > 0:
+                        st.markdown(
+                            f"- **{fo:,}** productos con `volume` directo de Odoo ({fo/total_p*100:.0f}%)\n"
+                            f"- **{fc:,}** productos con fallback m³ por categoría ({fc/total_p*100:.0f}%)\n"
+                            f"- **{fs:,}** productos sin volumen — no contribuyen al cálculo ({fs/total_p*100:.0f}%)"
+                        )
+                    else:
+                        st.info("Sin productos analizados")
+                    cap_slot = cfg.get("m3_slot_default", 0)
+                    if cap_slot > 0:
+                        st.caption(f"Capacidad por slot asumida: **{cap_slot:.2f} m³** "
+                                   f"(carga m³ por slot real en pestaña Datos manuales para mayor precisión)")
+                    else:
+                        st.warning("⚠️ Sin capacidad por slot definida → ocupación %  no calculable")
+
+                # Filtros
+                st.markdown("#### Detalle por posición")
+                fc1, fc2 = st.columns([1, 3])
+                with fc1:
+                    estado_f = st.selectbox("Estado", ["Todas", "VACIA", "DISPONIBLE", "MEDIO", "LLENA"],
+                                            key="ops_pos_estado")
+                with fc2:
+                    sort_f = st.selectbox("Ordenar por",
+                        ["m³ libre (desc)", "% ocupación (asc)", "% ocupación (desc)", "Posición"],
+                        key="ops_pos_sort")
+
+                df_pos = pd.DataFrame(disp["posiciones"])
+                if estado_f != "Todas":
+                    df_pos = df_pos[df_pos["estado"] == estado_f]
+                if sort_f == "m³ libre (desc)":
+                    df_pos = df_pos.sort_values("m3_libre", ascending=False)
+                elif sort_f == "% ocupación (asc)":
+                    df_pos = df_pos.sort_values("pct_ocupacion", ascending=True)
+                elif sort_f == "% ocupación (desc)":
+                    df_pos = df_pos.sort_values("pct_ocupacion", ascending=False)
+                else:
+                    df_pos = df_pos.sort_values("posicion")
+
+                st.dataframe(
+                    df_pos[["posicion", "estado", "m3_capacidad", "m3_ocupado", "m3_libre",
+                            "pct_ocupacion", "n_skus", "n_unidades", "calidad_dato"]].rename(columns={
+                        "posicion": "Posición",
+                        "estado": "Estado",
+                        "m3_capacidad": "Cap (m³)",
+                        "m3_ocupado": "Ocup (m³)",
+                        "m3_libre": "Libre (m³)",
+                        "pct_ocupacion": "% Ocup",
+                        "n_skus": "SKUs",
+                        "n_unidades": "Uds",
+                        "calidad_dato": "Calidad dato",
+                    }),
+                    use_container_width=True, hide_index=True, height=480,
+                )
+                st.caption(f"{len(df_pos):,} posiciones mostradas")
+
+                # Descarga
+                out_pos = io.BytesIO()
+                with pd.ExcelWriter(out_pos, engine='openpyxl') as w:
+                    df_pos.to_excel(w, index=False, sheet_name='Posiciones m3')
+                out_pos.seek(0)
                 st.download_button(
-                    label=f"📥 Descargar SKUs duplicados (Excel · {len(data_dup):,})",
-                    data=out_dup.getvalue(),
-                    file_name=f"Stock_duplicados_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    label=f"📥 Descargar disponibilidad m³ (Excel · {len(df_pos):,} filas)",
+                    data=out_pos.getvalue(),
+                    file_name=f"Disponibilidad_m3_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    key="ops_dl_dup",
+                    key="ops_dl_disp_m3",
+                    use_container_width=True,
+                )
+
+        # ── 4.2 Slots liberables ────────────────────────────────────────
+        with slot_subtabs[1]:
+            st.markdown("### 🆓 Slots que liberás consolidando fragmentos")
+            st.caption(
+                "Lógica con tu setup: Odoo agrega bien CA1/Stock y dirige picking automáticamente, "
+                "así que el problema NO es 'duplicados'. El problema real es **fragmentación**: "
+                "un SKU con qty pequeñas en varios slots ocupando posiciones que podrían recibir embarques."
+            )
+
+            cs1, cs2 = st.columns(2)
+            with cs1:
+                umbral = st.slider("Qty 'fragmento' (consolidar a slot principal)",
+                                   1, 50, 5, key="ops_slot_umbral")
+            with cs2:
+                min_ubi = st.selectbox("≥ ubicaciones", [2, 3, 4], index=0, key="ops_slot_minubi")
+
+            sl = _safe_call(slots_liberables, umbral_qty_chico=umbral, min_ubicaciones=min_ubi,
+                            default={"items": [], "slots_liberables_total": 0})
+
+            if sl.get("error"):
+                st.warning(f"⚠️ {sl['error']}")
+            elif sl.get("items"):
+                k1, k2 = st.columns(2)
+                k1.markdown(_kpi_card_simple("Slots liberables",
+                                              f"{sl['slots_liberables_total']:,}",
+                                              "Si consolidás los fragmentos", "#16A34A"),
+                            unsafe_allow_html=True)
+                k2.markdown(_kpi_card_simple("SKUs a consolidar",
+                                              f"{sl['skus_a_consolidar']:,}",
+                                              f"con qty ≤ {umbral} en slots adicionales", "#1F4E79"),
+                            unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                rows = []
+                for d in sl["items"][:300]:
+                    rows.append({
+                        "SKU": d["sku"][:60],
+                        "# Slots": d["n_ubicaciones"],
+                        "Qty total": f"{d['qty_total']:,.0f}",
+                        "Slot principal": d["slot_principal"],
+                        "Qty principal": f"{d['qty_principal']:,.0f}",
+                        "Slots a liberar": d["n_fragmentos"],
+                        "Qty a mover": f"{d['qty_a_mover']:,.0f}",
+                        "Detalle slots": " · ".join(d["slots_a_liberar"][:3]),
+                    })
+                df_sl = pd.DataFrame(rows)
+                st.dataframe(df_sl, use_container_width=True, hide_index=True, height=480)
+
+                # Descarga full
+                df_sl_full = pd.DataFrame([{
+                    "SKU": d["sku"], "# Slots": d["n_ubicaciones"],
+                    "Qty total": d["qty_total"], "Valor total": d["valor_total"],
+                    "Slot principal": d["slot_principal"], "Qty principal": d["qty_principal"],
+                    "# Slots a liberar": d["n_fragmentos"],
+                    "Slots a liberar": " · ".join(d["slots_a_liberar"]),
+                    "Qty a mover": d["qty_a_mover"],
+                } for d in sl["items"]])
+                out_sl = io.BytesIO()
+                with pd.ExcelWriter(out_sl, engine='openpyxl') as w:
+                    df_sl_full.to_excel(w, index=False, sheet_name='Slots liberables')
+                out_sl.seek(0)
+                st.download_button(
+                    label=f"📥 Descargar plan consolidación (Excel · {len(sl['items']):,})",
+                    data=out_sl.getvalue(),
+                    file_name=f"Slots_liberables_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    key="ops_dl_slots_lib",
                     use_container_width=True,
                 )
             else:
-                st.info("Sin SKUs con ese filtro.")
-        else:
-            st.info("Sin datos.")
+                st.success("✅ No se detectan fragmentos consolidables — slotting óptimo")
+
+        # ── 4.3 Slotting subóptimo ──────────────────────────────────────
+        with slot_subtabs[2]:
+            st.markdown("### 🐢 SKUs A en zona fría")
+            st.caption(
+                "Top SKUs por movimientos (zona caliente esperable: cerca de packing). "
+                "Si están en zona de baja actividad → re-slotting a posiciones más cercanas reduce OCT."
+            )
+
+            cz1, cz2 = st.columns(2)
+            with cz1:
+                top_n_a = st.slider("Top N SKUs A", 20, 200, 50, key="ops_slot_topa")
+            with cz2:
+                ventana = st.slider("Ventana actividad (días)", 7, 90, 30, key="ops_slot_vent")
+
+            su = _safe_call(slotting_suboptimo, top_n_a=top_n_a, dias_actividad=ventana,
+                            default={"items": [], "n_skus_a_relocar": 0})
+
+            if su.get("error"):
+                st.warning(f"⚠️ {su['error']}")
+            elif su.get("items"):
+                ku1, ku2, ku3 = st.columns(3)
+                ku1.markdown(_kpi_card_simple("SKUs A a relocar", f"{su['n_skus_a_relocar']:,}",
+                                              f"Top {top_n_a} por movs en {ventana}d", "#EA580C"),
+                             unsafe_allow_html=True)
+                ku2.markdown(_kpi_card_simple("Zonas calientes detectadas",
+                                              f"{su.get('n_zonas_calientes', 0)}",
+                                              "Top 20% movimientos", "#16A34A"),
+                             unsafe_allow_html=True)
+                ku3.markdown(_kpi_card_simple("Zonas frías detectadas",
+                                              f"{su.get('n_zonas_frias', 0)}",
+                                              "Bottom 50% movimientos", "#94A3B8"),
+                             unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                df_su = pd.DataFrame(su["items"])
+                st.dataframe(
+                    df_su.rename(columns={
+                        "sku": "SKU",
+                        "posicion_actual": "Posición actual",
+                        "qty_en_slot": "Qty en slot",
+                        "movimientos_30d": f"# Movs ({ventana}d)",
+                        "qty_movida_30d": f"Qty movida ({ventana}d)",
+                        "movs_posicion_actual": "Movs en su posición",
+                    }),
+                    use_container_width=True, hide_index=True, height=480,
+                )
+
+                out_su = io.BytesIO()
+                with pd.ExcelWriter(out_su, engine='openpyxl') as w:
+                    df_su.to_excel(w, index=False, sheet_name='Slotting suboptimo')
+                out_su.seek(0)
+                st.download_button(
+                    label=f"📥 Descargar plan re-slotting (Excel · {len(su['items']):,})",
+                    data=out_su.getvalue(),
+                    file_name=f"Slotting_suboptimo_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    key="ops_dl_slot_sub",
+                    use_container_width=True,
+                )
+            else:
+                st.success("✅ Top SKUs A correctamente ubicados en zona caliente")
+
+        # ── 4.4 Capacidad para próximos embarques ───────────────────────
+        with slot_subtabs[3]:
+            st.markdown("### 📥 Forecast de capacidad para embarques entrantes")
+            st.caption(
+                "Cruza disponibilidad m³ ahora vs próximos embarques cargados manualmente. "
+                "Roadmap H2: lectura automática del agente COMEX (Steven PI/PL)."
+            )
+
+            disp_cap = _safe_call(disponibilidad_posiciones, default={"totales": {"m3_libre": 0}})
+            m3_libre = disp_cap.get("totales", {}).get("m3_libre", 0)
+
+            cap = kpi_capacidad_recepcion(m3_libre)
+            embarques = get_proximos_embarques(solo_pendientes=True)
+
+            kf1, kf2, kf3 = st.columns(3)
+            kf1.markdown(_kpi_card_simple("m³ disponibles ahora", f"{m3_libre:,.0f}",
+                                          "Suma posiciones libres", "#16A34A" if m3_libre > 50 else "#EA580C"),
+                         unsafe_allow_html=True)
+            kf2.markdown(_kpi_card_simple("m³ próximos 30d", f"{cap.get('m3_proximos_30d', 0):,.0f}",
+                                          f"{len(embarques)} embarques cargados", "#1F4E79"),
+                         unsafe_allow_html=True)
+            ratio = cap.get("valor")
+            ratio_color = "#16A34A" if ratio and ratio >= 1.2 else "#DC2626" if ratio and ratio < 1 else "#EA580C"
+            kf3.markdown(_kpi_card_simple("Ratio capacidad",
+                                          f"{ratio:.2f}x" if ratio else "—",
+                                          "Disp / requerido (≥1.2 ideal)", ratio_color),
+                         unsafe_allow_html=True)
+
+            # Alerta capacidad
+            if cap.get("proximo_embarque"):
+                pe = cap["proximo_embarque"]
+                if not cap.get("ok"):
+                    st.error(
+                        f"🔴 **Capacidad insuficiente para próximo embarque** · "
+                        f"{pe.get('descripcion', 'embarque')} ({pe.get('m3', 0):.0f} m³) "
+                        f"ETA {pe.get('eta', '?')} — disp actual {m3_libre:.0f} m³"
+                    )
+                else:
+                    st.success(
+                        f"✅ Próximo embarque entra: {pe.get('descripcion', 'embarque')} "
+                        f"({pe.get('m3', 0):.0f} m³) ETA {pe.get('eta', '?')}"
+                    )
+
+            st.divider()
+
+            # Lista próximos embarques
+            st.markdown("#### Embarques cargados")
+            if not embarques:
+                st.info("Sin embarques cargados. Agregá uno en el formulario abajo.")
+            else:
+                df_emb = pd.DataFrame(embarques)
+                df_emb = df_emb[["eta", "descripcion", "contenedores", "m3"]].rename(columns={
+                    "eta": "ETA",
+                    "descripcion": "Descripción",
+                    "contenedores": "Contenedores",
+                    "m3": "m³",
+                })
+                st.dataframe(df_emb, use_container_width=True, hide_index=True, height=200)
+
+            # Form agregar embarque
+            with st.expander("➕ Agregar próximo embarque", expanded=not embarques):
+                from views._ops_data_helper import add_proximo_embarque, delete_proximo_embarque
+                with st.form("form_emb_nuevo", clear_on_submit=True):
+                    fc1, fc2, fc3 = st.columns([1, 2, 1])
+                    eta_in = fc1.date_input("ETA", key="emb_eta")
+                    desc_in = fc2.text_input("Descripción",
+                                             placeholder="Steven – plancha pelo + secadores",
+                                             key="emb_desc")
+                    cont_in = fc3.number_input("Contenedores", min_value=1, value=1,
+                                               key="emb_cont")
+                    m3_in = st.number_input("Volumen total (m³)", min_value=0.0, value=67.0,
+                                            help="40HC ≈ 67 m³ útil · 20GP ≈ 33 m³",
+                                            key="emb_m3")
+                    if st.form_submit_button("💾 Guardar embarque", type="primary",
+                                              use_container_width=True):
+                        ok = add_proximo_embarque(
+                            eta=eta_in.strftime("%Y-%m-%d"),
+                            m3=m3_in, descripcion=desc_in, contenedores=cont_in,
+                        )
+                        if ok:
+                            st.success("✅ Embarque guardado")
+                            st.cache_data.clear()
+                            st.rerun()
+                        else:
+                            st.error("❌ Error guardando")
+
+            if embarques:
+                with st.expander("🗑️ Eliminar embarque cargado"):
+                    from views._ops_data_helper import delete_proximo_embarque
+                    idx_del = st.selectbox(
+                        "Embarque a eliminar",
+                        options=list(range(len(embarques))),
+                        format_func=lambda i: f"{embarques[i]['eta']} · {embarques[i].get('descripcion', '')[:40]} · {embarques[i].get('m3', 0):.0f} m³",
+                        key="emb_del_idx",
+                    )
+                    if st.button("🗑️ Eliminar", key="emb_del_btn"):
+                        if delete_proximo_embarque(idx_del):
+                            st.success("Eliminado")
+                            st.cache_data.clear()
+                            st.rerun()
 
     # ============================================================
     # TAB 5 — USO DE POSICIONES
