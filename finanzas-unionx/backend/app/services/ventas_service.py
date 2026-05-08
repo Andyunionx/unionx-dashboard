@@ -902,9 +902,12 @@ class VentasService(BaseOdooService):
             canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name)
 
             # FIX: filtrar canales que se cargan manualmente (offline) — no traer de Odoo
-            CANALES_EXCLUIDOS_DE_SYNC = {'Sawa', 'sawa', 'SAWA'}
-            if canal_raw in CANALES_EXCLUIDOS_DE_SYNC:
-                continue
+            # SAWA: solo excluir abril 2026 (cargado manual). Mayo en adelante sí auto-sync.
+            # El Volcán: ya se filtra arriba (siempre, por bodega).
+            if canal_raw in ('Sawa', 'sawa', 'SAWA'):
+                fecha_venta_str = str(orden.get('date_order', ''))[:10]  # YYYY-MM-DD
+                if '2026-04-01' <= fecha_venta_str <= '2026-04-30':
+                    continue  # abril 2026: no traer
 
             # Resolver Tipo Negocio + KAM por canal (lookup en mapping del histórico)
             tn_info = canal_a_tn.get(canal_raw, {})
