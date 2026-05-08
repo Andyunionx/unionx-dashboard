@@ -340,38 +340,63 @@ def cached_ventas_canal_30d():
 # Filtros sidebar (compartidos para vistas de Ventas)
 # ============================================================
 def render_filters_sidebar(prefix="ventas"):
-    """Renderiza filtros en sidebar y devuelve dict {canal, marca, categoria, tipo_negocio, kam}."""
+    """[Legacy sidebar] Multi-select en sidebar.
+    NOTA: deprecada, usar render_ventas_filters_top() para vista al tope."""
+    return render_ventas_filters_top(prefix)
+
+
+def render_ventas_filters_top(prefix="ventas"):
+    """Filtros al tope de la página (multi-select), estilo Contribución.
+    Devuelve dict {canal, marca, categoria, tipo_negocio, kam, producto}.
+    """
     filtros_disp = cached_filtros()
 
-    st.sidebar.title("🎛️ Filtros")
-    f_categoria = st.sidebar.selectbox(
-        "Categoría", ["(Todas)"] + filtros_disp['categorias'], key=f"{prefix}_cat",
-    )
-    f_marca = st.sidebar.selectbox(
-        "Marca", ["(Todas)"] + filtros_disp['marcas'], key=f"{prefix}_marca",
-    )
-    f_tipo_negocio = st.sidebar.selectbox(
-        "Línea de Negocio", ["(Todas)"] + filtros_disp['tipos_negocio'], key=f"{prefix}_tn",
-    )
-    f_kam = st.sidebar.selectbox(
-        "KAM", ["(Todos)"] + filtros_disp.get('kams', []), key=f"{prefix}_kam",
-    )
-    f_canal = st.sidebar.selectbox(
-        "Canal de Venta", ["(Todos)"] + filtros_disp['canales'], key=f"{prefix}_canal",
-    )
+    st.markdown("##### 🔍 Filtros")
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+
+    with c1:
+        f_categoria = st.multiselect("Categoría", filtros_disp.get('categorias', []),
+                                     default=[], key=f"{prefix}_cat")
+    with c2:
+        f_marca = st.multiselect("Marca", filtros_disp.get('marcas', []),
+                                  default=[], key=f"{prefix}_marca")
+    with c3:
+        f_tn = st.multiselect("Línea Negocio", filtros_disp.get('tipos_negocio', []),
+                               default=[], key=f"{prefix}_tn")
+    with c4:
+        f_kam = st.multiselect("KAM", filtros_disp.get('kams', []),
+                                default=[], key=f"{prefix}_kam")
+    with c5:
+        f_canal = st.multiselect("Canal", filtros_disp.get('canales', []),
+                                  default=[], key=f"{prefix}_canal")
+    with c6:
+        f_producto = st.text_input("Producto contiene", value="", key=f"{prefix}_prod",
+                                   placeholder="Ej: pala, lhotse")
 
     f = {
-        'canal': None if f_canal.startswith("(") else f_canal,
-        'marca': None if f_marca.startswith("(") else f_marca,
-        'categoria': None if f_categoria.startswith("(") else f_categoria,
-        'tipo_negocio': None if f_tipo_negocio.startswith("(") else f_tipo_negocio,
-        'kam': None if f_kam.startswith("(") else f_kam,
+        'canal': f_canal or None,
+        'marca': f_marca or None,
+        'categoria': f_categoria or None,
+        'tipo_negocio': f_tn or None,
+        'kam': f_kam or None,
+        'producto': f_producto.strip() or None,
     }
 
-    activos = [f"{k}={v}" for k, v in f.items() if v]
+    activos = []
+    for k, v in f.items():
+        if v:
+            if isinstance(v, list):
+                activos.append(f"{k}=[{len(v)}]")
+            else:
+                activos.append(f"{k}={v}")
     if activos:
-        st.sidebar.info("**Activos:** " + ", ".join(activos))
+        st.caption("Filtros activos: " + " · ".join(activos))
 
+    return f
+
+
+def render_dashboard_actions_sidebar(prefix="ventas"):
+    """Botones de acción en sidebar (refrescar / forzar sync)."""
     st.sidebar.divider()
     if st.sidebar.button("🔄 Refrescar caché", use_container_width=True, key=f"{prefix}_refrescar"):
         st.cache_data.clear()
@@ -380,8 +405,6 @@ def render_filters_sidebar(prefix="ventas"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.rerun()
-
-    return f
 
 
 def render_health_header(title: str):

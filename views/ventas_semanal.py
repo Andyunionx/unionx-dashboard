@@ -6,14 +6,18 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from views.shared import (
-    cached_semanal, fmt_int, fmt_money, render_filters_sidebar, render_health_header,
+    cached_semanal, fmt_int, fmt_money,
+    render_ventas_filters_top, render_dashboard_actions_sidebar, render_health_header,
     kpi_card, COLOR_VENTA, COLOR_MARGEN, COLOR_NEGATIVO,
 )
 
 
 def render():
     render_health_header("📅 Vista Semanal — Ventas")
-    f = render_filters_sidebar(prefix="ventas_sem")
+    render_dashboard_actions_sidebar(prefix="ventas_sem")
+
+    f = render_ventas_filters_top(prefix="ventas_sem")
+    st.markdown("---")
 
     st.subheader("📅 Análisis semanal")
     c1, c2 = st.columns([1, 1])

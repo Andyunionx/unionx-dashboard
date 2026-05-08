@@ -8,14 +8,18 @@ import streamlit as st
 
 from views.shared import (
     cached_canales, cached_diaria, cached_kpis, cached_mensual, cached_top_skus,
-    fmt_int, fmt_money, fmt_pct, render_filters_sidebar, render_health_header,
+    fmt_int, fmt_money, fmt_pct,
+    render_ventas_filters_top, render_dashboard_actions_sidebar, render_health_header,
     kpi_card, COLOR_VENTA, COLOR_MARGEN, COLOR_COSTO, COLOR_NEGATIVO,
 )
 
 
 def render():
     render_health_header("📊 Dashboard Ventas UnionX")
-    f = render_filters_sidebar(prefix="ventas_gen")
+    render_dashboard_actions_sidebar(prefix="ventas_gen")
+
+    f = render_ventas_filters_top(prefix="ventas_gen")
+    st.markdown("---")
 
     c1, c2 = st.columns([2, 3])
     with c1:

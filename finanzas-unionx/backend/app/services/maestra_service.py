@@ -29,35 +29,44 @@ class MaestraService:
         return conn
 
     def _build_where(self, params):
+        """Construye WHERE soportando valores escalares (=) y listas (IN)."""
         clauses = []
         values = []
+
+        def _add(col, val):
+            """Agrega clause con = (escalar), IN (lista) o LIKE (str con wildcard)."""
+            if val is None or val == '' or val == []:
+                return
+            if isinstance(val, (list, tuple, set)):
+                if not val:
+                    return
+                placeholders = ','.join(['?'] * len(val))
+                clauses.append(f"{col} IN ({placeholders})")
+                values.extend(val)
+            else:
+                clauses.append(f"{col} = ?")
+                values.append(val)
+
         if params.get('fecha_desde'):
             clauses.append("fecha_venta >= ?")
             values.append(params['fecha_desde'])
         if params.get('fecha_hasta'):
             clauses.append("fecha_venta <= ?")
             values.append(params['fecha_hasta'])
-        if params.get('canal'):
-            clauses.append("canal = ?")
-            values.append(params['canal'])
-        if params.get('marca'):
-            clauses.append("marca = ?")
-            values.append(params['marca'])
-        if params.get('categoria'):
-            clauses.append("categoria_macro = ?")
-            values.append(params['categoria'])
-        if params.get('tipo_negocio'):
-            clauses.append("tipo_negocio = ?")
-            values.append(params['tipo_negocio'])
-        if params.get('kam'):
-            clauses.append("kam = ?")
-            values.append(params['kam'])
-        if params.get('bodega'):
-            clauses.append("bodega = ?")
-            values.append(params['bodega'])
-        if params.get('tipo_movimiento'):
-            clauses.append("tipo_movimiento = ?")
-            values.append(params['tipo_movimiento'])
+        _add('canal', params.get('canal'))
+        _add('marca', params.get('marca'))
+        _add('categoria_macro', params.get('categoria'))
+        _add('tipo_negocio', params.get('tipo_negocio'))
+        _add('kam', params.get('kam'))
+        _add('bodega', params.get('bodega'))
+        _add('tipo_movimiento', params.get('tipo_movimiento'))
+        _add('sku', params.get('sku'))
+
+        # Producto: búsqueda LIKE case-insensitive
+        if params.get('producto'):
+            clauses.append("LOWER(producto) LIKE ?")
+            values.append(f"%{str(params['producto']).lower()}%")
+
         where = " AND ".join(clauses) if clauses else "1=1"
         return where, values
 
@@ -427,23 +436,34 @@ class MaestraService:
             return d.replace(year=d.year + anios, day=28).strftime('%Y-%m-%d')
 
     def _kpis_periodo(self, fecha_desde: str, fecha_hasta: str, params_extra=None):
-        """
-        KPIs base para un período.
-        - Venta = SUM(venta_bruta) → BRUTA con IVA (incluye Devoluciones, suma negativa)
-        - Venta Neta = SUM(venta_neta) → SIN IVA
-        - Margen Final = SUM(margen_final) → calculado contra Venta Neta sin IVA
-        - % Margen = margen / venta_neta (la base correcta es la neta sin IVA)
-        - Unidades / Órdenes: solo Ventas (no incluyen NC)
-        """
+        """KPIs base para un período (soporta filtros escalares y multi-select)."""
         clauses = ["fecha_venta >= ?", "fecha_venta <= ?"]
         values = [fecha_desde, fecha_hasta]
+
+        def _add(col, val):
+            if val is None or val == '' or val == []:
+                return
+            if isinstance(val, (list, tuple, set)):
+                if not val:
+                    return
+                placeholders = ','.join(['?'] * len(val))
+                clauses.append(f"{col} IN ({placeholders})")
+                values.extend(val)
+            else:
+                clauses.append(f"{col} = ?")
+                values.append(val)
+
         if params_extra:
-            for k, col in [('canal', 'canal'), ('marca', 'marca'),
-                            ('categoria', 'categoria_macro'), ('tipo_negocio', 'tipo_negocio'),
-                            ('kam', 'kam'), ('bodega', 'bodega')]:
-                if params_extra.get(k):
-                    clauses.append(f"{col} = ?")
-                    values.append(params_extra[k])
+            _add('canal', params_extra.get('canal'))
+            _add('marca', params_extra.get('marca'))
+            _add('categoria_macro', params_extra.get('categoria'))
+            _add('tipo_negocio', params_extra.get('tipo_negocio'))
+            _add('kam', params_extra.get('kam'))
+            _add('bodega', params_extra.get('bodega'))
+            _add('sku', params_extra.get('sku'))
+            if params_extra.get('producto'):
+                clauses.append("LOWER(producto) LIKE ?")
+                values.append(f"%{str(params_extra['producto']).lower()}%")
         where = " AND ".join(clauses)
         conn = self._conn()
         row = conn.execute(f"""
@@ -570,7 +590,7 @@ class MaestraService:
         return [dias[k] for k in sorted(dias.keys())]
 
     def get_por_canal_yoy(self, params):
-        """Por canal: TY, LY y var %."""
+        """Por canal: TY, LY y var % (aplica filtros del dashboard)."""
         ty_desde = params.get('fecha_desde'); ty_hasta = params.get('fecha_hasta')
         if not ty_desde or not ty_hasta:
             from datetime import datetime
@@ -578,27 +598,36 @@ class MaestraService:
             ty_desde = hoy.replace(day=1).strftime('%Y-%m-%d')
             ty_hasta = hoy.strftime('%Y-%m-%d')
         ly_desde = self._shift_year(ty_desde); ly_hasta = self._shift_year(ty_hasta)
+
+        # Construir extra WHERE para filtros (sin canal porque agrupamos por canal)
+        params_extra = {k: v for k, v in params.items() if k not in ('fecha_desde', 'fecha_hasta', 'canal')}
+        extra_where, extra_values = '', []
+        if any(params_extra.get(k) for k in ('marca', 'categoria', 'tipo_negocio', 'kam', 'bodega', 'sku', 'producto')):
+            _w, _v = self._build_where(params_extra)
+            if _w and _w != '1=1':
+                extra_where = ' AND ' + _w
+                extra_values = _v
+
         conn = self._conn()
-        # Por canal: NETO incluye Devoluciones (suma negativa)
-        rows_ty = conn.execute("""
+        rows_ty = conn.execute(f"""
             SELECT canal,
                    ROUND(SUM(venta_bruta), 0) as venta,
                    ROUND(SUM(margen_final), 0) as margen,
                    ROUND(SUM(CASE WHEN tipo_movimiento = 'Venta' THEN cantidad ELSE 0 END), 0) as unidades,
                    ROUND(100.0 * SUM(margen_final) / NULLIF(SUM(venta_bruta), 0), 1) as pct_margen
             FROM ventas
-            WHERE fecha_venta BETWEEN ? AND ?
+            WHERE fecha_venta BETWEEN ? AND ? {extra_where}
             GROUP BY canal
-        """, [ty_desde, ty_hasta]).fetchall()
-        rows_ly = conn.execute("""
+        """, [ty_desde, ty_hasta] + extra_values).fetchall()
+        rows_ly = conn.execute(f"""
             SELECT canal,
                    ROUND(SUM(venta_bruta), 0) as venta,
                    ROUND(SUM(margen_final), 0) as margen,
                    ROUND(SUM(CASE WHEN tipo_movimiento = 'Venta' THEN cantidad ELSE 0 END), 0) as unidades
             FROM ventas
-            WHERE fecha_venta BETWEEN ? AND ?
+            WHERE fecha_venta BETWEEN ? AND ? {extra_where}
             GROUP BY canal
-        """, [ly_desde, ly_hasta]).fetchall()
+        """, [ly_desde, ly_hasta] + extra_values).fetchall()
         conn.close()
         ly_map = {r['canal']: r for r in rows_ly}
         result = []
@@ -619,7 +648,7 @@ class MaestraService:
         return result
 
     def get_top_skus_yoy(self, params, limit=20):
-        """Top SKUs con var YoY."""
+        """Top SKUs con var YoY (aplica filtros del dashboard)."""
         ty_desde = params.get('fecha_desde'); ty_hasta = params.get('fecha_hasta')
         if not ty_desde or not ty_hasta:
             from datetime import datetime
@@ -627,17 +656,32 @@ class MaestraService:
             ty_desde = hoy.replace(day=1).strftime('%Y-%m-%d')
             ty_hasta = hoy.strftime('%Y-%m-%d')
         ly_desde = self._shift_year(ty_desde); ly_hasta = self._shift_year(ty_hasta)
+
+        # Filtros extra (canal, marca, categoria, etc.)
+        params_extra = {k: v for k, v in params.items() if k not in ('fecha_desde', 'fecha_hasta')}
+        extra_where, extra_values = '', []
+        if any(params_extra.get(k) for k in ('canal', 'marca', 'categoria', 'tipo_negocio', 'kam', 'bodega', 'sku', 'producto')):
+            _w, _v = self._build_where(params_extra)
+            if _w and _w != '1=1':
+                # Reemplazar columnas para alias 'v.'
+                _w = _w.replace('canal ', 'v.canal ').replace('marca ', 'v.marca ').replace('kam ', 'v.kam ')
+                _w = _w.replace('categoria_macro', 'v.categoria_macro').replace('tipo_negocio', 'v.tipo_negocio')
+                _w = _w.replace('bodega', 'v.bodega').replace('sku ', 'v.sku ')
+                _w = _w.replace('LOWER(producto)', 'LOWER(v.producto)')
+                extra_where = ' AND ' + _w
+                extra_values = _v
+
         conn = self._conn()
-        ty = conn.execute("""
+        ty = conn.execute(f"""
             SELECT v.sku, COALESCE(p.producto, v.producto) as producto,
                    ROUND(SUM(v.venta_bruta), 0) as venta,
                    ROUND(SUM(v.margen_final), 0) as margen,
                    ROUND(SUM(v.cantidad), 0) as unidades,
                    ROUND(100.0 * SUM(v.margen_final) / NULLIF(SUM(v.venta_bruta), 0), 1) as pct_margen
             FROM ventas v LEFT JOIN dim_productos p ON v.sku = p.sku
-            WHERE v.tipo_movimiento = 'Venta' AND v.fecha_venta BETWEEN ? AND ?
+            WHERE v.tipo_movimiento = 'Venta' AND v.fecha_venta BETWEEN ? AND ? {extra_where}
             GROUP BY v.sku ORDER BY venta DESC LIMIT ?
-        """, [ty_desde, ty_hasta, limit]).fetchall()
+        """, [ty_desde, ty_hasta] + extra_values + [limit]).fetchall()
         skus = [r['sku'] for r in ty]
         if not skus:
             conn.close(); return []
@@ -687,16 +731,26 @@ class MaestraService:
             cur = fin_sem + timedelta(days=1)
             n_sem += 1
 
-        # Filtros adicionales
+        # Filtros adicionales (soporta escalar e IN)
         extra_clauses = []
         extra_values = []
         if params_extra:
             for k, col in [('canal', 'canal'), ('marca', 'marca'),
                             ('categoria', 'categoria_macro'), ('tipo_negocio', 'tipo_negocio'),
-                            ('kam', 'kam'), ('bodega', 'bodega')]:
-                if params_extra.get(k):
+                            ('kam', 'kam'), ('bodega', 'bodega'), ('sku', 'sku')]:
+                v = params_extra.get(k)
+                if not v:
+                    continue
+                if isinstance(v, (list, tuple, set)):
+                    placeholders = ','.join(['?'] * len(v))
+                    extra_clauses.append(f"AND {col} IN ({placeholders})")
+                    extra_values.extend(v)
+                else:
                     extra_clauses.append(f"AND {col} = ?")
-                    extra_values.append(params_extra[k])
+                    extra_values.append(v)
+            if params_extra.get('producto'):
+                extra_clauses.append("AND LOWER(producto) LIKE ?")
+                extra_values.append(f"%{str(params_extra['producto']).lower()}%")
         extra_where = ' '.join(extra_clauses)
 
         conn = self._conn()
