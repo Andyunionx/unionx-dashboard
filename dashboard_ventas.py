@@ -103,6 +103,7 @@ from views.contribucion_general import render as render_contrib_general
 from views.contribucion_meta import render as render_contrib_meta
 from views.contribucion_kam import render as render_contrib_kam
 from views.contribucion_detalle import render as render_contrib_detalle
+from views.sistema_alertas import render as render_sistema_alertas
 
 pages = {
     "📊 Ventas": [
@@ -125,6 +126,9 @@ pages = {
         st.Page(render_cruce_quiebres, title="Quiebres con demanda", icon="🚨", url_path="cruce-quiebres"),
         st.Page(render_cruce_sobrestock, title="Sobrestock", icon="💰", url_path="cruce-sobrestock"),
         st.Page(render_cruce_cobertura, title="Cobertura por canal", icon="📊", url_path="cruce-cobertura"),
+    ],
+    "⚙️ Sistema": [
+        st.Page(render_sistema_alertas, title="Alertas", icon="🚨", url_path="sistema-alertas"),
     ],
 }
 
