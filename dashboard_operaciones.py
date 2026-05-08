@@ -35,6 +35,12 @@ for _key in (
     if _key in st.secrets and not os.environ.get(_key):
         os.environ[_key] = str(st.secrets[_key])
 
+# Alias: views/shared.py (compartido con app Ventas) busca ANDRES_ODOO_PASSWORD.
+# En la app Operaciones usamos OPS_ODOO_PASSWORD pero apunta al mismo Odoo,
+# así que copiamos el valor a la env var que el código compartido espera.
+if not os.environ.get("ANDRES_ODOO_PASSWORD") and os.environ.get("OPS_ODOO_PASSWORD"):
+    os.environ["ANDRES_ODOO_PASSWORD"] = os.environ["OPS_ODOO_PASSWORD"]
+
 st.set_page_config(
     page_title="UnionX Operaciones",
     page_icon="🚢",
