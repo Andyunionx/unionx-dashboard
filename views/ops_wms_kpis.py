@@ -83,20 +83,30 @@ def render():
     # ============================================================
     # TAB 1 — RESUMEN
     # ============================================================
+    # Helper defensivo para que un crash en Tab 1 no rompa los demás tabs
+    def _safe_wms(fn, *args, default=None, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            st.session_state.setdefault('_wms_errors', []).append(
+                f"{fn.__name__}: {type(e).__name__}: {str(e)[:120]}"
+            )
+            return default if default is not None else {"valor": None, "error": f"{type(e).__name__}"}
+
     with tabs[0]:
         st.markdown("### KPIs principales — comparado con benchmarks de mercado")
 
-        # Cargar datos
-        otif_b2c = kpi_otif(dias=30, canal_b2b=False)
-        otif_b2b = kpi_otif(dias=30, canal_b2b=True)
-        pick_acc = kpi_pick_accuracy(dias=30)
-        tiempo_rec = kpi_tiempo_recepcion(dias=90)
-        exactitud = kpi_exactitud_inventario(dias=30)
-        merma = kpi_merma_operativa()
-        capacidad = get_capacidad_bodega()
+        # Cargar datos (defensivo: cualquier crash no debe romper Tab 5)
+        otif_b2c = _safe_wms(kpi_otif, dias=30, canal_b2b=False)
+        otif_b2b = _safe_wms(kpi_otif, dias=30, canal_b2b=True)
+        pick_acc = _safe_wms(kpi_pick_accuracy, dias=30)
+        tiempo_rec = _safe_wms(kpi_tiempo_recepcion, dias=90)
+        exactitud = _safe_wms(kpi_exactitud_inventario, dias=30, default={"valor": None, "total": 0})
+        merma = _safe_wms(kpi_merma_operativa, default={"valor": None, "n_meses": 0})
+        capacidad = _safe_wms(get_capacidad_bodega, default={}) or {}
 
         mes_actual = datetime.now().strftime("%Y-%m")
-        equipo = get_equipo_mes(mes_actual)
+        equipo = _safe_wms(get_equipo_mes, mes_actual, default={}) or {}
 
         # Fila 1: KPIs Odoo automáticos
         st.markdown("#### 🟢 Desde Odoo (automático)")
@@ -214,6 +224,16 @@ def render():
              "Benchmark": "≤ 0.5% del inventario", "Fuente": "Retail multicategoría"},
         ]
         st.dataframe(pd.DataFrame(bench), use_container_width=True, hide_index=True)
+
+        # Expander con errores capturados (no rompe los otros tabs)
+        errs = st.session_state.get('_wms_errors', [])
+        if errs:
+            with st.expander(f"🐛 Errores helpers Odoo capturados ({len(errs)})", expanded=False):
+                for e in errs[:10]:
+                    st.code(e)
+                if st.button("🧹 Limpiar errores", key="wms_clear_errs"):
+                    st.session_state['_wms_errors'] = []
+                    st.rerun()
 
     # ============================================================
     # TAB 2 — OTIF
