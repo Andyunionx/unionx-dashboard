@@ -163,6 +163,7 @@ test/
 # ============== SCRIPTS / DOCS DEL MONOREPO ==============
 *.txt
 !requirements.txt
+!runtime.txt
 !.gitignore
 !.github/**/*.txt
 *.bat
