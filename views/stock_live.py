@@ -1,9 +1,8 @@
-"""Stock LIVE — UI completa con KPIs cards + gauge + sub-tabs."""
+"""Stock LIVE — vista mínima: Stock Total + Por Bodega + Descarga."""
+import io
 from datetime import datetime
 
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 from views.shared import cached_stock
@@ -17,56 +16,6 @@ SEM_DISPLAY = {
     'SOBRESTOCK': '🔵 SOBRESTOCK',
     'SIN VENTA': '⚪ SIN VENTA',
 }
-
-CSS = """
-<style>
-    .kpi-card {
-        background: white; border-radius: 12px; padding: 18px 20px; text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #E2E8F0;
-        transition: transform 0.15s; height: 100%;
-    }
-    .kpi-card:hover {transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
-    .kpi-label {font-size: 0.75rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 4px;}
-    .kpi-value {font-size: 1.6rem; font-weight: 700; color: #1E293B; line-height: 1.2;}
-    .kpi-value.blue {color: #1F4E79;}
-    .kpi-value.red {color: #DC2626;}
-    .kpi-value.green {color: #16A34A;}
-    .kpi-value.orange {color: #EA580C;}
-    .kpi-sub {font-size: 0.72rem; color: #94A3B8; margin-top: 2px;}
-    .occ-container {background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #E2E8F0;}
-    .occ-bar-bg {background: #E2E8F0; border-radius: 8px; height: 24px; overflow: hidden; position: relative;}
-    .occ-bar-fill {height: 100%; border-radius: 8px; transition: width 0.5s;}
-    .occ-label {font-size: 0.75rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;}
-    .occ-pct {font-size: 1.4rem; font-weight: 700; color: #1E293B;}
-    .section-header {
-        font-size: 1rem; font-weight: 700; color: #1E293B; padding: 8px 0 6px 0;
-        border-bottom: 2px solid #1F4E79; margin-bottom: 12px; letter-spacing: 0.3px;
-    }
-</style>
-"""
-
-
-def _kpi_card(label, value, sub="", color="blue"):
-    return f"""<div class="kpi-card">
-        <div class="kpi-label">{label}</div>
-        <div class="kpi-value {color}">{value}</div>
-        <div class="kpi-sub">{sub}</div>
-    </div>"""
-
-
-def _occ_bar(label, occupied, total):
-    pct = (occupied / total * 100) if total > 0 else 0
-    color = "#16A34A" if pct < 80 else ("#EA580C" if pct < 95 else "#DC2626")
-    return f"""<div class="occ-container" style="margin-bottom:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
-            <span class="occ-label">{label}</span>
-            <span class="occ-pct" style="color:{color}">{pct:.0f}%</span>
-        </div>
-        <div class="occ-bar-bg">
-            <div class="occ-bar-fill" style="width:{min(pct,100):.0f}%; background:{color};"></div>
-        </div>
-        <div style="font-size:0.7rem; color:#94A3B8; margin-top:3px; text-align:right;">{occupied} / {total} posiciones</div>
-    </div>"""
 
 
 def _color_sem(val):
@@ -83,9 +32,6 @@ def _color_sem(val):
 
 
 def render():
-    st.markdown(CSS, unsafe_allow_html=True)
-
-    # Sidebar específica Stock
     with st.sidebar:
         st.markdown("### 📦 **Stock LIVE**")
         st.caption("Inventario en tiempo real")
@@ -93,17 +39,7 @@ def render():
         if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="stock_refresh"):
             cached_stock.clear()
             st.rerun()
-        st.markdown("##### Semáforo (target 3 meses)")
-        st.markdown("""
-        🔴 < 30 días — Crítico
-        🟡 30-89 días — Bajo
-        🟢 90-180 días — Óptimo
-        🔵 > 180 días — Sobrestock
-        ⚪ Sin venta reciente
-        """)
-        st.markdown("---")
 
-    # Load
     try:
         data = cached_stock()
     except Exception as e:
@@ -112,15 +48,13 @@ def render():
 
     df_sku = pd.DataFrame(data['skus'])
     df_det = pd.DataFrame(data['detalle'])
-    occ = data['ocupacion']
-
     if df_sku.empty:
         st.warning("Sin datos de stock")
         return
 
     df_sku['Semaforo'] = df_sku['Semaforo'].map(SEM_DISPLAY).fillna(df_sku['Semaforo'])
 
-    # Filtros sidebar adicionales (defensivos: solo si la columna existe)
+    # Filtros sidebar (defensivos)
     with st.sidebar:
         st.markdown("##### Filtros")
         sku_f = []
@@ -138,11 +72,6 @@ def render():
             marca_options = sorted([m for m in df_sku['Marca'].dropna().unique() if m])
             marca_f = st.selectbox("Marca", ["Todas"] + marca_options, key="stock_marca")
 
-        sem_f = "Todos"
-        if 'Semaforo' in df_sku.columns:
-            sem_options = sorted(df_sku['Semaforo'].dropna().unique().tolist())
-            sem_f = st.selectbox("Semáforo", ["Todos"] + sem_options, key="stock_sem")
-
         bod_f = "Todas"
         if 'Bodega' in df_det.columns:
             bod_options = sorted([b for b in df_det['Bodega'].dropna().unique() if b])
@@ -155,129 +84,67 @@ def render():
         df_f = df_f[df_f['Categoria'] == cat_f]
     if marca_f != "Todas" and 'Marca' in df_f.columns:
         df_f = df_f[df_f['Marca'] == marca_f]
-    if sem_f != "Todos" and 'Semaforo' in df_f.columns:
-        df_f = df_f[df_f['Semaforo'] == sem_f]
     if bod_f != "Todas" and 'Bodega' in df_f.columns:
         df_f = df_f[df_f['Bodega'].astype(str).str.contains(bod_f, na=False)]
 
     # Header
-    st.markdown("<h2 style='margin:0 0 4px 0; color:#1E293B;'>📦 Dashboard de Stock</h2>", unsafe_allow_html=True)
+    st.title("📦 Stock LIVE")
     gen = data.get('metadata', {}).get('generado_en', datetime.now().isoformat())
     try:
         gen_fmt = datetime.fromisoformat(gen).strftime('%d/%m/%Y %H:%M')
     except Exception:
         gen_fmt = gen[:16]
-    st.markdown(f"<span style='color:#94A3B8; font-size:0.8rem;'>Generado: {gen_fmt} · Cache 5 min</span>", unsafe_allow_html=True)
-    st.markdown("")
+    st.caption(f"Inventario en tiempo real desde Odoo · Generado: {gen_fmt} · Cache 5 min")
 
-    # KPIs
+    # KPIs principales
     total_val = float(df_f['Valor'].sum()) if 'Valor' in df_f.columns else 0
     total_qty = float(df_f['Qty'].sum()) if 'Qty' in df_f.columns else 0
     n_skus = len(df_f)
-    n_quiebre = len(df_f[df_f['Semaforo'].str.contains('QUIEBRE|CRITICO', na=False)])
-    n_bajo = len(df_f[df_f['Semaforo'].str.contains('BAJO', na=False)])
-    n_optimo = len(df_f[df_f['Semaforo'].str.contains('OPTIMO', na=False)])
-    n_sobre = len(df_f[df_f['Semaforo'].str.contains('SOBRESTOCK', na=False)])
-    n_sinventa = len(df_f[df_f['Semaforo'].str.contains('SIN VENTA', na=False)])
-    rot_30d_avg = df_f[df_f['Rot 30d Uds'] > 0]['Rot 30d Uds'].mean() if 'Rot 30d Uds' in df_f.columns and len(df_f[df_f['Rot 30d Uds'] > 0]) > 0 else 0
-    rot_90d_avg = df_f[df_f['Rot 90d Uds'] > 0]['Rot 90d Uds'].mean() if 'Rot 90d Uds' in df_f.columns and len(df_f[df_f['Rot 90d Uds'] > 0]) > 0 else 0
 
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    with c1:
-        st.markdown(_kpi_card("Valor Inventario", f"${total_val:,.0f}", f"{n_skus:,} SKUs activos", "blue"), unsafe_allow_html=True)
-    with c2:
-        st.markdown(_kpi_card("Unidades", f"{total_qty:,.0f}", f"Costo prom ${total_val/n_skus:,.0f}/SKU" if n_skus else "", "blue"), unsafe_allow_html=True)
-    with c3:
-        st.markdown(_kpi_card("Críticos / Quiebre", str(n_quiebre), "< 30 días", "red"), unsafe_allow_html=True)
-    with c4:
-        st.markdown(_kpi_card("Bajo Stock", str(n_bajo), "30-89 días", "orange"), unsafe_allow_html=True)
-    with c5:
-        st.markdown(_kpi_card("Óptimo", str(n_optimo), "90-180 días", "green"), unsafe_allow_html=True)
-    with c6:
-        st.markdown(_kpi_card("Sobrestock", str(n_sobre), f"> 180d · {n_sinventa} sin venta", "blue"), unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("💰 Valor Inventario", f"${total_val/1e6:,.1f}M", help=f"{n_skus:,} SKUs activos")
+    c2.metric("📦 Unidades en stock", f"{total_qty:,.0f}")
+    c3.metric("🔢 SKUs activos", f"{n_skus:,}")
 
-    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+    st.divider()
 
-    # Ocupación + Semáforo + Valor por bodega
-    col_occ, col_sem, col_bod = st.columns([1, 1, 1.5])
-
-    with col_occ:
-        st.markdown('<div class="section-header">🏭 Ocupación CA1/Stock</div>', unsafe_allow_html=True)
-        st.markdown(_occ_bar("CA1/Stock", occ.get('occupied', 0), occ.get('total', 0)), unsafe_allow_html=True)
-        st.markdown(f"""<div style="display:flex; gap:12px; margin-top:10px;">
-            <div style="flex:1; text-align:center; background:#D1FAE5; border-radius:8px; padding:12px;">
-                <div style="font-size:1.6rem; font-weight:700; color:#065F46;">{occ.get('occupied', 0)}</div>
-                <div style="font-size:0.75rem; color:#065F46;">Ocupadas</div>
-            </div>
-            <div style="flex:1; text-align:center; background:#FEE2E2; border-radius:8px; padding:12px;">
-                <div style="font-size:1.6rem; font-weight:700; color:#991B1B;">{occ.get('empty', 0)}</div>
-                <div style="font-size:0.75rem; color:#991B1B;">Vacías</div>
-            </div>
-            <div style="flex:1; text-align:center; background:#DBEAFE; border-radius:8px; padding:12px;">
-                <div style="font-size:1.6rem; font-weight:700; color:#1E40AF;">{occ.get('total', 0)}</div>
-                <div style="font-size:0.75rem; color:#1E40AF;">Total</div>
-            </div>
-        </div>""", unsafe_allow_html=True)
-
-    with col_sem:
-        st.markdown('<div class="section-header">🚦 Distribución Semáforo</div>', unsafe_allow_html=True)
-        sem_data = df_f['Semaforo'].value_counts().reset_index()
-        sem_data.columns = ['Semaforo', 'SKUs']
-        cmap = {
-            '🔴 QUIEBRE': '#EF4444', '🔴 CRITICO': '#F87171', '🟡 BAJO': '#F59E0B',
-            '🟢 OPTIMO': '#10B981', '🔵 SOBRESTOCK': '#3B82F6', '⚪ SIN VENTA': '#CBD5E1',
-        }
-        fig = px.pie(sem_data, names='Semaforo', values='SKUs', color='Semaforo',
-                     color_discrete_map=cmap, hole=0.45)
-        fig.update_layout(margin=dict(t=10, b=10, l=10, r=10), height=320,
-                          legend=dict(orientation='h', yanchor='top', y=-0.05, font=dict(size=10)),
-                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        fig.update_traces(textinfo='percent+value', textfont_size=11)
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col_bod:
-        st.markdown('<div class="section-header">💰 Valor por Bodega</div>', unsafe_allow_html=True)
-        if 'Bodega' in df_det.columns and 'Valor' in df_det.columns:
-            df_bod = df_det.groupby('Bodega').agg({'Valor': 'sum'}).reset_index()
-            df_bod = df_bod.sort_values('Valor', ascending=True).tail(12)
-            fig_b = go.Figure(go.Bar(
-                y=df_bod['Bodega'], x=df_bod['Valor'], orientation='h',
-                marker_color='#1F4E79', text=df_bod['Valor'].apply(lambda x: f"${x/1e6:.1f}M"),
-                textposition='outside', textfont=dict(size=10),
-            ))
-            fig_b.update_layout(margin=dict(t=10, b=10, l=10, r=60), height=320,
-                                xaxis=dict(showgrid=True, gridcolor='#F1F5F9', title=''),
-                                yaxis=dict(title=''), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig_b, use_container_width=True)
-
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-    # Sub-tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 Stock Total", "🏭 Por Bodega", "📍 Ocupación Detalle", "🚨 Alertas", "📈 Top Rotación",
-    ])
+    # Tabs reducidos: Stock Total + Por Bodega
+    tab1, tab2 = st.tabs(["📊 Stock Total", "🏭 Por Bodega"])
 
     with tab1:
+        st.markdown("### Stock Total Empresa")
         cols = [c for c in [
             'SKU', 'Producto', 'Categoria', 'Marca', 'Qty', 'Reservada', 'Disponible',
-            'Costo Unit', 'Valor', 'Vta 30d Qty', 'Vta 90d Qty', 'Dias Stock',
-            'Rot 30d Uds', 'Rot 90d Uds', 'Rot 30d $', 'Rot 90d $', 'Semaforo',
+            'Costo Unit', 'Valor', 'Semaforo',
         ] if c in df_f.columns]
         dfd = df_f[cols].sort_values('Valor', ascending=False) if 'Valor' in df_f.columns else df_f[cols]
+
         st.dataframe(
             dfd.style.map(_color_sem, subset=['Semaforo']).format({
                 'Qty': '{:,.0f}', 'Reservada': '{:,.0f}', 'Disponible': '{:,.0f}',
                 'Costo Unit': '${:,.0f}', 'Valor': '${:,.0f}',
-                'Vta 30d Qty': '{:,.0f}', 'Vta 90d Qty': '{:,.0f}',
-                'Dias Stock': '{:,.0f}',
-                'Rot 30d Uds': '{:.2f}x', 'Rot 90d Uds': '{:.2f}x',
-                'Rot 30d $': '{:.2f}x', 'Rot 90d $': '{:.2f}x',
             }),
-            height=550, use_container_width=True, hide_index=True,
+            height=520, use_container_width=True, hide_index=True,
         )
-        st.caption(f"{len(dfd):,} SKUs · Valor: ${dfd['Valor'].sum() if 'Valor' in dfd.columns else 0:,.0f} · Rot prom 30d: {rot_30d_avg:.2f}x · Rot prom 90d: {rot_90d_avg:.2f}x")
+        st.caption(f"{len(dfd):,} SKUs · Valor total: ${dfd['Valor'].sum() if 'Valor' in dfd.columns else 0:,.0f}")
+
+        # Descarga Excel del Stock Total
+        if st.button("📥 Descargar Stock Total (Excel)", key="dl_stock_total", use_container_width=True):
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as w:
+                dfd.to_excel(w, index=False, sheet_name='Stock Total')
+            output.seek(0)
+            st.download_button(
+                label=f"💾 Confirmar descarga ({len(dfd):,} filas)",
+                data=output,
+                file_name=f"Stock_total_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key="dl_stock_total_btn",
+                use_container_width=True,
+            )
 
     with tab2:
+        st.markdown("### Detalle por Bodega y Ubicación")
         df_d2 = df_det.copy()
         if sku_f and 'SKU' in df_d2.columns:
             df_d2 = df_d2[df_d2['SKU'].isin(sku_f)]
@@ -285,146 +152,36 @@ def render():
             df_d2 = df_d2[df_d2['Categoria'] == cat_f]
         if bod_f != "Todas" and 'Bodega' in df_d2.columns:
             df_d2 = df_d2[df_d2['Bodega'].astype(str).str.contains(bod_f, na=False)]
+
         cols2 = [c for c in ['Bodega', 'Ubicacion', 'Tipo', 'SKU', 'Producto', 'Categoria',
-                              'Qty', 'Reservada', 'Disponible', 'Costo Unit', 'Valor'] if c in df_d2.columns]
+                              'Marca', 'Qty', 'Reservada', 'Disponible', 'Costo Unit', 'Valor'] if c in df_d2.columns]
         if 'Valor' in df_d2.columns:
             df_d2_sorted = df_d2[cols2].sort_values(['Bodega', 'Valor'], ascending=[True, False])
         else:
             df_d2_sorted = df_d2[cols2]
+
         st.dataframe(
             df_d2_sorted.style.format({
                 'Qty': '{:,.0f}', 'Reservada': '{:,.0f}', 'Disponible': '{:,.0f}',
                 'Costo Unit': '${:,.0f}', 'Valor': '${:,.0f}',
             }),
-            height=550, use_container_width=True, hide_index=True,
+            height=520, use_container_width=True, hide_index=True,
         )
-        st.caption(f"{len(df_d2):,} líneas")
+        st.caption(f"{len(df_d2):,} líneas · Valor: ${df_d2['Valor'].sum() if 'Valor' in df_d2.columns else 0:,.0f}")
 
-    with tab3:
-        c_k1, c_k2, c_k3, c_k4 = st.columns(4)
-        with c_k1:
-            st.markdown(_kpi_card("Total Posiciones", str(occ.get('total', 0)), "CA1/Stock", "blue"), unsafe_allow_html=True)
-        with c_k2:
-            st.markdown(_kpi_card("Ocupadas", str(occ.get('occupied', 0)), f"{occ.get('pct', 0)}%", "green"), unsafe_allow_html=True)
-        with c_k3:
-            st.markdown(_kpi_card("Vacías", str(occ.get('empty', 0)), f"{100 - occ.get('pct', 0)}%", "red"), unsafe_allow_html=True)
-        with c_k4:
-            st.markdown(_kpi_card("% Ocupación", f"{occ.get('pct', 0)}%", "Target: <85%", "blue"), unsafe_allow_html=True)
-
-        c_o1, c_o2 = st.columns([1, 2])
-        with c_o1:
-            fig_gauge = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=occ.get('pct', 0),
-                number={"suffix": "%", "font": {"size": 40}},
-                gauge={
-                    "axis": {"range": [0, 100], "tickwidth": 1},
-                    "bar": {"color": "#1F4E79"},
-                    "steps": [
-                        {"range": [0, 70], "color": "#D1FAE5"},
-                        {"range": [70, 85], "color": "#FEF3C7"},
-                        {"range": [85, 100], "color": "#FEE2E2"},
-                    ],
-                    "threshold": {"line": {"color": "#EF4444", "width": 3}, "thickness": 0.8, "value": 85},
-                },
-                title={"text": "Tasa de Ocupación", "font": {"size": 14}},
-            ))
-            fig_gauge.update_layout(height=280, margin=dict(t=40, b=20, l=30, r=30),
-                                    paper_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig_gauge, use_container_width=True)
-
-        with c_o2:
-            if occ.get('positions'):
-                df_pos = pd.DataFrame(occ['positions']).sort_values('Posicion')
-
-                def _color_estado(val):
-                    if val == "Ocupada":
-                        return "background-color:#D1FAE5; color:#065F46; font-weight:600"
-                    return "background-color:#FEE2E2; color:#991B1B; font-weight:600"
-
-                estado_f = st.radio("Filtrar:", ["Todas", "Ocupadas", "Vacías"], horizontal=True, key="occ_filter")
-                if estado_f == "Ocupadas":
-                    df_pos = df_pos[df_pos['Estado'] == 'Ocupada']
-                elif estado_f == "Vacías":
-                    df_pos = df_pos[df_pos['Estado'] == 'Vacia']
-                cols_pos = [c for c in ['Posicion', 'Estado', 'SKUs'] if c in df_pos.columns]
-                st.dataframe(
-                    df_pos[cols_pos].style.map(_color_estado, subset=['Estado']),
-                    height=400, use_container_width=True, hide_index=True,
-                )
-
-    with tab4:
-        c_a1, c_a2 = st.columns(2)
-        with c_a1:
-            st.markdown("**🔴 Críticos / Quiebre**")
-            df_al = df_f[df_f['Semaforo'].str.contains('QUIEBRE|CRITICO', na=False)].sort_values('Vta 30d Qty', ascending=False) if 'Vta 30d Qty' in df_f.columns else df_f[df_f['Semaforo'].str.contains('QUIEBRE|CRITICO', na=False)]
-            if len(df_al) > 0:
-                cols_al = [c for c in ['SKU', 'Producto', 'Qty', 'Vta 30d Qty', 'Dias Stock', 'Valor'] if c in df_al.columns]
-                st.dataframe(
-                    df_al[cols_al].style.format({'Qty': '{:,.0f}', 'Vta 30d Qty': '{:,.0f}', 'Valor': '${:,.0f}'}),
-                    height=380, use_container_width=True, hide_index=True,
-                )
-                st.error(f"{len(df_al)} SKUs en riesgo")
-            else:
-                st.success("Sin críticos")
-
-        with c_a2:
-            st.markdown("**🔵 Sobrestock**")
-            df_so = df_f[df_f['Semaforo'].str.contains('SOBRESTOCK', na=False)].sort_values('Valor', ascending=False) if 'Valor' in df_f.columns else df_f[df_f['Semaforo'].str.contains('SOBRESTOCK', na=False)]
-            if len(df_so) > 0:
-                cols_so = [c for c in ['SKU', 'Producto', 'Qty', 'Vta 30d Qty', 'Dias Stock', 'Valor'] if c in df_so.columns]
-                st.dataframe(
-                    df_so[cols_so].style.format({'Qty': '{:,.0f}', 'Vta 30d Qty': '{:,.0f}', 'Valor': '${:,.0f}'}),
-                    height=380, use_container_width=True, hide_index=True,
-                )
-                st.warning(f"{len(df_so)} SKUs · ${df_so['Valor'].sum() if 'Valor' in df_so.columns else 0:,.0f} inmovilizado")
-            else:
-                st.success("Sin sobrestock")
-
-    with tab5:
-        cmap_r = {
-            '🔴 QUIEBRE': '#EF4444', '🔴 CRITICO': '#F87171', '🟡 BAJO': '#F59E0B',
-            '🟢 OPTIMO': '#10B981', '🔵 SOBRESTOCK': '#3B82F6', '⚪ SIN VENTA': '#CBD5E1',
-        }
-        rot_tab1, rot_tab2 = st.tabs(["📊 Rotación 30 días", "📊 Rotación 90 días"])
-
-        with rot_tab1:
-            if 'Rot 30d Uds' in df_f.columns and 'Vta 30d Qty' in df_f.columns:
-                df_rot30 = df_f[df_f['Vta 30d Qty'] > 0].sort_values('Rot 30d Uds', ascending=False).head(25)
-                if len(df_rot30) > 0:
-                    df_chart = df_rot30.head(20).copy()
-                    df_chart['Label'] = df_chart.apply(
-                        lambda r: (str(r['SKU'])[:15] if r.get('SKU') and not str(r['SKU']).isdigit() else str(r.get('Producto', ''))[:25]),
-                        axis=1,
-                    )
-                    fig_r30 = px.bar(df_chart, x='Label', y='Rot 30d Uds', color='Semaforo',
-                                     color_discrete_map=cmap_r, text='Rot 30d Uds',
-                                     labels={'Label': 'Producto', 'Rot 30d Uds': 'Rotación 30d (veces)'})
-                    fig_r30.update_layout(xaxis_tickangle=-45, height=420, margin=dict(t=20, b=120),
-                                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                          xaxis=dict(showgrid=False, type='category'),
-                                          yaxis=dict(showgrid=True, gridcolor='#F1F5F9'))
-                    fig_r30.update_traces(texttemplate='%{text:.1f}x', textposition='outside', textfont_size=9)
-                    st.plotly_chart(fig_r30, use_container_width=True)
-
-        with rot_tab2:
-            if 'Rot 90d Uds' in df_f.columns and 'Vta 90d Qty' in df_f.columns:
-                df_rot90 = df_f[df_f['Vta 90d Qty'] > 0].sort_values('Rot 90d Uds', ascending=False).head(25)
-                if len(df_rot90) > 0:
-                    df_chart90 = df_rot90.head(20).copy()
-                    df_chart90['Label'] = df_chart90.apply(
-                        lambda r: (str(r['SKU'])[:15] if r.get('SKU') and not str(r['SKU']).isdigit() else str(r.get('Producto', ''))[:25]),
-                        axis=1,
-                    )
-                    fig_r90 = px.bar(df_chart90, x='Label', y='Rot 90d Uds', color='Semaforo',
-                                     color_discrete_map=cmap_r, text='Rot 90d Uds',
-                                     labels={'Label': 'Producto', 'Rot 90d Uds': 'Rotación 90d (veces)'})
-                    fig_r90.update_layout(xaxis_tickangle=-45, height=420, margin=dict(t=20, b=120),
-                                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                          xaxis=dict(showgrid=False, type='category'),
-                                          yaxis=dict(showgrid=True, gridcolor='#F1F5F9'))
-                    fig_r90.update_traces(texttemplate='%{text:.1f}x', textposition='outside', textfont_size=9)
-                    st.plotly_chart(fig_r90, use_container_width=True)
+        if st.button("📥 Descargar Por Bodega (Excel)", key="dl_stock_bodega", use_container_width=True):
+            output = io.BytesIO()
+            with pd.ExcelWriter(output, engine='openpyxl') as w:
+                df_d2_sorted.to_excel(w, index=False, sheet_name='Stock por Bodega')
+            output.seek(0)
+            st.download_button(
+                label=f"💾 Confirmar descarga ({len(df_d2):,} filas)",
+                data=output,
+                file_name=f"Stock_por_bodega_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key="dl_stock_bodega_btn",
+                use_container_width=True,
+            )
 
     st.markdown("---")
     total_locs = data.get('metadata', {}).get('total_locations', 0)

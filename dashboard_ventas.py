@@ -99,6 +99,7 @@ from views.cruce_bestsellers import render as render_cruce_bestsellers
 from views.cruce_quiebres import render as render_cruce_quiebres
 from views.cruce_sobrestock import render as render_cruce_sobrestock
 from views.cruce_cobertura import render as render_cruce_cobertura
+from views.cruce_rotacion import render as render_cruce_rotacion
 from views.contribucion_general import render as render_contrib_general
 from views.contribucion_meta import render as render_contrib_meta
 from views.contribucion_kam import render as render_contrib_kam
@@ -127,6 +128,7 @@ pages = {
         st.Page(render_cruce_quiebres, title="Quiebres con demanda", icon="🚨", url_path="cruce-quiebres"),
         st.Page(render_cruce_sobrestock, title="Sobrestock", icon="💰", url_path="cruce-sobrestock"),
         st.Page(render_cruce_cobertura, title="Cobertura por canal", icon="📊", url_path="cruce-cobertura"),
+        st.Page(render_cruce_rotacion, title="Rotación inventario", icon="📈", url_path="cruce-rotacion"),
     ],
     "⚙️ Sistema": [
         st.Page(render_sistema_alertas, title="Alertas", icon="🚨", url_path="sistema-alertas"),
