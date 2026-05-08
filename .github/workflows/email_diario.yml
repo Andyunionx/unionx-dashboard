@@ -3,7 +3,8 @@ name: Email Diario Raw Ventas
 on:
   schedule:
     # 8:00 AM Chile = 12:00 UTC (Chile UTC-4 sin DST)
-    - cron: '0 12 * * *'
+    # Solo días hábiles: lunes (1) a viernes (5)
+    - cron: '0 12 * * 1-5'
   workflow_dispatch:    # Permite trigger manual
 
 jobs:
@@ -30,7 +31,7 @@ jobs:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_TO: ${{ vars.EMAIL_TO || 'andres@unionx.cl' }}
+          EMAIL_TO: ${{ vars.EMAIL_TO || 'andres@grupoeter.cl,nicolas@unionx.cl,nicole@unionx.cl' }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
           PYTHONIOENCODING: utf-8
         run: python enviar_excel_diario.py

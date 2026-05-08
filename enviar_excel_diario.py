@@ -24,7 +24,10 @@ import requests
 URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
 TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-EMAIL_TO = [e.strip() for e in os.environ.get('EMAIL_TO', 'andres@unionx.cl').split(',') if e.strip()]
+EMAIL_TO = [e.strip() for e in os.environ.get(
+    'EMAIL_TO',
+    'andres@grupoeter.cl,nicolas@unionx.cl,nicole@unionx.cl'
+).split(',') if e.strip()]
 EMAIL_FROM = os.environ.get('EMAIL_FROM', 'onboarding@resend.dev')
 
 if not URL or not TOKEN:
