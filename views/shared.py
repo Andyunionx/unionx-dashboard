@@ -212,15 +212,39 @@ def cached_filtros():
     return get_service().get_filtros_disponibles()
 
 
-@st.cache_data(ttl=300)
-def cached_kpis(desde, hasta, canal, marca, categoria, tipo_negocio, kam):
+def _params_from_filtros(desde, hasta, f: dict | None = None) -> dict:
+    """Construye el dict de params para los métodos del service desde dict de filtros."""
     p = {'fecha_desde': desde, 'fecha_hasta': hasta}
-    if canal: p['canal'] = canal
-    if marca: p['marca'] = marca
-    if categoria: p['categoria'] = categoria
-    if tipo_negocio: p['tipo_negocio'] = tipo_negocio
-    if kam: p['kam'] = kam
-    return get_service().get_kpis_yoy(p)
+    if not f:
+        return p
+    for k in ('canal', 'marca', 'categoria_padre', 'categoria_hijo',
+              'tipo_negocio', 'kam', 'producto', 'sku'):
+        v = f.get(k)
+        if v:
+            p[k] = v
+    if f.get('categoria'):  # backward compat
+        p['categoria'] = f['categoria']
+    return p
+
+
+def _filtros_to_key(f: dict | None) -> str:
+    """Serializa filtros a string estable para cache key."""
+    import json
+    if not f:
+        return ""
+    # Ordenar para que el orden no afecte el hash
+    return json.dumps(f, sort_keys=True, default=str)
+
+
+@st.cache_data(ttl=300)
+def _cached_kpis_inner(desde, hasta, key_filtros):
+    import json
+    f = json.loads(key_filtros) if key_filtros else {}
+    return get_service().get_kpis_yoy(_params_from_filtros(desde, hasta, f))
+
+
+def cached_kpis(desde, hasta, filtros: dict | None = None):
+    return _cached_kpis_inner(desde, hasta, _filtros_to_key(filtros))
 
 
 @st.cache_data(ttl=300)
@@ -234,36 +258,36 @@ def cached_diaria(anio, mes):
 
 
 @st.cache_data(ttl=300)
-def cached_semanal(anio, mes, canal, marca, categoria, tipo_negocio, kam):
-    p = {}
-    if canal: p['canal'] = canal
-    if marca: p['marca'] = marca
-    if categoria: p['categoria'] = categoria
-    if tipo_negocio: p['tipo_negocio'] = tipo_negocio
-    if kam: p['kam'] = kam
-    return get_service().get_tendencia_semanal_yoy(anio, mes, p)
+def _cached_semanal_inner(anio, mes, key_filtros):
+    import json
+    f = json.loads(key_filtros) if key_filtros else {}
+    return get_service().get_tendencia_semanal_yoy(anio, mes, _params_from_filtros(None, None, f))
+
+
+def cached_semanal(anio, mes, filtros: dict | None = None):
+    return _cached_semanal_inner(anio, mes, _filtros_to_key(filtros))
 
 
 @st.cache_data(ttl=300)
-def cached_canales(desde, hasta, canal, marca, categoria, tipo_negocio, kam):
-    p = {'fecha_desde': desde, 'fecha_hasta': hasta}
-    if canal: p['canal'] = canal
-    if marca: p['marca'] = marca
-    if categoria: p['categoria'] = categoria
-    if tipo_negocio: p['tipo_negocio'] = tipo_negocio
-    if kam: p['kam'] = kam
-    return get_service().get_por_canal_yoy(p)
+def _cached_canales_inner(desde, hasta, key_filtros):
+    import json
+    f = json.loads(key_filtros) if key_filtros else {}
+    return get_service().get_por_canal_yoy(_params_from_filtros(desde, hasta, f))
+
+
+def cached_canales(desde, hasta, filtros: dict | None = None):
+    return _cached_canales_inner(desde, hasta, _filtros_to_key(filtros))
 
 
 @st.cache_data(ttl=300)
-def cached_top_skus(desde, hasta, canal, marca, categoria, tipo_negocio, kam, limit):
-    p = {'fecha_desde': desde, 'fecha_hasta': hasta}
-    if canal: p['canal'] = canal
-    if marca: p['marca'] = marca
-    if categoria: p['categoria'] = categoria
-    if tipo_negocio: p['tipo_negocio'] = tipo_negocio
-    if kam: p['kam'] = kam
-    return get_service().get_top_skus_yoy(p, limit=limit)
+def _cached_top_skus_inner(desde, hasta, key_filtros, limit):
+    import json
+    f = json.loads(key_filtros) if key_filtros else {}
+    return get_service().get_top_skus_yoy(_params_from_filtros(desde, hasta, f), limit=limit)
+
+
+def cached_top_skus(desde, hasta, filtros: dict | None = None, limit: int = 20):
+    return _cached_top_skus_inner(desde, hasta, _filtros_to_key(filtros), limit)
 
 
 @st.cache_data(ttl=600)
@@ -346,40 +370,52 @@ def render_filters_sidebar(prefix="ventas"):
 
 
 def render_ventas_filters_top(prefix="ventas"):
-    """Filtros al tope de la página (multi-select), estilo Contribución.
-    Devuelve dict {canal, marca, categoria, tipo_negocio, kam, producto}.
-    """
+    """Filtros al tope (multi-select). Dos filas para mejor visibilidad."""
     filtros_disp = cached_filtros()
 
     st.markdown("##### 🔍 Filtros")
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
 
-    with c1:
-        f_categoria = st.multiselect("Categoría", filtros_disp.get('categorias', []),
-                                     default=[], key=f"{prefix}_cat")
-    with c2:
-        f_marca = st.multiselect("Marca", filtros_disp.get('marcas', []),
-                                  default=[], key=f"{prefix}_marca")
-    with c3:
-        f_tn = st.multiselect("Línea Negocio", filtros_disp.get('tipos_negocio', []),
-                               default=[], key=f"{prefix}_tn")
-    with c4:
+    # Fila 1: KAM, Tipo Negocio, Canal, Marca
+    r1c1, r1c2, r1c3, r1c4 = st.columns(4)
+    with r1c1:
         f_kam = st.multiselect("KAM", filtros_disp.get('kams', []),
                                 default=[], key=f"{prefix}_kam")
-    with c5:
+    with r1c2:
+        f_tn = st.multiselect("Línea Negocio", filtros_disp.get('tipos_negocio', []),
+                               default=[], key=f"{prefix}_tn")
+    with r1c3:
         f_canal = st.multiselect("Canal", filtros_disp.get('canales', []),
                                   default=[], key=f"{prefix}_canal")
-    with c6:
-        f_producto = st.text_input("Producto contiene", value="", key=f"{prefix}_prod",
-                                   placeholder="Ej: pala, lhotse")
+    with r1c4:
+        f_marca = st.multiselect("Marca", filtros_disp.get('marcas', []),
+                                  default=[], key=f"{prefix}_marca")
+
+    # Fila 2: Cat Padre, Cat Hija, Producto, SKU
+    r2c1, r2c2, r2c3, r2c4 = st.columns(4)
+    with r2c1:
+        f_cat_padre = st.multiselect("Categoría Padre", filtros_disp.get('categorias_padre', []),
+                                      default=[], key=f"{prefix}_catpadre")
+    with r2c2:
+        f_cat_hijo = st.multiselect("Categoría Hija", filtros_disp.get('categorias_hijo', []),
+                                     default=[], key=f"{prefix}_cathijo")
+    with r2c3:
+        f_producto = st.multiselect("Producto", filtros_disp.get('productos', []),
+                                     default=[], key=f"{prefix}_prod",
+                                     placeholder="Buscar producto...")
+    with r2c4:
+        f_sku = st.multiselect("SKU", filtros_disp.get('skus', []),
+                                default=[], key=f"{prefix}_sku",
+                                placeholder="Buscar SKU...")
 
     f = {
         'canal': f_canal or None,
         'marca': f_marca or None,
-        'categoria': f_categoria or None,
+        'categoria_padre': f_cat_padre or None,
+        'categoria_hijo': f_cat_hijo or None,
         'tipo_negocio': f_tn or None,
         'kam': f_kam or None,
-        'producto': f_producto.strip() or None,
+        'producto': f_producto or None,
+        'sku': f_sku or None,
     }
 
     activos = []

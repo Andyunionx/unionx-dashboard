@@ -45,9 +45,9 @@ def render():
         st.write("")
         st.caption(f"Comparado vs LY: {desde.replace(year=desde.year-1)} → {hasta.replace(year=hasta.year-1)}")
 
-    # KPIs
+    # KPIs (filtros como dict)
     try:
-        kpis = cached_kpis(desde_str, hasta_str, f['canal'], f['marca'], f['categoria'], f['tipo_negocio'], f['kam'])
+        kpis = cached_kpis(desde_str, hasta_str, f)
     except Exception as e:
         st.error(f"Error: {e}")
         return
@@ -153,7 +153,7 @@ def render():
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("Por Canal (TY vs LY)")
-        df_c = pd.DataFrame(cached_canales(desde_str, hasta_str, f['canal'], f['marca'], f['categoria'], f['tipo_negocio'], f['kam']))
+        df_c = pd.DataFrame(cached_canales(desde_str, hasta_str, f))
         if len(df_c):
             df_c['Var Venta %'] = df_c['var_venta_pct'].apply(lambda v: f"{v:+.1f}%" if v is not None else '—')
             df_c['Venta TY'] = df_c['venta_ty'].apply(fmt_money)
@@ -165,7 +165,7 @@ def render():
             )
     with col_b:
         st.subheader("Top 20 SKUs")
-        df_s = pd.DataFrame(cached_top_skus(desde_str, hasta_str, f['canal'], f['marca'], f['categoria'], f['tipo_negocio'], f['kam'], 20))
+        df_s = pd.DataFrame(cached_top_skus(desde_str, hasta_str, f, limit=20))
         if len(df_s):
             df_s['Var %'] = df_s['var_venta_pct'].apply(lambda v: f"{v:+.1f}%" if v is not None else '—')
             df_s['Venta TY'] = df_s['venta'].apply(fmt_money)

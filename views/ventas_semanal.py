@@ -33,7 +33,7 @@ def render():
             key="mes_sem",
         )
 
-    sem = cached_semanal(anio_sel, mes_sel, f['canal'], f['marca'], f['categoria'], f['tipo_negocio'], f['kam'])
+    sem = cached_semanal(anio_sel, mes_sel, f)
     df_w = pd.DataFrame(sem)
 
     if not len(df_w):

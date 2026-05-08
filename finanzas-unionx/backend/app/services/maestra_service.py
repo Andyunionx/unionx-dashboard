@@ -55,17 +55,25 @@ class MaestraService:
             values.append(params['fecha_hasta'])
         _add('canal', params.get('canal'))
         _add('marca', params.get('marca'))
-        _add('categoria_macro', params.get('categoria'))
+        _add('categoria_macro', params.get('categoria') or params.get('categoria_macro'))
+        _add('categoria_padre', params.get('categoria_padre'))
+        _add('categoria_hijo', params.get('categoria_hijo'))
         _add('tipo_negocio', params.get('tipo_negocio'))
         _add('kam', params.get('kam'))
         _add('bodega', params.get('bodega'))
         _add('tipo_movimiento', params.get('tipo_movimiento'))
         _add('sku', params.get('sku'))
 
-        # Producto: búsqueda LIKE case-insensitive
-        if params.get('producto'):
-            clauses.append("LOWER(producto) LIKE ?")
-            values.append(f"%{str(params['producto']).lower()}%")
+        # Producto: si lista → IN, si string → LIKE
+        prod = params.get('producto')
+        if prod:
+            if isinstance(prod, (list, tuple, set)):
+                placeholders = ','.join(['?'] * len(prod))
+                clauses.append(f"producto IN ({placeholders})")
+                values.extend(prod)
+            else:
+                clauses.append("LOWER(producto) LIKE ?")
+                values.append(f"%{str(prod).lower()}%")
 
         where = " AND ".join(clauses) if clauses else "1=1"
         return where, values
@@ -456,14 +464,23 @@ class MaestraService:
         if params_extra:
             _add('canal', params_extra.get('canal'))
             _add('marca', params_extra.get('marca'))
-            _add('categoria_macro', params_extra.get('categoria'))
+            _add('categoria_macro', params_extra.get('categoria') or params_extra.get('categoria_macro'))
+            _add('categoria_padre', params_extra.get('categoria_padre'))
+            _add('categoria_hijo', params_extra.get('categoria_hijo'))
             _add('tipo_negocio', params_extra.get('tipo_negocio'))
             _add('kam', params_extra.get('kam'))
             _add('bodega', params_extra.get('bodega'))
             _add('sku', params_extra.get('sku'))
-            if params_extra.get('producto'):
-                clauses.append("LOWER(producto) LIKE ?")
-                values.append(f"%{str(params_extra['producto']).lower()}%")
+            # Producto: si es lista (multiselect) usar IN, si es string usar LIKE
+            prod = params_extra.get('producto')
+            if prod:
+                if isinstance(prod, (list, tuple, set)):
+                    placeholders = ','.join(['?'] * len(prod))
+                    clauses.append(f"producto IN ({placeholders})")
+                    values.extend(prod)
+                else:
+                    clauses.append("LOWER(producto) LIKE ?")
+                    values.append(f"%{str(prod).lower()}%")
         where = " AND ".join(clauses)
         conn = self._conn()
         row = conn.execute(f"""
@@ -801,30 +818,52 @@ class MaestraService:
         return result
 
     def get_filtros_disponibles(self):
-        """Devuelve listas de canales, marcas, categorías y tipos de negocio existentes en ventas."""
+        """Devuelve listas distintas para todos los filtros del dashboard."""
         conn = self._conn()
-        canales = [r[0] for r in conn.execute(
-            "SELECT DISTINCT canal FROM ventas WHERE canal IS NOT NULL AND canal != '' GROUP BY canal ORDER BY canal"
-        ).fetchall()]
-        marcas = [r[0] for r in conn.execute(
-            "SELECT DISTINCT marca FROM ventas WHERE marca IS NOT NULL AND marca != '' AND marca != '0' GROUP BY marca ORDER BY marca"
-        ).fetchall()]
-        categorias = [r[0] for r in conn.execute(
-            "SELECT DISTINCT categoria_macro FROM ventas WHERE categoria_macro IS NOT NULL AND categoria_macro != '' GROUP BY categoria_macro ORDER BY categoria_macro"
-        ).fetchall()]
-        tipos_negocio = [r[0] for r in conn.execute(
-            "SELECT DISTINCT tipo_negocio FROM ventas WHERE tipo_negocio IS NOT NULL AND tipo_negocio != '' GROUP BY tipo_negocio ORDER BY tipo_negocio"
-        ).fetchall()]
-        kams = [r[0] for r in conn.execute(
-            "SELECT DISTINCT kam FROM ventas WHERE kam IS NOT NULL AND kam != '' GROUP BY kam ORDER BY kam"
-        ).fetchall()]
+
+        def _distinct(col):
+            return [r[0] for r in conn.execute(
+                f"SELECT DISTINCT {col} FROM ventas "
+                f"WHERE {col} IS NOT NULL AND {col} != '' AND {col} != '0' "
+                f"ORDER BY {col}"
+            ).fetchall()]
+
+        canales = _distinct('canal')
+        marcas = _distinct('marca')
+        categorias_macro = _distinct('categoria_macro')
+        categorias_padre = _distinct('categoria_padre')
+        categorias_hijo = _distinct('categoria_hijo')
+        tipos_negocio = _distinct('tipo_negocio')
+        kams = _distinct('kam')
+
+        # Productos y SKUs (limitar a top vendidos para no inflar UI)
+        productos = [r[0] for r in conn.execute("""
+            SELECT producto FROM ventas
+            WHERE producto IS NOT NULL AND producto != ''
+            GROUP BY producto
+            ORDER BY producto
+            LIMIT 5000
+        """).fetchall()]
+        skus = [r[0] for r in conn.execute("""
+            SELECT sku FROM ventas
+            WHERE sku IS NOT NULL AND sku != ''
+            GROUP BY sku
+            ORDER BY sku
+            LIMIT 5000
+        """).fetchall()]
+
         conn.close()
         return {
             'canales': canales,
             'marcas': marcas,
-            'categorias': categorias,
+            'categorias': categorias_macro,  # backward compat
+            'categorias_macro': categorias_macro,
+            'categorias_padre': categorias_padre,
+            'categorias_hijo': categorias_hijo,
             'tipos_negocio': tipos_negocio,
             'kams': kams,
+            'productos': productos,
+            'skus': skus,
         }
 
     def health(self):
