@@ -10,7 +10,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pct
+from views.contribucion_loader import (
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pct,
+    render_contrib_filters, aplicar_filtros,
+)
 
 
 COLS_NUM = [
@@ -54,35 +57,11 @@ def render():
 
     df = parsear_columnas_numericas(df, COLS_NUM)
 
-    # Filtros sidebar
-    with st.sidebar:
-        st.markdown("##### Filtros")
-        anios = sorted([int(a) if str(a).isdigit() else a for a in df['AÑO'].dropna().unique() if a])
-        # Negocio
-        negocios_opt = sorted([n for n in df['Negocio'].dropna().unique() if n])
-        f_negocio = st.multiselect("Negocio", negocios_opt, default=[], key="cgen_neg")
-        # Canal
-        canales_opt = sorted([c for c in df['Canal'].dropna().unique() if c])
-        f_canal = st.multiselect("Canal", canales_opt, default=[], key="cgen_canal")
-        # KAM
-        kams_opt = sorted([k for k in df['KAM'].dropna().unique() if k])
-        f_kam = st.multiselect("KAM", kams_opt, default=[], key="cgen_kam")
-        # Mes
-        meses_opt = sorted([int(m) if str(m).isdigit() else m for m in df['Mes'].dropna().unique() if m])
-        f_mes = st.multiselect("Mes", meses_opt, default=[], key="cgen_mes")
-
-    # Aplicar filtros
-    df_f = df.copy()
-    if f_negocio:
-        df_f = df_f[df_f['Negocio'].isin(f_negocio)]
-    if f_canal:
-        df_f = df_f[df_f['Canal'].isin(f_canal)]
-    if f_kam:
-        df_f = df_f[df_f['KAM'].isin(f_kam)]
-    if f_mes:
-        df_f = df_f[df_f['Mes'].astype(str).isin([str(m) for m in f_mes])]
-
-    st.caption(f"Filas filtradas: {len(df_f):,}")
+    # Filtros al tope
+    sel = render_contrib_filters(df, prefix="cgen")
+    df_f = aplicar_filtros(df, sel)
+    st.caption(f"Filas filtradas: {len(df_f):,} de {len(df):,}")
+    st.markdown("---")
 
     # Calcular KPIs por año
     def _kpis_anio(df_a):

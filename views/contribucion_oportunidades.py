@@ -6,7 +6,10 @@ Fuente: 'Analisis Meta vs Resultados'.
 import pandas as pd
 import streamlit as st
 
-from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M
+from views.contribucion_loader import (
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M,
+    render_contrib_filters, aplicar_filtros,
+)
 
 
 COLS_NUM = ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
@@ -36,15 +39,11 @@ def render():
 
     df = parsear_columnas_numericas(df, COLS_NUM)
 
-    # Filtros
-    with st.sidebar:
-        st.markdown("##### Filtros")
-        anios_opt = sorted([a for a in df['AÑO'].dropna().unique() if a])
-        f_anio = st.selectbox("Año", ["Todos"] + anios_opt, key="copo_anio")
-
-    df_f = df.copy()
-    if f_anio != "Todos":
-        df_f = df_f[df_f['AÑO'] == f_anio]
+    # Filtros al tope
+    sel = render_contrib_filters(df, prefix="copo")
+    df_f = aplicar_filtros(df, sel)
+    st.caption(f"Filas filtradas: {len(df_f):,} de {len(df):,}")
+    st.markdown("---")
 
     # Calcular brecha (gap) por entidad
     df_f['Gap Venta $'] = df_f['Resultado Venta'].fillna(0) - df_f['Meta Venta'].fillna(0)

@@ -7,7 +7,10 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M
+from views.contribucion_loader import (
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M,
+    render_contrib_filters, aplicar_filtros,
+)
 
 
 COLS_NUM = [
@@ -42,6 +45,12 @@ def render():
         return
 
     df = parsear_columnas_numericas(df, COLS_NUM)
+
+    # Filtros al tope (esta hoja no tiene AÑO/Mes/Trim, solo KAM/Canal)
+    sel = render_contrib_filters(df, prefix="ckam", with_anio=False, with_trim=False, with_mes=False, with_negocio=False)
+    df = aplicar_filtros(df, sel)
+    st.caption(f"Filas: {len(df):,}")
+    st.markdown("---")
 
     # Aggregate por KAM
     df_kam = df.groupby('KAM').agg({

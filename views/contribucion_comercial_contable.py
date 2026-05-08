@@ -7,7 +7,10 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M
+from views.contribucion_loader import (
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M,
+    render_contrib_filters, aplicar_filtros,
+)
 
 
 COLS_NUM = [
@@ -40,25 +43,11 @@ def render():
 
     df = parsear_columnas_numericas(df, COLS_NUM)
 
-    # Filtros
-    with st.sidebar:
-        st.markdown("##### Filtros")
-        anios_opt = sorted([a for a in df['AÑO'].dropna().unique() if a])
-        f_anio = st.selectbox("Año", ["Todos"] + anios_opt, key="ccc_anio")
-        negocios_opt = sorted([n for n in df['Negocio'].dropna().unique() if n])
-        f_negocio = st.multiselect("Negocio", negocios_opt, key="ccc_neg")
-        canales_opt = sorted([c for c in df['Canal'].dropna().unique() if c])
-        f_canal = st.multiselect("Canal", canales_opt, key="ccc_canal")
-
-    df_f = df.copy()
-    if f_anio != "Todos":
-        df_f = df_f[df_f['AÑO'] == f_anio]
-    if f_negocio:
-        df_f = df_f[df_f['Negocio'].isin(f_negocio)]
-    if f_canal:
-        df_f = df_f[df_f['Canal'].isin(f_canal)]
-
-    st.caption(f"Filas: {len(df_f):,}")
+    # Filtros al tope
+    sel = render_contrib_filters(df, prefix="ccc")
+    df_f = aplicar_filtros(df, sel)
+    st.caption(f"Filas filtradas: {len(df_f):,} de {len(df):,}")
+    st.markdown("---")
 
     # Resumen comparativo
     metricas = [

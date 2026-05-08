@@ -137,3 +137,91 @@ def color_cumplimiento(pct):
     if pct >= 0.85:
         return "🟡"
     return "🔴"
+
+
+def render_contrib_filters(df: pd.DataFrame, prefix: str = "contrib", *, with_anio=True, with_trim=True,
+                           with_mes=True, with_negocio=True, with_canal=True, with_kam=True) -> dict:
+    """
+    Renderiza barra de filtros al tope (en columnas), devuelve dict con selecciones.
+
+    Aplicar luego con: df_f = aplicar_filtros(df, filtros)
+    """
+    st.markdown("##### 🔍 Filtros")
+    cols = []
+    columns_pedidas = []
+    if with_anio and 'AÑO' in df.columns:
+        columns_pedidas.append('anio')
+    if with_trim and 'Trimestre' in df.columns:
+        columns_pedidas.append('trim')
+    if with_mes and 'Mes' in df.columns:
+        columns_pedidas.append('mes')
+    if with_negocio and 'Negocio' in df.columns:
+        columns_pedidas.append('negocio')
+    if with_canal and 'Canal' in df.columns:
+        columns_pedidas.append('canal')
+    if with_kam and 'KAM' in df.columns:
+        columns_pedidas.append('kam')
+
+    if not columns_pedidas:
+        return {}
+
+    cols = st.columns(len(columns_pedidas))
+    selecciones = {}
+    idx = 0
+
+    if 'anio' in columns_pedidas:
+        with cols[idx]:
+            anios = sorted([str(a).replace('.', '') for a in df['AÑO'].dropna().unique() if a])
+            selecciones['anio'] = st.multiselect("Año", anios, default=[], key=f"{prefix}_anio")
+        idx += 1
+
+    if 'trim' in columns_pedidas:
+        with cols[idx]:
+            trims = sorted([t for t in df['Trimestre'].dropna().unique() if t])
+            selecciones['trim'] = st.multiselect("Trimestre", trims, default=[], key=f"{prefix}_trim")
+        idx += 1
+
+    if 'mes' in columns_pedidas:
+        with cols[idx]:
+            meses = sorted([m for m in df['Mes'].dropna().unique() if m],
+                           key=lambda x: int(str(x).split('.')[0]) if str(x).split('.')[0].isdigit() else 99)
+            selecciones['mes'] = st.multiselect("Mes", meses, default=[], key=f"{prefix}_mes")
+        idx += 1
+
+    if 'negocio' in columns_pedidas:
+        with cols[idx]:
+            negs = sorted([n for n in df['Negocio'].dropna().unique() if n])
+            selecciones['negocio'] = st.multiselect("Línea Negocio", negs, default=[], key=f"{prefix}_neg")
+        idx += 1
+
+    if 'canal' in columns_pedidas:
+        with cols[idx]:
+            canales = sorted([c for c in df['Canal'].dropna().unique() if c])
+            selecciones['canal'] = st.multiselect("Canal", canales, default=[], key=f"{prefix}_canal")
+        idx += 1
+
+    if 'kam' in columns_pedidas:
+        with cols[idx]:
+            kams = sorted([k for k in df['KAM'].dropna().unique() if k])
+            selecciones['kam'] = st.multiselect("KAM", kams, default=[], key=f"{prefix}_kam")
+        idx += 1
+
+    return selecciones
+
+
+def aplicar_filtros(df: pd.DataFrame, sel: dict) -> pd.DataFrame:
+    """Aplica las selecciones de render_contrib_filters al DataFrame."""
+    df_f = df.copy()
+    if sel.get('anio'):
+        df_f = df_f[df_f['AÑO'].astype(str).str.replace('.', '', regex=False).isin(sel['anio'])]
+    if sel.get('trim'):
+        df_f = df_f[df_f['Trimestre'].isin(sel['trim'])]
+    if sel.get('mes'):
+        df_f = df_f[df_f['Mes'].astype(str).isin([str(m) for m in sel['mes']])]
+    if sel.get('negocio'):
+        df_f = df_f[df_f['Negocio'].isin(sel['negocio'])]
+    if sel.get('canal'):
+        df_f = df_f[df_f['Canal'].isin(sel['canal'])]
+    if sel.get('kam'):
+        df_f = df_f[df_f['KAM'].isin(sel['kam'])]
+    return df_f

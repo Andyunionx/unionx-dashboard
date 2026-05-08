@@ -7,7 +7,10 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M
+from views.contribucion_loader import (
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M,
+    render_contrib_filters, aplicar_filtros,
+)
 
 
 COLS_NUM = ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
@@ -37,27 +40,11 @@ def render():
 
     df = parsear_columnas_numericas(df, COLS_NUM)
 
-    # Filtros
-    with st.sidebar:
-        st.markdown("##### Filtros")
-        anios_opt = sorted([a for a in df['AÑO'].dropna().unique() if a])
-        f_anio = st.selectbox("Año", ["Todos"] + anios_opt, key="cmeta_anio")
-        negocios_opt = sorted([n for n in df['Negocio'].dropna().unique() if n])
-        f_negocio = st.multiselect("Negocio", negocios_opt, key="cmeta_neg")
-        canales_opt = sorted([c for c in df['Canal'].dropna().unique() if c])
-        f_canal = st.multiselect("Canal", canales_opt, key="cmeta_canal")
-        kams_opt = sorted([k for k in df['KAM'].dropna().unique() if k])
-        f_kam = st.multiselect("KAM", kams_opt, key="cmeta_kam")
-
-    df_f = df.copy()
-    if f_anio != "Todos":
-        df_f = df_f[df_f['AÑO'] == f_anio]
-    if f_negocio:
-        df_f = df_f[df_f['Negocio'].isin(f_negocio)]
-    if f_canal:
-        df_f = df_f[df_f['Canal'].isin(f_canal)]
-    if f_kam:
-        df_f = df_f[df_f['KAM'].isin(f_kam)]
+    # Filtros al tope
+    sel = render_contrib_filters(df, prefix="cmeta")
+    df_f = aplicar_filtros(df, sel)
+    st.caption(f"Filas filtradas: {len(df_f):,} de {len(df):,}")
+    st.markdown("---")
 
     # KPIs consolidados
     meta_v = df_f['Meta Venta'].sum() if 'Meta Venta' in df_f.columns else 0
