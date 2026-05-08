@@ -122,7 +122,7 @@ def forecast_diario_total(df: pd.DataFrame, dias_adelante: int = 60) -> pd.DataF
 
 
 def forecast_por_canal(top_n: int = 10, dias_adelante: int = 30) -> pd.DataFrame:
-    """Forecast Prophet por top N canales (más rápido que todos)."""
+    """Forecast Prophet por top N canales. Una sola query agrupada para no quemar Turso."""
     from prophet import Prophet
     import logging
     logging.getLogger('prophet').setLevel(logging.WARNING)
@@ -130,44 +130,68 @@ def forecast_por_canal(top_n: int = 10, dias_adelante: int = 30) -> pd.DataFrame
 
     print(f"[3/4] Forecasts por canal (top {top_n})...", flush=True)
 
-    # Top canales
-    rows = _q(f"""
-        SELECT canal, ROUND(SUM(venta_bruta), 0)
+    # Top canales: desde parquet histórico (últimos 12 meses) para no quemar Turso
+    canales = []
+    if HIST_PARQUET.exists():
+        df_h = pd.read_parquet(HIST_PARQUET, columns=['fecha_venta', 'canal', 'venta_bruta', 'tipo_movimiento'])
+        df_h = df_h[df_h['tipo_movimiento'] == 'Venta']
+        df_h['fecha_venta'] = pd.to_datetime(df_h['fecha_venta'], errors='coerce')
+        cutoff = pd.Timestamp.now() - pd.Timedelta(days=365)
+        df_h = df_h[df_h['fecha_venta'] >= cutoff]
+        top = df_h.groupby('canal')['venta_bruta'].sum().sort_values(ascending=False).head(top_n)
+        canales = top.index.tolist()
+        print(f"  Top {len(canales)} canales (desde parquet últimos 12m): {canales}", flush=True)
+    else:
+        # Fallback: query Turso con rango chico
+        rows = _q(f"""
+            SELECT canal, ROUND(SUM(venta_bruta), 0)
+            FROM ventas
+            WHERE fecha_venta >= date('now', '-90 days') AND tipo_movimiento = 'Venta'
+            GROUP BY canal
+            ORDER BY 2 DESC LIMIT {top_n}
+        """)
+        canales = [_val(r, 0) for r in rows]
+        print(f"  Top {len(canales)} canales (desde Turso 90d): {canales}", flush=True)
+
+    # UNA sola query Turso para todos los canales (april+)
+    canales_sql = ",".join("'" + c.replace("'", "''") + "'" for c in canales)
+    print("  Query agrupada Turso (1 sola request)...", flush=True)
+    rows_live = _q(f"""
+        SELECT canal, fecha_venta, ROUND(SUM(venta_bruta), 0)
         FROM ventas
-        WHERE fecha_venta >= '2026-01-01' AND tipo_movimiento = 'Venta'
-        GROUP BY canal
-        ORDER BY 2 DESC LIMIT {top_n}
+        WHERE canal IN ({canales_sql})
+          AND fecha_venta >= '2026-04-01'
+          AND tipo_movimiento = 'Venta'
+        GROUP BY canal, fecha_venta
     """)
-    canales = [_val(r, 0) for r in rows]
-    print(f"  Top {len(canales)} canales: {canales}", flush=True)
+    df_live = pd.DataFrame([{
+        'canal': _val(r, 0),
+        'ds': pd.to_datetime(_val(r, 1)),
+        'y': float(_val(r, 2) or 0),
+    } for r in rows_live])
+    print(f"  Turso live: {len(df_live)} filas (canal-fecha)")
+
+    # Histórico parquet (1 sola lectura, filtrado en pandas)
+    df_hist = pd.DataFrame()
+    if HIST_PARQUET.exists():
+        df_h = pd.read_parquet(HIST_PARQUET, columns=['fecha_venta', 'canal', 'venta_bruta', 'tipo_movimiento'])
+        df_h = df_h[(df_h['canal'].isin(canales)) & (df_h['tipo_movimiento'] == 'Venta')]
+        df_h['fecha_venta'] = pd.to_datetime(df_h['fecha_venta'], errors='coerce')
+        df_h = df_h.dropna(subset=['fecha_venta'])
+        df_hist = df_h.groupby([df_h['canal'], df_h['fecha_venta'].dt.date])['venta_bruta'].sum().reset_index()
+        df_hist.columns = ['canal', 'ds', 'y']
+        df_hist['ds'] = pd.to_datetime(df_hist['ds'])
+        print(f"  Histórico parquet: {len(df_hist)} filas (canal-fecha)")
 
     all_fcs = []
     for i, canal in enumerate(canales, 1):
-        canal_safe = canal.replace("'", "''")
-        # Cargar serie del canal (parquet + Turso)
-        df_canal = pd.DataFrame()
+        df_h_c = df_hist[df_hist['canal'] == canal][['ds', 'y']] if not df_hist.empty else pd.DataFrame()
+        df_l_c = df_live[df_live['canal'] == canal][['ds', 'y']]
 
-        if HIST_PARQUET.exists():
-            df_h = pd.read_parquet(HIST_PARQUET, columns=['fecha_venta', 'canal', 'venta_bruta', 'tipo_movimiento'])
-            df_h = df_h[(df_h['canal'] == canal) & (df_h['tipo_movimiento'] == 'Venta')]
-            df_h['fecha_venta'] = pd.to_datetime(df_h['fecha_venta'], errors='coerce')
-            df_h = df_h.dropna(subset=['fecha_venta'])
-            df_h = df_h.groupby(df_h['fecha_venta'].dt.date)['venta_bruta'].sum().reset_index()
-            df_h.columns = ['ds', 'y']
-            df_canal = df_h
-
-        rows_live = _q(f"""
-            SELECT fecha_venta, ROUND(SUM(venta_bruta), 0) FROM ventas
-            WHERE canal = '{canal_safe}' AND fecha_venta >= '2026-04-01' AND tipo_movimiento = 'Venta'
-            GROUP BY fecha_venta
-        """)
-        df_l = pd.DataFrame([{'ds': pd.to_datetime(_val(r, 0)), 'y': float(_val(r, 1) or 0)} for r in rows_live])
-
-        if not df_canal.empty:
-            df_canal['ds'] = pd.to_datetime(df_canal['ds'])
-            df_full = pd.concat([df_canal, df_l]).drop_duplicates(subset='ds').sort_values('ds')
+        if not df_h_c.empty:
+            df_full = pd.concat([df_h_c, df_l_c]).drop_duplicates(subset='ds').sort_values('ds')
         else:
-            df_full = df_l
+            df_full = df_l_c.sort_values('ds')
 
         df_full = df_full[df_full['y'] > 0]
 
