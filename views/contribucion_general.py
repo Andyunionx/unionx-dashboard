@@ -124,26 +124,51 @@ def render():
 
     st.divider()
 
-    # ===== EVOLUCIÓN MENSUAL =====
+    # ===== SELECTOR MÉTRICA + EVOLUCIÓN MENSUAL =====
     st.markdown("### Evolución Mensual YoY")
+
+    METRICAS = {
+        'Venta': {'col': 'Venta REAL KAM', 'color': '#1E40AF', 'label_corto': 'Venta'},
+        'Costo': {'col': 'Costo Venta KAM', 'color': '#EA580C', 'label_corto': 'Costo'},
+        'Margen Directo': {'col': 'Margen Directo KAM', 'color': '#16A34A', 'label_corto': 'Margen'},
+        'Comisión Venta': {'col': 'Comisión Venta KAM', 'color': '#DC2626', 'label_corto': 'Com.Venta'},
+        'Comisión Envío': {'col': 'Comisión Envío KAM', 'color': '#DC2626', 'label_corto': 'Com.Envio'},
+        'Marketing': {'col': 'Marketing KAM', 'color': '#DC2626', 'label_corto': 'Mkt'},
+        'Comisión Total': {'col': 'Total Comisiones KAM', 'color': '#DC2626', 'label_corto': 'Com.Total'},
+        'Contribución': {'col': 'Resultado Contribución KAM', 'color': '#10B981', 'label_corto': 'Contrib'},
+    }
+
+    cs1, cs2 = st.columns([1, 3])
+    with cs1:
+        metric_sel = st.selectbox(
+            "📊 Métrica principal",
+            list(METRICAS.keys()),
+            index=7,  # default Contribución
+            key="cgen_metric",
+            help="Cambia la métrica de los gráficos abajo",
+        )
+    metric_col = METRICAS[metric_sel]['col']
+    metric_color = METRICAS[metric_sel]['color']
+    metric_short = METRICAS[metric_sel]['label_corto']
 
     col_m1, col_m2 = st.columns([3, 2])
 
     with col_m1:
-        st.markdown("##### Venta (barras) y Contribución (líneas) por Mes")
+        st.markdown(f"##### Venta (barras) y {metric_sel} (líneas) por Mes")
         df_mes = df_f.copy()
         df_mes['Mes_int'] = pd.to_numeric(df_mes['Mes'], errors='coerce')
         df_mes = df_mes.dropna(subset=['Mes_int'])
         df_mes['Mes_int'] = df_mes['Mes_int'].astype(int)
 
-        agg_mes = df_mes.groupby(['AÑO', 'Mes_int']).agg({
-            'Venta REAL KAM': 'sum',
-            'Resultado Contribución KAM': 'sum',
-        }).reset_index()
+        # Agregar siempre Venta + métrica seleccionada
+        agg_dict = {'Venta REAL KAM': 'sum'}
+        if metric_col != 'Venta REAL KAM':
+            agg_dict[metric_col] = 'sum'
+        agg_mes = df_mes.groupby(['AÑO', 'Mes_int']).agg(agg_dict).reset_index()
         agg_mes['AÑO_str'] = agg_mes['AÑO'].astype(str).str.replace('.', '', regex=False)
 
         fig = go.Figure()
-        # Barras Venta
+        # Barras Venta (siempre)
         for anio in ['2025', '2026']:
             df_a = agg_mes[agg_mes['AÑO_str'] == anio]
             if len(df_a) > 0:
@@ -152,35 +177,38 @@ def render():
                     marker_color='#94A3B8' if anio == '2025' else '#1E40AF',
                     yaxis='y',
                 ))
-        # Líneas Contribución
-        for anio in ['2025', '2026']:
-            df_a = agg_mes[agg_mes['AÑO_str'] == anio]
-            if len(df_a) > 0:
-                fig.add_trace(go.Scatter(
-                    name=f'Contrib {anio}', x=df_a['Mes_int'], y=df_a['Resultado Contribución KAM'],
-                    mode='lines+markers',
-                    line=dict(color='#10B981' if anio == '2026' else '#CBD5E1', width=2.5),
-                    yaxis='y2',
-                ))
+        # Líneas métrica seleccionada (si no es Venta)
+        if metric_col != 'Venta REAL KAM':
+            for anio in ['2025', '2026']:
+                df_a = agg_mes[agg_mes['AÑO_str'] == anio]
+                if len(df_a) > 0:
+                    fig.add_trace(go.Scatter(
+                        name=f'{metric_short} {anio}', x=df_a['Mes_int'], y=df_a[metric_col],
+                        mode='lines+markers',
+                        line=dict(color=metric_color if anio == '2026' else '#CBD5E1', width=2.5),
+                        yaxis='y2',
+                    ))
 
-        fig.update_layout(
+        layout_kwargs = dict(
             barmode='group', height=380,
             xaxis=dict(title='Mes', dtick=1),
             yaxis=dict(title='Venta ($)', tickformat=',.0f'),
-            yaxis2=dict(title='Contribución ($)', overlaying='y', side='right', tickformat=',.0f'),
             margin=dict(t=20, b=40, l=40, r=40),
             paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
             legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
         )
+        if metric_col != 'Venta REAL KAM':
+            layout_kwargs['yaxis2'] = dict(title=f'{metric_sel} ($)', overlaying='y', side='right', tickformat=',.0f')
+        fig.update_layout(**layout_kwargs)
         st.plotly_chart(fig, use_container_width=True)
 
     with col_m2:
-        st.markdown("##### Mix Venta 2026 por Canal (top 10)")
-        df_mix = df_2026.groupby('Canal').agg({'Venta REAL KAM': 'sum'}).reset_index()
-        df_mix = df_mix.sort_values('Venta REAL KAM', ascending=False).head(10)
+        st.markdown(f"##### Mix {metric_sel} 2026 por Canal (top 10)")
+        df_mix = df_2026.groupby('Canal').agg({metric_col: 'sum'}).reset_index()
+        df_mix = df_mix.sort_values(metric_col, ascending=False).head(10)
         if len(df_mix):
             fig_mix = px.pie(
-                df_mix, names='Canal', values='Venta REAL KAM', hole=0.5,
+                df_mix, names='Canal', values=metric_col, hole=0.5,
                 color_discrete_sequence=px.colors.sequential.Blues_r,
             )
             fig_mix.update_layout(
