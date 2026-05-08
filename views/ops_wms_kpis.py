@@ -172,21 +172,21 @@ def render():
                                f"Benchmark: ≤0.5% · {merma.get('n_meses', 0)} meses",
                                color, sem), unsafe_allow_html=True)
 
-        # Ocupación bodega (m3)
-        m3_total = capacidad.get("m3_totales")
-        if m3_total:
-            # Necesitamos m3 ocupados — proxy: asumir ratio = ocupación posiciones
+        # Ocupación bodega — por # posiciones (exacto, NO depende de m³ caja master)
+        try:
             from views.shared import cached_stock
             stock_data = cached_stock()
             ocup_pct = stock_data.get("ocupacion", {}).get("pct", 0) if stock_data else 0
+            ocup_total = stock_data.get("ocupacion", {}).get("total", 0) if stock_data else 0
+            ocup_occ = stock_data.get("ocupacion", {}).get("occupied", 0) if stock_data else 0
             sem, color = _semaforo(ocup_pct/100, 0.85, amarillo_max=0.95, mayor_es_mejor=False)
-            c8.markdown(_kpi_card("Ocupación m³ bodega",
-                                   f"{ocup_pct:.0f}%",
-                                   f"Capacidad: {m3_total:.0f} m³ totales",
+            c8.markdown(_kpi_card("Ocupación bodega",
+                                   f"{ocup_pct:.0f}%" if ocup_total else "—",
+                                   f"{ocup_occ}/{ocup_total} posiciones · m³ pausado (H2)",
                                    color, sem), unsafe_allow_html=True)
-        else:
-            c8.markdown(_kpi_card("Ocupación m³ bodega", "—",
-                                   "Falta capacidad m³ (Tab 5)", "#94A3B8"),
+        except Exception:
+            c8.markdown(_kpi_card("Ocupación bodega", "—",
+                                   "Sin datos de stock", "#94A3B8"),
                         unsafe_allow_html=True)
 
         st.divider()

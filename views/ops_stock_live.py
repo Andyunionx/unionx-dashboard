@@ -255,18 +255,20 @@ def render():
     with tabs[2]:
         # Carga lazy (solo cuando el user entra al tab)
         from views._ops_stock_helper import uso_posiciones, alertas_operacionales
-        from views._ops_capacidad_helper import (
-            slots_liberables, disponibilidad_posiciones,
-        )
+        from views._ops_capacidad_helper import slots_liberables
         with st.spinner("Calculando KPIs operacionales…"):
             sl = _safe_call(slots_liberables, umbral_qty_chico=5, min_ubicaciones=2,
                             default={"items": [], "slots_liberables_total": 0, "skus_a_consolidar": 0})
-            disp_t = _safe_call(disponibilidad_posiciones, default={"totales": {}, "config": {}})
             uso = _safe_call(uso_posiciones, dias=7, default={"valor": None, "error": None})
             alertas = _safe_call(alertas_operacionales, default=[]) or []
 
         kpis = data.get("kpis", {}) or {}
-        tot_disp = disp_t.get("totales", {}) or {}
+        # Ocupación por # posiciones (exacto, no depende de m³ caja master)
+        uso_v = uso.get("valor", {}) if uso else {}
+        total_pos = uso_v.get("total_posiciones", 0)
+        n_vacias_h = uso_v.get("vacias", 0)
+        n_ocup_h = total_pos - n_vacias_h
+        ocup_pct_pos = (n_ocup_h / total_pos * 100) if total_pos else 0
 
         c1, c2, c3 = st.columns(3)
         c1.markdown(_kpi_card_simple("SKUs activos", f"{n_skus:,}",
@@ -280,11 +282,10 @@ def render():
                                       "#16A34A" if n_lib > 0 else "#94A3B8"),
                     unsafe_allow_html=True)
 
-        ocup_pct = tot_disp.get("pct_ocupacion", 0)
-        ocup_color = "#DC2626" if ocup_pct > 90 else ("#EA580C" if ocup_pct > 80 else "#16A34A")
+        ocup_color = "#DC2626" if ocup_pct_pos > 90 else ("#EA580C" if ocup_pct_pos > 80 else "#16A34A")
         c3.markdown(_kpi_card_simple("Ocupación bodega",
-                                      f"{ocup_pct:.0f}%" if ocup_pct else "—",
-                                      f"{tot_disp.get('m3_ocupado', 0):,.0f} / {tot_disp.get('m3_capacidad', 0):,.0f} m³",
+                                      f"{ocup_pct_pos:.0f}%" if total_pos else "—",
+                                      f"{n_ocup_h} / {total_pos} posiciones (exacto)",
                                       ocup_color),
                     unsafe_allow_html=True)
 
@@ -370,107 +371,78 @@ def render():
             "📥 Capacidad para próximos embarques",
         ])
 
-        # ── 4.1 Disponibilidad m³ por posición ──────────────────────────
+        # ── 4.1 Disponibilidad por posición (m³ pausado, ahora # posiciones) ──
         with slot_subtabs[0]:
-            disp = _safe_call(disponibilidad_posiciones, default={"posiciones": [], "totales": {}, "config": {}})
-            if disp.get("error"):
-                st.warning(f"⚠️ {disp['error']}")
-            elif not disp.get("posiciones"):
-                st.info("Sin datos de capacidad. Carga `m3_por_slot_default` en la pestaña KPIs WMS · Datos manuales.")
+            st.warning(
+                "🚧 **Métricas de m³ pausadas — Roadmap H2** · "
+                "Odoo tiene `product.volume` (unidad individual) pero NO la **caja master**, "
+                "que es lo que realmente ocupa espacio. Cuando se cargue caja master "
+                "(campo Odoo o desde PI/PL del agente COMEX), reactivamos m³ con precisión."
+            )
+            st.markdown("### 📍 Disponibilidad por posición (datos exactos: # posiciones)")
+
+            # Usar uso_posiciones (exacto, no depende de m³)
+            from views._ops_stock_helper import uso_posiciones as _uso_pos
+            uso_d = _safe_call(_uso_pos, dias=7, default={"valor": None, "detalle": {}, "error": None})
+
+            if uso_d.get("error") or not uso_d.get("valor"):
+                st.info("Sin datos de uso de posiciones desde Odoo")
             else:
-                tot = disp["totales"]
-                cfg = disp.get("config", {})
+                v = uso_d["valor"]
+                det = uso_d.get("detalle", {}) or {}
 
-                # KPI cards
                 kc1, kc2, kc3, kc4 = st.columns(4)
-                kc1.markdown(_kpi_card_simple("Capacidad total", f"{tot['m3_capacidad']:,.0f} m³",
-                                              f"{tot['n_posiciones']} posiciones", "#1F4E79"),
+                kc1.markdown(_kpi_card_simple("Total posiciones",
+                                              f"{v.get('total_posiciones', 0)}",
+                                              "Leaf de CA1/Stock", "#1F4E79"),
                              unsafe_allow_html=True)
-                kc2.markdown(_kpi_card_simple("Ocupado actual", f"{tot['m3_ocupado']:,.0f} m³",
-                                              f"{tot['pct_ocupacion']:.1f}% del total",
-                                              "#DC2626" if tot['pct_ocupacion'] > 85 else "#EA580C" if tot['pct_ocupacion'] > 70 else "#16A34A"),
+                kc2.markdown(_kpi_card_simple("Vacías (disponibles)",
+                                              f"{v.get('vacias', 0)}",
+                                              f"{v.get('pct_vacias', 0)*100:.0f}% del total",
+                                              "#16A34A"),
                              unsafe_allow_html=True)
-                kc3.markdown(_kpi_card_simple("Libre", f"{tot['m3_libre']:,.0f} m³",
-                                              f"{tot['n_disponibles']} posiciones disp.", "#16A34A"),
+                kc3.markdown(_kpi_card_simple("Activas (mov ≤7d)",
+                                              f"{v.get('activas', 0)}",
+                                              f"{v.get('pct_activas', 0)*100:.0f}% del total",
+                                              "#1F4E79"),
                              unsafe_allow_html=True)
-                kc4.markdown(_kpi_card_simple("Posiciones llenas", f"{tot['n_llenas']:,}",
-                                              f"≥90% ocupación", "#EA580C"),
+                kc4.markdown(_kpi_card_simple("Dormidas (sin mov >30d)",
+                                              f"{v.get('dormidas', 0)}",
+                                              f"{v.get('pct_dormidas', 0)*100:.0f}% del total",
+                                              "#EA580C" if v.get('dormidas', 0) > 30 else "#94A3B8"),
                              unsafe_allow_html=True)
 
-                # Calidad del dato volumétrico
-                with st.expander("ℹ️ Calidad del dato volumétrico", expanded=False):
-                    fo = cfg.get("fuente_volumen_odoo", 0)
-                    fc = cfg.get("fuente_volumen_categ", 0)
-                    fs = cfg.get("fuente_volumen_sin_dato", 0)
-                    total_p = fo + fc + fs
-                    if total_p > 0:
-                        st.markdown(
-                            f"- **{fo:,}** productos con `volume` directo de Odoo ({fo/total_p*100:.0f}%)\n"
-                            f"- **{fc:,}** productos con fallback m³ por categoría ({fc/total_p*100:.0f}%)\n"
-                            f"- **{fs:,}** productos sin volumen — no contribuyen al cálculo ({fs/total_p*100:.0f}%)"
-                        )
-                    else:
-                        st.info("Sin productos analizados")
-                    cap_slot = cfg.get("m3_slot_default", 0)
-                    if cap_slot > 0:
-                        st.caption(f"Capacidad por slot asumida: **{cap_slot:.2f} m³** "
-                                   f"(carga m³ por slot real en pestaña Datos manuales para mayor precisión)")
-                    else:
-                        st.warning("⚠️ Sin capacidad por slot definida → ocupación %  no calculable")
+                st.divider()
 
-                # Filtros
-                st.markdown("#### Detalle por posición")
-                fc1, fc2 = st.columns([1, 3])
-                with fc1:
-                    estado_f = st.selectbox("Estado", ["Todas", "VACIA", "DISPONIBLE", "MEDIO", "LLENA"],
-                                            key="ops_pos_estado")
-                with fc2:
-                    sort_f = st.selectbox("Ordenar por",
-                        ["m³ libre (desc)", "% ocupación (asc)", "% ocupación (desc)", "Posición"],
-                        key="ops_pos_sort")
+                # Tabla unificada
+                st.markdown("#### Detalle de posiciones (combinadas)")
+                rows = []
+                for p in det.get("vacias", []):
+                    rows.append({"Posición": p.get("nombre", "?"), "Estado": "🟢 VACIA",
+                                 "SKUs": p.get("n_skus", 0)})
+                for p in det.get("activas", []):
+                    rows.append({"Posición": p.get("nombre", "?"), "Estado": "🔵 ACTIVA",
+                                 "SKUs": p.get("n_skus", 0)})
+                for p in det.get("dormidas", []):
+                    rows.append({"Posición": p.get("nombre", "?"), "Estado": "🟠 DORMIDA",
+                                 "SKUs": p.get("n_skus", 0)})
 
-                df_pos = pd.DataFrame(disp["posiciones"])
-                if estado_f != "Todas":
-                    df_pos = df_pos[df_pos["estado"] == estado_f]
-                if sort_f == "m³ libre (desc)":
-                    df_pos = df_pos.sort_values("m3_libre", ascending=False)
-                elif sort_f == "% ocupación (asc)":
-                    df_pos = df_pos.sort_values("pct_ocupacion", ascending=True)
-                elif sort_f == "% ocupación (desc)":
-                    df_pos = df_pos.sort_values("pct_ocupacion", ascending=False)
-                else:
-                    df_pos = df_pos.sort_values("posicion")
+                if rows:
+                    df_pos = pd.DataFrame(rows).sort_values(["Estado", "Posición"])
+                    st.dataframe(df_pos, use_container_width=True, hide_index=True, height=400)
 
-                st.dataframe(
-                    df_pos[["posicion", "estado", "m3_capacidad", "m3_ocupado", "m3_libre",
-                            "pct_ocupacion", "n_skus", "n_unidades", "calidad_dato"]].rename(columns={
-                        "posicion": "Posición",
-                        "estado": "Estado",
-                        "m3_capacidad": "Cap (m³)",
-                        "m3_ocupado": "Ocup (m³)",
-                        "m3_libre": "Libre (m³)",
-                        "pct_ocupacion": "% Ocup",
-                        "n_skus": "SKUs",
-                        "n_unidades": "Uds",
-                        "calidad_dato": "Calidad dato",
-                    }),
-                    use_container_width=True, hide_index=True, height=480,
-                )
-                st.caption(f"{len(df_pos):,} posiciones mostradas")
-
-                # Descarga
-                out_pos = io.BytesIO()
-                with pd.ExcelWriter(out_pos, engine='openpyxl') as w:
-                    df_pos.to_excel(w, index=False, sheet_name='Posiciones m3')
-                out_pos.seek(0)
-                st.download_button(
-                    label=f"📥 Descargar disponibilidad m³ (Excel · {len(df_pos):,} filas)",
-                    data=out_pos.getvalue(),
-                    file_name=f"Disponibilidad_m3_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    key="ops_dl_disp_m3",
-                    use_container_width=True,
-                )
+                    out_pos = io.BytesIO()
+                    with pd.ExcelWriter(out_pos, engine='openpyxl') as w:
+                        df_pos.to_excel(w, index=False, sheet_name='Posiciones')
+                    out_pos.seek(0)
+                    st.download_button(
+                        label=f"📥 Descargar posiciones (Excel · {len(df_pos):,} filas)",
+                        data=out_pos.getvalue(),
+                        file_name=f"Posiciones_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        key="ops_dl_posiciones",
+                        use_container_width=True,
+                    )
 
         # ── 4.2 Slots liberables ────────────────────────────────────────
         with slot_subtabs[1]:
@@ -606,106 +578,35 @@ def render():
             else:
                 st.success("✅ Top SKUs A correctamente ubicados en zona caliente")
 
-        # ── 4.4 Capacidad para próximos embarques ───────────────────────
+        # ── 4.4 Capacidad para próximos embarques (PAUSADO H2) ──────────
         with slot_subtabs[3]:
             st.markdown("### 📥 Forecast de capacidad para embarques entrantes")
-            st.caption(
-                "Cruza disponibilidad m³ ahora vs próximos embarques cargados manualmente. "
-                "Roadmap H2: lectura automática del agente COMEX (Steven PI/PL)."
+            st.warning(
+                "🚧 **Pausado — Roadmap H2** · La métrica de capacidad m³ requiere las "
+                "dimensiones de **caja master** (no la unidad individual). "
+                "Cuando se cargue caja master en Odoo o se lea desde PI/PL del agente COMEX, "
+                "esta vista mostrará: m³ disponibles vs m³ próximos embarques + alerta automática "
+                "si próximo contenedor no entra."
+            )
+            st.markdown(
+                "**Mientras tanto, la métrica que SÍ funciona** está en la sub-tab "
+                "**📍 Disponibilidad por posición**: # posiciones vacías vs llenas (exacto)."
             )
 
-            disp_cap = _safe_call(disponibilidad_posiciones, default={"totales": {"m3_libre": 0}})
-            m3_libre = disp_cap.get("totales", {}).get("m3_libre", 0)
-
-            cap = kpi_capacidad_recepcion(m3_libre)
+            # Mantener form de carga para que cuando se reactive m³ ya haya datos
             embarques = get_proximos_embarques(solo_pendientes=True)
-
-            kf1, kf2, kf3 = st.columns(3)
-            kf1.markdown(_kpi_card_simple("m³ disponibles ahora", f"{m3_libre:,.0f}",
-                                          "Suma posiciones libres", "#16A34A" if m3_libre > 50 else "#EA580C"),
-                         unsafe_allow_html=True)
-            kf2.markdown(_kpi_card_simple("m³ próximos 30d", f"{cap.get('m3_proximos_30d', 0):,.0f}",
-                                          f"{len(embarques)} embarques cargados", "#1F4E79"),
-                         unsafe_allow_html=True)
-            ratio = cap.get("valor")
-            ratio_color = "#16A34A" if ratio and ratio >= 1.2 else "#DC2626" if ratio and ratio < 1 else "#EA580C"
-            kf3.markdown(_kpi_card_simple("Ratio capacidad",
-                                          f"{ratio:.2f}x" if ratio else "—",
-                                          "Disp / requerido (≥1.2 ideal)", ratio_color),
-                         unsafe_allow_html=True)
-
-            # Alerta capacidad
-            if cap.get("proximo_embarque"):
-                pe = cap["proximo_embarque"]
-                if not cap.get("ok"):
-                    st.error(
-                        f"🔴 **Capacidad insuficiente para próximo embarque** · "
-                        f"{pe.get('descripcion', 'embarque')} ({pe.get('m3', 0):.0f} m³) "
-                        f"ETA {pe.get('eta', '?')} — disp actual {m3_libre:.0f} m³"
-                    )
+            with st.expander(f"📋 Embarques cargados manualmente ({len(embarques)})", expanded=False):
+                if embarques:
+                    df_emb = pd.DataFrame(embarques)
+                    df_emb = df_emb[["eta", "descripcion", "contenedores", "m3"]].rename(columns={
+                        "eta": "ETA",
+                        "descripcion": "Descripción",
+                        "contenedores": "Contenedores",
+                        "m3": "m³",
+                    })
+                    st.dataframe(df_emb, use_container_width=True, hide_index=True, height=200)
                 else:
-                    st.success(
-                        f"✅ Próximo embarque entra: {pe.get('descripcion', 'embarque')} "
-                        f"({pe.get('m3', 0):.0f} m³) ETA {pe.get('eta', '?')}"
-                    )
-
-            st.divider()
-
-            # Lista próximos embarques
-            st.markdown("#### Embarques cargados")
-            if not embarques:
-                st.info("Sin embarques cargados. Agregá uno en el formulario abajo.")
-            else:
-                df_emb = pd.DataFrame(embarques)
-                df_emb = df_emb[["eta", "descripcion", "contenedores", "m3"]].rename(columns={
-                    "eta": "ETA",
-                    "descripcion": "Descripción",
-                    "contenedores": "Contenedores",
-                    "m3": "m³",
-                })
-                st.dataframe(df_emb, use_container_width=True, hide_index=True, height=200)
-
-            # Form agregar embarque
-            with st.expander("➕ Agregar próximo embarque", expanded=not embarques):
-                from views._ops_data_helper import add_proximo_embarque, delete_proximo_embarque
-                with st.form("form_emb_nuevo", clear_on_submit=True):
-                    fc1, fc2, fc3 = st.columns([1, 2, 1])
-                    eta_in = fc1.date_input("ETA", key="emb_eta")
-                    desc_in = fc2.text_input("Descripción",
-                                             placeholder="Steven – plancha pelo + secadores",
-                                             key="emb_desc")
-                    cont_in = fc3.number_input("Contenedores", min_value=1, value=1,
-                                               key="emb_cont")
-                    m3_in = st.number_input("Volumen total (m³)", min_value=0.0, value=67.0,
-                                            help="40HC ≈ 67 m³ útil · 20GP ≈ 33 m³",
-                                            key="emb_m3")
-                    if st.form_submit_button("💾 Guardar embarque", type="primary",
-                                              use_container_width=True):
-                        ok = add_proximo_embarque(
-                            eta=eta_in.strftime("%Y-%m-%d"),
-                            m3=m3_in, descripcion=desc_in, contenedores=cont_in,
-                        )
-                        if ok:
-                            st.success("✅ Embarque guardado")
-                            st.cache_data.clear()
-                            st.rerun()
-                        else:
-                            st.error("❌ Error guardando")
-
-            if embarques:
-                with st.expander("🗑️ Eliminar embarque cargado"):
-                    from views._ops_data_helper import delete_proximo_embarque
-                    idx_del = st.selectbox(
-                        "Embarque a eliminar",
-                        options=list(range(len(embarques))),
-                        format_func=lambda i: f"{embarques[i]['eta']} · {embarques[i].get('descripcion', '')[:40]} · {embarques[i].get('m3', 0):.0f} m³",
-                        key="emb_del_idx",
-                    )
-                    if st.button("🗑️ Eliminar", key="emb_del_btn"):
-                        if delete_proximo_embarque(idx_del):
-                            st.success("Eliminado")
-                            st.cache_data.clear()
-                            st.rerun()
+                    st.caption("Sin embarques cargados aún.")
 
     # ============================================================
     # TAB 5 — USO DE POSICIONES
