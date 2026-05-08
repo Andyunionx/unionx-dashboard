@@ -73,7 +73,7 @@ COLOR_NEUTRO = '#64748B'     # gris
 # ============================================================
 # Local SQLite combinando parquet histórico + Turso live
 # ============================================================
-@st.cache_resource(ttl=300, show_spinner="Cargando datos (parquet histórico + Turso live)…")
+@st.cache_resource(ttl=600, show_spinner="Cargando datos (parquet histórico + Turso live)…")
 def get_local_db_path():
     """SQLite local combinando histórico (parquet) + live (Turso). Auto-invalida 5 min."""
     if not os.environ.get('LIBSQL_URL'):
@@ -207,7 +207,7 @@ def get_service():
 # ============================================================
 # Cached queries
 # ============================================================
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def cached_filtros():
     return get_service().get_filtros_disponibles()
 
@@ -266,7 +266,7 @@ def cached_top_skus(desde, hasta, canal, marca, categoria, tipo_negocio, kam, li
     return get_service().get_top_skus_yoy(p, limit=limit)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def cached_health():
     return get_service().health()
 
@@ -274,7 +274,7 @@ def cached_health():
 # ============================================================
 # Stock LIVE (cache 5 min)
 # ============================================================
-@st.cache_data(ttl=300, show_spinner="Consultando Odoo (puede tomar 30-60s)…")
+@st.cache_data(ttl=900, show_spinner="Consultando Odoo (puede tomar 30-60s la primera vez)…")
 def cached_stock():
     """Stock LIVE desde Odoo, cache 5 min."""
     from app.services.stock_advanced_service import StockAdvancedService
@@ -300,7 +300,7 @@ def cached_stock():
     return StockAdvancedService(odoo).extract_full(progress_callback=None)
 
 
-@st.cache_data(ttl=300, show_spinner="Consultando ventas por canal desde Turso…")
+@st.cache_data(ttl=900, show_spinner="Consultando ventas por canal desde Turso…")
 def cached_ventas_canal_30d():
     """Ventas últimos 30 días por SKU+canal desde Turso."""
     url = os.environ.get('LIBSQL_URL', '').rstrip('/')
