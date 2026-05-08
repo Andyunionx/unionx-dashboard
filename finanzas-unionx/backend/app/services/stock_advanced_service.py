@@ -55,7 +55,7 @@ class StockAdvancedService:
         prods = self.odoo.search_read(
             'product.product',
             [('is_storable', '=', True), ('active', '=', True)],
-            ['id', 'name', 'default_code', 'categ_id', 'avg_cost',
+            ['id', 'name', 'default_code', 'categ_id', 'brand_id', 'avg_cost',
              'standard_price', 'list_price', 'qty_available', 'free_qty', 'uom_id'],
             limit=20000,
         )
@@ -198,6 +198,7 @@ class StockAdvancedService:
                 "SKU": prod.get("default_code", "") or "",
                 "Producto": prod.get("name", q["product_id"][1] if q.get("product_id") else "?"),
                 "Categoria": (prod.get("categ_id") or [0, ""])[1],
+                "Marca": (prod.get("brand_id") or [0, ""])[1] if isinstance(prod.get("brand_id"), (list, tuple)) else "",
                 "UdM": (prod.get("uom_id") or [0, ""])[1],
                 "Bodega": parent,
                 "Ubicacion": cn,
@@ -216,7 +217,7 @@ class StockAdvancedService:
 
         # Agregar por SKU
         agg = df.groupby("product_id").agg({
-            "SKU": "first", "Producto": "first", "Categoria": "first", "UdM": "first",
+            "SKU": "first", "Producto": "first", "Categoria": "first", "Marca": "first", "UdM": "first",
             "Qty": "sum", "Reservada": "sum", "Disponible": "sum",
             "Costo Unit": "first", "Valor": "sum",
             "Vta 30d Qty": "first", "Vta 30d $": "first",

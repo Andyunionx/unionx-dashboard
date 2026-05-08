@@ -120,26 +120,42 @@ def render():
 
     df_sku['Semaforo'] = df_sku['Semaforo'].map(SEM_DISPLAY).fillna(df_sku['Semaforo'])
 
-    # Filtros sidebar adicionales
+    # Filtros sidebar adicionales (defensivos: solo si la columna existe)
     with st.sidebar:
         st.markdown("##### Filtros")
-        sku_options = sorted([s for s in df_sku['SKU'].dropna().unique() if s])
-        sku_f = st.multiselect("SKU", sku_options, default=[], placeholder="Buscar SKU...", key="stock_sku")
-        cat_f = st.selectbox("Categoría", ["Todas"] + sorted([c for c in df_sku['Categoria'].dropna().unique() if c]), key="stock_cat")
-        marca_f = st.selectbox("Marca", ["Todas"] + sorted([m for m in df_sku['Marca'].dropna().unique() if m]), key="stock_marca")
-        sem_options = sorted(df_sku['Semaforo'].dropna().unique().tolist())
-        sem_f = st.selectbox("Semáforo", ["Todos"] + sem_options, key="stock_sem")
-        bod_options = sorted([b for b in df_det['Bodega'].dropna().unique() if b]) if 'Bodega' in df_det.columns else []
-        bod_f = st.selectbox("Bodega", ["Todas"] + bod_options, key="stock_bod")
+        sku_f = []
+        if 'SKU' in df_sku.columns:
+            sku_options = sorted([s for s in df_sku['SKU'].dropna().unique() if s])
+            sku_f = st.multiselect("SKU", sku_options, default=[], placeholder="Buscar SKU...", key="stock_sku")
+
+        cat_f = "Todas"
+        if 'Categoria' in df_sku.columns:
+            cat_options = sorted([c for c in df_sku['Categoria'].dropna().unique() if c])
+            cat_f = st.selectbox("Categoría", ["Todas"] + cat_options, key="stock_cat")
+
+        marca_f = "Todas"
+        if 'Marca' in df_sku.columns:
+            marca_options = sorted([m for m in df_sku['Marca'].dropna().unique() if m])
+            marca_f = st.selectbox("Marca", ["Todas"] + marca_options, key="stock_marca")
+
+        sem_f = "Todos"
+        if 'Semaforo' in df_sku.columns:
+            sem_options = sorted(df_sku['Semaforo'].dropna().unique().tolist())
+            sem_f = st.selectbox("Semáforo", ["Todos"] + sem_options, key="stock_sem")
+
+        bod_f = "Todas"
+        if 'Bodega' in df_det.columns:
+            bod_options = sorted([b for b in df_det['Bodega'].dropna().unique() if b])
+            bod_f = st.selectbox("Bodega", ["Todas"] + bod_options, key="stock_bod")
 
     df_f = df_sku.copy()
-    if sku_f:
+    if sku_f and 'SKU' in df_f.columns:
         df_f = df_f[df_f['SKU'].isin(sku_f)]
-    if cat_f != "Todas":
+    if cat_f != "Todas" and 'Categoria' in df_f.columns:
         df_f = df_f[df_f['Categoria'] == cat_f]
-    if marca_f != "Todas":
+    if marca_f != "Todas" and 'Marca' in df_f.columns:
         df_f = df_f[df_f['Marca'] == marca_f]
-    if sem_f != "Todos":
+    if sem_f != "Todos" and 'Semaforo' in df_f.columns:
         df_f = df_f[df_f['Semaforo'] == sem_f]
     if bod_f != "Todas" and 'Bodega' in df_f.columns:
         df_f = df_f[df_f['Bodega'].astype(str).str.contains(bod_f, na=False)]
