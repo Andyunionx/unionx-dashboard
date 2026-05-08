@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from views._shared import get_service
+from views.shared import get_service
 
 
 def render():

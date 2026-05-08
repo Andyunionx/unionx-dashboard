@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from views._shared import (
+from views.shared import (
     cached_semanal, fmt_int, fmt_money, render_filters_sidebar, render_health_header,
 )
 

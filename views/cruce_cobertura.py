@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from views._shared import cached_stock, cached_ventas_canal_30d
+from views.shared import cached_stock, cached_ventas_canal_30d
 
 
 SEM_DISPLAY = {

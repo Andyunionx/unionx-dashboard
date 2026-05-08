@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from views._shared import cached_stock
+from views.shared import cached_stock
 
 
 SEM_DISPLAY = {
