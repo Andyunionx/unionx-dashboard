@@ -76,7 +76,8 @@ st.markdown(
 # NAVEGACIÓN JERÁRQUICA — secciones del Plan Operaciones
 # ============================================================
 from views.ops_comex import render as render_ops_comex
-from views.ops_fulfillment_ops import render as render_ops_fulfillment
+from views.ops_stock_live import render as render_ops_stock_live
+from views.ops_wms_kpis import render as render_ops_wms
 from views.ops_postventa import render as render_ops_postventa
 from views.ops_sac import render as render_ops_sac
 from views.ops_logistica import render as render_ops_logistica
@@ -85,19 +86,16 @@ from views.ops_plan_estrategico import render as render_ops_plan
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
 
-# Reutilizamos Stock LIVE de la app Ventas (mismo módulo, diferente sesión)
-from views.stock_live import render as render_stock_live
-
 pages = {
     "🚢 COMEX": [
         st.Page(render_ops_comex, title="Embarques activos", icon="📦",
                 url_path="ops-comex", default=True),
     ],
     "📦 Fulfillment": [
-        st.Page(render_stock_live, title="Stock LIVE", icon="📦",
+        st.Page(render_ops_stock_live, title="Stock LIVE Operacional", icon="📦",
                 url_path="ops-stock-live"),
-        st.Page(render_ops_fulfillment, title="Operación bodega", icon="🎯",
-                url_path="ops-fulfillment"),
+        st.Page(render_ops_wms, title="KPIs WMS", icon="🎯",
+                url_path="ops-wms-kpis"),
         st.Page(render_ops_costo, title="Costo Operativo Total", icon="💰",
                 url_path="ops-costo-operativo"),
     ],
