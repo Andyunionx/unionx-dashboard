@@ -6,8 +6,10 @@ SAC, Logística, Costo Operativo). Repo compartido con la app de Ventas pero
 deploy y secrets independientes.
 
 Diferencias clave vs dashboard_ventas.py:
-  - Auth propio: el secret 'auth' acá lista usuarios del equipo Ops
-  - Odoo dual: usa OPS_ODOO_USER + OPS_ODOO_PASSWORD (no ANDRES_*)
+  - Auth: SSO contra Odoo (no streamlit_authenticator)
+    El user ingresa su email+password de Odoo. Se valida con Odoo XML-RPC.
+    Solo emails en OPS_ALLOWED_EMAILS pueden entrar.
+  - Odoo: usa OPS_ODOO_USER + OPS_ODOO_PASSWORD (cuenta servicio para datos)
   - Navegación: secciones Ops del Plan Estratégico Unificado 2026-2028
 """
 import os
@@ -15,8 +17,6 @@ import sys
 from pathlib import Path
 
 import streamlit as st
-import streamlit_authenticator as stauth
-import yaml
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -28,6 +28,8 @@ for _key in (
     "LIBSQL_AUTH_TOKEN",
     "OPS_ODOO_USER",
     "OPS_ODOO_PASSWORD",
+    "ODOO_URL",
+    "ODOO_DB",
     # gcp_service_account es struct, se accede por st.secrets directo
 ):
     if _key in st.secrets and not os.environ.get(_key):
@@ -41,59 +43,17 @@ st.set_page_config(
 )
 
 # ============================================================
-# AUTENTICACIÓN (mismo patrón que dashboard_ventas.py)
+# AUTENTICACIÓN — SSO Odoo
 # ============================================================
-def _to_plain(obj):
-    if hasattr(obj, "items") and not isinstance(obj, dict):
-        return {k: _to_plain(v) for k, v in obj.items()}
-    if isinstance(obj, dict):
-        return {k: _to_plain(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_to_plain(v) for v in obj]
-    return obj
-
-
-def _load_auth_config():
-    if "auth" in st.secrets:
-        return _to_plain(st.secrets["auth"])
-    cfg_path = PROJECT_ROOT / "auth_config.yaml"
-    if cfg_path.exists():
-        with open(cfg_path, encoding="utf-8") as f:
-            return yaml.safe_load(f)
-    return None
-
-
-auth_config = _load_auth_config()
-if not auth_config:
-    st.error("No hay configuración de autenticación.")
-    st.stop()
-
-authenticator = stauth.Authenticate(
-    auth_config["credentials"],
-    auth_config["cookie"]["name"],
-    auth_config["cookie"]["key"],
-    auth_config["cookie"]["expiry_days"],
-)
-try:
-    authenticator.login(location="main", key="login_main_ops")
-except Exception:
-    pass
-
-if st.session_state.get("authentication_status") is False:
-    st.error("Usuario o contraseña incorrectos")
-    st.stop()
-elif st.session_state.get("authentication_status") is None:
-    st.warning("Por favor ingresa tu usuario y contraseña")
-    st.stop()
-
-# Autenticado
 with st.sidebar:
     st.markdown("## 🚢 **UnionX Operaciones**")
     st.caption("Plan Estratégico 2026-2028")
     st.divider()
-    authenticator.logout("Cerrar sesión", "sidebar")
-    st.write(f"👤 **{st.session_state.get('name', '')}**")
-    st.divider()
+
+from views._ops_auth import require_login_ops  # noqa: E402
+
+# Bloquea hasta que el user haga login con sus credenciales Odoo
+require_login_ops()
 
 # Indicador de estado Odoo OPS (sidebar)
 from views._ops_odoo_helper import odoo_status_indicator  # noqa: E402

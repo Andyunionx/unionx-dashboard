@@ -12,9 +12,25 @@ Documento técnico para entender, mantener y replicar la 2da app de Streamlit Cl
 
 Tener una segunda app de Streamlit Cloud apuntando al **mismo repo** pero con:
 - Entry point distinto (`dashboard_operaciones.py`)
-- **Secrets independientes** (incluyendo usuario Odoo distinto)
-- **Auth independiente** (lista de usuarios del equipo Ops)
+- **Secrets independientes** (incluyendo cuenta servicio Odoo independiente)
+- **Auth: SSO contra Odoo** — cada user ingresa su login Odoo, se valida XML-RPC, y solo los emails de `OPS_ALLOWED_EMAILS` pueden entrar
 - **Foco operativo** según el Plan Estratégico Unificado 2026-2028
+
+## 🔐 Auth: SSO Odoo (no streamlit_authenticator)
+
+A diferencia de la app Ventas, **no usamos `streamlit_authenticator` con hashes bcrypt**. La app Operaciones autentica directamente contra Odoo:
+
+1. User ingresa su email + password de Odoo (su login normal en odoo.com)
+2. Validamos contra Odoo XML-RPC (`OdooClient.authenticate()`)
+3. Filtramos contra `OPS_ALLOWED_EMAILS` (lista en Streamlit Secrets)
+4. Si pasa ambos: dejamos entrar
+
+**Ventajas:**
+- ✅ No mantenemos hashes bcrypt paralelos
+- ✅ Si Andrés crea/desactiva user en Odoo → automáticamente se refleja
+- ✅ Cada user usa SU password real de Odoo (no una sintética)
+
+**Para datos del dashboard:** sigue habiendo una cuenta de servicio (`OPS_ODOO_USER` / `OPS_ODOO_PASSWORD`) usada por las queries del backend (StockAdvancedService, etc.) — NO afecta al login.
 
 Esto permite separar visibilidad y permisos sin duplicar código (auth, helpers, services se reusan vía imports).
 

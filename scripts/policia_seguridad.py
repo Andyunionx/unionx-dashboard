@@ -105,6 +105,8 @@ ALLOWLIST_FILES = {
     "scripts/policia_seguridad.py",  # este mismo archivo tiene los patterns
     "scripts/configurar_credenciales.py",  # script que pide la password
     "scripts/setup_app_operaciones.py",  # script asistido para Streamlit Cloud
+    "scripts/setup_app_operaciones_simple.py",  # script asistido modo simple
+    "views/_ops_auth.py",  # login form Odoo (tiene var password)
     ".env.template",
     ".streamlit/secrets.toml.template",
     "SEGURIDAD.md",
