@@ -15,7 +15,7 @@ from views.contribucion_loader import (
 
 def render():
     st.title("📊 Contribución Comercial — Vista General")
-    st.caption("Fuente: Google Sheet 'Análisis de Contribución' · Cache 5 min · "
+    st.caption("Fuente: Google Sheet 'Análisis de Contribución' · Cache 1 hora · "
                "[Abrir Sheet](https://docs.google.com/spreadsheets/d/1O7bRbY3v7Wc8atMu2I4PJ-pgA_Sy0-g57-iz0CSu4m4/)")
 
     if st.button("🔄 Refrescar", key="contrib_general_refresh"):

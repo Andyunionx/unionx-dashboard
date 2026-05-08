@@ -40,11 +40,12 @@ def _gspread_client():
     )
 
 
-@st.cache_data(ttl=300, show_spinner="Cargando datos de Contribución desde Google Sheets…")
+@st.cache_data(ttl=3600, show_spinner="Cargando datos de Contribución desde Google Sheets…")
 def cargar_hoja(nombre_hoja: str) -> pd.DataFrame:
     """Lee una hoja del Sheet de Contribución y devuelve DataFrame.
 
-    Cache: 5 min. Para forzar refresh: st.cache_data.clear()
+    Cache: 1 hora (3600s). Para forzar refresh manual usar el botón
+    '🔄 Refrescar' en cada vista (ejecuta st.cache_data.clear()).
     """
     gc = _gspread_client()
     sh = gc.open_by_key(SHEET_ID)

@@ -10,7 +10,7 @@ Documento de referencia para entender, mantener y replicar la sección "💼 Con
 
 ## 🎯 Objetivo
 
-Mostrar el análisis de Contribución Comercial dentro del dashboard de ventas, leyendo en vivo desde el Google Sheet "Análisis de Contribución" con cache de 5 min. Sin uploaders ni copias locales — la data fluye desde la fuente que el equipo ya mantiene en Drive.
+Mostrar el análisis de Contribución Comercial dentro del dashboard de ventas, leyendo en vivo desde el Google Sheet "Análisis de Contribución" con cache de **1 hora** (refresh manual disponible en cada vista). Sin uploaders ni copias locales — la data fluye desde la fuente que el equipo ya mantiene en Drive.
 
 ---
 
@@ -30,7 +30,7 @@ unionx-dashboard/
     └── contribucion_detalle.py    ⭐ NUEVO       ← Drill-down filtrable Año/Q/Mes/...
 ```
 
-**Patrón:** una vista por sub-página, cada una llama al loader común. Cache 5 min vía `@st.cache_data(ttl=300)`.
+**Patrón:** una vista por sub-página, cada una llama al loader común. Cache 1 hora vía `@st.cache_data(ttl=3600)`.
 
 ---
 
@@ -43,7 +43,7 @@ Ubicación: `views/_contribucion_loader.py`
 - **`_gspread_client()`** — singleton del cliente gspread
   - En **Streamlit Cloud:** lee de `st.secrets["gcp_service_account"]`
   - En **local:** lee de `credentials.json` en raíz
-- **`cargar_hoja(nombre)`** — lee hoja del Sheet → DataFrame, cacheado 5 min
+- **`cargar_hoja(nombre)`** — lee hoja del Sheet → DataFrame, cacheado 1 hora
 - **`parse_numero(val)`** — convierte formato chileno (`'22.043.655'` → `22043655.0`, `'63%'` → `0.63`)
 - **`parsear_columnas_numericas(df, cols)`** — helper masivo
 - **`fmt_pesos_M`, `fmt_pesos_K`, `fmt_pct`** — formateo display
@@ -194,8 +194,8 @@ Permisos: **Viewer** (solo lectura) o **Editor** si necesitás escribir.
 |---|---|
 | 1ra carga de una hoja | 2-5s (request HTTP a Sheets API) |
 | 2da-Nva carga (cache válido) | <100ms (instantáneo) |
-| Cache invalida automáticamente | a los 5 min |
-| Botón "🔄 Refrescar" | invalida cache global de la sesión |
+| Cache invalida automáticamente | a los **60 minutos** |
+| Botón "🔄 Refrescar" | invalida cache global de la sesión (instantáneo) |
 
 **Comparación vs Stock LIVE:** las hojas de Contribución son chicas (1000-2000 filas) y la API de Sheets es rápida → mucho más liviano que la consulta Odoo del Stock LIVE.
 
@@ -242,7 +242,7 @@ from views.mi_vista import render as render_mi_vista
 | `PermissionError: caller does not have permission` | Sheet no compartido con el SA | Compartir el Sheet con `union-x-revenue-bot@...` |
 | `FileNotFoundError: credentials` (local) | Falta `credentials.json` en raíz | Descargar nueva key del SA en Google Cloud Console |
 | `KeyError: 'gcp_service_account'` (cloud) | Secret no configurado | Agregar bloque `[gcp_service_account]` en Streamlit Cloud Secrets |
-| Datos viejos pese a actualización del Sheet | Cache 5 min vigente | Botón "🔄 Refrescar" o esperar 5 min |
+| Datos viejos pese a actualización del Sheet | Cache 1 hora vigente | Botón "🔄 Refrescar" o esperar hasta 1 hora |
 | Columnas con valores raros (texto en vez de números) | Format chileno no parseado | Agregar la columna al `cols_num` y llamar `parsear_columnas_numericas` |
 | KAM aparece vacío en algunas filas | El Sheet usa "merge cells" visualmente | Aplicar `df["KAM"] = df["KAM"].replace("", pd.NA).ffill()` |
 
