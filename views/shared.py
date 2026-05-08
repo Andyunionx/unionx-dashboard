@@ -73,7 +73,7 @@ COLOR_NEUTRO = '#64748B'     # gris
 # ============================================================
 # Local SQLite combinando parquet histórico + Turso live
 # ============================================================
-@st.cache_resource(ttl=600, show_spinner="Cargando datos (parquet histórico + Turso live)…")
+@st.cache_resource(show_spinner="Cargando datos (primera vez ~10s)…")
 def get_local_db_path():
     """SQLite local combinando histórico (parquet) + live (Turso). Auto-invalida 5 min."""
     if not os.environ.get('LIBSQL_URL'):
