@@ -146,6 +146,12 @@ pasos_streamlit_cloud*.txt
 _*.py
 !_generar_auth_local.py
 !__init__.py
+# Helpers de views (privados con underscore pero necesarios para imports)
+!views/_ops_auth.py
+!views/_ops_odoo_helper.py
+!views/_ops_data_helper.py
+!views/_ops_wms_helper.py
+!views/_contribucion_loader.py
 *.zip
 
 # Excel historicos / EERR (excepto los maestros)
