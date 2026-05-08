@@ -85,19 +85,151 @@ def render():
     st.caption("Plan Estratégico 2026-2028 · Cache 5-10 min · Datos Odoo + manuales")
 
     tabs = st.tabs([
-        "📊 Resumen",
-        "📦 OTIF (B2C/B2B)",
-        "🎯 Picking & OFR/OCT",
-        "📥 Recepciones",
-        "📈 Tendencia mensual",
-        "🛒 Análisis pedidos",
-        "📋 Datos manuales",
+        "📋 Datos manuales",      # 0 — primero (no toca Odoo, render instantáneo)
+        "📊 Resumen",             # 1
+        "📦 OTIF (B2C/B2B)",      # 2
+        "🎯 Picking & OFR/OCT",   # 3
+        "📥 Recepciones",         # 4
+        "📈 Tendencia mensual",   # 5
+        "🛒 Análisis pedidos",    # 6
     ])
+
+    # ============================================================
+    # TAB 0 — DATOS MANUALES (primero para garantizar render)
+    # No toca Odoo. Aparece instantáneo.
+    # ============================================================
+    try:
+        with tabs[0]:
+            st.markdown("### 📋 Carga de datos manuales")
+            st.caption("Datos que NO vienen de Odoo. Renderiza instantáneo.")
+
+            st.warning(
+                "⚠️ **Datos persistidos en JSON local.** En Streamlit Cloud se pierden "
+                "al re-deploy. Roadmap H2: migrar a Turso (libSQL)."
+            )
+
+            sub_tabs_dm = st.tabs([
+                "👥 Equipo bodega",
+                "🏭 Capacidad (m³ pausado)",
+                "📋 Cycle counts",
+                "📉 Merma",
+            ])
+
+            with sub_tabs_dm[0]:
+                st.markdown("#### Equipo bodega — horas trabajadas por mes")
+                st.caption("Necesario para calcular productividad picking (líneas/h)")
+                mes_input = st.text_input("Mes (YYYY-MM)",
+                                           value=datetime.now().strftime("%Y-%m"),
+                                           key="eq_mes_top")
+                actual_eq = get_equipo_mes(mes_input) or {}
+                c1, c2 = st.columns(2)
+                personas = c1.number_input("Personas activas", min_value=0, max_value=200, step=1,
+                                            value=int(actual_eq.get("personas") or 0),
+                                            key="eq_personas_top")
+                horas = c2.number_input("Horas total trabajadas en el mes", min_value=0.0, step=10.0,
+                                         value=float(actual_eq.get("horas_total") or 0),
+                                         key="eq_horas_top")
+                if st.button("💾 Guardar equipo", key="eq_save_top"):
+                    if set_equipo_mes(mes_input, int(personas), float(horas)):
+                        st.success(f"✅ Guardado para {mes_input}")
+                        st.cache_data.clear()
+                    else:
+                        st.error("❌ Error guardando")
+
+            with sub_tabs_dm[1]:
+                st.markdown("#### Capacidad de bodega")
+                st.warning(
+                    "🚧 **m³ pausado — Roadmap H2** · Requiere dimensiones de **caja master** "
+                    "(no la unidad individual). Mientras tanto, **Ocupación bodega** se mide por "
+                    "**# posiciones** (Tab Resumen)."
+                )
+                actual_cap = get_capacidad_bodega() or {}
+                current_m3 = actual_cap.get("m3_totales") or 0.0
+                m3 = st.number_input("Capacidad total m³ (informativo)",
+                                      min_value=0.0, step=10.0,
+                                      value=float(current_m3), key="cap_m3_top")
+                if st.button("💾 Guardar capacidad", key="cap_save_top"):
+                    if set_capacidad_bodega(float(m3)):
+                        st.success(f"✅ Capacidad: {m3:,.0f} m³")
+                    else:
+                        st.error("❌ Error guardando")
+                if actual_cap.get("fecha_actualizacion"):
+                    st.caption(f"Última actualización: {actual_cap['fecha_actualizacion'][:16]}")
+
+            with sub_tabs_dm[2]:
+                st.markdown("#### Cycle counts (auditorías de inventario)")
+                st.caption("Cargar resultados para calcular Exactitud Inventario.")
+
+                if st.button("📊 Calcular cobertura cycle counts (consulta Odoo)",
+                             key="cc_cobertura_btn"):
+                    with st.spinner("Consultando Odoo…"):
+                        try:
+                            cobertura_t = kpi_cobertura_cycle_counts(meses=12)
+                            if cobertura_t.get("valor") is not None:
+                                cv = cobertura_t["valor"]
+                                ic = "🟢" if cv >= 0.80 else ("🟡" if cv >= 0.50 else "🔴")
+                                st.metric(f"{ic} Cobertura últimos 12m",
+                                          f"{cv*100:.1f}%",
+                                          help=f"{cobertura_t.get('n_auditados', 0)} SKUs / "
+                                               f"{cobertura_t.get('total_skus', 0)} totales")
+                            else:
+                                st.info(cobertura_t.get("error", "Sin datos"))
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+
+                with st.form("cc_form_top", clear_on_submit=True):
+                    c1, c2, c3 = st.columns(3)
+                    sku = c1.text_input("SKU", key="cc_sku_top")
+                    qty_sis = c2.number_input("Qty Sistema", min_value=0.0, step=1.0, key="cc_qsis_top")
+                    qty_fis = c3.number_input("Qty Física", min_value=0.0, step=1.0, key="cc_qfis_top")
+                    fecha = st.text_input("Fecha (YYYY-MM-DD)",
+                                           value=datetime.now().strftime("%Y-%m-%d"), key="cc_fecha_top")
+                    nota = st.text_input("Nota (opcional)", key="cc_nota_top")
+                    if st.form_submit_button("➕ Agregar cycle count", type="primary"):
+                        if sku and (qty_fis > 0 or qty_sis > 0):
+                            if add_cycle_count(sku, qty_sis, qty_fis, fecha, nota):
+                                st.success(f"✅ Agregado: {sku}")
+                                st.cache_data.clear()
+                            else:
+                                st.error("❌ Error guardando")
+                        else:
+                            st.warning("Ingresá SKU + cantidades")
+
+                counts = get_cycle_counts()
+                if counts:
+                    st.markdown(f"##### Histórico ({len(counts)} cycle counts)")
+                    df = pd.DataFrame(counts[:50])
+                    st.dataframe(df, use_container_width=True, hide_index=True, height=300)
+
+            with sub_tabs_dm[3]:
+                st.markdown("#### Merma operativa por mes")
+                mes_m = st.text_input("Mes (YYYY-MM)",
+                                       value=datetime.now().strftime("%Y-%m"), key="m_mes_top")
+                actual_m = get_merma_mes(mes_m) or {}
+                c1, c2 = st.columns(2)
+                mermado = c1.number_input("Valor mermado ($)", min_value=0.0, step=1000.0,
+                                           value=float(actual_m.get("valor_mermado") or 0),
+                                           key="m_mer_top")
+                inv_prom = c2.number_input("Valor inventario promedio ($)", min_value=0.0, step=10000.0,
+                                            value=float(actual_m.get("valor_inv_promedio") or 0),
+                                            key="m_inv_top")
+                if mermado > 0 and inv_prom > 0:
+                    pct = mermado / inv_prom
+                    color = "🟢" if pct <= 0.005 else ("🟡" if pct <= 0.01 else "🔴")
+                    st.metric(f"{color} % Merma", f"{pct*100:.2f}%", help="Benchmark: ≤ 0.5%")
+                if st.button("💾 Guardar merma", key="m_save_top"):
+                    if set_merma_mes(mes_m, float(mermado), float(inv_prom)):
+                        st.success(f"✅ Guardado para {mes_m}")
+                        st.cache_data.clear()
+                    else:
+                        st.error("❌ Error guardando")
+    except Exception as e:
+        st.error(f"❌ Error en Tab Datos manuales: {type(e).__name__}: {e}")
 
     # ============================================================
     # TAB 1 — RESUMEN
     # ============================================================
-    with tabs[0]:
+    with tabs[1]:
         st.markdown("### KPIs principales — comparado con benchmarks de mercado")
 
         # Cargar datos (defensivo: cualquier crash no debe romper Tabs 2-6)
@@ -291,7 +423,7 @@ def render():
     # ============================================================
     # TAB 2 — OTIF
     # ============================================================
-    with tabs[1]:
+    with tabs[2]:
         st.markdown("### 📦 OTIF (On-Time In-Full)")
         st.caption("Pickings entregados a tiempo Y completos. On-Time = date_done ≤ scheduled_date · In-Full = qty_done ≥ product_uom_qty")
 
@@ -344,7 +476,7 @@ def render():
     # ============================================================
     # TAB 3 — PICKING & OFR/OCT
     # ============================================================
-    with tabs[2]:
+    with tabs[3]:
         st.markdown("### 🎯 Pick Accuracy + OFR + OCT + Productividad")
 
         col_p, _ = st.columns([1, 3])
@@ -426,7 +558,7 @@ def render():
     # ============================================================
     # TAB 4 — RECEPCIONES
     # ============================================================
-    with tabs[3]:
+    with tabs[4]:
         st.markdown("### 📥 Recepciones")
         st.caption("Tiempo entre fecha programada y fecha efectiva de recepción de embarques")
 
@@ -467,7 +599,7 @@ def render():
     # ============================================================
     # TAB 5 — TENDENCIA MENSUAL (LAZY)
     # ============================================================
-    with tabs[4]:
+    with tabs[5]:
         st.markdown("### 📈 Tendencia mes a mes")
         st.caption("Evolución de OTIF B2C/B2B + Pick Accuracy en los últimos meses")
 
@@ -529,7 +661,7 @@ def render():
     # ============================================================
     # TAB 6 — ANÁLISIS PEDIDOS (Odoo) — LAZY
     # ============================================================
-    with tabs[5]:
+    with tabs[6]:
         st.markdown("### 🛒 Análisis de pedidos (Odoo)")
         st.caption("Pedidos · unidades · venta agregada cruzando SKU · canal · categoría · marca")
 
@@ -752,127 +884,3 @@ def render():
                     key="an_dl_pedidos",
                     use_container_width=True,
                 )
-
-    # ============================================================
-    # TAB 7 — DATOS MANUALES
-    # ============================================================
-    with tabs[6]:
-        st.markdown("### 📋 Carga de datos manuales")
-        st.caption("Datos que NO vienen de Odoo y necesitan carga periódica.")
-
-        st.warning(
-            "⚠️ **Datos persistidos en JSON local.** En Streamlit Cloud, se pierden "
-            "al re-deploy. Para persistencia real (H2): migrar a Turso (libSQL). "
-            "Por ahora cargar datos críticos al inicio de cada sesión."
-        )
-
-        sub_tabs = st.tabs([
-            "👥 Equipo bodega",
-            "🏭 Capacidad (m³ pausado)",
-            "📋 Cycle counts",
-            "📉 Merma",
-        ])
-
-        # ---- Equipo bodega ----
-        with sub_tabs[0]:
-            st.markdown("#### Equipo bodega — horas trabajadas por mes")
-            st.caption("Necesario para calcular productividad picking (líneas/h)")
-
-            mes_input = st.text_input("Mes (YYYY-MM)",
-                                       value=datetime.now().strftime("%Y-%m"),
-                                       key="eq_mes")
-            actual = get_equipo_mes(mes_input)
-            c1, c2 = st.columns(2)
-            personas = c1.number_input("Personas activas", min_value=0, max_value=200, step=1,
-                                        value=int(actual.get("personas", 0)), key="eq_personas")
-            horas = c2.number_input("Horas total trabajadas en el mes", min_value=0.0, step=10.0,
-                                     value=float(actual.get("horas_total", 0)), key="eq_horas")
-            if st.button("💾 Guardar equipo", key="eq_save"):
-                if set_equipo_mes(mes_input, int(personas), float(horas)):
-                    st.success(f"✅ Guardado para {mes_input}")
-                    st.cache_data.clear()
-                else:
-                    st.error("❌ Error guardando")
-
-        # ---- Capacidad bodega (m³ pausado) ----
-        with sub_tabs[1]:
-            st.markdown("#### Capacidad de bodega")
-            st.warning(
-                "🚧 **m³ pausado — Roadmap H2** · Las métricas de m³ requieren las dimensiones "
-                "de **caja master** (no la unidad individual de Odoo). Cuando se cargue caja master, "
-                "se reactivan: m³ disponible por posición + capacidad para próximos embarques."
-            )
-            st.markdown("Mientras tanto, **Ocupación bodega** se mide por **# posiciones** (exacto, "
-                       "ver Tab Resumen).")
-
-            actual = get_capacidad_bodega()
-            current_m3 = actual.get("m3_totales") or 0.0
-            m3 = st.number_input("Capacidad total m³ (informativo, no usado activamente)",
-                                  min_value=0.0, step=10.0, value=float(current_m3), key="cap_m3")
-            if st.button("💾 Guardar capacidad", key="cap_save"):
-                if set_capacidad_bodega(float(m3)):
-                    st.success(f"✅ Capacidad actualizada: {m3:,.0f} m³")
-                else:
-                    st.error("❌ Error guardando")
-            if actual.get("fecha_actualizacion"):
-                st.caption(f"Última actualización: {actual['fecha_actualizacion'][:16]}")
-
-        # ---- Cycle counts ----
-        with sub_tabs[2]:
-            st.markdown("#### Cycle counts (auditorías de inventario)")
-            st.caption("Cargar resultados para calcular Exactitud Inventario + Cobertura.")
-
-            cobertura_t = _safe_wms(kpi_cobertura_cycle_counts, meses=12, default={"valor": None})
-            if cobertura_t.get("valor") is not None:
-                cv = cobertura_t["valor"]
-                ic = "🟢" if cv >= 0.80 else ("🟡" if cv >= 0.50 else "🔴")
-                st.metric(f"{ic} Cobertura últimos 12m",
-                          f"{cv*100:.1f}%",
-                          help=f"{cobertura_t.get('n_auditados', 0)} SKUs únicos auditados de "
-                               f"{cobertura_t.get('total_skus', 0)} totales")
-
-            with st.form("cc_form", clear_on_submit=True):
-                c1, c2, c3 = st.columns(3)
-                sku = c1.text_input("SKU", key="cc_sku")
-                qty_sis = c2.number_input("Qty Sistema", min_value=0.0, step=1.0, key="cc_qsis")
-                qty_fis = c3.number_input("Qty Física", min_value=0.0, step=1.0, key="cc_qfis")
-                fecha = st.text_input("Fecha (YYYY-MM-DD)",
-                                       value=datetime.now().strftime("%Y-%m-%d"), key="cc_fecha")
-                nota = st.text_input("Nota (opcional)", key="cc_nota")
-                if st.form_submit_button("➕ Agregar cycle count", type="primary"):
-                    if sku and (qty_fis > 0 or qty_sis > 0):
-                        if add_cycle_count(sku, qty_sis, qty_fis, fecha, nota):
-                            st.success(f"✅ Agregado: {sku}")
-                            st.cache_data.clear()
-                        else:
-                            st.error("❌ Error guardando")
-                    else:
-                        st.warning("Ingresá SKU + cantidades")
-
-            counts = get_cycle_counts()
-            if counts:
-                st.markdown(f"##### Histórico ({len(counts)} cycle counts)")
-                df = pd.DataFrame(counts[:50])
-                st.dataframe(df, use_container_width=True, hide_index=True, height=300)
-
-        # ---- Merma ----
-        with sub_tabs[3]:
-            st.markdown("#### Merma operativa por mes")
-            mes_m = st.text_input("Mes (YYYY-MM)",
-                                   value=datetime.now().strftime("%Y-%m"), key="m_mes")
-            actual = get_merma_mes(mes_m)
-            c1, c2 = st.columns(2)
-            mermado = c1.number_input("Valor mermado ($)", min_value=0.0, step=1000.0,
-                                       value=float(actual.get("valor_mermado", 0)), key="m_mer")
-            inv_prom = c2.number_input("Valor inventario promedio ($)", min_value=0.0, step=10000.0,
-                                        value=float(actual.get("valor_inv_promedio", 0)), key="m_inv")
-            if mermado > 0 and inv_prom > 0:
-                pct = mermado / inv_prom
-                color = "🟢" if pct <= 0.005 else ("🟡" if pct <= 0.01 else "🔴")
-                st.metric(f"{color} % Merma", f"{pct*100:.2f}%", help="Benchmark: ≤ 0.5%")
-            if st.button("💾 Guardar merma", key="m_save"):
-                if set_merma_mes(mes_m, float(mermado), float(inv_prom)):
-                    st.success(f"✅ Guardado para {mes_m}")
-                    st.cache_data.clear()
-                else:
-                    st.error("❌ Error guardando")
