@@ -266,7 +266,7 @@ def cached_top_skus(desde, hasta, canal, marca, categoria, tipo_negocio, kam, li
     return get_service().get_top_skus_yoy(p, limit=limit)
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=300)
 def cached_health():
     return get_service().health()
 
