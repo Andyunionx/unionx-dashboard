@@ -465,18 +465,30 @@ def render():
             c4.metric("Total", f"{vol.get('total', 0)}")
 
     # ============================================================
-    # TAB 5 — TENDENCIA MENSUAL
+    # TAB 5 — TENDENCIA MENSUAL (LAZY)
     # ============================================================
     with tabs[4]:
         st.markdown("### 📈 Tendencia mes a mes")
         st.caption("Evolución de OTIF B2C/B2B + Pick Accuracy en los últimos meses")
 
-        col_m, _ = st.columns([1, 3])
+        col_m, col_btn = st.columns([1, 1])
         with col_m:
             n_meses = st.selectbox("Meses históricos", [3, 6, 9, 12], index=1, key="tend_meses")
+        with col_btn:
+            st.caption(" ")
+            if st.button("📥 Calcular tendencia (30-60s)", type="primary",
+                         key="tend_load", use_container_width=True):
+                st.session_state['tend_loaded'] = True
+                st.session_state['tend_meses_val'] = n_meses
 
-        with st.spinner(f"Calculando tendencia {n_meses} meses (puede tardar 30-60s)…"):
-            tend = _safe_wms(tendencia_mensual, meses=n_meses, default=[])
+        if not st.session_state.get('tend_loaded'):
+            st.info("👆 Click para calcular la tendencia. Query pesada (1 cálculo por mes).")
+            tend = []
+        else:
+            with st.spinner(f"Calculando tendencia {n_meses} meses…"):
+                tend = _safe_wms(tendencia_mensual,
+                                  meses=st.session_state.get('tend_meses_val', n_meses),
+                                  default=[])
 
         if not tend:
             st.info("Sin datos históricos disponibles")
@@ -515,202 +527,214 @@ def render():
             st.dataframe(df_show, use_container_width=True, hide_index=True)
 
     # ============================================================
-    # TAB 6 — ANÁLISIS PEDIDOS (Odoo)
+    # TAB 6 — ANÁLISIS PEDIDOS (Odoo) — LAZY
     # ============================================================
     with tabs[5]:
-        from views._ops_analytics_helper import (
-            ventas_por_mes, top_skus, ventas_por_canal,
-            ventas_por_categoria, ventas_por_marca, detalle_pedidos,
-        )
-
         st.markdown("### 🛒 Análisis de pedidos (Odoo)")
         st.caption("Pedidos · unidades · venta agregada cruzando SKU · canal · categoría · marca")
 
-        col_v, _ = st.columns([1, 3])
+        col_v, col_btn = st.columns([1, 1])
         with col_v:
             ventana = st.selectbox("Ventana análisis (días)", [30, 60, 90, 180, 365],
                                    index=2, key="an_ventana")
+        with col_btn:
+            st.caption(" ")
+            if st.button("📥 Cargar análisis (puede tardar)", type="primary",
+                         key="an_load", use_container_width=True):
+                st.session_state['an_loaded'] = True
+                st.session_state['an_ventana_val'] = ventana
 
-        analytics_subtabs = st.tabs([
-            "📅 Por mes",
-            "🏆 Top SKUs",
-            "🛍️ Por canal (B2C/B2B)",
-            "📦 Por categoría",
-            "🏷️ Por marca",
-            "🔍 Detalle pedidos",
-        ])
+        if not st.session_state.get('an_loaded'):
+            st.info("👆 Click 'Cargar análisis' para consultar Odoo. "
+                    "Queries pesadas (sale.order + sale.order.line) — 30-90s la primera vez.")
 
-        # ── 6.1 Por mes ────────────────────────────────────────────────
-        with analytics_subtabs[0]:
-            st.markdown("#### Pedidos / unidades / monto por mes")
-            n_meses_a = st.selectbox("Meses históricos", [3, 6, 9, 12, 18, 24],
-                                     index=3, key="an_meses")
-            with st.spinner(f"Calculando {n_meses_a} meses…"):
-                vm = _safe_wms(ventas_por_mes, meses=n_meses_a, default=[])
+        # Solo ejecutar si el usuario lo solicitó explícitamente
+        if st.session_state.get('an_loaded'):
+            from views._ops_analytics_helper import (
+                ventas_por_mes, top_skus, ventas_por_canal,
+                ventas_por_categoria, ventas_por_marca, detalle_pedidos,
+            )
 
-            if not vm:
-                st.info("Sin datos")
-            else:
-                df_vm = pd.DataFrame(vm)
+            analytics_subtabs = st.tabs([
+                "📅 Por mes",
+                "🏆 Top SKUs",
+                "🛍️ Por canal (B2C/B2B)",
+                "📦 Por categoría",
+                "🏷️ Por marca",
+                "🔍 Detalle pedidos",
+            ])
 
-                # KPIs totales
-                t_ped = df_vm["n_pedidos"].sum()
-                t_uds = df_vm["n_unidades"].sum()
-                t_mto = df_vm["monto"].sum()
-                ck1, ck2, ck3, ck4 = st.columns(4)
-                ck1.metric(f"Pedidos {n_meses_a}m", f"{t_ped:,}")
-                ck2.metric(f"Unidades {n_meses_a}m", f"{t_uds:,}")
-                ck3.metric(f"Venta {n_meses_a}m", f"${t_mto/1e6:,.1f}M")
-                ck4.metric("Ticket promedio",
-                           f"${(t_mto/t_ped):,.0f}" if t_ped else "—")
+            # ── 6.1 Por mes ────────────────────────────────────────────────
+            with analytics_subtabs[0]:
+                st.markdown("#### Pedidos / unidades / monto por mes")
+                n_meses_a = st.selectbox("Meses históricos", [3, 6, 9, 12, 18, 24],
+                                         index=3, key="an_meses")
+                with st.spinner(f"Calculando {n_meses_a} meses…"):
+                    vm = _safe_wms(ventas_por_mes, meses=n_meses_a, default=[])
 
-                st.markdown("##### Evolución mensual")
-                # Gráfico pedidos + unidades (escalas distintas, 2 charts)
-                gc1, gc2 = st.columns(2)
-                with gc1:
-                    st.markdown("**Pedidos por mes**")
-                    st.bar_chart(df_vm.set_index("mes")["n_pedidos"], height=280)
-                with gc2:
-                    st.markdown("**Unidades por mes**")
-                    st.bar_chart(df_vm.set_index("mes")["n_unidades"], height=280)
-                st.markdown("**Venta ($ MM) por mes**")
-                df_vm_m = df_vm.copy()
-                df_vm_m["venta_MM"] = (df_vm_m["monto"] / 1e6).round(2)
-                st.line_chart(df_vm_m.set_index("mes")["venta_MM"], height=280)
+                if not vm:
+                    st.info("Sin datos")
+                else:
+                    df_vm = pd.DataFrame(vm)
 
-                # Tabla
-                st.markdown("##### Tabla detalle")
-                df_show = df_vm.copy()
-                df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
-                df_show["ticket_promedio"] = df_show["ticket_promedio"].apply(lambda v: f"${v:,.0f}")
-                df_show.columns = ["Mes", "# Pedidos", "Unidades", "Monto", "Ticket prom."]
-                st.dataframe(df_show, use_container_width=True, hide_index=True)
+                    # KPIs totales
+                    t_ped = df_vm["n_pedidos"].sum()
+                    t_uds = df_vm["n_unidades"].sum()
+                    t_mto = df_vm["monto"].sum()
+                    ck1, ck2, ck3, ck4 = st.columns(4)
+                    ck1.metric(f"Pedidos {n_meses_a}m", f"{t_ped:,}")
+                    ck2.metric(f"Unidades {n_meses_a}m", f"{t_uds:,}")
+                    ck3.metric(f"Venta {n_meses_a}m", f"${t_mto/1e6:,.1f}M")
+                    ck4.metric("Ticket promedio",
+                               f"${(t_mto/t_ped):,.0f}" if t_ped else "—")
 
-        # ── 6.2 Top SKUs ───────────────────────────────────────────────
-        with analytics_subtabs[1]:
-            st.markdown(f"#### Top SKUs (últimos {ventana} días)")
-            top_n_sk = st.slider("Top N", 10, 100, 30, key="an_topn")
-            with st.spinner("Consultando Odoo…"):
-                ts = _safe_wms(top_skus, dias=ventana, top_n=top_n_sk,
-                               default={"items": [], "error": None})
-            if ts.get("error"):
-                st.warning(ts["error"])
-            elif ts.get("items"):
-                df_ts = pd.DataFrame(ts["items"])
-                df_ts["monto"] = df_ts["monto"].apply(lambda v: f"${v:,.0f}")
-                df_ts["ticket_promedio_uds"] = df_ts["ticket_promedio_uds"].round(1)
-                df_show = df_ts[["sku", "n_pedidos", "unidades", "monto", "ticket_promedio_uds"]].rename(
-                    columns={"sku": "SKU", "n_pedidos": "# Pedidos",
-                             "unidades": "Unidades", "monto": "Venta",
-                             "ticket_promedio_uds": "Uds/pedido"})
-                st.dataframe(df_show, use_container_width=True, hide_index=True, height=520)
-                st.caption(f"Total SKUs distintos vendidos: {ts.get('total_skus_distintos', 0):,}")
-            else:
-                st.info("Sin datos")
+                    st.markdown("##### Evolución mensual")
+                    # Gráfico pedidos + unidades (escalas distintas, 2 charts)
+                    gc1, gc2 = st.columns(2)
+                    with gc1:
+                        st.markdown("**Pedidos por mes**")
+                        st.bar_chart(df_vm.set_index("mes")["n_pedidos"], height=280)
+                    with gc2:
+                        st.markdown("**Unidades por mes**")
+                        st.bar_chart(df_vm.set_index("mes")["n_unidades"], height=280)
+                    st.markdown("**Venta ($ MM) por mes**")
+                    df_vm_m = df_vm.copy()
+                    df_vm_m["venta_MM"] = (df_vm_m["monto"] / 1e6).round(2)
+                    st.line_chart(df_vm_m.set_index("mes")["venta_MM"], height=280)
 
-        # ── 6.3 Por canal ──────────────────────────────────────────────
-        with analytics_subtabs[2]:
-            st.markdown(f"#### Mix por canal — últimos {ventana} días")
-            with st.spinner("Consultando Odoo…"):
-                vc = _safe_wms(ventas_por_canal, dias=ventana,
-                               default={"items": [], "error": None})
-            if vc.get("error"):
-                st.warning(vc["error"])
-            elif vc.get("items"):
-                df_vc = pd.DataFrame(vc["items"])
-                # KPIs comparativos
-                cc1, cc2 = st.columns(2)
-                for i, (col, row) in enumerate(zip([cc1, cc2], vc["items"])):
-                    canal = row["canal"]
-                    col.metric(f"Pedidos {canal}", f"{row['n_pedidos']:,}",
-                               delta=f"{row['n_clientes']} clientes")
-                    col.metric(f"Venta {canal}", f"${row['monto']/1e6:,.1f}M")
-                    col.metric(f"Ticket prom. {canal}", f"${row['ticket_prom']:,.0f}")
-                st.markdown("##### Tabla")
-                df_show = df_vc.copy()
-                df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
-                df_show["ticket_prom"] = df_show["ticket_prom"].apply(lambda v: f"${v:,.0f}")
-                st.dataframe(df_show, use_container_width=True, hide_index=True)
+                    # Tabla
+                    st.markdown("##### Tabla detalle")
+                    df_show = df_vm.copy()
+                    df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
+                    df_show["ticket_promedio"] = df_show["ticket_promedio"].apply(lambda v: f"${v:,.0f}")
+                    df_show.columns = ["Mes", "# Pedidos", "Unidades", "Monto", "Ticket prom."]
+                    st.dataframe(df_show, use_container_width=True, hide_index=True)
 
-                # Pie chart simple via bar chart
-                st.markdown("##### Distribución $ por canal")
-                df_chart = pd.DataFrame(vc["items"]).set_index("canal")["monto"]
-                st.bar_chart(df_chart, height=200)
+            # ── 6.2 Top SKUs ───────────────────────────────────────────────
+            with analytics_subtabs[1]:
+                st.markdown(f"#### Top SKUs (últimos {ventana} días)")
+                top_n_sk = st.slider("Top N", 10, 100, 30, key="an_topn")
+                with st.spinner("Consultando Odoo…"):
+                    ts = _safe_wms(top_skus, dias=ventana, top_n=top_n_sk,
+                                   default={"items": [], "error": None})
+                if ts.get("error"):
+                    st.warning(ts["error"])
+                elif ts.get("items"):
+                    df_ts = pd.DataFrame(ts["items"])
+                    df_ts["monto"] = df_ts["monto"].apply(lambda v: f"${v:,.0f}")
+                    df_ts["ticket_promedio_uds"] = df_ts["ticket_promedio_uds"].round(1)
+                    df_show = df_ts[["sku", "n_pedidos", "unidades", "monto", "ticket_promedio_uds"]].rename(
+                        columns={"sku": "SKU", "n_pedidos": "# Pedidos",
+                                 "unidades": "Unidades", "monto": "Venta",
+                                 "ticket_promedio_uds": "Uds/pedido"})
+                    st.dataframe(df_show, use_container_width=True, hide_index=True, height=520)
+                    st.caption(f"Total SKUs distintos vendidos: {ts.get('total_skus_distintos', 0):,}")
+                else:
+                    st.info("Sin datos")
 
-        # ── 6.4 Por categoría ──────────────────────────────────────────
-        with analytics_subtabs[3]:
-            st.markdown(f"#### Mix por categoría — últimos {ventana} días")
-            with st.spinner("Consultando Odoo…"):
-                vcat = _safe_wms(ventas_por_categoria, dias=ventana,
-                                 default={"items": [], "error": None})
-            if vcat.get("error"):
-                st.warning(vcat["error"])
-            elif vcat.get("items"):
-                df_vcat = pd.DataFrame(vcat["items"])
-                df_show = df_vcat.copy()
-                df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
-                df_show.columns = ["Categoría", "Unidades", "Venta", "# SKUs"]
-                st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
-                st.markdown("##### Top 10 categorías por venta")
-                df_chart = df_vcat.head(10).set_index("categoria")["monto"]
-                st.bar_chart(df_chart, height=300)
+            # ── 6.3 Por canal ──────────────────────────────────────────────
+            with analytics_subtabs[2]:
+                st.markdown(f"#### Mix por canal — últimos {ventana} días")
+                with st.spinner("Consultando Odoo…"):
+                    vc = _safe_wms(ventas_por_canal, dias=ventana,
+                                   default={"items": [], "error": None})
+                if vc.get("error"):
+                    st.warning(vc["error"])
+                elif vc.get("items"):
+                    df_vc = pd.DataFrame(vc["items"])
+                    # KPIs comparativos
+                    cc1, cc2 = st.columns(2)
+                    for i, (col, row) in enumerate(zip([cc1, cc2], vc["items"])):
+                        canal = row["canal"]
+                        col.metric(f"Pedidos {canal}", f"{row['n_pedidos']:,}",
+                                   delta=f"{row['n_clientes']} clientes")
+                        col.metric(f"Venta {canal}", f"${row['monto']/1e6:,.1f}M")
+                        col.metric(f"Ticket prom. {canal}", f"${row['ticket_prom']:,.0f}")
+                    st.markdown("##### Tabla")
+                    df_show = df_vc.copy()
+                    df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
+                    df_show["ticket_prom"] = df_show["ticket_prom"].apply(lambda v: f"${v:,.0f}")
+                    st.dataframe(df_show, use_container_width=True, hide_index=True)
 
-        # ── 6.5 Por marca ──────────────────────────────────────────────
-        with analytics_subtabs[4]:
-            st.markdown(f"#### Mix por marca — últimos {ventana} días")
-            st.caption("Marca extraída del display_name (heurística). Si Odoo tiene un campo "
-                       "custom de marca, se puede mejorar.")
-            with st.spinner("Consultando Odoo…"):
-                vm_marca = _safe_wms(ventas_por_marca, dias=ventana,
+                    # Pie chart simple via bar chart
+                    st.markdown("##### Distribución $ por canal")
+                    df_chart = pd.DataFrame(vc["items"]).set_index("canal")["monto"]
+                    st.bar_chart(df_chart, height=200)
+
+            # ── 6.4 Por categoría ──────────────────────────────────────────
+            with analytics_subtabs[3]:
+                st.markdown(f"#### Mix por categoría — últimos {ventana} días")
+                with st.spinner("Consultando Odoo…"):
+                    vcat = _safe_wms(ventas_por_categoria, dias=ventana,
                                      default={"items": [], "error": None})
-            if vm_marca.get("error"):
-                st.warning(vm_marca["error"])
-            elif vm_marca.get("items"):
-                df_vm_marca = pd.DataFrame(vm_marca["items"])
-                df_show = df_vm_marca.copy()
-                df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
-                df_show.columns = ["Marca", "Unidades", "Venta", "# SKUs"]
-                st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
-                st.markdown("##### Top 10 marcas por venta")
-                df_chart = df_vm_marca.head(10).set_index("marca")["monto"]
-                st.bar_chart(df_chart, height=300)
+                if vcat.get("error"):
+                    st.warning(vcat["error"])
+                elif vcat.get("items"):
+                    df_vcat = pd.DataFrame(vcat["items"])
+                    df_show = df_vcat.copy()
+                    df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
+                    df_show.columns = ["Categoría", "Unidades", "Venta", "# SKUs"]
+                    st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+                    st.markdown("##### Top 10 categorías por venta")
+                    df_chart = df_vcat.head(10).set_index("categoria")["monto"]
+                    st.bar_chart(df_chart, height=300)
 
-        # ── 6.6 Detalle pedidos ────────────────────────────────────────
-        with analytics_subtabs[5]:
-            st.markdown(f"#### Detalle pedidos (últimos {ventana} días)")
-            top_n_d = st.slider("Mostrar últimos N pedidos", 50, 1000, 200, key="an_topn_d")
-            with st.spinner("Consultando Odoo…"):
-                det = _safe_wms(detalle_pedidos, dias=ventana, top_n=top_n_d,
-                                default={"items": [], "error": None})
-            if det.get("error"):
-                st.warning(det["error"])
-            elif det.get("items"):
-                df_det = pd.DataFrame(det["items"])
+            # ── 6.5 Por marca ──────────────────────────────────────────────
+            with analytics_subtabs[4]:
+                st.markdown(f"#### Mix por marca — últimos {ventana} días")
+                st.caption("Marca extraída del display_name (heurística). Si Odoo tiene un campo "
+                           "custom de marca, se puede mejorar.")
+                with st.spinner("Consultando Odoo…"):
+                    vm_marca = _safe_wms(ventas_por_marca, dias=ventana,
+                                         default={"items": [], "error": None})
+                if vm_marca.get("error"):
+                    st.warning(vm_marca["error"])
+                elif vm_marca.get("items"):
+                    df_vm_marca = pd.DataFrame(vm_marca["items"])
+                    df_show = df_vm_marca.copy()
+                    df_show["monto"] = df_show["monto"].apply(lambda v: f"${v:,.0f}")
+                    df_show.columns = ["Marca", "Unidades", "Venta", "# SKUs"]
+                    st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+                    st.markdown("##### Top 10 marcas por venta")
+                    df_chart = df_vm_marca.head(10).set_index("marca")["monto"]
+                    st.bar_chart(df_chart, height=300)
 
-                # Filtros locales
-                fc1, fc2, fc3 = st.columns(3)
-                with fc1:
-                    canal_f = st.multiselect("Canal", ["B2C", "B2B"],
-                                             default=["B2C", "B2B"], key="an_f_canal")
-                with fc2:
-                    cats_avail = sorted(df_det["categoria"].dropna().unique().tolist())
-                    cat_f = st.multiselect("Categoría", cats_avail, key="an_f_cat")
-                with fc3:
-                    marcas_avail = sorted(df_det["marca"].dropna().unique().tolist())
-                    marca_f = st.multiselect("Marca", marcas_avail, key="an_f_marca")
+            # ── 6.6 Detalle pedidos ────────────────────────────────────────
+            with analytics_subtabs[5]:
+                st.markdown(f"#### Detalle pedidos (últimos {ventana} días)")
+                top_n_d = st.slider("Mostrar últimos N pedidos", 50, 1000, 200, key="an_topn_d")
+                with st.spinner("Consultando Odoo…"):
+                    det = _safe_wms(detalle_pedidos, dias=ventana, top_n=top_n_d,
+                                    default={"items": [], "error": None})
+                if det.get("error"):
+                    st.warning(det["error"])
+                elif det.get("items"):
+                    df_det = pd.DataFrame(det["items"])
 
-                df_f = df_det.copy()
-                if canal_f:
-                    df_f = df_f[df_f["canal"].isin(canal_f)]
-                if cat_f:
-                    df_f = df_f[df_f["categoria"].isin(cat_f)]
-                if marca_f:
-                    df_f = df_f[df_f["marca"].isin(marca_f)]
+                    # Filtros locales
+                    fc1, fc2, fc3 = st.columns(3)
+                    with fc1:
+                        canal_f = st.multiselect("Canal", ["B2C", "B2B"],
+                                                 default=["B2C", "B2B"], key="an_f_canal")
+                    with fc2:
+                        cats_avail = sorted(df_det["categoria"].dropna().unique().tolist())
+                        cat_f = st.multiselect("Categoría", cats_avail, key="an_f_cat")
+                    with fc3:
+                        marcas_avail = sorted(df_det["marca"].dropna().unique().tolist())
+                        marca_f = st.multiselect("Marca", marcas_avail, key="an_f_marca")
 
-                st.dataframe(
-                    df_f.assign(monto=lambda d: d["monto"].apply(lambda v: f"${v:,.0f}")),
-                    use_container_width=True, hide_index=True, height=520,
-                )
+                    df_f = df_det.copy()
+                    if canal_f:
+                        df_f = df_f[df_f["canal"].isin(canal_f)]
+                    if cat_f:
+                        df_f = df_f[df_f["categoria"].isin(cat_f)]
+                    if marca_f:
+                        df_f = df_f[df_f["marca"].isin(marca_f)]
+
+                    st.dataframe(
+                        df_f.assign(monto=lambda d: d["monto"].apply(lambda v: f"${v:,.0f}")),
+                        use_container_width=True, hide_index=True, height=520,
+                    )
                 st.caption(f"{len(df_f):,} líneas · {df_f['unidades'].sum():,} uds · "
                            f"${df_det.loc[df_f.index, 'monto'].sum():,.0f}")
 
