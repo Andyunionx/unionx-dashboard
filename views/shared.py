@@ -298,21 +298,56 @@ def cached_health():
 # ============================================================
 # Stock LIVE (cache 5 min)
 # ============================================================
-@st.cache_data(ttl=900, show_spinner="Consultando Odoo (puede tomar 30-60s la primera vez)…")
+STOCK_DIR = PROJECT_ROOT / 'data' / 'stock'
+
+
+@st.cache_data(ttl=900, show_spinner="Cargando snapshot de stock…")
 def cached_stock():
-    """Stock LIVE desde Odoo, cache 5 min."""
+    """
+    Stock LIVE: prefiere parquets pre-computados (rápido <1s) sobre Odoo (30-60s).
+    Los parquets se actualizan cada 3h vía GH Actions sync_stock.yml.
+    Si no hay parquets, fallback a Odoo en vivo.
+    """
+    import json
+
+    skus_path = STOCK_DIR / 'skus.parquet'
+    detalle_path = STOCK_DIR / 'detalle.parquet'
+    meta_path = STOCK_DIR / 'metadata.json'
+
+    if skus_path.exists() and meta_path.exists():
+        # Modo rápido: leer parquets
+        df_skus = pd.read_parquet(skus_path)
+        df_detalle = pd.read_parquet(detalle_path) if detalle_path.exists() else pd.DataFrame()
+        with open(meta_path, encoding='utf-8') as f:
+            meta = json.load(f)
+
+        return {
+            'metadata': {
+                'generado_en': meta.get('generado_en'),
+                'total_skus': meta.get('total_skus', 0),
+                'total_quants': meta.get('total_quants', 0),
+                'total_locations': meta.get('total_locations', 0),
+            },
+            'kpis': meta.get('kpis', {}),
+            'ocupacion': meta.get('ocupacion', {}),
+            'semaforo': meta.get('semaforo', []),
+            'valor_bodega': meta.get('valor_bodega', []),
+            'skus': df_skus.to_dict(orient='records'),
+            'detalle': df_detalle.to_dict(orient='records') if not df_detalle.empty else [],
+        }
+
+    # Fallback: consultar Odoo en vivo
     from app.services.stock_advanced_service import StockAdvancedService
     from app.core.odoo_client import OdooClient
 
-    # Leer password directo de st.secrets (no dependemos de Config import-time)
     odoo_password = (
         st.secrets.get('ANDRES_ODOO_PASSWORD')
         or os.environ.get('ANDRES_ODOO_PASSWORD')
     )
     if not odoo_password:
         raise RuntimeError(
-            "ANDRES_ODOO_PASSWORD no está seteado en Streamlit Cloud Secrets. "
-            "Settings → Secrets → agregar: ANDRES_ODOO_PASSWORD = \"...\""
+            "Sin parquet en data/stock/ y ANDRES_ODOO_PASSWORD no seteado. "
+            "Esperar 1ra ejecución del workflow sync_stock.yml o configurar secret."
         )
 
     odoo = OdooClient(

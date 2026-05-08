@@ -76,6 +76,50 @@ RAW_TO_DB = {
 }
 
 
+def _data_quality_checks(df: pd.DataFrame) -> list[str]:
+    """Valida data quality. Devuelve lista de warnings (no bloquea)."""
+    warnings = []
+    n = len(df)
+    if n == 0:
+        warnings.append("DataFrame vacío")
+        return warnings
+
+    # 1. Fechas no futuras
+    if 'fecha_venta' in df.columns:
+        hoy = pd.Timestamp.now().normalize()
+        futuras = pd.to_datetime(df['fecha_venta'], errors='coerce') > hoy
+        n_futuras = int(futuras.sum())
+        if n_futuras > 0:
+            warnings.append(f"{n_futuras} filas con fecha_venta futura")
+
+    # 2. SKU obligatorio
+    if 'sku' in df.columns:
+        n_sin_sku = df['sku'].isna().sum() + (df['sku'] == '').sum()
+        if n_sin_sku > 0:
+            warnings.append(f"{n_sin_sku} filas sin SKU")
+
+    # 3. Venta bruta debería ser > 0 (excepto NCs que son negativas)
+    if 'venta_bruta' in df.columns:
+        n_cero = (df['venta_bruta'].fillna(0) == 0).sum()
+        pct_cero = n_cero / n * 100
+        if pct_cero > 5:
+            warnings.append(f"{pct_cero:.1f}% filas con venta_bruta=0 ({n_cero}/{n})")
+
+    # 4. Canal vacío (no debería haber)
+    if 'canal' in df.columns:
+        n_sin_canal = df['canal'].isna().sum() + (df['canal'] == '').sum()
+        if n_sin_canal > 0:
+            warnings.append(f"{n_sin_canal} filas sin canal")
+
+    # 5. Cantidad lógica
+    if 'cantidad' in df.columns:
+        n_cant_cero = (df['cantidad'].fillna(0) == 0).sum()
+        if n_cant_cero > n * 0.1:
+            warnings.append(f"{n_cant_cero} filas con cantidad=0 (>10%)")
+
+    return warnings
+
+
 def insertar_en_maestra(df_raw, db_path):
     """Inserta DataFrame RAW en la Maestra (SQLite local o Turso cloud, vía db_client)."""
     df = df_raw.rename(columns=RAW_TO_DB).copy()
@@ -86,6 +130,14 @@ def insertar_en_maestra(df_raw, db_path):
             df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%Y-%m-%d')
 
     df = df.where(pd.notna(df), None)
+
+    # ===== DATA QUALITY CHECKS =====
+    warnings = _data_quality_checks(df)
+    if warnings:
+        print("\n⚠️  Data Quality warnings:")
+        for w in warnings:
+            print(f"   - {w}")
+        print()
 
     conn = get_connection(db_path)
 

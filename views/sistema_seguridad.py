@@ -27,12 +27,13 @@ def render():
         st.markdown("---")
 
     st.title("🔐 Seguridad del Sistema")
-    st.caption("Gestión de usuarios autorizados + estado de credenciales")
+    st.caption("Gestión de usuarios autorizados + estado de credenciales + audit log")
 
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4 = st.tabs([
         "👥 Usuarios",
         "🔑 Mi cuenta",
         "🛡️ Credenciales del sistema",
+        "📜 Audit log",
     ])
 
     # ============================================================
@@ -230,3 +231,51 @@ def render():
                            "https://resend.com/dashboard", use_container_width=True)
 
         st.markdown(f"*Última carga: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+
+    # ============================================================
+    # TAB 4: AUDIT LOG
+    # ============================================================
+    with tab4:
+        st.markdown("### 📜 Últimos intentos de login")
+        st.caption("Registro de quién entró (o intentó entrar) al dashboard. Se guarda en Turso `audit_logins`.")
+
+        from views.audit import get_recent_logins
+        try:
+            logs = get_recent_logins(limit=100)
+        except Exception as e:
+            st.error(f"Error consultando audit_logins: {e}")
+            logs = []
+
+        if not logs:
+            st.info("Sin intentos de login registrados aún (o tabla recién creada).")
+        else:
+            # Resumen
+            n_total = len(logs)
+            n_exito = sum(1 for l in logs if l['exito'])
+            n_fallidos = n_total - n_exito
+            usuarios_unicos = len(set(l['usuario'] for l in logs))
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Intentos totales", n_total)
+            c2.metric("Exitosos", n_exito)
+            c3.metric("Fallidos", n_fallidos, delta=f"{n_fallidos/n_total*100:.0f}%" if n_total else "0%")
+            c4.metric("Usuarios únicos", usuarios_unicos)
+
+            st.divider()
+
+            # Tabla
+            import pandas as pd
+            df_logs = pd.DataFrame(logs)
+            df_logs['Estado'] = df_logs['exito'].apply(lambda x: '✅ OK' if x else '❌ Fallido')
+            df_logs['Cuándo'] = pd.to_datetime(df_logs['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+            st.dataframe(
+                df_logs[['Cuándo', 'usuario', 'Estado', 'ip']],
+                use_container_width=True, hide_index=True, height=500,
+            )
+
+            # Alerta si hay muchos fallidos del mismo user
+            if n_fallidos >= 5:
+                fallidos_por_user = df_logs[~df_logs['exito']]['usuario'].value_counts()
+                top_fallidos = fallidos_por_user[fallidos_por_user >= 3]
+                if len(top_fallidos) > 0:
+                    st.warning(f"⚠️ Usuarios con 3+ intentos fallidos: {dict(top_fallidos.head())}")

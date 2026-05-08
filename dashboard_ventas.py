@@ -67,6 +67,18 @@ try:
 except Exception:
     pass
 
+# Audit log: registrar intento de login (success/fail)
+try:
+    from views.audit import log_login, crear_tabla_audit
+    crear_tabla_audit()  # idempotente, primera vez crea
+    if st.session_state.get('authentication_status') is True and not st.session_state.get('_audit_logged'):
+        log_login(st.session_state.get('username', '?'), exito=True)
+        st.session_state['_audit_logged'] = True
+    elif st.session_state.get('authentication_status') is False:
+        log_login(st.session_state.get('username', '?'), exito=False)
+except Exception:
+    pass  # No bloquear login si audit falla
+
 if st.session_state.get('authentication_status') is False:
     st.error('Usuario o contraseña incorrectos')
     st.stop()

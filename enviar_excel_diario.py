@@ -156,38 +156,56 @@ def upload_to_fileio(xlsx_bytes: bytes, fname: str) -> str:
 
 
 def enviar_email(xlsx_bytes: bytes, n_filas: int):
-    """Envía email vía Resend con XLSX adjunto (o link si > 25MB)."""
+    """Envía email vía Resend con XLSX adjunto + Top insights del día."""
     print(f"[3/3] Enviando email a {EMAIL_TO}...", flush=True)
     fecha = datetime.now().strftime('%Y-%m-%d')
     fname = f"Raw ventas {fecha}.xlsx"
     size_mb = len(xlsx_bytes) / 1024 / 1024
 
+    # Generar insights
+    print("      Generando Top insights...", flush=True)
+    try:
+        from generar_insights import generar_insights, render_insights_html
+        insights = generar_insights()
+        insights_html = render_insights_html(insights)
+    except Exception as e:
+        print(f"      [WARN] insights fallaron: {e}", flush=True)
+        insights_html = ""
+
+    body_insights_block = f"""
+        <div style="background:#F8FAFC;padding:16px;border-radius:8px;margin:16px 0;">
+            <h3 style="margin:0 0 12px 0;color:#1E293B;font-size:1rem;">🔥 Top insights del día</h3>
+            {insights_html}
+        </div>
+    """ if insights_html else ""
+
     if size_mb > 25:
-        # Subir a file.io y enviar link
         print(f"      Adjunto {size_mb:.1f} MB > 25 MB (límite Gmail). Subiendo a file.io...", flush=True)
         download_url = upload_to_fileio(xlsx_bytes, fname)
         print(f"      [OK] Link: {download_url}", flush=True)
         body_html = (
-            f"<p>Hola,</p>"
-            f"<p>Adjunto Raw Ventas actualizado al <b>{fecha}</b> (con histórico completo).</p>"
+            f"<div style='font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;'>"
+            f"<h2 style='color:#1E293B;margin:0 0 8px 0;'>📊 Reporte UnionX — {fecha}</h2>"
+            f"{body_insights_block}"
+            f"<hr style='border:none;border-top:1px solid #E2E8F0;margin:16px 0;'/>"
             f"<p><b>📥 Descarga el Excel:</b> <a href='{download_url}'>{fname}</a></p>"
-            f"<p style='color:#888'>(El archivo pesa {size_mb:.1f} MB y supera el límite de adjuntos de Gmail.<br/>"
-            f"El link expira en 14 días o tras 1 descarga, lo que ocurra primero.)</p>"
-            f"<hr/>"
-            f"<p><b>Total filas:</b> {n_filas:,}<br/>"
-            f"<b>Tamaño:</b> {size_mb:.1f} MB</p>"
-            f"<p>Dashboard live: "
-            f"<a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
+            f"<p style='color:#888;font-size:0.85rem'>El archivo pesa {size_mb:.1f} MB y supera el límite de adjuntos de Gmail. "
+            f"El link expira en 14 días o tras 1 descarga.</p>"
+            f"<p><b>Total filas:</b> {n_filas:,} · <b>Tamaño:</b> {size_mb:.1f} MB</p>"
+            f"<p>Dashboard live: <a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
+            f"</div>"
         )
         attachments = []
     else:
         body_html = (
-            f"<p>Hola,</p>"
+            f"<div style='font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;'>"
+            f"<h2 style='color:#1E293B;margin:0 0 8px 0;'>📊 Reporte UnionX — {fecha}</h2>"
+            f"{body_insights_block}"
+            f"<hr style='border:none;border-top:1px solid #E2E8F0;margin:16px 0;'/>"
             f"<p>Adjunto Raw Ventas actualizado al <b>{fecha}</b>.</p>"
-            f"<p><b>Total filas:</b> {n_filas:,}<br/>"
-            f"<b>Tamaño:</b> {size_mb:.1f} MB</p>"
-            f"<p>Dashboard live: "
-            f"<a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
+            f"<p><b>Total filas:</b> {n_filas:,} · <b>Tamaño:</b> {size_mb:.1f} MB</p>"
+            f"<p>Dashboard live: <a href='https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/'>Dashboard UnionX</a></p>"
+            f"</div>"
         )
         attachments = [{
             "filename": fname,

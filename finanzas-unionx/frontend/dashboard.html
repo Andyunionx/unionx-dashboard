@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnionX Finanzas - Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: #001529;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .header-subtitle {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #001529;
+            color: white;
+            padding: 24px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #1890ff;
+        }
+
+        .sidebar-item.active {
+            background: rgba(24,144,255,0.15);
+            border-left-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .sidebar-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sidebar-item-label {
+            margin-left: 8px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1890ff;
+        }
+
+        .kpi-card:nth-child(2) .kpi-value {
+            color: #52c41a;
+        }
+
+        .kpi-card:nth-child(3) .kpi-value {
+            color: #faad14;
+        }
+
+        .kpi-card:nth-child(4) .kpi-value {
+            color: #722ed1;
+        }
+
+        .button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .button:hover:not(:disabled) {
+            background: #0050b3;
+        }
+
+        .button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+
+        .button.loading:after {
+            content: " ⟳";
+            display: inline-block;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .status-badge.idle {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .status-badge.loading {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .status-badge.error {
+            background: #fff1f0;
+            color: #ff4d4f;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .table th {
+            background: #fafafa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #d9d9d9;
+            font-size: 14px;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .table tr:hover {
+            background: #fafafa;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #1890ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .error-message {
+            background: #fff1f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #d9d9d9;
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #1890ff;
+        }
+
+        .tab.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>📊 UnionX Finanzas</h1>
+        </div>
+        <div class="header-subtitle">Dashboard de Ventas & Operaciones</div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-item active" onclick="switchPage('ventas')">
+                <span>📦</span><span class="sidebar-item-label">Ventas</span>
+            </div>
+            <div class="sidebar-item" onclick="switchPage('stock')">
+                <span>📊</span><span class="sidebar-item-label">Stock</span>
+            </div>
+            <div class="sidebar-item disabled" title="Próximamente">
+                <span>📈</span><span class="sidebar-item-label">EE.RR.</span>
+            </div>
+            <div class="sidebar-item disabled" title="Próximamente">
+                <span>🌍</span><span class="sidebar-item-label">COMEX</span>
+            </div>
+            <div class="sidebar-item disabled" title="Próximamente">
+                <span>🔔</span><span class="sidebar-item-label">Alertas</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Página de Ventas -->
+            <div id="ventas" class="page active">
+                <div class="card">
+                    <h2>Dashboard de Ventas</h2>
+                    <button class="button" id="btnRefreshVentas" onclick="refreshVentas()">🔄 Actualizar Ventas</button>
+                    <span class="status-badge idle" id="statusVentas">Listo</span>
+                </div>
+
+                <div id="ventasContent" style="display: none;">
+                    <div class="kpi-grid" id="ventasKpis"></div>
+                    <div class="card">
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab(event, 'ventas-bodega')">Por Bodega</button>
+                            <button class="tab" onclick="switchTab(event, 'ventas-categoria')">Por Categoría</button>
+                        </div>
+                        <div id="ventas-bodega" class="tab-content active">
+                            <table class="table" id="tablaBodega"></table>
+                        </div>
+                        <div id="ventas-categoria" class="tab-content">
+                            <table class="table" id="tablaCategoria"></table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ventasError"></div>
+                <div id="ventasLoading" style="display: none; padding: 40px; text-align: center;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 16px;">Extrayendo datos de Odoo...</p>
+                </div>
+            </div>
+
+            <!-- Página de Stock -->
+            <div id="stock" class="page">
+                <div class="card">
+                    <h2>Dashboard de Stock</h2>
+                    <button class="button" id="btnRefreshStock" onclick="refreshStock()">🔄 Actualizar Stock</button>
+                    <span class="status-badge idle" id="statusStock">Listo</span>
+                </div>
+
+                <div id="stockContent" style="display: none;">
+                    <div class="kpi-grid" id="stockKpis"></div>
+                    <div class="card">
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab(event, 'stock-bodega')">Por Bodega</button>
+                            <button class="tab" onclick="switchTab(event, 'stock-categoria')">Por Categoría</button>
+                        </div>
+                        <div id="stock-bodega" class="tab-content active">
+                            <table class="table" id="tablaStockBodega"></table>
+                        </div>
+                        <div id="stock-categoria" class="tab-content">
+                            <table class="table" id="tablaStockCategoria"></table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="stockError"></div>
+                <div id="stockLoading" style="display: none; padding: 40px; text-align: center;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 16px;">Extrayendo datos de Stock...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        // Configurar axios con headers por defecto
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        axios.defaults.headers.common['Accept'] = 'application/json';
+
+        function switchPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            event.target.closest('.sidebar-item').classList.add('active');
+        }
+
+        function switchTab(e, tabId) {
+            const container = e.target.closest('.card') || e.target.closest('.content');
+            container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            e.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('es-CL').format(num);
+        }
+
+        function formatCurrency(num) {
+            return '$' + (num / 1000000).toFixed(1) + 'M';
+        }
+
+        // Ventas
+        async function refreshVentas() {
+            const btn = document.getElementById('btnRefreshVentas');
+            const status = document.getElementById('statusVentas');
+            const loading = document.getElementById('ventasLoading');
+            const errorDiv = document.getElementById('ventasError');
+            const content = document.getElementById('ventasContent');
+
+            btn.disabled = true;
+            btn.classList.add('loading');
+            status.className = 'status-badge loading';
+            status.textContent = 'Extrayendo...';
+            errorDiv.innerHTML = '';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const response = await axios.post(
+                    API_BASE + '/ventas/refresh',
+                    {
+                        'periodo_inicio': '2026-04-01 00:00:00',
+                        'periodo_fin': '2026-04-30 23:59:59'
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                const jobId = response.data.job_id;
+
+                // Poll for job completion
+                let jobStatus = 'PENDING';
+                let progress = 0;
+
+                while (jobStatus !== 'DONE' && jobStatus !== 'ERROR') {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    const jobResponse = await axios.get(API_BASE + '/jobs/' + jobId);
+                    jobStatus = jobResponse.data.status;
+                    progress = jobResponse.data.progress || 0;
+                    status.textContent = jobResponse.data.label || `${progress}%`;
+                }
+
+                if (jobStatus === 'ERROR') {
+                    throw new Error(jobResponse.data.error_message);
+                }
+
+                // Load data
+                const dataResponse = await axios.get(API_BASE + '/ventas/data');
+                displayVentasData(dataResponse.data);
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                status.className = 'status-badge idle';
+                status.textContent = 'Completado';
+
+            } catch (error) {
+                loading.style.display = 'none';
+                let errorMsg = error.message;
+                if (error.response) {
+                    errorMsg = error.response.data?.error || error.response.statusText || error.message;
+                } else if (error.request) {
+                    errorMsg = 'No se pudo conectar al servidor. ¿Está corriendo Flask en localhost:5000?';
+                }
+                errorDiv.innerHTML = `<div class="error-message">Error: ${errorMsg}</div>`;
+                status.className = 'status-badge error';
+                status.textContent = 'Error';
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+
+        function displayVentasData(data) {
+            const kpis = data.kpis;
+            const resumenes = data.resumenes;
+
+            // KPIs
+            document.getElementById('ventasKpis').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-label">Venta Neta</div>
+                    <div class="kpi-value">${formatCurrency(kpis.venta_neta)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Margen Final</div>
+                    <div class="kpi-value">${formatCurrency(kpis.margen_final)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Costo Total</div>
+                    <div class="kpi-value">${formatCurrency(kpis.costo_total)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">% Margen</div>
+                    <div class="kpi-value">${(kpis.margen_final / kpis.venta_neta * 100).toFixed(1)}%</div>
+                </div>
+            `;
+
+            // Tablas
+            if (resumenes.bodega && resumenes.bodega.length > 0) {
+                let html = '<tr><th>Bodega</th><th>Venta Neta</th><th>Costo</th><th>Margen</th></tr>';
+                resumenes.bodega.forEach(row => {
+                    html += `<tr>
+                        <td>${row.Bodega}</td>
+                        <td>${formatCurrency(row['Venta Neta'])}</td>
+                        <td>${formatCurrency(row['Costo Total'])}</td>
+                        <td>${formatCurrency(row['Margen Final'])}</td>
+                    </tr>`;
+                });
+                document.getElementById('tablaBodega').innerHTML = html;
+            }
+
+            if (resumenes.categoria && resumenes.categoria.length > 0) {
+                let html = '<tr><th>Categoría</th><th>Venta Neta</th><th>Costo</th><th>Margen</th></tr>';
+                resumenes.categoria.forEach(row => {
+                    html += `<tr>
+                        <td>${row.Categoría}</td>
+                        <td>${formatCurrency(row['Venta Neta'])}</td>
+                        <td>${formatCurrency(row['Costo Total'])}</td>
+                        <td>${formatCurrency(row['Margen Final'])}</td>
+                    </tr>`;
+                });
+                document.getElementById('tablaCategoria').innerHTML = html;
+            }
+        }
+
+        // Stock
+        async function refreshStock() {
+            const btn = document.getElementById('btnRefreshStock');
+            const status = document.getElementById('statusStock');
+            const loading = document.getElementById('stockLoading');
+            const errorDiv = document.getElementById('stockError');
+            const content = document.getElementById('stockContent');
+
+            btn.disabled = true;
+            btn.classList.add('loading');
+            status.className = 'status-badge loading';
+            status.textContent = 'Extrayendo...';
+            errorDiv.innerHTML = '';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const response = await axios.post(
+                    API_BASE + '/stock/refresh',
+                    {},
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                const jobId = response.data.job_id;
+
+                // Poll for job completion
+                let jobStatus = 'PENDING';
+                let progress = 0;
+
+                while (jobStatus !== 'DONE' && jobStatus !== 'ERROR') {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    const jobResponse = await axios.get(API_BASE + '/jobs/' + jobId);
+                    jobStatus = jobResponse.data.status;
+                    progress = jobResponse.data.progress || 0;
+                    status.textContent = jobResponse.data.label || `${progress}%`;
+                }
+
+                if (jobStatus === 'ERROR') {
+                    throw new Error(jobResponse.data.error_message);
+                }
+
+                // Load data
+                const dataResponse = await axios.get(API_BASE + '/stock/data');
+                displayStockData(dataResponse.data);
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                status.className = 'status-badge idle';
+                status.textContent = 'Completado';
+
+            } catch (error) {
+                loading.style.display = 'none';
+                let errorMsg = error.message;
+                if (error.response) {
+                    errorMsg = error.response.data?.error || error.response.statusText || error.message;
+                } else if (error.request) {
+                    errorMsg = 'No se pudo conectar al servidor. ¿Está corriendo Flask en localhost:5000?';
+                }
+                errorDiv.innerHTML = `<div class="error-message">Error: ${errorMsg}</div>`;
+                status.className = 'status-badge error';
+                status.textContent = 'Error';
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+        }
+
+        function displayStockData(data) {
+            const kpis = data.kpis;
+            const resumenes = data.resumenes;
+
+            // KPIs
+            document.getElementById('stockKpis').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-label">Stock Total</div>
+                    <div class="kpi-value">${formatNumber(kpis.stock_total)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Valor Total</div>
+                    <div class="kpi-value">${formatCurrency(kpis.valor_total)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Productos Activos</div>
+                    <div class="kpi-value">${formatNumber(kpis.productos_activos)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Stock Reservado</div>
+                    <div class="kpi-value">${formatNumber(kpis.stock_reservado)}</div>
+                </div>
+            `;
+
+            // Tablas
+            if (resumenes.bodega && resumenes.bodega.length > 0) {
+                let html = '<tr><th>Bodega</th><th>Stock Total</th><th>Stock Reservado</th><th>Stock Libre</th><th>Valor Total</th></tr>';
+                resumenes.bodega.forEach(row => {
+                    html += `<tr>
+                        <td>${row.Bodega}</td>
+                        <td>${formatNumber(row['Stock Total'])}</td>
+                        <td>${formatNumber(row['Stock Reservado'])}</td>
+                        <td>${formatNumber(row['Stock Libre'])}</td>
+                        <td>${formatCurrency(row['Valor Total'])}</td>
+                    </tr>`;
+                });
+                document.getElementById('tablaStockBodega').innerHTML = html;
+            }
+
+            if (resumenes.categoria && resumenes.categoria.length > 0) {
+                let html = '<tr><th>Categoría</th><th>Stock Total</th><th>Valor Total</th></tr>';
+                resumenes.categoria.forEach(row => {
+                    html += `<tr>
+                        <td>${row.Categoría}</td>
+                        <td>${formatNumber(row['Stock Total'])}</td>
+                        <td>${formatCurrency(row['Valor Total'])}</td>
+                    </tr>`;
+                });
+                document.getElementById('tablaStockCategoria').innerHTML = html;
+            }
+        }
+
+        // Check backend connectivity on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await axios.get(API_BASE + '/health');
+                console.log('Backend conectado:', response.data);
+            } catch (error) {
+                document.querySelector('.content').innerHTML = `
+                    <div class="card">
+                        <div class="error-message">
+                            <strong>Error de conexión:</strong> No se puede conectar al backend en localhost:5000.
+                            Asegúrate de que el servidor Flask esté corriendo: python run.py
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
