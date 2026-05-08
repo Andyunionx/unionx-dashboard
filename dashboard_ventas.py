@@ -92,8 +92,12 @@ with st.sidebar:
     st.write(f"👤 **{st.session_state.get('name', '')}**")
     st.divider()
 
-# Auto-refresh DESACTIVADO (causaba re-renders innecesarios). Si querés data fresh,
-# hace clic en "Refrescar" del sidebar de cada vista.
+# Auto-refresh cada 15 min via JS (alineado con TTL del cache local SQLite).
+# Después de 15 min, el cache expiró → reload trae data fresca.
+st.markdown(
+    """<script>setTimeout(function(){window.location.reload();}, 900000);</script>""",
+    unsafe_allow_html=True,
+)
 
 
 # ============================================================
