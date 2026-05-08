@@ -90,6 +90,26 @@ elif st.session_state.get('authentication_status') is None:
 with st.sidebar:
     authenticator.logout('Cerrar sesión', 'sidebar')
     st.write(f"👤 **{st.session_state.get('name', '')}**")
+
+    # Badge de alertas abiertas
+    try:
+        from views.alertas_helper import contar_abiertas, crear_tabla_alertas
+        crear_tabla_alertas()  # idempotent
+        counts = contar_abiertas(target_app='ventas')
+        if counts['total'] > 0:
+            badge_color = '#DC2626' if counts['critical'] > 0 else '#EA580C' if counts['warning'] > 0 else '#1E40AF'
+            partes = []
+            if counts['critical']: partes.append(f"🔴 {counts['critical']}")
+            if counts['warning']: partes.append(f"🟡 {counts['warning']}")
+            if counts['info']: partes.append(f"🔵 {counts['info']}")
+            st.markdown(
+                f"<div style='background:{badge_color}15;border-left:3px solid {badge_color};padding:6px 10px;border-radius:4px;font-size:0.85rem;'>"
+                f"<b>{counts['total']} alertas</b> · {' · '.join(partes)}</div>",
+                unsafe_allow_html=True,
+            )
+    except Exception:
+        pass
+
     st.divider()
 
 # Auto-refresh cada 15 min via JS (alineado con TTL del cache local SQLite).
@@ -121,6 +141,7 @@ from views.contribucion_oportunidades import render as render_contrib_oportunida
 from views.contribucion_administracion import render as render_contrib_administracion
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
+from views.alertas_negocio import render as render_alertas_negocio
 
 pages = {
     "📊 Ventas": [
@@ -147,8 +168,11 @@ pages = {
         st.Page(render_cruce_cobertura, title="Cobertura por canal", icon="📊", url_path="cruce-cobertura"),
         st.Page(render_cruce_rotacion, title="Rotación inventario", icon="📈", url_path="cruce-rotacion"),
     ],
+    "🔔 Alertas": [
+        st.Page(render_alertas_negocio, title="Negocio", icon="🔔", url_path="alertas-negocio"),
+    ],
     "⚙️ Sistema": [
-        st.Page(render_sistema_alertas, title="Alertas", icon="🚨", url_path="sistema-alertas"),
+        st.Page(render_sistema_alertas, title="Salud servicios", icon="🚨", url_path="sistema-salud"),
         st.Page(render_sistema_seguridad, title="Seguridad", icon="🔐", url_path="sistema-seguridad"),
     ],
 }

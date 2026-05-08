@@ -165,6 +165,20 @@ def main():
 
     if ok:
         logger.info(f"[OK] Sincronización completada: {n:,} filas")
+        # Después del sync, evaluar alertas
+        try:
+            logger.info("Evaluando alertas de negocio...")
+            import subprocess
+            r = subprocess.run(
+                [PYTHON_EXE, '-u', str(PROJECT_ROOT / 'evaluar_alertas.py')],
+                capture_output=True, text=True, timeout=120,
+                env={**os.environ, 'PYTHONIOENCODING': 'utf-8'},
+            )
+            for line in (r.stdout or '').splitlines():
+                if line.strip():
+                    logger.info(f"  | {line}")
+        except Exception as e:
+            logger.warning(f"Eval alertas falló (no bloquea): {e}")
         return 0
     else:
         logger.error(f"[FAIL] Sincronización fallida: {msg}")
