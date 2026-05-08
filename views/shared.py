@@ -50,6 +50,27 @@ def fmt_pct(v, decimals=1):
 
 
 # ============================================================
+# KPI cards estilo Contribución (custom HTML, colores)
+# ============================================================
+def kpi_card(label: str, value: str, sub: str = "", color: str = "#1E40AF") -> str:
+    """Renderiza una KPI card estilizada. Usar con st.markdown(unsafe_allow_html=True)."""
+    return f"""<div style="background:white;border-radius:12px;padding:16px 18px;text-align:center;
+        box-shadow:0 1px 3px rgba(0,0,0,0.08);border:1px solid #E2E8F0;height:100%;">
+        <div style="font-size:0.7rem;color:#64748B;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:4px;">{label}</div>
+        <div style="font-size:1.5rem;font-weight:700;color:{color};line-height:1.2;">{value}</div>
+        <div style="font-size:0.7rem;color:#94A3B8;margin-top:2px;">{sub}</div>
+    </div>"""
+
+
+# Paleta colores estándar
+COLOR_VENTA = '#1E40AF'      # azul
+COLOR_MARGEN = '#16A34A'     # verde
+COLOR_COSTO = '#EA580C'      # naranja
+COLOR_NEGATIVO = '#DC2626'   # rojo
+COLOR_NEUTRO = '#64748B'     # gris
+
+
+# ============================================================
 # Local SQLite combinando parquet histórico + Turso live
 # ============================================================
 @st.cache_resource(ttl=300, show_spinner="Cargando datos (parquet histórico + Turso live)…")

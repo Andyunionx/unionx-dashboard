@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from views.shared import cached_stock
+from views.shared import cached_stock, kpi_card, COLOR_NEGATIVO, COLOR_VENTA, COLOR_COSTO
 
 
 SEM_DISPLAY = {
@@ -50,11 +50,11 @@ def render():
     df_q['Precio Prom'] = df_q['Vta 30d $'] / df_q['Vta 30d Qty'].replace(0, 1)
     df_q['Riesgo Venta 30d $'] = (df_q['Vta Diaria'] * 30 * df_q['Precio Prom']).round(0)
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("SKUs en riesgo", len(df_q))
-    c2.metric("Venta últimos 30d", f"${df_q['Vta 30d $'].sum()/1e6:,.1f}M")
-    c3.metric("Venta en riesgo (próximos 30d)", f"${df_q['Riesgo Venta 30d $'].sum()/1e6:,.1f}M",
-              help="Estimación: días sin reposición × venta diaria × precio promedio")
+    cols = st.columns(3)
+    cols[0].markdown(kpi_card("SKUs en Riesgo", str(len(df_q)), "Quiebre + demanda activa", COLOR_NEGATIVO), unsafe_allow_html=True)
+    cols[1].markdown(kpi_card("Venta últimos 30d", f"${df_q['Vta 30d $'].sum()/1e6:,.1f}M", "Demanda real", COLOR_VENTA), unsafe_allow_html=True)
+    cols[2].markdown(kpi_card("Venta en Riesgo (30d)", f"${df_q['Riesgo Venta 30d $'].sum()/1e6:,.1f}M",
+                              "Si no se repone", COLOR_COSTO), unsafe_allow_html=True)
 
     st.divider()
 

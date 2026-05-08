@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from views.shared import cached_stock
+from views.shared import cached_stock, kpi_card, COLOR_VENTA, COLOR_MARGEN, COLOR_COSTO
 
 
 SEM_DISPLAY = {
@@ -101,10 +101,10 @@ def render():
     total_qty = float(df_f['Qty'].sum()) if 'Qty' in df_f.columns else 0
     n_skus = len(df_f)
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("💰 Valor Inventario", f"${total_val/1e6:,.1f}M", help=f"{n_skus:,} SKUs activos")
-    c2.metric("📦 Unidades en stock", f"{total_qty:,.0f}")
-    c3.metric("🔢 SKUs activos", f"{n_skus:,}")
+    cols = st.columns(3)
+    cols[0].markdown(kpi_card("Valor Inventario", f"${total_val/1e6:,.1f}M", f"{n_skus:,} SKUs activos", COLOR_VENTA), unsafe_allow_html=True)
+    cols[1].markdown(kpi_card("Unidades en stock", f"{total_qty:,.0f}", "", COLOR_MARGEN), unsafe_allow_html=True)
+    cols[2].markdown(kpi_card("SKUs activos", f"{n_skus:,}", "", COLOR_VENTA), unsafe_allow_html=True)
 
     st.divider()
 

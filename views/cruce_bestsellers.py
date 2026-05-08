@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 
-from views.shared import cached_stock
+from views.shared import cached_stock, kpi_card, COLOR_VENTA, COLOR_MARGEN, COLOR_NEGATIVO, COLOR_NEUTRO
 
 
 SEM_DISPLAY = {
@@ -55,11 +55,11 @@ def render():
 
     df_top = df_sku[df_sku[col_venta] > 0].sort_values(col_venta, ascending=False).head(30).copy()
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("SKUs en top", len(df_top))
-    c2.metric(f"Venta total {horizonte}", f"${df_top[col_venta].sum()/1e6:,.1f}M")
-    c3.metric("Stock unidades", f"{df_top['Qty'].sum():,.0f}")
-    c4.metric("Stock valor", f"${df_top['Valor'].sum()/1e6:,.1f}M")
+    cols = st.columns(4)
+    cols[0].markdown(kpi_card("SKUs en Top", str(len(df_top)), f"Top 30 por venta {horizonte}", COLOR_VENTA), unsafe_allow_html=True)
+    cols[1].markdown(kpi_card(f"Venta total {horizonte}", f"${df_top[col_venta].sum()/1e6:,.1f}M", "", COLOR_MARGEN), unsafe_allow_html=True)
+    cols[2].markdown(kpi_card("Stock Unidades", f"{df_top['Qty'].sum():,.0f}", "", COLOR_VENTA), unsafe_allow_html=True)
+    cols[3].markdown(kpi_card("Stock Valor", f"${df_top['Valor'].sum()/1e6:,.1f}M", "", COLOR_MARGEN), unsafe_allow_html=True)
 
     st.divider()
 

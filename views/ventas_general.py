@@ -9,6 +9,7 @@ import streamlit as st
 from views.shared import (
     cached_canales, cached_diaria, cached_kpis, cached_mensual, cached_top_skus,
     fmt_int, fmt_money, fmt_pct, render_filters_sidebar, render_health_header,
+    kpi_card, COLOR_VENTA, COLOR_MARGEN, COLOR_COSTO, COLOR_NEGATIVO,
 )
 
 
@@ -50,22 +51,44 @@ def render():
     ty = kpis['ty']
     ly = kpis['ly']
     var = kpis['var_pct']
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Venta Bruta", fmt_money(ty['venta']),
-                  delta=f"{var['venta']}% vs LY ({fmt_money(ly['venta'])})" if var['venta'] is not None else None,
-                  help="Con IVA — comparable contra histórico")
-    with col2:
-        st.metric("Margen Frontal", fmt_money(ty['margen']),
-                  delta=f"{var['margen']}% vs LY ({fmt_money(ly['margen'])})" if var['margen'] is not None else None,
-                  help="Margen Front (sin descontar comisiones, logística, marketing)")
-    with col3:
-        st.metric("% Margen", fmt_pct(ty['pct_margen']),
-                  delta=f"{var['pct_margen']:+.1f} pts vs LY" if var['pct_margen'] is not None else None,
-                  help="vs Venta NETA sin IVA")
-    with col4:
-        st.metric("Unidades", fmt_int(ty['unidades']),
-                  delta=f"{var['unidades']}% vs LY ({fmt_int(ly['unidades'])})" if var['unidades'] is not None else None)
+
+    # KPIs estilo Contribución — TY arriba, LY + Δ abajo
+    st.markdown("### KPIs Principales — Comparación YoY")
+    st.markdown("---")
+
+    def _color_delta(v):
+        if v is None:
+            return COLOR_NEGATIVO
+        return COLOR_MARGEN if v >= 0 else COLOR_NEGATIVO
+
+    def _delta_txt(v, ly_val=None):
+        if v is None:
+            return "—"
+        signo = "+" if v >= 0 else ""
+        if ly_val is not None:
+            return f"{signo}{v}% vs LY"
+        return f"{signo}{v}%"
+
+    # Fila 1: TY (año actual)
+    cols = st.columns(4)
+    cols[0].markdown(kpi_card("Venta Bruta TY", fmt_money(ty['venta']),
+                              _delta_txt(var['venta']), _color_delta(var['venta'])), unsafe_allow_html=True)
+    cols[1].markdown(kpi_card("Margen Frontal TY", fmt_money(ty['margen']),
+                              _delta_txt(var['margen']), _color_delta(var['margen'])), unsafe_allow_html=True)
+    cols[2].markdown(kpi_card("% Margen TY", fmt_pct(ty['pct_margen']),
+                              f"{var['pct_margen']:+.1f} pts vs LY" if var['pct_margen'] is not None else "—",
+                              _color_delta(var['pct_margen'])), unsafe_allow_html=True)
+    cols[3].markdown(kpi_card("Unidades TY", fmt_int(ty['unidades']),
+                              _delta_txt(var['unidades']), _color_delta(var['unidades'])), unsafe_allow_html=True)
+
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+    # Fila 2: LY (año anterior)
+    cols2 = st.columns(4)
+    cols2[0].markdown(kpi_card("Venta Bruta LY", fmt_money(ly['venta']), "Año anterior", COLOR_VENTA), unsafe_allow_html=True)
+    cols2[1].markdown(kpi_card("Margen Frontal LY", fmt_money(ly['margen']), "Año anterior", COLOR_MARGEN), unsafe_allow_html=True)
+    cols2[2].markdown(kpi_card("% Margen LY", fmt_pct(ly['pct_margen']), "Año anterior", COLOR_MARGEN), unsafe_allow_html=True)
+    cols2[3].markdown(kpi_card("Unidades LY", fmt_int(ly['unidades']), "Año anterior", COLOR_VENTA), unsafe_allow_html=True)
 
     st.divider()
 

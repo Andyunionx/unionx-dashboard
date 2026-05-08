@@ -7,6 +7,7 @@ import streamlit as st
 
 from views.shared import (
     cached_semanal, fmt_int, fmt_money, render_filters_sidebar, render_health_header,
+    kpi_card, COLOR_VENTA, COLOR_MARGEN, COLOR_NEGATIVO,
 )
 
 
@@ -46,16 +47,17 @@ def render():
     var_m = (ty_m - ly_m) / abs(ly_m) * 100 if ly_m else 0
     var_u = (ty_u - ly_u) / abs(ly_u) * 100 if ly_u else 0
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.metric("Venta Bruta del mes", fmt_money(ty_v),
-                  delta=f"{var_v:+.1f}% vs LY ({fmt_money(ly_v)})")
-    with c2:
-        st.metric("Margen Frontal del mes", fmt_money(ty_m),
-                  delta=f"{var_m:+.1f}% vs LY")
-    with c3:
-        st.metric("Unidades del mes", fmt_int(ty_u),
-                  delta=f"{var_u:+.1f}% vs LY")
+    color_v = COLOR_MARGEN if var_v >= 0 else COLOR_NEGATIVO
+    color_m = COLOR_MARGEN if var_m >= 0 else COLOR_NEGATIVO
+    color_u = COLOR_MARGEN if var_u >= 0 else COLOR_NEGATIVO
+
+    cols = st.columns(3)
+    cols[0].markdown(kpi_card("Venta Bruta del mes", fmt_money(ty_v),
+                              f"{var_v:+.1f}% vs LY ({fmt_money(ly_v)})", color_v), unsafe_allow_html=True)
+    cols[1].markdown(kpi_card("Margen Frontal del mes", fmt_money(ty_m),
+                              f"{var_m:+.1f}% vs LY", color_m), unsafe_allow_html=True)
+    cols[2].markdown(kpi_card("Unidades del mes", fmt_int(ty_u),
+                              f"{var_u:+.1f}% vs LY", color_u), unsafe_allow_html=True)
 
     st.divider()
 
