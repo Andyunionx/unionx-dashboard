@@ -227,6 +227,50 @@ def regla_margen_bajo():
 
 
 # ============================================================
+# REGLA 5: Forecast Prophet — proyección bajo objetivo/LY
+# ============================================================
+def regla_proyeccion_prophet():
+    """Lee forecast_resumen.json y crea alerta si proyección está -10% bajo LY."""
+    import json as _json
+    fc_path = Path(__file__).parent / 'data' / 'forecast' / 'forecast_resumen.json'
+    if not fc_path.exists():
+        return None
+    try:
+        with open(fc_path, encoding='utf-8') as f:
+            r = _json.load(f)
+    except Exception:
+        return None
+
+    proyeccion = r.get('proyeccion_mes', 0)
+    venta_ly = r.get('venta_ly_mes_completo', 0)
+    pct_vs_ly = r.get('pct_vs_ly')
+
+    if not pct_vs_ly:
+        return None
+
+    if pct_vs_ly < -10:
+        sev = 'critical' if pct_vs_ly < -25 else 'warning'
+        crear_alerta(
+            tipo='proyeccion_prophet_bajo_LY',
+            severity=sev,
+            titulo=f"Proyección fin de mes: {pct_vs_ly:+.1f}% vs LY (Prophet)",
+            mensaje=f"Proyectamos cerrar el mes en ${proyeccion/1e6:.1f}M vs ${venta_ly/1e6:.1f}M LY.",
+            contexto={
+                'proyeccion': proyeccion,
+                'venta_ly': venta_ly,
+                'pct_vs_ly': pct_vs_ly,
+                'venta_actual_mes': r.get('venta_actual_mes'),
+                'dias_pendientes': r.get('dias_pendientes'),
+            },
+            fecha_objetivo=r.get('fecha_actual'),
+            target_apps=['ventas', 'operaciones'],
+        )
+        print(f"  📈 proyeccion_prophet_bajo_LY: {pct_vs_ly:+.1f}%")
+        return True
+    return None
+
+
+# ============================================================
 # MAIN
 # ============================================================
 def main():
@@ -238,6 +282,7 @@ def main():
     regla_anomalia_canal()
     regla_mes_bajo_proyeccion()
     regla_margen_bajo()
+    regla_proyeccion_prophet()
 
     print("\n[OK] Evaluación completa")
 

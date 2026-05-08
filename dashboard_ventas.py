@@ -142,11 +142,13 @@ from views.contribucion_administracion import render as render_contrib_administr
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
 from views.alertas_negocio import render as render_alertas_negocio
+from views.forecast import render as render_forecast
 
 pages = {
     "📊 Ventas": [
         st.Page(render_ventas_general, title="Vista General", icon="📈", url_path="ventas-general", default=True),
         st.Page(render_ventas_semanal, title="Vista Semanal", icon="📅", url_path="ventas-semanal"),
+        st.Page(render_forecast, title="Forecast", icon="🔮", url_path="ventas-forecast"),
         st.Page(render_ventas_descarga, title="Descargar RAW", icon="⬇️", url_path="ventas-descarga"),
         st.Page(render_ventas_carga, title="Cargar offline", icon="📤", url_path="ventas-carga"),
     ],
