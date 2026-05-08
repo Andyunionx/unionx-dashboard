@@ -110,6 +110,8 @@ ALLOWLIST_FILES = {
     "auth_config.yaml.template",  # template de auth, contiene placeholders
     "DEPLOY_CLOUD.md",  # doc deploy con ejemplos $2b$
     "EXTRACCION_RAW_DESDE_ODOO.md",  # doc con placeholder <contraseña>
+    "STOCK_LIVE_IMPLEMENTACION.md",  # doc tecnica con ejemplos de patron
+    "CONTRIBUCION_COMERCIAL_IMPLEMENTACION.md",  # doc tecnica con ejemplo TOML de SA (placeholder)
 }
 
 

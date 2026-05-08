@@ -99,6 +99,10 @@ from views.cruce_bestsellers import render as render_cruce_bestsellers
 from views.cruce_quiebres import render as render_cruce_quiebres
 from views.cruce_sobrestock import render as render_cruce_sobrestock
 from views.cruce_cobertura import render as render_cruce_cobertura
+from views.contribucion_general import render as render_contrib_general
+from views.contribucion_meta import render as render_contrib_meta
+from views.contribucion_kam import render as render_contrib_kam
+from views.contribucion_detalle import render as render_contrib_detalle
 
 pages = {
     "📊 Ventas": [
@@ -109,6 +113,12 @@ pages = {
     ],
     "📦 Stock": [
         st.Page(render_stock_live, title="Stock LIVE", icon="📦", url_path="stock-live"),
+    ],
+    "💼 Contribución": [
+        st.Page(render_contrib_general, title="Vista General", icon="📊", url_path="contrib-general"),
+        st.Page(render_contrib_meta, title="Meta vs Resultado", icon="🎯", url_path="contrib-meta"),
+        st.Page(render_contrib_kam, title="Por KAM", icon="👤", url_path="contrib-kam"),
+        st.Page(render_contrib_detalle, title="Análisis detallado", icon="🔬", url_path="contrib-detalle"),
     ],
     "🔄 Análisis cruzado": [
         st.Page(render_cruce_bestsellers, title="Bestsellers", icon="🔥", url_path="cruce-bestsellers"),
