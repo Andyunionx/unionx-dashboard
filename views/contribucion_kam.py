@@ -7,7 +7,7 @@ Muestra: ranking + drill-down KAM/Canal con margen, comisiones y resultado contr
 import pandas as pd
 import streamlit as st
 
-from views._contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos_K
+from views.contribucion_loader import cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos_K
 
 
 def render():

@@ -7,7 +7,7 @@ Muestra: KPIs consolidados Año/Mes/Negocio + tabla con margenes y comisiones %.
 import pandas as pd
 import streamlit as st
 
-from views._contribucion_loader import (
+from views.contribucion_loader import (
     cargar_hoja, parsear_columnas_numericas,
     fmt_pesos_M, fmt_pct,
 )
