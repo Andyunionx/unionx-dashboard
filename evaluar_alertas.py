@@ -271,6 +271,90 @@ def regla_proyeccion_prophet():
 
 
 # ============================================================
+# REGLA 6: Gap de pedidos (Yuju/Multivende cortados)
+# ============================================================
+def regla_gap_pedidos():
+    """
+    Si no entra ningún pedido a Odoo (vía Yuju/Multivende/manual) por más de 1h
+    durante horario activo Chile → alerta.
+
+    Horario activo: Lun-Sáb 09:00-23:00, Dom 10:00-22:00 (hora Chile).
+    Severidades: warning si gap > 60 min, critical si > 120 min.
+
+    Detecta corte de Yuju → Odoo (caso real 2026-05-09 que motivó esta regla).
+    """
+    try:
+        from zoneinfo import ZoneInfo
+        ahora_cl = datetime.now(ZoneInfo('America/Santiago'))
+    except Exception:
+        # Fallback: asumir UTC-4 (Chile horario invierno)
+        ahora_cl = datetime.now() - timedelta(hours=4)
+
+    hora = ahora_cl.hour
+    dow = ahora_cl.weekday()  # 0=Lun, 6=Dom
+
+    # Solo evaluar en horario activo
+    if dow == 6:  # Domingo
+        if hora < 10 or hora >= 22:
+            return None
+    else:  # Lun-Sáb
+        if hora < 9 or hora >= 23:
+            return None
+
+    # Última venta en Turso (combinada fecha + hora)
+    rows = _q("""
+        SELECT MAX(fecha_venta || ' ' || hora_venta)
+        FROM ventas
+        WHERE tipo_movimiento = 'Venta'
+          AND fecha_venta >= date('now', '-2 days')
+    """)
+    if not rows:
+        return None
+    ultimo_str = _val(rows[0], 0)
+    if not ultimo_str:
+        return None
+
+    try:
+        # hora_venta puede ser 'HH:MM:SS' o vacío. Construimos datetime sin tz
+        ultimo = datetime.strptime(ultimo_str.strip(), '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        try:
+            ultimo = datetime.strptime(ultimo_str.strip()[:16], '%Y-%m-%d %H:%M')
+        except Exception:
+            return None
+
+    # Comparar como naive (ambos hora Chile)
+    ahora_naive = ahora_cl.replace(tzinfo=None) if ahora_cl.tzinfo else ahora_cl
+    delta_min = int((ahora_naive - ultimo).total_seconds() / 60)
+
+    if delta_min < 60:
+        return None
+
+    sev = 'critical' if delta_min > 120 else 'warning'
+    crear_alerta(
+        tipo='gap_pedidos',
+        severity=sev,
+        titulo=f"Sin pedidos hace {delta_min} min — posible corte Yuju → Odoo",
+        mensaje=(
+            f"Último pedido registrado: {ultimo_str} (hace {delta_min} min, hora Chile). "
+            f"Revisar panel Yuju, ir.cron de Odoo y Queue de Multivende. "
+            f"Horario activo Chile: lun-sab 09-23, dom 10-22."
+        ),
+        contexto={
+            'ultimo_pedido': ultimo_str,
+            'delta_min': delta_min,
+            'evaluado_en_chile': str(ahora_naive),
+            'hora_chile': hora,
+            'dia_semana': dow,
+        },
+        fecha_objetivo=str(ahora_cl.date()),
+        target_apps=['ventas', 'operaciones'],
+    )
+    print(f"  🔴 gap_pedidos: {delta_min} min sin pedidos (último {ultimo_str})")
+    return True
+
+
+# ============================================================
 # MAIN
 # ============================================================
 def main():
@@ -283,6 +367,7 @@ def main():
     regla_mes_bajo_proyeccion()
     regla_margen_bajo()
     regla_proyeccion_prophet()
+    regla_gap_pedidos()
 
     print("\n[OK] Evaluación completa")
 
