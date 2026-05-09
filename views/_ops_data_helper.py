@@ -6,13 +6,24 @@ Datos que se cargan manualmente:
   - capacidad_bodega: m3 totales disponibles
   - cycle_counts: lista de auditorías (SKU, qty_sistema, qty_fisica, fecha)
   - merma_operativa: valor mermado por mes
+  - proximos_embarques: lista de embarques entrantes
+  - m3_por_categoria: fallback volumen unidad
 
-Storage:
-  - LOCAL (desarrollo): JSON file en data/ops_kpis_manuales.json (gitignored)
-  - STREAMLIT CLOUD (prod): mismo JSON pero NO persiste entre re-deploys
-    → roadmap H2: migrar a Turso (libSQL)
+Storage (en orden de preferencia):
+  1. **TURSO (prod)**: tabla `ops_kpis_manuales` con esquema key-value JSON.
+     Persiste entre re-deploys de Streamlit Cloud. Requiere LIBSQL_URL +
+     LIBSQL_AUTH_TOKEN en env vars.
+  2. **JSON local (dev fallback)**: `data/ops_manuales/kpis.json`. Solo si
+     Turso no está disponible (ej: desarrollo local sin credenciales).
 
-Convención: claves en formato "YYYY-MM" (mes/año), valores arbitrarios.
+API pública (sin cambios):
+  - get_equipo_mes(mes), set_equipo_mes(mes, personas, horas)
+  - get_capacidad_bodega(), set_capacidad_bodega(m3)
+  - add_cycle_count, get_cycle_counts, kpi_exactitud_inventario
+  - set/get_merma_mes, kpi_merma_operativa
+  - add/get/delete_proximo_embarque, kpi_capacidad_recepcion
+  - set/get_m3_categoria, get_all_m3_categoria
+  - calcular_horas_estandar_mes, get_horas_promedio_dia
 """
 import json
 import os
@@ -25,37 +36,131 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data" / "ops_manuales"
 DATA_FILE = DATA_DIR / "kpis.json"
 
+# Asegurar que db_client esté importable
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+_TURSO_KEY = "kpis_v1"  # singleton key en la tabla
+
+
+def _empty_estructura() -> Dict:
+    return {
+        "equipo_bodega": {},
+        "capacidad_bodega": {
+            "m3_totales": None,
+            "m3_por_slot_default": 0,
+            "fecha_actualizacion": None,
+        },
+        "cycle_counts": [],
+        "merma": {},
+        "proximos_embarques": [],
+        "m3_por_categoria": {},
+        "_meta": {"version": 1, "ultima_carga": None, "storage": "init"},
+    }
+
+
+def _try_turso():
+    """Devuelve (conn, esta_en_turso) o (None, False) si no hay credenciales."""
+    if not os.environ.get('LIBSQL_URL'):
+        return None, False
+    try:
+        from db_client import get_connection, get_db_path
+        conn = get_connection(get_db_path())
+        # Asegurar tabla existe
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ops_kpis_manuales (
+                k TEXT PRIMARY KEY,
+                v TEXT NOT NULL,
+                ts TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        return conn, True
+    except Exception as e:
+        print(f"[ops_data_helper] Turso falló, fallback JSON: {e}")
+        return None, False
+
 
 def _load() -> Dict:
-    """Carga el JSON. Si no existe, devuelve estructura vacía."""
+    """Carga la estructura desde Turso (prod) o JSON local (fallback dev)."""
+    # 1. Intentar Turso
+    conn, ok = _try_turso()
+    if ok:
+        try:
+            row = conn.execute("SELECT v FROM ops_kpis_manuales WHERE k = ?",
+                               (_TURSO_KEY,)).fetchone()
+            if row:
+                data = json.loads(row[0])
+                data.setdefault("_meta", {})["storage"] = "turso"
+                return data
+            else:
+                # Primera vez: estructura vacía
+                return _empty_estructura()
+        except Exception as e:
+            print(f"[ops_data_helper] Error leyendo de Turso: {e}")
+        finally:
+            try: conn.close()
+            except Exception: pass
+
+    # 2. Fallback JSON local
     if not DATA_FILE.exists():
-        return {
-            "equipo_bodega": {},   # {"YYYY-MM": {"personas": N, "horas_total": H}}
-            "capacidad_bodega": {  # único, no por mes
-                "m3_totales": None,
-                "fecha_actualizacion": None,
-            },
-            "cycle_counts": [],    # [{"sku": ..., "qty_sistema": ..., "qty_fisica": ..., "fecha": "YYYY-MM-DD"}, ...]
-            "merma": {},           # {"YYYY-MM": {"valor_mermado": ..., "valor_inv_promedio": ...}}
-            "_meta": {"version": 1, "ultima_carga": None},
-        }
+        return _empty_estructura()
     try:
         with open(DATA_FILE, encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            data.setdefault("_meta", {})["storage"] = "json_local"
+            return data
     except Exception:
-        return {}
+        return _empty_estructura()
 
 
 def _save(data: Dict) -> bool:
-    """Persiste JSON. Crea dir si no existe."""
+    """Persiste a Turso (prod) o JSON local (fallback dev)."""
+    data.setdefault("_meta", {})["ultima_carga"] = datetime.now().isoformat()
+
+    # 1. Intentar Turso
+    conn, ok = _try_turso()
+    if ok:
+        try:
+            data["_meta"]["storage"] = "turso"
+            conn.execute(
+                "INSERT OR REPLACE INTO ops_kpis_manuales (k, v, ts) VALUES (?, ?, ?)",
+                (_TURSO_KEY, json.dumps(data, ensure_ascii=False),
+                 datetime.now().isoformat()),
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"[ops_data_helper] Error escribiendo a Turso: {e}")
+        finally:
+            try: conn.close()
+            except Exception: pass
+
+    # 2. Fallback JSON local
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
-        data["_meta"]["ultima_carga"] = datetime.now().isoformat()
+        data["_meta"]["storage"] = "json_local"
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return True
     except Exception:
         return False
+
+
+def get_storage_status() -> Dict:
+    """Diagnóstico para mostrar en la UI: dónde se está persistiendo."""
+    conn, ok = _try_turso()
+    if conn:
+        try: conn.close()
+        except Exception: pass
+    return {
+        "turso_configurado": bool(os.environ.get('LIBSQL_URL')),
+        "turso_alcanzable": ok,
+        "storage_actual": "Turso (cloud)" if ok else "JSON local (efímero en Cloud)",
+        "advertencia": None if ok else (
+            "Sin LIBSQL_URL en env. Datos en JSON local — se pierden al re-deploy."
+        ),
+    }
 
 
 # ============================================================

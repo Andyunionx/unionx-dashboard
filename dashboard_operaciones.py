@@ -65,11 +65,10 @@ require_login_ops()
 from views._ops_odoo_helper import odoo_status_indicator  # noqa: E402
 odoo_status_indicator()
 
-# Auto-refresh cada 5 min
-st.markdown(
-    """<script>setTimeout(function(){window.location.reload();}, 300000);</script>""",
-    unsafe_allow_html=True,
-)
+# Auto-refresh DESACTIVADO (causaba re-render completo cada 5 min, sensación
+# de "corriendo todo el rato"). El user puede refrescar manualmente con el
+# botón "🔄 Refrescar Odoo" del sidebar de cada vista, o F5 del browser.
+# Cache TTL de 5-15 min en helpers Odoo ya garantiza datos relativamente frescos.
 
 
 # ============================================================

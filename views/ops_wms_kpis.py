@@ -32,7 +32,7 @@ from views._ops_data_helper import (
     get_capacidad_bodega, set_capacidad_bodega,
     add_cycle_count, get_cycle_counts, kpi_exactitud_inventario,
     set_merma_mes, get_merma_mes, kpi_merma_operativa,
-    calcular_horas_estandar_mes,
+    calcular_horas_estandar_mes, get_storage_status,
 )
 
 
@@ -107,10 +107,18 @@ def render():
             st.markdown("### 📋 Carga de datos manuales")
             st.caption("Datos que NO vienen de Odoo. Renderiza instantáneo.")
 
-            st.warning(
-                "⚠️ **Datos persistidos en JSON local.** En Streamlit Cloud se pierden "
-                "al re-deploy. Roadmap H2: migrar a Turso (libSQL)."
-            )
+            # Status del storage (Turso o JSON)
+            ss = get_storage_status()
+            if ss["turso_alcanzable"]:
+                st.success(f"💾 **Persistencia: {ss['storage_actual']}** · "
+                           "Datos guardados sobreviven re-deploys.")
+            else:
+                st.warning(
+                    f"⚠️ **Persistencia: {ss['storage_actual']}** · "
+                    f"{ss.get('advertencia', '')} "
+                    "Para activar Turso: setear `LIBSQL_URL` y `LIBSQL_AUTH_TOKEN` "
+                    "en Streamlit Secrets."
+                )
 
             sub_tabs_dm = st.tabs([
                 "👥 Equipo bodega",
