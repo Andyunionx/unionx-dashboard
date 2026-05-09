@@ -86,6 +86,55 @@ def get_horas_promedio_dia(mes: str) -> float:
     return horas / 22 if horas else 0
 
 
+# Horario estándar UnionX bodega (definido por Andrés 2026-05-09):
+# L-J: 8 a 18 con 1h almuerzo = 9 hrs/día
+# V:   8 a 15 con 1h almuerzo = 6 hrs/día
+# Total/persona/sem: 4*9 + 6 = 42 hrs (coincide con contrato 42h sem)
+HORARIO_BODEGA = {
+    "lunes_jueves_hrs": 9,
+    "viernes_hrs": 6,
+    "sabado_hrs": 0,
+    "domingo_hrs": 0,
+}
+
+
+def calcular_horas_estandar_mes(mes: str, n_personas: int) -> Dict:
+    """Calcula horas totales estándar del mes según horario UnionX bodega.
+
+    Args:
+        mes: "YYYY-MM"
+        n_personas: cantidad de operarios activos
+
+    Returns:
+        {horas_total, horas_persona, n_lj, n_v, n_dias_habiles}
+    """
+    import calendar
+    from datetime import date as _date
+    try:
+        anio, mes_n = mes.split("-")
+        anio, mes_n = int(anio), int(mes_n)
+    except Exception:
+        return {"horas_total": 0, "error": "Formato YYYY-MM inválido"}
+
+    n_dias = calendar.monthrange(anio, mes_n)[1]
+    n_lj = sum(1 for d in range(1, n_dias + 1)
+               if _date(anio, mes_n, d).weekday() < 4)  # L=0, M=1, X=2, J=3
+    n_v = sum(1 for d in range(1, n_dias + 1)
+              if _date(anio, mes_n, d).weekday() == 4)  # V=4
+    hrs_persona = (n_lj * HORARIO_BODEGA["lunes_jueves_hrs"]
+                   + n_v * HORARIO_BODEGA["viernes_hrs"])
+    hrs_total = hrs_persona * n_personas
+    return {
+        "horas_total": hrs_total,
+        "horas_persona": hrs_persona,
+        "n_lj": n_lj,
+        "n_v": n_v,
+        "n_dias_habiles": n_lj + n_v,
+        "n_personas": n_personas,
+        "error": None,
+    }
+
+
 # ============================================================
 # Capacidad bodega
 # ============================================================

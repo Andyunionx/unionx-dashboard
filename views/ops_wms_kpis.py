@@ -31,6 +31,7 @@ from views._ops_data_helper import (
     get_capacidad_bodega, set_capacidad_bodega,
     add_cycle_count, get_cycle_counts, kpi_exactitud_inventario,
     set_merma_mes, get_merma_mes, kpi_merma_operativa,
+    calcular_horas_estandar_mes,
 )
 
 
@@ -118,11 +119,16 @@ def render():
 
             with sub_tabs_dm[0]:
                 st.markdown("#### Equipo bodega — horas trabajadas por mes")
-                st.caption("Necesario para calcular productividad picking (líneas/h)")
+                st.caption(
+                    "Necesario para calcular productividad picking (líneas/h). "
+                    "Horario estándar UnionX: L-J 8-18 con 1h almuerzo (9h) · V 8-15 con 1h almuerzo (6h) "
+                    "= 42 hrs/sem por persona."
+                )
                 mes_input = st.text_input("Mes (YYYY-MM)",
                                            value=datetime.now().strftime("%Y-%m"),
                                            key="eq_mes_top")
                 actual_eq = get_equipo_mes(mes_input) or {}
+
                 c1, c2 = st.columns(2)
                 personas = c1.number_input("Personas activas", min_value=0, max_value=200, step=1,
                                             value=int(actual_eq.get("personas") or 0),
@@ -130,12 +136,34 @@ def render():
                 horas = c2.number_input("Horas total trabajadas en el mes", min_value=0.0, step=10.0,
                                          value=float(actual_eq.get("horas_total") or 0),
                                          key="eq_horas_top")
-                if st.button("💾 Guardar equipo", key="eq_save_top"):
-                    if set_equipo_mes(mes_input, int(personas), float(horas)):
-                        st.success(f"✅ Guardado para {mes_input}")
-                        st.cache_data.clear()
-                    else:
-                        st.error("❌ Error guardando")
+
+                # Botón calcular automático con horario estándar
+                ce1, ce2 = st.columns([1, 1])
+                with ce1:
+                    if st.button("📐 Calcular horas estándar del mes",
+                                 key="eq_calc_btn", use_container_width=True):
+                        if personas > 0:
+                            calc = calcular_horas_estandar_mes(mes_input, int(personas))
+                            if calc.get("error"):
+                                st.error(calc["error"])
+                            else:
+                                st.session_state['eq_horas_top'] = float(calc["horas_total"])
+                                st.success(
+                                    f"✅ Calculado: {calc['horas_total']} h "
+                                    f"({calc['n_lj']} L-J × 9h + {calc['n_v']} V × 6h "
+                                    f"= {calc['horas_persona']} h/persona × {personas})"
+                                )
+                                st.rerun()
+                        else:
+                            st.warning("Ingresá # personas primero")
+                with ce2:
+                    if st.button("💾 Guardar equipo", key="eq_save_top",
+                                 type="primary", use_container_width=True):
+                        if set_equipo_mes(mes_input, int(personas), float(horas)):
+                            st.success(f"✅ Guardado para {mes_input}")
+                            st.cache_data.clear()
+                        else:
+                            st.error("❌ Error guardando")
 
             with sub_tabs_dm[1]:
                 st.markdown("#### Capacidad de bodega")
