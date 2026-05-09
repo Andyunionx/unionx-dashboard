@@ -24,6 +24,7 @@ from views._ops_wms_helper import (
     kpi_volumen_movimientos, top_clientes_otif_problemas,
     kpi_ofr, kpi_oct, kpi_lineas_pickeadas_mes,
     tendencia_mensual, kpi_cobertura_cycle_counts,
+    kpi_merma_odoo, kpi_ajustes_inventario,
 )
 from views._ops_data_helper import (
     get_equipo_mes, set_equipo_mes,
@@ -157,72 +158,182 @@ def render():
                     st.caption(f"Última actualización: {actual_cap['fecha_actualizacion'][:16]}")
 
             with sub_tabs_dm[2]:
-                st.markdown("#### Cycle counts (auditorías de inventario)")
-                st.caption("Cargar resultados para calcular Exactitud Inventario.")
+                st.markdown("#### 📋 Inventarios / cycle counts (desde Odoo)")
+                st.caption(
+                    "Lee `stock.move` con location virtual de inventario (ajustes hechos "
+                    "en módulo Inventario de Odoo) desde abril 2026 a la fecha. "
+                    "Ajustes negativos = pérdidas detectadas, positivos = surplus encontrado."
+                )
 
-                if st.button("📊 Calcular cobertura cycle counts (consulta Odoo)",
-                             key="cc_cobertura_btn"):
-                    with st.spinner("Consultando Odoo…"):
-                        try:
-                            cobertura_t = kpi_cobertura_cycle_counts(meses=12)
-                            if cobertura_t.get("valor") is not None:
-                                cv = cobertura_t["valor"]
-                                ic = "🟢" if cv >= 0.80 else ("🟡" if cv >= 0.50 else "🔴")
-                                st.metric(f"{ic} Cobertura últimos 12m",
-                                          f"{cv*100:.1f}%",
-                                          help=f"{cobertura_t.get('n_auditados', 0)} SKUs / "
-                                               f"{cobertura_t.get('total_skus', 0)} totales")
-                            else:
-                                st.info(cobertura_t.get("error", "Sin datos"))
-                        except Exception as e:
-                            st.error(f"Error: {e}")
+                if st.button("📥 Cargar inventarios desde Odoo", type="primary",
+                             key="inv_load_btn"):
+                    st.session_state['inv_loaded'] = True
 
-                with st.form("cc_form_top", clear_on_submit=True):
-                    c1, c2, c3 = st.columns(3)
-                    sku = c1.text_input("SKU", key="cc_sku_top")
-                    qty_sis = c2.number_input("Qty Sistema", min_value=0.0, step=1.0, key="cc_qsis_top")
-                    qty_fis = c3.number_input("Qty Física", min_value=0.0, step=1.0, key="cc_qfis_top")
-                    fecha = st.text_input("Fecha (YYYY-MM-DD)",
-                                           value=datetime.now().strftime("%Y-%m-%d"), key="cc_fecha_top")
-                    nota = st.text_input("Nota (opcional)", key="cc_nota_top")
-                    if st.form_submit_button("➕ Agregar cycle count", type="primary"):
-                        if sku and (qty_fis > 0 or qty_sis > 0):
-                            if add_cycle_count(sku, qty_sis, qty_fis, fecha, nota):
-                                st.success(f"✅ Agregado: {sku}")
-                                st.cache_data.clear()
-                            else:
-                                st.error("❌ Error guardando")
+                if st.session_state.get('inv_loaded'):
+                    with st.spinner("Consultando Odoo (stock.move ajustes)…"):
+                        inv = _safe_wms(kpi_ajustes_inventario,
+                                        desde_fecha="2026-04-01",
+                                        default={"n_ajustes": 0, "error": None})
+
+                    if inv.get("error") and inv.get("n_ajustes", 0) == 0:
+                        st.warning(inv["error"])
+                    elif inv.get("n_ajustes", 0) == 0:
+                        st.info("Sin ajustes de inventario registrados desde 2026-04-01")
+                    else:
+                        # KPI cards
+                        ck1, ck2, ck3, ck4 = st.columns(4)
+                        ck1.metric("Total ajustes", f"{inv.get('n_ajustes', 0):,}")
+                        ck2.metric("SKUs únicos ajustados", f"{inv.get('n_skus_unicos', 0):,}")
+                        cob = inv.get("cobertura_pct")
+                        if cob is not None:
+                            ic = "🟢" if cob >= 0.80 else ("🟡" if cob >= 0.50 else "🔴")
+                            ck3.metric(f"{ic} Cobertura", f"{cob*100:.1f}%",
+                                       help=f"{inv.get('n_skus_unicos', 0)} / "
+                                            f"{inv.get('total_skus_activos', 0)} SKUs activos")
                         else:
-                            st.warning("Ingresá SKU + cantidades")
+                            ck3.metric("Cobertura", "—")
+                        valor_neto = inv.get("valor_neto", 0)
+                        ck4.metric("$ Neto ajustes", f"${valor_neto:,.0f}",
+                                   delta="surplus" if valor_neto > 0 else "pérdida")
 
-                counts = get_cycle_counts()
-                if counts:
-                    st.markdown(f"##### Histórico ({len(counts)} cycle counts)")
-                    df = pd.DataFrame(counts[:50])
-                    st.dataframe(df, use_container_width=True, hide_index=True, height=300)
+                        # Surplus vs perdidas
+                        st.markdown("##### Detalle financiero")
+                        cs1, cs2 = st.columns(2)
+                        cs1.metric("✅ $ Surplus (encontrado)",
+                                   f"${inv.get('valor_surplus', 0):,.0f}")
+                        cs2.metric("❌ $ Pérdidas (faltante)",
+                                   f"${inv.get('valor_perdidas', 0):,.0f}")
+
+                        # Top SKUs ajustados
+                        st.markdown("##### Top SKUs con más ajustes")
+                        if inv.get("top_skus_ajustados"):
+                            df_top = pd.DataFrame(inv["top_skus_ajustados"])
+                            df_top["valor_neto"] = df_top["valor_neto"].apply(lambda v: f"${v:,.0f}")
+                            df_top.columns = ["SKU", "# Ajustes", "Qty surplus",
+                                              "Qty pérdida", "$ neto"]
+                            st.dataframe(df_top, use_container_width=True, hide_index=True,
+                                         height=300)
+
+                        # Detalle ajustes
+                        with st.expander(f"📋 Ver últimos {len(inv.get('detalle', []))} ajustes"):
+                            if inv.get("detalle"):
+                                df_det = pd.DataFrame(inv["detalle"])
+                                df_det["valor"] = df_det["valor"].apply(lambda v: f"${v:,.0f}")
+                                st.dataframe(df_det, use_container_width=True,
+                                             hide_index=True, height=400)
+
+                        st.caption(f"Datos desde {inv.get('desde')} · Cache 10 min")
+                else:
+                    st.info("👆 Click 'Cargar inventarios desde Odoo'. Query pesada (15-30s).")
+
+                # Carga manual opcional como complemento
+                with st.expander("➕ Agregar cycle count manual adicional", expanded=False):
+                    st.caption("Para cycle counts hechos fuera del módulo Inventario Odoo")
+                    with st.form("cc_form_top", clear_on_submit=True):
+                        c1, c2, c3 = st.columns(3)
+                        sku = c1.text_input("SKU", key="cc_sku_top")
+                        qty_sis = c2.number_input("Qty Sistema", min_value=0.0, step=1.0,
+                                                   key="cc_qsis_top")
+                        qty_fis = c3.number_input("Qty Física", min_value=0.0, step=1.0,
+                                                   key="cc_qfis_top")
+                        fecha = st.text_input("Fecha (YYYY-MM-DD)",
+                                               value=datetime.now().strftime("%Y-%m-%d"),
+                                               key="cc_fecha_top")
+                        nota = st.text_input("Nota (opcional)", key="cc_nota_top")
+                        if st.form_submit_button("➕ Agregar"):
+                            if sku and (qty_fis > 0 or qty_sis > 0):
+                                if add_cycle_count(sku, qty_sis, qty_fis, fecha, nota):
+                                    st.success(f"✅ Agregado: {sku}")
+                                    st.cache_data.clear()
 
             with sub_tabs_dm[3]:
-                st.markdown("#### Merma operativa por mes")
-                mes_m = st.text_input("Mes (YYYY-MM)",
-                                       value=datetime.now().strftime("%Y-%m"), key="m_mes_top")
-                actual_m = get_merma_mes(mes_m) or {}
-                c1, c2 = st.columns(2)
-                mermado = c1.number_input("Valor mermado ($)", min_value=0.0, step=1000.0,
-                                           value=float(actual_m.get("valor_mermado") or 0),
-                                           key="m_mer_top")
-                inv_prom = c2.number_input("Valor inventario promedio ($)", min_value=0.0, step=10000.0,
-                                            value=float(actual_m.get("valor_inv_promedio") or 0),
-                                            key="m_inv_top")
-                if mermado > 0 and inv_prom > 0:
-                    pct = mermado / inv_prom
-                    color = "🟢" if pct <= 0.005 else ("🟡" if pct <= 0.01 else "🔴")
-                    st.metric(f"{color} % Merma", f"{pct*100:.2f}%", help="Benchmark: ≤ 0.5%")
-                if st.button("💾 Guardar merma", key="m_save_top"):
-                    if set_merma_mes(mes_m, float(mermado), float(inv_prom)):
-                        st.success(f"✅ Guardado para {mes_m}")
-                        st.cache_data.clear()
+                st.markdown("#### 📉 Merma operativa (desde Odoo · stock.scrap)")
+                st.caption(
+                    "Lee `stock.scrap` state=done con valor calculado del move asociado. "
+                    "Compara contra valor inventario actual para % merma."
+                )
+
+                col_v, _ = st.columns([1, 3])
+                with col_v:
+                    dias_merma = st.selectbox("Ventana (días)",
+                                              [30, 60, 90, 180, 365],
+                                              index=2, key="merma_dias_top")
+
+                if st.button("📥 Cargar merma desde Odoo", type="primary",
+                             key="merma_load_btn"):
+                    st.session_state['merma_loaded'] = True
+                    st.session_state['merma_dias_val'] = dias_merma
+
+                if st.session_state.get('merma_loaded'):
+                    with st.spinner("Consultando stock.scrap…"):
+                        m_dias = st.session_state.get('merma_dias_val', dias_merma)
+                        merma_o = _safe_wms(kpi_merma_odoo, dias=m_dias,
+                                            default={"valor": None, "error": None})
+
+                    if merma_o.get("error") and merma_o.get("n_scraps", 0) == 0:
+                        st.warning(merma_o["error"])
+                    elif merma_o.get("n_scraps", 0) == 0:
+                        st.success("✅ Sin scraps registrados en la ventana seleccionada")
                     else:
-                        st.error("❌ Error guardando")
+                        # KPI cards
+                        mk1, mk2, mk3, mk4 = st.columns(4)
+                        v_pct = merma_o.get("valor")
+                        ic = "🟢" if v_pct and v_pct <= 0.005 else \
+                             ("🟡" if v_pct and v_pct <= 0.01 else "🔴")
+                        mk1.metric(f"{ic} % Merma",
+                                   f"{v_pct*100:.2f}%" if v_pct is not None else "—",
+                                   help="Benchmark: ≤ 0.5% (calculado vs valor inv. actual)")
+                        mk2.metric("$ Mermado total",
+                                   f"${merma_o.get('valor_mermado', 0):,.0f}")
+                        mk3.metric("Unidades mermadas",
+                                   f"{merma_o.get('qty_mermada', 0):,.0f}")
+                        mk4.metric("# Scraps", f"{merma_o.get('n_scraps', 0):,}")
+
+                        st.caption(f"Inventario referencia: ${merma_o.get('valor_inventario_referencia', 0):,.0f}")
+
+                        # Top SKUs mermados
+                        st.markdown("##### Top SKUs mermados (por valor)")
+                        if merma_o.get("top_skus"):
+                            df_top_m = pd.DataFrame(merma_o["top_skus"])
+                            df_top_m["valor_mermado"] = df_top_m["valor_mermado"].apply(
+                                lambda v: f"${v:,.0f}")
+                            df_top_m.columns = ["SKU", "Qty mermada", "$ mermado", "# Scraps"]
+                            st.dataframe(df_top_m, use_container_width=True, hide_index=True,
+                                         height=300)
+
+                        # Detalle scraps
+                        with st.expander(f"📋 Ver últimos {len(merma_o.get('detalle', []))} scraps"):
+                            if merma_o.get("detalle"):
+                                df_det_m = pd.DataFrame(merma_o["detalle"])
+                                df_det_m["valor"] = df_det_m["valor"].apply(
+                                    lambda v: f"${v:,.0f}")
+                                st.dataframe(df_det_m, use_container_width=True,
+                                             hide_index=True, height=400)
+                else:
+                    st.info("👆 Click 'Cargar merma desde Odoo'. Query pesada (10-20s).")
+
+                # Carga manual opcional (override) — colapsado por default
+                with st.expander("✏️ Override manual (si querés un valor distinto al de Odoo)",
+                                 expanded=False):
+                    mes_m = st.text_input("Mes (YYYY-MM)",
+                                           value=datetime.now().strftime("%Y-%m"), key="m_mes_top")
+                    actual_m = get_merma_mes(mes_m) or {}
+                    c1m, c2m = st.columns(2)
+                    mermado = c1m.number_input("Valor mermado ($)", min_value=0.0, step=1000.0,
+                                                value=float(actual_m.get("valor_mermado") or 0),
+                                                key="m_mer_top")
+                    inv_prom = c2m.number_input("Valor inventario promedio ($)",
+                                                 min_value=0.0, step=10000.0,
+                                                 value=float(actual_m.get("valor_inv_promedio") or 0),
+                                                 key="m_inv_top")
+                    if mermado > 0 and inv_prom > 0:
+                        pct = mermado / inv_prom
+                        color_m = "🟢" if pct <= 0.005 else ("🟡" if pct <= 0.01 else "🔴")
+                        st.metric(f"{color_m} % Merma manual", f"{pct*100:.2f}%")
+                    if st.button("💾 Guardar merma manual", key="m_save_top"):
+                        if set_merma_mes(mes_m, float(mermado), float(inv_prom)):
+                            st.success(f"✅ Guardado para {mes_m}")
+                            st.cache_data.clear()
     except Exception as e:
         st.error(f"❌ Error en Tab Datos manuales: {type(e).__name__}: {e}")
 
@@ -240,8 +351,28 @@ def render():
         ofr = _safe_wms(kpi_ofr, dias=30)
         oct = _safe_wms(kpi_oct, dias=30)
         exactitud = _safe_wms(kpi_exactitud_inventario, dias=30, default={"valor": None, "total": 0})
-        merma = _safe_wms(kpi_merma_operativa, default={"valor": None, "n_meses": 0})
-        cobertura = _safe_wms(kpi_cobertura_cycle_counts, meses=12, default={"valor": None})
+        # Merma: priorizar Odoo (stock.scrap) sobre manual
+        merma_odoo_t = _safe_wms(kpi_merma_odoo, dias=90, default={"valor": None, "n_scraps": 0})
+        merma_manual = _safe_wms(kpi_merma_operativa, default={"valor": None, "n_meses": 0})
+        if merma_odoo_t.get("valor") is not None:
+            merma = merma_odoo_t
+            merma["fuente"] = "Odoo (90d)"
+        else:
+            merma = merma_manual
+            merma["fuente"] = "Manual"
+        # Cobertura: priorizar ajustes de inventario Odoo sobre cycle counts manuales
+        ajustes_t = _safe_wms(kpi_ajustes_inventario, desde_fecha="2026-04-01",
+                              default={"cobertura_pct": None, "n_skus_unicos": 0})
+        if ajustes_t.get("cobertura_pct") is not None:
+            cobertura = {
+                "valor": ajustes_t.get("cobertura_pct"),
+                "n_auditados": ajustes_t.get("n_skus_unicos", 0),
+                "total_skus": ajustes_t.get("total_skus_activos", 0),
+                "fuente": "Odoo ajustes desde 2026-04",
+            }
+        else:
+            cobertura = _safe_wms(kpi_cobertura_cycle_counts, meses=12, default={"valor": None})
+            cobertura["fuente"] = "Cycle counts manuales"
 
         mes_actual = datetime.now().strftime("%Y-%m")
         equipo = _safe_wms(get_equipo_mes, mes_actual, default={}) or {}
@@ -350,20 +481,22 @@ def render():
                                f"Bench: ≥98% · {exactitud.get('total', 0)} cycle counts",
                                color, sem), unsafe_allow_html=True)
 
-        # Cobertura cycle counts
+        # Cobertura cycle counts (Odoo ajustes con fallback manual)
         v = cobertura.get("valor")
         sem, color = _semaforo(v, 0.80, 0.50, mayor_es_mejor=True)
-        c10.markdown(_kpi_card("Cobertura cycle counts (12m)",
+        sub_cob = cobertura.get('fuente', '')
+        c10.markdown(_kpi_card("Cobertura ajustes inventario",
                                f"{v*100:.1f}%" if v is not None else "—",
-                               f"Bench: ≥80% · {cobertura.get('n_auditados', 0)}/{cobertura.get('total_skus', 0)} SKUs",
+                               f"Bench: ≥80% · {cobertura.get('n_auditados', 0)}/{cobertura.get('total_skus', 0)} · {sub_cob}",
                                color, sem), unsafe_allow_html=True)
 
-        # Merma operativa
+        # Merma operativa (Odoo stock.scrap con fallback manual)
         v = merma.get("valor")
         sem, color = _semaforo(v, 0.005, amarillo_max=0.01, mayor_es_mejor=False)
+        sub_merma = merma.get('fuente', '')
         c11.markdown(_kpi_card("Merma operativa",
                                f"{v*100:.2f}%" if v is not None else "—",
-                               f"Bench: ≤0.5% · {merma.get('n_meses', 0)} meses",
+                               f"Bench: ≤0.5% · {sub_merma}",
                                color, sem), unsafe_allow_html=True)
 
         # Equipo bodega

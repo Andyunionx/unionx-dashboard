@@ -599,6 +599,255 @@ def tendencia_mensual(meses: int = 6) -> List[Dict]:
 
 
 # ============================================================
+# MERMA OPERATIVA — desde Odoo stock.scrap
+# ============================================================
+@st.cache_data(ttl=600, show_spinner=False)
+def kpi_merma_odoo(dias: int = 90) -> Dict:
+    """Merma ejecutada en Odoo via stock.scrap state=done.
+
+    Args:
+        dias: ventana temporal (default 90d)
+
+    Returns:
+        valor_pct: merma / valor_inventario_promedio (necesita stock data)
+        valor_mermado: $ total
+        qty_mermada: unidades total
+        n_scraps: cantidad de scraps
+        top_skus: top 20 SKUs mermados por valor
+        detalle: lista últimos 50 scraps
+    """
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return {"valor": None, "error": "Odoo no disponible"}
+
+    try:
+        desde = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+        scraps = odoo.search_read(
+            "stock.scrap",
+            [("state", "=", "done"), ("date_done", ">=", desde)],
+            ["id", "name", "product_id", "scrap_qty", "date_done",
+             "location_id", "scrap_location_id", "move_id", "origin"],
+            limit=20000,
+        )
+        if not scraps:
+            return {"valor": None, "qty_mermada": 0, "valor_mermado": 0,
+                    "n_scraps": 0, "top_skus": [], "detalle": [],
+                    "error": "Sin scraps en ventana"}
+
+        # Cargar values desde los stock.moves asociados
+        move_ids = [s["move_id"][0] for s in scraps if s.get("move_id")]
+        moves_value = {}
+        if move_ids:
+            moves = odoo.search_read(
+                "stock.move",
+                [("id", "in", move_ids)],
+                ["id", "value"], limit=20000,
+            )
+            moves_value = {m["id"]: m.get("value", 0) or 0 for m in moves}
+
+        # Agregar valor a cada scrap
+        for s in scraps:
+            mid = s["move_id"][0] if s.get("move_id") else None
+            s["valor"] = abs(moves_value.get(mid, 0))  # value puede ser negativo (egreso)
+
+        total_qty = sum(s.get("scrap_qty", 0) for s in scraps)
+        total_valor = sum(s.get("valor", 0) for s in scraps)
+
+        # Top SKUs mermados
+        from collections import defaultdict
+        agg = defaultdict(lambda: {"qty": 0, "valor": 0, "n_scraps": 0})
+        for s in scraps:
+            if not s.get("product_id"):
+                continue
+            pid = s["product_id"][0]
+            agg[pid]["nombre"] = s["product_id"][1]
+            agg[pid]["qty"] += s.get("scrap_qty", 0)
+            agg[pid]["valor"] += s.get("valor", 0)
+            agg[pid]["n_scraps"] += 1
+
+        top_skus = [
+            {"sku": v["nombre"][:80], "qty_mermada": v["qty"],
+             "valor_mermado": v["valor"], "n_scraps": v["n_scraps"]}
+            for v in agg.values()
+        ]
+        top_skus.sort(key=lambda x: -x["valor_mermado"])
+
+        # Detalle últimos N
+        detalle = sorted(
+            [{"fecha": s.get("date_done", "")[:10],
+              "ref": s.get("name", ""),
+              "sku": s["product_id"][1][:60] if s.get("product_id") else "",
+              "qty": s.get("scrap_qty", 0),
+              "valor": s.get("valor", 0),
+              "ubicacion": s["location_id"][1] if s.get("location_id") else "",
+              "destino": s["scrap_location_id"][1] if s.get("scrap_location_id") else "",
+              "origen": s.get("origin", "")} for s in scraps],
+            key=lambda d: d["fecha"], reverse=True,
+        )[:50]
+
+        # Calcular % merma vs inventario promedio
+        # Necesitamos valor_inventario_promedio del cached_stock
+        try:
+            from views.shared import cached_stock
+            stock_data = cached_stock()
+            valor_inv = stock_data.get("kpis", {}).get("valor_total", 0) if stock_data else 0
+            pct = total_valor / valor_inv if valor_inv > 0 else None
+        except Exception:
+            pct = None
+            valor_inv = 0
+
+        return {
+            "valor": pct,  # % sobre valor inventario
+            "valor_mermado": total_valor,
+            "qty_mermada": total_qty,
+            "n_scraps": len(scraps),
+            "valor_inventario_referencia": valor_inv,
+            "top_skus": top_skus[:20],
+            "detalle": detalle,
+            "ventana_dias": dias,
+            "error": None,
+        }
+    except Exception as e:
+        return {"valor": None, "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+# ============================================================
+# AJUSTES DE INVENTARIO — desde Odoo stock.move (cycle counts)
+# ============================================================
+@st.cache_data(ttl=600, show_spinner=False)
+def kpi_ajustes_inventario(desde_fecha: str = "2026-04-01") -> Dict:
+    """Ajustes de inventario hechos en Odoo desde fecha (default abril 2026).
+
+    Considera ajustes de inventario los stock.moves donde:
+      - location_id.usage = 'inventory' (origen virtual de inventario)
+      - O location_dest_id.usage = 'inventory' (destino virtual)
+      - state = 'done'
+
+    Equivalente a "cycle counts CON discrepancia" (los exactos no generan move).
+
+    Returns:
+        n_ajustes: total movimientos
+        n_skus_unicos: SKUs únicos ajustados
+        valor_neto: $ neto (positivo = surplus, negativo = pérdida)
+        valor_perdidas: $ perdido (ajustes negativos)
+        valor_surplus: $ ganado (ajustes positivos)
+        top_skus_ajustados: top 20 SKUs con más ajustes
+        detalle: lista detallada
+        cobertura_pct: SKUs únicos / total SKUs activos
+    """
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return {"n_ajustes": 0, "error": "Odoo no disponible"}
+
+    try:
+        # Domain: state=done desde fecha + es_inventory (origen O destino virtual)
+        # En Odoo: ubicaciones de ajuste tienen usage='inventory'
+        moves = odoo.search_read(
+            "stock.move",
+            [("state", "=", "done"),
+             ("date", ">=", desde_fecha),
+             "|",
+             ("location_id.usage", "=", "inventory"),
+             ("location_dest_id.usage", "=", "inventory")],
+            ["id", "name", "date", "product_id", "product_uom_qty",
+             "location_id", "location_dest_id", "value", "reference"],
+            limit=50000,
+        )
+        if not moves:
+            return {"n_ajustes": 0, "n_skus_unicos": 0, "valor_neto": 0,
+                    "valor_perdidas": 0, "valor_surplus": 0,
+                    "top_skus_ajustados": [], "detalle": [],
+                    "error": "Sin ajustes en ventana"}
+
+        # Para cada move:
+        #   Si location_id (origen) es inventory virtual => INGRESO (surplus, valor>0)
+        #   Si location_dest_id (destino) es inventory virtual => EGRESO (pérdida, valor<0)
+        from collections import defaultdict
+        agg = defaultdict(lambda: {"qty_neta": 0, "valor_neto": 0, "n_movs": 0,
+                                    "qty_surplus": 0, "qty_perdida": 0})
+
+        valor_neto = 0
+        valor_surplus = 0
+        valor_perdidas = 0
+        for m in moves:
+            if not m.get("product_id"):
+                continue
+            pid = m["product_id"][0]
+            qty = m.get("product_uom_qty", 0) or 0
+            val = m.get("value", 0) or 0
+            loc_origen = m.get("location_id")
+            loc_dest = m.get("location_dest_id")
+
+            # Detectar dirección del ajuste
+            origen_es_virt = "inventory" in (loc_origen[1].lower() if loc_origen else "")
+            # Más confiable: usar valor (positivo = ingreso a stock real)
+            if val > 0:
+                # Ajuste positivo (encontraron más): surplus
+                agg[pid]["qty_surplus"] += qty
+                agg[pid]["valor_neto"] += val
+                valor_surplus += val
+            elif val < 0:
+                # Ajuste negativo: pérdida
+                agg[pid]["qty_perdida"] += qty
+                agg[pid]["valor_neto"] += val
+                valor_perdidas += abs(val)
+            agg[pid]["nombre"] = m["product_id"][1]
+            agg[pid]["qty_neta"] += qty if val >= 0 else -qty
+            agg[pid]["n_movs"] += 1
+            valor_neto += val
+
+        # Top SKUs con más ajustes
+        top = [
+            {"sku": v["nombre"][:80], "n_ajustes": v["n_movs"],
+             "qty_surplus": v["qty_surplus"], "qty_perdida": v["qty_perdida"],
+             "valor_neto": v["valor_neto"]}
+            for v in agg.values()
+        ]
+        top.sort(key=lambda x: -x["n_ajustes"])
+
+        # Detalle últimos N
+        detalle = sorted(
+            [{"fecha": m.get("date", "")[:10],
+              "ref": m.get("reference", "") or m.get("name", "")[:40],
+              "sku": m["product_id"][1][:60] if m.get("product_id") else "",
+              "qty": m.get("product_uom_qty", 0),
+              "valor": m.get("value", 0),
+              "tipo": "Surplus" if (m.get("value") or 0) > 0 else "Pérdida",
+              "origen": m["location_id"][1] if m.get("location_id") else "",
+              "destino": m["location_dest_id"][1] if m.get("location_dest_id") else ""}
+             for m in moves],
+            key=lambda d: d["fecha"], reverse=True,
+        )[:100]
+
+        # Cobertura: SKUs únicos / total activos
+        n_skus_ajustados = len(agg)
+        try:
+            total_activos = odoo.search_count(
+                "product.product",
+                [("active", "=", True), ("type", "=", "product")],
+            )
+        except Exception:
+            total_activos = 0
+        cobertura_pct = n_skus_ajustados / total_activos if total_activos else None
+
+        return {
+            "n_ajustes": len(moves),
+            "n_skus_unicos": n_skus_ajustados,
+            "total_skus_activos": total_activos,
+            "cobertura_pct": cobertura_pct,
+            "valor_neto": valor_neto,
+            "valor_perdidas": valor_perdidas,
+            "valor_surplus": valor_surplus,
+            "top_skus_ajustados": top[:20],
+            "detalle": detalle,
+            "desde": desde_fecha,
+            "error": None,
+        }
+    except Exception as e:
+        return {"n_ajustes": 0, "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+# ============================================================
 # COBERTURA CYCLE COUNTS
 # ============================================================
 @st.cache_data(ttl=300, show_spinner=False)
