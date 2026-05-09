@@ -42,6 +42,13 @@ if str(PROJECT_ROOT) not in sys.path:
 
 _TURSO_KEY = "kpis_v1"  # singleton key en la tabla
 
+# Cache módulo-level: una sola conexión Turso reutilizada (evita abrir/cerrar
+# en cada _load/_save y reducir overhead que causaba "corriendo todo el rato")
+_TURSO_CONN = None
+_TURSO_PROBED = False  # True si ya intentamos conectar (no reintentar en bucle)
+_DATA_CACHE = None  # cache in-memory del último _load() para evitar leer disk/red en cada get
+_DATA_CACHE_TS = 0
+
 
 def _empty_estructura() -> Dict:
     return {
@@ -59,14 +66,17 @@ def _empty_estructura() -> Dict:
     }
 
 
-def _try_turso():
-    """Devuelve (conn, esta_en_turso) o (None, False) si no hay credenciales."""
+def _get_turso_conn():
+    """Devuelve conn Turso cacheada o None. Solo intenta conectar 1 vez por proceso."""
+    global _TURSO_CONN, _TURSO_PROBED
+    if _TURSO_PROBED:
+        return _TURSO_CONN
+    _TURSO_PROBED = True
     if not os.environ.get('LIBSQL_URL'):
-        return None, False
+        return None
     try:
         from db_client import get_connection, get_db_path
         conn = get_connection(get_db_path())
-        # Asegurar tabla existe
         conn.execute("""
             CREATE TABLE IF NOT EXISTS ops_kpis_manuales (
                 k TEXT PRIMARY KEY,
@@ -75,52 +85,64 @@ def _try_turso():
             )
         """)
         conn.commit()
-        return conn, True
+        _TURSO_CONN = conn
+        return conn
     except Exception as e:
-        print(f"[ops_data_helper] Turso falló, fallback JSON: {e}")
-        return None, False
+        print(f"[ops_data_helper] Turso falló: {e}")
+        return None
 
 
-def _load() -> Dict:
-    """Carga la estructura desde Turso (prod) o JSON local (fallback dev)."""
-    # 1. Intentar Turso
-    conn, ok = _try_turso()
-    if ok:
+def _load(force_refresh: bool = False) -> Dict:
+    """Carga la estructura. Cachea in-memory por 30s para evitar I/O en cada get_*().
+
+    Args:
+        force_refresh: ignorar cache (después de un set_*)
+    """
+    global _DATA_CACHE, _DATA_CACHE_TS
+    import time
+    if not force_refresh and _DATA_CACHE is not None and (time.time() - _DATA_CACHE_TS) < 30:
+        return _DATA_CACHE
+
+    conn = _get_turso_conn()
+    data = None
+    if conn is not None:
         try:
             row = conn.execute("SELECT v FROM ops_kpis_manuales WHERE k = ?",
                                (_TURSO_KEY,)).fetchone()
             if row:
                 data = json.loads(row[0])
-                data.setdefault("_meta", {})["storage"] = "turso"
-                return data
             else:
-                # Primera vez: estructura vacía
-                return _empty_estructura()
+                data = _empty_estructura()
+            data.setdefault("_meta", {})["storage"] = "turso"
         except Exception as e:
             print(f"[ops_data_helper] Error leyendo de Turso: {e}")
-        finally:
-            try: conn.close()
-            except Exception: pass
+            data = None
 
-    # 2. Fallback JSON local
-    if not DATA_FILE.exists():
-        return _empty_estructura()
-    try:
-        with open(DATA_FILE, encoding="utf-8") as f:
-            data = json.load(f)
-            data.setdefault("_meta", {})["storage"] = "json_local"
-            return data
-    except Exception:
-        return _empty_estructura()
+    # Fallback JSON local
+    if data is None:
+        if DATA_FILE.exists():
+            try:
+                with open(DATA_FILE, encoding="utf-8") as f:
+                    data = json.load(f)
+                    data.setdefault("_meta", {})["storage"] = "json_local"
+            except Exception:
+                data = _empty_estructura()
+        else:
+            data = _empty_estructura()
+
+    _DATA_CACHE = data
+    _DATA_CACHE_TS = time.time()
+    return data
 
 
 def _save(data: Dict) -> bool:
-    """Persiste a Turso (prod) o JSON local (fallback dev)."""
+    """Persiste y refresca el cache in-memory."""
+    global _DATA_CACHE, _DATA_CACHE_TS
+    import time
     data.setdefault("_meta", {})["ultima_carga"] = datetime.now().isoformat()
 
-    # 1. Intentar Turso
-    conn, ok = _try_turso()
-    if ok:
+    conn = _get_turso_conn()
+    if conn is not None:
         try:
             data["_meta"]["storage"] = "turso"
             conn.execute(
@@ -129,19 +151,20 @@ def _save(data: Dict) -> bool:
                  datetime.now().isoformat()),
             )
             conn.commit()
+            _DATA_CACHE = data
+            _DATA_CACHE_TS = time.time()
             return True
         except Exception as e:
             print(f"[ops_data_helper] Error escribiendo a Turso: {e}")
-        finally:
-            try: conn.close()
-            except Exception: pass
 
-    # 2. Fallback JSON local
+    # Fallback JSON local
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         data["_meta"]["storage"] = "json_local"
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        _DATA_CACHE = data
+        _DATA_CACHE_TS = time.time()
         return True
     except Exception:
         return False
@@ -149,10 +172,8 @@ def _save(data: Dict) -> bool:
 
 def get_storage_status() -> Dict:
     """Diagnóstico para mostrar en la UI: dónde se está persistiendo."""
-    conn, ok = _try_turso()
-    if conn:
-        try: conn.close()
-        except Exception: pass
+    conn = _get_turso_conn()
+    ok = conn is not None
     return {
         "turso_configurado": bool(os.environ.get('LIBSQL_URL')),
         "turso_alcanzable": ok,
