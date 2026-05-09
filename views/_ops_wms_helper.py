@@ -1087,113 +1087,149 @@ def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
 
 
 # ============================================================
-# FORECAST VOLUMEN PICKING (proyección de carga futura)
+# FORECAST VOLUMEN PICKING — V2: basado en forecast Prophet de ventas
 # ============================================================
 @st.cache_data(ttl=900, show_spinner=False)
 def forecast_volumen_picking(meses_adelante: int = 3) -> Dict:
-    """Proyecta volumen futuro de picking basado en histórico + crecimiento.
+    """Proyecta carga de picking basada en el forecast de VENTAS (Prophet).
 
-    Lógica simple:
-      1. Toma últimos 6 meses de productividad
-      2. Calcula promedio + crecimiento mes a mes
-      3. Proyecta N meses adelante
+    Mejor que el approach anterior porque el forecast Prophet del dashboard
+    ventas YA incluye:
+      - Trend
+      - Estacionalidad semanal
+      - Estacionalidad anual (Cyber Day, Black Friday, Día Madre/Padre, etc)
+      - Holidays Chile
+
+    Lógica:
+      1. Lee proyección mensual $ desde data/forecast/forecast_resumen.json
+      2. Calcula ratio histórico líneas_pickeadas / venta_$ últimos 3 meses
+      3. Aplica ratio a proyección $ → líneas proyectadas
       4. Calcula horas equipo necesarias y % capacidad cubierta
 
-    Returns:
-        historico: últimos 6 meses
-        forecast: próximos N meses
-        gap_capacidad: si necesitamos más equipo o no
+    Returns: historico + forecast + tasas + recomendaciones
     """
     try:
-        # Histórico últimos 6 meses
+        from views._ops_forecast_loader import proyeccion_mensual_ventas, cargar_forecast_resumen
+        from views._ops_data_helper import get_equipo_mes, calcular_horas_estandar_mes
+
+        # 1. Cargar proyección de ventas Prophet
+        proy = proyeccion_mensual_ventas(meses_adelante=meses_adelante + 1)
+        if not proy:
+            return {"forecast": [], "error": "Sin forecast de ventas (data/forecast vacío)"}
+
+        # 2. Histórico interno de picking + ventas para calcular ratio líneas/$
         hist = productividad_periodo("mes", n_periodos=6)
         if hist.get("error") or not hist.get("items"):
-            return {"forecast": [], "error": hist.get("error", "Sin histórico")}
+            return {"forecast": [], "error": hist.get("error", "Sin histórico picking")}
 
-        items = hist["items"]
-        if len(items) < 2:
-            return {"forecast": [], "error": "Insuficiente histórico (mínimo 2 meses)"}
+        # Cargar venta histórica de Odoo para los mismos meses
+        odoo = get_ops_odoo_client()
+        ventas_hist = {}
+        if odoo:
+            from datetime import datetime as _dt2, date as _date2
+            for it in hist["items"]:
+                # it["periodo"] = "YYYY-MM"
+                try:
+                    anio_h, mes_h = it["periodo"].split("-")
+                    anio_h, mes_h = int(anio_h), int(mes_h)
+                    desde = _date2(anio_h, mes_h, 1).strftime("%Y-%m-%d")
+                    hasta = (_date2(anio_h + (1 if mes_h == 12 else 0),
+                                    1 if mes_h == 12 else mes_h + 1, 1)).strftime("%Y-%m-%d")
+                    sos = odoo.search_read(
+                        "sale.order",
+                        [("state", "in", ["sale", "done"]),
+                         ("date_order", ">=", desde),
+                         ("date_order", "<", hasta)],
+                        ["amount_total"], limit=20000,
+                    )
+                    venta_mes = sum(s.get("amount_total", 0) or 0 for s in sos)
+                    ventas_hist[it["periodo"]] = venta_mes
+                except Exception:
+                    pass
 
-        # Calcular crecimiento mes a mes (% promedio últimos 3 meses)
-        unidades_serie = [it["n_unidades_despachadas"] for it in items if it["n_unidades_despachadas"] > 0]
-        lineas_serie = [it["n_lineas_pickeadas"] for it in items if it["n_lineas_pickeadas"] > 0]
-        pedidos_serie = [it["n_pedidos"] for it in items if it["n_pedidos"] > 0]
+        # 3. Calcular ratios históricos por mes (líneas/$ y uds/$)
+        ratios_lineas = []
+        ratios_uds = []
+        ratios_pedidos = []
+        for it in hist["items"]:
+            venta_mes = ventas_hist.get(it["periodo"], 0)
+            if venta_mes <= 0:
+                continue
+            ratios_lineas.append(it["n_lineas_pickeadas"] / venta_mes)
+            ratios_uds.append(it["n_unidades_despachadas"] / venta_mes)
+            ratios_pedidos.append(it["n_pedidos"] / venta_mes)
 
-        if not unidades_serie or len(unidades_serie) < 2:
-            return {"forecast": [], "error": "Sin variación histórica"}
+        if not ratios_lineas:
+            return {"forecast": [], "error": "Sin venta histórica para calcular ratios"}
 
-        # Crecimiento mes a mes
-        crec_uds = sum(
-            (unidades_serie[i] / unidades_serie[i-1] - 1) if unidades_serie[i-1] > 0 else 0
-            for i in range(1, len(unidades_serie))
-        ) / (len(unidades_serie) - 1)
-        crec_lineas = sum(
-            (lineas_serie[i] / lineas_serie[i-1] - 1) if lineas_serie[i-1] > 0 else 0
-            for i in range(1, len(lineas_serie))
-        ) / max(len(lineas_serie) - 1, 1) if lineas_serie else 0
-        crec_pedidos = sum(
-            (pedidos_serie[i] / pedidos_serie[i-1] - 1) if pedidos_serie[i-1] > 0 else 0
-            for i in range(1, len(pedidos_serie))
-        ) / max(len(pedidos_serie) - 1, 1) if pedidos_serie else 0
+        # Promedio últimos 3 meses con datos
+        ratios_lineas = ratios_lineas[-3:]
+        ratios_uds = ratios_uds[-3:]
+        ratios_pedidos = ratios_pedidos[-3:]
+        ratio_lineas_clp = sum(ratios_lineas) / len(ratios_lineas)
+        ratio_uds_clp = sum(ratios_uds) / len(ratios_uds)
+        ratio_pedidos_clp = sum(ratios_pedidos) / len(ratios_pedidos)
 
-        # Capacidad equipo actual (del mes actual)
-        from views._ops_data_helper import get_equipo_mes, calcular_horas_estandar_mes
+        # 4. Productividad actual (líneas/h)
         from datetime import datetime as _dt
         mes_actual_str = _dt.now().strftime("%Y-%m")
         eq = get_equipo_mes(mes_actual_str) or {}
         n_personas = eq.get("personas", 0)
         horas_actuales = eq.get("horas_total", 0)
 
-        # Productividad actual (líneas/h promedio últimos 3 meses)
-        ultimos_3 = items[-3:]
+        ultimos_3 = hist["items"][-3:]
         total_lineas_3m = sum(it["n_lineas_pickeadas"] for it in ultimos_3)
-        # Aproximar horas trabajadas en esos 3m (usar último mes como proxy)
         horas_3m = horas_actuales * 3 if horas_actuales else 0
         prod_lineas_h = total_lineas_3m / horas_3m if horas_3m else 0
 
-        # Forecast
-        ultimo_uds = unidades_serie[-1]
-        ultimo_lineas = lineas_serie[-1] if lineas_serie else 0
-        ultimo_pedidos = pedidos_serie[-1] if pedidos_serie else 0
-
+        # 5. Construir forecast aplicando ratios a proyección $ Prophet
         forecast = []
-        for i in range(1, meses_adelante + 1):
-            uds_proj = ultimo_uds * ((1 + crec_uds) ** i)
-            lineas_proj = ultimo_lineas * ((1 + crec_lineas) ** i)
-            pedidos_proj = ultimo_pedidos * ((1 + crec_pedidos) ** i)
+        # Skip mes actual (mixto), tomar futuros
+        proy_futuros = [p for p in proy if p["mes_str"] > mes_actual_str][:meses_adelante]
+        for p in proy_futuros:
+            venta_proj_clp = p.get("proyeccion_clp", 0)
+            lineas_proj = int(venta_proj_clp * ratio_lineas_clp)
+            uds_proj = int(venta_proj_clp * ratio_uds_clp)
+            pedidos_proj = int(venta_proj_clp * ratio_pedidos_clp)
 
-            # Horas necesarias = líneas proyectadas / productividad actual
             horas_necesarias = lineas_proj / prod_lineas_h if prod_lineas_h > 0 else 0
-            # Horas estándar del mes proyectado (asumimos mismo equipo)
-            anio_p = _dt.now().year
-            mes_p = _dt.now().month + i
-            while mes_p > 12:
-                mes_p -= 12
-                anio_p += 1
-            mes_p_str = f"{anio_p}-{mes_p:02d}"
-            calc_h = calcular_horas_estandar_mes(mes_p_str, n_personas) if n_personas > 0 else {}
+            calc_h = calcular_horas_estandar_mes(p["mes_str"], n_personas) if n_personas > 0 else {}
             horas_disp = calc_h.get("horas_total", 0)
             cobertura_pct = (horas_disp / horas_necesarias * 100) if horas_necesarias > 0 else None
 
+            # Banda baja/alta usando bandas Prophet
+            venta_low = p.get("banda_inferior", 0)
+            venta_high = p.get("banda_superior", 0)
+
             forecast.append({
-                "mes": mes_p_str,
-                "pedidos_proj": int(pedidos_proj),
-                "lineas_proj": int(lineas_proj),
-                "unidades_proj": int(uds_proj),
+                "mes": p["mes_str"],
+                "tipo_proyeccion": p.get("tipo", "forecast"),
+                "venta_proj_clp": int(venta_proj_clp),
+                "venta_proj_clp_low": int(venta_low),
+                "venta_proj_clp_high": int(venta_high),
+                "vs_ly_pct": p.get("pct_vs_ly", 0),
+                "pedidos_proj": pedidos_proj,
+                "lineas_proj": lineas_proj,
+                "unidades_proj": uds_proj,
                 "horas_necesarias_estim": int(horas_necesarias),
                 "horas_disponibles_estandar": horas_disp,
                 "cobertura_pct": cobertura_pct,
-                "alerta": "🔴 Falta capacidad" if cobertura_pct and cobertura_pct < 90
-                          else ("🟡 Limite" if cobertura_pct and cobertura_pct < 110 else "🟢 OK"),
+                "alerta": ("🔴 Falta capacidad" if cobertura_pct and cobertura_pct < 90
+                          else "🟡 Límite" if cobertura_pct and cobertura_pct < 110
+                          else "🟢 OK"),
             })
 
         return {
-            "historico": items,
+            "fuente": "Forecast ventas Prophet (dashboard ventas)",
+            "historico": hist["items"],
+            "ventas_hist_clp": ventas_hist,
             "forecast": forecast,
-            "tasas_crecimiento": {
-                "uds_pct_mensual": round(crec_uds * 100, 1),
-                "lineas_pct_mensual": round(crec_lineas * 100, 1),
-                "pedidos_pct_mensual": round(crec_pedidos * 100, 1),
+            "ratios_aplicados": {
+                "lineas_por_clp": round(ratio_lineas_clp * 1_000_000, 2),  # líneas por MM CLP
+                "uds_por_clp": round(ratio_uds_clp * 1_000_000, 2),
+                "pedidos_por_clp": round(ratio_pedidos_clp * 1_000_000, 2),
+                "n_meses_promedio": len(ratios_lineas),
+                "leyenda": "Por cada $1MM CLP de venta",
             },
             "productividad_actual_lineas_h": round(prod_lineas_h, 1),
             "n_personas_actual": n_personas,

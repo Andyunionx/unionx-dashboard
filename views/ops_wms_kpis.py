@@ -684,37 +684,51 @@ def render():
             with prod_subtabs[3]:
                 st.markdown("##### 🔮 Forecast volumen 3 meses adelante")
                 st.caption(
-                    "Proyecta carga de picking futura basado en tendencia histórica "
-                    "(últimos 6 meses). Calcula horas necesarias vs disponibles. "
-                    "Roadmap H2: integrar con proyección de venta del dashboard ventas."
+                    "**Fuente: Forecast Prophet del dashboard ventas** (incluye trend, "
+                    "estacionalidad semanal/anual, holidays Chile, eventos comerciales). "
+                    "Convertido a líneas/uds/pedidos usando ratio histórico líneas/$ "
+                    "de últimos 3 meses."
                 )
-                if st.button("📥 Calcular forecast", type="primary", key="fc_btn"):
+                if st.button("📥 Calcular forecast operacional", type="primary", key="fc_btn"):
                     st.session_state['fc_loaded'] = True
                 if st.session_state.get('fc_loaded'):
-                    with st.spinner("Calculando forecast…"):
+                    with st.spinner("Cargando forecast ventas + calculando ratios…"):
                         fc = _safe_wms(forecast_volumen_picking, meses_adelante=3,
                                        default={"forecast": [], "error": None})
                     if fc.get("error"):
                         st.warning(fc["error"])
                     elif fc.get("forecast"):
-                        # Tasas de crecimiento detectadas
-                        tc = fc.get("tasas_crecimiento", {})
-                        tg1, tg2, tg3, tg4 = st.columns(4)
-                        tg1.metric("Crec. pedidos / mes", f"{tc.get('pedidos_pct_mensual', 0):+.1f}%")
-                        tg2.metric("Crec. líneas / mes", f"{tc.get('lineas_pct_mensual', 0):+.1f}%")
-                        tg3.metric("Crec. unidades / mes", f"{tc.get('uds_pct_mensual', 0):+.1f}%")
-                        tg4.metric("Productividad actual",
-                                   f"{fc.get('productividad_actual_lineas_h', 0):.0f} L/h")
+                        st.success(f"📊 Fuente: {fc.get('fuente', 'Prophet')}")
+
+                        # Ratios aplicados (transparencia)
+                        ratios = fc.get("ratios_aplicados", {})
+                        with st.expander("ℹ️ Ratios históricos aplicados (últimos N meses)", expanded=False):
+                            r1, r2, r3 = st.columns(3)
+                            r1.metric("Líneas / $1MM",
+                                      f"{ratios.get('lineas_por_clp', 0):.1f}",
+                                      help="Por cada $1MM CLP vendido se pickean N líneas")
+                            r2.metric("Unidades / $1MM",
+                                      f"{ratios.get('uds_por_clp', 0):.1f}")
+                            r3.metric("Pedidos / $1MM",
+                                      f"{ratios.get('pedidos_por_clp', 0):.1f}")
+                            st.caption(f"Promedio últimos {ratios.get('n_meses_promedio', 0)} meses · "
+                                       f"Productividad actual: {fc.get('productividad_actual_lineas_h', 0):.0f} L/h")
 
                         st.markdown("##### Proyección próximos 3 meses")
                         df_fc = pd.DataFrame(fc["forecast"])
-                        df_show_fc = df_fc[["mes", "pedidos_proj", "lineas_proj", "unidades_proj",
+                        # Formato CLP
+                        df_fc["venta_str"] = df_fc["venta_proj_clp"].apply(lambda v: f"${v/1e6:,.0f}MM")
+                        df_show_fc = df_fc[["mes", "tipo_proyeccion", "venta_str", "vs_ly_pct",
+                                            "pedidos_proj", "lineas_proj", "unidades_proj",
                                             "horas_necesarias_estim", "horas_disponibles_estandar",
                                             "cobertura_pct", "alerta"]].rename(columns={
                             "mes": "Mes",
-                            "pedidos_proj": "Pedidos proj.",
-                            "lineas_proj": "Líneas proj.",
-                            "unidades_proj": "Uds proj.",
+                            "tipo_proyeccion": "Tipo",
+                            "venta_str": "Venta proj.",
+                            "vs_ly_pct": "% vs LY",
+                            "pedidos_proj": "Pedidos",
+                            "lineas_proj": "Líneas",
+                            "unidades_proj": "Unidades",
                             "horas_necesarias_estim": "Hrs necesarias",
                             "horas_disponibles_estandar": "Hrs disponibles",
                             "cobertura_pct": "Cobertura %",
@@ -722,7 +736,18 @@ def render():
                         })
                         df_show_fc["Cobertura %"] = df_show_fc["Cobertura %"].apply(
                             lambda v: f"{v:.0f}%" if v is not None else "—")
+                        df_show_fc["% vs LY"] = df_show_fc["% vs LY"].apply(
+                            lambda v: f"{v:+.1f}%" if v else "—")
                         st.dataframe(df_show_fc, use_container_width=True, hide_index=True)
+
+                        # Banda de confianza Prophet (low/high)
+                        with st.expander("📊 Banda de confianza forecast Prophet (low/high)"):
+                            df_band = df_fc[["mes", "venta_proj_clp_low", "venta_proj_clp",
+                                             "venta_proj_clp_high"]].copy()
+                            for c in ["venta_proj_clp_low", "venta_proj_clp", "venta_proj_clp_high"]:
+                                df_band[c] = df_band[c].apply(lambda v: f"${v/1e6:,.0f}MM")
+                            df_band.columns = ["Mes", "Banda baja (P10)", "Punto medio", "Banda alta (P90)"]
+                            st.dataframe(df_band, use_container_width=True, hide_index=True)
 
                         # Histórico+forecast en gráfico
                         st.markdown("##### Histórico + Forecast (líneas pickeadas)")
@@ -750,7 +775,7 @@ def render():
                         else:
                             st.success("✅ Equipo actual cubre la demanda proyectada en los próximos 3 meses.")
                 else:
-                    st.info("👆 Click 'Calcular forecast'. Necesita histórico ≥2 meses.")
+                    st.info("👆 Click 'Calcular forecast operacional'. Lee proyección Prophet del dashboard ventas.")
 
     # ============================================================
     # TAB 4 — RECEPCIONES
