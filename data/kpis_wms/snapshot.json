@@ -1,0 +1,30 @@
+{
+  "generado_en": "2026-05-09T13:59:40.321448",
+  "mes_actual": "2026-05",
+  "kpis": {},
+  "tendencia_6m": [],
+  "forecast_3m": {
+    "forecast": [],
+    "error": "Snapshot inicial vacío"
+  },
+  "productividad_dia_30d": {
+    "items": []
+  },
+  "productividad_semana_12s": {
+    "items": []
+  },
+  "productividad_mes_6m": {
+    "items": []
+  },
+  "plan_auditoria": {
+    "plan": [],
+    "error": "Snapshot inicial vacío"
+  },
+  "otif_ventanas": {},
+  "pick_ventanas": {},
+  "recepcion_ventanas": {},
+  "errores": [
+    "Snapshot inicial vacío - esperar primera ejecución de sync_kpis_wms.yml (00:00 o 12:00 Chile)"
+  ],
+  "_nota": "Este es un snapshot vacío inicial. GH Action sync_kpis_wms.yml lo va a regenerar con datos reales 2x/día."
+}
