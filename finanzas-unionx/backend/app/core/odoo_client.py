@@ -10,9 +10,38 @@ Mejoras implementadas:
 """
 import xmlrpc.client
 import http.client
+import socket
 import time
 import random
 from typing import List, Dict, Any
+
+# Timeout default XML-RPC: evita que ServerProxy.authenticate() se cuelgue
+# indefinidamente cuando Odoo SaaS está lento. Sin esto, el script Streamlit
+# queda "corriendo todo el rato" hasta que el user apreta Stop.
+_DEFAULT_XMLRPC_TIMEOUT_S = 15
+
+
+class _TimeoutTransport(xmlrpc.client.SafeTransport):
+    """Transport HTTPS con timeout configurable (XML-RPC no lo soporta nativamente)."""
+    def __init__(self, timeout=_DEFAULT_XMLRPC_TIMEOUT_S, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._timeout = timeout
+
+    def make_connection(self, host):
+        # Reusar conexión existente si está disponible (connection pooling)
+        if self._connection and host == self._connection[0]:
+            return self._connection[1]
+        chost, self._extra_headers, x509 = self.get_host_info(host)
+        self._connection = host, http.client.HTTPSConnection(
+            chost, None, timeout=self._timeout, **(x509 or {})
+        )
+        return self._connection[1]
+
+
+def _make_proxy(url: str, timeout: int = _DEFAULT_XMLRPC_TIMEOUT_S):
+    """Crea ServerProxy con timeout. Funciona para http y https."""
+    transport = _TimeoutTransport(timeout=timeout)
+    return xmlrpc.client.ServerProxy(url, transport=transport, allow_none=True)
 
 
 class OdooClient:
@@ -37,7 +66,7 @@ class OdooClient:
             return self._uid
 
         try:
-            common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common')
+            common = _make_proxy(f'{self.url}/xmlrpc/2/common')
             self._uid = common.authenticate(self.db, self.username, self.password, {})
             if not self._uid:
                 raise ValueError("Autenticación fallida: UID vacío")
@@ -131,7 +160,7 @@ class OdooClient:
         - Jitter aleatorio para evitar sincronización
         """
         uid = self.authenticate()
-        models = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object')
+        models = _make_proxy(f'{self.url}/xmlrpc/2/object', timeout=60)
 
         # Compat: callers pasan opciones como dict posicional (args[1])
         # o como **kwargs. Unificamos en `options`.
@@ -180,7 +209,7 @@ class OdooClient:
     def get_fields(self, model: str) -> Dict[str, Dict]:
         """Obtiene campos de un modelo."""
         uid = self.authenticate()
-        models = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object')
+        models = _make_proxy(f'{self.url}/xmlrpc/2/object', timeout=60)
         try:
             return models.execute_kw(
                 self.db, uid, self.password, model, 'fields_get', [],

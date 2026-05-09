@@ -56,9 +56,34 @@ def get_ops_odoo_client():
 
 
 def odoo_status_indicator():
-    """Muestra en sidebar si la conexión Odoo OPS está OK. Llama a esto al inicio de cada vista."""
-    client = get_ops_odoo_client()
-    if client is None:
+    """Muestra en sidebar si la conexión Odoo OPS está OK.
+
+    OPTIMIZADO: cachea el resultado en st.session_state para no llamar a
+    get_ops_odoo_client() (que hace authenticate XML-RPC) en cada render.
+    Antes esto causaba que el script se quedara "corriendo todo el rato"
+    cuando Odoo SaaS estaba lento (sin timeout en authenticate).
+    """
+    # Cache en sesión: solo chequea 1 vez por sesión Streamlit
+    cached = st.session_state.get('_ops_odoo_status_cached')
+    if cached is not None:
+        if cached:
+            user = os.environ.get("OPS_ODOO_USER", "?")
+            st.sidebar.success(f"🟢 Odoo OPS · {user}")
+        else:
+            st.sidebar.error("🔴 Odoo OPS · ver detalle al refrescar")
+        return cached
+
+    # Primera vez en esta sesión: chequear con timeout (15s en _make_proxy)
+    try:
+        client = get_ops_odoo_client()
+        ok = client is not None
+    except Exception as e:
+        st.sidebar.warning(f"⚠️ Odoo OPS timeout/error: {type(e).__name__}")
+        st.session_state['_ops_odoo_status_cached'] = False
+        return False
+
+    st.session_state['_ops_odoo_status_cached'] = ok
+    if not ok:
         st.sidebar.error("🔴 Odoo OPS · sin credenciales")
         st.sidebar.caption(
             "Setear `OPS_ODOO_USER` y `OPS_ODOO_PASSWORD` "
