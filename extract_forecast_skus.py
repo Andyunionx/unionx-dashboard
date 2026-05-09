@@ -273,17 +273,14 @@ def forecast_sku_canal(df_serie: pd.DataFrame, regresores: pd.DataFrame,
     from prophet import Prophet
 
     m = Prophet(
-        yearly_seasonality=True,
+        yearly_seasonality=False,  # series cortas SKU x canal: yearly tiende a overfit
         weekly_seasonality=True,
         daily_seasonality=False,
         changepoint_prior_scale=0.05,
         holidays=holidays,
         holidays_prior_scale=10.0,
     )
-    try:
-        m.add_country_holidays(country_name='CL')
-    except Exception:
-        pass
+    # Skip add_country_holidays para no requerir internet ni cargar holiday lib en cada modelo
 
     # Agregar regresores
     for col in regresores.columns:
