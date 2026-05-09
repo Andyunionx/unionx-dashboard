@@ -718,37 +718,30 @@ def kpi_merma_odoo(dias: int = 90) -> Dict:
 def kpi_ajustes_inventario(desde_fecha: str = "2026-04-01") -> Dict:
     """Ajustes de inventario hechos en Odoo desde fecha (default abril 2026).
 
-    Considera ajustes de inventario los stock.moves donde:
-      - location_id.usage = 'inventory' (origen virtual de inventario)
-      - O location_dest_id.usage = 'inventory' (destino virtual)
-      - state = 'done'
+    Filtra SOLO por la ubicación virtual `Inventory adjustment`
+    (excluye Scrap y Production que también tienen usage='inventory').
+
+    En UnionX las ubicaciones virtuales son:
+      - Virtual Locations/Inventory adjustment  ← USAMOS ESTA (cycle counts)
+      - Virtual Locations/Production            ← NO usamos (es producción)
+      - Virtual Locations/Scrap                 ← NO usamos (cubierto por kpi_merma_odoo)
 
     Equivalente a "cycle counts CON discrepancia" (los exactos no generan move).
-
-    Returns:
-        n_ajustes: total movimientos
-        n_skus_unicos: SKUs únicos ajustados
-        valor_neto: $ neto (positivo = surplus, negativo = pérdida)
-        valor_perdidas: $ perdido (ajustes negativos)
-        valor_surplus: $ ganado (ajustes positivos)
-        top_skus_ajustados: top 20 SKUs con más ajustes
-        detalle: lista detallada
-        cobertura_pct: SKUs únicos / total SKUs activos
     """
     odoo = get_ops_odoo_client()
     if odoo is None:
         return {"n_ajustes": 0, "error": "Odoo no disponible"}
 
     try:
-        # Domain: state=done desde fecha + es_inventory (origen O destino virtual)
-        # En Odoo: ubicaciones de ajuste tienen usage='inventory'
+        # Domain: state=done desde fecha + ubicación = Inventory adjustment
+        # Filtramos por NOMBRE (no por usage genérico) para excluir Scrap+Production
         moves = odoo.search_read(
             "stock.move",
             [("state", "=", "done"),
              ("date", ">=", desde_fecha),
              "|",
-             ("location_id.usage", "=", "inventory"),
-             ("location_dest_id.usage", "=", "inventory")],
+             ("location_id.name", "=", "Inventory adjustment"),
+             ("location_dest_id.name", "=", "Inventory adjustment")],
             ["id", "name", "date", "product_id", "product_uom_qty",
              "location_id", "location_dest_id", "value", "reference"],
             limit=50000,
