@@ -352,6 +352,147 @@ def _tab_componentes(df_comp: pd.DataFrame):
 
 
 # ============================================================
+# TAB Jerarquia / SKU — desagregacion del forecast multi-nivel
+# ============================================================
+def _tab_jerarquia(fc_skus: pd.DataFrame, fc_marca_canal: pd.DataFrame,
+                    fc_canal_jerar: pd.DataFrame, fc_categoria: pd.DataFrame,
+                    fc_tipo_negocio: pd.DataFrame, df_comp_sku: pd.DataFrame,
+                    meta_skus: dict):
+    if fc_skus.empty:
+        st.info("⏳ Forecast SKU x canal aun no generado. Correr extract_forecast_skus.py")
+        return
+
+    st.caption(f"🕒 Generado: {meta_skus.get('generado_en', '?')[:19]} · "
+                f"{meta_skus.get('modelos_entrenados', 0)} modelos Prophet "
+                f"({meta_skus.get('skus_unicos', 0)} SKUs × {meta_skus.get('canales_unicos', 0)} canales)")
+
+    # Selector de nivel de desagregacion
+    nivel = st.radio("Nivel de desagregacion",
+                      ["Total", "Linea de negocio", "Canal", "Categoria", "Marca x Canal", "SKU"],
+                      horizontal=True, key="fc_nivel")
+
+    if nivel == "Total":
+        df = fc_skus.groupby('ds', as_index=False)[['yhat', 'yhat_lower', 'yhat_upper']].sum()
+        venta_total = df['yhat'].sum()
+        st.metric(f"Proyeccion total proximos {len(df)} dias", f"${venta_total/1e6:.1f}M (unidades)")
+        _chart_forecast(df, 'Total bottom-up')
+
+    elif nivel == "Linea de negocio":
+        if fc_tipo_negocio.empty:
+            st.info("Sin datos de linea de negocio")
+            return
+        opciones = sorted([x for x in fc_tipo_negocio['tipo_negocio'].unique() if x])
+        sel = st.selectbox("Linea de negocio", opciones, key="fc_tn")
+        df = fc_tipo_negocio[fc_tipo_negocio['tipo_negocio'] == sel]
+        st.metric(f"Proyeccion {sel}", f"${df['yhat'].sum()/1e6:.1f}M (unid)")
+        _chart_forecast(df, sel)
+
+    elif nivel == "Canal":
+        if fc_canal_jerar.empty:
+            return
+        opciones = sorted(fc_canal_jerar['canal'].unique())
+        sel = st.selectbox("Canal", opciones, key="fc_canal_jerar_sel")
+        df = fc_canal_jerar[fc_canal_jerar['canal'] == sel]
+        st.metric(f"Proyeccion {sel}", f"${df['yhat'].sum()/1e6:.1f}M (unid)")
+        _chart_forecast(df, sel)
+
+    elif nivel == "Categoria":
+        if fc_categoria.empty:
+            return
+        opciones = sorted([x for x in fc_categoria['categoria_padre'].unique() if x])
+        sel = st.selectbox("Categoria padre", opciones, key="fc_cat_sel")
+        df = fc_categoria[fc_categoria['categoria_padre'] == sel]
+        st.metric(f"Proyeccion {sel}", f"${df['yhat'].sum()/1e6:.1f}M (unid)")
+        _chart_forecast(df, sel)
+
+    elif nivel == "Marca x Canal":
+        if fc_marca_canal.empty:
+            return
+        cols = st.columns(2)
+        canal_sel = cols[0].selectbox("Canal", sorted(fc_marca_canal['canal'].unique()), key="fc_mc_canal")
+        marcas = sorted([x for x in fc_marca_canal[fc_marca_canal['canal']==canal_sel]['marca'].unique() if x])
+        marca_sel = cols[1].selectbox("Marca", marcas, key="fc_mc_marca")
+        df = fc_marca_canal[(fc_marca_canal['canal']==canal_sel) & (fc_marca_canal['marca']==marca_sel)]
+        st.metric(f"{marca_sel} en {canal_sel}", f"${df['yhat'].sum()/1e6:.2f}M (unid)")
+        _chart_forecast(df, f"{marca_sel} - {canal_sel}")
+
+    else:  # SKU
+        skus_canales = fc_skus[['sku', 'canal']].drop_duplicates()
+        cols = st.columns(2)
+        canal_sel = cols[0].selectbox("Canal", sorted(skus_canales['canal'].unique()), key="fc_sku_canal")
+        sub = skus_canales[skus_canales['canal'] == canal_sel]
+        sku_sel = cols[1].selectbox(f"SKU ({len(sub)} disponibles)",
+                                       sorted(sub['sku'].unique()), key="fc_sku_sku")
+
+        df = fc_skus[(fc_skus['sku']==sku_sel) & (fc_skus['canal']==canal_sel)].copy()
+        if df.empty:
+            return
+
+        producto = (df.iloc[0].get('producto') or '?')[:60]
+        marca = df.iloc[0].get('marca') or '?'
+        st.markdown(f"**SKU {sku_sel}** · {producto} · _{marca}_")
+        col_kpi = st.columns(3)
+        col_kpi[0].metric("Total proyectado (unid)", f"{df['yhat'].sum():.0f}")
+        col_kpi[1].metric("Promedio diario", f"{df['yhat'].mean():.1f}")
+        col_kpi[2].metric("Mejor dia", f"{df['yhat'].max():.0f}",
+                           f"{df.loc[df['yhat'].idxmax(), 'ds'].strftime('%d-%b')}")
+
+        _chart_forecast(df, f"SKU {sku_sel} en {canal_sel}")
+
+        # Componentes explicables del SKU x canal
+        if not df_comp_sku.empty:
+            comp = df_comp_sku[(df_comp_sku['sku']==sku_sel) & (df_comp_sku['canal']==canal_sel)]
+            if not comp.empty:
+                st.markdown("##### Componentes del forecast (descomposicion Prophet)")
+                # Sumar contribucion de cada componente sobre el periodo proyectado
+                future_only = comp[comp['ds'] > pd.Timestamp.now()]
+                if not future_only.empty:
+                    descomp = {}
+                    for c in ['trend', 'weekly', 'yearly', 'holidays',
+                                'tuvo_stock', 'descuento_efectivo', 'promo_activa']:
+                        if c in future_only.columns:
+                            descomp[c] = float(future_only[c].sum())
+                    if descomp:
+                        df_d = pd.DataFrame([
+                            {'componente': k, 'aporte': v} for k, v in descomp.items()
+                        ]).sort_values('aporte', ascending=True)
+                        fig = go.Figure(go.Bar(
+                            x=df_d['aporte'], y=df_d['componente'],
+                            orientation='h',
+                            marker_color=['#10B981' if v >= 0 else '#DC2626' for v in df_d['aporte']],
+                        ))
+                        fig.update_layout(
+                            height=280, margin=dict(t=10, b=30, l=140, r=20),
+                            xaxis=dict(title='Aporte total al forecast (unid)'),
+                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                        st.caption("Cuantas unidades aporta cada componente al forecast del periodo. Verde suma, rojo resta.")
+
+
+def _chart_forecast(df: pd.DataFrame, titulo: str):
+    """Helper: chart forecast con banda de confianza."""
+    if df.empty:
+        return
+    fig = go.Figure()
+    if 'yhat_upper' in df.columns:
+        fig.add_trace(go.Scatter(x=df['ds'], y=df['yhat_upper'], mode='lines',
+                                  line=dict(width=0), showlegend=False, hoverinfo='skip'))
+        fig.add_trace(go.Scatter(x=df['ds'], y=df['yhat_lower'], mode='lines',
+                                  line=dict(width=0), fill='tonexty',
+                                  fillcolor='rgba(99,102,241,0.15)', name='Banda 80%'))
+    fig.add_trace(go.Scatter(x=df['ds'], y=df['yhat'], mode='lines+markers',
+                              line=dict(color='#1E40AF', width=2.5), name=titulo))
+    fig.update_layout(
+        height=360, xaxis=dict(title='Fecha'), yaxis=dict(title='Forecast', tickformat=',.0f'),
+        margin=dict(t=20, b=40, l=60, r=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+        hovermode='x unified',
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+# ============================================================
 # TAB 5 — Por canal (mantenemos)
 # ============================================================
 def _tab_canales(fc_canal: pd.DataFrame):
@@ -398,6 +539,14 @@ def render():
     fc_anual = _cargar_parquet('forecast_anual.parquet')
     fc_canal = _cargar_parquet('forecast_canal.parquet')
     df_comp = _cargar_parquet('forecast_componentes.parquet')
+    fc_skus = _cargar_parquet('forecast_skus.parquet')
+    fc_marca_canal = _cargar_parquet('forecast_jerarquico_marca_canal.parquet')
+    fc_canal_jerar = _cargar_parquet('forecast_jerarquico_canal.parquet')
+    fc_categoria = _cargar_parquet('forecast_jerarquico_categoria.parquet')
+    fc_tipo_negocio = _cargar_parquet('forecast_jerarquico_tipo_negocio.parquet')
+    df_comp_sku = _cargar_parquet('forecast_componentes_skus.parquet')
+    meta_skus_path = FC_DIR / 'metadata_skus.json'
+    meta_skus = json.load(open(meta_skus_path, encoding='utf-8')) if meta_skus_path.exists() else {}
 
     if not resumen and fc_diario.empty:
         st.warning("⏳ Aún no hay forecasts. El cron diario corre 06:00 UTC. Manual: GitHub → Actions → 'Sync Forecast' → Run workflow.")
@@ -406,7 +555,10 @@ def render():
     if resumen.get('generado_en'):
         st.caption(f"🕒 Generado: {resumen['generado_en'][:19]} · Eventos modelados: Cyber Day, CyberMonday, Black Friday, Día Madre/Padre, FFPP, Navidad + feriados Chile")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📅 Cierre del mes", "📊 30 / 60 / 90 días", "📆 Año", "🔬 Componentes", "📈 Por canal"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "📅 Cierre del mes", "📊 30 / 60 / 90 días", "📆 Año",
+        "🔬 Componentes", "📈 Por canal", "🧬 Jerarquía / SKU"
+    ])
     with tab1:
         _tab_cierre_mes(resumen, fc_diario)
     with tab2:
@@ -417,3 +569,6 @@ def render():
         _tab_componentes(df_comp)
     with tab5:
         _tab_canales(fc_canal)
+    with tab6:
+        _tab_jerarquia(fc_skus, fc_marca_canal, fc_canal_jerar, fc_categoria,
+                        fc_tipo_negocio, df_comp_sku, meta_skus)

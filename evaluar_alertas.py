@@ -33,11 +33,22 @@ if not URL or not TOKEN:
 HEADERS = {'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json'}
 
 
-def _q(sql: str):
+def _q(sql: str, retries: int = 3):
     body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
-    r = requests.post(f"{URL}/v2/pipeline", json=body, headers=HEADERS, timeout=120)
-    r.raise_for_status()
-    return r.json()['results'][0]['response']['result']['rows']
+    last_err = None
+    for attempt in range(retries):
+        try:
+            r = requests.post(f"{URL}/v2/pipeline", json=body, headers=HEADERS, timeout=120)
+            r.raise_for_status()
+            res = r.json()['results'][0]
+            if res.get('type') == 'error':
+                raise RuntimeError(res['error']['message'])
+            return res['response']['result']['rows']
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            last_err = e
+            import time
+            time.sleep(2 ** attempt)
+    raise last_err
 
 
 def _val(row, idx):
@@ -355,19 +366,168 @@ def regla_gap_pedidos():
 
 
 # ============================================================
+# DATA QUALITY: reglas de inconsistencia que pueden sesgar el forecast
+# ============================================================
+def regla_dq_margen_100():
+    """SKUs con costo_total=0 pero venta>0 → margen 100%, probable error de costeo."""
+    rows = _q("""
+        SELECT sku, producto, marca, ROUND(SUM(venta_bruta),0)
+        FROM ventas
+        WHERE fecha_venta >= date('now','-30 days')
+          AND tipo_movimiento = 'Venta'
+          AND venta_bruta > 0
+          AND (costo_total = 0 OR costo_total IS NULL)
+        GROUP BY sku, producto, marca
+        HAVING SUM(venta_bruta) > 100000
+        ORDER BY 4 DESC
+        LIMIT 20
+    """)
+    if not rows:
+        return None
+    detalles = []
+    for r in rows:
+        detalles.append({
+            'sku': _val(r, 0),
+            'producto': (_val(r, 1) or '?')[:50],
+            'marca': _val(r, 2),
+            'venta_30d': float(_val(r, 3) or 0),
+        })
+    crear_alerta(
+        tipo='dq_margen_100',
+        severity='warning',
+        titulo=f"{len(detalles)} SKUs con margen 100% (costo $0) - ventas > $100K LTM",
+        mensaje=f"Productos sin costo registrado pero con ventas. Top: " +
+                ", ".join(f"{d['sku']} (${d['venta_30d']/1e6:.1f}M)" for d in detalles[:5]),
+        contexto={'skus_afectados': detalles},
+        target_apps=['ventas'],
+    )
+    print(f"  ⚠️  dq_margen_100: {len(detalles)} SKUs")
+    return len(detalles)
+
+
+def regla_dq_sin_marca():
+    """SKUs con marca NULL/?/vacía pero ventas > $100K LTM."""
+    rows = _q("""
+        SELECT sku, producto, ROUND(SUM(venta_bruta),0)
+        FROM ventas
+        WHERE fecha_venta >= date('now','-30 days')
+          AND tipo_movimiento = 'Venta'
+          AND (marca IS NULL OR marca = '?' OR marca = '' OR TRIM(marca) = '')
+        GROUP BY sku, producto
+        HAVING SUM(venta_bruta) > 100000
+        ORDER BY 3 DESC
+        LIMIT 20
+    """)
+    if not rows:
+        return None
+    detalles = [{'sku': _val(r, 0), 'producto': (_val(r, 1) or '?')[:50],
+                 'venta_30d': float(_val(r, 2) or 0)} for r in rows]
+    crear_alerta(
+        tipo='dq_sin_marca',
+        severity='warning',
+        titulo=f"{len(detalles)} SKUs sin marca asignada con ventas relevantes",
+        mensaje=f"Falta clasificacion de marca. Sesgo en forecast por marca/categoria. Top: " +
+                ", ".join(f"{d['sku']}" for d in detalles[:5]),
+        contexto={'skus_afectados': detalles},
+        target_apps=['ventas'],
+    )
+    print(f"  ⚠️  dq_sin_marca: {len(detalles)} SKUs")
+    return len(detalles)
+
+
+def regla_dq_precio_inconsistente():
+    """SKU con precio_unit < 50% del precio típico (precio lista estimado).
+
+    Lee parquet de pricing_historico (precio_lista_estimado) y compara con
+    la última venta efectiva.
+    """
+    pricing_path = Path(__file__).parent / 'data' / 'pricing_historico' / 'pricing_diario.parquet'
+    if not pricing_path.exists():
+        return None
+    try:
+        import pandas as pd
+        df = pd.read_parquet(pricing_path)
+        # Ultimos 7 dias por SKU x canal: precio promedio vs precio lista estimado
+        ult = df[df['fecha'] >= pd.Timestamp.now() - pd.Timedelta(days=7)].copy()
+        ult = ult[(ult['precio_lista_estimado'] > 0) & (ult['precio_promedio_dia'] > 0)]
+        ult['ratio'] = ult['precio_promedio_dia'] / ult['precio_lista_estimado']
+        # Inconsistente: precio < 50% lista (no es promo, es error)
+        # Filtramos solo los que NO tienen promo_activa para no falsear con descuentos legítimos
+        sospechosos = ult[(ult['ratio'] < 0.5) & (ult['promo_activa'] == 0)]
+        if sospechosos.empty:
+            return None
+        agrupado = sospechosos.groupby(['sku', 'canal']).agg(
+            ratio_min=('ratio', 'min'),
+            precio_lista=('precio_lista_estimado', 'mean'),
+            precio_dia=('precio_promedio_dia', 'mean'),
+        ).reset_index().sort_values('ratio_min').head(20)
+
+        detalles = agrupado.to_dict(orient='records')
+        crear_alerta(
+            tipo='dq_precio_inconsistente',
+            severity='warning',
+            titulo=f"{len(agrupado)} (SKU, canal) con precio < 50% del lista estimado",
+            mensaje=f"Posible error de precios/lista (NO es promo declarada). Sesgo en regresor pricing del forecast.",
+            contexto={'casos': detalles[:10]},
+            target_apps=['ventas'],
+        )
+        print(f"  ⚠️  dq_precio_inconsistente: {len(agrupado)} casos")
+        return len(agrupado)
+    except Exception as e:
+        print(f"  [skip] dq_precio_inconsistente: {e}")
+        return None
+
+
+def regla_dq_descripcion_faltante():
+    """Productos con descripción/nombre tipo '[?]' o vacío y ventas > $100K LTM."""
+    rows = _q("""
+        SELECT sku, marca, ROUND(SUM(venta_bruta),0)
+        FROM ventas
+        WHERE fecha_venta >= date('now','-30 days')
+          AND tipo_movimiento = 'Venta'
+          AND (producto IS NULL OR producto = '' OR producto LIKE '[?]%' OR producto LIKE '?%')
+        GROUP BY sku, marca
+        HAVING SUM(venta_bruta) > 100000
+        ORDER BY 3 DESC
+        LIMIT 20
+    """)
+    if not rows:
+        return None
+    detalles = [{'sku': _val(r, 0), 'marca': _val(r, 1),
+                 'venta_30d': float(_val(r, 2) or 0)} for r in rows]
+    crear_alerta(
+        tipo='dq_sin_descripcion',
+        severity='info',
+        titulo=f"{len(detalles)} SKUs sin descripción con ventas LTM > $100K",
+        mensaje=f"Productos sin descripcion adecuada. Top: " +
+                ", ".join(d['sku'] for d in detalles[:5]),
+        contexto={'skus_afectados': detalles},
+        target_apps=['ventas'],
+    )
+    print(f"  ℹ️  dq_sin_descripcion: {len(detalles)} SKUs")
+    return len(detalles)
+
+
+# ============================================================
 # MAIN
 # ============================================================
 def main():
     print(f"=== Evaluación de alertas — {datetime.now()} ===\n", flush=True)
     crear_tabla_alertas()
 
-    print("Reglas:")
+    print("Reglas de negocio:")
     regla_anomalia_global()
     regla_anomalia_canal()
     regla_mes_bajo_proyeccion()
     regla_margen_bajo()
     regla_proyeccion_prophet()
     regla_gap_pedidos()
+
+    print("\nReglas de Data Quality (sesgo forecast):")
+    regla_dq_margen_100()
+    regla_dq_sin_marca()
+    regla_dq_descripcion_faltante()
+    regla_dq_precio_inconsistente()
 
     print("\n[OK] Evaluación completa")
 

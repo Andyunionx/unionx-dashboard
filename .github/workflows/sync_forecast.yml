@@ -1,10 +1,15 @@
-name: Sync Forecast (Prophet)
+name: Sync Forecast (Prophet completo: total + canal + SKU jerarquico)
 
 on:
   schedule:
-    # Diario 06:00 UTC = 02:00 Chile (después del backup, antes del email)
+    # Diario 06:00 UTC = 02:00 Chile (despues del backup, antes del email)
     - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      max_modelos:
+        description: 'Max modelos Prophet SKU (default 200)'
+        required: false
+        default: '200'
 
 permissions:
   contents: write
@@ -12,7 +17,7 @@ permissions:
 jobs:
   forecast:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,22 +28,55 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: Instalar dependencias (Prophet)
+      - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           pip install pandas pyarrow requests prophet zstandard
 
-      - name: Ejecutar forecast
+      - name: 1. Pricing historico
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_pricing_historico.py
+
+      - name: 2. Stock historico (incremental - actualiza ultimos 90d)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          STOCK_HIST_DESDE: 2024-01-01
+          PYTHONIOENCODING: utf-8
+        run: python extract_stock_historico.py
+        continue-on-error: true   # si Odoo falla, seguimos con el resto
+
+      - name: 3. Forecast total + canal
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           PYTHONIOENCODING: utf-8
         run: python extract_forecast.py
 
-      - name: Commit forecasts si cambiaron
+      - name: 4. Forecast SKU x canal con regresores + jerarquia
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          DIAS_ADELANTE: '60'
+          MAX_MODELOS: ${{ github.event.inputs.max_modelos || '200' }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_forecast_skus.py
+        continue-on-error: true
+
+      - name: 5. Evaluar alertas (incluye DQ)
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: python evaluar_alertas.py
+        continue-on-error: true
+
+      - name: Commit parquets si cambiaron
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions Forecast"
-          git add data/forecast/
-          git diff --staged --quiet || git commit -m "Forecast $(date -u +'%Y-%m-%d')"
+          git add data/forecast/ data/pricing_historico/ data/stock_historico/
+          git diff --staged --quiet || git commit -m "Forecast pipeline $(date -u +'%Y-%m-%d')"
           git push

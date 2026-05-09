@@ -33,6 +33,7 @@ from views._ops_data_helper import (
     add_cycle_count, get_cycle_counts, kpi_exactitud_inventario,
     set_merma_mes, get_merma_mes, kpi_merma_operativa,
     calcular_horas_estandar_mes, get_storage_status,
+    get_config_equipo, set_config_equipo, get_horas_mes_efectivas,
 )
 
 
@@ -131,52 +132,92 @@ def render():
             )
 
             with sub_tabs_dm[0]:
-                st.markdown("#### Equipo bodega — horas trabajadas por mes")
+                st.markdown("#### 👥 Equipo bodega")
                 st.caption(
-                    "Necesario para calcular productividad picking (líneas/h). "
-                    "Horario estándar UnionX: L-J 8-18 con 1h almuerzo (9h) · V 8-15 con 1h almuerzo (6h) "
-                    "= 42 hrs/sem por persona."
+                    "**Configuración base constante.** Las horas mensuales se calculan "
+                    "automáticamente con el calendario + horario UnionX (L-J 9h + V 6h)."
                 )
-                mes_input = st.text_input("Mes (YYYY-MM)",
-                                           value=datetime.now().strftime("%Y-%m"),
-                                           key="eq_mes_top")
-                actual_eq = get_equipo_mes(mes_input) or {}
 
-                c1, c2 = st.columns(2)
-                personas = c1.number_input("Personas activas", min_value=0, max_value=200, step=1,
-                                            value=int(actual_eq.get("personas") or 0),
-                                            key="eq_personas_top")
-                horas = c2.number_input("Horas total trabajadas en el mes", min_value=0.0, step=10.0,
-                                         value=float(actual_eq.get("horas_total") or 0),
-                                         key="eq_horas_top")
-
-                # Botón calcular automático con horario estándar
-                ce1, ce2 = st.columns([1, 1])
-                with ce1:
-                    if st.button("📐 Calcular horas estándar del mes",
-                                 key="eq_calc_btn", use_container_width=True):
-                        if personas > 0:
-                            calc = calcular_horas_estandar_mes(mes_input, int(personas))
-                            if calc.get("error"):
-                                st.error(calc["error"])
-                            else:
-                                st.session_state['eq_horas_top'] = float(calc["horas_total"])
-                                st.success(
-                                    f"✅ Calculado: {calc['horas_total']} h "
-                                    f"({calc['n_lj']} L-J × 9h + {calc['n_v']} V × 6h "
-                                    f"= {calc['horas_persona']} h/persona × {personas})"
-                                )
-                                st.rerun()
-                        else:
-                            st.warning("Ingresá # personas primero")
-                with ce2:
-                    if st.button("💾 Guardar equipo", key="eq_save_top",
-                                 type="primary", use_container_width=True):
-                        if set_equipo_mes(mes_input, int(personas), float(horas)):
-                            st.success(f"✅ Guardado para {mes_input}")
+                # ── Configuración base (singleton) ──────────────────────
+                cfg = get_config_equipo()
+                with st.container(border=True):
+                    st.markdown("##### ⚙️ Configuración base")
+                    cb1, cb2, cb3 = st.columns([1, 1, 1])
+                    n_pers = cb1.number_input("Personas activas",
+                                               min_value=0, max_value=200, step=1,
+                                               value=int(cfg.get("n_personas") or 5),
+                                               key="cfg_personas",
+                                               help="Si cambia (contratación/baja), actualizá acá")
+                    hrs_sem = cb2.number_input("Hrs/sem por persona",
+                                                min_value=20.0, max_value=60.0, step=1.0,
+                                                value=float(cfg.get("horas_semana_persona") or 42),
+                                                key="cfg_hrs_sem",
+                                                help="Default: 42 (L-J 9h + V 6h)")
+                    cb3.markdown("&nbsp;", unsafe_allow_html=True)
+                    if cb3.button("💾 Guardar config", key="cfg_save",
+                                  type="primary", use_container_width=True):
+                        if set_config_equipo(int(n_pers), float(hrs_sem)):
+                            st.success("✅ Configuración guardada")
                             st.cache_data.clear()
-                        else:
-                            st.error("❌ Error guardando")
+                            st.rerun()
+
+                # ── Vista automática mes actual ─────────────────────────
+                mes_actual = datetime.now().strftime("%Y-%m")
+                horas_efec = get_horas_mes_efectivas(mes_actual)
+
+                st.markdown(f"##### 📅 Mes actual: {mes_actual}")
+                col_h1, col_h2, col_h3, col_h4 = st.columns(4)
+                col_h1.metric("Personas", f"{horas_efec.get('n_personas', 0)}")
+                col_h2.metric("Horas/persona mes",
+                              f"{horas_efec.get('horas_persona', 0):,.0f}h")
+                col_h3.metric("Horas equipo total",
+                              f"{horas_efec.get('horas_total', 0):,.0f}h")
+                fuente_label = "🟢 Auto (calendario)" if horas_efec.get("fuente") == "auto" else "🟡 Override manual"
+                col_h4.metric("Fuente", fuente_label)
+                st.caption(f"💡 {horas_efec.get('detalle', '')}")
+
+                # ── Tabla mensual del año ───────────────────────────────
+                with st.expander("📊 Ver horas calculadas para todos los meses del año actual"):
+                    import pandas as pd
+                    anio = datetime.now().year
+                    rows = []
+                    for m in range(1, 13):
+                        m_str = f"{anio}-{m:02d}"
+                        h = get_horas_mes_efectivas(m_str)
+                        rows.append({
+                            "Mes": m_str,
+                            "Personas": h.get("n_personas", 0),
+                            "L-J": h.get("n_lj", 0),
+                            "V": h.get("n_v", 0),
+                            "Hrs/persona": h.get("horas_persona", 0),
+                            "Hrs equipo": h.get("horas_total", 0),
+                            "Fuente": h.get("fuente", ""),
+                        })
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+                # ── Override manual opcional (vacaciones, ausencias, etc.) ──
+                with st.expander("✏️ Override manual de un mes (vacaciones, ausencias)"):
+                    st.caption(
+                        "Solo si necesitás ajustar un mes específico (ej: alguien estuvo de "
+                        "vacaciones 1 semana). Lo cargado acá pisa el cálculo automático."
+                    )
+                    om1, om2, om3 = st.columns([1, 1, 1])
+                    mes_ov = om1.text_input("Mes (YYYY-MM)",
+                                             value=mes_actual, key="ov_mes")
+                    actual_ov = get_equipo_mes(mes_ov) or {}
+                    ov_pers = om2.number_input("Personas (este mes)",
+                                                min_value=0, max_value=200, step=1,
+                                                value=int(actual_ov.get("personas") or n_pers),
+                                                key="ov_pers")
+                    ov_horas = om3.number_input("Horas totales (este mes)",
+                                                 min_value=0.0, step=10.0,
+                                                 value=float(actual_ov.get("horas_total") or 0),
+                                                 key="ov_horas")
+                    if st.button("💾 Guardar override", key="ov_save"):
+                        if set_equipo_mes(mes_ov, int(ov_pers), float(ov_horas)):
+                            st.success(f"✅ Override guardado para {mes_ov}")
+                            st.cache_data.clear()
+                            st.rerun()
 
             with sub_tabs_dm[1]:
                 st.markdown("#### Capacidad de bodega")
@@ -271,7 +312,11 @@ def render():
                 cobertura["fuente"] = "Cycle counts manuales"
 
             mes_actual = datetime.now().strftime("%Y-%m")
-            equipo = _safe_wms(get_equipo_mes, mes_actual, default={}) or {}
+            # Usar horas efectivas (override manual o auto-calculado por calendario)
+            _eq_efec = get_horas_mes_efectivas(mes_actual)
+            equipo = {"personas": _eq_efec.get("n_personas", 0),
+                      "horas_total": _eq_efec.get("horas_total", 0),
+                      "fuente": _eq_efec.get("fuente", "")}
             lineas_mes = _safe_wms(kpi_lineas_pickeadas_mes, mes_actual, default={"lineas": 0})
 
             # Fila 1: Cumplimiento al cliente (OTIF + OFR + OCT)
@@ -465,7 +510,10 @@ def render():
 
             # Productividad/equipo (manuales — siempre frescos desde Turso)
             mes_actual = datetime.now().strftime("%Y-%m")
-            equipo = get_equipo_mes(mes_actual) or {}
+            _eq_efec = get_horas_mes_efectivas(mes_actual)
+            equipo = {"personas": _eq_efec.get("n_personas", 0),
+                      "horas_total": _eq_efec.get("horas_total", 0),
+                      "fuente": _eq_efec.get("fuente", "")}
             lineas_mes = kpis.get("lineas_mes_actual", {})
 
             # Fila 1: Cumplimiento al cliente
@@ -762,7 +810,10 @@ def render():
         # ============================================================
         st.markdown("#### ⚡ Productividad operativa por período")
         mes_actual = datetime.now().strftime("%Y-%m")
-        equipo_t = _safe_wms(get_equipo_mes, mes_actual, default={}) or {}
+        _eq_efec_t = get_horas_mes_efectivas(mes_actual)
+        equipo_t = {"personas": _eq_efec_t.get("n_personas", 0),
+                    "horas_total": _eq_efec_t.get("horas_total", 0),
+                    "fuente": _eq_efec_t.get("fuente", "")}
 
         if not equipo_t or not equipo_t.get("horas_total"):
             st.info(f"📋 Cargá horas equipo de {mes_actual} en Tab Datos manuales → Equipo bodega.")

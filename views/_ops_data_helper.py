@@ -262,6 +262,73 @@ def calcular_horas_estandar_mes(mes: str, n_personas: int) -> Dict:
 
 
 # ============================================================
+# Configuración equipo base (singleton, no por mes)
+# ============================================================
+def get_config_equipo() -> Dict:
+    """Configuración constante del equipo bodega (no cambia mes a mes).
+
+    {n_personas, horas_semana_persona, ts}
+
+    Default: 5 personas, 42h/sem (definido por Andrés 2026-05-09).
+    """
+    data = _load()
+    cfg = data.get("config_equipo") or {}
+    return {
+        "n_personas": cfg.get("n_personas", 5),  # default 5
+        "horas_semana_persona": cfg.get("horas_semana_persona", 42),
+        "ts": cfg.get("ts"),
+    }
+
+
+def set_config_equipo(n_personas: int, horas_semana_persona: float = 42) -> bool:
+    data = _load()
+    data["config_equipo"] = {
+        "n_personas": int(n_personas),
+        "horas_semana_persona": float(horas_semana_persona),
+        "ts": datetime.now().isoformat(),
+    }
+    return _save(data)
+
+
+def get_horas_mes_efectivas(mes: str) -> Dict:
+    """Devuelve horas efectivas del mes:
+       - Si hay override manual cargado para ese mes → usa override
+       - Si no → calcula automáticamente con config base + calendario
+
+    Returns: {n_personas, horas_total, fuente: 'override'|'auto', detalle}
+    """
+    # ¿Hay override manual?
+    info = get_equipo_mes(mes)
+    if info and info.get("horas_total", 0) > 0 and info.get("personas", 0) > 0:
+        return {
+            "n_personas": info["personas"],
+            "horas_total": info["horas_total"],
+            "fuente": "override",
+            "detalle": "Cargado manualmente (vacaciones/ajustes)",
+        }
+
+    # Auto: usar config base
+    cfg = get_config_equipo()
+    n_pers = cfg["n_personas"]
+    calc = calcular_horas_estandar_mes(mes, n_pers)
+    if calc.get("error"):
+        return {
+            "n_personas": n_pers, "horas_total": 0,
+            "fuente": "auto", "detalle": calc["error"],
+        }
+    return {
+        "n_personas": n_pers,
+        "horas_total": calc["horas_total"],
+        "horas_persona": calc["horas_persona"],
+        "n_lj": calc["n_lj"],
+        "n_v": calc["n_v"],
+        "fuente": "auto",
+        "detalle": (f"{calc['n_lj']} L-J × 9h + {calc['n_v']} V × 6h "
+                    f"= {calc['horas_persona']}h/persona × {n_pers}"),
+    }
+
+
+# ============================================================
 # Capacidad bodega
 # ============================================================
 def get_capacidad_bodega() -> Dict:
