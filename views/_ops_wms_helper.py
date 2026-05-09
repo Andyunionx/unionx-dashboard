@@ -841,6 +841,369 @@ def kpi_ajustes_inventario(desde_fecha: str = "2026-04-01") -> Dict:
 
 
 # ============================================================
+# PLAN AUDITORÍA SEMANAL (priorización por alta rotación)
+# ============================================================
+@st.cache_data(ttl=600, show_spinner=False)
+def plan_auditoria_semanal(
+    top_n_priorizar: int = 50,
+    dias_sin_ajuste: int = 30,
+    dias_rotacion: int = 90,
+) -> Dict:
+    """Plan recomendado de cycle counts para la semana.
+
+    Lógica de priorización (combinada):
+      1. SKUs Top A por rotación (movimientos en últimos N días)
+      2. Que NO tengan ajuste en últimos N días (sin auditar recientemente)
+      3. Que NO sean inactivos (qty > 0 actualmente)
+
+    Args:
+        top_n_priorizar: cuántos SKUs sugerir
+        dias_sin_ajuste: SKU "sin auditar" si ajuste hace > N días
+        dias_rotacion: ventana para calcular top movers
+
+    Returns:
+        plan_semana: lista de SKUs priorizados con score
+        skus_alta_rotacion_sin_ajuste: count
+        capacidad_semanal: estimación con horas equipo
+    """
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return {"plan": [], "error": "Odoo no disponible"}
+
+    try:
+        # 1. Movimientos outgoing últimos N días → ranking de rotación
+        desde_rot = (datetime.now() - timedelta(days=dias_rotacion)).strftime("%Y-%m-%d")
+        moves_rot = odoo.search_read(
+            "stock.move",
+            [("state", "=", "done"),
+             ("date", ">=", desde_rot),
+             ("picking_type_id.code", "=", "outgoing")],
+            ["product_id", "product_uom_qty"],
+            limit=200000,
+        )
+        from collections import defaultdict
+        rot = defaultdict(lambda: {"qty": 0, "n_movs": 0, "nombre": ""})
+        for m in moves_rot:
+            if not m.get("product_id"):
+                continue
+            pid = m["product_id"][0]
+            rot[pid]["nombre"] = m["product_id"][1]
+            rot[pid]["qty"] += m.get("product_uom_qty", 0) or 0
+            rot[pid]["n_movs"] += 1
+
+        # Top movers
+        top_movers = sorted(rot.items(), key=lambda x: -x[1]["qty"])
+
+        # 2. SKUs con ajuste reciente (excluirlos del plan)
+        desde_aj = (datetime.now() - timedelta(days=dias_sin_ajuste)).strftime("%Y-%m-%d")
+        ajustes_recientes = odoo.search_read(
+            "stock.move",
+            [("state", "=", "done"),
+             ("date", ">=", desde_aj),
+             "|",
+             ("location_id.name", "=", "Inventory adjustment"),
+             ("location_dest_id.name", "=", "Inventory adjustment")],
+            ["product_id"],
+            limit=20000,
+        )
+        skus_auditados_recientes = {a["product_id"][0]
+                                    for a in ajustes_recientes
+                                    if a.get("product_id")}
+
+        # 3. SKUs con stock actual (de cached stock data)
+        from views.shared import cached_stock
+        try:
+            stock = cached_stock()
+            # Stock data devuelve dict con 'skus' como list of dicts
+            skus_data = stock.get("skus", []) if stock else []
+            stock_actual = {}  # {product_id: {qty, valor, sku, semaforo}}
+            # Necesitamos cargar product.product para mapear SKU code a id
+            # Más fácil: quants
+            quants = odoo.search_read(
+                "stock.quant",
+                [("location_id.usage", "=", "internal"), ("quantity", ">", 0)],
+                ["product_id", "quantity", "value"],
+                limit=80000,
+            )
+            for q in quants:
+                if not q.get("product_id"):
+                    continue
+                pid = q["product_id"][0]
+                if pid not in stock_actual:
+                    stock_actual[pid] = {"qty": 0, "valor": 0,
+                                         "nombre": q["product_id"][1]}
+                stock_actual[pid]["qty"] += q.get("quantity", 0)
+                stock_actual[pid]["valor"] += q.get("value", 0)
+        except Exception:
+            stock_actual = {}
+
+        # 4. Construir plan: top movers SIN ajuste reciente, CON stock
+        plan = []
+        for pid, info in top_movers:
+            if len(plan) >= top_n_priorizar:
+                break
+            if pid in skus_auditados_recientes:
+                continue
+            stock_info = stock_actual.get(pid, {"qty": 0, "valor": 0})
+            if stock_info.get("qty", 0) <= 0:
+                continue  # Sin stock no tiene sentido auditar
+            # Score: combinación de rotación + valor en stock
+            score = info["qty"] * (1 + (stock_info["valor"] / 100000))
+            plan.append({
+                "product_id": pid,
+                "sku": info["nombre"][:80],
+                "qty_movida_period": int(info["qty"]),
+                "n_movs_period": info["n_movs"],
+                "qty_stock_actual": int(stock_info["qty"]),
+                "valor_stock_actual": stock_info["valor"],
+                "prioridad_score": round(score, 1),
+                "razon": "Top rotación + sin auditar >{}d".format(dias_sin_ajuste),
+            })
+
+        # 5. Capacidad semanal estimada (asumiendo ~3 SKUs auditables / hora / persona)
+        from views._ops_data_helper import get_equipo_mes
+        mes_actual = datetime.now().strftime("%Y-%m")
+        eq = get_equipo_mes(mes_actual) or {}
+        n_personas = eq.get("personas", 0)
+        horas_mes = eq.get("horas_total", 0)
+        # Asumir 5% del tiempo dedicado a cycle counts → 0.05 * horas/mes
+        # Y 3 SKUs/h/persona auditables
+        horas_cc_mes = horas_mes * 0.05
+        capacidad_skus_mes = horas_cc_mes * 3
+        capacidad_skus_semana = capacidad_skus_mes / 4.33
+
+        return {
+            "plan": plan,
+            "skus_alta_rotacion_sin_ajuste": len(plan),
+            "skus_auditados_recientes": len(skus_auditados_recientes),
+            "capacidad": {
+                "n_personas": n_personas,
+                "horas_mes": horas_mes,
+                "horas_cc_mes_5pct": round(horas_cc_mes, 0),
+                "skus_audit_mes": int(capacidad_skus_mes),
+                "skus_audit_semana": int(capacidad_skus_semana),
+            },
+            "ventana_rotacion_dias": dias_rotacion,
+            "ventana_sin_ajuste_dias": dias_sin_ajuste,
+            "error": None,
+        }
+    except Exception as e:
+        return {"plan": [], "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+# ============================================================
+# PRODUCTIVIDAD POR PERÍODO (día / semana / mes)
+# ============================================================
+@st.cache_data(ttl=600, show_spinner=False)
+def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
+    """Productividad operativa: pedidos despachados, unidades, líneas pickeadas.
+
+    Args:
+        periodo: 'dia', 'semana', 'mes'
+        n_periodos: cuántos períodos hacia atrás traer
+
+    Returns:
+        items: [{periodo, n_pedidos, n_unidades, n_lineas_pickeadas, ...}, ...]
+    """
+    from datetime import date as _date, timedelta as _td
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return {"items": [], "error": "Odoo no disponible"}
+
+    try:
+        items = []
+        hoy = _date.today()
+        for i in range(n_periodos, 0, -1):
+            if periodo == "dia":
+                desde_d = hoy - _td(days=i)
+                hasta_d = desde_d + _td(days=1)
+                label = desde_d.strftime("%Y-%m-%d")
+            elif periodo == "semana":
+                # Semana ISO (lunes a domingo)
+                desde_d = hoy - _td(days=hoy.weekday() + 7 * (i - 1) + 7)
+                hasta_d = desde_d + _td(days=7)
+                label = f"Sem {desde_d.isocalendar()[1]} ({desde_d.strftime('%d/%m')})"
+            else:  # mes
+                anio = hoy.year
+                mes_n = hoy.month - i + 1
+                while mes_n <= 0:
+                    mes_n += 12
+                    anio -= 1
+                desde_d = _date(anio, mes_n, 1)
+                if mes_n == 12:
+                    hasta_d = _date(anio + 1, 1, 1)
+                else:
+                    hasta_d = _date(anio, mes_n + 1, 1)
+                label = f"{anio}-{mes_n:02d}"
+
+            desde = desde_d.strftime("%Y-%m-%d")
+            hasta = hasta_d.strftime("%Y-%m-%d")
+
+            # Pedidos despachados (pickings outgoing done)
+            pickings = odoo.search_read(
+                "stock.picking",
+                [("state", "=", "done"),
+                 ("date_done", ">=", desde),
+                 ("date_done", "<", hasta),
+                 ("picking_type_code", "=", "outgoing")],
+                ["id"],
+                limit=20000,
+            )
+            n_pedidos = len(pickings)
+
+            # Líneas y unidades de esos pickings
+            n_lineas = 0
+            n_unidades = 0
+            if pickings:
+                pid_ids = [p["id"] for p in pickings]
+                moves = odoo.search_read(
+                    "stock.move",
+                    [("picking_id", "in", pid_ids),
+                     ("state", "=", "done")],
+                    ["product_uom_qty", "quantity_done"],
+                    limit=200000,
+                )
+                n_lineas = len(moves)
+                n_unidades = sum(m.get("quantity_done", 0) or 0 for m in moves)
+
+            items.append({
+                "periodo": label,
+                "fecha_desde": desde,
+                "n_pedidos": n_pedidos,
+                "n_lineas_pickeadas": n_lineas,
+                "n_unidades_despachadas": int(n_unidades),
+                "uds_por_pedido": (n_unidades / n_pedidos) if n_pedidos else 0,
+                "lineas_por_pedido": (n_lineas / n_pedidos) if n_pedidos else 0,
+            })
+
+        return {
+            "items": items,
+            "periodo": periodo,
+            "n_periodos": n_periodos,
+            "error": None,
+        }
+    except Exception as e:
+        return {"items": [], "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+# ============================================================
+# FORECAST VOLUMEN PICKING (proyección de carga futura)
+# ============================================================
+@st.cache_data(ttl=900, show_spinner=False)
+def forecast_volumen_picking(meses_adelante: int = 3) -> Dict:
+    """Proyecta volumen futuro de picking basado en histórico + crecimiento.
+
+    Lógica simple:
+      1. Toma últimos 6 meses de productividad
+      2. Calcula promedio + crecimiento mes a mes
+      3. Proyecta N meses adelante
+      4. Calcula horas equipo necesarias y % capacidad cubierta
+
+    Returns:
+        historico: últimos 6 meses
+        forecast: próximos N meses
+        gap_capacidad: si necesitamos más equipo o no
+    """
+    try:
+        # Histórico últimos 6 meses
+        hist = productividad_periodo("mes", n_periodos=6)
+        if hist.get("error") or not hist.get("items"):
+            return {"forecast": [], "error": hist.get("error", "Sin histórico")}
+
+        items = hist["items"]
+        if len(items) < 2:
+            return {"forecast": [], "error": "Insuficiente histórico (mínimo 2 meses)"}
+
+        # Calcular crecimiento mes a mes (% promedio últimos 3 meses)
+        unidades_serie = [it["n_unidades_despachadas"] for it in items if it["n_unidades_despachadas"] > 0]
+        lineas_serie = [it["n_lineas_pickeadas"] for it in items if it["n_lineas_pickeadas"] > 0]
+        pedidos_serie = [it["n_pedidos"] for it in items if it["n_pedidos"] > 0]
+
+        if not unidades_serie or len(unidades_serie) < 2:
+            return {"forecast": [], "error": "Sin variación histórica"}
+
+        # Crecimiento mes a mes
+        crec_uds = sum(
+            (unidades_serie[i] / unidades_serie[i-1] - 1) if unidades_serie[i-1] > 0 else 0
+            for i in range(1, len(unidades_serie))
+        ) / (len(unidades_serie) - 1)
+        crec_lineas = sum(
+            (lineas_serie[i] / lineas_serie[i-1] - 1) if lineas_serie[i-1] > 0 else 0
+            for i in range(1, len(lineas_serie))
+        ) / max(len(lineas_serie) - 1, 1) if lineas_serie else 0
+        crec_pedidos = sum(
+            (pedidos_serie[i] / pedidos_serie[i-1] - 1) if pedidos_serie[i-1] > 0 else 0
+            for i in range(1, len(pedidos_serie))
+        ) / max(len(pedidos_serie) - 1, 1) if pedidos_serie else 0
+
+        # Capacidad equipo actual (del mes actual)
+        from views._ops_data_helper import get_equipo_mes, calcular_horas_estandar_mes
+        from datetime import datetime as _dt
+        mes_actual_str = _dt.now().strftime("%Y-%m")
+        eq = get_equipo_mes(mes_actual_str) or {}
+        n_personas = eq.get("personas", 0)
+        horas_actuales = eq.get("horas_total", 0)
+
+        # Productividad actual (líneas/h promedio últimos 3 meses)
+        ultimos_3 = items[-3:]
+        total_lineas_3m = sum(it["n_lineas_pickeadas"] for it in ultimos_3)
+        # Aproximar horas trabajadas en esos 3m (usar último mes como proxy)
+        horas_3m = horas_actuales * 3 if horas_actuales else 0
+        prod_lineas_h = total_lineas_3m / horas_3m if horas_3m else 0
+
+        # Forecast
+        ultimo_uds = unidades_serie[-1]
+        ultimo_lineas = lineas_serie[-1] if lineas_serie else 0
+        ultimo_pedidos = pedidos_serie[-1] if pedidos_serie else 0
+
+        forecast = []
+        for i in range(1, meses_adelante + 1):
+            uds_proj = ultimo_uds * ((1 + crec_uds) ** i)
+            lineas_proj = ultimo_lineas * ((1 + crec_lineas) ** i)
+            pedidos_proj = ultimo_pedidos * ((1 + crec_pedidos) ** i)
+
+            # Horas necesarias = líneas proyectadas / productividad actual
+            horas_necesarias = lineas_proj / prod_lineas_h if prod_lineas_h > 0 else 0
+            # Horas estándar del mes proyectado (asumimos mismo equipo)
+            anio_p = _dt.now().year
+            mes_p = _dt.now().month + i
+            while mes_p > 12:
+                mes_p -= 12
+                anio_p += 1
+            mes_p_str = f"{anio_p}-{mes_p:02d}"
+            calc_h = calcular_horas_estandar_mes(mes_p_str, n_personas) if n_personas > 0 else {}
+            horas_disp = calc_h.get("horas_total", 0)
+            cobertura_pct = (horas_disp / horas_necesarias * 100) if horas_necesarias > 0 else None
+
+            forecast.append({
+                "mes": mes_p_str,
+                "pedidos_proj": int(pedidos_proj),
+                "lineas_proj": int(lineas_proj),
+                "unidades_proj": int(uds_proj),
+                "horas_necesarias_estim": int(horas_necesarias),
+                "horas_disponibles_estandar": horas_disp,
+                "cobertura_pct": cobertura_pct,
+                "alerta": "🔴 Falta capacidad" if cobertura_pct and cobertura_pct < 90
+                          else ("🟡 Limite" if cobertura_pct and cobertura_pct < 110 else "🟢 OK"),
+            })
+
+        return {
+            "historico": items,
+            "forecast": forecast,
+            "tasas_crecimiento": {
+                "uds_pct_mensual": round(crec_uds * 100, 1),
+                "lineas_pct_mensual": round(crec_lineas * 100, 1),
+                "pedidos_pct_mensual": round(crec_pedidos * 100, 1),
+            },
+            "productividad_actual_lineas_h": round(prod_lineas_h, 1),
+            "n_personas_actual": n_personas,
+            "error": None,
+        }
+    except Exception as e:
+        return {"forecast": [], "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+# ============================================================
 # COBERTURA CYCLE COUNTS
 # ============================================================
 @st.cache_data(ttl=300, show_spinner=False)

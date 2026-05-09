@@ -25,6 +25,7 @@ from views._ops_wms_helper import (
     kpi_ofr, kpi_oct, kpi_lineas_pickeadas_mes,
     tendencia_mensual, kpi_cobertura_cycle_counts,
     kpi_merma_odoo, kpi_ajustes_inventario,
+    plan_auditoria_semanal, productividad_periodo, forecast_volumen_picking,
 )
 from views._ops_data_helper import (
     get_equipo_mes, set_equipo_mes,
@@ -87,13 +88,14 @@ def render():
     st.caption("Plan Estratégico 2026-2028 · Cache 5-10 min · Datos Odoo + manuales")
 
     tabs = st.tabs([
-        "📋 Datos manuales",      # 0 — primero (no toca Odoo, render instantáneo)
-        "📊 Resumen",             # 1
-        "📦 OTIF (B2C/B2B)",      # 2
-        "🎯 Picking & OFR/OCT",   # 3
-        "📥 Recepciones",         # 4
-        "📈 Tendencia mensual",   # 5
-        "🛒 Análisis pedidos",    # 6
+        "📋 Datos manuales",         # 0 — primero (instantáneo)
+        "📊 Resumen",                # 1
+        "📦 OTIF (B2C/B2B)",         # 2
+        "🎯 Picking & Productividad", # 3
+        "📥 Recepciones",            # 4
+        "🔍 Auditoría inventario",   # 5 ← NUEVO (cycle counts + merma + plan semanal)
+        "📈 Tendencia mensual",      # 6
+        "🛒 Análisis pedidos",       # 7
     ])
 
     # ============================================================
@@ -113,9 +115,12 @@ def render():
             sub_tabs_dm = st.tabs([
                 "👥 Equipo bodega",
                 "🏭 Capacidad (m³ pausado)",
-                "📋 Cycle counts",
-                "📉 Merma",
             ])
+            st.caption(
+                "ℹ️ **Cycle counts** y **Merma** ahora son automáticos desde Odoo "
+                "(`stock.move` → ubicación `Inventory adjustment` y modelo `stock.scrap`). "
+                "Los encontrás en la tab **🔍 Auditoría inventario**."
+            )
 
             with sub_tabs_dm[0]:
                 st.markdown("#### Equipo bodega — horas trabajadas por mes")
@@ -185,183 +190,6 @@ def render():
                 if actual_cap.get("fecha_actualizacion"):
                     st.caption(f"Última actualización: {actual_cap['fecha_actualizacion'][:16]}")
 
-            with sub_tabs_dm[2]:
-                st.markdown("#### 📋 Inventarios / cycle counts (desde Odoo)")
-                st.caption(
-                    "Lee `stock.move` con location virtual de inventario (ajustes hechos "
-                    "en módulo Inventario de Odoo) desde abril 2026 a la fecha. "
-                    "Ajustes negativos = pérdidas detectadas, positivos = surplus encontrado."
-                )
-
-                if st.button("📥 Cargar inventarios desde Odoo", type="primary",
-                             key="inv_load_btn"):
-                    st.session_state['inv_loaded'] = True
-
-                if st.session_state.get('inv_loaded'):
-                    with st.spinner("Consultando Odoo (stock.move ajustes)…"):
-                        inv = _safe_wms(kpi_ajustes_inventario,
-                                        desde_fecha="2026-04-01",
-                                        default={"n_ajustes": 0, "error": None})
-
-                    if inv.get("error") and inv.get("n_ajustes", 0) == 0:
-                        st.warning(inv["error"])
-                    elif inv.get("n_ajustes", 0) == 0:
-                        st.info("Sin ajustes de inventario registrados desde 2026-04-01")
-                    else:
-                        # KPI cards
-                        ck1, ck2, ck3, ck4 = st.columns(4)
-                        ck1.metric("Total ajustes", f"{inv.get('n_ajustes', 0):,}")
-                        ck2.metric("SKUs únicos ajustados", f"{inv.get('n_skus_unicos', 0):,}")
-                        cob = inv.get("cobertura_pct")
-                        if cob is not None:
-                            ic = "🟢" if cob >= 0.80 else ("🟡" if cob >= 0.50 else "🔴")
-                            ck3.metric(f"{ic} Cobertura", f"{cob*100:.1f}%",
-                                       help=f"{inv.get('n_skus_unicos', 0)} / "
-                                            f"{inv.get('total_skus_activos', 0)} SKUs activos")
-                        else:
-                            ck3.metric("Cobertura", "—")
-                        valor_neto = inv.get("valor_neto", 0)
-                        ck4.metric("$ Neto ajustes", f"${valor_neto:,.0f}",
-                                   delta="surplus" if valor_neto > 0 else "pérdida")
-
-                        # Surplus vs perdidas
-                        st.markdown("##### Detalle financiero")
-                        cs1, cs2 = st.columns(2)
-                        cs1.metric("✅ $ Surplus (encontrado)",
-                                   f"${inv.get('valor_surplus', 0):,.0f}")
-                        cs2.metric("❌ $ Pérdidas (faltante)",
-                                   f"${inv.get('valor_perdidas', 0):,.0f}")
-
-                        # Top SKUs ajustados
-                        st.markdown("##### Top SKUs con más ajustes")
-                        if inv.get("top_skus_ajustados"):
-                            df_top = pd.DataFrame(inv["top_skus_ajustados"])
-                            df_top["valor_neto"] = df_top["valor_neto"].apply(lambda v: f"${v:,.0f}")
-                            df_top.columns = ["SKU", "# Ajustes", "Qty surplus",
-                                              "Qty pérdida", "$ neto"]
-                            st.dataframe(df_top, use_container_width=True, hide_index=True,
-                                         height=300)
-
-                        # Detalle ajustes
-                        with st.expander(f"📋 Ver últimos {len(inv.get('detalle', []))} ajustes"):
-                            if inv.get("detalle"):
-                                df_det = pd.DataFrame(inv["detalle"])
-                                df_det["valor"] = df_det["valor"].apply(lambda v: f"${v:,.0f}")
-                                st.dataframe(df_det, use_container_width=True,
-                                             hide_index=True, height=400)
-
-                        st.caption(f"Datos desde {inv.get('desde')} · Cache 10 min")
-                else:
-                    st.info("👆 Click 'Cargar inventarios desde Odoo'. Query pesada (15-30s).")
-
-                # Carga manual opcional como complemento
-                with st.expander("➕ Agregar cycle count manual adicional", expanded=False):
-                    st.caption("Para cycle counts hechos fuera del módulo Inventario Odoo")
-                    with st.form("cc_form_top", clear_on_submit=True):
-                        c1, c2, c3 = st.columns(3)
-                        sku = c1.text_input("SKU", key="cc_sku_top")
-                        qty_sis = c2.number_input("Qty Sistema", min_value=0.0, step=1.0,
-                                                   key="cc_qsis_top")
-                        qty_fis = c3.number_input("Qty Física", min_value=0.0, step=1.0,
-                                                   key="cc_qfis_top")
-                        fecha = st.text_input("Fecha (YYYY-MM-DD)",
-                                               value=datetime.now().strftime("%Y-%m-%d"),
-                                               key="cc_fecha_top")
-                        nota = st.text_input("Nota (opcional)", key="cc_nota_top")
-                        if st.form_submit_button("➕ Agregar"):
-                            if sku and (qty_fis > 0 or qty_sis > 0):
-                                if add_cycle_count(sku, qty_sis, qty_fis, fecha, nota):
-                                    st.success(f"✅ Agregado: {sku}")
-                                    st.cache_data.clear()
-
-            with sub_tabs_dm[3]:
-                st.markdown("#### 📉 Merma operativa (desde Odoo · stock.scrap)")
-                st.caption(
-                    "Lee `stock.scrap` state=done con valor calculado del move asociado. "
-                    "Compara contra valor inventario actual para % merma."
-                )
-
-                col_v, _ = st.columns([1, 3])
-                with col_v:
-                    dias_merma = st.selectbox("Ventana (días)",
-                                              [30, 60, 90, 180, 365],
-                                              index=2, key="merma_dias_top")
-
-                if st.button("📥 Cargar merma desde Odoo", type="primary",
-                             key="merma_load_btn"):
-                    st.session_state['merma_loaded'] = True
-                    st.session_state['merma_dias_val'] = dias_merma
-
-                if st.session_state.get('merma_loaded'):
-                    with st.spinner("Consultando stock.scrap…"):
-                        m_dias = st.session_state.get('merma_dias_val', dias_merma)
-                        merma_o = _safe_wms(kpi_merma_odoo, dias=m_dias,
-                                            default={"valor": None, "error": None})
-
-                    if merma_o.get("error") and merma_o.get("n_scraps", 0) == 0:
-                        st.warning(merma_o["error"])
-                    elif merma_o.get("n_scraps", 0) == 0:
-                        st.success("✅ Sin scraps registrados en la ventana seleccionada")
-                    else:
-                        # KPI cards
-                        mk1, mk2, mk3, mk4 = st.columns(4)
-                        v_pct = merma_o.get("valor")
-                        ic = "🟢" if v_pct and v_pct <= 0.005 else \
-                             ("🟡" if v_pct and v_pct <= 0.01 else "🔴")
-                        mk1.metric(f"{ic} % Merma",
-                                   f"{v_pct*100:.2f}%" if v_pct is not None else "—",
-                                   help="Benchmark: ≤ 0.5% (calculado vs valor inv. actual)")
-                        mk2.metric("$ Mermado total",
-                                   f"${merma_o.get('valor_mermado', 0):,.0f}")
-                        mk3.metric("Unidades mermadas",
-                                   f"{merma_o.get('qty_mermada', 0):,.0f}")
-                        mk4.metric("# Scraps", f"{merma_o.get('n_scraps', 0):,}")
-
-                        st.caption(f"Inventario referencia: ${merma_o.get('valor_inventario_referencia', 0):,.0f}")
-
-                        # Top SKUs mermados
-                        st.markdown("##### Top SKUs mermados (por valor)")
-                        if merma_o.get("top_skus"):
-                            df_top_m = pd.DataFrame(merma_o["top_skus"])
-                            df_top_m["valor_mermado"] = df_top_m["valor_mermado"].apply(
-                                lambda v: f"${v:,.0f}")
-                            df_top_m.columns = ["SKU", "Qty mermada", "$ mermado", "# Scraps"]
-                            st.dataframe(df_top_m, use_container_width=True, hide_index=True,
-                                         height=300)
-
-                        # Detalle scraps
-                        with st.expander(f"📋 Ver últimos {len(merma_o.get('detalle', []))} scraps"):
-                            if merma_o.get("detalle"):
-                                df_det_m = pd.DataFrame(merma_o["detalle"])
-                                df_det_m["valor"] = df_det_m["valor"].apply(
-                                    lambda v: f"${v:,.0f}")
-                                st.dataframe(df_det_m, use_container_width=True,
-                                             hide_index=True, height=400)
-                else:
-                    st.info("👆 Click 'Cargar merma desde Odoo'. Query pesada (10-20s).")
-
-                # Carga manual opcional (override) — colapsado por default
-                with st.expander("✏️ Override manual (si querés un valor distinto al de Odoo)",
-                                 expanded=False):
-                    mes_m = st.text_input("Mes (YYYY-MM)",
-                                           value=datetime.now().strftime("%Y-%m"), key="m_mes_top")
-                    actual_m = get_merma_mes(mes_m) or {}
-                    c1m, c2m = st.columns(2)
-                    mermado = c1m.number_input("Valor mermado ($)", min_value=0.0, step=1000.0,
-                                                value=float(actual_m.get("valor_mermado") or 0),
-                                                key="m_mer_top")
-                    inv_prom = c2m.number_input("Valor inventario promedio ($)",
-                                                 min_value=0.0, step=10000.0,
-                                                 value=float(actual_m.get("valor_inv_promedio") or 0),
-                                                 key="m_inv_top")
-                    if mermado > 0 and inv_prom > 0:
-                        pct = mermado / inv_prom
-                        color_m = "🟢" if pct <= 0.005 else ("🟡" if pct <= 0.01 else "🔴")
-                        st.metric(f"{color_m} % Merma manual", f"{pct*100:.2f}%")
-                    if st.button("💾 Guardar merma manual", key="m_save_top"):
-                        if set_merma_mes(mes_m, float(mermado), float(inv_prom)):
-                            st.success(f"✅ Guardado para {mes_m}")
-                            st.cache_data.clear()
     except Exception as e:
         st.error(f"❌ Error en Tab Datos manuales: {type(e).__name__}: {e}")
 
@@ -714,25 +542,215 @@ def render():
 
         st.divider()
 
-        # Productividad
-        st.markdown("#### ⚡ Productividad picking (sincronizada por mes)")
+        # ============================================================
+        # PRODUCTIVIDAD DETALLADA (día / semana / mes) + FORECAST
+        # ============================================================
+        st.markdown("#### ⚡ Productividad operativa por período")
         mes_actual = datetime.now().strftime("%Y-%m")
         equipo_t = _safe_wms(get_equipo_mes, mes_actual, default={}) or {}
-        lineas_t = _safe_wms(kpi_lineas_pickeadas_mes, mes_actual, default={"lineas": 0})
 
         if not equipo_t or not equipo_t.get("horas_total"):
-            st.info(f"📋 Cargá horas equipo de {mes_actual} en Tab 6 → Equipo bodega.")
+            st.info(f"📋 Cargá horas equipo de {mes_actual} en Tab Datos manuales → Equipo bodega.")
         else:
-            lineas = lineas_t.get("lineas", 0)
+            lineas_t = _safe_wms(kpi_lineas_pickeadas_mes, mes_actual, default={"lineas": 0})
             horas = equipo_t.get("horas_total", 0)
             personas = equipo_t.get("personas", 0)
-            prod = lineas / horas if horas else 0
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Productividad", f"{prod:.0f} líneas/h",
-                      help="Benchmark: 60-120 líneas/h B2C")
-            c2.metric("Equipo", f"{personas} personas")
-            c3.metric(f"Líneas {mes_actual}", f"{lineas:,}")
-            c4.metric("Horas total mes", f"{horas:,.0f}h")
+            lineas = lineas_t.get("lineas", 0)
+            prod_actual = lineas / horas if horas else 0
+
+            # Cards mes actual
+            ck1, ck2, ck3, ck4 = st.columns(4)
+            ck1.metric("Productividad mes actual", f"{prod_actual:.0f} líneas/h",
+                       help="Benchmark: 60-120 líneas/h B2C")
+            ck2.metric(f"Equipo {mes_actual}", f"{personas} personas")
+            ck3.metric(f"Líneas {mes_actual}", f"{lineas:,}")
+            ck4.metric(f"Horas {mes_actual}", f"{horas:,.0f}h")
+
+            st.divider()
+
+            # Sub-tabs por período
+            prod_subtabs = st.tabs(["📅 Por día (últimos 30d)",
+                                     "📆 Por semana (últimas 12)",
+                                     "🗓️ Por mes (últimos 6)",
+                                     "🔮 Forecast 3 meses"])
+
+            with prod_subtabs[0]:
+                st.markdown("##### Productividad diaria")
+                if st.button("📥 Cargar datos diarios", type="primary",
+                             key="prod_d_btn"):
+                    st.session_state['prod_d_loaded'] = True
+                if st.session_state.get('prod_d_loaded'):
+                    with st.spinner("Consultando 30 días Odoo…"):
+                        prod_d = _safe_wms(productividad_periodo, periodo="dia",
+                                           n_periodos=30, default={"items": []})
+                    if prod_d.get("items"):
+                        df_d = pd.DataFrame(prod_d["items"])
+                        # Productividad diaria asumiendo horas/día estándar
+                        horas_dia_promedio = horas / 21  # 21 días hábiles aprox
+                        df_d["lineas_h"] = (df_d["n_lineas_pickeadas"] / horas_dia_promedio).round(1)
+
+                        # Charts
+                        cc1, cc2 = st.columns(2)
+                        with cc1:
+                            st.markdown("**Pedidos / día**")
+                            st.bar_chart(df_d.set_index("periodo")["n_pedidos"], height=240)
+                        with cc2:
+                            st.markdown("**Líneas pickeadas / día**")
+                            st.bar_chart(df_d.set_index("periodo")["n_lineas_pickeadas"], height=240)
+                        st.markdown("**Unidades despachadas / día**")
+                        st.line_chart(df_d.set_index("periodo")["n_unidades_despachadas"], height=240)
+
+                        # Tabla
+                        df_show = df_d[["periodo", "n_pedidos", "n_lineas_pickeadas",
+                                        "n_unidades_despachadas", "uds_por_pedido", "lineas_h"]].rename(
+                            columns={"periodo": "Día", "n_pedidos": "Pedidos",
+                                     "n_lineas_pickeadas": "Líneas",
+                                     "n_unidades_despachadas": "Unidades",
+                                     "uds_por_pedido": "Uds/pedido",
+                                     "lineas_h": "Líneas/h*"})
+                        df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
+                        st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+                        st.caption(f"*Productividad asumiendo {horas_dia_promedio:.0f}h/día equipo")
+                else:
+                    st.info("👆 Click 'Cargar datos diarios'.")
+
+            with prod_subtabs[1]:
+                st.markdown("##### Productividad semanal")
+                if st.button("📥 Cargar datos semanales", type="primary",
+                             key="prod_s_btn"):
+                    st.session_state['prod_s_loaded'] = True
+                if st.session_state.get('prod_s_loaded'):
+                    with st.spinner("Consultando 12 semanas Odoo…"):
+                        prod_s = _safe_wms(productividad_periodo, periodo="semana",
+                                           n_periodos=12, default={"items": []})
+                    if prod_s.get("items"):
+                        df_s = pd.DataFrame(prod_s["items"])
+                        horas_sem = horas / 4.33
+                        df_s["lineas_h"] = (df_s["n_lineas_pickeadas"] / horas_sem).round(1)
+
+                        cs1, cs2 = st.columns(2)
+                        cs1.markdown("**Pedidos / semana**")
+                        cs1.bar_chart(df_s.set_index("periodo")["n_pedidos"], height=240)
+                        cs2.markdown("**Líneas / semana**")
+                        cs2.bar_chart(df_s.set_index("periodo")["n_lineas_pickeadas"], height=240)
+                        st.markdown("**Unidades despachadas / semana**")
+                        st.line_chart(df_s.set_index("periodo")["n_unidades_despachadas"], height=240)
+
+                        df_show = df_s[["periodo", "n_pedidos", "n_lineas_pickeadas",
+                                        "n_unidades_despachadas", "lineas_h"]].rename(
+                            columns={"periodo": "Semana", "n_pedidos": "Pedidos",
+                                     "n_lineas_pickeadas": "Líneas",
+                                     "n_unidades_despachadas": "Unidades",
+                                     "lineas_h": "Líneas/h*"})
+                        st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+                        st.caption(f"*Productividad asumiendo {horas_sem:.0f}h/semana equipo")
+                else:
+                    st.info("👆 Click 'Cargar datos semanales'.")
+
+            with prod_subtabs[2]:
+                st.markdown("##### Productividad mensual")
+                if st.button("📥 Cargar datos mensuales", type="primary",
+                             key="prod_m_btn"):
+                    st.session_state['prod_m_loaded'] = True
+                if st.session_state.get('prod_m_loaded'):
+                    with st.spinner("Consultando 6 meses Odoo…"):
+                        prod_m = _safe_wms(productividad_periodo, periodo="mes",
+                                           n_periodos=6, default={"items": []})
+                    if prod_m.get("items"):
+                        df_m = pd.DataFrame(prod_m["items"])
+                        # Asumir mismas horas todos los meses (proxy)
+                        df_m["lineas_h"] = (df_m["n_lineas_pickeadas"] / horas).round(1)
+
+                        cm1, cm2 = st.columns(2)
+                        cm1.markdown("**Pedidos / mes**")
+                        cm1.bar_chart(df_m.set_index("periodo")["n_pedidos"], height=240)
+                        cm2.markdown("**Líneas / mes**")
+                        cm2.bar_chart(df_m.set_index("periodo")["n_lineas_pickeadas"], height=240)
+                        st.markdown("**Productividad líneas/h por mes**")
+                        st.line_chart(df_m.set_index("periodo")["lineas_h"], height=240)
+
+                        df_show = df_m[["periodo", "n_pedidos", "n_lineas_pickeadas",
+                                        "n_unidades_despachadas", "uds_por_pedido", "lineas_h"]].rename(
+                            columns={"periodo": "Mes", "n_pedidos": "Pedidos",
+                                     "n_lineas_pickeadas": "Líneas",
+                                     "n_unidades_despachadas": "Unidades",
+                                     "uds_por_pedido": "Uds/pedido",
+                                     "lineas_h": "Líneas/h"})
+                        df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
+                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                else:
+                    st.info("👆 Click 'Cargar datos mensuales'.")
+
+            with prod_subtabs[3]:
+                st.markdown("##### 🔮 Forecast volumen 3 meses adelante")
+                st.caption(
+                    "Proyecta carga de picking futura basado en tendencia histórica "
+                    "(últimos 6 meses). Calcula horas necesarias vs disponibles. "
+                    "Roadmap H2: integrar con proyección de venta del dashboard ventas."
+                )
+                if st.button("📥 Calcular forecast", type="primary", key="fc_btn"):
+                    st.session_state['fc_loaded'] = True
+                if st.session_state.get('fc_loaded'):
+                    with st.spinner("Calculando forecast…"):
+                        fc = _safe_wms(forecast_volumen_picking, meses_adelante=3,
+                                       default={"forecast": [], "error": None})
+                    if fc.get("error"):
+                        st.warning(fc["error"])
+                    elif fc.get("forecast"):
+                        # Tasas de crecimiento detectadas
+                        tc = fc.get("tasas_crecimiento", {})
+                        tg1, tg2, tg3, tg4 = st.columns(4)
+                        tg1.metric("Crec. pedidos / mes", f"{tc.get('pedidos_pct_mensual', 0):+.1f}%")
+                        tg2.metric("Crec. líneas / mes", f"{tc.get('lineas_pct_mensual', 0):+.1f}%")
+                        tg3.metric("Crec. unidades / mes", f"{tc.get('uds_pct_mensual', 0):+.1f}%")
+                        tg4.metric("Productividad actual",
+                                   f"{fc.get('productividad_actual_lineas_h', 0):.0f} L/h")
+
+                        st.markdown("##### Proyección próximos 3 meses")
+                        df_fc = pd.DataFrame(fc["forecast"])
+                        df_show_fc = df_fc[["mes", "pedidos_proj", "lineas_proj", "unidades_proj",
+                                            "horas_necesarias_estim", "horas_disponibles_estandar",
+                                            "cobertura_pct", "alerta"]].rename(columns={
+                            "mes": "Mes",
+                            "pedidos_proj": "Pedidos proj.",
+                            "lineas_proj": "Líneas proj.",
+                            "unidades_proj": "Uds proj.",
+                            "horas_necesarias_estim": "Hrs necesarias",
+                            "horas_disponibles_estandar": "Hrs disponibles",
+                            "cobertura_pct": "Cobertura %",
+                            "alerta": "Estado",
+                        })
+                        df_show_fc["Cobertura %"] = df_show_fc["Cobertura %"].apply(
+                            lambda v: f"{v:.0f}%" if v is not None else "—")
+                        st.dataframe(df_show_fc, use_container_width=True, hide_index=True)
+
+                        # Histórico+forecast en gráfico
+                        st.markdown("##### Histórico + Forecast (líneas pickeadas)")
+                        hist_items = fc.get("historico", [])
+                        if hist_items:
+                            df_combo = pd.concat([
+                                pd.DataFrame([{"mes": h["periodo"], "lineas": h["n_lineas_pickeadas"],
+                                               "tipo": "Histórico"} for h in hist_items]),
+                                pd.DataFrame([{"mes": f["mes"], "lineas": f["lineas_proj"],
+                                               "tipo": "Forecast"} for f in fc["forecast"]]),
+                            ])
+                            chart_combo = df_combo.pivot_table(index="mes", columns="tipo",
+                                                                 values="lineas").fillna(0)
+                            st.line_chart(chart_combo, height=300)
+
+                        # Recomendación
+                        criticos = [f for f in fc["forecast"]
+                                    if f.get("cobertura_pct") and f["cobertura_pct"] < 100]
+                        if criticos:
+                            st.warning(
+                                f"⚠️ **{len(criticos)} de 3 meses proyectados tienen cobertura <100%.** "
+                                "Considerar contratación adicional o redistribución de horas extra. "
+                                f"Equipo actual: {fc.get('n_personas_actual', 0)} personas."
+                            )
+                        else:
+                            st.success("✅ Equipo actual cubre la demanda proyectada en los próximos 3 meses.")
+                else:
+                    st.info("👆 Click 'Calcular forecast'. Necesita histórico ≥2 meses.")
 
     # ============================================================
     # TAB 4 — RECEPCIONES
@@ -776,9 +794,236 @@ def render():
             c4.metric("Total", f"{vol.get('total', 0)}")
 
     # ============================================================
-    # TAB 5 — TENDENCIA MENSUAL (LAZY)
+    # TAB 5 — AUDITORÍA INVENTARIO (cycle counts + plan + merma)
     # ============================================================
     with tabs[5]:
+        st.markdown("### 🔍 Auditoría de inventario")
+        st.caption(
+            "Cycle counts (ajustes Odoo) · Plan auditoría semanal por prioridad de rotación · "
+            "Merma (stock.scrap) · Todo automático desde Odoo."
+        )
+
+        au_subtabs = st.tabs([
+            "📋 Cycle counts (ajustes)",
+            "📅 Plan auditoría semanal",
+            "📉 Merma operativa",
+        ])
+
+        # ── 5.1 Cycle counts (ajustes inventario) ─────────────────────
+        with au_subtabs[0]:
+            st.markdown("#### Ajustes de inventario hechos en Odoo")
+            st.caption(
+                "Lee `stock.move` con location virtual `Inventory adjustment`. "
+                "Cada ajuste = cycle count CON discrepancia (los exactos no generan move)."
+            )
+
+            if st.button("📥 Cargar inventarios desde Odoo", type="primary",
+                         key="inv_load_btn_au"):
+                st.session_state['inv_loaded_au'] = True
+
+            if st.session_state.get('inv_loaded_au'):
+                with st.spinner("Consultando Odoo (stock.move ajustes)…"):
+                    inv = _safe_wms(kpi_ajustes_inventario,
+                                    desde_fecha="2026-04-01",
+                                    default={"n_ajustes": 0, "error": None})
+
+                if inv.get("error") and inv.get("n_ajustes", 0) == 0:
+                    st.warning(inv["error"])
+                elif inv.get("n_ajustes", 0) == 0:
+                    st.info("Sin ajustes de inventario registrados desde 2026-04-01")
+                else:
+                    ck1, ck2, ck3, ck4 = st.columns(4)
+                    ck1.metric("Total ajustes", f"{inv.get('n_ajustes', 0):,}")
+                    ck2.metric("SKUs únicos ajustados", f"{inv.get('n_skus_unicos', 0):,}")
+                    cob = inv.get("cobertura_pct")
+                    if cob is not None:
+                        ic = "🟢" if cob >= 0.80 else ("🟡" if cob >= 0.50 else "🔴")
+                        ck3.metric(f"{ic} Cobertura", f"{cob*100:.1f}%",
+                                   help=f"{inv.get('n_skus_unicos', 0)} / "
+                                        f"{inv.get('total_skus_activos', 0)} SKUs activos")
+                    else:
+                        ck3.metric("Cobertura", "—")
+                    valor_neto = inv.get("valor_neto", 0)
+                    ck4.metric("$ Neto ajustes", f"${valor_neto:,.0f}",
+                               delta="surplus" if valor_neto > 0 else "pérdida")
+
+                    st.markdown("##### Detalle financiero")
+                    cs1, cs2 = st.columns(2)
+                    cs1.metric("✅ $ Surplus (encontrado)",
+                               f"${inv.get('valor_surplus', 0):,.0f}")
+                    cs2.metric("❌ $ Pérdidas (faltante)",
+                               f"${inv.get('valor_perdidas', 0):,.0f}")
+
+                    st.markdown("##### Top SKUs con más ajustes")
+                    if inv.get("top_skus_ajustados"):
+                        df_top = pd.DataFrame(inv["top_skus_ajustados"])
+                        df_top["valor_neto"] = df_top["valor_neto"].apply(lambda v: f"${v:,.0f}")
+                        df_top.columns = ["SKU", "# Ajustes", "Qty surplus",
+                                          "Qty pérdida", "$ neto"]
+                        st.dataframe(df_top, use_container_width=True, hide_index=True,
+                                     height=300)
+
+                    with st.expander(f"📋 Ver últimos {len(inv.get('detalle', []))} ajustes"):
+                        if inv.get("detalle"):
+                            df_det = pd.DataFrame(inv["detalle"])
+                            df_det["valor"] = df_det["valor"].apply(lambda v: f"${v:,.0f}")
+                            st.dataframe(df_det, use_container_width=True,
+                                         hide_index=True, height=400)
+
+                    st.caption(f"Datos desde {inv.get('desde')} · Cache 10 min")
+            else:
+                st.info("👆 Click 'Cargar inventarios desde Odoo'. Query 15-30s.")
+
+        # ── 5.2 Plan auditoría semanal (priorización) ────────────────
+        with au_subtabs[1]:
+            st.markdown("#### 📅 Plan auditoría semanal — priorización por rotación")
+            st.caption(
+                "Top SKUs por rotación que NO tengan cycle count reciente. "
+                "El operario debería empezar por estos para maximizar impacto en exactitud."
+            )
+
+            ca, cb, cc = st.columns(3)
+            with ca:
+                top_n = st.slider("# SKUs a sugerir", 20, 200, 50, key="plan_topn")
+            with cb:
+                dias_sin = st.slider("Sin auditar hace > N días", 7, 90, 30, key="plan_dias_sin")
+            with cc:
+                dias_rot = st.slider("Ventana rotación (días)", 30, 180, 90, key="plan_dias_rot")
+
+            if st.button("📥 Generar plan", type="primary", key="plan_btn"):
+                st.session_state['plan_loaded'] = True
+                st.session_state['plan_params'] = (top_n, dias_sin, dias_rot)
+
+            if st.session_state.get('plan_loaded'):
+                p_top, p_sin, p_rot = st.session_state.get('plan_params', (top_n, dias_sin, dias_rot))
+                with st.spinner("Calculando plan (queries Odoo)…"):
+                    plan = _safe_wms(plan_auditoria_semanal,
+                                     top_n_priorizar=p_top,
+                                     dias_sin_ajuste=p_sin,
+                                     dias_rotacion=p_rot,
+                                     default={"plan": [], "error": None})
+
+                if plan.get("error"):
+                    st.warning(plan["error"])
+                elif not plan.get("plan"):
+                    st.success("✅ Todos los top movers tienen cycle counts recientes")
+                else:
+                    cap = plan.get("capacidad", {})
+                    pk1, pk2, pk3, pk4 = st.columns(4)
+                    pk1.metric("SKUs sugeridos", f"{len(plan['plan']):,}")
+                    pk2.metric("Equipo", f"{cap.get('n_personas', 0)} personas")
+                    pk3.metric("Capacidad / mes",
+                               f"{cap.get('skus_audit_mes', 0):,} SKUs",
+                               help="Asumiendo 5% de horas dedicado + 3 SKUs/h/persona")
+                    pk4.metric("Capacidad / semana",
+                               f"{cap.get('skus_audit_semana', 0):,} SKUs")
+
+                    st.markdown("##### 🎯 Plan priorizado (ordenado por score)")
+                    df_plan = pd.DataFrame(plan["plan"])
+                    df_plan["valor_stock_actual"] = df_plan["valor_stock_actual"].apply(
+                        lambda v: f"${v:,.0f}")
+                    df_show = df_plan[[
+                        "sku", "qty_movida_period", "n_movs_period",
+                        "qty_stock_actual", "valor_stock_actual", "prioridad_score",
+                    ]].rename(columns={
+                        "sku": "SKU",
+                        "qty_movida_period": f"Qty movida ({p_rot}d)",
+                        "n_movs_period": f"# Movs ({p_rot}d)",
+                        "qty_stock_actual": "Qty en stock",
+                        "valor_stock_actual": "$ en stock",
+                        "prioridad_score": "Score",
+                    })
+                    st.dataframe(df_show, use_container_width=True, hide_index=True, height=420)
+
+                    # Descarga
+                    import io
+                    out_p = io.BytesIO()
+                    with pd.ExcelWriter(out_p, engine='openpyxl') as w:
+                        pd.DataFrame(plan["plan"]).to_excel(w, index=False, sheet_name='Plan auditoria')
+                    out_p.seek(0)
+                    st.download_button(
+                        label=f"📥 Descargar plan (Excel · {len(plan['plan']):,})",
+                        data=out_p.getvalue(),
+                        file_name=f"Plan_auditoria_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        key="dl_plan_au",
+                        use_container_width=True,
+                    )
+
+                    st.caption(f"💡 Sugerencia: el operario audita ~"
+                               f"{cap.get('skus_audit_semana', 50)//5} SKUs/día (L-V) "
+                               f"para cubrir el plan en una semana.")
+            else:
+                st.info("👆 Configurá parámetros y click 'Generar plan'.")
+
+        # ── 5.3 Merma operativa ──────────────────────────────────────
+        with au_subtabs[2]:
+            st.markdown("#### 📉 Merma operativa (Odoo · stock.scrap)")
+            st.caption(
+                "Lee `stock.scrap` state=done con valor del move asociado. "
+                "Compara contra valor inventario actual para % merma."
+            )
+
+            col_v, _ = st.columns([1, 3])
+            with col_v:
+                dias_merma = st.selectbox("Ventana (días)",
+                                          [30, 60, 90, 180, 365],
+                                          index=2, key="merma_dias_au")
+
+            if st.button("📥 Cargar merma desde Odoo", type="primary",
+                         key="merma_load_btn_au"):
+                st.session_state['merma_loaded_au'] = True
+                st.session_state['merma_dias_val_au'] = dias_merma
+
+            if st.session_state.get('merma_loaded_au'):
+                with st.spinner("Consultando stock.scrap…"):
+                    m_dias = st.session_state.get('merma_dias_val_au', dias_merma)
+                    merma_o = _safe_wms(kpi_merma_odoo, dias=m_dias,
+                                        default={"valor": None, "error": None})
+
+                if merma_o.get("error") and merma_o.get("n_scraps", 0) == 0:
+                    st.warning(merma_o["error"])
+                elif merma_o.get("n_scraps", 0) == 0:
+                    st.success("✅ Sin scraps registrados en la ventana seleccionada")
+                else:
+                    mk1, mk2, mk3, mk4 = st.columns(4)
+                    v_pct = merma_o.get("valor")
+                    ic = "🟢" if v_pct and v_pct <= 0.005 else \
+                         ("🟡" if v_pct and v_pct <= 0.01 else "🔴")
+                    mk1.metric(f"{ic} % Merma",
+                               f"{v_pct*100:.2f}%" if v_pct is not None else "—",
+                               help="Benchmark: ≤ 0.5%")
+                    mk2.metric("$ Mermado total",
+                               f"${merma_o.get('valor_mermado', 0):,.0f}")
+                    mk3.metric("Unidades mermadas",
+                               f"{merma_o.get('qty_mermada', 0):,.0f}")
+                    mk4.metric("# Scraps", f"{merma_o.get('n_scraps', 0):,}")
+
+                    st.caption(f"Inventario referencia: ${merma_o.get('valor_inventario_referencia', 0):,.0f}")
+
+                    st.markdown("##### Top SKUs mermados (por valor)")
+                    if merma_o.get("top_skus"):
+                        df_top_m = pd.DataFrame(merma_o["top_skus"])
+                        df_top_m["valor_mermado"] = df_top_m["valor_mermado"].apply(
+                            lambda v: f"${v:,.0f}")
+                        df_top_m.columns = ["SKU", "Qty mermada", "$ mermado", "# Scraps"]
+                        st.dataframe(df_top_m, use_container_width=True, hide_index=True,
+                                     height=300)
+
+                    with st.expander(f"📋 Ver últimos {len(merma_o.get('detalle', []))} scraps"):
+                        if merma_o.get("detalle"):
+                            df_det_m = pd.DataFrame(merma_o["detalle"])
+                            df_det_m["valor"] = df_det_m["valor"].apply(
+                                lambda v: f"${v:,.0f}")
+                            st.dataframe(df_det_m, use_container_width=True,
+                                         hide_index=True, height=400)
+            else:
+                st.info("👆 Click 'Cargar merma desde Odoo'. Query 10-20s.")
+
+    # ============================================================
+    # TAB 6 — TENDENCIA MENSUAL (LAZY)
+    # ============================================================
+    with tabs[6]:
         st.markdown("### 📈 Tendencia mes a mes")
         st.caption("Evolución de OTIF B2C/B2B + Pick Accuracy en los últimos meses")
 
@@ -840,7 +1085,7 @@ def render():
     # ============================================================
     # TAB 6 — ANÁLISIS PEDIDOS (Odoo) — LAZY
     # ============================================================
-    with tabs[6]:
+    with tabs[7]:
         st.markdown("### 🛒 Análisis de pedidos (Odoo)")
         st.caption("Pedidos · unidades · venta agregada cruzando SKU · canal · categoría · marca")
 
