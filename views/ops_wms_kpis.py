@@ -427,6 +427,24 @@ def render():
         st.markdown("### 📦 OTIF (On-Time In-Full)")
         st.caption("Pickings entregados a tiempo Y completos. On-Time = date_done ≤ scheduled_date · In-Full = qty_done ≥ product_uom_qty")
 
+        # ── Acceso al reporte OTIF de Drive (Apps Script) ─────────────
+        OTIF_DRIVE_URL = "https://script.google.com/a/macros/unionx.cl/s/AKfycbz7eDhT9yZLXCVVPu5aSOpee-ANf2gtGSyNXtQYkStbzzr4S-s-lMyV4WL3LDwezMJs/exec"
+        with st.container(border=True):
+            cda, cdb = st.columns([3, 1])
+            with cda:
+                st.markdown("**📊 Reporte OTIF detallado (Google Drive)**")
+                st.caption(
+                    "Vista alternativa con análisis manual desde planilla. "
+                    "Requiere login con cuenta @unionx.cl. "
+                    "*Roadmap H2: integración nativa leyendo el Sheet fuente con gspread.*"
+                )
+            with cdb:
+                st.link_button("🔗 Abrir reporte Drive", OTIF_DRIVE_URL,
+                               use_container_width=True, type="primary")
+
+        st.divider()
+        st.markdown("#### OTIF calculado desde Odoo (live)")
+
         col_period, _ = st.columns([1, 3])
         with col_period:
             dias_otif = st.selectbox("Ventana", [7, 14, 30, 60, 90], index=2, key="otif_dias")
