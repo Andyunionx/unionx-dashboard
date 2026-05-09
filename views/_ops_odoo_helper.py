@@ -34,9 +34,17 @@ def get_ops_odoo_client():
     """Devuelve OdooClient autenticado con creds OPS, o None si no hay creds.
 
     Cache_resource = singleton durante la sesión Streamlit (no se recrea por reload).
+
+    Cascada de credenciales (toma la primera disponible):
+      1. OPS_ODOO_USER + OPS_ODOO_PASSWORD (cuenta servicio Operaciones)
+      2. ANDRES_ODOO_USER + ANDRES_ODOO_PASSWORD (fallback usuario Andrés)
+      3. Default: 'andres@grupoeter.cl' + ANDRES_ODOO_PASSWORD
     """
-    user = os.environ.get("OPS_ODOO_USER", "").strip()
-    pwd = os.environ.get("OPS_ODOO_PASSWORD", "").strip()
+    user = (os.environ.get("OPS_ODOO_USER", "").strip()
+            or os.environ.get("ANDRES_ODOO_USER", "").strip()
+            or "andres@grupoeter.cl")
+    pwd = (os.environ.get("OPS_ODOO_PASSWORD", "").strip()
+           or os.environ.get("ANDRES_ODOO_PASSWORD", "").strip())
     if not user or not pwd:
         return None
 
