@@ -695,14 +695,45 @@ def render():
                                use_container_width=True, type="primary")
 
         st.divider()
-        st.markdown("#### OTIF calculado desde Odoo (live)")
+        st.markdown("#### OTIF calculado desde Odoo (snapshot/live)")
 
-        col_period, _ = st.columns([1, 3])
+        # Snapshot (instantáneo) o lazy fallback
+        from views._ops_kpis_snapshot import (
+            cargar_snapshot as _cs_otif, snapshot_status as _ss_otif,
+            get_otif_ventana as _gov,
+        )
+        ss_otif = _ss_otif()
+        snap_otif = _cs_otif()
+
+        col_period, col_period2 = st.columns([1, 3])
         with col_period:
             dias_otif = st.selectbox("Ventana", [7, 14, 30, 60, 90], index=2, key="otif_dias")
 
-        otif_b2c_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=False)
-        otif_b2b_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=True)
+        if ss_otif["existe"] and ss_otif["fresco"]:
+            with col_period2:
+                st.success(f"📸 {ss_otif['leyenda']}")
+
+        # Snapshot tiene OTIF para ventanas 7/14/30/60/90 — todas
+        usar_snap_otif = (
+            ss_otif["existe"] and ss_otif["fresco"]
+            and not st.session_state.get('otif_force_refresh')
+        )
+
+        if usar_snap_otif:
+            otif_b2c_t = _gov("b2c", dias_otif)
+            otif_b2b_t = _gov("b2b", dias_otif)
+        else:
+            if not st.session_state.get('otif_loaded'):
+                st.info("👆 Sin snapshot fresco. Click 'Cargar OTIF desde Odoo' para consultar (10-30s).")
+                if st.button("📥 Cargar OTIF desde Odoo", type="primary", key="otif_load_btn"):
+                    st.session_state['otif_loaded'] = True
+                    st.rerun()
+                otif_b2c_t = {"error": "Sin cargar"}
+                otif_b2b_t = {"error": "Sin cargar"}
+            else:
+                with st.spinner(f"Consultando Odoo (ventana {dias_otif}d)…"):
+                    otif_b2c_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=False)
+                    otif_b2b_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=True)
 
         st.markdown("#### B2C (clientes finales)")
         if otif_b2c_t.get("error"):
@@ -733,8 +764,14 @@ def render():
         st.divider()
 
         st.markdown("### 🏢 Top clientes B2B con peor OTIF")
-        top = _safe_wms(top_clientes_otif_problemas, dias=dias_otif, top_n=15,
-                        default={"valor": [], "error": None})
+        # Usar snapshot si está disponible (siempre 30d), fallback a Odoo bajo demanda
+        if usar_snap_otif and dias_otif == 30:
+            top = snap_otif.get("kpis", {}).get("top_clientes_otif_30d", {"valor": []})
+        elif st.session_state.get('otif_loaded'):
+            top = _safe_wms(top_clientes_otif_problemas, dias=dias_otif, top_n=15,
+                            default={"valor": [], "error": None})
+        else:
+            top = {"valor": []}
         if top.get("valor"):
             df = pd.DataFrame(top["valor"])
             df["on_time_pct"] = (df["on_time_pct"] * 100).round(1).astype(str) + "%"
@@ -744,18 +781,63 @@ def render():
             st.info("Sin datos")
 
     # ============================================================
-    # TAB 3 — PICKING & OFR/OCT
+    # TAB 3 — PICKING & OFR/OCT (snapshot + lazy fallback)
     # ============================================================
     with tabs[3]:
         st.markdown("### 🎯 Pick Accuracy + OFR + OCT + Productividad")
 
-        col_p, _ = st.columns([1, 3])
+        # Snapshot precalculado (si existe) — instantáneo
+        from views._ops_kpis_snapshot import (
+            cargar_snapshot, snapshot_status, get_pick_ventana,
+        )
+        ss_pick = snapshot_status()
+        snap_pick = cargar_snapshot()
+
+        col_p, col_p2 = st.columns([1, 3])
         with col_p:
             dias_p = st.selectbox("Ventana", [7, 14, 30, 60, 90], index=2, key="pick_dias")
 
-        pick_acc_t = _safe_wms(kpi_pick_accuracy, dias=dias_p)
-        ofr_t = _safe_wms(kpi_ofr, dias=dias_p)
-        oct_t = _safe_wms(kpi_oct, dias=dias_p)
+        # Banner del snapshot
+        if ss_pick["existe"] and ss_pick["fresco"]:
+            with col_p2:
+                st.success(f"📸 {ss_pick['leyenda']} — datos instantáneos")
+
+        # Si el user pidió ventana 30d Y hay snapshot fresco, usar snapshot
+        usar_snapshot_pick = (
+            ss_pick["existe"] and ss_pick["fresco"]
+            and dias_p == 30
+            and not st.session_state.get('pick_force_refresh')
+        )
+
+        if usar_snapshot_pick:
+            # Lectura instantánea del snapshot
+            pick_acc_t = snap_pick.get("kpis", {}).get("pick_accuracy_30d", {})
+            ofr_t = snap_pick.get("kpis", {}).get("ofr_30d", {})
+            oct_t = snap_pick.get("kpis", {}).get("oct_30d", {})
+        else:
+            # Lazy: solo ejecuta queries si el user clickea
+            if not st.session_state.get('pick_loaded'):
+                if dias_p != 30:
+                    st.info(
+                        f"👆 Ventana {dias_p}d requiere queries en vivo Odoo "
+                        "(snapshot solo tiene 30d). Click 'Cargar' para consultar."
+                    )
+                else:
+                    st.info("👆 Sin snapshot fresco. Click 'Cargar Picking desde Odoo' "
+                            "para consultar en vivo (15-45s).")
+                if st.button("📥 Cargar Picking desde Odoo",
+                             type="primary", key="pick_load_btn"):
+                    st.session_state['pick_loaded'] = True
+                    st.rerun()
+                # Sin click, no hace queries — Tab queda con info pero NO en blanco
+                pick_acc_t = {"error": "Sin cargar"}
+                ofr_t = {"error": "Sin cargar"}
+                oct_t = {"error": "Sin cargar"}
+            else:
+                with st.spinner(f"Consultando Odoo (ventana {dias_p}d)…"):
+                    pick_acc_t = _safe_wms(kpi_pick_accuracy, dias=dias_p)
+                    ofr_t = _safe_wms(kpi_ofr, dias=dias_p)
+                    oct_t = _safe_wms(kpi_oct, dias=dias_p)
 
         # Pick Accuracy
         st.markdown("#### Pick Accuracy")
@@ -1044,17 +1126,45 @@ def render():
                     st.info("👆 Click 'Calcular forecast operacional'. Lee proyección Prophet del dashboard ventas.")
 
     # ============================================================
-    # TAB 4 — RECEPCIONES
+    # TAB 4 — RECEPCIONES (snapshot + lazy fallback)
     # ============================================================
     with tabs[4]:
         st.markdown("### 📥 Recepciones")
         st.caption("Tiempo entre fecha programada y fecha efectiva de recepción de embarques")
 
-        col_r, _ = st.columns([1, 3])
+        from views._ops_kpis_snapshot import (
+            cargar_snapshot as _cs_rec, snapshot_status as _ss_rec,
+            get_recepcion_ventana as _grv,
+        )
+        ss_rec = _ss_rec()
+        snap_rec = _cs_rec()
+
+        col_r, col_r2 = st.columns([1, 3])
         with col_r:
             dias_r = st.selectbox("Ventana", [30, 60, 90, 180, 365], index=2, key="rec_dias")
 
-        rec = _safe_wms(kpi_tiempo_recepcion, dias=dias_r)
+        if ss_rec["existe"] and ss_rec["fresco"]:
+            with col_r2:
+                st.success(f"📸 {ss_rec['leyenda']}")
+
+        usar_snap_rec = (
+            ss_rec["existe"] and ss_rec["fresco"]
+            and not st.session_state.get('rec_force_refresh')
+        )
+
+        if usar_snap_rec:
+            rec = _grv(dias_r) or {"error": "Ventana no en snapshot"}
+        else:
+            if not st.session_state.get('rec_loaded'):
+                st.info("👆 Sin snapshot fresco. Click 'Cargar Recepciones' para consultar Odoo (5-15s).")
+                if st.button("📥 Cargar Recepciones desde Odoo",
+                             type="primary", key="rec_load_btn"):
+                    st.session_state['rec_loaded'] = True
+                    st.rerun()
+                rec = {"error": "Sin cargar"}
+            else:
+                with st.spinner(f"Consultando Odoo (ventana {dias_r}d)…"):
+                    rec = _safe_wms(kpi_tiempo_recepcion, dias=dias_r)
 
         if rec.get("error"):
             st.warning(rec["error"])
@@ -1073,7 +1183,13 @@ def render():
 
         st.divider()
 
-        vol = _safe_wms(kpi_volumen_movimientos, dias=dias_r)
+        # Volumen movs: usar snapshot 90d si está, sino lazy
+        if usar_snap_rec and dias_r == 90:
+            vol = snap_rec.get("kpis", {}).get("volumen_movs_90d", {"error": "Sin datos"})
+        elif st.session_state.get('rec_loaded'):
+            vol = _safe_wms(kpi_volumen_movimientos, dias=dias_r)
+        else:
+            vol = {"error": "Sin cargar"}
         st.markdown("### 📊 Volumen movimientos por tipo")
         if vol.get("error"):
             st.warning(vol["error"])
