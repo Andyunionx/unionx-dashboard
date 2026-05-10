@@ -78,7 +78,7 @@ def kpi_otif(dias: int = 30, canal_b2b: bool = False) -> Dict:
                 chunk_moves = odoo.search_read(
                     "stock.move",
                     [("picking_id", "in", chunk)],
-                    ["picking_id", "product_uom_qty", "quantity_done", "state"],
+                    ["picking_id", "product_uom_qty", "quantity", "state"],
                     limit=20000,
                 )
                 moves.extend(chunk_moves)
@@ -98,7 +98,7 @@ def kpi_otif(dias: int = 30, canal_b2b: bool = False) -> Dict:
                 continue
             # in_full = todos los moves cumplieron qty_done >= product_uom_qty
             ok = all(
-                (m.get("quantity_done") or 0) >= (m.get("product_uom_qty") or 0)
+                (m.get("quantity") or 0) >= (m.get("product_uom_qty") or 0)
                 for m in mvs
             )
             if ok:
@@ -117,7 +117,7 @@ def kpi_otif(dias: int = 30, canal_b2b: bool = False) -> Dict:
             mvs = moves_by_pid.get(pid, [])
             if not mvs:
                 continue
-            if all((m.get("quantity_done") or 0) >= (m.get("product_uom_qty") or 0) for m in mvs):
+            if all((m.get("quantity") or 0) >= (m.get("product_uom_qty") or 0) for m in mvs):
                 both += 1
 
         total = len(pickings)
@@ -157,7 +157,7 @@ def kpi_pick_accuracy(dias: int = 30) -> Dict:
                 [("state", "=", "done"),
                  ("date", ">=", desde),
                  ("picking_type_id.code", "=", "outgoing")],
-                ["product_uom_qty", "quantity_done"],
+                ["product_uom_qty", "quantity"],
                 page_size=2000,
             )
         except AttributeError:
@@ -167,14 +167,14 @@ def kpi_pick_accuracy(dias: int = 30) -> Dict:
                 [("state", "=", "done"),
                  ("date", ">=", desde),
                  ("picking_type_id.code", "=", "outgoing")],
-                ["product_uom_qty", "quantity_done"],
+                ["product_uom_qty", "quantity"],
                 limit=20000,
             )
         if not moves:
             return {"valor": None, "error": "Sin moves en ventana"}
 
         ok = sum(1 for m in moves
-                 if (m.get("quantity_done") or 0) == (m.get("product_uom_qty") or 0))
+                 if (m.get("quantity") or 0) == (m.get("product_uom_qty") or 0))
         total = len(moves)
         return {
             "valor": ok / total if total else None,
@@ -557,7 +557,7 @@ def tendencia_mensual(meses: int = 6) -> List[Dict]:
             moves = odoo.search_read(
                 "stock.move",
                 [("picking_id", "in", picking_ids)],
-                ["picking_id", "product_uom_qty", "quantity_done"],
+                ["picking_id", "product_uom_qty", "quantity"],
                 limit=200000,
             )
             moves_by_pid = defaultdict(list)
@@ -592,7 +592,7 @@ def tendencia_mensual(meses: int = 6) -> List[Dict]:
                 mvs = moves_by_pid.get(pid, [])
                 if not mvs:
                     continue
-                if all((m.get("quantity_done") or 0) >= (m.get("product_uom_qty") or 0) for m in mvs):
+                if all((m.get("quantity") or 0) >= (m.get("product_uom_qty") or 0) for m in mvs):
                     if b2b:
                         otif_b2b_count += 1
                     else:
@@ -600,7 +600,7 @@ def tendencia_mensual(meses: int = 6) -> List[Dict]:
 
             # Pick Accuracy = moves OK / total moves
             ok = sum(1 for m in moves
-                     if (m.get("quantity_done") or 0) == (m.get("product_uom_qty") or 0))
+                     if (m.get("quantity") or 0) == (m.get("product_uom_qty") or 0))
             pick_acc = ok / len(moves) if moves else None
 
             out.append({
@@ -1080,11 +1080,11 @@ def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
                     "stock.move",
                     [("picking_id", "in", pid_ids),
                      ("state", "=", "done")],
-                    ["product_uom_qty", "quantity_done"],
+                    ["product_uom_qty", "quantity"],
                     limit=200000,
                 )
                 n_lineas = len(moves)
-                n_unidades = sum(m.get("quantity_done", 0) or 0 for m in moves)
+                n_unidades = sum(m.get("quantity", 0) or 0 for m in moves)
 
             items.append({
                 "periodo": label,
