@@ -273,226 +273,13 @@ def render():
                     st.cache_data.clear()
                     st.rerun()
 
-            # Si snapshot fresco → leer del JSON (instantáneo)
-            # Si no → consultar Odoo en vivo automáticamente con cache 12h
+            # SNAPSHOT ONLY — la app NUNCA consulta Odoo en runtime
             if not (ss_st["existe"] and ss_st["fresco"]):
-                # MODO ODOO LIVE
-                with st.spinner("Consultando KPIs desde Odoo en vivo (cache 12h, próx. snapshot 00:00 / 12:00)…"):
-                    pass
-
-                # Cargar datos (defensivo: cualquier crash no debe romper Tabs 2-6)
-                otif_b2c = _safe_wms(kpi_otif, dias=30, canal_b2b=False)
-                otif_b2b = _safe_wms(kpi_otif, dias=30, canal_b2b=True)
-                pick_acc = _safe_wms(kpi_pick_accuracy, dias=30)
-                tiempo_rec = _safe_wms(kpi_tiempo_recepcion, dias=90)
-                ofr = _safe_wms(kpi_ofr, dias=30)
-                oct = _safe_wms(kpi_oct, dias=30)
-                exactitud = _safe_wms(kpi_exactitud_inventario, dias=30, default={"valor": None, "total": 0})
-                # Merma: priorizar Odoo (stock.scrap) sobre manual
-                merma_odoo_t = _safe_wms(kpi_merma_odoo, dias=90, default={"valor": None, "n_scraps": 0})
-                merma_manual = _safe_wms(kpi_merma_operativa, default={"valor": None, "n_meses": 0})
-                if merma_odoo_t.get("valor") is not None:
-                    merma = merma_odoo_t
-                    merma["fuente"] = "Odoo (90d)"
-                else:
-                    merma = merma_manual
-                    merma["fuente"] = "Manual"
-                # Cobertura: priorizar ajustes de inventario Odoo sobre cycle counts manuales
-                ajustes_t = _safe_wms(kpi_ajustes_inventario, desde_fecha="2026-04-01",
-                                      default={"cobertura_pct": None, "n_skus_unicos": 0})
-                if ajustes_t.get("cobertura_pct") is not None:
-                    cobertura = {
-                        "valor": ajustes_t.get("cobertura_pct"),
-                        "n_auditados": ajustes_t.get("n_skus_unicos", 0),
-                        "total_skus": ajustes_t.get("total_skus_activos", 0),
-                        "fuente": "Odoo ajustes desde 2026-04",
-                    }
-                else:
-                    cobertura = _safe_wms(kpi_cobertura_cycle_counts, meses=12, default={"valor": None})
-                    cobertura["fuente"] = "Cycle counts manuales"
-
-                mes_actual = datetime.now().strftime("%Y-%m")
-                # Usar horas efectivas (override manual o auto-calculado por calendario)
-                _eq_efec = get_horas_mes_efectivas(mes_actual)
-                equipo = {"personas": _eq_efec.get("n_personas", 0),
-                          "horas_total": _eq_efec.get("horas_total", 0),
-                          "fuente": _eq_efec.get("fuente", "")}
-                lineas_mes = _safe_wms(kpi_lineas_pickeadas_mes, mes_actual, default={"lineas": 0})
-
-                # Fila 1: Cumplimiento al cliente (OTIF + OFR + OCT)
-                st.markdown("#### 📦 Cumplimiento al cliente (Odoo)")
-                c1, c2, c3, c4 = st.columns(4)
-
-                # OTIF B2C
-                v = otif_b2c.get("valor")
-                sem, color = _semaforo(v, 0.97, 0.92, mayor_es_mejor=True)
-                c1.markdown(_kpi_card("OTIF B2C",
-                                       f"{v*100:.1f}%" if v is not None else "—",
-                                       f"Bench: 92-97% · {otif_b2c.get('total_pickings', 0)} pickings",
-                                       color, sem), unsafe_allow_html=True)
-
-                # OTIF B2B
-                v = otif_b2b.get("valor")
-                sem, color = _semaforo(v, 0.98, 0.95, mayor_es_mejor=True)
-                c2.markdown(_kpi_card("OTIF B2B",
-                                       f"{v*100:.1f}%" if v is not None else "—",
-                                       f"Bench: 95-98% · {otif_b2b.get('total_pickings', 0)} pickings",
-                                       color, sem), unsafe_allow_html=True)
-
-                # OFR
-                v = ofr.get("valor")
-                sem, color = _semaforo(v, 0.95, 0.85, mayor_es_mejor=True)
-                c3.markdown(_kpi_card("OFR (cumplim. SO)",
-                                       f"{v*100:.1f}%" if v is not None else "—",
-                                       f"Bench: ≥95% · {ofr.get('cumplidos', 0)}/{ofr.get('total_con_pickings', 0)} SO",
-                                       color, sem), unsafe_allow_html=True)
-
-                # OCT
-                v = oct.get("valor")
-                sem, color = _semaforo(v, 24, amarillo_max=72, mayor_es_mejor=False)
-                c4.markdown(_kpi_card("OCT (orden→despacho)",
-                                       f"{v:.0f}h" if v is not None else "—",
-                                       f"Bench: <24h B2C/<72h B2B · {oct.get('n_orders', 0)} SO",
-                                       color, sem), unsafe_allow_html=True)
-
-                st.markdown("<br>", unsafe_allow_html=True)
-
-                # Fila 2: Operación interna bodega
-                st.markdown("#### 🎯 Operación interna bodega (Odoo)")
-                c5, c6, c7, c8 = st.columns(4)
-
-                # Pick Accuracy
-                v = pick_acc.get("valor")
-                sem, color = _semaforo(v, 0.995, 0.98, mayor_es_mejor=True)
-                c5.markdown(_kpi_card("Pick Accuracy",
-                                       f"{v*100:.2f}%" if v is not None else "—",
-                                       f"Bench: ≥99.5% · {pick_acc.get('total', 0)} moves",
-                                       color, sem), unsafe_allow_html=True)
-
-                # Tiempo recepción
-                v = tiempo_rec.get("valor")
-                sem, color = _semaforo(v, 24, amarillo_max=72, mayor_es_mejor=False)
-                c6.markdown(_kpi_card("Tiempo recepción",
-                                       f"{v:.0f}h" if v is not None else "—",
-                                       f"Bench: 24-72h · {tiempo_rec.get('n_recepciones', 0)} recep.",
-                                       color, sem), unsafe_allow_html=True)
-
-                # Productividad picking (sincronizada por mes actual)
-                if equipo and equipo.get("horas_total", 0) > 0:
-                    lineas = lineas_mes.get("lineas", 0)
-                    horas = equipo.get("horas_total", 0)
-                    v = lineas / horas if horas else None
-                    sem, color = _semaforo(v, 60, 40, mayor_es_mejor=True)
-                    c7.markdown(_kpi_card("Productividad picking",
-                                           f"{v:.0f} líneas/h" if v is not None else "—",
-                                           f"Bench: 60-120 · {lineas:,} líneas / {horas:,.0f}h ({mes_actual})",
-                                           color, sem), unsafe_allow_html=True)
-                else:
-                    c7.markdown(_kpi_card("Productividad picking", "—",
-                                           f"Cargá horas equipo {mes_actual} (Tab 6)", "#94A3B8"),
-                                unsafe_allow_html=True)
-
-                # Ocupación bodega — # posiciones (exacto)
-                try:
-                    from views.shared import cached_stock
-                    stock_data = cached_stock()
-                    ocup_pct = stock_data.get("ocupacion", {}).get("pct", 0) if stock_data else 0
-                    ocup_total = stock_data.get("ocupacion", {}).get("total", 0) if stock_data else 0
-                    ocup_occ = stock_data.get("ocupacion", {}).get("occupied", 0) if stock_data else 0
-                    sem, color = _semaforo(ocup_pct/100, 0.85, amarillo_max=0.95, mayor_es_mejor=False)
-                    c8.markdown(_kpi_card("Ocupación bodega",
-                                           f"{ocup_pct:.0f}%" if ocup_total else "—",
-                                           f"{ocup_occ}/{ocup_total} posiciones · m³ pausado (H2)",
-                                           color, sem), unsafe_allow_html=True)
-                except Exception:
-                    c8.markdown(_kpi_card("Ocupación bodega", "—", "Sin datos stock", "#94A3B8"),
-                                unsafe_allow_html=True)
-
-                st.markdown("<br>", unsafe_allow_html=True)
-
-                # Fila 3: Calidad del inventario (manuales)
-                st.markdown("#### 🟡 Calidad del inventario (manuales)")
-                c9, c10, c11, c12 = st.columns(4)
-
-                # Exactitud inventario
-                v = exactitud.get("valor")
-                sem, color = _semaforo(v, 0.98, 0.95, mayor_es_mejor=True)
-                c9.markdown(_kpi_card("Exactitud Inventario",
-                                       f"{v*100:.1f}%" if v is not None else "—",
-                                       f"Bench: ≥98% · {exactitud.get('total', 0)} cycle counts",
-                                       color, sem), unsafe_allow_html=True)
-
-                # Cobertura cycle counts (Odoo ajustes con fallback manual)
-                v = cobertura.get("valor")
-                sem, color = _semaforo(v, 0.80, 0.50, mayor_es_mejor=True)
-                sub_cob = cobertura.get('fuente', '')
-                c10.markdown(_kpi_card("Cobertura ajustes inventario",
-                                       f"{v*100:.1f}%" if v is not None else "—",
-                                       f"Bench: ≥80% · {cobertura.get('n_auditados', 0)}/{cobertura.get('total_skus', 0)} · {sub_cob}",
-                                       color, sem), unsafe_allow_html=True)
-
-                # Merma operativa (Odoo stock.scrap con fallback manual)
-                v = merma.get("valor")
-                sem, color = _semaforo(v, 0.005, amarillo_max=0.01, mayor_es_mejor=False)
-                sub_merma = merma.get('fuente', '')
-                c11.markdown(_kpi_card("Merma operativa",
-                                       f"{v*100:.2f}%" if v is not None else "—",
-                                       f"Bench: ≤0.5% · {sub_merma}",
-                                       color, sem), unsafe_allow_html=True)
-
-                # Equipo bodega
-                n_pers = equipo.get("personas", 0)
-                n_horas = equipo.get("horas_total", 0)
-                c12.markdown(_kpi_card("Equipo bodega (mes)",
-                                       f"{n_pers} personas" if n_pers else "—",
-                                       f"{n_horas:,.0f}h totales {mes_actual}",
-                                       "#1F4E79" if n_pers else "#94A3B8"),
-                             unsafe_allow_html=True)
-
-                st.divider()
-
-                # Tabla resumen con benchmarks
-                st.markdown("### 📋 Matriz de benchmarks vs mercado")
-                bench = [
-                    {"KPI": "OTIF B2C", "Tu valor":
-                        f"{otif_b2c.get('valor',0)*100:.1f}%" if otif_b2c.get('valor') else "—",
-                     "Benchmark": "92-97%", "Fuente": "E-com chileno marketplaces"},
-                    {"KPI": "OTIF B2B", "Tu valor":
-                        f"{otif_b2b.get('valor',0)*100:.1f}%" if otif_b2b.get('valor') else "—",
-                     "Benchmark": "95-98%", "Fuente": "Cadenas retail Chile"},
-                    {"KPI": "OFR (Order Fulfillment Rate)", "Tu valor":
-                        f"{ofr.get('valor',0)*100:.1f}%" if ofr.get('valor') else "—",
-                     "Benchmark": "≥ 95%", "Fuente": "Plan estratégico UnionX"},
-                    {"KPI": "OCT (Order Cycle Time)", "Tu valor":
-                        f"{oct.get('valor',0):.0f}h" if oct.get('valor') else "—",
-                     "Benchmark": "<24h B2C / <72h B2B", "Fuente": "E-com Chile"},
-                    {"KPI": "Pick Accuracy", "Tu valor":
-                        f"{pick_acc.get('valor',0)*100:.2f}%" if pick_acc.get('valor') else "—",
-                     "Benchmark": "≥ 99.5%", "Fuente": "E-com retail multicategoría"},
-                    {"KPI": "Tiempo recepción", "Tu valor":
-                        f"{tiempo_rec.get('valor',0):.0f}h" if tiempo_rec.get('valor') else "—",
-                     "Benchmark": "24-72 horas", "Fuente": "Importadores con WMS"},
-                    {"KPI": "Exactitud de inventario", "Tu valor":
-                        f"{exactitud.get('valor',0)*100:.1f}%" if exactitud.get('valor') else "—",
-                     "Benchmark": "≥ 98% (clase mundial 99.5%)", "Fuente": "WMS-driven warehouses"},
-                    {"KPI": "Cobertura cycle counts (12m)", "Tu valor":
-                        f"{cobertura.get('valor',0)*100:.1f}%" if cobertura.get('valor') else "—",
-                     "Benchmark": "≥ 80% SKUs auditados/año", "Fuente": "Best practice WMS"},
-                    {"KPI": "Merma operativa", "Tu valor":
-                        f"{merma.get('valor',0)*100:.2f}%" if merma.get('valor') else "—",
-                     "Benchmark": "≤ 0.5% del inventario", "Fuente": "Retail multicategoría"},
-                ]
-                st.dataframe(pd.DataFrame(bench), use_container_width=True, hide_index=True)
-
-                # Expander con errores capturados (no rompe los otros tabs)
-                errs = st.session_state.get('_wms_errors', [])
-                if errs:
-                    with st.expander(f"🐛 Errores helpers Odoo capturados ({len(errs)})", expanded=False):
-                        for e in errs[:10]:
-                            st.code(e)
-                        if st.button("🧹 Limpiar errores", key="wms_clear_errs"):
-                            st.session_state['_wms_errors'] = []
-                            st.rerun()
+                st.warning(
+                    "📸 **Snapshot pendiente.** Los KPIs se generan automáticamente "
+                    "a las 00:00 y 12:00 Chile via GH Action `sync_kpis_wms.yml`. "
+                    "Si necesitás datos ahora, dispará el workflow manualmente desde GitHub."
+                )
             else:
                 # Modo snapshot: lectura instantánea del JSON pre-calculado
                 from views._ops_kpis_snapshot import cargar_snapshot
@@ -724,21 +511,15 @@ def render():
             # con cache 12h (no se cuelga, no pide click)
             usar_snap_otif = ss_otif["existe"] and ss_otif["fresco"]
 
+            # SNAPSHOT ONLY — no consulta Odoo en runtime
             if usar_snap_otif:
-                otif_b2c_t = _gov("b2c", dias_otif)
-                otif_b2b_t = _gov("b2b", dias_otif)
-                # Si la ventana específica no está en snapshot → usar Odoo
-                if not otif_b2c_t or otif_b2c_t.get("error") == "Ventana no en snapshot":
-                    with st.spinner(f"Consultando Odoo (ventana {dias_otif}d, cache 12h)…"):
-                        otif_b2c_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=False)
-                        otif_b2b_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=True)
+                otif_b2c_t = _gov("b2c", dias_otif) or {"error": "Ventana no en snapshot"}
+                otif_b2b_t = _gov("b2b", dias_otif) or {"error": "Ventana no en snapshot"}
             else:
-                # Sin snapshot fresco — consulta Odoo automáticamente con cache 12h
                 with col_period2:
-                    st.warning("📸 Sin snapshot fresco. Consultando Odoo en vivo (próxima actualización automática 00:00 / 12:00 Chile)")
-                with st.spinner(f"Consultando Odoo (ventana {dias_otif}d, cache 12h)…"):
-                    otif_b2c_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=False)
-                    otif_b2b_t = _safe_wms(kpi_otif, dias=dias_otif, canal_b2b=True)
+                    st.warning("📸 Snapshot pendiente. Próx. actualización automática 00:00 / 12:00 Chile.")
+                otif_b2c_t = {"error": "Esperando primer snapshot"}
+                otif_b2b_t = {"error": "Esperando primer snapshot"}
 
             st.markdown("#### B2C (clientes finales)")
             if otif_b2c_t.get("error"):
@@ -769,12 +550,11 @@ def render():
             st.divider()
 
             st.markdown("### 🏢 Top clientes B2B con peor OTIF")
-            # Snapshot 30d o Odoo en vivo (cache 12h)
+            # SNAPSHOT ONLY (30d)
             if usar_snap_otif and dias_otif == 30:
                 top = snap_otif.get("kpis", {}).get("top_clientes_otif_30d", {"valor": []})
             else:
-                top = _safe_wms(top_clientes_otif_problemas, dias=dias_otif, top_n=15,
-                                default={"valor": [], "error": None})
+                top = {"valor": []}
             if top.get("valor"):
                 df = pd.DataFrame(top["valor"])
                 df["on_time_pct"] = (df["on_time_pct"] * 100).round(1).astype(str) + "%"
@@ -817,25 +597,23 @@ def render():
                 ss_pick["existe"] and ss_pick["fresco"] and dias_p == 30
             )
 
+            # SNAPSHOT ONLY — la app NO consulta Odoo en runtime
             if usar_snapshot_pick:
-                pick_acc_t = snap_pick.get("kpis", {}).get("pick_accuracy_30d", {})
-                ofr_t = snap_pick.get("kpis", {}).get("ofr_30d", {})
-                oct_t = snap_pick.get("kpis", {}).get("oct_30d", {})
+                pick_acc_t = snap_pick.get("kpis", {}).get("pick_accuracy_30d", {"error": "Sin datos en snapshot"})
+                ofr_t = snap_pick.get("kpis", {}).get("ofr_30d", {"error": "Sin datos en snapshot"})
+                oct_t = snap_pick.get("kpis", {}).get("oct_30d", {"error": "Sin datos en snapshot"})
+            elif dias_p != 30:
+                with col_p2:
+                    st.info(f"ℹ️ Snapshot solo tiene ventana 30d. Cambiá filtro a 30d.")
+                pick_acc_t = {"error": "Ventana no en snapshot"}
+                ofr_t = {"error": "Ventana no en snapshot"}
+                oct_t = {"error": "Ventana no en snapshot"}
             else:
-                # Sin snapshot fresco o ventana ≠ 30d → consultar Odoo automáticamente
-                if not (ss_pick["existe"] and ss_pick["fresco"]):
-                    with col_p2:
-                        st.warning("📸 Sin snapshot fresco. Consultando Odoo en vivo (cache 12h, próx. actualización 00:00 / 12:00 Chile)")
-                # Cada KPI por separado con su propio try/except — uno fallido no bloquea el resto
-                with st.spinner(f"Pick Accuracy (ventana {dias_p}d)…"):
-                    pick_acc_t = _safe_wms(kpi_pick_accuracy, dias=dias_p,
-                                            default={"valor": None, "error": "Sin datos"})
-                with st.spinner(f"OFR (ventana {dias_p}d)…"):
-                    ofr_t = _safe_wms(kpi_ofr, dias=dias_p,
-                                       default={"valor": None, "error": "Sin datos"})
-                with st.spinner(f"OCT (ventana {dias_p}d, query pesada — puede tardar 30-60s)…"):
-                    oct_t = _safe_wms(kpi_oct, dias=dias_p,
-                                       default={"valor": None, "error": "Sin datos"})
+                with col_p2:
+                    st.warning("📸 Snapshot pendiente. Próx. actualización automática 00:00 / 12:00 Chile.")
+                pick_acc_t = {"error": "Esperando primer snapshot"}
+                ofr_t = {"error": "Esperando primer snapshot"}
+                oct_t = {"error": "Esperando primer snapshot"}
 
             # Pick Accuracy
             st.markdown("#### Pick Accuracy")
@@ -1154,17 +932,13 @@ def render():
 
             usar_snap_rec = ss_rec["existe"] and ss_rec["fresco"]
 
+            # SNAPSHOT ONLY
             if usar_snap_rec:
-                rec = _grv(dias_r) or {}
-                # Si la ventana específica no está en snapshot, consultar Odoo
-                if not rec or rec.get("error") == "Ventana no en snapshot":
-                    with st.spinner(f"Consultando Odoo (ventana {dias_r}d, cache 12h)…"):
-                        rec = _safe_wms(kpi_tiempo_recepcion, dias=dias_r)
+                rec = _grv(dias_r) or {"error": "Ventana no en snapshot"}
             else:
                 with col_r2:
-                    st.warning("📸 Sin snapshot fresco. Consultando Odoo en vivo (próx. actualización 00:00 / 12:00 Chile)")
-                with st.spinner(f"Consultando Odoo (ventana {dias_r}d, cache 12h)…"):
-                    rec = _safe_wms(kpi_tiempo_recepcion, dias=dias_r)
+                    st.warning("📸 Snapshot pendiente. Próx. actualización automática 00:00 / 12:00 Chile.")
+                rec = {"error": "Esperando primer snapshot"}
 
             if rec.get("error"):
                 st.warning(rec["error"])
@@ -1183,11 +957,11 @@ def render():
 
             st.divider()
 
-            # Volumen movs: snapshot 90d o Odoo en vivo (cache 12h)
+            # Volumen movs: SNAPSHOT ONLY (90d)
             if usar_snap_rec and dias_r == 90:
                 vol = snap_rec.get("kpis", {}).get("volumen_movs_90d", {"error": "Sin datos"})
             else:
-                vol = _safe_wms(kpi_volumen_movimientos, dias=dias_r)
+                vol = {"error": "Solo disponible para ventana 90d en snapshot"}
             st.markdown("### 📊 Volumen movimientos por tipo")
             if vol.get("error"):
                 st.warning(vol["error"])
