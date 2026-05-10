@@ -65,7 +65,7 @@ jobs:
         run: python extract_forecast_skus.py
         continue-on-error: true
 
-      - name: 5. Validation MAPE (backtest 60d)
+      - name: 5. Validation MAPE (backtest 60d) + sesgo Prophet TOTAL
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
@@ -73,7 +73,13 @@ jobs:
         run: python extract_forecast_validation.py
         continue-on-error: true
 
-      - name: 6. Reconciliacion MinT
+      - name: 6a. Calibracion forecast TOTAL (anclado al sesgo medido)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_forecast_calibrated.py
+        continue-on-error: true
+
+      - name: 6b. Reconciliacion MinT
         env:
           PYTHONIOENCODING: utf-8
         run: python extract_forecast_mint.py

@@ -1,0 +1,11 @@
+{
+  "generado_en": "2026-05-10T08:51:57.336275",
+  "factor_calibracion": 0.85,
+  "cobertura_skus_forecasted": 0.4980240762233734,
+  "n_skus_forecasted": 89,
+  "sesgo_sku_pct": 51.6984765722596,
+  "sesgo_total_efectivo_pct": 36.18893360058172,
+  "descuento_aplicado_pct": 15.000000000000002,
+  "metodo": "factor = 1 / (1 + sesgo_total/100), donde sesgo_total = sesgo_SKU * 0.5 (errores cancelan al agregar)",
+  "note": "Backup en data/forecast/_raw/. Factor clampeado a [0.5, 1.2] para evitar volatilidad. Re-mide cada cron."
+}

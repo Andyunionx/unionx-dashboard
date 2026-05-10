@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-05-10T08:21:13.497993",
+  "generado_en": "2026-05-10T08:51:55.767060",
   "pares_validados": 175,
   "pares_con_mape": 175,
   "mape_pct_p50": 57.58081250933659,
@@ -9,5 +9,12 @@
   "sesgo_promedio": 8.52884037376811,
   "venta_real_total_test": 18707.0,
   "venta_pred_total_test": 28378.234012372603,
-  "sesgo_global_pct": 51.6984765722596
+  "sesgo_global_pct": 51.6984765722596,
+  "prophet_total_backtest": {
+    "venta_real_total": 58748.0,
+    "venta_pred_total": 154592.66901507686,
+    "sesgo_total_pct": 163.1454160398258,
+    "mape_total_pct": 311.34563102000055,
+    "n_dias": 59
+  }
 }

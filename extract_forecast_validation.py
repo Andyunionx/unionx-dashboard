@@ -176,6 +176,45 @@ def validar_sku_canal(sku: str, canal: str, ventas: pd.DataFrame,
     }
 
 
+def backtest_prophet_total(ventas: pd.DataFrame, holidays: pd.DataFrame,
+                            fecha_corte: pd.Timestamp, horizonte: int = 60) -> dict:
+    """Backtest del Prophet TOTAL (serie agregada). Mide sesgo a nivel total."""
+    from prophet import Prophet
+    print(f"\n[X] Backtest Prophet TOTAL: train hasta {fecha_corte.date()}, predict {horizonte}d", flush=True)
+
+    # Serie diaria total
+    df_diario = ventas.groupby('fecha', as_index=False)['cantidad'].sum()
+    df_diario['ds'] = df_diario['fecha']
+    df_diario['y'] = df_diario['cantidad']
+    train = df_diario[df_diario['ds'] <= fecha_corte][['ds', 'y']]
+    test = df_diario[(df_diario['ds'] > fecha_corte) &
+                      (df_diario['ds'] <= fecha_corte + pd.Timedelta(days=horizonte))]
+    if len(train) < 90 or test.empty:
+        return {}
+
+    m = Prophet(yearly_seasonality=True, weekly_seasonality=True, daily_seasonality=False,
+                 changepoint_prior_scale=0.05, holidays=holidays, holidays_prior_scale=10.0)
+    m.fit(train)
+    future = m.make_future_dataframe(periods=horizonte, freq='D')
+    fc = m.predict(future)
+    fc_test = fc[fc['ds'] > fecha_corte][['ds', 'yhat']]
+    merged = pd.merge(test[['ds', 'cantidad']], fc_test, on='ds', how='inner')
+    if merged.empty:
+        return {}
+    real = merged['cantidad'].values
+    pred = np.maximum(merged['yhat'].values, 0)
+    mape = float(np.mean(np.abs(real - pred) / np.maximum(real, 1)) * 100)
+    sesgo_pct = float((pred.sum() - real.sum()) / max(real.sum(), 1) * 100)
+    print(f"   TOTAL real {real.sum():.0f} unid, predicho {pred.sum():.0f} unid, sesgo {sesgo_pct:+.1f}%, MAPE {mape:.1f}%", flush=True)
+    return {
+        'venta_real_total': float(real.sum()),
+        'venta_pred_total': float(pred.sum()),
+        'sesgo_total_pct': sesgo_pct,
+        'mape_total_pct': mape,
+        'n_dias': len(merged),
+    }
+
+
 def main():
     if not URL or not TOKEN:
         print("[ERROR] LIBSQL_URL/LIBSQL_AUTH_TOKEN no seteados", flush=True)
@@ -248,6 +287,9 @@ def main():
         sku_meta = h.drop_duplicates('sku').set_index('sku')
 
     df_val_clean = df_val.dropna(subset=['mape_pct'])
+    # Backtest del Prophet TOTAL (serie agregada) para medir sesgo a nivel total
+    bt_total = backtest_prophet_total(ventas, holidays, fecha_corte, horizonte=60)
+
     summary = {
         'generado_en': datetime.now().isoformat(),
         'pares_validados': len(df_val),
@@ -263,6 +305,7 @@ def main():
             (df_val['venta_pred_test'].sum() - df_val['venta_real_test'].sum())
             / max(df_val['venta_real_test'].sum(), 1) * 100
         ),
+        'prophet_total_backtest': bt_total,
     }
     with open(OUT_DIR / 'validation_summary.json', 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2, default=str)

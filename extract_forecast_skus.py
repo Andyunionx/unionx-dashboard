@@ -420,9 +420,19 @@ def main():
             })
 
             fc, model = forecast_sku_canal(df_serie, regs, DIAS_ADELANTE, holidays)
-            # Guardar predicciones futuras
-            fc_fut = fc[fc['ds'] > df_serie['ds'].max()][
+            # Guardar predicciones futuras (filtrar futuro estricto desde HOY, no desde max(train))
+            hoy_ts = pd.Timestamp(datetime.now().date())
+            fc_fut = fc[fc['ds'] > hoy_ts][
                 ['ds', 'yhat', 'yhat_lower', 'yhat_upper']].copy()
+            # Clip a >= 0 (no hay venta negativa). Prophet a veces predice negativos en SKUs
+            # con cambios bruscos de tendencia o ventas intermitentes.
+            for c in ['yhat', 'yhat_lower', 'yhat_upper']:
+                fc_fut[c] = fc_fut[c].clip(lower=0)
+            # Outlier guard: si yhat de algun dia > 10x del max historico de train, descartar SKU
+            max_hist = df_serie['y'].max()
+            if max_hist > 0 and (fc_fut['yhat'] > 10 * max_hist).any():
+                print(f"   [{i}] {sku}/{canal}: outlier (yhat > 10x max hist), descartado", flush=True)
+                continue
             fc_fut['sku'] = sku
             fc_fut['canal'] = canal
             forecasts.append(fc_fut)
