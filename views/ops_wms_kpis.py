@@ -810,11 +810,17 @@ def render():
             # Sin snapshot fresco o ventana ≠ 30d → consultar Odoo automáticamente
             if not (ss_pick["existe"] and ss_pick["fresco"]):
                 with col_p2:
-                    st.warning("📸 Sin snapshot fresco. Consultando Odoo en vivo (próx. actualización 00:00 / 12:00 Chile)")
-            with st.spinner(f"Consultando Odoo (ventana {dias_p}d, cache 12h)…"):
-                pick_acc_t = _safe_wms(kpi_pick_accuracy, dias=dias_p)
-                ofr_t = _safe_wms(kpi_ofr, dias=dias_p)
-                oct_t = _safe_wms(kpi_oct, dias=dias_p)
+                    st.warning("📸 Sin snapshot fresco. Consultando Odoo en vivo (cache 12h, próx. actualización 00:00 / 12:00 Chile)")
+            # Cada KPI por separado con su propio try/except — uno fallido no bloquea el resto
+            with st.spinner(f"Pick Accuracy (ventana {dias_p}d)…"):
+                pick_acc_t = _safe_wms(kpi_pick_accuracy, dias=dias_p,
+                                        default={"valor": None, "error": "Sin datos"})
+            with st.spinner(f"OFR (ventana {dias_p}d)…"):
+                ofr_t = _safe_wms(kpi_ofr, dias=dias_p,
+                                   default={"valor": None, "error": "Sin datos"})
+            with st.spinner(f"OCT (ventana {dias_p}d, query pesada — puede tardar 30-60s)…"):
+                oct_t = _safe_wms(kpi_oct, dias=dias_p,
+                                   default={"valor": None, "error": "Sin datos"})
 
         # Pick Accuracy
         st.markdown("#### Pick Accuracy")
