@@ -22,7 +22,7 @@ from views._ops_odoo_helper import get_ops_odoo_client
 # ============================================================
 # OTIF B2C / B2B
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_otif(dias: int = 30, canal_b2b: bool = False) -> Dict:
     """OTIF = on-time + in-full sobre pickings done en últimos N días.
 
@@ -130,7 +130,7 @@ def kpi_otif(dias: int = 30, canal_b2b: bool = False) -> Dict:
 # ============================================================
 # PICK ACCURACY
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_pick_accuracy(dias: int = 30) -> Dict:
     """Pick Accuracy = moves sin discrepancia / total moves done en ventana.
 
@@ -170,7 +170,7 @@ def kpi_pick_accuracy(dias: int = 30) -> Dict:
 # ============================================================
 # TIEMPO DE RECEPCIÓN
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_tiempo_recepcion(dias: int = 90) -> Dict:
     """Tiempo recepción = horas entre scheduled_date y date_done para pickings incoming.
 
@@ -238,7 +238,7 @@ def kpi_tiempo_recepcion(dias: int = 90) -> Dict:
 # ============================================================
 # VOLUMEN DE MOVIMIENTOS
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_volumen_movimientos(dias: int = 30) -> Dict:
     """Volumen de movimientos por tipo (incoming, outgoing, internal) último N días."""
     odoo = get_ops_odoo_client()
@@ -270,7 +270,7 @@ def kpi_volumen_movimientos(dias: int = 30) -> Dict:
 # ============================================================
 # OFR — Order Fulfillment Rate
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_ofr(dias: int = 30) -> Dict:
     """OFR = sale.orders cumplidos completos / total sale.orders del período.
 
@@ -352,7 +352,7 @@ def kpi_ofr(dias: int = 30) -> Dict:
 # ============================================================
 # OCT — Order Cycle Time
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_oct(dias: int = 30) -> Dict:
     """OCT = horas promedio entre confirmación venta (sale.order.date_order)
     y primer despacho (stock.picking outgoing date_done).
@@ -449,7 +449,7 @@ def kpi_oct(dias: int = 30) -> Dict:
 # ============================================================
 # PRODUCTIVIDAD PICKING — por mes específico
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_lineas_pickeadas_mes(mes: str) -> Dict:
     """Líneas (moves) pickeadas en el mes YYYY-MM.
 
@@ -487,7 +487,7 @@ def kpi_lineas_pickeadas_mes(mes: str) -> Dict:
 # ============================================================
 # TENDENCIA MES A MES (OTIF + Pick Accuracy + OCT)
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def tendencia_mensual(meses: int = 6) -> List[Dict]:
     """Histórico mes a mes de KPIs principales.
 
@@ -601,7 +601,7 @@ def tendencia_mensual(meses: int = 6) -> List[Dict]:
 # ============================================================
 # MERMA OPERATIVA — desde Odoo stock.scrap
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_merma_odoo(dias: int = 90) -> Dict:
     """Merma ejecutada en Odoo via stock.scrap state=done.
 
@@ -714,7 +714,7 @@ def kpi_merma_odoo(dias: int = 90) -> Dict:
 # ============================================================
 # AJUSTES DE INVENTARIO — desde Odoo stock.move (cycle counts)
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_ajustes_inventario(desde_fecha: str = "2026-04-01") -> Dict:
     """Ajustes de inventario hechos en Odoo desde fecha (default abril 2026).
 
@@ -843,7 +843,7 @@ def kpi_ajustes_inventario(desde_fecha: str = "2026-04-01") -> Dict:
 # ============================================================
 # PLAN AUDITORÍA SEMANAL (priorización por alta rotación)
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def plan_auditoria_semanal(
     top_n_priorizar: int = 50,
     dias_sin_ajuste: int = 30,
@@ -994,7 +994,7 @@ def plan_auditoria_semanal(
 # ============================================================
 # PRODUCTIVIDAD POR PERÍODO (día / semana / mes)
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
     """Productividad operativa: pedidos despachados, unidades, líneas pickeadas.
 
@@ -1089,7 +1089,7 @@ def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
 # ============================================================
 # FORECAST VOLUMEN PICKING — V2: basado en forecast Prophet de ventas
 # ============================================================
-@st.cache_data(ttl=900, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def forecast_volumen_picking(meses_adelante: int = 3) -> Dict:
     """Proyecta carga de picking basada en el forecast de VENTAS (Prophet).
 
@@ -1242,7 +1242,7 @@ def forecast_volumen_picking(meses_adelante: int = 3) -> Dict:
 # ============================================================
 # COBERTURA CYCLE COUNTS
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def kpi_cobertura_cycle_counts(meses: int = 12) -> Dict:
     """% SKUs únicos auditados en últimos N meses sobre total SKUs activos."""
     from views._ops_data_helper import get_cycle_counts
@@ -1277,7 +1277,7 @@ def kpi_cobertura_cycle_counts(meses: int = 12) -> Dict:
 # ============================================================
 # TOP CLIENTES B2B CON PROBLEMAS DE OTIF
 # ============================================================
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=43200, show_spinner=False)
 def top_clientes_otif_problemas(dias: int = 30, top_n: int = 10) -> Dict:
     """Identifica clientes B2B con peor OTIF para foco de mejora."""
     odoo = get_ops_odoo_client()
