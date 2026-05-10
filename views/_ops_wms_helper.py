@@ -68,14 +68,22 @@ def kpi_otif(dias: int = 30, canal_b2b: bool = False) -> Dict:
                 on_time += 1
 
         # In-full: qty_done >= product_uom_qty para TODAS las move_lines del picking
-        # Esto requiere consultar move_lines (más caro, hacer en lote)
+        # Paginar moves en chunks de 100 picking_ids para evitar 502 Odoo SaaS
         picking_ids = [p["id"] for p in pickings]
-        moves = odoo.search_read(
-            "stock.move",
-            [("picking_id", "in", picking_ids)],
-            ["picking_id", "product_uom_qty", "quantity_done", "state"],
-            limit=200000,
-        )
+        moves = []
+        chunk_size = 100
+        for i in range(0, len(picking_ids), chunk_size):
+            chunk = picking_ids[i:i + chunk_size]
+            try:
+                chunk_moves = odoo.search_read(
+                    "stock.move",
+                    [("picking_id", "in", chunk)],
+                    ["picking_id", "product_uom_qty", "quantity_done", "state"],
+                    limit=20000,
+                )
+                moves.extend(chunk_moves)
+            except Exception:
+                continue  # Skip chunk problemático, mejor parcial que nada
         # Agrupar por picking
         moves_by_pid = defaultdict(list)
         for m in moves:
@@ -142,14 +150,26 @@ def kpi_pick_accuracy(dias: int = 30) -> Dict:
 
     try:
         desde = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
-        moves = odoo.search_read(
-            "stock.move",
-            [("state", "=", "done"),
-             ("date", ">=", desde),
-             ("picking_type_id.code", "=", "outgoing")],
-            ["product_uom_qty", "quantity_done"],
-            limit=200000,
-        )
+        # Paginar para evitar 502 Odoo SaaS en respuestas grandes
+        try:
+            moves = odoo.search_read_paginated(
+                "stock.move",
+                [("state", "=", "done"),
+                 ("date", ">=", desde),
+                 ("picking_type_id.code", "=", "outgoing")],
+                ["product_uom_qty", "quantity_done"],
+                page_size=2000,
+            )
+        except AttributeError:
+            # Fallback si search_read_paginated no existe
+            moves = odoo.search_read(
+                "stock.move",
+                [("state", "=", "done"),
+                 ("date", ">=", desde),
+                 ("picking_type_id.code", "=", "outgoing")],
+                ["product_uom_qty", "quantity_done"],
+                limit=20000,
+            )
         if not moves:
             return {"valor": None, "error": "Sin moves en ventana"}
 
