@@ -79,23 +79,22 @@ def _contar_abiertas(target_app):
     return contar_abiertas(target_app=target_app)
 
 
-def render():
-    # Asegurar tabla creada
+def _render_view(target_app: str, key_prefix: str):
+    """Render compartido. target_app filtra alertas a 'ventas' u 'operaciones'."""
     crear_tabla_alertas()
 
     with st.sidebar:
         st.markdown("### 🔔 **Alertas Negocio**")
-        st.caption("Sincronizadas con app Operaciones")
+        st.caption(f"App actual: {target_app} · bus compartido")
         st.markdown("---")
-        if st.button("🔄 Refrescar", use_container_width=True, type="primary", key="alert_neg_refresh"):
+        if st.button("🔄 Refrescar", use_container_width=True, type="primary", key=f"{key_prefix}_refresh"):
             st.cache_data.clear()
             st.rerun()
 
     st.title("🔔 Alertas de Negocio")
-    st.caption("Bus compartido con la app Operaciones · alertas se generan automáticamente cada vez que el cron actualiza ventas")
+    st.caption(f"Filtradas para target_app='{target_app}'. Bus Turso compartido entre Ventas y Operaciones.")
 
-    # Resumen contadores
-    counts = _contar_abiertas(target_app='ventas')
+    counts = _contar_abiertas(target_app=target_app)
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("🔴 Críticas", counts['critical'])
     c2.metric("🟡 Warnings", counts['warning'])
@@ -105,7 +104,7 @@ def render():
     if counts['total'] == 0:
         st.success("✅ No hay alertas abiertas. Todo en orden.")
         with st.expander("Ver alertas resueltas (últimas 50)"):
-            cerradas = _cargar_alertas(target_app='ventas', status='resuelta')[:50]
+            cerradas = _cargar_alertas(target_app=target_app, status='resuelta')[:50]
             if cerradas:
                 df = pd.DataFrame([{
                     'ID': a['id'],
@@ -121,15 +120,13 @@ def render():
 
     st.divider()
 
-    # Tabs por severity
     tab_crit, tab_warn, tab_info, tab_all = st.tabs([
         f"🔴 Críticas ({counts['critical']})",
         f"🟡 Warnings ({counts['warning']})",
         f"🔵 Info ({counts['info']})",
         "📋 Todas",
     ])
-
-    abiertas = _cargar_alertas(target_app='ventas', status='open')
+    abiertas = _cargar_alertas(target_app=target_app, status='open')
 
     with tab_crit:
         criticas = [a for a in abiertas if a['severity'] == 'critical']
@@ -137,30 +134,26 @@ def render():
             st.success("✅ Sin alertas críticas")
         for a in criticas:
             _render_alerta_card(a)
-
     with tab_warn:
         warns = [a for a in abiertas if a['severity'] == 'warning']
         if not warns:
             st.success("✅ Sin warnings")
         for a in warns:
             _render_alerta_card(a)
-
     with tab_info:
         infos = [a for a in abiertas if a['severity'] == 'info']
         if not infos:
             st.info("Sin alertas informativas")
         for a in infos:
             _render_alerta_card(a)
-
     with tab_all:
         for a in abiertas:
             _render_alerta_card(a)
 
     st.divider()
 
-    # Historial reciente
     with st.expander("📜 Historial reciente de alertas resueltas (últimas 30)"):
-        resueltas = _cargar_alertas(target_app='ventas', status='resuelta')[:30]
+        resueltas = _cargar_alertas(target_app=target_app, status='resuelta')[:30]
         if resueltas:
             df = pd.DataFrame([{
                 'ID': a['id'],
@@ -172,3 +165,13 @@ def render():
             st.dataframe(df, use_container_width=True, hide_index=True, height=300)
         else:
             st.caption("Sin histórico")
+
+
+def render():
+    """Vista para app de Ventas."""
+    _render_view(target_app='ventas', key_prefix='alert_neg_ventas')
+
+
+def render_ops():
+    """Vista para app de Operaciones."""
+    _render_view(target_app='operaciones', key_prefix='alert_neg_ops')

@@ -84,6 +84,7 @@ from views.ops_costo_operativo import render as render_ops_costo
 from views.ops_plan_estrategico import render as render_ops_plan
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
+from views.alertas_negocio import render_ops as render_alertas_negocio_ops
 
 pages = {
     "🚢 COMEX": [
@@ -114,8 +115,12 @@ pages = {
         st.Page(render_ops_plan, title="Roadmap H1/H2/H3", icon="📋",
                 url_path="ops-plan"),
     ],
+    "🔔 Alertas": [
+        st.Page(render_alertas_negocio_ops, title="Negocio", icon="🔔",
+                url_path="ops-alertas-negocio"),
+    ],
     "⚙️ Sistema": [
-        st.Page(render_sistema_alertas, title="Alertas", icon="🚨",
+        st.Page(render_sistema_alertas, title="Salud servicios", icon="🚨",
                 url_path="ops-sistema-alertas"),
         st.Page(render_sistema_seguridad, title="Seguridad", icon="🔐",
                 url_path="ops-sistema-seguridad"),

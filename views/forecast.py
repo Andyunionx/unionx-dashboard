@@ -521,6 +521,147 @@ def _tab_canales(fc_canal: pd.DataFrame):
 
 
 # ============================================================
+# TAB Validation (MAPE backtest)
+# ============================================================
+def _tab_validation(df_val: pd.DataFrame, summary: dict):
+    if df_val.empty:
+        st.info("⏳ Sin validation. Correr extract_forecast_validation.py.")
+        return
+
+    if summary:
+        st.caption(f"🕒 Generado: {summary.get('generado_en','?')[:19]} · "
+                    f"{summary.get('pares_con_mape', 0)} pares con MAPE")
+
+    cols = st.columns(4)
+    cols[0].metric("MAPE mediana", f"{summary.get('mape_pct_p50', 0):.0f}%",
+                    "menor = mejor")
+    cols[1].metric("MAPE p75", f"{summary.get('mape_pct_p75', 0):.0f}%")
+    cols[2].metric("Sesgo global", f"{summary.get('sesgo_global_pct', 0):+.1f}%",
+                    "venta predicha vs real")
+    cols[3].metric("Pares evaluados", f"{summary.get('pares_validados', 0)}")
+
+    st.markdown("##### Distribucion del MAPE por SKU x canal")
+    df_clean = df_val.dropna(subset=['mape_pct'])
+    fig = go.Figure(go.Histogram(x=df_clean['mape_pct'].clip(upper=200), nbinsx=40,
+                                  marker_color='#1E40AF'))
+    fig.update_layout(height=280, xaxis=dict(title='MAPE % (clipped at 200)'),
+                       yaxis=dict(title='Pares (sku,canal)'),
+                       margin=dict(t=20, b=40, l=60, r=20),
+                       paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("##### Top 20 mejores y peores predicciones")
+    cols = st.columns(2)
+    cols[0].markdown("**Mejores (MAPE bajo):**")
+    cols[0].dataframe(
+        df_clean.nsmallest(20, 'mape_pct')[['sku', 'canal', 'mape_pct', 'venta_real_test', 'venta_pred_test', 'sesgo']],
+        use_container_width=True, hide_index=True,
+    )
+    cols[1].markdown("**Peores (MAPE alto):**")
+    cols[1].dataframe(
+        df_clean.nlargest(20, 'mape_pct')[['sku', 'canal', 'mape_pct', 'venta_real_test', 'venta_pred_test', 'sesgo']],
+        use_container_width=True, hide_index=True,
+    )
+
+    st.caption("MAPE = error % promedio. Sesgo positivo = sobre-estimamos. "
+                "Con 1 año de historia y SKUs con poca venta, MAPE > 50% es esperable.")
+
+
+# ============================================================
+# TAB Pricing & Basket (elasticidad + complementariedad)
+# ============================================================
+def _tab_pricing_basket(df_elast_cat: pd.DataFrame, df_elast_sku: pd.DataFrame,
+                        df_basket: pd.DataFrame):
+    sub_tabs = st.tabs(["💰 Elasticidad por categoria", "📦 Elasticidad por SKU",
+                         "🧺 Market basket (productos juntos)"])
+
+    with sub_tabs[0]:
+        if df_elast_cat.empty:
+            st.info("Sin elasticidad. Correr extract_elasticidad_basket.py")
+        else:
+            st.markdown("Si bajo precio 10%, la venta sube |elasticidad| × 10% (modelo log-log).")
+            df_show = df_elast_cat.copy()
+            df_show = df_show.sort_values('elasticidad')
+            fig = go.Figure(go.Bar(
+                x=df_show['elasticidad'], y=df_show['categoria_padre'],
+                orientation='h',
+                marker_color=['#DC2626' if v < -0.5 else '#EA580C' if v < 0 else '#94A3B8' for v in df_show['elasticidad']],
+            ))
+            fig.update_layout(height=600, margin=dict(t=10, b=30, l=180, r=20),
+                                xaxis=dict(title='Elasticidad-precio (negativo = elastica, baja precio sube venta)'),
+                                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, use_container_width=True)
+            st.caption("🟥 muy elasticas (precio sensible) · 🟧 elasticas suaves · ⬜ inelasticas/positivas (baja calidad de regresion o efecto Veblen)")
+            with st.expander("📋 Tabla completa"):
+                st.dataframe(df_show, use_container_width=True, hide_index=True)
+
+    with sub_tabs[1]:
+        if df_elast_sku.empty:
+            st.info("Sin elasticidades por SKU.")
+        else:
+            st.markdown(f"**{len(df_elast_sku)} SKU x canal** con elasticidad calculada")
+            df_show = df_elast_sku.sort_values('elasticidad')
+            cols = st.columns(2)
+            cols[0].markdown("**Mas elasticos (oportunidad de promo):**")
+            cols[0].dataframe(df_show.head(15)[['sku', 'canal', 'elasticidad', 'r2', 'n_obs']],
+                               use_container_width=True, hide_index=True)
+            cols[1].markdown("**Menos elasticos (precio firme posible):**")
+            cols[1].dataframe(df_show.tail(15)[['sku', 'canal', 'elasticidad', 'r2', 'n_obs']],
+                               use_container_width=True, hide_index=True)
+
+    with sub_tabs[2]:
+        if df_basket.empty:
+            st.info("Sin market basket. Correr extract_elasticidad_basket.py")
+        else:
+            st.markdown(f"**{len(df_basket)} pares de SKUs** comprados juntos en mismo pedido")
+            st.caption("Lift > 1 = mas frecuente que lo esperado por azar. Confidence A→B = % pedidos con A que tambien tienen B")
+
+            cols = st.columns(2)
+            min_pedidos = cols[0].number_input("Min pedidos juntos", min_value=2, value=5, key="bsk_min")
+            min_lift = cols[1].number_input("Min lift", min_value=1.0, value=2.0, step=0.5, key="bsk_lift")
+            df_filt = df_basket[(df_basket['n_pedidos_juntos'] >= min_pedidos) & (df_basket['lift'] >= min_lift)]
+            df_filt = df_filt.sort_values('lift', ascending=False).head(50)
+            st.dataframe(
+                df_filt[['sku_a', 'sku_b', 'n_pedidos_juntos', 'lift', 'confidence_a_to_b', 'confidence_b_to_a']],
+                use_container_width=True, hide_index=True,
+            )
+
+
+# ============================================================
+# TAB MinT (jerarquia reconciliada)
+# ============================================================
+def _tab_mint(df_recon: pd.DataFrame, mint_meta: dict):
+    if df_recon.empty:
+        st.info("⏳ Sin reconciliacion MinT.")
+        return
+    st.caption(f"🕒 Metodo: {mint_meta.get('metodo','?')} · {mint_meta.get('n_total_nodos',0)} nodos coherentes")
+
+    nivel_sel = st.selectbox("Nivel jerarquico",
+                              sorted(df_recon['nivel'].unique()), key="mint_nivel")
+    df_nivel = df_recon[df_recon['nivel'] == nivel_sel]
+
+    if nivel_sel == 'TOTAL':
+        df_nodo = df_nivel
+        st.metric(f"Total reconciliado 60d", f"{df_nodo['yhat'].sum():.0f} unid")
+    else:
+        nodos = sorted(df_nivel['nombre'].unique())
+        sel = st.selectbox(f"Nodo en {nivel_sel}", nodos, key="mint_nodo")
+        df_nodo = df_nivel[df_nivel['nombre'] == sel]
+        st.metric(f"{sel} reconciliado 60d", f"{df_nodo['yhat'].sum():.0f} unid")
+
+    if not df_nodo.empty:
+        df_nodo = df_nodo.sort_values('ds')
+        fig = go.Figure(go.Scatter(x=df_nodo['ds'], y=df_nodo['yhat'], mode='lines+markers',
+                                    line=dict(color='#6366F1', width=2.5)))
+        fig.update_layout(height=320, margin=dict(t=20, b=40, l=60, r=20),
+                           yaxis=dict(title='Forecast (unid)', tickformat=',.0f'),
+                           paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.caption("Todos los niveles suman exactamente — coherencia garantizada.")
+
+
+# ============================================================
 # Render principal
 # ============================================================
 def render():
@@ -545,8 +686,17 @@ def render():
     fc_categoria = _cargar_parquet('forecast_jerarquico_categoria.parquet')
     fc_tipo_negocio = _cargar_parquet('forecast_jerarquico_tipo_negocio.parquet')
     df_comp_sku = _cargar_parquet('forecast_componentes_skus.parquet')
+    df_validation = _cargar_parquet('forecast_validation.parquet')
+    df_recon = _cargar_parquet('forecast_reconciled.parquet')
+    df_elast_cat = _cargar_parquet('elasticidad_categoria.parquet')
+    df_elast_sku = _cargar_parquet('elasticidad_sku.parquet')
+    df_basket = _cargar_parquet('market_basket.parquet')
     meta_skus_path = FC_DIR / 'metadata_skus.json'
     meta_skus = json.load(open(meta_skus_path, encoding='utf-8')) if meta_skus_path.exists() else {}
+    val_summary_path = FC_DIR / 'validation_summary.json'
+    val_summary = json.load(open(val_summary_path, encoding='utf-8')) if val_summary_path.exists() else {}
+    mint_meta_path = FC_DIR / 'mint_metadata.json'
+    mint_meta = json.load(open(mint_meta_path, encoding='utf-8')) if mint_meta_path.exists() else {}
 
     if not resumen and fc_diario.empty:
         st.warning("⏳ Aún no hay forecasts. El cron diario corre 06:00 UTC. Manual: GitHub → Actions → 'Sync Forecast' → Run workflow.")
@@ -555,20 +705,27 @@ def render():
     if resumen.get('generado_en'):
         st.caption(f"🕒 Generado: {resumen['generado_en'][:19]} · Eventos modelados: Cyber Day, CyberMonday, Black Friday, Día Madre/Padre, FFPP, Navidad + feriados Chile")
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tabs = st.tabs([
         "📅 Cierre del mes", "📊 30 / 60 / 90 días", "📆 Año",
-        "🔬 Componentes", "📈 Por canal", "🧬 Jerarquía / SKU"
+        "🔬 Componentes", "📈 Por canal", "🧬 Jerarquía / SKU",
+        "🎯 Precision (MAPE)", "💰 Pricing & Basket", "🔗 MinT reconciliado",
     ])
-    with tab1:
+    with tabs[0]:
         _tab_cierre_mes(resumen, fc_diario)
-    with tab2:
+    with tabs[1]:
         _tab_horizontes(resumen, fc_diario)
-    with tab3:
+    with tabs[2]:
         _tab_anio(resumen, fc_anual)
-    with tab4:
+    with tabs[3]:
         _tab_componentes(df_comp)
-    with tab5:
+    with tabs[4]:
         _tab_canales(fc_canal)
-    with tab6:
+    with tabs[5]:
         _tab_jerarquia(fc_skus, fc_marca_canal, fc_canal_jerar, fc_categoria,
                         fc_tipo_negocio, df_comp_sku, meta_skus)
+    with tabs[6]:
+        _tab_validation(df_validation, val_summary)
+    with tabs[7]:
+        _tab_pricing_basket(df_elast_cat, df_elast_sku, df_basket)
+    with tabs[8]:
+        _tab_mint(df_recon, mint_meta)

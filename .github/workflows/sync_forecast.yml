@@ -1,4 +1,4 @@
-name: Sync Forecast (Prophet completo: total + canal + SKU jerarquico)
+name: "Sync Forecast (Prophet completo: total + canal + SKU jerarquico)"
 
 on:
   schedule:
@@ -65,7 +65,29 @@ jobs:
         run: python extract_forecast_skus.py
         continue-on-error: true
 
-      - name: 5. Evaluar alertas (incluye DQ)
+      - name: 5. Validation MAPE (backtest 60d)
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_forecast_validation.py
+        continue-on-error: true
+
+      - name: 6. Reconciliacion MinT
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_forecast_mint.py
+        continue-on-error: true
+
+      - name: 7. Elasticidad-precio + market basket
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_elasticidad_basket.py
+        continue-on-error: true
+
+      - name: 8. Evaluar alertas (incluye DQ)
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
