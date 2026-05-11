@@ -482,24 +482,31 @@ def render():
             st.divider()
             st.markdown("#### 📊 OTIF desde RESUMEN MENSUAL OTIF (Drive)")
 
-            from views._ops_otif_drive import (
-                kpi_otif_resumen, kpi_otif_por_mes, kpi_otif_por_cliente,
-                kpi_otif_por_courier, top_pedidos_tarde, meses_disponibles,
-            )
+            # Datos PRECALCULADOS en snapshot para no bloquear el render
+            from views._ops_kpis_snapshot import cargar_snapshot as _cs_otif
+            snap_otif_data = _cs_otif().get("otif_drive", {})
 
-            meses_dispon = meses_disponibles()
+            if snap_otif_data.get("error"):
+                st.warning(f"⚠️ {snap_otif_data['error']}")
+                st.caption("Próx. actualización snapshot: 00:00 / 12:00 Chile o trigger manual")
+                meses_dispon = []
+            else:
+                meses_dispon = snap_otif_data.get("meses_disponibles", [])
+
             if not meses_dispon:
                 st.warning(
                     "⚠️ Sin acceso al Sheet OTIF o sin datos. "
-                    "Verificar permisos del Service Account."
+                    "Verificar permisos del Service Account o esperá próx. snapshot."
                 )
             else:
                 col_mes, _ = st.columns([1, 3])
                 with col_mes:
                     mes_otif = st.selectbox("Mes", meses_dispon, index=0, key="otif_mes_drive")
 
-                # ── Resumen del mes seleccionado ─────────────────────────
-                resumen = kpi_otif_resumen(mes=mes_otif)
+                # ── Resumen del mes seleccionado (desde snapshot) ────────
+                resumen = snap_otif_data.get("resumen_por_mes", {}).get(mes_otif, {})
+                if not resumen:
+                    resumen = {"error": f"Mes {mes_otif} no en snapshot. Solo top 6 meses precalculados."}
                 if resumen.get("error"):
                     st.warning(resumen["error"])
                 else:
@@ -533,9 +540,9 @@ def render():
 
                 st.divider()
 
-                # ── Tendencia mensual ────────────────────────────────────
+                # ── Tendencia mensual (del snapshot) ─────────────────────
                 st.markdown("##### 📈 Tendencia OTIF mes a mes")
-                meses_data = kpi_otif_por_mes()
+                meses_data = snap_otif_data.get("por_mes", [])
                 if meses_data:
                     df_meses = pd.DataFrame(meses_data)
                     chart = df_meses[["MES", "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
@@ -554,9 +561,9 @@ def render():
 
                 st.divider()
 
-                # ── Por cliente / canal ──────────────────────────────────
+                # ── Por cliente / canal (del snapshot) ───────────────────
                 st.markdown(f"##### 🏢 OTIF por cliente — {mes_otif}")
-                clientes_data = kpi_otif_por_cliente(mes=mes_otif, top_n=20)
+                clientes_data = snap_otif_data.get("clientes_por_mes", {}).get(mes_otif, [])
                 if clientes_data:
                     df_cli = pd.DataFrame(clientes_data)
                     df_show_cli = df_cli[["CLIENTE", "n_pedidos",
@@ -569,9 +576,9 @@ def render():
                 else:
                     st.info("Sin clientes con suficiente data")
 
-                # ── Por courier ──────────────────────────────────────────
+                # ── Por courier (del snapshot) ───────────────────────────
                 st.markdown(f"##### 🚚 OTIF por courier — {mes_otif}")
-                couriers_data = kpi_otif_por_courier(mes=mes_otif)
+                couriers_data = snap_otif_data.get("couriers_por_mes", {}).get(mes_otif, [])
                 if couriers_data:
                     df_cou = pd.DataFrame(couriers_data)
                     df_show_cou = df_cou[["CURIER", "n_pedidos",
@@ -581,9 +588,9 @@ def render():
                                  "dias_promedio": "Días promedio"})
                     st.dataframe(df_show_cou, use_container_width=True, hide_index=True)
 
-                # ── Top pedidos tarde ────────────────────────────────────
+                # ── Top pedidos tarde (del snapshot) ─────────────────────
                 with st.expander(f"🐌 Top 50 pedidos tarde (courier) — {mes_otif}"):
-                    tarde_data = top_pedidos_tarde(mes=mes_otif, top_n=50)
+                    tarde_data = snap_otif_data.get("tarde_por_mes", {}).get(mes_otif, [])
                     if tarde_data:
                         df_tarde = pd.DataFrame(tarde_data)
                         st.dataframe(df_tarde, use_container_width=True, hide_index=True, height=400)

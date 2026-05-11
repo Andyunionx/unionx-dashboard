@@ -123,6 +123,28 @@ def main():
     snapshot["productividad_dias_14d"] = _safe_run(
         "Prod últimos 14 días", productividad_calendario, tipo="dia_especifico"); _save_partial(snapshot)
 
+    # === OTIF desde Drive Sheet (precalculado para no bloquear app) ===
+    print("\n--- OTIF DRIVE ---", flush=True)
+    try:
+        from views._ops_otif_drive import (
+            kpi_otif_resumen, kpi_otif_por_mes, kpi_otif_por_cliente,
+            kpi_otif_por_courier, top_pedidos_tarde, meses_disponibles,
+        )
+        meses_dispon = meses_disponibles()
+        snapshot["otif_drive"] = {
+            "meses_disponibles": meses_dispon,
+            "por_mes": kpi_otif_por_mes(),
+            "resumen_por_mes": {m: kpi_otif_resumen(m) for m in meses_dispon[:6]},
+            "clientes_por_mes": {m: kpi_otif_por_cliente(m, top_n=20) for m in meses_dispon[:6]},
+            "couriers_por_mes": {m: kpi_otif_por_courier(m) for m in meses_dispon[:6]},
+            "tarde_por_mes": {m: top_pedidos_tarde(m, top_n=50) for m in meses_dispon[:6]},
+        }
+        print(f"  OK: {len(meses_dispon)} meses disponibles, datos para top 6", flush=True)
+    except Exception as e:
+        print(f"  ERROR OTIF Drive: {type(e).__name__}: {e}", flush=True)
+        snapshot["otif_drive"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
+    _save_partial(snapshot)
+
     # === OTIF para distintas ventanas (para Tab OTIF) ===
     snapshot["otif_ventanas"] = {}
     for dias in [7, 14, 30, 60, 90]:
