@@ -15,6 +15,8 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).parent.parent
 COMEX_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'transito.parquet'
 COMEX_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'transito_resumen.json'
+VALIDACION_ODOO = PROJECT_ROOT / 'data' / 'comex' / 'validacion_odoo.parquet'
+VALIDACION_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'validacion_odoo_resumen.json'
 STOCK_LIVE = PROJECT_ROOT / 'data' / 'stock' / 'skus.parquet'
 FC_SKUS_ANCHORED = PROJECT_ROOT / 'data' / 'forecast' / 'forecast_skus_anchored.parquet'
 
@@ -28,6 +30,21 @@ def _cargar_transito():
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
     return df
+
+
+@st.cache_data(ttl=900)
+def _cargar_validacion_odoo() -> tuple[pd.DataFrame, dict]:
+    """Validación PIs vs Odoo stock.move."""
+    df = pd.DataFrame()
+    resumen = {}
+    if VALIDACION_ODOO.exists():
+        df = pd.read_parquet(VALIDACION_ODOO)
+    if VALIDACION_RESUMEN.exists():
+        try:
+            resumen = json.load(open(VALIDACION_RESUMEN, encoding='utf-8'))
+        except Exception:
+            pass
+    return df, resumen
 
 
 @st.cache_data(ttl=900)
@@ -46,7 +63,7 @@ def _cargar_forecast_skus():
     return df
 
 
-def _tab_resumen(df: pd.DataFrame):
+def _tab_resumen(df: pd.DataFrame, val_resumen: dict):
     if df.empty:
         st.info("Sin datos de tránsito.")
         return
@@ -70,8 +87,38 @@ def _tab_resumen(df: pd.DataFrame):
     cols2[2].metric("PIs con ETA vencida", atrasadas['pi'].nunique(),
                      "Revisar status" if len(atrasadas) > 0 else "OK")
 
+    # Validación Odoo: PIs probablemente ingresadas pero drive desactualizado
+    if val_resumen:
+        st.divider()
+        st.markdown("##### 🔍 Cruce con Odoo (stock.move)")
+        st.caption(f"Última validación: {val_resumen.get('generado_en','')[:19]}. "
+                    "Detecta PIs ya ingresadas en Odoo pero que el drive aún marca en tránsito.")
+        cols3 = st.columns(4)
+        cols3[0].metric("🟢 PIs ya ingresadas", val_resumen.get('pis_ingresados', 0),
+                         "drive desactualizado" if val_resumen.get('pis_ingresados', 0) > 0 else None)
+        cols3[1].metric("🟡 Parciales", val_resumen.get('pis_parciales', 0))
+        cols3[2].metric("🔴 Realmente pendientes", val_resumen.get('pis_pendientes', 0))
+        cols3[3].metric("SKUs sin match Odoo", val_resumen.get('sku_no_match_odoo', 0))
 
-def _tab_por_pi(df: pd.DataFrame):
+        # Tabla con PIs ingresadas (alerta visible)
+        pis_ingresados = [p for p in val_resumen.get('por_pi', []) if p['status_pi'] == '🟢 INGRESADO']
+        if pis_ingresados:
+            st.warning(f"⚠️ {len(pis_ingresados)} PI(s) parecen ya recibidas en Odoo. "
+                        "Pedir a Martin actualizar 'Importaciones UnionX Integrada' (mover a EN BODEGA):")
+            df_alert = pd.DataFrame(pis_ingresados)[
+                ['pi', 'fecha_embarque', 'unidades_esperadas', 'unidades_recibidas', 'ratio_pi']
+            ].rename(columns={
+                'pi': 'PI', 'fecha_embarque': 'Embarque',
+                'unidades_esperadas': 'Esperado', 'unidades_recibidas': 'Recibido (Odoo)',
+                'ratio_pi': '% recibido',
+            })
+            df_alert['% recibido'] = (df_alert['% recibido'] * 100).round(1).astype(str) + '%'
+            df_alert['Esperado'] = df_alert['Esperado'].apply(lambda v: f'{v:,.0f}')
+            df_alert['Recibido (Odoo)'] = df_alert['Recibido (Odoo)'].apply(lambda v: f'{v:,.0f}')
+            st.dataframe(df_alert, use_container_width=True, hide_index=True)
+
+
+def _tab_por_pi(df: pd.DataFrame, val_resumen: dict | None = None):
     if df.empty:
         return
 
@@ -81,6 +128,13 @@ def _tab_por_pi(df: pd.DataFrame):
         usd=('costo_total_usd', 'sum'),
         skus=('sku', 'nunique'),
     ).sort_values('fecha_eta_bodega')
+
+    # Merge con validacion Odoo
+    val_map = {p['pi']: p for p in (val_resumen.get('por_pi', []) if val_resumen else [])}
+    pi_agg['Odoo'] = pi_agg['pi'].map(lambda p: val_map.get(p, {}).get('status_pi', '⚪ -'))
+    pi_agg['% recibido'] = pi_agg['pi'].map(
+        lambda p: f"{val_map.get(p, {}).get('ratio_pi', 0)*100:.0f}%" if p in val_map else '-'
+    )
 
     hoy = pd.Timestamp(datetime.now().date())
     pi_agg['dias_para_llegar'] = (pi_agg['fecha_eta_bodega'] - hoy).dt.days
@@ -102,7 +156,7 @@ def _tab_por_pi(df: pd.DataFrame):
     pi_agg['Unid'] = pi_agg['unidades'].apply(lambda v: f'{v:,.0f}')
 
     cols_show = ['pi', 'transporte', 'fecha_embarque', 'fecha_eta_chile', 'fecha_eta_bodega',
-                  'skus', 'Unid', 'USD', 'Status']
+                  'skus', 'Unid', 'USD', 'Status', 'Odoo', '% recibido']
     rename = {'pi': 'PI', 'transporte': 'Transporte', 'fecha_embarque': 'Embarque',
                'fecha_eta_chile': 'ETA Chile', 'fecha_eta_bodega': 'ETA Bodega',
                'skus': 'SKUs'}
@@ -257,6 +311,7 @@ def render():
 
     st.title("🚢 COMEX — Embarques en tránsito")
     df = _cargar_transito()
+    df_val, val_resumen = _cargar_validacion_odoo()
 
     if COMEX_RESUMEN.exists():
         try:
@@ -275,8 +330,8 @@ def render():
     # este archivo para reutilización.
     tab1, tab2, tab3 = st.tabs(["📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs"])
     with tab1:
-        _tab_resumen(df)
+        _tab_resumen(df, val_resumen)
     with tab2:
-        _tab_por_pi(df)
+        _tab_por_pi(df, val_resumen)
     with tab3:
         _tab_detalle_skus(df)

@@ -43,6 +43,13 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python extract_comex_transito.py
 
+      - name: Validar PIs contra Odoo (deteccion drive desactualizado)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_comex_validacion_odoo.py
+        continue-on-error: true
+
       - name: Commit parquet COMEX si cambio
         run: |
           git config --local user.email "actions@github.com"
