@@ -692,47 +692,66 @@ def render():
                 n_uds_mes = mes_act_data.get("n_unidades", 0)
                 n_dias_habiles = 21  # promedio mes UnionX (LJ+V)
 
-                # 6 KPI cards: pedidos/líneas/uds × por persona/día y por persona/hora
+                # KPI cards: 3 dimensiones × 3 vistas (persona/día · hora equipo · día equipo)
                 st.markdown(f"##### 📊 Productividad {mes_actual} · {personas} personas · {horas:,.0f}h")
                 st.caption(
                     "Pedido = 1 cliente atendido · Línea = 1 SKU distinto pickeado · "
                     "Unidad = 1 ítem físico tomado · Más detalle abajo."
                 )
-                ck1, ck2, ck3 = st.columns(3)
+
+                # Pre-cálculos
                 ped_pers_dia = (n_pedidos_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
-                ped_pers_h = (n_pedidos_mes / horas) if horas else 0
-                ck1.metric("Pedidos / persona / día", f"{ped_pers_dia:.1f}",
-                           delta=f"{ped_pers_h:.1f} ped/persona/h",
-                           help=f"Mes: {n_pedidos_mes:,} pedidos / {personas} personas / {n_dias_habiles} días")
-
                 lin_pers_dia = (n_lineas_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
-                lin_pers_h = (n_lineas_mes / horas) if horas else 0
-                ck2.metric("Líneas / persona / día", f"{lin_pers_dia:.1f}",
-                           delta=f"{lin_pers_h:.1f} lín/persona/h",
-                           help=f"Mes: {n_lineas_mes:,} líneas. Bench: 60-120 lín/persona/h")
-
                 uds_pers_dia = (n_uds_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
+                ped_pers_h = (n_pedidos_mes / horas) if horas else 0
+                lin_pers_h = (n_lineas_mes / horas) if horas else 0
                 uds_pers_h = (n_uds_mes / horas) if horas else 0
-                ck3.metric("Unidades / persona / día", f"{uds_pers_dia:.1f}",
-                           delta=f"{uds_pers_h:.1f} uds/persona/h",
-                           help=f"Mes: {n_uds_mes:,} unidades")
-
-                st.markdown("<br>", unsafe_allow_html=True)
-
-                # KPIs equipo entero (totales)
-                st.markdown(f"##### ⚙️ Productividad equipo entero")
-                ce1, ce2, ce3, ce4 = st.columns(4)
-                ce1.metric("Pedidos / día", f"{n_pedidos_mes/n_dias_habiles:,.0f}" if n_dias_habiles else "—",
-                           delta=f"{n_pedidos_mes/horas:.1f} ped/h equipo" if horas else None)
-                ce2.metric("Líneas / día", f"{n_lineas_mes/n_dias_habiles:,.0f}" if n_dias_habiles else "—",
-                           delta=f"{n_lineas_mes/horas:.1f} lín/h equipo" if horas else None)
-                ce3.metric("Unidades / día", f"{n_uds_mes/n_dias_habiles:,.0f}" if n_dias_habiles else "—",
-                           delta=f"{n_uds_mes/horas:.1f} uds/h equipo" if horas else None)
+                # Por hora EQUIPO ENTERO = total / horas_dia (9h estándar)
+                horas_dia_equipo = horas / n_dias_habiles if n_dias_habiles else 0
+                ped_eq_h = (n_pedidos_mes / n_dias_habiles / horas_dia_equipo) if (n_dias_habiles and horas_dia_equipo) else 0
+                lin_eq_h = (n_lineas_mes / n_dias_habiles / horas_dia_equipo) if (n_dias_habiles and horas_dia_equipo) else 0
+                uds_eq_h = (n_uds_mes / n_dias_habiles / horas_dia_equipo) if (n_dias_habiles and horas_dia_equipo) else 0
+                # Por DÍA equipo
+                ped_eq_dia = n_pedidos_mes / n_dias_habiles if n_dias_habiles else 0
+                lin_eq_dia = n_lineas_mes / n_dias_habiles if n_dias_habiles else 0
+                uds_eq_dia = n_uds_mes / n_dias_habiles if n_dias_habiles else 0
                 lineas_x_pedido = (n_lineas_mes / n_pedidos_mes) if n_pedidos_mes else 0
                 uds_x_pedido = (n_uds_mes / n_pedidos_mes) if n_pedidos_mes else 0
+
+                # FILA 1 — Por persona/día
+                st.markdown("**🧑 Por persona / día**")
+                ck1, ck2, ck3 = st.columns(3)
+                ck1.metric("Pedidos / persona / día", f"{ped_pers_dia:.1f}",
+                           delta=f"{ped_pers_h:.2f} ped/persona/h")
+                ck2.metric("Líneas / persona / día", f"{lin_pers_dia:.1f}",
+                           delta=f"{lin_pers_h:.2f} lín/persona/h",
+                           help="Bench: 60-120 lín/persona/h B2C (depende del mix)")
+                ck3.metric("Unidades / persona / día", f"{uds_pers_dia:.1f}",
+                           delta=f"{uds_pers_h:.2f} uds/persona/h")
+
+                # FILA 2 — Por hora equipo (NUEVA)
+                st.markdown(f"**⏱️ Por hora trabajada (equipo entero, {horas_dia_equipo:.1f}h/día)**")
+                ch1, ch2, ch3 = st.columns(3)
+                ch1.metric("Pedidos / hora (equipo)", f"{ped_eq_h:.1f}",
+                           delta=f"{ped_eq_dia/horas_dia_equipo*5:.0f} ped/h × {personas} pers." if horas_dia_equipo else None,
+                           help=f"{n_pedidos_mes:,} ped del mes / {n_dias_habiles} días / {horas_dia_equipo:.1f}h")
+                ch2.metric("Líneas / hora (equipo)", f"{lin_eq_h:.1f}",
+                           delta=f"{ped_eq_h * lineas_x_pedido:.1f} esperado por mix")
+                ch3.metric("Unidades / hora (equipo)", f"{uds_eq_h:.1f}",
+                           delta=f"{ped_eq_h * uds_x_pedido:.1f} esperado por mix")
+
+                # FILA 3 — Equipo entero por día
+                st.markdown("**⚙️ Equipo entero / día**")
+                ce1, ce2, ce3, ce4 = st.columns(4)
+                ce1.metric("Pedidos / día", f"{ped_eq_dia:,.0f}",
+                           delta=f"{ped_eq_h:.1f} ped/h equipo")
+                ce2.metric("Líneas / día", f"{lin_eq_dia:,.0f}",
+                           delta=f"{lin_eq_h:.1f} lín/h equipo")
+                ce3.metric("Unidades / día", f"{uds_eq_dia:,.0f}",
+                           delta=f"{uds_eq_h:.1f} uds/h equipo")
                 ce4.metric("Mix promedio", f"{lineas_x_pedido:.2f} lín/ped",
                            delta=f"{uds_x_pedido:.1f} uds/ped",
-                           help="Pedidos chicos = más rápidos. Mix alto = pedidos complejos.")
+                           help="Pedidos chicos (mix bajo) = más rápidos por línea")
 
                 st.divider()
 
