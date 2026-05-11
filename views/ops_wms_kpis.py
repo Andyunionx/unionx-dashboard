@@ -519,25 +519,62 @@ def render():
                         mes_num = None
                 with col_comp:
                     st.markdown("**COMPARAR CON**")
-                    opciones_comp = ["(Sin comparativo)"]
-                    if mes_num:
-                        # Buscar mismo mes en años anteriores
-                        for a in anios_disp:
-                            if a >= anio_sel:
+                    opciones_comp_dict = {"(Sin comparativo)": None}
+                    todos_cortes = snap_otif_data.get("dashboard_por_corte", {})
+
+                    if corte_sel and mes_num:
+                        # 1. Mes anterior calendario
+                        if mes_num == 1:
+                            mes_ant_key = f"{anio_sel - 1}-12"
+                            mes_ant_num, mes_ant_anio = 12, anio_sel - 1
+                        else:
+                            mes_ant_key = f"{anio_sel}-{mes_num - 1:02d}"
+                            mes_ant_num, mes_ant_anio = mes_num - 1, anio_sel
+                        if mes_ant_key in todos_cortes:
+                            opciones_comp_dict[
+                                f"📅 Mes anterior — {nombres_mes[mes_ant_num-1]} {mes_ant_anio}"
+                            ] = mes_ant_key
+
+                        # 2. Mismo mes año anterior
+                        same_my_key = f"{anio_sel - 1}-{mes_num:02d}"
+                        if same_my_key in todos_cortes:
+                            opciones_comp_dict[
+                                f"📆 Mismo mes año anterior — {nombres_mes[mes_num-1]} {anio_sel - 1}"
+                            ] = same_my_key
+
+                        # 3. Mes con volumen similar
+                        n_ord_actual = todos_cortes.get(corte_sel, {}).get("resumen", {}).get("n_ordenes", 0)
+                        if n_ord_actual > 0:
+                            candidatos = []
+                            for k, dash_k in todos_cortes.items():
+                                if k == corte_sel or k in opciones_comp_dict.values():
+                                    continue
+                                n_k = dash_k.get("resumen", {}).get("n_ordenes", 0)
+                                if n_k > 0:
+                                    candidatos.append((abs(n_k - n_ord_actual), k, n_k))
+                            candidatos.sort()
+                            if candidatos:
+                                _, k_sim, n_sim = candidatos[0]
+                                a_sim, m_sim = map(int, k_sim.split("-"))
+                                opciones_comp_dict[
+                                    f"📊 Volumen similar — {nombres_mes[m_sim-1]} {a_sim} ({n_sim:,} órd)"
+                                ] = k_sim
+
+                        # 4. Resto de meses
+                        for c in cortes_data:
+                            k = c["key"]
+                            if k == corte_sel or k in opciones_comp_dict.values():
                                 continue
-                            for (m, k, _) in anios_meses.get(a, []):
-                                if m == mes_num:
-                                    opciones_comp.append(f"{nombres_mes[m-1]} {a}")
-                    comp_sel_label = st.selectbox("comp", opciones_comp, index=0,
-                                                   key="otif_comp", label_visibility="collapsed")
-                    # Resolver clave del comparativo
-                    comp_key = None
-                    if comp_sel_label != "(Sin comparativo)" and mes_num:
-                        try:
-                            anio_comp = int(comp_sel_label.split()[-1])
-                            comp_key = f"{anio_comp}-{mes_num:02d}"
-                        except Exception:
-                            comp_key = None
+                            opciones_comp_dict[
+                                f"   {nombres_mes[c['mes']-1]} {c['anio']}"
+                            ] = k
+
+                    comp_sel_label = st.selectbox("comp",
+                                                   list(opciones_comp_dict.keys()),
+                                                   index=0,
+                                                   key="otif_comp",
+                                                   label_visibility="collapsed")
+                    comp_key = opciones_comp_dict.get(comp_sel_label)
 
                 dash = snap_otif_data.get("dashboard_por_corte", {}).get(corte_sel, {})
                 if not dash or dash.get("error"):
