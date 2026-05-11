@@ -78,6 +78,36 @@ def _capacidad_bodega_m3() -> tuple[float, str]:
     return 0.0, 'auto'
 
 
+def _posiciones_bodega(odoo: OdooClient) -> dict:
+    """Réplica de uso_posiciones() del helper Stock LIVE: cuenta posiciones leaf
+    de CA1/Stock y separa entre vacías vs con stock. Es la métrica REAL que ve
+    Andrés en Stock LIVE > Uso de posiciones, no una asunción global.
+
+    Returns: {total_posiciones, vacias, ocupadas, leaf_loc_names}
+    """
+    locs = odoo.search_read(
+        'stock.location',
+        [('usage', '=', 'internal'), ('complete_name', 'ilike', 'CA1/Stock/')],
+        ['id', 'complete_name', 'child_ids', 'quant_ids'],
+        limit=10000,
+    )
+    leaf = [l for l in locs if not l.get('child_ids')]
+    if not leaf:
+        return {'total_posiciones': 0, 'vacias': 0, 'ocupadas': 0,
+                'vacias_lista': [], 'ocupadas_lista': []}
+    vacias = [l['complete_name'].replace('CA1/Stock/', '')
+              for l in leaf if not l.get('quant_ids')]
+    ocupadas = [l['complete_name'].replace('CA1/Stock/', '')
+                for l in leaf if l.get('quant_ids')]
+    return {
+        'total_posiciones': len(leaf),
+        'vacias': len(vacias),
+        'ocupadas': len(ocupadas),
+        'vacias_lista': sorted(vacias),
+        'ocupadas_lista': sorted(ocupadas),
+    }
+
+
 def _stock_actual_m3(odoo: OdooClient) -> tuple[float, dict, list]:
     """Calcula m³ del stock actual cruzando stock.quant con product.template.volume.
 
@@ -220,41 +250,50 @@ def main():
     print(f"      {len(salidas)} días con salidas previstas, total m3 (90d): "
           f"{sum(salidas.values()):,.1f}", flush=True)
 
-    # 4. Capacidad bodega
-    cap_m3, cap_fuente = _capacidad_bodega_m3()
-    if cap_m3 == 0:
-        # Asumir desde # posiciones Odoo (consulta rápida via stock.location leaf)
-        try:
-            print(f"      Cargando # posiciones bodega...", flush=True)
-            locs = odoo.search_read(
-                'stock.location',
-                [('usage', '=', 'internal'), ('child_ids', '=', False)],
-                ['id'],
-                limit=10000,
-            )
-            n_pos = len(locs)
-            cap_m3 = n_pos * M3_POR_POSICION
-            cap_fuente = f'auto: {n_pos} posiciones × {M3_POR_POSICION} m³'
-            print(f"      Capacidad estimada: {cap_m3:,.1f} m³ ({n_pos} posiciones)", flush=True)
-        except Exception as e:
-            print(f"      WARN: no se pudo estimar capacidad: {e}", flush=True)
-            cap_m3 = 1000  # fallback conservador
-            cap_fuente = 'fallback'
+    # 4. Capacidad bodega (REAL: posiciones leaf CA1/Stock — misma data que usa
+    # Stock LIVE > Uso de posiciones, no asunción global)
+    print(f"\n[6/6] Cargando posiciones reales CA1/Stock (vacías vs ocupadas)...", flush=True)
+    pos = _posiciones_bodega(odoo)
+    print(f"      Total posiciones leaf: {pos['total_posiciones']} "
+          f"(vacías {pos['vacias']} · ocupadas {pos['ocupadas']})", flush=True)
 
-    # 5. Construir serie temporal
-    print(f"\nConstruyendo serie temporal {HORIZONTE_DIAS} días…", flush=True)
+    cap_m3_override, cap_fuente_manual = _capacidad_bodega_m3()
+    if cap_m3_override > 0:
+        cap_m3 = cap_m3_override
+        cap_fuente = cap_fuente_manual
+    else:
+        cap_m3 = pos['total_posiciones'] * M3_POR_POSICION
+        cap_fuente = f'{pos["total_posiciones"]} pos CA1/Stock × {M3_POR_POSICION} m³'
+
+    # 5. Construir serie temporal usando POSICIONES como métrica primaria
+    # (es la unidad real que opera la bodega, no m³ teóricos).
+    #
+    # MODELO:
+    #   - posiciones_ocupadas_HOY = pos['ocupadas'] (dato REAL de Odoo)
+    #   - posiciones_libres_HOY = pos['vacias']
+    #   - Cada día: pos_ocup_t = pos_ocup_t-1 + pallets_entrantes - pallets_salientes
+    #   - Pallets entrantes = sum(pallets_estim de PIs con ETA en ese día)
+    #   - Pallets salientes = m3_saliente / M3_POR_PALLET (forecast venta convertido)
+    print(f"\nConstruyendo serie temporal {HORIZONTE_DIAS} días (posiciones reales)…", flush=True)
     hoy = datetime.now().date()
+
+    # Convertir entradas (m³ -> pallets entrantes por día)
+    entradas_pallets = {f: m / M3_POR_PALLET for f, m in transito.items()}
+
     rows = []
-    m3_ocup = m3_stock
-    pallets_disp_ini = (cap_m3 - m3_stock) / M3_POR_PALLET if cap_m3 > m3_stock else 0
+    pos_ocup = pos['ocupadas']
+    pos_total = pos['total_posiciones']
 
     for i in range(HORIZONTE_DIAS + 1):
         fecha = hoy + timedelta(days=i)
-        ent = transito.get(fecha, 0)
-        sal = salidas.get(fecha, 0)
-        m3_ocup = max(0, m3_ocup + ent - sal)
-        m3_disp = max(0, cap_m3 - m3_ocup)
-        pct = (m3_ocup / cap_m3 * 100) if cap_m3 > 0 else 0
+        ent_m3 = transito.get(fecha, 0)
+        sal_m3 = salidas.get(fecha, 0)
+        ent_pal = entradas_pallets.get(fecha, 0)
+        sal_pal = sal_m3 / M3_POR_PALLET if sal_m3 > 0 else 0
+
+        pos_ocup = max(0, pos_ocup + ent_pal - sal_pal)
+        pos_disp = max(0, pos_total - pos_ocup)
+        pct = (pos_ocup / pos_total * 100) if pos_total > 0 else 0
 
         if pct >= PCT_CRITICO:
             alerta = '🔴 BODEGA LLENA'
@@ -267,12 +306,12 @@ def main():
 
         rows.append({
             'fecha': fecha,
-            'm3_ocupado': round(m3_ocup, 1),
-            'm3_entrante_dia': round(ent, 1),
-            'm3_saliente_dia': round(sal, 1),
-            'm3_disponible': round(m3_disp, 1),
-            'pallets_ocupados': round(m3_ocup / M3_POR_PALLET, 1),
-            'pallets_disp': round(m3_disp / M3_POR_PALLET, 1),
+            'posiciones_ocupadas': round(pos_ocup, 1),
+            'posiciones_disp': round(pos_disp, 1),
+            'pallets_entrantes_dia': round(ent_pal, 1),
+            'pallets_salientes_dia': round(sal_pal, 1),
+            'm3_entrante_dia': round(ent_m3, 1),
+            'm3_saliente_dia': round(sal_m3, 1),
             'pct_ocupacion': round(pct, 1),
             'alerta': alerta,
         })
@@ -284,19 +323,52 @@ def main():
     # 6. Eventos clave
     primer_critico = df_fc[df_fc['alerta'] == '🔴 BODEGA LLENA']
     primer_atencion = df_fc[df_fc['alerta'].isin(['🟠 ATENCIÓN', '🔴 BODEGA LLENA'])]
-    pico = df_fc.loc[df_fc['m3_ocupado'].idxmax()]
-    minimo = df_fc.loc[df_fc['m3_ocupado'].idxmin()]
+    pico = df_fc.loc[df_fc['posiciones_ocupadas'].idxmax()]
+    minimo = df_fc.loc[df_fc['posiciones_ocupadas'].idxmin()]
 
     # Días con entrada de tránsito
-    dias_entrada = [{'fecha': r['fecha'].isoformat(), 'm3': r['m3_entrante_dia']}
-                     for r in df_fc.to_dict('records') if r['m3_entrante_dia'] > 0]
+    dias_entrada = [{'fecha': r['fecha'].isoformat(),
+                      'pallets': r['pallets_entrantes_dia'],
+                      'm3': r['m3_entrante_dia']}
+                     for r in df_fc.to_dict('records') if r['pallets_entrantes_dia'] > 0]
+
+    # Cruzar entradas con PIs específicas (para insights por embarque)
+    pis_entrantes = []
+    if DIMENSIONES_PARQUET.exists():
+        try:
+            from json import load as _jl
+            with open(PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_resumen.json',
+                       encoding='utf-8') as f:
+                dim_resumen = _jl(f)
+            for pi_info in dim_resumen.get('por_pi', []):
+                eta = pi_info.get('fecha_eta_bodega') or ''
+                if not eta:
+                    continue
+                try:
+                    eta_d = datetime.strptime(eta[:10], '%Y-%m-%d').date()
+                except Exception:
+                    continue
+                # Solo PIs cuyo ETA está en el horizonte (incluye vencidas recientes)
+                if (eta_d - hoy).days > HORIZONTE_DIAS:
+                    continue
+                pis_entrantes.append({
+                    'pi': pi_info['pi'],
+                    'fecha_eta': eta,
+                    'pallets': pi_info.get('pallets_estim', 0),
+                    'm3': pi_info.get('volumen_total_m3', 0),
+                    'unidades': pi_info.get('unidades_totales', 0),
+                    'transporte': pi_info.get('transporte', ''),
+                })
+        except Exception:
+            pass
 
     # Resumen
     resumen = {
         'generado_en': datetime.now().isoformat(),
         'horizonte_dias': HORIZONTE_DIAS,
+        # Capacidad expresada en POSICIONES REALES (CA1/Stock leaf)
+        'capacidad_posiciones': pos['total_posiciones'],
         'capacidad_bodega_m3': cap_m3,
-        'capacidad_pallets': round(cap_m3 / M3_POR_PALLET, 0),
         'capacidad_fuente': cap_fuente,
         'asunciones': {
             'm3_por_posicion': M3_POR_POSICION,
@@ -304,20 +376,21 @@ def main():
             'umbral_anomalo_m3_unidad': VOL_UNIT_ANOMALO_M3,
         },
         'estado_actual': {
-            'm3_ocupado_hoy': round(m3_stock, 1),
-            'm3_disponible_hoy': round(cap_m3 - m3_stock, 1),
-            'pct_ocupacion_hoy': round(m3_stock / cap_m3 * 100, 1) if cap_m3 else 0,
-            'pallets_ocupados_hoy': round(m3_stock / M3_POR_PALLET, 1),
-            'pallets_disp_hoy': round(pallets_disp_ini, 1),
+            'posiciones_total': pos['total_posiciones'],
+            'posiciones_ocupadas_hoy': pos['ocupadas'],
+            'posiciones_libres_hoy': pos['vacias'],
+            'pct_ocupacion_hoy': round(pos['ocupadas'] / pos['total_posiciones'] * 100, 1)
+                                  if pos['total_posiciones'] else 0,
+            'm3_stock_calculado': round(m3_stock, 1),
         },
         'pico_proyectado': {
             'fecha': pico['fecha'].isoformat(),
-            'm3_ocupado': pico['m3_ocupado'],
+            'posiciones_ocupadas': pico['posiciones_ocupadas'],
             'pct_ocupacion': pico['pct_ocupacion'],
         },
         'minimo_proyectado': {
             'fecha': minimo['fecha'].isoformat(),
-            'm3_ocupado': minimo['m3_ocupado'],
+            'posiciones_ocupadas': minimo['posiciones_ocupadas'],
             'pct_ocupacion': minimo['pct_ocupacion'],
         },
         'primer_critico': (primer_critico.iloc[0]['fecha'].isoformat()
@@ -325,6 +398,9 @@ def main():
         'primer_atencion': (primer_atencion.iloc[0]['fecha'].isoformat()
                              if not primer_atencion.empty else None),
         'dias_con_entrada_transito': dias_entrada,
+        'pis_entrantes': sorted(pis_entrantes, key=lambda x: x['fecha_eta']),
+        'pallets_total_entrantes_horizonte': round(sum(entradas_pallets.values()), 1),
+        'pallets_total_salientes_horizonte': round(sum(salidas.values()) / M3_POR_PALLET, 1),
         'm3_total_entrante_horizonte': round(sum(transito.values()), 1),
         'm3_total_saliente_horizonte': round(sum(salidas.values()), 1),
         'stock_anomalies_count': len(stock_anomalies),
@@ -336,9 +412,14 @@ def main():
     print(f"  resumen: {OUT_RESUMEN}", flush=True)
 
     print(f"\n=== RESUMEN ===")
-    print(f"  Capacidad bodega: {cap_m3:,.0f} m³ ({resumen['capacidad_pallets']:,.0f} pallets) [{cap_fuente}]")
-    print(f"  Estado HOY: {m3_stock:,.0f} m³ ({m3_stock/cap_m3*100:.1f}% ocupación)" if cap_m3 else "")
-    print(f"  Pico {HORIZONTE_DIAS}d: {pico['m3_ocupado']:,.0f} m³ ({pico['pct_ocupacion']:.0f}%) el {pico['fecha']}")
+    print(f"  Capacidad bodega: {pos['total_posiciones']:,} posiciones CA1/Stock leaf [{cap_fuente}]")
+    print(f"  Estado HOY: {pos['ocupadas']} ocupadas / {pos['vacias']} libres "
+          f"({pos['ocupadas']/pos['total_posiciones']*100:.1f}% ocupación)"
+          if pos['total_posiciones'] else "")
+    print(f"  Pico {HORIZONTE_DIAS}d: {pico['posiciones_ocupadas']:,.0f} posiciones "
+          f"({pico['pct_ocupacion']:.0f}%) el {pico['fecha']}")
+    print(f"  Pallets entrantes próximos {HORIZONTE_DIAS}d: "
+          f"{resumen['pallets_total_entrantes_horizonte']:,.0f} de {len(pis_entrantes)} PIs")
     if resumen['primer_critico']:
         print(f"  🔴 PRIMER CRÍTICO: {resumen['primer_critico']}")
     if resumen['primer_atencion']:

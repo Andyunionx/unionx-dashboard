@@ -4,11 +4,13 @@ Helper de visualización del forecast de capacidad bodega 90 días.
 Lee data/capacidad/forecast_diario.parquet + forecast_resumen.json
 (generado por extract_capacidad_forecast.py).
 
-Incluye:
-  - KPIs estado actual (ocupación %, m³ disp, pallets disp)
-  - Gráfico Plotly: m³ ocupado vs capacidad + entradas (PIs) + salidas (forecast)
-  - Tabla diaria con alertas semáforo
-  - Insights automáticos de slotting/distribución según el escenario
+Modelo:
+  - Capacidad = # POSICIONES leaf de CA1/Stock (mismo dato que Stock LIVE >
+    Uso de posiciones, no asunción).
+  - Estado HOY = ocupadas vs libres reales según Odoo (quant_ids).
+  - Forecast = pos_ocup_t = pos_ocup_t-1 + pallets_entrantes - pallets_salientes
+  - Pallets entrantes: pallets_estim por PI con su ETA
+  - Pallets salientes: m³ saliente forecast / m³ por pallet apilable
 """
 import json
 from datetime import datetime
@@ -58,113 +60,135 @@ def _kpi_card(label: str, value: str, sub: str = '', color: str = '#1F4E79') -> 
 
 
 def _generar_insights(df: pd.DataFrame, resumen: dict) -> list[dict]:
-    """Genera insights de slotting/distribución basados en el escenario detectado."""
+    """Insights de slotting/distribución basados en el escenario detectado."""
     insights = []
-    cap = resumen.get('capacidad_bodega_m3', 0)
     estado = resumen.get('estado_actual', {})
     pico = resumen.get('pico_proyectado', {})
-    minimo = resumen.get('minimo_proyectado', {})
+    pos_total = estado.get('posiciones_total', 0)
+    pos_libres = estado.get('posiciones_libres_hoy', 0)
     pct_hoy = estado.get('pct_ocupacion_hoy', 0)
     pct_pico = pico.get('pct_ocupacion', 0)
-    pct_min = minimo.get('pct_ocupacion', 0)
+    pos_pico = pico.get('posiciones_ocupadas', 0)
     primer_critico = resumen.get('primer_critico')
     primer_atencion = resumen.get('primer_atencion')
-    entrante = resumen.get('m3_total_entrante_horizonte', 0)
-    saliente = resumen.get('m3_total_saliente_horizonte', 0)
+    pis_entrantes = resumen.get('pis_entrantes', [])
+    pal_total_ent = resumen.get('pallets_total_entrantes_horizonte', 0)
 
-    # 1. Saturación cercana
+    # ── 1. Choque PI vs posiciones libres ────────────────────────────────
+    # Si las próximas semanas hay PIs cuyo total de pallets > posiciones libres,
+    # alertar al user de un próximo choque incluso si no se "llena" globalmente
+    # (ej: PI grande llega antes que se vacíe espacio por ventas).
+    pis_30d = [pi for pi in pis_entrantes
+                if (pd.to_datetime(pi['fecha_eta']).date() - datetime.now().date()).days <= 30]
+    if pis_30d:
+        pal_30d = sum(pi['pallets'] for pi in pis_30d)
+        if pal_30d > pos_libres * 0.8:
+            insights.append({
+                'tipo': '🟠 ALERTA RECEPCIÓN 30D',
+                'titulo': (f'Próximos 30d entran {pal_30d:,.0f} pallets de {len(pis_30d)} PIs'
+                            f' vs {pos_libres} posiciones libres HOY'),
+                'accion': (
+                    "**Plan inmediato (no esperás a que se llene):**\n"
+                    "1. Adelantar consolidación de SKUs fragmentados → revisar sub-tab "
+                    "**🆓 Slots liberables**\n"
+                    "2. Liquidar SKUs sin venta 60+d (sub-tab Stock Total filtro 'SIN VENTA')\n"
+                    "3. Pre-empacar pedidos B2B grandes pendientes para sacarlos\n"
+                    "4. Re-slotting de SKUs C de zona caliente a estanterías altas\n"
+                    "5. Coordinar con Steven/Vicente posibles delays si capacidad no alcanza"
+                ),
+            })
+
+    # ── 2. Saturación crítica (>90% en algún momento) ────────────────────
     if primer_critico:
         dias = (pd.to_datetime(primer_critico).date() - datetime.now().date()).days
-        if dias <= 7:
+        if dias <= 14:
             insights.append({
-                'tipo': '🔴 CRÍTICO',
-                'titulo': f'Bodega se llena en {dias} días ({primer_critico})',
+                'tipo': '🔴 BODEGA SE LLENA',
+                'titulo': f'Saturación 100% proyectada en {dias} días ({primer_critico})',
                 'accion': (
-                    "**Acción urgente:**\n"
-                    "1. Adelantar campañas/promos de SKUs sobrestockeados (liquidación)\n"
-                    "2. Mover SKUs C (baja rotación) a bodega externa o consolidar fragmentos\n"
-                    "3. Negociar con couriers tiempo extra de almacenaje en CD\n"
-                    "4. Renegociar ETAs con Steven (delay de 1-2 semanas en próximos PIs)"
-                ),
-            })
-        elif dias <= 30:
-            insights.append({
-                'tipo': '🟠 ALERTA',
-                'titulo': f'Bodega proyecta llenarse en {dias} días',
-                'accion': (
-                    "**Plan a 30 días:**\n"
-                    "1. Revisar slotting: consolidar fragmentos (ver sub-tab '🆓 Slots liberables')\n"
-                    "2. Liquidar SKUs sin venta 60+ días\n"
-                    "3. Pre-empacar pedidos B2B para liberar espacio fluido\n"
-                    "4. Confirmar con Andrés capacidad real o revisar el cálculo (actualmente "
-                    f"asumiendo {cap:,.0f} m³ totales)"
+                    "**Acción urgente esta semana:**\n"
+                    "1. Bloquear recepción de nuevos PIs hasta liberar al menos 50 posiciones\n"
+                    "2. Movimiento masivo a bodega externa de SKUs lentos (>180d sin venta)\n"
+                    "3. Promo flash 24-48h en SKUs sobrestockeados (top 20 por valor)\n"
+                    "4. Renegociar ETAs con Steven (delay 1-2 semanas próximos PIs)\n"
+                    "5. Revisar slotting subóptimo: SKUs A en zonas frías ocupando posiciones "
+                    "que podrían usarse mejor"
                 ),
             })
 
-    # 2. Sub-utilización
-    if pct_hoy < 30 and pct_pico < 50:
+    if primer_atencion and not primer_critico:
+        dias = (pd.to_datetime(primer_atencion).date() - datetime.now().date()).days
         insights.append({
-            'tipo': '🟡 EFICIENCIA',
-            'titulo': f'Bodega sub-utilizada ({pct_hoy:.0f}% hoy, pico {pct_pico:.0f}%)',
+            'tipo': '🟠 ATENCIÓN',
+            'titulo': f'Bodega supera 90% en {dias} días ({primer_atencion})',
             'accion': (
-                "**Oportunidad de eficiencia:**\n"
-                "1. Renegociar arriendo o sub-arrendar zona ociosa\n"
-                "2. Recibir más volumen importable (adelantar PIs futuros)\n"
-                "3. Consolidar bodegas si hay >1 ubicación → reducir costo logístico\n"
-                "4. Re-slotting agresivo: TODOS los SKUs A en zona caliente cerca de packing"
+                "**Plan a 30 días:**\n"
+                "1. Consolidar fragmentos (sub-tab '🆓 Slots liberables')\n"
+                "2. Liquidación moderada de SKUs sin venta 60+d\n"
+                "3. Confirmar capacidad real (¿hay racks en altura no contados?)"
             ),
         })
 
-    # 3. Quiebre proyectado de stock
-    if pct_min < 5:
-        primer_quiebre = df[df['m3_ocupado'] < 50].iloc[0] if (df['m3_ocupado'] < 50).any() else None
-        if primer_quiebre is not None:
-            dias_q = (primer_quiebre['fecha'].date() - datetime.now().date()).days
-            insights.append({
-                'tipo': '🔴 RIESGO QUIEBRE',
-                'titulo': f'Stock total proyecta quiebre en {dias_q} días ({primer_quiebre["fecha"].date()})',
-                'accion': (
-                    "**Plan de aprovisionamiento:**\n"
-                    "1. Comparar forecast venta vs PIs en tránsito — está saliendo MÁS de lo "
-                    f"que entra ({saliente:,.0f} m³ vs {entrante:,.0f} m³ próximos 90d)\n"
-                    "2. Adelantar siguiente PI con Steven (transporte aéreo si es posible)\n"
-                    "3. Revisar SKUs con quiebre crítico (sub-tab 'Stock Total' filtro 'CRÍTICO')\n"
-                    "4. Si forecast es realista → necesario agregar PI grande en próximas 4 semanas"
-                ),
-            })
+    # ── 3. Sub-utilización ────────────────────────────────────────────────
+    if pct_hoy < 50 and pct_pico < 60:
+        insights.append({
+            'tipo': '🟡 EFICIENCIA — sub-utilizada',
+            'titulo': f'Bodega al {pct_hoy:.0f}% hoy, pico solo {pct_pico:.0f}%',
+            'accion': (
+                "**Oportunidades:**\n"
+                f"1. Tenés ~{pos_libres - 50} posiciones que no se usan en 90d → "
+                "sub-arrendar o consolidar bodegas\n"
+                "2. Adelantar PIs futuros (ahorro flete por consolidación)\n"
+                "3. Re-slotting agresivo: TODOS los SKUs A en zona caliente cerca de packing\n"
+                "4. Renegociar arriendo si la zona ociosa supera 30% por 6+ meses"
+            ),
+        })
 
-    # 4. Concentración temporal de entradas
+    # ── 4. Concentración temporal de entradas ────────────────────────────
     eventos = resumen.get('dias_con_entrada_transito', [])
     if eventos:
         df_ev = pd.DataFrame(eventos)
         df_ev['fecha'] = pd.to_datetime(df_ev['fecha'])
-        # Detectar pico de entrada (>2x el promedio)
-        avg_ent = df_ev['m3'].mean()
-        picos_ent = df_ev[df_ev['m3'] > avg_ent * 2]
-        if not picos_ent.empty:
-            top = picos_ent.iloc[0]
+        avg_pal = df_ev['pallets'].mean()
+        picos = df_ev[df_ev['pallets'] > avg_pal * 2]
+        if not picos.empty:
+            top = picos.iloc[0]
             insights.append({
-                'tipo': '🔵 PLANIFICACIÓN',
-                'titulo': f'Entrada grande de {top["m3"]:,.0f} m³ el {top["fecha"].date()}',
+                'tipo': '🔵 PLANIFICACIÓN RECEPCIÓN',
+                'titulo': f'Entrada grande de {top["pallets"]:,.0f} pallets el {top["fecha"].date()}',
                 'accion': (
                     "**Preparar bodega para recepción:**\n"
-                    f"1. Liberar al menos {top['m3']*1.2:,.0f} m³ con anticipación (buffer 20%)\n"
+                    f"1. Liberar al menos {top['pallets']*1.2:,.0f} posiciones con anticipación\n"
                     "2. Asignar slots cercanos a recepción para SKUs A esperados\n"
-                    "3. Coordinar staff extra ese día para recepción/check-in\n"
+                    "3. Coordinar staff extra ese día (recepción + check-in)\n"
                     "4. Revisar % cobertura volumen del PI (sub-tab COMEX → '📐 Volumen / Pallets')"
                 ),
             })
 
-    # 5. Sin alertas → proactivo
+    # ── 5. Distribución espacial (slotting óptimo) ────────────────────────
+    if pos_libres < pos_total * 0.10:
+        insights.append({
+            'tipo': '🔵 SLOTTING — zona caliente',
+            'titulo': 'Pocas posiciones libres → slotting es crítico',
+            'accion': (
+                "**Re-distribución sugerida:**\n"
+                "1. SKUs A (top 20% movimientos) → posiciones más cercanas a packing\n"
+                "2. SKUs C (sin venta 90+d) → estanterías altas o bodega externa\n"
+                "3. Consolidar SKUs con qty <5 fragmentados en múltiples slots\n"
+                "4. Posiciones dormidas (stock pero sin movs >30d) → candidatas a reasignar"
+            ),
+        })
+
+    # Sin alertas
     if not insights:
         insights.append({
             'tipo': '🟢 OK',
             'titulo': f'Capacidad balanceada — pico {pct_pico:.0f}% en horizonte 90d',
             'accion': (
                 "**Optimizaciones nice-to-have:**\n"
-                "1. Re-slotting periódico de SKUs A para reducir OCT (sub-tab 'Slotting subóptimo')\n"
-                "2. Revisar SKUs dormidas >30d (sub-tab 'Uso de posiciones') y liquidar\n"
-                "3. Auditar volumen mal cargado en Odoo (excluidos del cálculo)"
+                "1. Re-slotting periódico de SKUs A para reducir OCT\n"
+                "2. Auditar SKUs dormidas >30d y liquidar\n"
+                "3. Corregir SKUs con volumen anómalo en Odoo (excluidos del cálculo)"
             ),
         })
 
@@ -185,23 +209,23 @@ def render_forecast_capacidad():
         return
 
     # Header con metadata
-    cap = resumen.get('capacidad_bodega_m3', 0)
+    estado = resumen.get('estado_actual', {})
+    cap_pos = resumen.get('capacidad_posiciones', 0)
     cap_fuente = resumen.get('capacidad_fuente', '')
-    cap_pal = resumen.get('capacidad_pallets', 0)
     asunc = resumen.get('asunciones', {})
 
     st.caption(
         f"🕒 Generado: {resumen.get('generado_en','')[:19]} · "
-        f"Capacidad: **{cap:,.0f} m³** ({cap_pal:,.0f} pallets) [{cap_fuente}] · "
-        f"📐 Asunciones: posición = {asunc.get('m3_por_posicion', 1.8)} m³ "
-        f"(1×1,2×1,5m), pallet apilable = {asunc.get('m3_por_pallet_apilable', 1.2)} m³"
+        f"Capacidad: **{cap_pos:,} posiciones** CA1/Stock leaf [{cap_fuente}] · "
+        f"📐 Asunciones: posición ≈ {asunc.get('m3_por_posicion', 1.8)} m³ "
+        f"(1×1,2×1,5m), 1 pallet apilable ≈ {asunc.get('m3_por_pallet_apilable', 1.2)} m³"
     )
 
-    # KPIs estado actual
-    estado = resumen.get('estado_actual', {})
+    # ─── KPIs estado actual (POSICIONES) ─────────────────────────────────
+    pos_ocup_hoy = estado.get('posiciones_ocupadas_hoy', 0)
+    pos_libres_hoy = estado.get('posiciones_libres_hoy', 0)
     pct_hoy = estado.get('pct_ocupacion_hoy', 0)
     color_hoy = _color_pct(pct_hoy)
-
     pico = resumen.get('pico_proyectado', {})
     minimo = resumen.get('minimo_proyectado', {})
 
@@ -209,29 +233,29 @@ def render_forecast_capacidad():
     cols[0].markdown(_kpi_card(
         "Ocupación HOY",
         f"{pct_hoy:.0f}%",
-        f"{estado.get('m3_ocupado_hoy', 0):,.0f} m³ / {cap:,.0f} m³",
+        f"{pos_ocup_hoy} ocup / {cap_pos} totales",
         color_hoy,
     ), unsafe_allow_html=True)
     cols[1].markdown(_kpi_card(
-        "Pallets disponibles HOY",
-        f"{estado.get('pallets_disp_hoy', 0):,.0f}",
-        f"de {cap_pal:,.0f} totales",
-        '#16A34A',
+        "Posiciones LIBRES hoy",
+        f"{pos_libres_hoy}",
+        f"de {cap_pos} ({pos_libres_hoy/cap_pos*100:.0f}% libre)" if cap_pos else "—",
+        '#16A34A' if pos_libres_hoy > 100 else '#EA580C',
     ), unsafe_allow_html=True)
     cols[2].markdown(_kpi_card(
         "Pico próximos 90d",
         f"{pico.get('pct_ocupacion', 0):.0f}%",
-        f"{pico.get('m3_ocupado', 0):,.0f} m³ el {pico.get('fecha','')[:10]}",
+        f"{pico.get('posiciones_ocupadas', 0):,.0f} pos el {pico.get('fecha','')[:10]}",
         _color_pct(pico.get('pct_ocupacion', 0)),
     ), unsafe_allow_html=True)
     cols[3].markdown(_kpi_card(
         "Mínimo próximos 90d",
         f"{minimo.get('pct_ocupacion', 0):.0f}%",
-        f"{minimo.get('m3_ocupado', 0):,.0f} m³ el {minimo.get('fecha','')[:10]}",
+        f"{minimo.get('posiciones_ocupadas', 0):,.0f} pos el {minimo.get('fecha','')[:10]}",
         '#DC2626' if minimo.get('pct_ocupacion', 0) < 10 else '#16A34A',
     ), unsafe_allow_html=True)
 
-    # Banner con primer evento crítico
+    # ─── Banner alerta ───────────────────────────────────────────────────
     if resumen.get('primer_critico'):
         dias = (pd.to_datetime(resumen['primer_critico']).date() - datetime.now().date()).days
         st.error(
@@ -246,54 +270,93 @@ def render_forecast_capacidad():
 
     st.divider()
 
-    # ============= GRÁFICO PRINCIPAL ============================
-    st.markdown("##### 📊 Evolución m³ ocupado vs capacidad")
+    # ─── Cruce PIs entrantes vs posiciones libres ─────────────────────────
+    pis_entrantes = resumen.get('pis_entrantes', [])
+    if pis_entrantes:
+        st.markdown("##### 🚢 Embarques entrantes vs posiciones disponibles")
+        df_pis = pd.DataFrame(pis_entrantes)
+        df_pis['fecha_eta'] = pd.to_datetime(df_pis['fecha_eta']).dt.date
+
+        # Acumulado de pallets necesarios contra libres hoy
+        df_pis_sorted = df_pis.sort_values('fecha_eta').copy()
+        df_pis_sorted['pallets_acumulado'] = df_pis_sorted['pallets'].cumsum()
+        df_pis_sorted['pos_libres_si_no_sale_nada'] = (pos_libres_hoy
+                                                        - df_pis_sorted['pallets_acumulado'])
+        df_pis_sorted['estado'] = df_pis_sorted['pos_libres_si_no_sale_nada'].apply(
+            lambda v: '🔴 NO ENTRA' if v < 0 else ('🟠 AJUSTADO' if v < 30 else '🟢 ENTRA')
+        )
+
+        df_show = df_pis_sorted[[
+            'pi', 'fecha_eta', 'transporte', 'unidades', 'm3', 'pallets',
+            'pallets_acumulado', 'pos_libres_si_no_sale_nada', 'estado',
+        ]].copy()
+        df_show['unidades'] = df_show['unidades'].apply(lambda v: f'{v:,.0f}')
+        df_show['m3'] = df_show['m3'].apply(lambda v: f'{v:,.1f}')
+        df_show['pallets'] = df_show['pallets'].apply(lambda v: f'{v:,.0f}')
+        df_show['pallets_acumulado'] = df_show['pallets_acumulado'].apply(lambda v: f'{v:,.0f}')
+        df_show['pos_libres_si_no_sale_nada'] = df_show['pos_libres_si_no_sale_nada'].apply(
+            lambda v: f'{v:,.0f}'
+        )
+        df_show.columns = ['PI', 'ETA bodega', 'Transp.', 'Unidades', 'm³',
+                            'Pallets PI', 'Pallets acum.',
+                            'Pos libres si no sale nada', 'Estado']
+        st.dataframe(df_show, use_container_width=True, hide_index=True, height=320)
+        st.caption(
+            "**Lógica de la columna 'Pos libres si no sale nada'**: "
+            f"asume que se reciben todos los PIs SIN que salga nada por venta. "
+            f"Si pasa a negativo, ese PI no entraría sin liberar espacio antes. "
+            "El forecast del gráfico abajo SÍ considera salidas."
+        )
+
+    st.divider()
+
+    # ─── GRÁFICO PRINCIPAL ────────────────────────────────────────────────
+    st.markdown("##### 📊 Evolución posiciones ocupadas (con salidas forecast)")
 
     fig = go.Figure()
 
-    # Área de capacidad (gris claro fondo)
+    # Capacidad total (línea horizontal punteada)
     fig.add_trace(go.Scatter(
-        x=df['fecha'], y=[cap] * len(df),
-        mode='lines', name='Capacidad total',
+        x=df['fecha'], y=[cap_pos] * len(df),
+        mode='lines', name=f'Capacidad ({cap_pos} pos)',
         line=dict(color='#CBD5E1', width=2, dash='dash'),
-        fill='tonexty' if False else None,
-        hovertemplate='Capacidad: %{y:,.0f} m³<extra></extra>',
+        hovertemplate='Capacidad: %{y:,.0f} posiciones<extra></extra>',
     ))
 
-    # Línea de ocupación (azul)
+    # Línea de ocupación
     fig.add_trace(go.Scatter(
-        x=df['fecha'], y=df['m3_ocupado'],
-        mode='lines', name='Ocupado proyectado',
+        x=df['fecha'], y=df['posiciones_ocupadas'],
+        mode='lines', name='Posiciones ocupadas',
         line=dict(color='#1F4E79', width=3),
         fill='tozeroy', fillcolor='rgba(31,78,121,0.15)',
-        hovertemplate='%{x|%d/%m}<br>Ocupado: %{y:,.0f} m³<br>'
-                       'Pallets: %{customdata[0]:,.0f}<br>'
+        hovertemplate='%{x|%d/%m}<br>Ocupado: %{y:,.0f} pos<br>'
+                       'Disponible: %{customdata[0]:,.0f}<br>'
                        'Ocupación: %{customdata[1]:.1f}%<extra></extra>',
-        customdata=df[['pallets_ocupados', 'pct_ocupacion']].values,
+        customdata=df[['posiciones_disp', 'pct_ocupacion']].values,
     ))
 
-    # Línea umbrales 70% y 90%
-    fig.add_hline(y=cap * 0.9, line=dict(color='#EA580C', width=1, dash='dot'),
+    # Umbrales
+    fig.add_hline(y=cap_pos * 0.9, line=dict(color='#EA580C', width=1, dash='dot'),
                    annotation_text='90%', annotation_position='right')
-    fig.add_hline(y=cap * 0.7, line=dict(color='#F59E0B', width=1, dash='dot'),
+    fig.add_hline(y=cap_pos * 0.7, line=dict(color='#F59E0B', width=1, dash='dot'),
                    annotation_text='70%', annotation_position='right')
 
     # Marcadores entradas (PIs)
-    df_ent = df[df['m3_entrante_dia'] > 0]
+    df_ent = df[df['pallets_entrantes_dia'] > 0]
     if not df_ent.empty:
         fig.add_trace(go.Scatter(
-            x=df_ent['fecha'], y=df_ent['m3_ocupado'],
+            x=df_ent['fecha'], y=df_ent['posiciones_ocupadas'],
             mode='markers', name='Entrada PI',
             marker=dict(symbol='triangle-up', size=14, color='#16A34A',
                          line=dict(color='white', width=2)),
-            hovertemplate='%{x|%d/%m}<br><b>Entra %{customdata:,.0f} m³</b><extra></extra>',
-            customdata=df_ent['m3_entrante_dia'],
+            hovertemplate='%{x|%d/%m}<br><b>Entran %{customdata:,.0f} pallets</b><extra></extra>',
+            customdata=df_ent['pallets_entrantes_dia'],
         ))
 
     fig.update_layout(
         height=420,
         xaxis=dict(title='Fecha'),
-        yaxis=dict(title='m³', tickformat=',.0f'),
+        yaxis=dict(title='Posiciones ocupadas', tickformat=',.0f'),
         hovermode='x unified',
         margin=dict(t=20, b=40, l=60, r=20),
         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
@@ -302,14 +365,14 @@ def render_forecast_capacidad():
     st.plotly_chart(fig, use_container_width=True)
     st.caption(
         f"🟢 Triángulos = días con llegada de PI · "
-        f"Total entrante 90d: {resumen.get('m3_total_entrante_horizonte', 0):,.0f} m³ · "
-        f"Total saliente 90d: {resumen.get('m3_total_saliente_horizonte', 0):,.0f} m³ "
-        "(forecast venta × volumen unitario)"
+        f"Total entrante 90d: {resumen.get('pallets_total_entrantes_horizonte', 0):,.0f} pallets · "
+        f"Total saliente 90d: {resumen.get('pallets_total_salientes_horizonte', 0):,.0f} pallets "
+        "(forecast venta convertido)"
     )
 
     st.divider()
 
-    # ============= INSIGHTS ============================
+    # ─── INSIGHTS ────────────────────────────────────────────────────────
     st.markdown("##### 💡 Insights & acciones recomendadas")
     insights = _generar_insights(df, resumen)
     for ins in insights:
@@ -328,30 +391,29 @@ def render_forecast_capacidad():
 
     st.divider()
 
-    # ============= TABLA DETALLE ============================
+    # ─── DETALLE DIARIO ──────────────────────────────────────────────────
     with st.expander("📋 Detalle diario (próximos 90 días)", expanded=False):
         df_show = df.copy()
         df_show['fecha'] = df_show['fecha'].dt.date
-        df_show = df_show[['fecha', 'm3_ocupado', 'm3_entrante_dia',
-                           'm3_saliente_dia', 'm3_disponible',
-                           'pallets_ocupados', 'pallets_disp',
+        df_show = df_show[['fecha', 'posiciones_ocupadas', 'posiciones_disp',
+                           'pallets_entrantes_dia', 'pallets_salientes_dia',
                            'pct_ocupacion', 'alerta']]
-        df_show.columns = ['Fecha', 'm³ Ocup', 'Entra', 'Sale',
-                           'm³ Disp', 'Pal Ocup', 'Pal Disp',
-                           '% Ocup', 'Estado']
+        df_show.columns = ['Fecha', 'Pos Ocup', 'Pos Disp',
+                           'Pal Entran', 'Pal Salen', '% Ocup', 'Estado']
         st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
 
-    # ============= ANOMALÍAS STOCK ACTUAL ============================
+    # ─── ANOMALÍAS STOCK ─────────────────────────────────────────────────
     anom_count = resumen.get('stock_anomalies_count', 0)
     if anom_count > 0:
         with st.expander(
             f"⚠️ {anom_count} SKUs en stock con volumen anómalo "
-            "(excluidos del cálculo)", expanded=False,
+            "(excluidos del cálculo m³)", expanded=False,
         ):
             st.caption(
                 "Estos SKUs tienen `product.template.volume` cargado en cm³ "
-                "u otra unidad por error. Corregir en Odoo para que el cálculo "
-                "de capacidad sea más preciso."
+                "u otra unidad por error. No afecta el cálculo por POSICIONES "
+                "(ese usa el dato real de Odoo) pero sí el m³ informativo. "
+                "Corregir en Odoo cuando se pueda."
             )
             top = resumen.get('top_stock_anomalies', [])
             if top:

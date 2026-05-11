@@ -1,29 +1,29 @@
 {
-  "generado_en": "2026-05-11T17:56:48.963524",
+  "generado_en": "2026-05-11T18:55:51.738335",
   "horizonte_dias": 90,
-  "capacidad_bodega_m3": 2539.7999999999997,
-  "capacidad_pallets": 2116.0,
-  "capacidad_fuente": "auto: 1411 posiciones × 1.7999999999999998 m³",
+  "capacidad_posiciones": 1361,
+  "capacidad_bodega_m3": 2449.7999999999997,
+  "capacidad_fuente": "1361 pos CA1/Stock × 1.7999999999999998 m³",
   "asunciones": {
     "m3_por_posicion": 1.7999999999999998,
     "m3_por_pallet_apilable": 1.2,
     "umbral_anomalo_m3_unidad": 1.0
   },
   "estado_actual": {
-    "m3_ocupado_hoy": 1136.4,
-    "m3_disponible_hoy": 1403.4,
-    "pct_ocupacion_hoy": 44.7,
-    "pallets_ocupados_hoy": 947.0,
-    "pallets_disp_hoy": 1169.5
+    "posiciones_total": 1361,
+    "posiciones_ocupadas_hoy": 920,
+    "posiciones_libres_hoy": 441,
+    "pct_ocupacion_hoy": 67.6,
+    "m3_stock_calculado": 1136.4
   },
   "pico_proyectado": {
     "fecha": "2026-05-13",
-    "m3_ocupado": 1173.2,
-    "pct_ocupacion": 46.2
+    "posiciones_ocupadas": 950.7,
+    "pct_ocupacion": 69.9
   },
   "minimo_proyectado": {
-    "fecha": "2026-07-19",
-    "m3_ocupado": 0.0,
+    "fecha": "2026-07-17",
+    "posiciones_ocupadas": 0.0,
     "pct_ocupacion": 0.0
   },
   "primer_critico": null,
@@ -31,29 +31,119 @@
   "dias_con_entrada_transito": [
     {
       "fecha": "2026-05-13",
+      "pallets": 68.5,
       "m3": 82.1
     },
     {
       "fecha": "2026-05-20",
+      "pallets": 76.8,
       "m3": 92.2
     },
     {
       "fecha": "2026-06-12",
+      "pallets": 103.8,
       "m3": 124.6
     },
     {
       "fecha": "2026-06-23",
+      "pallets": 86.6,
       "m3": 103.9
     },
     {
       "fecha": "2026-06-24",
+      "pallets": 37.2,
       "m3": 44.6
     },
     {
       "fecha": "2026-06-25",
+      "pallets": 37.5,
       "m3": 45.0
     }
   ],
+  "pis_entrantes": [
+    {
+      "pi": "26TP0312PI",
+      "fecha_eta": "2026-05-07",
+      "pallets": 40.4,
+      "m3": 48.47,
+      "unidades": 2198.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0309PI",
+      "fecha_eta": "2026-05-13",
+      "pallets": 29.8,
+      "m3": 35.73,
+      "unidades": 3967.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0329PI",
+      "fecha_eta": "2026-05-13",
+      "pallets": 38.7,
+      "m3": 46.42,
+      "unidades": 2866.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0320PI",
+      "fecha_eta": "2026-05-20",
+      "pallets": 41.9,
+      "m3": 50.25,
+      "unidades": 2197.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0330PI",
+      "fecha_eta": "2026-05-20",
+      "pallets": 34.9,
+      "m3": 41.91,
+      "unidades": 5393.002,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0422PI",
+      "fecha_eta": "2026-06-12",
+      "pallets": 103.8,
+      "m3": 124.61,
+      "unidades": 7334.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0423PI",
+      "fecha_eta": "2026-06-23",
+      "pallets": 49.1,
+      "m3": 58.91,
+      "unidades": 7672.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0424PI",
+      "fecha_eta": "2026-06-23",
+      "pallets": 37.5,
+      "m3": 45.01,
+      "unidades": 2400.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0429PI",
+      "fecha_eta": "2026-06-24",
+      "pallets": 37.2,
+      "m3": 44.59,
+      "unidades": 3288.0,
+      "transporte": "BARCO"
+    },
+    {
+      "pi": "26TP0430PI",
+      "fecha_eta": "2026-06-25",
+      "pallets": 37.5,
+      "m3": 45.03,
+      "unidades": 6743.032,
+      "transporte": "BARCO"
+    }
+  ],
+  "pallets_total_entrantes_horizonte": 450.8,
+  "pallets_total_salientes_horizonte": 9163.0,
   "m3_total_entrante_horizonte": 540.9,
   "m3_total_saliente_horizonte": 10995.6,
   "stock_anomalies_count": 55,
