@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-05-10T09:17:13.058099",
+  "generado_en": "2026-05-11T11:59:16.605540",
   "mes_actual": "2026-05",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0189452591310684,
-      "total_pickings": 10979,
-      "on_time": 209,
-      "on_time_pct": 0.01903634210766008,
-      "in_full": 10964,
-      "in_full_pct": 0.9986337553511249,
-      "both": 208,
+      "valor": 0.018259173905335935,
+      "total_pickings": 11282,
+      "on_time": 207,
+      "on_time_pct": 0.01834781067186669,
+      "in_full": 11267,
+      "in_full_pct": 0.9986704485020387,
+      "both": 206,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.12602739726027398,
+      "valor": 0.13424657534246576,
       "total_pickings": 365,
-      "on_time": 47,
-      "on_time_pct": 0.12876712328767123,
+      "on_time": 50,
+      "on_time_pct": 0.136986301369863,
       "in_full": 359,
       "in_full_pct": 0.9835616438356164,
-      "both": 46,
+      "both": 49,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999322585015581,
-      "ok": 14761,
-      "total": 14762,
+      "valor": 0.9999342105263158,
+      "ok": 15199,
+      "total": 15200,
       "errores": 1,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 8.656065821256039,
-      "n_recepciones": 276,
+      "valor": 8.623649217809868,
+      "n_recepciones": 277,
       "min": 0.0008333333333333334,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/00981",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 14:02",
+          "done": "2026-05-11 14:03"
+        },
+        {
+          "picking": "CA1/RET/00980",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:57",
+          "done": "2026-05-11 14:00"
+        },
+        {
+          "picking": "CA1/RET/00979",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-11 13:44",
+          "done": "2026-05-11 13:47"
+        },
+        {
+          "picking": "CA1/RET/00978",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:37",
+          "done": "2026-05-11 13:38"
+        },
+        {
+          "picking": "CA1/RET/00977",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:34",
+          "done": "2026-05-11 13:36"
+        },
         {
           "picking": "CA1/IN/00796",
           "proveedor": "",
@@ -139,60 +174,25 @@
           "horas": 19.3,
           "scheduled": "2026-05-06 17:29",
           "done": "2026-05-07 12:46"
-        },
-        {
-          "picking": "CA1/RET/00974",
-          "proveedor": "Casa Mila SpA",
-          "horas": 0.1,
-          "scheduled": "2026-05-06 20:00",
-          "done": "2026-05-06 20:03"
-        },
-        {
-          "picking": "CA1/RET/00973",
-          "proveedor": "Cliente Marketing",
-          "horas": 0.0,
-          "scheduled": "2026-05-05 18:27",
-          "done": "2026-05-05 18:27"
-        },
-        {
-          "picking": "CA1/IN/00781",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-05 17:04",
-          "done": "2026-05-05 17:23"
-        },
-        {
-          "picking": "CA1/IN/00780",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-04 17:25",
-          "done": "2026-05-04 17:32"
-        },
-        {
-          "picking": "CA1/IN/00779",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-05-04 17:05",
-          "done": "2026-05-04 17:18"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9112679832007864,
-      "total_so": 11286,
-      "total_con_pickings": 11191,
-      "cumplidos": 10198,
-      "parciales": 21,
-      "sin_iniciar": 972,
+      "valor": 0.9351254480286738,
+      "total_so": 11254,
+      "total_con_pickings": 11160,
+      "cumplidos": 10436,
+      "parciales": 19,
+      "sin_iniciar": 705,
       "error": null
     },
     "oct_30d": {
-      "valor": 44.36218341005506,
-      "n_orders": 11079,
+      "valor": 46.694058152476345,
+      "n_orders": 11381,
       "min_h": 0.018333333333333333,
       "max_h": 718.7063888888889,
-      "mediana_h": 24.10861111111111,
+      "mediana_h": 25.578611111111112,
       "detalle": [
         {
           "so": "S200834",
@@ -343,17 +343,17 @@
     },
     "ajustes_inventario": {
       "n_ajustes": 0,
-      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: EOF occurred in violation of protocol (_ssl.c:2427)"
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 4670,
+      "lineas": 5530,
       "mes": "2026-05",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 192,
-      "outgoing": 29333,
-      "internal": 20475,
+      "incoming": 203,
+      "outgoing": 29274,
+      "internal": 20523,
       "total": 50000,
       "error": null
     },
@@ -367,14 +367,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 84,
-          "tarde": 84,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "abc S.A.",
-          "total": 93,
-          "tarde": 93,
+          "total": 86,
+          "tarde": 86,
           "on_time_pct": 0.0
         },
         {
@@ -408,26 +402,32 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "abc S.A.",
+          "total": 85,
+          "tarde": 85,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 45,
-          "tarde": 37,
-          "on_time_pct": 0.17777777777777778
+          "total": 49,
+          "tarde": 41,
+          "on_time_pct": 0.16326530612244897
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 15,
-          "tarde": 10,
-          "on_time_pct": 0.3333333333333333
+          "total": 16,
+          "tarde": 11,
+          "on_time_pct": 0.3125
         },
         {
           "cliente": "Sawa SPA",
-          "total": 22,
+          "total": 21,
           "tarde": 6,
-          "on_time_pct": 0.7272727272727273
+          "on_time_pct": 0.7142857142857143
         },
         {
           "cliente": "Falabella Retail",
-          "total": 7,
+          "total": 11,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -445,11 +445,59 @@
         }
       ],
       "error": null
+    },
+    "devoluciones_picking_error_90d": {
+      "valor": 7.547549562242126e-05,
+      "n_devoluciones": 3,
+      "n_despachos": 39748,
+      "ventana_dias": 90,
+      "ejemplos": [
+        {
+          "ref": "BPV/IN/00350",
+          "origen": "Internal Transfer",
+          "cliente": "",
+          "fecha": "2026-02-17"
+        },
+        {
+          "ref": "CA1/IN/00743",
+          "origen": "Devolucion Zenlab (Fresherb)",
+          "cliente": "",
+          "fecha": "2026-04-22"
+        },
+        {
+          "ref": "CA1/IN/00781",
+          "origen": "Devolución Paris",
+          "cliente": "",
+          "fecha": "2026-05-05"
+        }
+      ],
+      "error": null
+    },
+    "devoluciones_picking_error_30d": {
+      "valor": 0.00017168855695767876,
+      "n_devoluciones": 2,
+      "n_despachos": 11649,
+      "ventana_dias": 30,
+      "ejemplos": [
+        {
+          "ref": "CA1/IN/00743",
+          "origen": "Devolucion Zenlab (Fresherb)",
+          "cliente": "",
+          "fecha": "2026-04-22"
+        },
+        {
+          "ref": "CA1/IN/00781",
+          "origen": "Devolución Paris",
+          "cliente": "",
+          "fecha": "2026-05-05"
+        }
+      ],
+      "error": null
     }
   },
   "errores": [
     "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od",
-    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: EOF occurred in violation of protocol (_ssl.c:2427)"
+    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
   ],
   "tendencia_6m": [
     {
@@ -499,12 +547,12 @@
     },
     {
       "mes": "2026-05",
-      "otif_b2c": 0.0031645569620253164,
-      "otif_b2b": 0.1125,
-      "pick_acc": 0.996797608881298,
-      "n_pickings": 3556,
-      "n_b2c": 3476,
-      "n_b2b": 80
+      "otif_b2c": 0.0026875152699731247,
+      "otif_b2b": 0.14285714285714285,
+      "pick_acc": 0.9972943722943723,
+      "n_pickings": 4184,
+      "n_b2c": 4093,
+      "n_b2b": 91
     }
   ],
   "forecast_3m": {
@@ -558,11 +606,11 @@
       {
         "periodo": "2026-05",
         "fecha_desde": "2026-05-01",
-        "n_pedidos": 3556,
-        "n_lineas_pickeadas": 4670,
-        "n_unidades_despachadas": 8333,
-        "uds_por_pedido": 2.343363329583802,
-        "lineas_por_pedido": 1.313273340832396
+        "n_pedidos": 4184,
+        "n_lineas_pickeadas": 5530,
+        "n_unidades_despachadas": 10068,
+        "uds_por_pedido": 2.4063097514340344,
+        "lineas_por_pedido": 1.3217017208413002
       }
     ],
     "ventas_hist_clp": {
@@ -570,20 +618,20 @@
       "2026-01": 381313043.0,
       "2026-02": 373146079.0,
       "2026-03": 680115680.0,
-      "2026-04": 525483756.0,
-      "2026-05": 182961786.0
+      "2026-04": 525151846.0,
+      "2026-05": 200140144.0
     },
     "forecast": [
       {
         "mes": "2026-06",
         "tipo_proyeccion": "forecast",
-        "venta_proj_clp": 810803096,
-        "venta_proj_clp_low": 390134020,
-        "venta_proj_clp_high": 1233829010,
-        "vs_ly_pct": -4.166799360708474,
-        "pedidos_proj": 18645,
-        "lineas_proj": 24240,
-        "unidades_proj": 51191,
+        "venta_proj_clp": 1076021011,
+        "venta_proj_clp_low": 588547960,
+        "venta_proj_clp_high": 1569980191,
+        "vs_ly_pct": 27.18073962467493,
+        "pedidos_proj": 25277,
+        "lineas_proj": 32932,
+        "unidades_proj": 69661,
         "horas_necesarias_estim": 0,
         "horas_disponibles_estandar": 0,
         "cobertura_pct": null,
@@ -592,13 +640,13 @@
       {
         "mes": "2026-07",
         "tipo_proyeccion": "forecast",
-        "venta_proj_clp": 615667624,
-        "venta_proj_clp_low": 182023401,
-        "venta_proj_clp_high": 1055528352,
-        "vs_ly_pct": -6.913967375495897,
-        "pedidos_proj": 14158,
-        "lineas_proj": 18406,
-        "unidades_proj": 38871,
+        "venta_proj_clp": 616307117,
+        "venta_proj_clp_low": 179055936,
+        "venta_proj_clp_high": 1058357252,
+        "vs_ly_pct": -6.817279058714856,
+        "pedidos_proj": 14478,
+        "lineas_proj": 18862,
+        "unidades_proj": 39899,
         "horas_necesarias_estim": 0,
         "horas_disponibles_estandar": 0,
         "cobertura_pct": null,
@@ -607,13 +655,13 @@
       {
         "mes": "2026-08",
         "tipo_proyeccion": "forecast",
-        "venta_proj_clp": 617655252,
-        "venta_proj_clp_low": 181310367,
-        "venta_proj_clp_high": 1059941712,
-        "vs_ly_pct": 5.694754488120644,
-        "pedidos_proj": 14203,
-        "lineas_proj": 18465,
-        "unidades_proj": 38997,
+        "venta_proj_clp": 616724598,
+        "venta_proj_clp_low": 173592653,
+        "venta_proj_clp_high": 1053746135,
+        "vs_ly_pct": 5.535498583269393,
+        "pedidos_proj": 14487,
+        "lineas_proj": 18875,
+        "unidades_proj": 39926,
         "horas_necesarias_estim": 0,
         "horas_disponibles_estandar": 0,
         "cobertura_pct": null,
@@ -621,9 +669,9 @@
       }
     ],
     "ratios_aplicados": {
-      "lineas_por_clp": 29.9,
-      "uds_por_clp": 63.14,
-      "pedidos_por_clp": 23.0,
+      "lineas_por_clp": 30.61,
+      "uds_por_clp": 64.74,
+      "pedidos_por_clp": 23.49,
       "n_meses_promedio": 3,
       "leyenda": "Por cada $1MM CLP de venta"
     },
@@ -633,15 +681,6 @@
   },
   "productividad_dia_30d": {
     "items": [
-      {
-        "periodo": "2026-04-10",
-        "fecha_desde": "2026-04-10",
-        "n_pedidos": 325,
-        "n_lineas_pickeadas": 422,
-        "n_unidades_despachadas": 657,
-        "uds_por_pedido": 2.0215384615384617,
-        "lineas_por_pedido": 1.2984615384615386
-      },
       {
         "periodo": "2026-04-11",
         "fecha_desde": "2026-04-11",
@@ -902,6 +941,15 @@
         "n_unidades_despachadas": 0,
         "uds_por_pedido": 0,
         "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-10",
+        "fecha_desde": "2026-05-10",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
       }
     ],
     "periodo": "dia",
@@ -910,15 +958,6 @@
   },
   "productividad_semana_12s": {
     "items": [
-      {
-        "periodo": "Sem 7 (09/02)",
-        "fecha_desde": "2026-02-09",
-        "n_pedidos": 2457,
-        "n_lineas_pickeadas": 3280,
-        "n_unidades_despachadas": 6570,
-        "uds_por_pedido": 2.673992673992674,
-        "lineas_por_pedido": 1.334961334961335
-      },
       {
         "periodo": "Sem 8 (16/02)",
         "fecha_desde": "2026-02-16",
@@ -1017,6 +1056,15 @@
         "n_unidades_despachadas": 3046,
         "uds_por_pedido": 1.8206814106395697,
         "lineas_por_pedido": 1.3060370591751345
+      },
+      {
+        "periodo": "Sem 19 (04/05)",
+        "fecha_desde": "2026-05-04",
+        "n_pedidos": 3556,
+        "n_lineas_pickeadas": 4670,
+        "n_unidades_despachadas": 8333,
+        "uds_por_pedido": 2.343363329583802,
+        "lineas_por_pedido": 1.313273340832396
       }
     ],
     "periodo": "semana",
@@ -1073,11 +1121,11 @@
       {
         "periodo": "2026-05",
         "fecha_desde": "2026-05-01",
-        "n_pedidos": 3556,
-        "n_lineas_pickeadas": 4670,
-        "n_unidades_despachadas": 8333,
-        "uds_por_pedido": 2.343363329583802,
-        "lineas_por_pedido": 1.313273340832396
+        "n_pedidos": 4184,
+        "n_lineas_pickeadas": 5530,
+        "n_unidades_despachadas": 10068,
+        "uds_por_pedido": 2.4063097514340344,
+        "lineas_por_pedido": 1.3217017208413002
       }
     ],
     "periodo": "mes",
@@ -1088,153 +1136,522 @@
     "plan": [],
     "error": "StreamlitSecretNotFoundError: No secrets found. Valid paths for a secrets.toml file or secret directories are: C:\\Users\\andre\\.streamlit\\secrets.toml,"
   },
+  "productividad_meses_12m": {
+    "items": [
+      {
+        "periodo": "2025-06",
+        "fecha_desde": "2025-06-01",
+        "fecha_hasta": "2025-07-01",
+        "n_pedidos": 13061,
+        "n_lineas": 19391,
+        "n_unidades": 39882,
+        "uds_por_pedido": 3.05351810734247,
+        "lineas_por_pedido": 1.4846489549039124
+      },
+      {
+        "periodo": "2025-07",
+        "fecha_desde": "2025-07-01",
+        "fecha_hasta": "2025-08-01",
+        "n_pedidos": 7701,
+        "n_lineas": 13539,
+        "n_unidades": 41033,
+        "uds_por_pedido": 5.328269055966757,
+        "lineas_por_pedido": 1.7580833657966497
+      },
+      {
+        "periodo": "2025-08",
+        "fecha_desde": "2025-08-01",
+        "fecha_hasta": "2025-09-01",
+        "n_pedidos": 6693,
+        "n_lineas": 10435,
+        "n_unidades": 23784,
+        "uds_por_pedido": 3.5535634244733303,
+        "lineas_por_pedido": 1.5590915882265053
+      },
+      {
+        "periodo": "2025-09",
+        "fecha_desde": "2025-09-01",
+        "fecha_hasta": "2025-10-01",
+        "n_pedidos": 5224,
+        "n_lineas": 9312,
+        "n_unidades": 56829,
+        "uds_por_pedido": 10.878445635528331,
+        "lineas_por_pedido": 1.782542113323124
+      },
+      {
+        "periodo": "2025-10",
+        "fecha_desde": "2025-10-01",
+        "fecha_hasta": "2025-11-01",
+        "n_pedidos": 11892,
+        "n_lineas": 17563,
+        "n_unidades": 26535,
+        "uds_por_pedido": 2.231331987891019,
+        "lineas_por_pedido": 1.4768752102253615
+      },
+      {
+        "periodo": "2025-11",
+        "fecha_desde": "2025-11-01",
+        "fecha_hasta": "2025-12-01",
+        "n_pedidos": 6067,
+        "n_lineas": 9821,
+        "n_unidades": 70356,
+        "uds_por_pedido": 11.596505686500741,
+        "lineas_por_pedido": 1.618757211142245
+      },
+      {
+        "periodo": "2025-12",
+        "fecha_desde": "2025-12-01",
+        "fecha_hasta": "2026-01-01",
+        "n_pedidos": 12962,
+        "n_lineas": 19733,
+        "n_unidades": 45185,
+        "uds_por_pedido": 3.485958956951088,
+        "lineas_por_pedido": 1.5223730905724426
+      },
+      {
+        "periodo": "2026-01",
+        "fecha_desde": "2026-01-01",
+        "fecha_hasta": "2026-02-01",
+        "n_pedidos": 8039,
+        "n_lineas": 11991,
+        "n_unidades": 26315,
+        "uds_por_pedido": 3.2734170916780694,
+        "lineas_por_pedido": 1.4916034332628436
+      },
+      {
+        "periodo": "2026-02",
+        "fecha_desde": "2026-02-01",
+        "fecha_hasta": "2026-03-01",
+        "n_pedidos": 10141,
+        "n_lineas": 13242,
+        "n_unidades": 26817,
+        "uds_por_pedido": 2.644413765900799,
+        "lineas_por_pedido": 1.305788383788581
+      },
+      {
+        "periodo": "2026-03",
+        "fecha_desde": "2026-03-01",
+        "fecha_hasta": "2026-04-01",
+        "n_pedidos": 15705,
+        "n_lineas": 20421,
+        "n_unidades": 45523,
+        "uds_por_pedido": 2.8986310092327283,
+        "lineas_por_pedido": 1.3002865329512894
+      },
+      {
+        "periodo": "2026-04",
+        "fecha_desde": "2026-04-01",
+        "fecha_hasta": "2026-05-01",
+        "n_pedidos": 13905,
+        "n_lineas": 17940,
+        "n_unidades": 40427,
+        "uds_por_pedido": 2.907371449119022,
+        "lineas_por_pedido": 1.290183387270766
+      },
+      {
+        "periodo": "2026-05",
+        "fecha_desde": "2026-05-01",
+        "fecha_hasta": "2026-06-01",
+        "n_pedidos": 4184,
+        "n_lineas": 5530,
+        "n_unidades": 10068,
+        "uds_por_pedido": 2.4063097514340344,
+        "lineas_por_pedido": 1.3217017208413002
+      }
+    ],
+    "tipo": "mes",
+    "anio": 2026,
+    "mes": 5,
+    "error": null
+  },
+  "productividad_semanas_mes_actual": {
+    "items": [
+      {
+        "periodo": "S1 (01/05-03/05)",
+        "fecha_desde": "2026-05-01",
+        "fecha_hasta": "2026-05-04",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "S2 (04/05-10/05)",
+        "fecha_desde": "2026-05-04",
+        "fecha_hasta": "2026-05-11",
+        "n_pedidos": 3556,
+        "n_lineas": 4670,
+        "n_unidades": 8333,
+        "uds_por_pedido": 2.343363329583802,
+        "lineas_por_pedido": 1.313273340832396
+      },
+      {
+        "periodo": "S3 (11/05-17/05)",
+        "fecha_desde": "2026-05-11",
+        "fecha_hasta": "2026-05-18",
+        "n_pedidos": 628,
+        "n_lineas": 860,
+        "n_unidades": 1735,
+        "uds_por_pedido": 2.7627388535031847,
+        "lineas_por_pedido": 1.3694267515923566
+      },
+      {
+        "periodo": "S4 (18/05-24/05)",
+        "fecha_desde": "2026-05-18",
+        "fecha_hasta": "2026-05-25",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "S5 (25/05-31/05)",
+        "fecha_desde": "2026-05-25",
+        "fecha_hasta": "2026-06-01",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      }
+    ],
+    "tipo": "semana_de_mes",
+    "anio": 2026,
+    "mes": 5,
+    "error": null
+  },
+  "productividad_dias_14d": {
+    "items": [
+      {
+        "periodo": "2026-04-28 (Tue)",
+        "fecha_desde": "2026-04-28",
+        "fecha_hasta": "2026-04-29",
+        "n_pedidos": 216,
+        "n_lineas": 316,
+        "n_unidades": 467,
+        "uds_por_pedido": 2.162037037037037,
+        "lineas_por_pedido": 1.462962962962963
+      },
+      {
+        "periodo": "2026-04-29 (Wed)",
+        "fecha_desde": "2026-04-29",
+        "fecha_hasta": "2026-04-30",
+        "n_pedidos": 102,
+        "n_lineas": 163,
+        "n_unidades": 180,
+        "uds_por_pedido": 1.7647058823529411,
+        "lineas_por_pedido": 1.5980392156862746
+      },
+      {
+        "periodo": "2026-04-30 (Thu)",
+        "fecha_desde": "2026-04-30",
+        "fecha_hasta": "2026-05-01",
+        "n_pedidos": 478,
+        "n_lineas": 579,
+        "n_unidades": 1085,
+        "uds_por_pedido": 2.2698744769874475,
+        "lineas_por_pedido": 1.211297071129707
+      },
+      {
+        "periodo": "2026-05-01 (Fri)",
+        "fecha_desde": "2026-05-01",
+        "fecha_hasta": "2026-05-02",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-02 (Sat)",
+        "fecha_desde": "2026-05-02",
+        "fecha_hasta": "2026-05-03",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-03 (Sun)",
+        "fecha_desde": "2026-05-03",
+        "fecha_hasta": "2026-05-04",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-04 (Mon)",
+        "fecha_desde": "2026-05-04",
+        "fecha_hasta": "2026-05-05",
+        "n_pedidos": 1747,
+        "n_lineas": 2128,
+        "n_unidades": 2454,
+        "uds_por_pedido": 1.4046937607326846,
+        "lineas_por_pedido": 1.2180881511161992
+      },
+      {
+        "periodo": "2026-05-05 (Tue)",
+        "fecha_desde": "2026-05-05",
+        "fecha_hasta": "2026-05-06",
+        "n_pedidos": 474,
+        "n_lineas": 672,
+        "n_unidades": 729,
+        "uds_por_pedido": 1.5379746835443038,
+        "lineas_por_pedido": 1.4177215189873418
+      },
+      {
+        "periodo": "2026-05-06 (Wed)",
+        "fecha_desde": "2026-05-06",
+        "fecha_hasta": "2026-05-07",
+        "n_pedidos": 774,
+        "n_lineas": 1021,
+        "n_unidades": 1183,
+        "uds_por_pedido": 1.528423772609819,
+        "lineas_por_pedido": 1.3191214470284238
+      },
+      {
+        "periodo": "2026-05-07 (Thu)",
+        "fecha_desde": "2026-05-07",
+        "fecha_hasta": "2026-05-08",
+        "n_pedidos": 446,
+        "n_lineas": 629,
+        "n_unidades": 2721,
+        "uds_por_pedido": 6.1008968609865475,
+        "lineas_por_pedido": 1.4103139013452914
+      },
+      {
+        "periodo": "2026-05-08 (Fri)",
+        "fecha_desde": "2026-05-08",
+        "fecha_hasta": "2026-05-09",
+        "n_pedidos": 115,
+        "n_lineas": 220,
+        "n_unidades": 1246,
+        "uds_por_pedido": 10.834782608695653,
+        "lineas_por_pedido": 1.9130434782608696
+      },
+      {
+        "periodo": "2026-05-09 (Sat)",
+        "fecha_desde": "2026-05-09",
+        "fecha_hasta": "2026-05-10",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-10 (Sun)",
+        "fecha_desde": "2026-05-10",
+        "fecha_hasta": "2026-05-11",
+        "n_pedidos": 0,
+        "n_lineas": 0,
+        "n_unidades": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-11 (Mon)",
+        "fecha_desde": "2026-05-11",
+        "fecha_hasta": "2026-05-12",
+        "n_pedidos": 628,
+        "n_lineas": 860,
+        "n_unidades": 1735,
+        "uds_por_pedido": 2.7627388535031847,
+        "lineas_por_pedido": 1.3694267515923566
+      }
+    ],
+    "tipo": "dia_especifico",
+    "anio": 2026,
+    "mes": 5,
+    "error": null
+  },
   "otif_ventanas": {
     "b2c_7d": {
-      "valor": 0.0031645569620253164,
-      "total_pickings": 3476,
+      "valor": 0.0026875152699731247,
+      "total_pickings": 4093,
       "on_time": 11,
-      "on_time_pct": 0.0031645569620253164,
-      "in_full": 3463,
-      "in_full_pct": 0.9962600690448792,
+      "on_time_pct": 0.0026875152699731247,
+      "in_full": 4080,
+      "in_full_pct": 0.9968238455900318,
       "both": 11,
       "error": null
     },
     "b2b_7d": {
-      "valor": 0.1125,
-      "total_pickings": 80,
-      "on_time": 9,
-      "on_time_pct": 0.1125,
-      "in_full": 79,
-      "in_full_pct": 0.9875,
-      "both": 9,
+      "valor": 0.14285714285714285,
+      "total_pickings": 91,
+      "on_time": 13,
+      "on_time_pct": 0.14285714285714285,
+      "in_full": 90,
+      "in_full_pct": 0.989010989010989,
+      "both": 13,
       "error": null
     },
     "b2c_14d": {
-      "valor": 0.0076666011401611955,
-      "total_pickings": 5087,
+      "valor": 0.006837307152875175,
+      "total_pickings": 5704,
       "on_time": 39,
-      "on_time_pct": 0.0076666011401611955,
-      "in_full": 5074,
-      "in_full_pct": 0.997444466286613,
+      "on_time_pct": 0.006837307152875175,
+      "in_full": 5691,
+      "in_full_pct": 0.9977208976157083,
       "both": 39,
       "error": null
     },
     "b2b_14d": {
-      "valor": 0.11971830985915492,
-      "total_pickings": 142,
-      "on_time": 17,
-      "on_time_pct": 0.11971830985915492,
-      "in_full": 141,
-      "in_full_pct": 0.9929577464788732,
-      "both": 17,
+      "valor": 0.13725490196078433,
+      "total_pickings": 153,
+      "on_time": 21,
+      "on_time_pct": 0.13725490196078433,
+      "in_full": 152,
+      "in_full_pct": 0.9934640522875817,
+      "both": 21,
       "error": null
     },
     "b2c_30d": {
-      "valor": 0.0189452591310684,
-      "total_pickings": 10979,
-      "on_time": 209,
-      "on_time_pct": 0.01903634210766008,
-      "in_full": 10964,
-      "in_full_pct": 0.9986337553511249,
-      "both": 208,
+      "valor": 0.018259173905335935,
+      "total_pickings": 11282,
+      "on_time": 207,
+      "on_time_pct": 0.01834781067186669,
+      "in_full": 11267,
+      "in_full_pct": 0.9986704485020387,
+      "both": 206,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.12602739726027398,
+      "valor": 0.13424657534246576,
       "total_pickings": 365,
-      "on_time": 47,
-      "on_time_pct": 0.12876712328767123,
+      "on_time": 50,
+      "on_time_pct": 0.136986301369863,
       "in_full": 359,
       "in_full_pct": 0.9835616438356164,
-      "both": 46,
+      "both": 49,
       "error": null
     },
     "b2c_60d": {
-      "valor": 0.004,
+      "valor": 0.0041,
       "total_pickings": 20000,
-      "on_time": 81,
-      "on_time_pct": 0.00405,
-      "in_full": 19996,
-      "in_full_pct": 0.9998,
-      "both": 80,
+      "on_time": 83,
+      "on_time_pct": 0.00415,
+      "in_full": 19997,
+      "in_full_pct": 0.99985,
+      "both": 82,
       "error": null
     },
     "b2b_60d": {
-      "valor": 0.10877626699629171,
-      "total_pickings": 809,
-      "on_time": 91,
-      "on_time_pct": 0.11248454882571075,
-      "in_full": 799,
-      "in_full_pct": 0.9876390605686032,
-      "both": 88,
+      "valor": 0.11498708010335917,
+      "total_pickings": 774,
+      "on_time": 92,
+      "on_time_pct": 0.11886304909560723,
+      "in_full": 764,
+      "in_full_pct": 0.9870801033591732,
+      "both": 89,
       "error": null
     },
     "b2c_90d": {
-      "valor": 0.0053,
+      "valor": 0.00545,
       "total_pickings": 20000,
-      "on_time": 106,
-      "on_time_pct": 0.0053,
-      "in_full": 19991,
-      "in_full_pct": 0.99955,
-      "both": 106,
+      "on_time": 109,
+      "on_time_pct": 0.00545,
+      "in_full": 19992,
+      "in_full_pct": 0.9996,
+      "both": 109,
       "error": null
     },
     "b2b_90d": {
-      "valor": 0.16666666666666666,
-      "total_pickings": 1158,
-      "on_time": 209,
-      "on_time_pct": 0.18048359240069084,
-      "in_full": 1131,
-      "in_full_pct": 0.9766839378238342,
-      "both": 193,
+      "valor": 0.17100694444444445,
+      "total_pickings": 1152,
+      "on_time": 211,
+      "on_time_pct": 0.1831597222222222,
+      "in_full": 1128,
+      "in_full_pct": 0.9791666666666666,
+      "both": 197,
       "error": null
     }
   },
   "pick_ventanas": {
     "7d": {
-      "valor": 0.9997858672376874,
-      "ok": 4669,
-      "total": 4670,
+      "valor": 0.9998191681735985,
+      "ok": 5529,
+      "total": 5530,
       "errores": 1,
       "error": null
     },
     "14d": {
-      "valor": 0.999854121079504,
-      "ok": 6854,
-      "total": 6855,
+      "valor": 0.9998703823720025,
+      "ok": 7714,
+      "total": 7715,
       "errores": 1,
       "error": null
     },
     "30d": {
-      "valor": 0.9999322585015581,
-      "ok": 14761,
-      "total": 14762,
+      "valor": 0.9999342105263158,
+      "ok": 15199,
+      "total": 15200,
       "errores": 1,
       "error": null
     },
     "60d": {
-      "valor": 0.9998892917439318,
-      "ok": 36127,
-      "total": 36131,
+      "valor": 0.9998860561173623,
+      "ok": 35101,
+      "total": 35105,
       "errores": 4,
       "error": null
     },
     "90d": {
-      "valor": 0.9995036083851999,
-      "ok": 52352,
-      "total": 52378,
-      "errores": 26,
+      "valor": 0.9995967199892458,
+      "ok": 52052,
+      "total": 52073,
+      "errores": 21,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "30d": {
-      "valor": 0.969451951951952,
+      "valor": 0.9628941441441441,
       "n_recepciones": 74,
       "min": 0.001388888888888889,
       "max": 39.187222222222225,
       "detalle": [
         {
+          "picking": "CA1/RET/00981",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 14:02",
+          "done": "2026-05-11 14:03"
+        },
+        {
+          "picking": "CA1/RET/00980",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:57",
+          "done": "2026-05-11 14:00"
+        },
+        {
+          "picking": "CA1/RET/00979",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-11 13:44",
+          "done": "2026-05-11 13:47"
+        },
+        {
+          "picking": "CA1/RET/00978",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:37",
+          "done": "2026-05-11 13:38"
+        },
+        {
+          "picking": "CA1/RET/00977",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:34",
+          "done": "2026-05-11 13:36"
+        },
+        {
           "picking": "CA1/IN/00796",
           "proveedor": "",
           "horas": 0.0,
@@ -1338,51 +1755,51 @@
           "horas": 19.3,
           "scheduled": "2026-05-06 17:29",
           "done": "2026-05-07 12:46"
-        },
-        {
-          "picking": "CA1/RET/00974",
-          "proveedor": "Casa Mila SpA",
-          "horas": 0.1,
-          "scheduled": "2026-05-06 20:00",
-          "done": "2026-05-06 20:03"
-        },
-        {
-          "picking": "CA1/RET/00973",
-          "proveedor": "Cliente Marketing",
-          "horas": 0.0,
-          "scheduled": "2026-05-05 18:27",
-          "done": "2026-05-05 18:27"
-        },
-        {
-          "picking": "CA1/IN/00781",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-05 17:04",
-          "done": "2026-05-05 17:23"
-        },
-        {
-          "picking": "CA1/IN/00780",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-04 17:25",
-          "done": "2026-05-04 17:32"
-        },
-        {
-          "picking": "CA1/IN/00779",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-05-04 17:05",
-          "done": "2026-05-04 17:18"
         }
       ],
       "error": null
     },
     "60d": {
-      "valor": 7.1516248651564185,
-      "n_recepciones": 206,
+      "valor": 7.015719269994633,
+      "n_recepciones": 207,
       "min": 0.0008333333333333334,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/00981",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 14:02",
+          "done": "2026-05-11 14:03"
+        },
+        {
+          "picking": "CA1/RET/00980",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:57",
+          "done": "2026-05-11 14:00"
+        },
+        {
+          "picking": "CA1/RET/00979",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-11 13:44",
+          "done": "2026-05-11 13:47"
+        },
+        {
+          "picking": "CA1/RET/00978",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:37",
+          "done": "2026-05-11 13:38"
+        },
+        {
+          "picking": "CA1/RET/00977",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:34",
+          "done": "2026-05-11 13:36"
+        },
         {
           "picking": "CA1/IN/00796",
           "proveedor": "",
@@ -1487,51 +1904,51 @@
           "horas": 19.3,
           "scheduled": "2026-05-06 17:29",
           "done": "2026-05-07 12:46"
-        },
-        {
-          "picking": "CA1/RET/00974",
-          "proveedor": "Casa Mila SpA",
-          "horas": 0.1,
-          "scheduled": "2026-05-06 20:00",
-          "done": "2026-05-06 20:03"
-        },
-        {
-          "picking": "CA1/RET/00973",
-          "proveedor": "Cliente Marketing",
-          "horas": 0.0,
-          "scheduled": "2026-05-05 18:27",
-          "done": "2026-05-05 18:27"
-        },
-        {
-          "picking": "CA1/IN/00781",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-05 17:04",
-          "done": "2026-05-05 17:23"
-        },
-        {
-          "picking": "CA1/IN/00780",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-04 17:25",
-          "done": "2026-05-04 17:32"
-        },
-        {
-          "picking": "CA1/IN/00779",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-05-04 17:05",
-          "done": "2026-05-04 17:18"
         }
       ],
       "error": null
     },
     "90d": {
-      "valor": 8.656065821256039,
-      "n_recepciones": 276,
+      "valor": 8.623649217809868,
+      "n_recepciones": 277,
       "min": 0.0008333333333333334,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/00981",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 14:02",
+          "done": "2026-05-11 14:03"
+        },
+        {
+          "picking": "CA1/RET/00980",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:57",
+          "done": "2026-05-11 14:00"
+        },
+        {
+          "picking": "CA1/RET/00979",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-11 13:44",
+          "done": "2026-05-11 13:47"
+        },
+        {
+          "picking": "CA1/RET/00978",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:37",
+          "done": "2026-05-11 13:38"
+        },
+        {
+          "picking": "CA1/RET/00977",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:34",
+          "done": "2026-05-11 13:36"
+        },
         {
           "picking": "CA1/IN/00796",
           "proveedor": "",
@@ -1636,51 +2053,51 @@
           "horas": 19.3,
           "scheduled": "2026-05-06 17:29",
           "done": "2026-05-07 12:46"
-        },
-        {
-          "picking": "CA1/RET/00974",
-          "proveedor": "Casa Mila SpA",
-          "horas": 0.1,
-          "scheduled": "2026-05-06 20:00",
-          "done": "2026-05-06 20:03"
-        },
-        {
-          "picking": "CA1/RET/00973",
-          "proveedor": "Cliente Marketing",
-          "horas": 0.0,
-          "scheduled": "2026-05-05 18:27",
-          "done": "2026-05-05 18:27"
-        },
-        {
-          "picking": "CA1/IN/00781",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-05 17:04",
-          "done": "2026-05-05 17:23"
-        },
-        {
-          "picking": "CA1/IN/00780",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-04 17:25",
-          "done": "2026-05-04 17:32"
-        },
-        {
-          "picking": "CA1/IN/00779",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-05-04 17:05",
-          "done": "2026-05-04 17:18"
         }
       ],
       "error": null
     },
     "180d": {
-      "valor": 9.99162627392493,
-      "n_recepciones": 447,
+      "valor": 9.925196296296296,
+      "n_recepciones": 450,
       "min": -33.568888888888885,
       "max": 500.6477777777778,
       "detalle": [
+        {
+          "picking": "CA1/RET/00981",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 14:02",
+          "done": "2026-05-11 14:03"
+        },
+        {
+          "picking": "CA1/RET/00980",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:57",
+          "done": "2026-05-11 14:00"
+        },
+        {
+          "picking": "CA1/RET/00979",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-11 13:44",
+          "done": "2026-05-11 13:47"
+        },
+        {
+          "picking": "CA1/RET/00978",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:37",
+          "done": "2026-05-11 13:38"
+        },
+        {
+          "picking": "CA1/RET/00977",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:34",
+          "done": "2026-05-11 13:36"
+        },
         {
           "picking": "CA1/IN/00796",
           "proveedor": "",
@@ -1785,51 +2202,51 @@
           "horas": 19.3,
           "scheduled": "2026-05-06 17:29",
           "done": "2026-05-07 12:46"
-        },
-        {
-          "picking": "CA1/RET/00974",
-          "proveedor": "Casa Mila SpA",
-          "horas": 0.1,
-          "scheduled": "2026-05-06 20:00",
-          "done": "2026-05-06 20:03"
-        },
-        {
-          "picking": "CA1/RET/00973",
-          "proveedor": "Cliente Marketing",
-          "horas": 0.0,
-          "scheduled": "2026-05-05 18:27",
-          "done": "2026-05-05 18:27"
-        },
-        {
-          "picking": "CA1/IN/00781",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-05 17:04",
-          "done": "2026-05-05 17:23"
-        },
-        {
-          "picking": "CA1/IN/00780",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-04 17:25",
-          "done": "2026-05-04 17:32"
-        },
-        {
-          "picking": "CA1/IN/00779",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-05-04 17:05",
-          "done": "2026-05-04 17:18"
         }
       ],
       "error": null
     },
     "365d": {
-      "valor": 12.475271769861465,
-      "n_recepciones": 786,
+      "valor": 12.396622067706138,
+      "n_recepciones": 791,
       "min": -33.568888888888885,
       "max": 508.22305555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/00981",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 14:02",
+          "done": "2026-05-11 14:03"
+        },
+        {
+          "picking": "CA1/RET/00980",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:57",
+          "done": "2026-05-11 14:00"
+        },
+        {
+          "picking": "CA1/RET/00979",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-11 13:44",
+          "done": "2026-05-11 13:47"
+        },
+        {
+          "picking": "CA1/RET/00978",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:37",
+          "done": "2026-05-11 13:38"
+        },
+        {
+          "picking": "CA1/RET/00977",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-11 13:34",
+          "done": "2026-05-11 13:36"
+        },
         {
           "picking": "CA1/IN/00796",
           "proveedor": "",
@@ -1934,41 +2351,6 @@
           "horas": 19.3,
           "scheduled": "2026-05-06 17:29",
           "done": "2026-05-07 12:46"
-        },
-        {
-          "picking": "CA1/RET/00974",
-          "proveedor": "Casa Mila SpA",
-          "horas": 0.1,
-          "scheduled": "2026-05-06 20:00",
-          "done": "2026-05-06 20:03"
-        },
-        {
-          "picking": "CA1/RET/00973",
-          "proveedor": "Cliente Marketing",
-          "horas": 0.0,
-          "scheduled": "2026-05-05 18:27",
-          "done": "2026-05-05 18:27"
-        },
-        {
-          "picking": "CA1/IN/00781",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-05 17:04",
-          "done": "2026-05-05 17:23"
-        },
-        {
-          "picking": "CA1/IN/00780",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-04 17:25",
-          "done": "2026-05-04 17:32"
-        },
-        {
-          "picking": "CA1/IN/00779",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-05-04 17:05",
-          "done": "2026-05-04 17:18"
         }
       ],
       "error": null

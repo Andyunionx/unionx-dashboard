@@ -1045,12 +1045,15 @@ def kpi_devoluciones_picking_error(dias: int = 90) -> Dict:
             ["id", "name", "origin", "partner_id", "date_done"],
             limit=10000,
         )
-        despachos = odoo.search_count(
+        # search_count no esta disponible en nuestro OdooClient → usar search_read con id
+        despachos_list = odoo.search_read(
             "stock.picking",
             [("state", "=", "done"),
              ("date_done", ">=", desde),
              ("picking_type_code", "=", "outgoing")],
+            ["id"], limit=50000,
         )
+        despachos = len(despachos_list)
         n_dev = len(devoluciones)
         n_des = despachos
         return {
