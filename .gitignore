@@ -160,6 +160,7 @@ _*.py
 !views/_ops_forecast_loader.py
 !views/_ops_kpis_snapshot.py
 !views/_ops_wms_raw_loader.py
+!views/_ops_otif_drive.py
 !views/_contribucion_loader.py
 # Permitir scripts en root
 !precalcular_kpis_wms.py

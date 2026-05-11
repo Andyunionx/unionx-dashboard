@@ -480,73 +480,115 @@ def render():
                                    use_container_width=True, type="primary")
 
             st.divider()
-            st.markdown("#### OTIF calculado desde Odoo (snapshot/live)")
+            st.markdown("#### 📊 OTIF desde RESUMEN MENSUAL OTIF (Drive)")
 
-            # Snapshot (instantáneo) o lazy fallback
-            from views._ops_kpis_snapshot import (
-                cargar_snapshot as _cs_otif, snapshot_status as _ss_otif,
-                get_otif_ventana as _gov,
+            from views._ops_otif_drive import (
+                kpi_otif_resumen, kpi_otif_por_mes, kpi_otif_por_cliente,
+                kpi_otif_por_courier, top_pedidos_tarde, meses_disponibles,
             )
-            ss_otif = _ss_otif()
-            snap_otif = _cs_otif()
 
-            col_period, col_period2 = st.columns([1, 3])
-            with col_period:
-                dias_otif = st.selectbox("Ventana", [7, 14, 30, 60, 90], index=2, key="otif_dias")
-
-            if ss_otif["existe"]:
-                with col_period2:
-                    st.success(f"📸 {ss_otif['leyenda']}")
-
-            # Estrategia: snapshot si existe (instantáneo) → fallback Odoo en vivo
-            # con cache 12h (no se cuelga, no pide click)
-            usar_snap_otif = ss_otif["existe"]
-
-            # Siempre mostrar última info disponible del snapshot
-            otif_b2c_t = _gov("b2c", dias_otif) or snap_otif.get("kpis", {}).get("otif_b2c_30d", {})
-            otif_b2b_t = _gov("b2b", dias_otif) or snap_otif.get("kpis", {}).get("otif_b2b_30d", {})
-
-            st.markdown("#### B2C (clientes finales)")
-            if otif_b2c_t.get("error"):
-                st.warning(otif_b2c_t["error"])
+            meses_dispon = meses_disponibles()
+            if not meses_dispon:
+                st.warning(
+                    "⚠️ Sin acceso al Sheet OTIF o sin datos. "
+                    "Verificar permisos del Service Account."
+                )
             else:
-                c1, c2, c3, c4 = st.columns(4)
-                v = otif_b2c_t.get('valor', 0) or 0
-                c1.metric("OTIF total", f"{v*100:.1f}%")
-                c2.metric("On-Time", f"{otif_b2c_t.get('on_time_pct', 0)*100:.1f}%",
-                          delta=f"{otif_b2c_t.get('on_time', 0)} pickings")
-                c3.metric("In-Full", f"{otif_b2c_t.get('in_full_pct', 0)*100:.1f}%",
-                          delta=f"{otif_b2c_t.get('in_full', 0)} pickings")
-                c4.metric("Total pickings", f"{otif_b2c_t.get('total_pickings', 0)}")
+                col_mes, _ = st.columns([1, 3])
+                with col_mes:
+                    mes_otif = st.selectbox("Mes", meses_dispon, index=0, key="otif_mes_drive")
 
-            st.markdown("#### B2B (empresas)")
-            if otif_b2b_t.get("error"):
-                st.warning(otif_b2b_t["error"])
-            else:
-                c1, c2, c3, c4 = st.columns(4)
-                v = otif_b2b_t.get('valor', 0) or 0
-                c1.metric("OTIF total", f"{v*100:.1f}%")
-                c2.metric("On-Time", f"{otif_b2b_t.get('on_time_pct', 0)*100:.1f}%",
-                          delta=f"{otif_b2b_t.get('on_time', 0)} pickings")
-                c3.metric("In-Full", f"{otif_b2b_t.get('in_full_pct', 0)*100:.1f}%",
-                          delta=f"{otif_b2b_t.get('in_full', 0)} pickings")
-                c4.metric("Total pickings", f"{otif_b2b_t.get('total_pickings', 0)}")
+                # ── Resumen del mes seleccionado ─────────────────────────
+                resumen = kpi_otif_resumen(mes=mes_otif)
+                if resumen.get("error"):
+                    st.warning(resumen["error"])
+                else:
+                    st.markdown(f"##### Resumen {mes_otif} — {resumen['n_pedidos']:,} pedidos")
+                    c1, c2, c3 = st.columns(3)
+                    v_emp = resumen["otif_empresa_pct"]
+                    sem_e, col_e = _semaforo(v_emp, 0.95, 0.85, mayor_es_mejor=True)
+                    c1.metric(f"{sem_e} OTIF Empresa",
+                              f"{v_emp*100:.1f}%",
+                              delta=f"{resumen['n_empresa_ok']:,} a tiempo / {resumen['n_pedidos']:,}",
+                              help="% de pedidos entregados al courier en/antes de fecha compromiso")
+                    v_cou = resumen["otif_courier_pct"]
+                    sem_c, col_c = _semaforo(v_cou, 0.95, 0.85, mayor_es_mejor=True)
+                    c2.metric(f"{sem_c} OTIF Courier",
+                              f"{v_cou*100:.1f}%",
+                              delta=f"{resumen['n_courier_ok']:,} a tiempo",
+                              help="% de pedidos que el courier entregó en/antes de fecha promesa")
+                    v_tot = resumen["otif_total_pct"]
+                    sem_t, col_t = _semaforo(v_tot, 0.92, 0.80, mayor_es_mejor=True)
+                    c3.metric(f"{sem_t} OTIF E2E (total)",
+                              f"{v_tot*100:.1f}%",
+                              delta=f"{resumen['n_otif_ok']:,} totalmente OK",
+                              help="% pedidos donde TANTO empresa como courier cumplieron")
 
-            st.divider()
+                    if resumen.get("dias_empresa_promedio") is not None:
+                        st.caption(
+                            f"Días empresa promedio: {resumen['dias_empresa_promedio']:.1f} · "
+                            f"Días courier promedio: {resumen.get('dias_courier_promedio', 0):.1f} · "
+                            f"(negativo = adelantado, 0 = on-time, positivo = tarde)"
+                        )
 
-            st.markdown("### 🏢 Top clientes B2B con peor OTIF")
-            # SNAPSHOT ONLY (30d)
-            if usar_snap_otif and dias_otif == 30:
-                top = snap_otif.get("kpis", {}).get("top_clientes_otif_30d", {"valor": []})
-            else:
-                top = {"valor": []}
-            if top.get("valor"):
-                df = pd.DataFrame(top["valor"])
-                df["on_time_pct"] = (df["on_time_pct"] * 100).round(1).astype(str) + "%"
-                df.columns = ["Cliente", "Total Pickings", "Tarde", "% On-Time"]
-                st.dataframe(df, use_container_width=True, hide_index=True)
-            else:
-                st.info("Sin datos")
+                st.divider()
+
+                # ── Tendencia mensual ────────────────────────────────────
+                st.markdown("##### 📈 Tendencia OTIF mes a mes")
+                meses_data = kpi_otif_por_mes()
+                if meses_data:
+                    df_meses = pd.DataFrame(meses_data)
+                    chart = df_meses[["MES", "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
+                        columns={"otif_empresa_pct": "Empresa",
+                                 "otif_courier_pct": "Courier",
+                                 "otif_total_pct": "Total E2E"})
+                    st.line_chart(chart.set_index("MES"), height=280)
+                    df_show_meses = df_meses[["MES", "n_pedidos",
+                                               "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
+                        columns={"MES": "Mes", "n_pedidos": "Pedidos",
+                                 "otif_empresa_pct": "OTIF Empresa %",
+                                 "otif_courier_pct": "OTIF Courier %",
+                                 "otif_total_pct": "OTIF Total %"})
+                    with st.expander("📋 Tabla mensual"):
+                        st.dataframe(df_show_meses, use_container_width=True, hide_index=True)
+
+                st.divider()
+
+                # ── Por cliente / canal ──────────────────────────────────
+                st.markdown(f"##### 🏢 OTIF por cliente — {mes_otif}")
+                clientes_data = kpi_otif_por_cliente(mes=mes_otif, top_n=20)
+                if clientes_data:
+                    df_cli = pd.DataFrame(clientes_data)
+                    df_show_cli = df_cli[["CLIENTE", "n_pedidos",
+                                           "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
+                        columns={"CLIENTE": "Cliente", "n_pedidos": "Pedidos",
+                                 "otif_empresa_pct": "Empresa %",
+                                 "otif_courier_pct": "Courier %",
+                                 "otif_total_pct": "Total E2E %"})
+                    st.dataframe(df_show_cli, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Sin clientes con suficiente data")
+
+                # ── Por courier ──────────────────────────────────────────
+                st.markdown(f"##### 🚚 OTIF por courier — {mes_otif}")
+                couriers_data = kpi_otif_por_courier(mes=mes_otif)
+                if couriers_data:
+                    df_cou = pd.DataFrame(couriers_data)
+                    df_show_cou = df_cou[["CURIER", "n_pedidos",
+                                           "otif_courier_pct", "dias_promedio"]].rename(
+                        columns={"CURIER": "Courier", "n_pedidos": "Pedidos",
+                                 "otif_courier_pct": "OTIF Courier %",
+                                 "dias_promedio": "Días promedio"})
+                    st.dataframe(df_show_cou, use_container_width=True, hide_index=True)
+
+                # ── Top pedidos tarde ────────────────────────────────────
+                with st.expander(f"🐌 Top 50 pedidos tarde (courier) — {mes_otif}"):
+                    tarde_data = top_pedidos_tarde(mes=mes_otif, top_n=50)
+                    if tarde_data:
+                        df_tarde = pd.DataFrame(tarde_data)
+                        st.dataframe(df_tarde, use_container_width=True, hide_index=True, height=400)
+                    else:
+                        st.success("✅ Sin pedidos significativamente tarde este mes")
 
         # ============================================================
         # TAB 3 — PICKING & OFR/OCT (snapshot + lazy fallback)
