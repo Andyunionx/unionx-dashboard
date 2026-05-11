@@ -73,6 +73,14 @@ COLOR_NEUTRO = '#64748B'     # gris
 # ============================================================
 # Local SQLite combinando parquet histórico + Turso live
 # ============================================================
+@st.cache_data(ttl=3600, show_spinner=False)
+def _read_historico_parquet():
+    """Lectura cacheada del parquet histórico (no cambia día a día)."""
+    if not HISTORICO_PARQUET.exists():
+        return pd.DataFrame()
+    return pd.read_parquet(HISTORICO_PARQUET)
+
+
 @st.cache_resource(ttl=900, show_spinner="Cargando datos (primera vez ~10s)…")
 def get_local_db_path():
     """SQLite local combinando histórico (parquet) + live (Turso). Auto-invalida 5 min."""
@@ -85,11 +93,19 @@ def get_local_db_path():
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
     headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
 
-    def turso_query(sql):
+    def turso_query(sql, retries=3):
         body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
-        r = requests.post(f"{libsql_url}/v2/pipeline", json=body, headers=headers, timeout=300)
-        r.raise_for_status()
-        return r.json()['results'][0]['response']['result']
+        last = None
+        for i in range(retries):
+            try:
+                r = requests.post(f"{libsql_url}/v2/pipeline", json=body, headers=headers, timeout=60)
+                r.raise_for_status()
+                return r.json()['results'][0]['response']['result']
+            except (requests.exceptions.RequestException, KeyError) as e:
+                last = e
+                import time as _t
+                _t.sleep(2 ** i)
+        raise last
 
     tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local.db'
     if tmp_path.exists():
@@ -137,9 +153,9 @@ def get_local_db_path():
     placeholders = ','.join(['?'] * len(cols_v))
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
-    # Parquet histórico
-    if HISTORICO_PARQUET.exists():
-        df_hist = pd.read_parquet(HISTORICO_PARQUET)
+    # Parquet histórico (cacheado por separado para no re-leerlo si invalida la DB local)
+    df_hist = _read_historico_parquet()
+    if not df_hist.empty:
         df_hist[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
 
     # Live de Turso

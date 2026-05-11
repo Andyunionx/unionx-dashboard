@@ -91,11 +91,15 @@ with st.sidebar:
     authenticator.logout('Cerrar sesión', 'sidebar')
     st.write(f"👤 **{st.session_state.get('name', '')}**")
 
-    # Badge de alertas abiertas
-    try:
+    # Badge de alertas abiertas (cacheado 5min para no pegar Turso en cada render)
+    @st.cache_data(ttl=300, show_spinner=False)
+    def _badge_contar_abiertas(target_app: str) -> dict:
         from views.alertas_helper import contar_abiertas, crear_tabla_alertas
-        crear_tabla_alertas()  # idempotent
-        counts = contar_abiertas(target_app='ventas')
+        crear_tabla_alertas()
+        return contar_abiertas(target_app=target_app)
+
+    try:
+        counts = _badge_contar_abiertas('ventas')
         if counts['total'] > 0:
             badge_color = '#DC2626' if counts['critical'] > 0 else '#EA580C' if counts['warning'] > 0 else '#1E40AF'
             partes = []
