@@ -308,7 +308,17 @@ def cached_top_skus(desde, hasta, filtros: dict | None = None, limit: int = 20):
 
 @st.cache_data(ttl=600)
 def cached_health():
-    return get_service().health()
+    """Health check. Si Turso/servicio cuelga, devuelve degraded en lugar de crashear."""
+    try:
+        return get_service().health()
+    except Exception as e:
+        # ReadTimeout, ConnectionError, etc → no romper el dashboard
+        return {
+            'status': 'degraded',
+            'error': type(e).__name__,
+            'message': str(e)[:120],
+            'fuente': 'fallback',
+        }
 
 
 # ============================================================

@@ -147,6 +147,7 @@ from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
 from views.alertas_negocio import render as render_alertas_negocio
 from views.forecast import render as render_forecast
+from views.ops_comex import render as render_comex
 
 pages = {
     "📊 Ventas": [
@@ -158,6 +159,7 @@ pages = {
     ],
     "📦 Stock": [
         st.Page(render_stock_live, title="Stock LIVE", icon="📦", url_path="stock-live"),
+        st.Page(render_comex, title="COMEX en tránsito", icon="🚢", url_path="stock-comex"),
     ],
     "💼 Contribución": [
         st.Page(render_contrib_general, title="Resultados Generales", icon="📊", url_path="contrib-general"),
