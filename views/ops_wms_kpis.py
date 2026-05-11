@@ -680,19 +680,59 @@ def render():
             if not equipo_t or not equipo_t.get("horas_total"):
                 st.info(f"📋 Cargá horas equipo de {mes_actual} en Tab Datos manuales → Equipo bodega.")
             else:
-                lineas_t = _safe_wms(kpi_lineas_pickeadas_mes, mes_actual, default={"lineas": 0})
                 horas = equipo_t.get("horas_total", 0)
                 personas = equipo_t.get("personas", 0)
-                lineas = lineas_t.get("lineas", 0)
-                prod_actual = lineas / horas if horas else 0
+                # Datos del mes actual desde el snapshot (productividad_meses_12m)
+                snap_prod_pre = snap_pick if 'snap_pick' in dir() else cargar_snapshot()
+                meses_data_pre = (snap_prod_pre.get("productividad_meses_12m", {}) or {}).get("items", [])
+                # El último mes en la lista es el actual
+                mes_act_data = next((m for m in meses_data_pre if m.get("periodo") == mes_actual), {})
+                n_pedidos_mes = mes_act_data.get("n_pedidos", 0)
+                n_lineas_mes = mes_act_data.get("n_lineas", 0)
+                n_uds_mes = mes_act_data.get("n_unidades", 0)
+                n_dias_habiles = 21  # promedio mes UnionX (LJ+V)
 
-                # Cards mes actual
-                ck1, ck2, ck3, ck4 = st.columns(4)
-                ck1.metric("Productividad mes actual", f"{prod_actual:.0f} líneas/h",
-                           help="Benchmark: 60-120 líneas/h B2C")
-                ck2.metric(f"Equipo {mes_actual}", f"{personas} personas")
-                ck3.metric(f"Líneas {mes_actual}", f"{lineas:,}")
-                ck4.metric(f"Horas {mes_actual}", f"{horas:,.0f}h")
+                # 6 KPI cards: pedidos/líneas/uds × por persona/día y por persona/hora
+                st.markdown(f"##### 📊 Productividad {mes_actual} · {personas} personas · {horas:,.0f}h")
+                st.caption(
+                    "Pedido = 1 cliente atendido · Línea = 1 SKU distinto pickeado · "
+                    "Unidad = 1 ítem físico tomado · Más detalle abajo."
+                )
+                ck1, ck2, ck3 = st.columns(3)
+                ped_pers_dia = (n_pedidos_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
+                ped_pers_h = (n_pedidos_mes / horas) if horas else 0
+                ck1.metric("Pedidos / persona / día", f"{ped_pers_dia:.1f}",
+                           delta=f"{ped_pers_h:.1f} ped/persona/h",
+                           help=f"Mes: {n_pedidos_mes:,} pedidos / {personas} personas / {n_dias_habiles} días")
+
+                lin_pers_dia = (n_lineas_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
+                lin_pers_h = (n_lineas_mes / horas) if horas else 0
+                ck2.metric("Líneas / persona / día", f"{lin_pers_dia:.1f}",
+                           delta=f"{lin_pers_h:.1f} lín/persona/h",
+                           help=f"Mes: {n_lineas_mes:,} líneas. Bench: 60-120 lín/persona/h")
+
+                uds_pers_dia = (n_uds_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
+                uds_pers_h = (n_uds_mes / horas) if horas else 0
+                ck3.metric("Unidades / persona / día", f"{uds_pers_dia:.1f}",
+                           delta=f"{uds_pers_h:.1f} uds/persona/h",
+                           help=f"Mes: {n_uds_mes:,} unidades")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # KPIs equipo entero (totales)
+                st.markdown(f"##### ⚙️ Productividad equipo entero")
+                ce1, ce2, ce3, ce4 = st.columns(4)
+                ce1.metric("Pedidos / día", f"{n_pedidos_mes/n_dias_habiles:,.0f}" if n_dias_habiles else "—",
+                           delta=f"{n_pedidos_mes/horas:.1f} ped/h equipo" if horas else None)
+                ce2.metric("Líneas / día", f"{n_lineas_mes/n_dias_habiles:,.0f}" if n_dias_habiles else "—",
+                           delta=f"{n_lineas_mes/horas:.1f} lín/h equipo" if horas else None)
+                ce3.metric("Unidades / día", f"{n_uds_mes/n_dias_habiles:,.0f}" if n_dias_habiles else "—",
+                           delta=f"{n_uds_mes/horas:.1f} uds/h equipo" if horas else None)
+                lineas_x_pedido = (n_lineas_mes / n_pedidos_mes) if n_pedidos_mes else 0
+                uds_x_pedido = (n_uds_mes / n_pedidos_mes) if n_pedidos_mes else 0
+                ce4.metric("Mix promedio", f"{lineas_x_pedido:.2f} lín/ped",
+                           delta=f"{uds_x_pedido:.1f} uds/ped",
+                           help="Pedidos chicos = más rápidos. Mix alto = pedidos complejos.")
 
                 st.divider()
 
@@ -708,32 +748,55 @@ def render():
                 prod_sem_data = (snap_prod.get("productividad_semanas_mes_actual", {}) or {}).get("items", [])
                 prod_dias_data = (snap_prod.get("productividad_dias_14d", {}) or {}).get("items", [])
 
+                # Helper para enriquecer df con productividad por persona/día/hora
+                def _enrich_prod(df, horas_periodo, dias_periodo=1, n_personas=personas):
+                    """Agrega columnas: ped_pers_dia, ped_pers_h, lin_pers_dia, ..."""
+                    if df.empty or n_personas <= 0:
+                        return df
+                    horas_persona = horas_periodo / n_personas if n_personas else 0
+                    df["ped_per_h"] = (df["n_pedidos"] / horas_periodo).round(2) if horas_periodo else 0
+                    df["lin_per_h"] = (df["n_lineas"] / horas_periodo).round(2) if horas_periodo else 0
+                    df["uds_per_h"] = (df["n_unidades"] / horas_periodo).round(2) if horas_periodo else 0
+                    df["ped_per_pers_dia"] = (df["n_pedidos"] / n_personas / dias_periodo).round(1) if dias_periodo else 0
+                    df["lin_per_pers_dia"] = (df["n_lineas"] / n_personas / dias_periodo).round(1) if dias_periodo else 0
+                    df["uds_per_pers_dia"] = (df["n_unidades"] / n_personas / dias_periodo).round(1) if dias_periodo else 0
+                    df["ped_per_pers_h"] = (df["n_pedidos"] / n_personas / horas_persona).round(2) if horas_persona else 0
+                    df["lin_per_pers_h"] = (df["n_lineas"] / n_personas / horas_persona).round(2) if horas_persona else 0
+                    df["uds_per_pers_h"] = (df["n_unidades"] / n_personas / horas_persona).round(2) if horas_persona else 0
+                    return df
+
                 # ── Por MES (calendario) ─────────────────────────────────
                 with prod_subtabs[0]:
                     st.markdown("##### Productividad por mes calendario")
                     if prod_meses_data:
                         df_m = pd.DataFrame(prod_meses_data)
-                        # Productividad: líneas / horas equipo (asumiendo horas del mes actual)
-                        df_m["lineas_h"] = (df_m["n_lineas"] / horas).round(1) if horas else 0
-                        df_m["uds_h"] = (df_m["n_unidades"] / horas).round(1) if horas else 0
+                        df_m = _enrich_prod(df_m, horas_periodo=horas, dias_periodo=21)
 
-                        cm1, cm2 = st.columns(2)
+                        cm1, cm2, cm3 = st.columns(3)
                         cm1.markdown("**Pedidos / mes**")
                         cm1.bar_chart(df_m.set_index("periodo")["n_pedidos"], height=240)
-                        cm2.markdown("**Líneas pickeadas / mes**")
+                        cm2.markdown("**Líneas / mes**")
                         cm2.bar_chart(df_m.set_index("periodo")["n_lineas"], height=240)
-                        st.markdown("**Productividad (líneas/h) por mes**")
-                        st.line_chart(df_m.set_index("periodo")["lineas_h"], height=240)
+                        cm3.markdown("**Unidades / mes**")
+                        cm3.bar_chart(df_m.set_index("periodo")["n_unidades"], height=240)
 
-                        df_show = df_m[["periodo", "n_pedidos", "n_lineas",
-                                        "n_unidades", "uds_por_pedido", "lineas_h"]].rename(
-                            columns={"periodo": "Mes", "n_pedidos": "Pedidos",
-                                     "n_lineas": "Líneas", "n_unidades": "Unidades",
-                                     "uds_por_pedido": "Uds/pedido",
-                                     "lineas_h": "Líneas/h"})
-                        df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
+                        st.markdown("**Productividad (líneas/persona/h) — tendencia mensual**")
+                        st.line_chart(df_m.set_index("periodo")["lin_per_pers_h"], height=200)
+
+                        st.markdown("##### 📋 Tabla detalle (totales + por persona)")
+                        df_show = df_m[["periodo", "n_pedidos", "n_lineas", "n_unidades",
+                                        "ped_per_pers_dia", "lin_per_pers_dia", "uds_per_pers_dia",
+                                        "ped_per_pers_h", "lin_per_pers_h", "uds_per_pers_h"]].rename(
+                            columns={"periodo": "Mes",
+                                     "n_pedidos": "Pedidos", "n_lineas": "Líneas", "n_unidades": "Uds",
+                                     "ped_per_pers_dia": "Ped/persona/día",
+                                     "lin_per_pers_dia": "Lín/persona/día",
+                                     "uds_per_pers_dia": "Uds/persona/día",
+                                     "ped_per_pers_h": "Ped/persona/h",
+                                     "lin_per_pers_h": "Lín/persona/h",
+                                     "uds_per_pers_h": "Uds/persona/h"})
                         st.dataframe(df_show, use_container_width=True, hide_index=True)
-                        st.caption(f"Productividad asume {horas:,.0f}h equipo/mes constante")
+                        st.caption(f"Asume {personas} personas constantes. Mes hábil = 21 días.")
                     else:
                         st.info("Sin datos en snapshot. Esperá próxima actualización 00:00 Chile.")
 
@@ -742,23 +805,30 @@ def render():
                     st.markdown(f"##### Productividad por semana — {mes_actual}")
                     if prod_sem_data:
                         df_s = pd.DataFrame(prod_sem_data)
-                        # Horas/semana proporcional (4.33 sem/mes)
                         horas_sem = horas / 4.33 if horas else 0
-                        df_s["lineas_h"] = (df_s["n_lineas"] / horas_sem).round(1) if horas_sem else 0
+                        df_s = _enrich_prod(df_s, horas_periodo=horas_sem, dias_periodo=5)
 
-                        cs1, cs2 = st.columns(2)
+                        cs1, cs2, cs3 = st.columns(3)
                         cs1.markdown("**Pedidos / semana**")
-                        cs1.bar_chart(df_s.set_index("periodo")["n_pedidos"], height=240)
+                        cs1.bar_chart(df_s.set_index("periodo")["n_pedidos"], height=200)
                         cs2.markdown("**Líneas / semana**")
-                        cs2.bar_chart(df_s.set_index("periodo")["n_lineas"], height=240)
+                        cs2.bar_chart(df_s.set_index("periodo")["n_lineas"], height=200)
+                        cs3.markdown("**Unidades / semana**")
+                        cs3.bar_chart(df_s.set_index("periodo")["n_unidades"], height=200)
 
-                        df_show = df_s[["periodo", "n_pedidos", "n_lineas",
-                                        "n_unidades", "lineas_h"]].rename(
-                            columns={"periodo": "Semana", "n_pedidos": "Pedidos",
-                                     "n_lineas": "Líneas", "n_unidades": "Unidades",
-                                     "lineas_h": "Líneas/h"})
+                        df_show = df_s[["periodo", "n_pedidos", "n_lineas", "n_unidades",
+                                        "ped_per_pers_dia", "lin_per_pers_dia", "uds_per_pers_dia",
+                                        "ped_per_pers_h", "lin_per_pers_h", "uds_per_pers_h"]].rename(
+                            columns={"periodo": "Semana",
+                                     "n_pedidos": "Pedidos", "n_lineas": "Líneas", "n_unidades": "Uds",
+                                     "ped_per_pers_dia": "Ped/persona/día",
+                                     "lin_per_pers_dia": "Lín/persona/día",
+                                     "uds_per_pers_dia": "Uds/persona/día",
+                                     "ped_per_pers_h": "Ped/persona/h",
+                                     "lin_per_pers_h": "Lín/persona/h",
+                                     "uds_per_pers_h": "Uds/persona/h"})
                         st.dataframe(df_show, use_container_width=True, hide_index=True)
-                        st.caption(f"Productividad asume {horas_sem:.0f}h equipo/semana")
+                        st.caption(f"Asume {personas} personas, ~{horas_sem:.0f}h/semana, 5 días hábiles.")
                     else:
                         st.info("Sin datos en snapshot.")
 
@@ -767,25 +837,30 @@ def render():
                     st.markdown("##### Productividad por día (últimos 14)")
                     if prod_dias_data:
                         df_d = pd.DataFrame(prod_dias_data)
-                        # Horas/día = horas mes / 21 días hábiles
                         horas_dia = horas / 21 if horas else 0
-                        df_d["lineas_h"] = (df_d["n_lineas"] / horas_dia).round(1) if horas_dia else 0
+                        df_d = _enrich_prod(df_d, horas_periodo=horas_dia, dias_periodo=1)
 
-                        cd1, cd2 = st.columns(2)
+                        cd1, cd2, cd3 = st.columns(3)
                         cd1.markdown("**Pedidos / día**")
-                        cd1.bar_chart(df_d.set_index("periodo")["n_pedidos"], height=240)
+                        cd1.bar_chart(df_d.set_index("periodo")["n_pedidos"], height=200)
                         cd2.markdown("**Líneas / día**")
-                        cd2.bar_chart(df_d.set_index("periodo")["n_lineas"], height=240)
+                        cd2.bar_chart(df_d.set_index("periodo")["n_lineas"], height=200)
+                        cd3.markdown("**Unidades / día**")
+                        cd3.bar_chart(df_d.set_index("periodo")["n_unidades"], height=200)
 
-                        df_show = df_d[["periodo", "n_pedidos", "n_lineas",
-                                        "n_unidades", "uds_por_pedido", "lineas_h"]].rename(
-                            columns={"periodo": "Día", "n_pedidos": "Pedidos",
-                                     "n_lineas": "Líneas", "n_unidades": "Unidades",
-                                     "uds_por_pedido": "Uds/pedido",
-                                     "lineas_h": "Líneas/h"})
-                        df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
+                        df_show = df_d[["periodo", "n_pedidos", "n_lineas", "n_unidades",
+                                        "ped_per_pers_dia", "lin_per_pers_dia", "uds_per_pers_dia",
+                                        "ped_per_pers_h", "lin_per_pers_h", "uds_per_pers_h"]].rename(
+                            columns={"periodo": "Día",
+                                     "n_pedidos": "Pedidos", "n_lineas": "Líneas", "n_unidades": "Uds",
+                                     "ped_per_pers_dia": "Ped/persona/día",
+                                     "lin_per_pers_dia": "Lín/persona/día",
+                                     "uds_per_pers_dia": "Uds/persona/día",
+                                     "ped_per_pers_h": "Ped/persona/h",
+                                     "lin_per_pers_h": "Lín/persona/h",
+                                     "uds_per_pers_h": "Uds/persona/h"})
                         st.dataframe(df_show, use_container_width=True, hide_index=True)
-                        st.caption(f"Productividad asume {horas_dia:.1f}h equipo/día hábil")
+                        st.caption(f"Asume {personas} personas, ~{horas_dia:.1f}h/día hábil. Sáb/Dom = 0 esperado.")
                     else:
                         st.info("Sin datos en snapshot.")
 
