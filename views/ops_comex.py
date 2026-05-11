@@ -249,7 +249,7 @@ def _tab_triangulacion(df_transito: pd.DataFrame, df_stock: pd.DataFrame, df_fc:
 def render():
     with st.sidebar:
         st.markdown("### 🚢 **COMEX**")
-        st.caption("Embarques en tránsito + triangulación")
+        st.caption("Embarques en tránsito")
         st.markdown("---")
         if st.button("🔄 Refrescar", use_container_width=True, type="primary", key="comex_refresh"):
             st.cache_data.clear()
@@ -257,8 +257,6 @@ def render():
 
     st.title("🚢 COMEX — Embarques en tránsito")
     df = _cargar_transito()
-    df_stock = _cargar_stock_live()
-    df_fc = _cargar_forecast_skus()
 
     if COMEX_RESUMEN.exists():
         try:
@@ -272,15 +270,13 @@ def render():
         st.warning("⏳ Sin datos. Correr `python extract_comex_transito.py`")
         return
 
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs",
-        "🎯 Triangulación demanda · stock · tránsito",
-    ])
+    # Nota: la triangulación demanda · stock · tránsito vive en la app Planificación
+    # (futura). Los helpers _tab_triangulacion + _cargar_stock_live + _cargar_forecast_skus
+    # quedan en el archivo por si Planificación los importa.
+    tab1, tab2, tab3 = st.tabs(["📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs"])
     with tab1:
         _tab_resumen(df)
     with tab2:
         _tab_por_pi(df)
     with tab3:
         _tab_detalle_skus(df)
-    with tab4:
-        _tab_triangulacion(df, df_stock, df_fc)
