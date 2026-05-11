@@ -73,10 +73,10 @@ jobs:
         run: python extract_forecast_validation.py
         continue-on-error: true
 
-      - name: 6a. Calibracion forecast TOTAL (anclado al sesgo medido)
+      - name: 6a. Calibracion forecast TOTAL via ANCLAS de negocio
         env:
           PYTHONIOENCODING: utf-8
-        run: python extract_forecast_calibrated.py
+        run: python extract_forecast_anchored.py
         continue-on-error: true
 
       - name: 6b. Reconciliacion MinT
