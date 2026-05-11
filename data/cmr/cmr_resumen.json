@@ -1,10 +1,16 @@
 {
-  "generado_en": "2026-05-11T18:16:30.599059",
+  "generado_en": "2026-05-11T18:51:32.176883",
   "modo": "UPDATE",
   "cmr_filas_sheet": 100,
-  "matched": 54,
-  "no_match": 46,
+  "matched": 11,
+  "no_match": 89,
   "sample_no_match": [
+    {
+      "cmr_name": "#20713",
+      "cmr_fecha": "2026-04-30",
+      "sku": "LVMONEXV-15",
+      "razon": "sin candidato Turso"
+    },
     {
       "cmr_name": "#20710",
       "cmr_fecha": "2026-04-30",
@@ -118,14 +124,8 @@
       "cmr_fecha": "2026-04-19",
       "sku": "LHSWMOVON7-PK",
       "razon": "sin candidato Turso"
-    },
-    {
-      "cmr_name": "#20617",
-      "cmr_fecha": "2026-04-19",
-      "sku": "67933831843970",
-      "razon": "sin candidato Turso"
     }
   ],
-  "total_venta_bruta_cmr": 3304460.0,
-  "total_comision_cmr": 434171.0
+  "total_venta_bruta_cmr": 522890.0,
+  "total_comision_cmr": 69689.0
 }

@@ -13,9 +13,7 @@ Flujo:
    - tipo_negocio = 'Fidelización CMR'
    - venta_bruta = Venta CMR Bruto (PVP)
    - venta_neta = Venta CMR Neto
-   - comision = Comisión CMR
-   - comision_pct = Comisión % (0.15 / 0.20)
-   - logistica = Envío CMR
+   (Comisión y envío CMR quedan FUERA del registro: por ahora solo venta y costo → margen directo)
 4. Reporta no-matches (CMR sheet sin equivalente en Turso) y duplicates.
 
 Modos:
@@ -270,19 +268,17 @@ def main():
         for i, m in enumerate(matches, 1):
             bruta = float(m['venta_bruta_cmr'] or 0)
             neta = float(m['venta_neta_cmr'] or 0)
-            comis = float(m['comision_cmr'] or 0)
-            pct = float(m['comision_pct_cmr'] or 0)
-            envio = float(m['envio_cmr'] or 0)
             rowid = int(m['turso_rowid'])
+            # Comision y logistica quedan en 0 (fuera del modelo venta-costo-margen directo)
             update_sql = (
                 f"UPDATE ventas SET "
                 f"canal = 'CMR', "
                 f"tipo_negocio = 'Fidelización CMR', "
                 f"venta_bruta = {bruta}, "
                 f"venta_neta = {neta}, "
-                f"comision = {comis}, "
-                f"comision_pct = {pct}, "
-                f"logistica = {envio} "
+                f"comision = 0, "
+                f"comision_pct = 0, "
+                f"logistica = 0 "
                 f"WHERE rowid = {rowid}"
             )
             try:
