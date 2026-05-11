@@ -270,9 +270,9 @@ def render():
         st.warning("⏳ Sin datos. Correr `python extract_comex_transito.py`")
         return
 
-    # Nota: la triangulación demanda · stock · tránsito vive en la app Planificación
-    # (futura). Los helpers _tab_triangulacion + _cargar_stock_live + _cargar_forecast_skus
-    # quedan en el archivo por si Planificación los importa.
+    # La triangulación demanda · stock · tránsito vive en la app Planificación (futura).
+    # Helpers _tab_triangulacion, _cargar_stock_live, _cargar_forecast_skus quedan en
+    # este archivo para reutilización.
     tab1, tab2, tab3 = st.tabs(["📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs"])
     with tab1:
         _tab_resumen(df)
