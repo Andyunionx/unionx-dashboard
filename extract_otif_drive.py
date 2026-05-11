@@ -86,9 +86,10 @@ def main():
         except Exception as e:
             print(f"  ERROR: {e}", flush=True)
 
-        # Dashboard por corte (formato Apps Script)
-        print(f"\n[3/3] Dashboard por corte (formato Apps Script)…", flush=True)
-        for c in cortes[:6]:  # top 6 cortes recientes
+        # Dashboard por corte (formato Apps Script) — TODOS los disponibles
+        # para soportar comparativos año contra año
+        print(f"\n[3/3] Dashboard por corte (formato Apps Script) — {len(cortes)} cortes…", flush=True)
+        for c in cortes:
             try:
                 otif_data["dashboard_por_corte"][c["key"]] = dashboard_otif_corte(c["key"])
                 print(f"  {c['key']}: {c['label']} OK", flush=True)

@@ -45,9 +45,81 @@ SHEET_ID = "1OSvJ0sO4H4VgU9Ac0GW5mpCjdCJL2N61dcYZpkxFbCo"
 WORKSHEET_NAME = "REPORTE EMPRESA 2026"
 
 
+def _normalizar_otif_df(rows: list, fecha_col_alt: str = None) -> pd.DataFrame:
+    """Normaliza un DataFrame OTIF (independiente del año/sheet de origen).
+
+    Args:
+        rows: lista de filas (incluye header en row 0)
+        fecha_col_alt: si la columna fecha tiene otro nombre (ej "Fecha venta" en 2025)
+    """
+    if not rows or len(rows) < 2:
+        return pd.DataFrame()
+
+    headers = [h.strip() for h in rows[0]]
+    df = pd.DataFrame(rows[1:], columns=headers)
+    df.columns = [c if c else f"col_{i}" for i, c in enumerate(df.columns)]
+
+    # Renombrar columnas alternativas (para compat 2025 vs 2026)
+    rename_map = {}
+    if fecha_col_alt and fecha_col_alt in df.columns:
+        rename_map[fecha_col_alt] = "FECHA"
+    if "Concepto" in df.columns and "Estado Empresa" not in df.columns:
+        rename_map["Concepto"] = "Estado Empresa"
+    if "Fecha venta" in df.columns and "FECHA" not in df.columns:
+        rename_map["Fecha venta"] = "FECHA"
+    if "ESTADO" in df.columns and "ESTADO CLIENTE" not in df.columns:
+        rename_map["ESTADO"] = "ESTADO CLIENTE"
+    if "TIPO DE DESPACHO" in df.columns and "SERVICIO" not in df.columns:
+        rename_map["TIPO DE DESPACHO"] = "SERVICIO"
+    if rename_map:
+        df = df.rename(columns=rename_map)
+
+    if "FECHA" not in df.columns:
+        return pd.DataFrame()
+
+    # Limpiar filas vacías
+    df = df.dropna(subset=["FECHA"], how="all")
+    df = df[df["FECHA"].astype(str).str.strip() != ""]
+
+    # Normalizar fechas
+    df["FECHA"] = pd.to_datetime(
+        df["FECHA"].astype(str).str.replace("-", "/"),
+        format="%d/%m/%Y", errors="coerce"
+    )
+    df = df.dropna(subset=["FECHA"])
+    df["MES"] = df["FECHA"].dt.to_period("M").astype(str)
+
+    # Estado Empresa puede venir como "A Tiempo" / "Tarde" / "Demorado"
+    if "Estado Empresa" in df.columns:
+        df["Estado Empresa"] = df["Estado Empresa"].astype(str).str.strip()
+        df["empresa_a_tiempo"] = df["Estado Empresa"].str.lower().eq("a tiempo")
+    else:
+        df["empresa_a_tiempo"] = False
+
+    if "CUMPLIMIENTO COURIER" in df.columns:
+        df["CUMPLIMIENTO COURIER"] = df["CUMPLIMIENTO COURIER"].astype(str).str.strip()
+        df["courier_a_tiempo"] = df["CUMPLIMIENTO COURIER"].str.lower().eq("a tiempo")
+    else:
+        df["courier_a_tiempo"] = False
+
+    df["otif_total"] = df["empresa_a_tiempo"] & df["courier_a_tiempo"]
+
+    # Días (varios encodings posibles)
+    for col in ["D�AS EMPRESA", "DÍAS EMPRESA", "DIAS EMPRESA"]:
+        if col in df.columns:
+            df["dias_empresa"] = pd.to_numeric(df[col], errors="coerce")
+            break
+    for col in ["D�AS", "DÍAS", "DIAS"]:
+        if col in df.columns:
+            df["dias_courier"] = pd.to_numeric(df[col], errors="coerce")
+            break
+
+    return df
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def cargar_otif_drive() -> pd.DataFrame:
-    """Carga el Sheet OTIF y devuelve DataFrame normalizado.
+    """Carga ambas hojas (2026 + 2025) y devuelve DataFrame combinado normalizado.
 
     Cache 1h. Se invalida con el botón "Refrescar Odoo" del sidebar
     o automáticamente cada hora.
@@ -67,7 +139,6 @@ def cargar_otif_drive() -> pd.DataFrame:
                     "https://www.googleapis.com/auth/drive.readonly"],
         )
     else:
-        # En Streamlit Cloud: leer desde st.secrets["gcp_service_account"]
         try:
             creds_info = dict(st.secrets["gcp_service_account"])
             creds = Credentials.from_service_account_info(
@@ -81,48 +152,43 @@ def cargar_otif_drive() -> pd.DataFrame:
     try:
         gc = gspread.authorize(creds)
         sh = gc.open_by_key(SHEET_ID)
+    except Exception as e:
+        print(f"[ops_otif_drive] Error abriendo Sheet: {e}")
+        return pd.DataFrame()
+
+    dfs = []
+
+    # 1. 2026 — REPORTE EMPRESA 2026
+    try:
         ws = sh.worksheet(WORKSHEET_NAME)
         rows = ws.get_all_values()
+        df_2026 = _normalizar_otif_df(rows)
+        if not df_2026.empty:
+            dfs.append(df_2026)
+            print(f"[ops_otif_drive] {WORKSHEET_NAME}: {len(df_2026):,} filas")
     except Exception as e:
-        print(f"[ops_otif_drive] Error leyendo Sheet: {e}")
+        print(f"[ops_otif_drive] Error leyendo {WORKSHEET_NAME}: {e}")
+
+    # 2. 2025 — COMPILADO AÑO 2025 (estructura distinta, normalizada por _normalizar)
+    for sheet_name in ["COMPILADO AÑO 2025", "COMPILADO A�O 2025"]:
+        try:
+            ws = sh.worksheet(sheet_name)
+            rows = ws.get_all_values()
+            df_2025 = _normalizar_otif_df(rows)
+            if not df_2025.empty:
+                dfs.append(df_2025)
+                print(f"[ops_otif_drive] {sheet_name}: {len(df_2025):,} filas")
+            break
+        except Exception:
+            continue
+
+    if not dfs:
         return pd.DataFrame()
 
-    if not rows or len(rows) < 2:
-        return pd.DataFrame()
-
-    headers = [h.strip() for h in rows[0]]
-    df = pd.DataFrame(rows[1:], columns=headers)
-
-    # Limpiar columnas vacías y filas vacías
-    df.columns = [c if c else f"col_{i}" for i, c in enumerate(df.columns)]
-    df = df.dropna(subset=["FECHA"], how="all")
-    df = df[df["FECHA"].astype(str).str.strip() != ""]
-
-    # Normalizar fechas (puede venir 26/01/2026 o 26-01-2026)
-    df["FECHA"] = pd.to_datetime(
-        df["FECHA"].astype(str).str.replace("-", "/"),
-        format="%d/%m/%Y", errors="coerce"
-    )
-    df = df.dropna(subset=["FECHA"])
-    df["MES"] = df["FECHA"].dt.to_period("M").astype(str)
-
-    # Normalizar estados
-    df["Estado Empresa"] = df["Estado Empresa"].astype(str).str.strip()
-    df["CUMPLIMIENTO COURIER"] = df["CUMPLIMIENTO COURIER"].astype(str).str.strip()
-    df["empresa_a_tiempo"] = df["Estado Empresa"].str.lower().eq("a tiempo")
-    df["courier_a_tiempo"] = df["CUMPLIMIENTO COURIER"].str.lower().eq("a tiempo")
-    df["otif_total"] = df["empresa_a_tiempo"] & df["courier_a_tiempo"]
-
-    # Días
-    for col in ["D�AS EMPRESA", "DÍAS EMPRESA", "DIAS EMPRESA"]:
-        if col in df.columns:
-            df["dias_empresa"] = pd.to_numeric(df[col], errors="coerce")
-            break
-    for col in ["D�AS", "DÍAS", "DIAS"]:
-        if col in df.columns:
-            df["dias_courier"] = pd.to_numeric(df[col], errors="coerce")
-            break
-
+    # Concatenar y deduplicar por ORDEN si hubiera overlap
+    df = pd.concat(dfs, ignore_index=True, sort=False)
+    if "ORDEN" in df.columns:
+        df = df.drop_duplicates(subset=["ORDEN", "FECHA"], keep="last")
     return df
 
 
