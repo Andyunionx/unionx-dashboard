@@ -145,13 +145,16 @@ def _entrenar_prophet(df: pd.DataFrame, dias_adelante: int, with_holidays: bool 
     logging.getLogger('cmdstanpy').setLevel(logging.WARNING)
 
     holidays_df = _build_holidays_chile() if with_holidays else None
+    # yearly_seasonality=False: con 1 año historia no hay señal para validar
+    # holidays_prior_scale=25: confiar fuerte en eventos como patron estructural retail
+    # changepoint_prior_scale=0.02: trend mas estable, no extrapolar growth agresivo
     m = Prophet(
-        yearly_seasonality=True,
+        yearly_seasonality=False,
         weekly_seasonality=True,
         daily_seasonality=False,
-        changepoint_prior_scale=0.05,
+        changepoint_prior_scale=0.02,
         holidays=holidays_df,
-        holidays_prior_scale=10.0,  # peso fuerte a eventos e-commerce
+        holidays_prior_scale=25.0,
     )
     # Holidays oficiales Chile (feriados)
     try:
@@ -200,9 +203,10 @@ def forecast_anual(df: pd.DataFrame, m=None, fc=None) -> tuple:
 def extraer_componentes(m, fc) -> dict:
     """Extrae componentes de Prophet (trend, weekly, yearly, holidays) para vista de diagnóstico."""
     print("[4/5] Extrayendo componentes Prophet...", flush=True)
-    cols = ['ds', 'trend', 'weekly', 'yearly']
-    if 'holidays' in fc.columns:
-        cols.append('holidays')
+    cols = ['ds', 'trend']
+    for c in ['weekly', 'yearly', 'holidays']:
+        if c in fc.columns:
+            cols.append(c)
     df_comp = fc[cols].copy()
     return df_comp
 

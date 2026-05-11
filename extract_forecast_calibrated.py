@@ -189,16 +189,37 @@ def main():
         factor_calibracion = max(0.85, min(1.10, factor_calibracion))
         print(f"    Factor clamped:                {factor_calibracion:.3f}", flush=True)
 
-    # 6. Aplicar factor a forecast_anual y forecast_diario
-    print(f"[6] Aplicando factor a forecast_anual + forecast_diario...", flush=True)
+    # 6. Aplicar factor a forecast_anual y forecast_diario — DIFERENCIAL por evento.
+    # Los dias en ventana de holiday/evento NO se calibran (son estructurales del retail).
+    # Solo dias "normales" reciben el descuento del sesgo.
+    print(f"[6] Aplicando factor DIFERENCIAL...", flush=True)
+    comp_path = OUT_DIR / 'forecast_componentes.parquet'
+    dias_con_evento = set()
+    if comp_path.exists():
+        comp = pd.read_parquet(comp_path)
+        comp['ds'] = pd.to_datetime(comp['ds'])
+        if 'holidays' in comp.columns:
+            # Un dia es "de evento" si el componente holidays > 5% de la suma de trend en ese dia
+            umbral = comp['trend'].abs().mean() * 0.05 if 'trend' in comp.columns else 1_000_000
+            dias_con_evento = set(comp[comp['holidays'].abs() > umbral]['ds'].dt.normalize())
+    print(f"    Dias con evento detectados (no se calibran): {len(dias_con_evento)}", flush=True)
+
     for df in [fc_anual, fc_diario]:
+        df['ds_norm'] = pd.to_datetime(df['ds']).dt.normalize()
+        df['en_evento'] = df['ds_norm'].isin(dias_con_evento)
         for col in ['yhat', 'yhat_lower', 'yhat_upper']:
-            if col in df.columns:
-                df[col] = (df[col] * factor_calibracion).round(0)
+            if col not in df.columns:
+                continue
+            # Dias en evento: factor = 1.0 (no tocar). Dias normales: factor calibracion.
+            df[col] = df.apply(
+                lambda r: r[col] if r['en_evento'] else r[col] * factor_calibracion,
+                axis=1,
+            ).round(0)
+        df.drop(columns=['ds_norm', 'en_evento'], inplace=True)
 
     fc_anual.to_parquet(FC_ANUAL, compression='zstd', compression_level=9, index=False)
     fc_diario.to_parquet(FC_DIARIO, compression='zstd', compression_level=9, index=False)
-    print(f"    forecast_anual: actualizado", flush=True)
+    print(f"    forecast_anual: actualizado (calibrado solo dias normales)", flush=True)
     print(f"    forecast_diario: actualizado", flush=True)
 
     # 7. Regenerar forecast_resumen.json con valores calibrados
