@@ -1,0 +1,61 @@
+name: "Sync CMR ventas (Drive sheet → Turso)"
+
+on:
+  schedule:
+    # Semanal: lunes 09:00 UTC (06:00 Chile)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'DRY_RUN: 1=solo reporte, 0=UPDATE real'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow gspread google-auth requests zstandard
+
+      - name: Restaurar credentials.json desde secret
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -z "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "[ERROR] GOOGLE_CREDENTIALS_JSON secret no configurado"
+            exit 1
+          fi
+          echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+
+      - name: Ejecutar sync CMR
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_cmr_ventas.py
+
+      - name: Commit auditoria si cambio
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions CMR"
+          rm -f credentials.json data/cmr/last_run.log
+          git add data/cmr/
+          git diff --staged --quiet || git commit -m "CMR sync $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
