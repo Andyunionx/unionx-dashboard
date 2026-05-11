@@ -73,12 +73,16 @@ COLOR_NEUTRO = '#64748B'     # gris
 # ============================================================
 # Local SQLite combinando parquet histórico + Turso live
 # ============================================================
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def _read_historico_parquet():
-    """Lectura cacheada del parquet histórico (no cambia día a día)."""
+    """Lectura del parquet histórico (no cambia día a día).
+    cache_resource: zero overhead vs cache_data que serializa el DataFrame en cada acceso.
+    """
     if not HISTORICO_PARQUET.exists():
         return pd.DataFrame()
-    return pd.read_parquet(HISTORICO_PARQUET)
+    df = pd.read_parquet(HISTORICO_PARQUET)
+    print(f"[historico_parquet] {len(df):,} filas cargadas desde {HISTORICO_PARQUET.name}", flush=True)
+    return df
 
 
 @st.cache_resource(ttl=900, show_spinner="Cargando datos (primera vez ~10s)…")
@@ -156,52 +160,71 @@ def get_local_db_path():
     # Parquet histórico (cacheado por separado para no re-leerlo si invalida la DB local)
     df_hist = _read_historico_parquet()
     if not df_hist.empty:
+        print(f"[Local DB] Insertando {len(df_hist):,} filas histórico parquet...", flush=True)
         df_hist[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
+        print(f"[Local DB] Histórico insertado OK", flush=True)
 
-    # Live de Turso
+    # Live de Turso (con fallback si Turso falla — no romper el dashboard)
     chunk_size = 50000
     last_rowid = 0
-    while True:
-        result = turso_query(
-            f"SELECT rowid, {cols_csv} FROM ventas "
-            f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
-            f"ORDER BY rowid LIMIT {chunk_size}"
-        )
-        rows = result['rows']
-        if not rows:
-            break
-        flat = []
-        for r in rows:
-            vals = [c.get('value') if isinstance(c, dict) else c for c in r]
-            last_rowid = int(vals[0])
-            flat.append(tuple(vals[1:]))
-        conn.executemany(insert_sql, flat)
-        conn.commit()
-        if len(rows) < chunk_size:
-            break
+    chunks_turso = 0
+    try:
+        while True:
+            result = turso_query(
+                f"SELECT rowid, {cols_csv} FROM ventas "
+                f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
+                f"ORDER BY rowid LIMIT {chunk_size}"
+            )
+            rows = result['rows']
+            if not rows:
+                break
+            flat = []
+            for r in rows:
+                vals = [c.get('value') if isinstance(c, dict) else c for c in r]
+                last_rowid = int(vals[0])
+                flat.append(tuple(vals[1:]))
+            conn.executemany(insert_sql, flat)
+            conn.commit()
+            chunks_turso += 1
+            print(f"[Local DB] Turso chunk {chunks_turso}: +{len(rows):,} filas (total {chunks_turso*chunk_size:,})", flush=True)
+            if len(rows) < chunk_size:
+                break
+        print(f"[Local DB] Turso live OK: {chunks_turso} chunks", flush=True)
+    except Exception as e:
+        print(f"[Local DB][WARN] Turso fallo después de {chunks_turso} chunks: {type(e).__name__}. Dashboard usara solo histórico parquet.", flush=True)
 
-    # dim_productos + metadata
+    # dim_productos + metadata (con fallback)
     cols_p = ['sku', 'producto', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
               'categoria_comercial', 'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra']
-    result = turso_query(f"SELECT {','.join(cols_p)} FROM dim_productos")
-    rows = result['rows']
-    if rows:
-        flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
-        conn.executemany(
-            f"INSERT OR IGNORE INTO dim_productos ({','.join(cols_p)}) VALUES ({','.join(['?']*len(cols_p))})",
-            flat,
-        )
+    try:
+        result = turso_query(f"SELECT {','.join(cols_p)} FROM dim_productos")
+        rows = result['rows']
+        if rows:
+            flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+            conn.executemany(
+                f"INSERT OR IGNORE INTO dim_productos ({','.join(cols_p)}) VALUES ({','.join(['?']*len(cols_p))})",
+                flat,
+            )
+    except Exception as e:
+        print(f"[Local DB][WARN] dim_productos: {type(e).__name__}", flush=True)
 
     cols_m = ['fecha_carga', 'fuente', 'filas_cargadas', 'fecha_min_datos', 'fecha_max_datos', 'tipo']
-    result = turso_query(f"SELECT {','.join(cols_m)} FROM metadata_cargas")
-    rows = result['rows']
-    if rows:
-        flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
-        conn.executemany(
-            f"INSERT INTO metadata_cargas ({','.join(cols_m)}) VALUES ({','.join(['?']*len(cols_m))})",
-            flat,
-        )
-        conn.commit()
+    try:
+        result = turso_query(f"SELECT {','.join(cols_m)} FROM metadata_cargas")
+        rows = result['rows']
+        if rows:
+            flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+            conn.executemany(
+                f"INSERT INTO metadata_cargas ({','.join(cols_m)}) VALUES ({','.join(['?']*len(cols_m))})",
+                flat,
+            )
+            conn.commit()
+    except Exception as e:
+        print(f"[Local DB][WARN] metadata_cargas: {type(e).__name__}", flush=True)
+
+    # Stats finales
+    n_ventas = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+    print(f"[Local DB] BUILD COMPLETO: {n_ventas:,} filas en ventas", flush=True)
 
     conn.close()
     return str(tmp_path)
