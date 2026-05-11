@@ -57,11 +57,18 @@ jobs:
         run: python extract_comex_dimensiones.py
         continue-on-error: true
 
+      - name: Forecast capacidad bodega (m³ disp + tránsito + forecast venta)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_capacidad_forecast.py
+        continue-on-error: true
+
       - name: Commit parquet COMEX si cambio
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions COMEX"
           rm -f credentials.json
-          git add data/comex/
-          git diff --staged --quiet || git commit -m "COMEX transito $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git add data/comex/ data/capacidad/
+          git diff --staged --quiet || git commit -m "COMEX + capacidad $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push

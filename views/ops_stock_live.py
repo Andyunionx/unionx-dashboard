@@ -354,9 +354,6 @@ def render():
         from views._ops_capacidad_helper import (
             disponibilidad_posiciones, slots_liberables, slotting_suboptimo,
         )
-        from views._ops_data_helper import (
-            get_proximos_embarques, kpi_capacidad_recepcion,
-        )
 
         st.markdown("### 📐 Eficiencia de slotting & capacidad de recepción")
         st.caption(
@@ -578,35 +575,10 @@ def render():
             else:
                 st.success("✅ Top SKUs A correctamente ubicados en zona caliente")
 
-        # ── 4.4 Capacidad para próximos embarques (PAUSADO H2) ──────────
+        # ── 4.4 Forecast de capacidad bodega 90 días ─────────────────────
         with slot_subtabs[3]:
-            st.markdown("### 📥 Forecast de capacidad para embarques entrantes")
-            st.warning(
-                "🚧 **Pausado — Roadmap H2** · La métrica de capacidad m³ requiere las "
-                "dimensiones de **caja master** (no la unidad individual). "
-                "Cuando se cargue caja master en Odoo o se lea desde PI/PL del agente COMEX, "
-                "esta vista mostrará: m³ disponibles vs m³ próximos embarques + alerta automática "
-                "si próximo contenedor no entra."
-            )
-            st.markdown(
-                "**Mientras tanto, la métrica que SÍ funciona** está en la sub-tab "
-                "**📍 Disponibilidad por posición**: # posiciones vacías vs llenas (exacto)."
-            )
-
-            # Mantener form de carga para que cuando se reactive m³ ya haya datos
-            embarques = get_proximos_embarques(solo_pendientes=True)
-            with st.expander(f"📋 Embarques cargados manualmente ({len(embarques)})", expanded=False):
-                if embarques:
-                    df_emb = pd.DataFrame(embarques)
-                    df_emb = df_emb[["eta", "descripcion", "contenedores", "m3"]].rename(columns={
-                        "eta": "ETA",
-                        "descripcion": "Descripción",
-                        "contenedores": "Contenedores",
-                        "m3": "m³",
-                    })
-                    st.dataframe(df_emb, use_container_width=True, hide_index=True, height=200)
-                else:
-                    st.caption("Sin embarques cargados aún.")
+            from views._ops_capacidad_forecast_helper import render_forecast_capacidad
+            render_forecast_capacidad()
 
     # ============================================================
     # TAB 5 — USO DE POSICIONES

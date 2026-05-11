@@ -1,0 +1,112 @@
+{
+  "generado_en": "2026-05-11T17:56:48.963524",
+  "horizonte_dias": 90,
+  "capacidad_bodega_m3": 2539.7999999999997,
+  "capacidad_pallets": 2116.0,
+  "capacidad_fuente": "auto: 1411 posiciones × 1.7999999999999998 m³",
+  "asunciones": {
+    "m3_por_posicion": 1.7999999999999998,
+    "m3_por_pallet_apilable": 1.2,
+    "umbral_anomalo_m3_unidad": 1.0
+  },
+  "estado_actual": {
+    "m3_ocupado_hoy": 1136.4,
+    "m3_disponible_hoy": 1403.4,
+    "pct_ocupacion_hoy": 44.7,
+    "pallets_ocupados_hoy": 947.0,
+    "pallets_disp_hoy": 1169.5
+  },
+  "pico_proyectado": {
+    "fecha": "2026-05-13",
+    "m3_ocupado": 1173.2,
+    "pct_ocupacion": 46.2
+  },
+  "minimo_proyectado": {
+    "fecha": "2026-07-19",
+    "m3_ocupado": 0.0,
+    "pct_ocupacion": 0.0
+  },
+  "primer_critico": null,
+  "primer_atencion": null,
+  "dias_con_entrada_transito": [
+    {
+      "fecha": "2026-05-13",
+      "m3": 82.1
+    },
+    {
+      "fecha": "2026-05-20",
+      "m3": 92.2
+    },
+    {
+      "fecha": "2026-06-12",
+      "m3": 124.6
+    },
+    {
+      "fecha": "2026-06-23",
+      "m3": 103.9
+    },
+    {
+      "fecha": "2026-06-24",
+      "m3": 44.6
+    },
+    {
+      "fecha": "2026-06-25",
+      "m3": 45.0
+    }
+  ],
+  "m3_total_entrante_horizonte": 540.9,
+  "m3_total_saliente_horizonte": 10995.6,
+  "stock_anomalies_count": 55,
+  "top_stock_anomalies": [
+    {
+      "sku": "6902221386601",
+      "vol_unit_m3": 3.86,
+      "qty": 1.0
+    },
+    {
+      "sku": "6902221386588",
+      "vol_unit_m3": 3.86,
+      "qty": 2.0
+    },
+    {
+      "sku": "6902221366597",
+      "vol_unit_m3": 2.84,
+      "qty": 1.0
+    },
+    {
+      "sku": "6902221378453",
+      "vol_unit_m3": 3.6,
+      "qty": 3.0
+    },
+    {
+      "sku": "6902221385154",
+      "vol_unit_m3": 1.83,
+      "qty": 3.0
+    },
+    {
+      "sku": "HK-126C-BK-M",
+      "vol_unit_m3": 6.8,
+      "qty": 2.0
+    },
+    {
+      "sku": "GUIR220VTEJIDOBLAN",
+      "vol_unit_m3": 1.99,
+      "qty": 1.0
+    },
+    {
+      "sku": "1656603804695",
+      "vol_unit_m3": 19.84,
+      "qty": 3.0
+    },
+    {
+      "sku": "1661892870974",
+      "vol_unit_m3": 8.47,
+      "qty": 1.0
+    },
+    {
+      "sku": "1628016796209",
+      "vol_unit_m3": 8.47,
+      "qty": 2.0
+    }
+  ]
+}

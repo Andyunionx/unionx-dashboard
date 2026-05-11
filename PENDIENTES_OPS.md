@@ -128,6 +128,14 @@ estricta "todo el pedido entregado", cambiar a `max(date_done)` por SO.
 
 ## ✅ COMPLETADOS RECIENTES (2026-05-09 a 2026-05-11)
 
+- Stock LIVE → "Capacidad para próximos embarques": **forecast funcional 90 días**
+  combinando stock m³ actual (Odoo) + tránsito m³ por ETA (COMEX) + forecast
+  venta diaria × volumen unitario. Gráfico Plotly con umbrales 70%/90%, marca
+  llegadas de PIs, insights automáticos de slotting según el escenario
+  (saturación, sub-utilización, quiebre, planificación recepción).
+  Asume 1 posición = 1×1,2×1,5m = 1.8 m³. Capacidad bodega configurable manual
+  o estimada desde # posiciones Odoo. (`extract_capacidad_forecast.py` +
+  `views/_ops_capacidad_forecast_helper.py`).
 - COMEX: nueva tab "📐 Volumen / Pallets" → cruza SKUs en tránsito con
   peso/volumen Odoo, estima m³/pallets/containers por PI, detecta SKUs con
   volumen mal cargado en Odoo (`extract_comex_dimensiones.py`)
