@@ -36,11 +36,21 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 HIST_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
 
 
-def _q(sql: str):
+def _q(sql: str, retries: int = 3):
     body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
-    r = requests.post(f"{URL}/v2/pipeline", json=body, headers=HEADERS, timeout=300)
-    r.raise_for_status()
-    return r.json()['results'][0]['response']['result']['rows']
+    last = None
+    for i in range(retries):
+        try:
+            r = requests.post(f"{URL}/v2/pipeline", json=body, headers=HEADERS, timeout=180)
+            r.raise_for_status()
+            res = r.json()['results'][0]
+            if res.get('type') == 'error':
+                raise RuntimeError(res['error']['message'])
+            return res['response']['result']['rows']
+        except (requests.exceptions.RequestException, RuntimeError) as e:
+            last = e
+            time.sleep(2 ** i)
+    raise last
 
 
 def _val(row, idx):
@@ -137,33 +147,136 @@ def _build_holidays_chile() -> pd.DataFrame:
     return df
 
 
-def _entrenar_prophet(df: pd.DataFrame, dias_adelante: int, with_holidays: bool = True):
-    """Entrena Prophet, devuelve (modelo, forecast df). Reutilizable para anual."""
+def _cargar_regresores_externos(df_ds: pd.DatetimeIndex) -> pd.DataFrame:
+    """Calcula regresores externos a nivel diario para Prophet TOTAL:
+    - descuento_promedio_dia: descuento_efectivo promedio del dia (ponderado por venta)
+    - n_skus_promo: cuantos SKUs con promo_activa ese dia
+    - basket_size_dia: # pedidos multi-SKU del dia (cross-product / complementariedad)
+
+    Para fechas futuras: usa el promedio del MISMO mes del año anterior
+    (asume que la estacionalidad de descuentos se mantiene).
+    """
+    PRICING = PROJECT_ROOT / 'data' / 'pricing_historico' / 'pricing_diario.parquet'
+    if not PRICING.exists():
+        return pd.DataFrame({'ds': df_ds,
+                              'descuento_promedio_dia': 0.0,
+                              'n_skus_promo': 0,
+                              'basket_size_dia': 0})
+
+    pri = pd.read_parquet(PRICING)
+    pri['fecha'] = pd.to_datetime(pri['fecha'])
+    # Regresor 1: descuento ponderado por venta_bruta
+    pri['desc_x_venta'] = pri['descuento_efectivo'] * pri['venta_bruta']
+    reg_desc = pri.groupby('fecha').agg(
+        desc_x_venta=('desc_x_venta', 'sum'),
+        venta_bruta=('venta_bruta', 'sum'),
+        n_skus_promo=('promo_activa', 'sum'),
+    )
+    reg_desc['descuento_promedio_dia'] = reg_desc['desc_x_venta'] / reg_desc['venta_bruta'].clip(lower=1)
+    reg_desc = reg_desc[['descuento_promedio_dia', 'n_skus_promo']]
+
+    # Para fechas futuras: usar mismo mes-dia del año anterior
+    hoy = pd.Timestamp(datetime.now().date())
+    df_full = pd.DataFrame({'ds': df_ds}).set_index('ds')
+    df_full = df_full.join(reg_desc)
+    # Imputar fechas futuras con valor del MISMO dia del año anterior
+    fechas_faltantes = df_full[df_full['descuento_promedio_dia'].isna()].index
+    for f in fechas_faltantes:
+        f_ly = f - pd.Timedelta(days=365)
+        if f_ly in reg_desc.index:
+            df_full.loc[f, 'descuento_promedio_dia'] = reg_desc.loc[f_ly, 'descuento_promedio_dia']
+            df_full.loc[f, 'n_skus_promo'] = reg_desc.loc[f_ly, 'n_skus_promo']
+
+    # Fallback: rellenar con la mediana del año
+    df_full['descuento_promedio_dia'] = df_full['descuento_promedio_dia'].fillna(
+        reg_desc['descuento_promedio_dia'].median()
+    )
+    df_full['n_skus_promo'] = df_full['n_skus_promo'].fillna(
+        reg_desc['n_skus_promo'].median()
+    ).astype(int)
+
+    # Basket size: % pedidos multi-SKU por dia (complementariedad)
+    HIST = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+    if HIST.exists():
+        try:
+            h = pd.read_parquet(HIST, columns=['fecha_venta', 'pedido', 'sku', 'tipo_movimiento'])
+            h = h[h['tipo_movimiento'] == 'Venta'].copy()
+            h['fecha_venta'] = pd.to_datetime(h['fecha_venta'], errors='coerce')
+            h = h.dropna(subset=['fecha_venta', 'pedido'])
+            # Por dia: cuantos pedidos tienen mas de 1 SKU
+            pedidos_dia = h.groupby(['fecha_venta', 'pedido'])['sku'].nunique().reset_index()
+            pedidos_dia.columns = ['fecha', 'pedido', 'n_skus']
+            basket_dia = pedidos_dia.groupby('fecha').apply(
+                lambda x: (x['n_skus'] > 1).sum() / max(len(x), 1)
+            ).reset_index(name='pct_multi_sku')
+            basket_dia['fecha'] = pd.to_datetime(basket_dia['fecha'])
+            basket_dia = basket_dia.set_index('fecha')['pct_multi_sku']
+            # Join e imputar futuro con LY
+            df_full = df_full.join(basket_dia.rename('basket_size_dia'))
+            for f in df_full[df_full['basket_size_dia'].isna()].index:
+                f_ly = f - pd.Timedelta(days=365)
+                if f_ly in basket_dia.index:
+                    df_full.loc[f, 'basket_size_dia'] = basket_dia.loc[f_ly]
+            df_full['basket_size_dia'] = df_full['basket_size_dia'].fillna(basket_dia.median())
+        except Exception as e:
+            print(f"   [skip] basket_size_dia: {e}", flush=True)
+            df_full['basket_size_dia'] = 0
+    else:
+        df_full['basket_size_dia'] = 0
+
+    return df_full.reset_index()
+
+
+def _entrenar_prophet(df: pd.DataFrame, dias_adelante: int, with_holidays: bool = True,
+                       with_regresores: bool = False):
+    """Entrena Prophet, devuelve (modelo, forecast df).
+
+    Si with_regresores=True (env var WITH_REGRESORES=1), agrega descuento + n_skus_promo +
+    basket_size como regresores. EXPERIMENTAL: hoy absorbe crecimiento Q1 y baja proyeccion,
+    util para escenarios con cambios fuertes de pricing strategy.
+    """
     from prophet import Prophet
     import logging
     logging.getLogger('prophet').setLevel(logging.WARNING)
     logging.getLogger('cmdstanpy').setLevel(logging.WARNING)
 
+    # Override via env var
+    if os.environ.get('WITH_REGRESORES') == '1':
+        with_regresores = True
+
     holidays_df = _build_holidays_chile() if with_holidays else None
-    # yearly_seasonality=False: con 1 año historia no hay señal para validar
-    # holidays_prior_scale=25: confiar fuerte en eventos como patron estructural retail
-    # changepoint_prior_scale=0.02: trend mas estable, no extrapolar growth agresivo
     m = Prophet(
-        yearly_seasonality=False,
+        yearly_seasonality=True,
         weekly_seasonality=True,
         daily_seasonality=False,
-        changepoint_prior_scale=0.02,
+        changepoint_prior_scale=0.05,
         holidays=holidays_df,
-        holidays_prior_scale=25.0,
+        holidays_prior_scale=10.0,
     )
-    # Holidays oficiales Chile (feriados)
     try:
         m.add_country_holidays(country_name='CL')
     except Exception:
-        pass  # holidays library puede fallar offline
+        pass
 
-    m.fit(df)
+    df_train = df.copy()
+    if with_regresores:
+        # Calcular regresores para fechas de train + futuro
+        fechas_full = pd.date_range(df['ds'].min(),
+                                     df['ds'].max() + pd.Timedelta(days=dias_adelante),
+                                     freq='D')
+        regs = _cargar_regresores_externos(fechas_full)
+
+        df_train = df_train.merge(regs, on='ds', how='left')
+        for col in ['descuento_promedio_dia', 'n_skus_promo', 'basket_size_dia']:
+            df_train[col] = df_train[col].fillna(0)
+            m.add_regressor(col)
+
+    m.fit(df_train)
     future = m.make_future_dataframe(periods=dias_adelante, freq='D')
+    if with_regresores:
+        future = future.merge(regs, on='ds', how='left')
+        for col in ['descuento_promedio_dia', 'n_skus_promo', 'basket_size_dia']:
+            future[col] = future[col].fillna(0)
     fc = m.predict(future)
     return m, fc
 
@@ -342,9 +455,15 @@ def main():
     df_componentes.to_parquet(OUTPUT_DIR / 'forecast_componentes.parquet', compression='zstd', index=False)
 
     # 3. Forecast por canal (top 10, próximos 30 días)
-    fc_canal = forecast_por_canal(top_n=10, dias_adelante=30)
-    if not fc_canal.empty:
-        fc_canal.to_parquet(OUTPUT_DIR / 'forecast_canal.parquet', compression='zstd', index=False)
+    if os.environ.get('SKIP_CANAL') != '1':
+        try:
+            fc_canal = forecast_por_canal(top_n=10, dias_adelante=30)
+            if not fc_canal.empty:
+                fc_canal.to_parquet(OUTPUT_DIR / 'forecast_canal.parquet', compression='zstd', index=False)
+        except Exception as e:
+            print(f"  [skip] forecast_por_canal fallo: {str(e)[:120]}", flush=True)
+    else:
+        print("  [skip] forecast_por_canal (SKIP_CANAL=1)", flush=True)
 
     # 4. Resumen multi-horizonte
     print("[5/5] Calculando proyecciones multi-horizonte...", flush=True)
