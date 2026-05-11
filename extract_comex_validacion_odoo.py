@@ -99,20 +99,36 @@ def main():
     resumen_pi = []
 
     for pi, df_pi in df_t.groupby('pi', dropna=False):
-        fecha_embarque = df_pi['fecha_embarque'].min()
+        fecha_embarque = pd.Timestamp(df_pi['fecha_embarque'].min())
+        fecha_eta_bodega_val = df_pi['fecha_eta_bodega'].min() if 'fecha_eta_bodega' in df_pi.columns else None
+        fecha_eta_bodega = pd.Timestamp(fecha_eta_bodega_val) if pd.notna(fecha_eta_bodega_val) else pd.NaT
         if pd.isna(fecha_embarque):
             fecha_embarque = pd.Timestamp('2026-01-01')
+
+        # Ventana de fechas centrada en ETA bodega (evita capturar movimientos de OTROS PIs).
+        # Si no hay ETA bodega, usar fecha_embarque + 50d como estimacion.
+        if pd.notna(fecha_eta_bodega):
+            ventana_desde = fecha_eta_bodega - pd.Timedelta(days=14)
+            ventana_hasta = fecha_eta_bodega + pd.Timedelta(days=60)
+        else:
+            ventana_desde = fecha_embarque + pd.Timedelta(days=35)
+            ventana_hasta = fecha_embarque + pd.Timedelta(days=110)
+
+        # Limite superior: no buscar movimientos en el futuro
+        hoy_ts = pd.Timestamp(datetime.now())
+        ventana_hasta_real = ventana_hasta if ventana_hasta < hoy_ts else hoy_ts
 
         skus_pi = df_pi['sku'].dropna().astype(str).unique().tolist()
         product_ids_pi = [sku_to_id[s] for s in skus_pi if s in sku_to_id]
 
         recibido_por_prod = defaultdict(float)
-        if product_ids_pi:
-            # Stock.move: ingresos a bodegas relevantes desde fecha_embarque
+        # Solo buscar movimientos si la ventana ya comenzo (sino la PI todavia no puede haber llegado)
+        if product_ids_pi and ventana_desde <= hoy_ts:
             domain = [
                 ('product_id', 'in', product_ids_pi),
                 ('state', '=', 'done'),
-                ('date', '>=', fecha_embarque.strftime('%Y-%m-%d 00:00:00')),
+                ('date', '>=', ventana_desde.strftime('%Y-%m-%d 00:00:00')),
+                ('date', '<=', ventana_hasta_real.strftime('%Y-%m-%d 23:59:59')),
                 ('location_dest_id', 'in', dest_ids),
                 ('product_uom_qty', '>', 0),
             ]
