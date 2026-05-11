@@ -244,3 +244,183 @@ def meses_disponibles() -> List[str]:
     if df.empty:
         return []
     return sorted(df["MES"].unique().tolist(), reverse=True)
+
+
+# ============================================================
+# CORTE OTIF 26-25 (formato Apps Script)
+# ============================================================
+def cortes_otif_disponibles() -> List[Dict]:
+    """Cortes mensuales tipo Apps Script: del 26 del mes anterior al 25 del mes objetivo.
+
+    Returns: [{label, mes, anio, desde, hasta}, ...] ordenado descendente.
+    """
+    df = cargar_otif_drive()
+    if df.empty:
+        return []
+    out = []
+    meses_unicos = sorted(df["MES"].unique().tolist())
+    nombres_es = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    for m_str in meses_unicos:
+        try:
+            anio, mes = map(int, m_str.split("-"))
+        except Exception:
+            continue
+        # Corte = día 26 mes anterior → día 25 mes actual
+        if mes == 1:
+            desde = pd.Timestamp(year=anio - 1, month=12, day=26)
+        else:
+            desde = pd.Timestamp(year=anio, month=mes - 1, day=26)
+        hasta = pd.Timestamp(year=anio, month=mes, day=25)
+        label = f"Corte {nombres_es[mes-1]} {anio} ({desde.strftime('%d-%m')} al {hasta.strftime('%d-%m')})"
+        out.append({"label": label, "mes": mes, "anio": anio,
+                    "desde": desde.strftime("%Y-%m-%d"),
+                    "hasta": hasta.strftime("%Y-%m-%d"),
+                    "key": f"{anio}-{mes:02d}"})
+    return sorted(out, key=lambda x: x["key"], reverse=True)
+
+
+def _filtrar_corte(df: pd.DataFrame, desde: str, hasta: str,
+                   courier: str = None, cliente: str = None,
+                   servicio: str = None) -> pd.DataFrame:
+    """Filtra df por corte y filtros opcionales."""
+    f = df[(df["FECHA"] >= pd.Timestamp(desde)) & (df["FECHA"] <= pd.Timestamp(hasta))].copy()
+    if courier and courier != "Todos":
+        f = f[f["CURIER"].astype(str).str.strip().str.lower() == courier.strip().lower()]
+    if cliente and cliente != "Todos":
+        f = f[f["CLIENTE"].astype(str).str.strip().str.upper() == cliente.strip().upper()]
+    if servicio and servicio != "Todos":
+        f = f[f.get("SERVICIO", pd.Series([])).astype(str).str.strip().str.lower() == servicio.strip().lower()]
+    return f
+
+
+def dashboard_otif_corte(corte_key: str, courier: str = None,
+                         cliente: str = None, servicio: str = None) -> Dict:
+    """Dashboard OTIF completo para un corte (formato Apps Script).
+
+    Returns dict con TODO lo que muestra el Apps Script:
+      - resumen: $ cancelacion, $ quiebre, NS empresa, NS courier, OTIF total
+      - por_cliente: tabla pivot con cliente x métricas
+      - pareto_quiebres: top SKUs por $ quiebre con % acumulado
+      - opciones_filtros: couriers, clientes, servicios disponibles
+    """
+    df = cargar_otif_drive()
+    if df.empty:
+        return {"error": "Sin datos del Sheet OTIF"}
+
+    cortes = cortes_otif_disponibles()
+    corte = next((c for c in cortes if c["key"] == corte_key), None)
+    if not corte:
+        return {"error": f"Corte {corte_key} no disponible"}
+
+    # Opciones de filtros (basadas en TODO el rango, no solo el corte)
+    f_all = df[(df["FECHA"] >= pd.Timestamp(corte["desde"])) &
+               (df["FECHA"] <= pd.Timestamp(corte["hasta"]))].copy()
+    opc_couriers = sorted([c for c in f_all["CURIER"].astype(str).str.strip().unique() if c])
+    opc_clientes = sorted([c for c in f_all["CLIENTE"].astype(str).str.strip().unique() if c])
+    opc_servicios = sorted([s for s in f_all.get("SERVICIO", pd.Series([])).astype(str).str.strip().unique() if s])
+
+    # Aplicar filtros
+    f = _filtrar_corte(df, corte["desde"], corte["hasta"], courier, cliente, servicio)
+    if f.empty:
+        return {
+            "corte": corte,
+            "n_ordenes": 0,
+            "resumen": {"n_ordenes": 0, "cancelacion_clp": 0, "quiebre_clp": 0,
+                         "n_canceladas": 0, "n_quiebres": 0,
+                         "ns_empresa_pct": None, "ns_courier_pct": None,
+                         "otif_total_pct": None, "n_empresa_ok": 0, "n_courier_ok": 0, "n_otif_ok": 0},
+            "por_cliente": [], "pareto_quiebres": [],
+            "opciones_filtros": {"couriers": opc_couriers, "clientes": opc_clientes,
+                                  "servicios": opc_servicios},
+            "error": None,
+        }
+
+    n = len(f)
+    n_emp = int(f["empresa_a_tiempo"].sum())
+    n_cou = int(f["courier_a_tiempo"].sum())
+    n_total = int(f["otif_total"].sum())
+
+    # $ Cancelación y $ Quiebre
+    canc_col = next((c for c in f.columns if "CANCELACI" in c.upper()), None)
+    quie_col = next((c for c in f.columns if "QUIEBRE" in c.upper()), None)
+    canc_serie = pd.to_numeric(f[canc_col].astype(str).str.replace("[$,. ]", "", regex=True),
+                                errors="coerce").fillna(0) if canc_col else pd.Series([0])
+    quie_serie = pd.to_numeric(f[quie_col].astype(str).str.replace("[$,. ]", "", regex=True),
+                                errors="coerce").fillna(0) if quie_col else pd.Series([0])
+    canc_clp = float(canc_serie.sum())
+    quie_clp = float(quie_serie.sum())
+    n_canc = int((canc_serie > 0).sum())
+    n_quie = int((quie_serie > 0).sum())
+
+    resumen = {
+        "n_ordenes": n,
+        "cancelacion_clp": canc_clp,
+        "quiebre_clp": quie_clp,
+        "n_canceladas": n_canc,
+        "n_quiebres": n_quie,
+        "ns_empresa_pct": n_emp / n if n else 0,
+        "ns_courier_pct": n_cou / n if n else 0,
+        "otif_total_pct": n_total / n if n else 0,
+        "n_empresa_ok": n_emp,
+        "n_courier_ok": n_cou,
+        "n_otif_ok": n_total,
+    }
+
+    # Por cliente (pivot)
+    g = f.groupby("CLIENTE").agg(
+        ORDENES=("ORDEN", "count"),
+        A_TPO_EMP=("empresa_a_tiempo", "sum"),
+        A_TPO_COU=("courier_a_tiempo", "sum"),
+        OTIF=("otif_total", "sum"),
+    ).reset_index()
+    g["NS_EMP_PCT"] = (g["A_TPO_EMP"] / g["ORDENES"]).round(4)
+    g["NS_COU_PCT"] = (g["A_TPO_COU"] / g["ORDENES"]).round(4)
+    g["OTIF_PCT"] = (g["OTIF"] / g["ORDENES"]).round(4)
+    g = g.sort_values("ORDENES", ascending=False)
+    por_cliente = g.to_dict("records")
+    # Total
+    if n > 0:
+        por_cliente.append({
+            "CLIENTE": "TOTAL", "ORDENES": n,
+            "A_TPO_EMP": n_emp, "NS_EMP_PCT": n_emp / n,
+            "A_TPO_COU": n_cou, "NS_COU_PCT": n_cou / n,
+            "OTIF": n_total, "OTIF_PCT": n_total / n,
+        })
+
+    # Pareto de quiebres por SKU
+    sku_col = next((c for c in f.columns if c.upper() == "SKU"), None)
+    pareto = []
+    if sku_col and quie_col:
+        f_quie = f[quie_serie > 0].copy()
+        if not f_quie.empty:
+            f_quie["quiebre_num"] = pd.to_numeric(
+                f_quie[quie_col].astype(str).str.replace("[$,. ]", "", regex=True),
+                errors="coerce"
+            ).fillna(0)
+            pareto_g = f_quie.groupby(sku_col).agg(
+                monto=("quiebre_num", "sum"),
+                n_ordenes=("ORDEN", "count"),
+            ).reset_index().sort_values("monto", ascending=False)
+            total_quiebre = pareto_g["monto"].sum()
+            pareto_g["pct"] = pareto_g["monto"] / total_quiebre if total_quiebre else 0
+            pareto_g["pct_acumulado"] = pareto_g["pct"].cumsum()
+            pareto = pareto_g.head(20).to_dict("records")
+
+    return {
+        "corte": corte,
+        "resumen": resumen,
+        "por_cliente": por_cliente,
+        "pareto_quiebres": pareto,
+        "opciones_filtros": {
+            "couriers": ["Todos"] + opc_couriers,
+            "clientes": ["Todos"] + opc_clientes,
+            "servicios": ["Todos"] + opc_servicios,
+        },
+        "filtros_aplicados": {
+            "courier": courier or "Todos",
+            "cliente": cliente or "Todos",
+            "servicio": servicio or "Todos",
+        },
+        "error": None,
+    }

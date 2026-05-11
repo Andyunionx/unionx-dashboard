@@ -480,122 +480,219 @@ def render():
                                    use_container_width=True, type="primary")
 
             st.divider()
-            st.markdown("#### 📊 OTIF desde RESUMEN MENSUAL OTIF (Drive)")
+            st.markdown("### 📊 Dashboard OTIF Union X")
+            st.caption("CONTROL DE GESTION / LOGISTICA — Mismo formato del reporte Apps Script (corte 26-25)")
 
             # Datos PRECALCULADOS en snapshot para no bloquear el render
             from views._ops_kpis_snapshot import cargar_snapshot as _cs_otif
             snap_otif_data = _cs_otif().get("otif_drive", {})
 
+            # Selector de corte (formato 26-25 estilo Apps Script)
+            cortes_data = snap_otif_data.get("cortes_disponibles", [])
+            if cortes_data and snap_otif_data.get("dashboard_por_corte"):
+                col_modo, col_periodo, _ = st.columns([1, 1, 2])
+                with col_modo:
+                    st.markdown("**MODO DE FECHA**")
+                    st.selectbox("modo", ["Corte OTIF (26-25) por fecha"],
+                                 index=0, key="otif_modo", label_visibility="collapsed")
+                with col_periodo:
+                    st.markdown("**PERIODO**")
+                    corte_keys = [c["key"] for c in cortes_data]
+                    corte_labels = {c["key"]: c["label"] for c in cortes_data}
+                    corte_sel = st.selectbox("corte", corte_keys, index=0,
+                                              format_func=lambda k: corte_labels.get(k, k),
+                                              key="otif_corte_sel", label_visibility="collapsed")
+
+                dash = snap_otif_data.get("dashboard_por_corte", {}).get(corte_sel, {})
+                if not dash or dash.get("error"):
+                    st.warning(f"⚠️ {dash.get('error', 'Sin datos para este corte')}")
+                else:
+                    opc = dash.get("opciones_filtros", {})
+                    col_cou, col_cli, col_serv, col_btn = st.columns([1, 1, 1, 1])
+                    with col_cou:
+                        st.markdown("**COURIER**")
+                        f_cou = st.selectbox("cou", opc.get("couriers", ["Todos"]),
+                                              key="otif_f_cou", label_visibility="collapsed")
+                    with col_cli:
+                        st.markdown("**CLIENTE / MARKETPLACE**")
+                        f_cli = st.selectbox("cli", opc.get("clientes", ["Todos"]),
+                                              key="otif_f_cli", label_visibility="collapsed")
+                    with col_serv:
+                        st.markdown("**TIPO DE SERVICIO**")
+                        f_serv = st.selectbox("serv", opc.get("servicios", ["Todos"]),
+                                                key="otif_f_serv", label_visibility="collapsed")
+
+                    # Si hay filtros activos, recalcular en runtime (solo este corte)
+                    if f_cou != "Todos" or f_cli != "Todos" or f_serv != "Todos":
+                        from views._ops_otif_drive import dashboard_otif_corte as _dash_fn
+                        with st.spinner("Aplicando filtros…"):
+                            dash = _dash_fn(corte_sel, courier=f_cou,
+                                            cliente=f_cli, servicio=f_serv)
+
+                    r = dash.get("resumen", {})
+                    corte_info = dash.get("corte", {})
+                    st.caption(f"Periodo: **{corte_info.get('label', '')}** · "
+                               f"**{r.get('n_ordenes', 0):,} órdenes** · "
+                               f"Snapshot: {snap_otif_data.get('generado_en', '')[:16]}")
+
+                    # ── 5 KPI CARDS principales (estilo Apps Script) ─────
+                    k1, k2, k3, k4, k5 = st.columns(5)
+
+                    canc_clp = r.get("cancelacion_clp", 0)
+                    k1.markdown(f"""
+                        <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">$ CANCELACIÓN</div>
+                          <div style="color:#ef4444;font-size:1.6rem;font-weight:700;line-height:1.3;">${canc_clp/1e6:,.1f}M</div>
+                          <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_canceladas', 0)} órdenes afectadas</div>
+                          <div style="height:3px;background:#ef4444;border-radius:2px;margin-top:6px;"></div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    quie_clp = r.get("quiebre_clp", 0)
+                    k2.markdown(f"""
+                        <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">$ QUIEBRE</div>
+                          <div style="color:#eab308;font-size:1.6rem;font-weight:700;line-height:1.3;">${quie_clp/1e6:,.1f}M</div>
+                          <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_quiebres', 0)} órdenes afectadas</div>
+                          <div style="height:3px;background:#eab308;border-radius:2px;margin-top:6px;"></div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    ns_e = r.get("ns_empresa_pct") or 0
+                    k3.markdown(f"""
+                        <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">NS EMPRESA</div>
+                          <div style="color:#22c55e;font-size:1.6rem;font-weight:700;line-height:1.3;">{ns_e*100:.1f}%</div>
+                          <div style="color:#94a3b8;font-size:0.75rem;">Entregas a tiempo al courier</div>
+                          <div style="height:3px;background:#22c55e;border-radius:2px;margin-top:6px;width:{min(100, ns_e*100):.0f}%;"></div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    ns_c = r.get("ns_courier_pct") or 0
+                    k4.markdown(f"""
+                        <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">NS COURIER</div>
+                          <div style="color:#22c55e;font-size:1.6rem;font-weight:700;line-height:1.3;">{ns_c*100:.1f}%</div>
+                          <div style="color:#94a3b8;font-size:0.75rem;">Entregas a tiempo al cliente</div>
+                          <div style="height:3px;background:#22c55e;border-radius:2px;margin-top:6px;width:{min(100, ns_c*100):.0f}%;"></div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    otif_t = r.get("otif_total_pct") or 0
+                    k5.markdown(f"""
+                        <div style="background:#1e293b;border-radius:8px;padding:12px;border:2px solid #8b5cf6;height:100%;">
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">OTIF TOTAL</div>
+                          <div style="color:#8b5cf6;font-size:1.6rem;font-weight:700;line-height:1.3;">{otif_t*100:.1f}%</div>
+                          <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_ordenes', 0)} órdenes - {r.get('n_otif_ok', 0)} OTIF</div>
+                          <div style="height:3px;background:#8b5cf6;border-radius:2px;margin-top:6px;width:{min(100, otif_t*100):.0f}%;"></div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # ── OTIF por Cliente (pivot) ─────────────────────────
+                    col_left, col_right = st.columns([1, 1])
+
+                    with col_left:
+                        st.markdown("##### OTIF por Cliente")
+                        st.caption("Pivot por marketplace; verde = alto cumplimiento, rojo = atención urgente")
+                        por_cli = dash.get("por_cliente", [])
+                        if por_cli:
+                            df_cli = pd.DataFrame(por_cli)
+                            df_cli["NS_EMP_PCT_STR"] = df_cli["NS_EMP_PCT"].apply(lambda v: f"{v*100:.1f}%")
+                            df_cli["NS_COU_PCT_STR"] = df_cli["NS_COU_PCT"].apply(lambda v: f"{v*100:.1f}%")
+                            df_cli["OTIF_PCT_STR"] = df_cli["OTIF_PCT"].apply(lambda v: f"{v*100:.1f}%")
+                            df_show = df_cli[["CLIENTE", "ORDENES", "A_TPO_EMP", "NS_EMP_PCT_STR",
+                                              "A_TPO_COU", "NS_COU_PCT_STR", "OTIF", "OTIF_PCT_STR"]].rename(
+                                columns={"CLIENTE": "CLIENTE", "ORDENES": "ORDENES",
+                                         "A_TPO_EMP": "A TPO EMP", "NS_EMP_PCT_STR": "NS EMP %",
+                                         "A_TPO_COU": "A TPO COU", "NS_COU_PCT_STR": "NS COU %",
+                                         "OTIF": "OTIF", "OTIF_PCT_STR": "OTIF %"})
+
+                            # Coloreado verde/rojo
+                            def _color_otif(val):
+                                try:
+                                    pct = float(val.rstrip("%")) / 100
+                                    if pct >= 0.95:
+                                        return "color:#22c55e;font-weight:600"
+                                    elif pct >= 0.80:
+                                        return "color:#eab308"
+                                    else:
+                                        return "color:#ef4444;font-weight:600"
+                                except Exception:
+                                    return ""
+
+                            st.dataframe(
+                                df_show.style.map(_color_otif, subset=["NS EMP %", "NS COU %", "OTIF %"]),
+                                use_container_width=True, hide_index=True, height=420
+                            )
+
+                    with col_right:
+                        st.markdown("##### Pareto de Quiebres")
+                        st.caption("SKUs con mayor monto de quiebre y % acumulado · Regla 80/20")
+                        pareto = dash.get("pareto_quiebres", [])
+                        if pareto:
+                            df_par = pd.DataFrame(pareto)
+                            df_par["monto_MM"] = (df_par["monto"] / 1e6).round(2)
+                            df_par["pct_acum_pct"] = (df_par["pct_acumulado"] * 100).round(1)
+
+                            # Gráfico combinado (barras monto + línea acumulada)
+                            import plotly.graph_objects as go
+                            fig = go.Figure()
+                            fig.add_trace(go.Bar(
+                                x=df_par[df_par.columns[0]], y=df_par["monto_MM"],
+                                name="Monto Quiebre $MM", marker_color="#eab308", yaxis="y1"
+                            ))
+                            fig.add_trace(go.Scatter(
+                                x=df_par[df_par.columns[0]], y=df_par["pct_acum_pct"],
+                                name="% Acumulado", mode="lines+markers",
+                                line=dict(color="#8b5cf6", width=2),
+                                marker=dict(size=6),
+                                yaxis="y2"
+                            ))
+                            fig.update_layout(
+                                height=380,
+                                template="plotly_dark",
+                                showlegend=True,
+                                legend=dict(orientation="h", yanchor="bottom", y=1.05),
+                                yaxis=dict(title="Monto $MM", side="left"),
+                                yaxis2=dict(title="% Acumulado", side="right",
+                                            overlaying="y", range=[0, 100]),
+                                xaxis=dict(tickangle=-45),
+                                margin=dict(t=40, b=80),
+                            )
+                            st.plotly_chart(fig, use_container_width=True)
+
+                            df_show_p = df_par[[df_par.columns[0], "monto_MM",
+                                                "n_ordenes", "pct_acum_pct"]].rename(
+                                columns={df_par.columns[0]: "SKU",
+                                         "monto_MM": "Monto $MM",
+                                         "n_ordenes": "# Órdenes",
+                                         "pct_acum_pct": "% Acum"})
+                            with st.expander("📋 Tabla detallada"):
+                                st.dataframe(df_show_p, use_container_width=True, hide_index=True)
+                        else:
+                            st.info("Sin quiebres registrados en este corte")
+
+                    st.divider()
+
             if snap_otif_data.get("error"):
                 st.warning(f"⚠️ {snap_otif_data['error']}")
-                st.caption("Próx. actualización snapshot: 00:00 / 12:00 Chile o trigger manual")
-                meses_dispon = []
-            else:
-                meses_dispon = snap_otif_data.get("meses_disponibles", [])
+                st.caption("Próx. actualización snapshot: día 01 y 10 de cada mes o trigger manual")
+            elif not cortes_data:
+                st.warning("⚠️ Sin cortes disponibles del Sheet OTIF.")
 
-            if not meses_dispon:
-                st.warning(
-                    "⚠️ Sin acceso al Sheet OTIF o sin datos. "
-                    "Verificar permisos del Service Account o esperá próx. snapshot."
-                )
-            else:
-                col_mes, _ = st.columns([1, 3])
-                with col_mes:
-                    mes_otif = st.selectbox("Mes", meses_dispon, index=0, key="otif_mes_drive")
-
-                # ── Resumen del mes seleccionado (desde snapshot) ────────
-                resumen = snap_otif_data.get("resumen_por_mes", {}).get(mes_otif, {})
-                if not resumen:
-                    resumen = {"error": f"Mes {mes_otif} no en snapshot. Solo top 6 meses precalculados."}
-                if resumen.get("error"):
-                    st.warning(resumen["error"])
-                else:
-                    st.markdown(f"##### Resumen {mes_otif} — {resumen['n_pedidos']:,} pedidos")
-                    c1, c2, c3 = st.columns(3)
-                    v_emp = resumen["otif_empresa_pct"]
-                    sem_e, col_e = _semaforo(v_emp, 0.95, 0.85, mayor_es_mejor=True)
-                    c1.metric(f"{sem_e} OTIF Empresa",
-                              f"{v_emp*100:.1f}%",
-                              delta=f"{resumen['n_empresa_ok']:,} a tiempo / {resumen['n_pedidos']:,}",
-                              help="% de pedidos entregados al courier en/antes de fecha compromiso")
-                    v_cou = resumen["otif_courier_pct"]
-                    sem_c, col_c = _semaforo(v_cou, 0.95, 0.85, mayor_es_mejor=True)
-                    c2.metric(f"{sem_c} OTIF Courier",
-                              f"{v_cou*100:.1f}%",
-                              delta=f"{resumen['n_courier_ok']:,} a tiempo",
-                              help="% de pedidos que el courier entregó en/antes de fecha promesa")
-                    v_tot = resumen["otif_total_pct"]
-                    sem_t, col_t = _semaforo(v_tot, 0.92, 0.80, mayor_es_mejor=True)
-                    c3.metric(f"{sem_t} OTIF E2E (total)",
-                              f"{v_tot*100:.1f}%",
-                              delta=f"{resumen['n_otif_ok']:,} totalmente OK",
-                              help="% pedidos donde TANTO empresa como courier cumplieron")
-
-                    if resumen.get("dias_empresa_promedio") is not None:
-                        st.caption(
-                            f"Días empresa promedio: {resumen['dias_empresa_promedio']:.1f} · "
-                            f"Días courier promedio: {resumen.get('dias_courier_promedio', 0):.1f} · "
-                            f"(negativo = adelantado, 0 = on-time, positivo = tarde)"
-                        )
-
-                st.divider()
-
-                # ── Tendencia mensual (del snapshot) ─────────────────────
-                st.markdown("##### 📈 Tendencia OTIF mes a mes")
-                meses_data = snap_otif_data.get("por_mes", [])
-                if meses_data:
-                    df_meses = pd.DataFrame(meses_data)
+            # Sección antigua mensual eliminada — se reemplazó por dashboard
+            # estilo Apps Script arriba (formato corte 26-25).
+            # Tendencia mensual + Top pedidos tarde quedan en expander:
+            if snap_otif_data.get("por_mes"):
+                with st.expander("📈 Tendencia mensual + Top pedidos tarde (vista anterior)"):
+                    df_meses = pd.DataFrame(snap_otif_data["por_mes"])
                     chart = df_meses[["MES", "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
                         columns={"otif_empresa_pct": "Empresa",
                                  "otif_courier_pct": "Courier",
                                  "otif_total_pct": "Total E2E"})
-                    st.line_chart(chart.set_index("MES"), height=280)
-                    df_show_meses = df_meses[["MES", "n_pedidos",
-                                               "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
-                        columns={"MES": "Mes", "n_pedidos": "Pedidos",
-                                 "otif_empresa_pct": "OTIF Empresa %",
-                                 "otif_courier_pct": "OTIF Courier %",
-                                 "otif_total_pct": "OTIF Total %"})
-                    with st.expander("📋 Tabla mensual"):
-                        st.dataframe(df_show_meses, use_container_width=True, hide_index=True)
-
-                st.divider()
-
-                # ── Por cliente / canal (del snapshot) ───────────────────
-                st.markdown(f"##### 🏢 OTIF por cliente — {mes_otif}")
-                clientes_data = snap_otif_data.get("clientes_por_mes", {}).get(mes_otif, [])
-                if clientes_data:
-                    df_cli = pd.DataFrame(clientes_data)
-                    df_show_cli = df_cli[["CLIENTE", "n_pedidos",
-                                           "otif_empresa_pct", "otif_courier_pct", "otif_total_pct"]].rename(
-                        columns={"CLIENTE": "Cliente", "n_pedidos": "Pedidos",
-                                 "otif_empresa_pct": "Empresa %",
-                                 "otif_courier_pct": "Courier %",
-                                 "otif_total_pct": "Total E2E %"})
-                    st.dataframe(df_show_cli, use_container_width=True, hide_index=True)
-                else:
-                    st.info("Sin clientes con suficiente data")
-
-                # ── Por courier (del snapshot) ───────────────────────────
-                st.markdown(f"##### 🚚 OTIF por courier — {mes_otif}")
-                couriers_data = snap_otif_data.get("couriers_por_mes", {}).get(mes_otif, [])
-                if couriers_data:
-                    df_cou = pd.DataFrame(couriers_data)
-                    df_show_cou = df_cou[["CURIER", "n_pedidos",
-                                           "otif_courier_pct", "dias_promedio"]].rename(
-                        columns={"CURIER": "Courier", "n_pedidos": "Pedidos",
-                                 "otif_courier_pct": "OTIF Courier %",
-                                 "dias_promedio": "Días promedio"})
-                    st.dataframe(df_show_cou, use_container_width=True, hide_index=True)
-
-                # ── Top pedidos tarde (del snapshot) ─────────────────────
-                with st.expander(f"🐌 Top 50 pedidos tarde (courier) — {mes_otif}"):
-                    tarde_data = snap_otif_data.get("tarde_por_mes", {}).get(mes_otif, [])
-                    if tarde_data:
-                        df_tarde = pd.DataFrame(tarde_data)
-                        st.dataframe(df_tarde, use_container_width=True, hide_index=True, height=400)
-                    else:
-                        st.success("✅ Sin pedidos significativamente tarde este mes")
+                    st.line_chart(chart.set_index("MES"), height=240)
 
         # ============================================================
         # TAB 3 — PICKING & OFR/OCT (snapshot + lazy fallback)

@@ -47,50 +47,63 @@ def main():
         from views._ops_otif_drive import (
             kpi_otif_resumen, kpi_otif_por_mes, kpi_otif_por_cliente,
             kpi_otif_por_courier, top_pedidos_tarde, meses_disponibles,
+            cortes_otif_disponibles, dashboard_otif_corte,
         )
     except Exception as e:
         print(f"ERROR import: {e}", flush=True)
         return 1
 
-    print("\n[1/2] Listando meses disponibles del Sheet…", flush=True)
+    print("\n[1/3] Listando cortes (26-25) y meses disponibles del Sheet…", flush=True)
     try:
+        cortes = cortes_otif_disponibles()
         meses_dispon = meses_disponibles()
-        print(f"  OK: {len(meses_dispon)} meses", flush=True)
+        print(f"  OK: {len(cortes)} cortes, {len(meses_dispon)} meses", flush=True)
     except Exception as e:
         print(f"  ERROR: {type(e).__name__}: {e}", flush=True)
+        cortes = []
         meses_dispon = []
 
-    if not meses_dispon:
+    if not cortes and not meses_dispon:
         snapshot["otif_drive"] = {"error": "Sin acceso al Sheet o sin meses con datos"}
     else:
-        print(f"\n[2/2] Pre-cálculo OTIF para top 6 meses ({meses_dispon[:6]})…", flush=True)
         otif_data = {
+            "cortes_disponibles": cortes,
             "meses_disponibles": meses_dispon,
             "por_mes": [],
             "resumen_por_mes": {},
             "clientes_por_mes": {},
             "couriers_por_mes": {},
             "tarde_por_mes": {},
+            "dashboard_por_corte": {},  # NUEVO: formato Apps Script
             "generado_en": datetime.now().isoformat(),
         }
 
         # Tendencia mensual completa
+        print(f"\n[2/3] Tendencia mensual…", flush=True)
         try:
             otif_data["por_mes"] = kpi_otif_por_mes()
-            print(f"  Tendencia mensual: {len(otif_data['por_mes'])} meses", flush=True)
+            print(f"  OK: {len(otif_data['por_mes'])} meses", flush=True)
         except Exception as e:
-            print(f"  ERROR tendencia: {e}", flush=True)
+            print(f"  ERROR: {e}", flush=True)
 
-        # Top 6 meses con detalle
+        # Dashboard por corte (formato Apps Script)
+        print(f"\n[3/3] Dashboard por corte (formato Apps Script)…", flush=True)
+        for c in cortes[:6]:  # top 6 cortes recientes
+            try:
+                otif_data["dashboard_por_corte"][c["key"]] = dashboard_otif_corte(c["key"])
+                print(f"  {c['key']}: {c['label']} OK", flush=True)
+            except Exception as e:
+                print(f"  {c['key']}: ERROR {e}", flush=True)
+
+        # Mantener también detalle por mes calendario (compat con view anterior)
         for m in meses_dispon[:6]:
             try:
                 otif_data["resumen_por_mes"][m] = kpi_otif_resumen(m)
                 otif_data["clientes_por_mes"][m] = kpi_otif_por_cliente(m, top_n=20)
                 otif_data["couriers_por_mes"][m] = kpi_otif_por_courier(m)
                 otif_data["tarde_por_mes"][m] = top_pedidos_tarde(m, top_n=50)
-                print(f"  {m}: OK", flush=True)
-            except Exception as e:
-                print(f"  {m}: ERROR {e}", flush=True)
+            except Exception:
+                pass
 
         snapshot["otif_drive"] = otif_data
 
