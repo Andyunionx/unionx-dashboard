@@ -159,9 +159,11 @@ _*.py
 !views/_ops_analytics_helper.py
 !views/_ops_forecast_loader.py
 !views/_ops_kpis_snapshot.py
+!views/_ops_wms_raw_loader.py
 !views/_contribucion_loader.py
-# Permitir el script de precalculo (root)
+# Permitir scripts en root
 !precalcular_kpis_wms.py
+!extract_wms_raw.py
 *.zip
 
 # Excel historicos / EERR (excepto los maestros)

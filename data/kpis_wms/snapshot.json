@@ -1,30 +1,1977 @@
 {
-  "generado_en": "2026-05-09T13:59:40.321448",
+  "generado_en": "2026-05-10T09:17:13.058099",
   "mes_actual": "2026-05",
-  "kpis": {},
-  "tendencia_6m": [],
+  "kpis": {
+    "otif_b2c_30d": {
+      "valor": 0.0189452591310684,
+      "total_pickings": 10979,
+      "on_time": 209,
+      "on_time_pct": 0.01903634210766008,
+      "in_full": 10964,
+      "in_full_pct": 0.9986337553511249,
+      "both": 208,
+      "error": null
+    },
+    "otif_b2b_30d": {
+      "valor": 0.12602739726027398,
+      "total_pickings": 365,
+      "on_time": 47,
+      "on_time_pct": 0.12876712328767123,
+      "in_full": 359,
+      "in_full_pct": 0.9835616438356164,
+      "both": 46,
+      "error": null
+    },
+    "pick_accuracy_30d": {
+      "valor": 0.9999322585015581,
+      "ok": 14761,
+      "total": 14762,
+      "errores": 1,
+      "error": null
+    },
+    "tiempo_recepcion_90d": {
+      "valor": 8.656065821256039,
+      "n_recepciones": 276,
+      "min": 0.0008333333333333334,
+      "max": 361.9194444444444,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00796",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 16:07",
+          "done": "2026-05-08 16:07"
+        },
+        {
+          "picking": "CA1/IN/00795",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:54",
+          "done": "2026-05-08 15:55"
+        },
+        {
+          "picking": "CA1/IN/00794",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:43",
+          "done": "2026-05-08 15:44"
+        },
+        {
+          "picking": "CA1/RET/00976",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 14:32",
+          "done": "2026-05-08 14:34"
+        },
+        {
+          "picking": "CA1/IN/00793",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:33",
+          "done": "2026-05-08 13:33"
+        },
+        {
+          "picking": "CA1/IN/00792",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:32",
+          "done": "2026-05-08 13:32"
+        },
+        {
+          "picking": "CA1/IN/00791",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:30",
+          "done": "2026-05-08 13:30"
+        },
+        {
+          "picking": "CA1/IN/00790",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:25",
+          "done": "2026-05-08 13:25"
+        },
+        {
+          "picking": "CA1/IN/00789",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-08 12:47",
+          "done": "2026-05-08 12:51"
+        },
+        {
+          "picking": "CA1/RET/00975",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-07 16:18",
+          "done": "2026-05-07 16:26"
+        },
+        {
+          "picking": "CA1/IN/00787",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 15:01",
+          "done": "2026-05-07 15:02"
+        },
+        {
+          "picking": "CA1/IN/00786",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:48",
+          "done": "2026-05-07 14:49"
+        },
+        {
+          "picking": "CA1/IN/00785",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:39",
+          "done": "2026-05-07 14:40"
+        },
+        {
+          "picking": "CA1/IN/00784",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:25",
+          "done": "2026-05-07 14:26"
+        },
+        {
+          "picking": "CA1/IN/00783",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 19.3,
+          "scheduled": "2026-05-06 17:29",
+          "done": "2026-05-07 12:46"
+        },
+        {
+          "picking": "CA1/RET/00974",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.1,
+          "scheduled": "2026-05-06 20:00",
+          "done": "2026-05-06 20:03"
+        },
+        {
+          "picking": "CA1/RET/00973",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-05-05 18:27",
+          "done": "2026-05-05 18:27"
+        },
+        {
+          "picking": "CA1/IN/00781",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-05 17:04",
+          "done": "2026-05-05 17:23"
+        },
+        {
+          "picking": "CA1/IN/00780",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-04 17:25",
+          "done": "2026-05-04 17:32"
+        },
+        {
+          "picking": "CA1/IN/00779",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-04 17:05",
+          "done": "2026-05-04 17:18"
+        }
+      ],
+      "error": null
+    },
+    "ofr_30d": {
+      "valor": 0.9112679832007864,
+      "total_so": 11286,
+      "total_con_pickings": 11191,
+      "cumplidos": 10198,
+      "parciales": 21,
+      "sin_iniciar": 972,
+      "error": null
+    },
+    "oct_30d": {
+      "valor": 44.36218341005506,
+      "n_orders": 11079,
+      "min_h": 0.018333333333333333,
+      "max_h": 718.7063888888889,
+      "mediana_h": 24.10861111111111,
+      "detalle": [
+        {
+          "so": "S200834",
+          "cliente": "Cliente Falabella Fcom, maria fernanda alfaro",
+          "horas": 718.7,
+          "fecha_orden": "2026-03-17 18:35",
+          "fecha_despacho": "2026-04-16 17:17"
+        },
+        {
+          "so": "S200929",
+          "cliente": "Cliente Falabella Fcom, efrain tranamil Meliqueo",
+          "horas": 715.2,
+          "fecha_orden": "2026-03-17 22:05",
+          "fecha_despacho": "2026-04-16 17:18"
+        },
+        {
+          "so": "S201117",
+          "cliente": "Cliente Falabella Fcom, Ingrid Parada",
+          "horas": 697.2,
+          "fecha_orden": "2026-03-18 13:19",
+          "fecha_despacho": "2026-04-16 14:32"
+        },
+        {
+          "so": "S201222",
+          "cliente": "Cliente Falabella Fcom, María jose jelvez chandia",
+          "horas": 694.0,
+          "fecha_orden": "2026-03-18 16:32",
+          "fecha_despacho": "2026-04-16 14:32"
+        },
+        {
+          "so": "S201471",
+          "cliente": "Cliente Falabella Fcom, Francisca Gutiérrez",
+          "horas": 684.5,
+          "fecha_orden": "2026-03-19 02:01",
+          "fecha_despacho": "2026-04-16 14:32"
+        },
+        {
+          "so": "S204851",
+          "cliente": "Cliente Falabella Fcom, luis lobos robles",
+          "horas": 683.8,
+          "fecha_orden": "2026-03-27 02:30",
+          "fecha_despacho": "2026-04-24 14:16"
+        },
+        {
+          "so": "S205415",
+          "cliente": "Cliente Falabella Fcom, carola quevedo",
+          "horas": 663.1,
+          "fecha_orden": "2026-03-27 23:12",
+          "fecha_despacho": "2026-04-24 14:16"
+        },
+        {
+          "so": "S202132",
+          "cliente": "Cliente Falabella Fcom, Carolina Rodríguez Diaz",
+          "horas": 645.1,
+          "fecha_orden": "2026-03-20 20:12",
+          "fecha_despacho": "2026-04-16 17:18"
+        },
+        {
+          "so": "S205711",
+          "cliente": "Cliente Mercado Libre, Luis Balmaceda",
+          "horas": 645.0,
+          "fecha_orden": "2026-03-28 15:03",
+          "fecha_despacho": "2026-04-24 12:03"
+        },
+        {
+          "so": "S205831",
+          "cliente": "Cliente Falabella Fcom, Estefany Inostroza",
+          "horas": 644.5,
+          "fecha_orden": "2026-03-28 17:46",
+          "fecha_despacho": "2026-04-24 14:16"
+        },
+        {
+          "so": "S202224",
+          "cliente": "Cliente Falabella Fcom, Andres Cuberos",
+          "horas": 639.3,
+          "fecha_orden": "2026-03-21 01:59",
+          "fecha_despacho": "2026-04-16 17:18"
+        },
+        {
+          "so": "S202286",
+          "cliente": "Cliente Falabella Fcom, Gianella Pantanalli",
+          "horas": 629.5,
+          "fecha_orden": "2026-03-21 11:48",
+          "fecha_despacho": "2026-04-16 17:18"
+        },
+        {
+          "so": "S202285",
+          "cliente": "Cliente Falabella Fcom, hector molina",
+          "horas": 626.7,
+          "fecha_orden": "2026-03-21 11:48",
+          "fecha_despacho": "2026-04-16 14:32"
+        },
+        {
+          "so": "S202378",
+          "cliente": "Cliente Falabella Fcom, Valentina Gabriela",
+          "horas": 624.4,
+          "fecha_orden": "2026-03-21 16:53",
+          "fecha_despacho": "2026-04-16 17:19"
+        },
+        {
+          "so": "S202411",
+          "cliente": "Cliente Mercado Libre, Tiare Saa",
+          "horas": 622.5,
+          "fecha_orden": "2026-03-21 18:40",
+          "fecha_despacho": "2026-04-16 17:13"
+        },
+        {
+          "so": "S206377",
+          "cliente": "Cliente Falabella Fcom, Pablo Crespo Meza",
+          "horas": 622.3,
+          "fecha_orden": "2026-03-29 15:57",
+          "fecha_despacho": "2026-04-24 14:16"
+        },
+        {
+          "so": "S202422",
+          "cliente": "Cliente Falabella Fcom, Evelyn Zarate",
+          "horas": 621.9,
+          "fecha_orden": "2026-03-21 19:24",
+          "fecha_despacho": "2026-04-16 17:19"
+        },
+        {
+          "so": "S206461",
+          "cliente": "Cliente Falabella Fcom, nicole vera Maluenda",
+          "horas": 620.0,
+          "fecha_orden": "2026-03-29 18:18",
+          "fecha_despacho": "2026-04-24 14:16"
+        },
+        {
+          "so": "S202534",
+          "cliente": "Cliente Falabella Fcom, pia Yañez",
+          "horas": 615.5,
+          "fecha_orden": "2026-03-22 01:50",
+          "fecha_despacho": "2026-04-16 17:19"
+        },
+        {
+          "so": "S207033",
+          "cliente": "Cliente Falabella Fcom, elson rojas",
+          "horas": 606.3,
+          "fecha_orden": "2026-03-30 07:58",
+          "fecha_despacho": "2026-04-24 14:16"
+        }
+      ],
+      "error": null
+    },
+    "merma_odoo_90d": {
+      "valor": null,
+      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od"
+    },
+    "ajustes_inventario": {
+      "n_ajustes": 0,
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: EOF occurred in violation of protocol (_ssl.c:2427)"
+    },
+    "lineas_mes_actual": {
+      "lineas": 4670,
+      "mes": "2026-05",
+      "error": null
+    },
+    "volumen_movs_90d": {
+      "incoming": 192,
+      "outgoing": 29333,
+      "internal": 20475,
+      "total": 50000,
+      "error": null
+    },
+    "top_clientes_otif_30d": {
+      "valor": [
+        {
+          "cliente": "Casa Mila SpA",
+          "total": 7,
+          "tarde": 7,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Global Reward Solutions",
+          "total": 84,
+          "tarde": 84,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "abc S.A.",
+          "total": 93,
+          "tarde": 93,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 12,
+          "tarde": 12,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Comercializadora SP Digital SPA",
+          "total": 27,
+          "tarde": 27,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Yohana Alejandra Grisman Colmenares",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Lokal SpA",
+          "total": 9,
+          "tarde": 9,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SPEEDREAMS SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 45,
+          "tarde": 37,
+          "on_time_pct": 0.17777777777777778
+        },
+        {
+          "cliente": "Cliente Mercado Libre",
+          "total": 15,
+          "tarde": 10,
+          "on_time_pct": 0.3333333333333333
+        },
+        {
+          "cliente": "Sawa SPA",
+          "total": 22,
+          "tarde": 6,
+          "on_time_pct": 0.7272727272727273
+        },
+        {
+          "cliente": "Falabella Retail",
+          "total": 7,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "WALMART CHILE COM. LTDA",
+          "total": 3,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 3,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        }
+      ],
+      "error": null
+    }
+  },
+  "errores": [
+    "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od",
+    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: EOF occurred in violation of protocol (_ssl.c:2427)"
+  ],
+  "tendencia_6m": [
+    {
+      "mes": "2025-12",
+      "otif_b2c": 0.005098324836125273,
+      "otif_b2b": 0.12727272727272726,
+      "pick_acc": 0.9929967754937525,
+      "n_pickings": 12962,
+      "n_b2c": 12357,
+      "n_b2b": 605
+    },
+    {
+      "mes": "2026-01",
+      "otif_b2c": 0.005798221878623889,
+      "otif_b2b": 0.16906474820143885,
+      "pick_acc": 0.9907438016528926,
+      "n_pickings": 8039,
+      "n_b2c": 7761,
+      "n_b2b": 278
+    },
+    {
+      "mes": "2026-02",
+      "otif_b2c": 0.006277209679052344,
+      "otif_b2b": 0.19318181818181818,
+      "pick_acc": 0.9943600541434803,
+      "n_pickings": 10141,
+      "n_b2c": 9877,
+      "n_b2b": 264
+    },
+    {
+      "mes": "2026-03",
+      "otif_b2c": 0.004325599685410932,
+      "otif_b2b": 0.203579418344519,
+      "pick_acc": 0.9992169529682376,
+      "n_pickings": 15705,
+      "n_b2c": 15258,
+      "n_b2b": 447
+    },
+    {
+      "mes": "2026-04",
+      "otif_b2c": 0.016235451108310477,
+      "otif_b2b": 0.125,
+      "pick_acc": 0.9990532412564045,
+      "n_pickings": 13905,
+      "n_b2c": 13489,
+      "n_b2b": 416
+    },
+    {
+      "mes": "2026-05",
+      "otif_b2c": 0.0031645569620253164,
+      "otif_b2b": 0.1125,
+      "pick_acc": 0.996797608881298,
+      "n_pickings": 3556,
+      "n_b2c": 3476,
+      "n_b2b": 80
+    }
+  ],
   "forecast_3m": {
-    "forecast": [],
-    "error": "Snapshot inicial vacío"
+    "fuente": "Forecast ventas Prophet (dashboard ventas)",
+    "historico": [
+      {
+        "periodo": "2025-12",
+        "fecha_desde": "2025-12-01",
+        "n_pedidos": 12962,
+        "n_lineas_pickeadas": 19733,
+        "n_unidades_despachadas": 45185,
+        "uds_por_pedido": 3.485958956951088,
+        "lineas_por_pedido": 1.5223730905724426
+      },
+      {
+        "periodo": "2026-01",
+        "fecha_desde": "2026-01-01",
+        "n_pedidos": 8039,
+        "n_lineas_pickeadas": 11991,
+        "n_unidades_despachadas": 26315,
+        "uds_por_pedido": 3.2734170916780694,
+        "lineas_por_pedido": 1.4916034332628436
+      },
+      {
+        "periodo": "2026-02",
+        "fecha_desde": "2026-02-01",
+        "n_pedidos": 10141,
+        "n_lineas_pickeadas": 13242,
+        "n_unidades_despachadas": 26817,
+        "uds_por_pedido": 2.644413765900799,
+        "lineas_por_pedido": 1.305788383788581
+      },
+      {
+        "periodo": "2026-03",
+        "fecha_desde": "2026-03-01",
+        "n_pedidos": 15705,
+        "n_lineas_pickeadas": 20421,
+        "n_unidades_despachadas": 45523,
+        "uds_por_pedido": 2.8986310092327283,
+        "lineas_por_pedido": 1.3002865329512894
+      },
+      {
+        "periodo": "2026-04",
+        "fecha_desde": "2026-04-01",
+        "n_pedidos": 13905,
+        "n_lineas_pickeadas": 17940,
+        "n_unidades_despachadas": 40427,
+        "uds_por_pedido": 2.907371449119022,
+        "lineas_por_pedido": 1.290183387270766
+      },
+      {
+        "periodo": "2026-05",
+        "fecha_desde": "2026-05-01",
+        "n_pedidos": 3556,
+        "n_lineas_pickeadas": 4670,
+        "n_unidades_despachadas": 8333,
+        "uds_por_pedido": 2.343363329583802,
+        "lineas_por_pedido": 1.313273340832396
+      }
+    ],
+    "ventas_hist_clp": {
+      "2025-12": 471474706.0,
+      "2026-01": 381313043.0,
+      "2026-02": 373146079.0,
+      "2026-03": 680115680.0,
+      "2026-04": 525483756.0,
+      "2026-05": 182961786.0
+    },
+    "forecast": [
+      {
+        "mes": "2026-06",
+        "tipo_proyeccion": "forecast",
+        "venta_proj_clp": 810803096,
+        "venta_proj_clp_low": 390134020,
+        "venta_proj_clp_high": 1233829010,
+        "vs_ly_pct": -4.166799360708474,
+        "pedidos_proj": 18645,
+        "lineas_proj": 24240,
+        "unidades_proj": 51191,
+        "horas_necesarias_estim": 0,
+        "horas_disponibles_estandar": 0,
+        "cobertura_pct": null,
+        "alerta": "🟢 OK"
+      },
+      {
+        "mes": "2026-07",
+        "tipo_proyeccion": "forecast",
+        "venta_proj_clp": 615667624,
+        "venta_proj_clp_low": 182023401,
+        "venta_proj_clp_high": 1055528352,
+        "vs_ly_pct": -6.913967375495897,
+        "pedidos_proj": 14158,
+        "lineas_proj": 18406,
+        "unidades_proj": 38871,
+        "horas_necesarias_estim": 0,
+        "horas_disponibles_estandar": 0,
+        "cobertura_pct": null,
+        "alerta": "🟢 OK"
+      },
+      {
+        "mes": "2026-08",
+        "tipo_proyeccion": "forecast",
+        "venta_proj_clp": 617655252,
+        "venta_proj_clp_low": 181310367,
+        "venta_proj_clp_high": 1059941712,
+        "vs_ly_pct": 5.694754488120644,
+        "pedidos_proj": 14203,
+        "lineas_proj": 18465,
+        "unidades_proj": 38997,
+        "horas_necesarias_estim": 0,
+        "horas_disponibles_estandar": 0,
+        "cobertura_pct": null,
+        "alerta": "🟢 OK"
+      }
+    ],
+    "ratios_aplicados": {
+      "lineas_por_clp": 29.9,
+      "uds_por_clp": 63.14,
+      "pedidos_por_clp": 23.0,
+      "n_meses_promedio": 3,
+      "leyenda": "Por cada $1MM CLP de venta"
+    },
+    "productividad_actual_lineas_h": 0,
+    "n_personas_actual": 0,
+    "error": null
   },
   "productividad_dia_30d": {
-    "items": []
+    "items": [
+      {
+        "periodo": "2026-04-10",
+        "fecha_desde": "2026-04-10",
+        "n_pedidos": 325,
+        "n_lineas_pickeadas": 422,
+        "n_unidades_despachadas": 657,
+        "uds_por_pedido": 2.0215384615384617,
+        "lineas_por_pedido": 1.2984615384615386
+      },
+      {
+        "periodo": "2026-04-11",
+        "fecha_desde": "2026-04-11",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-04-12",
+        "fecha_desde": "2026-04-12",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-04-13",
+        "fecha_desde": "2026-04-13",
+        "n_pedidos": 1283,
+        "n_lineas_pickeadas": 1564,
+        "n_unidades_despachadas": 14964,
+        "uds_por_pedido": 11.663289166017147,
+        "lineas_por_pedido": 1.2190179267342167
+      },
+      {
+        "periodo": "2026-04-14",
+        "fecha_desde": "2026-04-14",
+        "n_pedidos": 420,
+        "n_lineas_pickeadas": 552,
+        "n_unidades_despachadas": 910,
+        "uds_por_pedido": 2.1666666666666665,
+        "lineas_por_pedido": 1.3142857142857143
+      },
+      {
+        "periodo": "2026-04-15",
+        "fecha_desde": "2026-04-15",
+        "n_pedidos": 261,
+        "n_lineas_pickeadas": 356,
+        "n_unidades_despachadas": 384,
+        "uds_por_pedido": 1.471264367816092,
+        "lineas_por_pedido": 1.3639846743295019
+      },
+      {
+        "periodo": "2026-04-16",
+        "fecha_desde": "2026-04-16",
+        "n_pedidos": 849,
+        "n_lineas_pickeadas": 1084,
+        "n_unidades_despachadas": 1501,
+        "uds_por_pedido": 1.767962308598351,
+        "lineas_por_pedido": 1.276796230859835
+      },
+      {
+        "periodo": "2026-04-17",
+        "fecha_desde": "2026-04-17",
+        "n_pedidos": 306,
+        "n_lineas_pickeadas": 460,
+        "n_unidades_despachadas": 1444,
+        "uds_por_pedido": 4.718954248366013,
+        "lineas_por_pedido": 1.5032679738562091
+      },
+      {
+        "periodo": "2026-04-18",
+        "fecha_desde": "2026-04-18",
+        "n_pedidos": 31,
+        "n_lineas_pickeadas": 32,
+        "n_unidades_despachadas": 32,
+        "uds_por_pedido": 1.032258064516129,
+        "lineas_por_pedido": 1.032258064516129
+      },
+      {
+        "periodo": "2026-04-19",
+        "fecha_desde": "2026-04-19",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-04-20",
+        "fecha_desde": "2026-04-20",
+        "n_pedidos": 723,
+        "n_lineas_pickeadas": 940,
+        "n_unidades_despachadas": 1399,
+        "uds_por_pedido": 1.9349930843706777,
+        "lineas_por_pedido": 1.3001383125864454
+      },
+      {
+        "periodo": "2026-04-21",
+        "fecha_desde": "2026-04-21",
+        "n_pedidos": 670,
+        "n_lineas_pickeadas": 863,
+        "n_unidades_despachadas": 1873,
+        "uds_por_pedido": 2.7955223880597013,
+        "lineas_por_pedido": 1.2880597014925372
+      },
+      {
+        "periodo": "2026-04-22",
+        "fecha_desde": "2026-04-22",
+        "n_pedidos": 242,
+        "n_lineas_pickeadas": 318,
+        "n_unidades_despachadas": 1366,
+        "uds_por_pedido": 5.644628099173554,
+        "lineas_por_pedido": 1.3140495867768596
+      },
+      {
+        "periodo": "2026-04-23",
+        "fecha_desde": "2026-04-23",
+        "n_pedidos": 266,
+        "n_lineas_pickeadas": 375,
+        "n_unidades_despachadas": 436,
+        "uds_por_pedido": 1.6390977443609023,
+        "lineas_por_pedido": 1.4097744360902256
+      },
+      {
+        "periodo": "2026-04-24",
+        "fecha_desde": "2026-04-24",
+        "n_pedidos": 672,
+        "n_lineas_pickeadas": 860,
+        "n_unidades_despachadas": 2150,
+        "uds_por_pedido": 3.199404761904762,
+        "lineas_por_pedido": 1.2797619047619047
+      },
+      {
+        "periodo": "2026-04-25",
+        "fecha_desde": "2026-04-25",
+        "n_pedidos": 69,
+        "n_lineas_pickeadas": 81,
+        "n_unidades_despachadas": 88,
+        "uds_por_pedido": 1.2753623188405796,
+        "lineas_por_pedido": 1.173913043478261
+      },
+      {
+        "periodo": "2026-04-26",
+        "fecha_desde": "2026-04-26",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-04-27",
+        "fecha_desde": "2026-04-27",
+        "n_pedidos": 877,
+        "n_lineas_pickeadas": 1127,
+        "n_unidades_despachadas": 1314,
+        "uds_por_pedido": 1.4982896237172179,
+        "lineas_por_pedido": 1.2850627137970354
+      },
+      {
+        "periodo": "2026-04-28",
+        "fecha_desde": "2026-04-28",
+        "n_pedidos": 216,
+        "n_lineas_pickeadas": 316,
+        "n_unidades_despachadas": 467,
+        "uds_por_pedido": 2.162037037037037,
+        "lineas_por_pedido": 1.462962962962963
+      },
+      {
+        "periodo": "2026-04-29",
+        "fecha_desde": "2026-04-29",
+        "n_pedidos": 102,
+        "n_lineas_pickeadas": 163,
+        "n_unidades_despachadas": 180,
+        "uds_por_pedido": 1.7647058823529411,
+        "lineas_por_pedido": 1.5980392156862746
+      },
+      {
+        "periodo": "2026-04-30",
+        "fecha_desde": "2026-04-30",
+        "n_pedidos": 478,
+        "n_lineas_pickeadas": 579,
+        "n_unidades_despachadas": 1085,
+        "uds_por_pedido": 2.2698744769874475,
+        "lineas_por_pedido": 1.211297071129707
+      },
+      {
+        "periodo": "2026-05-01",
+        "fecha_desde": "2026-05-01",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-02",
+        "fecha_desde": "2026-05-02",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-03",
+        "fecha_desde": "2026-05-03",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      },
+      {
+        "periodo": "2026-05-04",
+        "fecha_desde": "2026-05-04",
+        "n_pedidos": 1747,
+        "n_lineas_pickeadas": 2128,
+        "n_unidades_despachadas": 2454,
+        "uds_por_pedido": 1.4046937607326846,
+        "lineas_por_pedido": 1.2180881511161992
+      },
+      {
+        "periodo": "2026-05-05",
+        "fecha_desde": "2026-05-05",
+        "n_pedidos": 474,
+        "n_lineas_pickeadas": 672,
+        "n_unidades_despachadas": 729,
+        "uds_por_pedido": 1.5379746835443038,
+        "lineas_por_pedido": 1.4177215189873418
+      },
+      {
+        "periodo": "2026-05-06",
+        "fecha_desde": "2026-05-06",
+        "n_pedidos": 774,
+        "n_lineas_pickeadas": 1021,
+        "n_unidades_despachadas": 1183,
+        "uds_por_pedido": 1.528423772609819,
+        "lineas_por_pedido": 1.3191214470284238
+      },
+      {
+        "periodo": "2026-05-07",
+        "fecha_desde": "2026-05-07",
+        "n_pedidos": 446,
+        "n_lineas_pickeadas": 629,
+        "n_unidades_despachadas": 2721,
+        "uds_por_pedido": 6.1008968609865475,
+        "lineas_por_pedido": 1.4103139013452914
+      },
+      {
+        "periodo": "2026-05-08",
+        "fecha_desde": "2026-05-08",
+        "n_pedidos": 115,
+        "n_lineas_pickeadas": 220,
+        "n_unidades_despachadas": 1246,
+        "uds_por_pedido": 10.834782608695653,
+        "lineas_por_pedido": 1.9130434782608696
+      },
+      {
+        "periodo": "2026-05-09",
+        "fecha_desde": "2026-05-09",
+        "n_pedidos": 0,
+        "n_lineas_pickeadas": 0,
+        "n_unidades_despachadas": 0,
+        "uds_por_pedido": 0,
+        "lineas_por_pedido": 0
+      }
+    ],
+    "periodo": "dia",
+    "n_periodos": 30,
+    "error": null
   },
   "productividad_semana_12s": {
-    "items": []
+    "items": [
+      {
+        "periodo": "Sem 7 (09/02)",
+        "fecha_desde": "2026-02-09",
+        "n_pedidos": 2457,
+        "n_lineas_pickeadas": 3280,
+        "n_unidades_despachadas": 6570,
+        "uds_por_pedido": 2.673992673992674,
+        "lineas_por_pedido": 1.334961334961335
+      },
+      {
+        "periodo": "Sem 8 (16/02)",
+        "fecha_desde": "2026-02-16",
+        "n_pedidos": 2674,
+        "n_lineas_pickeadas": 3568,
+        "n_unidades_despachadas": 9479,
+        "uds_por_pedido": 3.544876589379207,
+        "lineas_por_pedido": 1.3343305908750935
+      },
+      {
+        "periodo": "Sem 9 (23/02)",
+        "fecha_desde": "2026-02-23",
+        "n_pedidos": 1755,
+        "n_lineas_pickeadas": 2499,
+        "n_unidades_despachadas": 4003,
+        "uds_por_pedido": 2.280911680911681,
+        "lineas_por_pedido": 1.423931623931624
+      },
+      {
+        "periodo": "Sem 10 (02/03)",
+        "fecha_desde": "2026-03-02",
+        "n_pedidos": 2000,
+        "n_lineas_pickeadas": 2765,
+        "n_unidades_despachadas": 3583,
+        "uds_por_pedido": 1.7915,
+        "lineas_por_pedido": 1.3825
+      },
+      {
+        "periodo": "Sem 11 (09/03)",
+        "fecha_desde": "2026-03-09",
+        "n_pedidos": 5674,
+        "n_lineas_pickeadas": 7123,
+        "n_unidades_despachadas": 17508,
+        "uds_por_pedido": 3.085653859710962,
+        "lineas_por_pedido": 1.255375396545647
+      },
+      {
+        "periodo": "Sem 12 (16/03)",
+        "fecha_desde": "2026-03-16",
+        "n_pedidos": 2799,
+        "n_lineas_pickeadas": 3637,
+        "n_unidades_despachadas": 10602,
+        "uds_por_pedido": 3.787781350482315,
+        "lineas_por_pedido": 1.299392640228653
+      },
+      {
+        "periodo": "Sem 13 (23/03)",
+        "fecha_desde": "2026-03-23",
+        "n_pedidos": 3115,
+        "n_lineas_pickeadas": 4134,
+        "n_unidades_despachadas": 10048,
+        "uds_por_pedido": 3.2256821829855538,
+        "lineas_por_pedido": 1.327126805778491
+      },
+      {
+        "periodo": "Sem 14 (30/03)",
+        "fecha_desde": "2026-03-30",
+        "n_pedidos": 4184,
+        "n_lineas_pickeadas": 5265,
+        "n_unidades_despachadas": 6507,
+        "uds_por_pedido": 1.555210325047801,
+        "lineas_por_pedido": 1.2583652007648183
+      },
+      {
+        "periodo": "Sem 15 (06/04)",
+        "fecha_desde": "2026-04-06",
+        "n_pedidos": 4373,
+        "n_lineas_pickeadas": 5767,
+        "n_unidades_despachadas": 8109,
+        "uds_por_pedido": 1.8543334095586554,
+        "lineas_por_pedido": 1.318774296821404
+      },
+      {
+        "periodo": "Sem 16 (13/04)",
+        "fecha_desde": "2026-04-13",
+        "n_pedidos": 3150,
+        "n_lineas_pickeadas": 4048,
+        "n_unidades_despachadas": 19235,
+        "uds_por_pedido": 6.106349206349206,
+        "lineas_por_pedido": 1.285079365079365
+      },
+      {
+        "periodo": "Sem 17 (20/04)",
+        "fecha_desde": "2026-04-20",
+        "n_pedidos": 2642,
+        "n_lineas_pickeadas": 3437,
+        "n_unidades_despachadas": 7312,
+        "uds_por_pedido": 2.767600302800908,
+        "lineas_por_pedido": 1.3009084027252082
+      },
+      {
+        "periodo": "Sem 18 (27/04)",
+        "fecha_desde": "2026-04-27",
+        "n_pedidos": 1673,
+        "n_lineas_pickeadas": 2185,
+        "n_unidades_despachadas": 3046,
+        "uds_por_pedido": 1.8206814106395697,
+        "lineas_por_pedido": 1.3060370591751345
+      }
+    ],
+    "periodo": "semana",
+    "n_periodos": 12,
+    "error": null
   },
   "productividad_mes_6m": {
-    "items": []
+    "items": [
+      {
+        "periodo": "2025-12",
+        "fecha_desde": "2025-12-01",
+        "n_pedidos": 12962,
+        "n_lineas_pickeadas": 19733,
+        "n_unidades_despachadas": 45185,
+        "uds_por_pedido": 3.485958956951088,
+        "lineas_por_pedido": 1.5223730905724426
+      },
+      {
+        "periodo": "2026-01",
+        "fecha_desde": "2026-01-01",
+        "n_pedidos": 8039,
+        "n_lineas_pickeadas": 11991,
+        "n_unidades_despachadas": 26315,
+        "uds_por_pedido": 3.2734170916780694,
+        "lineas_por_pedido": 1.4916034332628436
+      },
+      {
+        "periodo": "2026-02",
+        "fecha_desde": "2026-02-01",
+        "n_pedidos": 10141,
+        "n_lineas_pickeadas": 13242,
+        "n_unidades_despachadas": 26817,
+        "uds_por_pedido": 2.644413765900799,
+        "lineas_por_pedido": 1.305788383788581
+      },
+      {
+        "periodo": "2026-03",
+        "fecha_desde": "2026-03-01",
+        "n_pedidos": 15705,
+        "n_lineas_pickeadas": 20421,
+        "n_unidades_despachadas": 45523,
+        "uds_por_pedido": 2.8986310092327283,
+        "lineas_por_pedido": 1.3002865329512894
+      },
+      {
+        "periodo": "2026-04",
+        "fecha_desde": "2026-04-01",
+        "n_pedidos": 13905,
+        "n_lineas_pickeadas": 17940,
+        "n_unidades_despachadas": 40427,
+        "uds_por_pedido": 2.907371449119022,
+        "lineas_por_pedido": 1.290183387270766
+      },
+      {
+        "periodo": "2026-05",
+        "fecha_desde": "2026-05-01",
+        "n_pedidos": 3556,
+        "n_lineas_pickeadas": 4670,
+        "n_unidades_despachadas": 8333,
+        "uds_por_pedido": 2.343363329583802,
+        "lineas_por_pedido": 1.313273340832396
+      }
+    ],
+    "periodo": "mes",
+    "n_periodos": 6,
+    "error": null
   },
   "plan_auditoria": {
     "plan": [],
-    "error": "Snapshot inicial vacío"
+    "error": "StreamlitSecretNotFoundError: No secrets found. Valid paths for a secrets.toml file or secret directories are: C:\\Users\\andre\\.streamlit\\secrets.toml,"
   },
-  "otif_ventanas": {},
-  "pick_ventanas": {},
-  "recepcion_ventanas": {},
-  "errores": [
-    "Snapshot inicial vacío - esperar primera ejecución de sync_kpis_wms.yml (00:00 o 12:00 Chile)"
-  ],
-  "_nota": "Este es un snapshot vacío inicial. GH Action sync_kpis_wms.yml lo va a regenerar con datos reales 2x/día."
+  "otif_ventanas": {
+    "b2c_7d": {
+      "valor": 0.0031645569620253164,
+      "total_pickings": 3476,
+      "on_time": 11,
+      "on_time_pct": 0.0031645569620253164,
+      "in_full": 3463,
+      "in_full_pct": 0.9962600690448792,
+      "both": 11,
+      "error": null
+    },
+    "b2b_7d": {
+      "valor": 0.1125,
+      "total_pickings": 80,
+      "on_time": 9,
+      "on_time_pct": 0.1125,
+      "in_full": 79,
+      "in_full_pct": 0.9875,
+      "both": 9,
+      "error": null
+    },
+    "b2c_14d": {
+      "valor": 0.0076666011401611955,
+      "total_pickings": 5087,
+      "on_time": 39,
+      "on_time_pct": 0.0076666011401611955,
+      "in_full": 5074,
+      "in_full_pct": 0.997444466286613,
+      "both": 39,
+      "error": null
+    },
+    "b2b_14d": {
+      "valor": 0.11971830985915492,
+      "total_pickings": 142,
+      "on_time": 17,
+      "on_time_pct": 0.11971830985915492,
+      "in_full": 141,
+      "in_full_pct": 0.9929577464788732,
+      "both": 17,
+      "error": null
+    },
+    "b2c_30d": {
+      "valor": 0.0189452591310684,
+      "total_pickings": 10979,
+      "on_time": 209,
+      "on_time_pct": 0.01903634210766008,
+      "in_full": 10964,
+      "in_full_pct": 0.9986337553511249,
+      "both": 208,
+      "error": null
+    },
+    "b2b_30d": {
+      "valor": 0.12602739726027398,
+      "total_pickings": 365,
+      "on_time": 47,
+      "on_time_pct": 0.12876712328767123,
+      "in_full": 359,
+      "in_full_pct": 0.9835616438356164,
+      "both": 46,
+      "error": null
+    },
+    "b2c_60d": {
+      "valor": 0.004,
+      "total_pickings": 20000,
+      "on_time": 81,
+      "on_time_pct": 0.00405,
+      "in_full": 19996,
+      "in_full_pct": 0.9998,
+      "both": 80,
+      "error": null
+    },
+    "b2b_60d": {
+      "valor": 0.10877626699629171,
+      "total_pickings": 809,
+      "on_time": 91,
+      "on_time_pct": 0.11248454882571075,
+      "in_full": 799,
+      "in_full_pct": 0.9876390605686032,
+      "both": 88,
+      "error": null
+    },
+    "b2c_90d": {
+      "valor": 0.0053,
+      "total_pickings": 20000,
+      "on_time": 106,
+      "on_time_pct": 0.0053,
+      "in_full": 19991,
+      "in_full_pct": 0.99955,
+      "both": 106,
+      "error": null
+    },
+    "b2b_90d": {
+      "valor": 0.16666666666666666,
+      "total_pickings": 1158,
+      "on_time": 209,
+      "on_time_pct": 0.18048359240069084,
+      "in_full": 1131,
+      "in_full_pct": 0.9766839378238342,
+      "both": 193,
+      "error": null
+    }
+  },
+  "pick_ventanas": {
+    "7d": {
+      "valor": 0.9997858672376874,
+      "ok": 4669,
+      "total": 4670,
+      "errores": 1,
+      "error": null
+    },
+    "14d": {
+      "valor": 0.999854121079504,
+      "ok": 6854,
+      "total": 6855,
+      "errores": 1,
+      "error": null
+    },
+    "30d": {
+      "valor": 0.9999322585015581,
+      "ok": 14761,
+      "total": 14762,
+      "errores": 1,
+      "error": null
+    },
+    "60d": {
+      "valor": 0.9998892917439318,
+      "ok": 36127,
+      "total": 36131,
+      "errores": 4,
+      "error": null
+    },
+    "90d": {
+      "valor": 0.9995036083851999,
+      "ok": 52352,
+      "total": 52378,
+      "errores": 26,
+      "error": null
+    }
+  },
+  "recepcion_ventanas": {
+    "30d": {
+      "valor": 0.969451951951952,
+      "n_recepciones": 74,
+      "min": 0.001388888888888889,
+      "max": 39.187222222222225,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00796",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 16:07",
+          "done": "2026-05-08 16:07"
+        },
+        {
+          "picking": "CA1/IN/00795",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:54",
+          "done": "2026-05-08 15:55"
+        },
+        {
+          "picking": "CA1/IN/00794",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:43",
+          "done": "2026-05-08 15:44"
+        },
+        {
+          "picking": "CA1/RET/00976",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 14:32",
+          "done": "2026-05-08 14:34"
+        },
+        {
+          "picking": "CA1/IN/00793",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:33",
+          "done": "2026-05-08 13:33"
+        },
+        {
+          "picking": "CA1/IN/00792",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:32",
+          "done": "2026-05-08 13:32"
+        },
+        {
+          "picking": "CA1/IN/00791",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:30",
+          "done": "2026-05-08 13:30"
+        },
+        {
+          "picking": "CA1/IN/00790",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:25",
+          "done": "2026-05-08 13:25"
+        },
+        {
+          "picking": "CA1/IN/00789",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-08 12:47",
+          "done": "2026-05-08 12:51"
+        },
+        {
+          "picking": "CA1/RET/00975",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-07 16:18",
+          "done": "2026-05-07 16:26"
+        },
+        {
+          "picking": "CA1/IN/00787",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 15:01",
+          "done": "2026-05-07 15:02"
+        },
+        {
+          "picking": "CA1/IN/00786",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:48",
+          "done": "2026-05-07 14:49"
+        },
+        {
+          "picking": "CA1/IN/00785",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:39",
+          "done": "2026-05-07 14:40"
+        },
+        {
+          "picking": "CA1/IN/00784",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:25",
+          "done": "2026-05-07 14:26"
+        },
+        {
+          "picking": "CA1/IN/00783",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 19.3,
+          "scheduled": "2026-05-06 17:29",
+          "done": "2026-05-07 12:46"
+        },
+        {
+          "picking": "CA1/RET/00974",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.1,
+          "scheduled": "2026-05-06 20:00",
+          "done": "2026-05-06 20:03"
+        },
+        {
+          "picking": "CA1/RET/00973",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-05-05 18:27",
+          "done": "2026-05-05 18:27"
+        },
+        {
+          "picking": "CA1/IN/00781",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-05 17:04",
+          "done": "2026-05-05 17:23"
+        },
+        {
+          "picking": "CA1/IN/00780",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-04 17:25",
+          "done": "2026-05-04 17:32"
+        },
+        {
+          "picking": "CA1/IN/00779",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-04 17:05",
+          "done": "2026-05-04 17:18"
+        }
+      ],
+      "error": null
+    },
+    "60d": {
+      "valor": 7.1516248651564185,
+      "n_recepciones": 206,
+      "min": 0.0008333333333333334,
+      "max": 361.9194444444444,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00796",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 16:07",
+          "done": "2026-05-08 16:07"
+        },
+        {
+          "picking": "CA1/IN/00795",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:54",
+          "done": "2026-05-08 15:55"
+        },
+        {
+          "picking": "CA1/IN/00794",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:43",
+          "done": "2026-05-08 15:44"
+        },
+        {
+          "picking": "CA1/RET/00976",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 14:32",
+          "done": "2026-05-08 14:34"
+        },
+        {
+          "picking": "CA1/IN/00793",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:33",
+          "done": "2026-05-08 13:33"
+        },
+        {
+          "picking": "CA1/IN/00792",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:32",
+          "done": "2026-05-08 13:32"
+        },
+        {
+          "picking": "CA1/IN/00791",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:30",
+          "done": "2026-05-08 13:30"
+        },
+        {
+          "picking": "CA1/IN/00790",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:25",
+          "done": "2026-05-08 13:25"
+        },
+        {
+          "picking": "CA1/IN/00789",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-08 12:47",
+          "done": "2026-05-08 12:51"
+        },
+        {
+          "picking": "CA1/RET/00975",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-07 16:18",
+          "done": "2026-05-07 16:26"
+        },
+        {
+          "picking": "CA1/IN/00787",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 15:01",
+          "done": "2026-05-07 15:02"
+        },
+        {
+          "picking": "CA1/IN/00786",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:48",
+          "done": "2026-05-07 14:49"
+        },
+        {
+          "picking": "CA1/IN/00785",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:39",
+          "done": "2026-05-07 14:40"
+        },
+        {
+          "picking": "CA1/IN/00784",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:25",
+          "done": "2026-05-07 14:26"
+        },
+        {
+          "picking": "CA1/IN/00783",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 19.3,
+          "scheduled": "2026-05-06 17:29",
+          "done": "2026-05-07 12:46"
+        },
+        {
+          "picking": "CA1/RET/00974",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.1,
+          "scheduled": "2026-05-06 20:00",
+          "done": "2026-05-06 20:03"
+        },
+        {
+          "picking": "CA1/RET/00973",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-05-05 18:27",
+          "done": "2026-05-05 18:27"
+        },
+        {
+          "picking": "CA1/IN/00781",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-05 17:04",
+          "done": "2026-05-05 17:23"
+        },
+        {
+          "picking": "CA1/IN/00780",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-04 17:25",
+          "done": "2026-05-04 17:32"
+        },
+        {
+          "picking": "CA1/IN/00779",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-04 17:05",
+          "done": "2026-05-04 17:18"
+        }
+      ],
+      "error": null
+    },
+    "90d": {
+      "valor": 8.656065821256039,
+      "n_recepciones": 276,
+      "min": 0.0008333333333333334,
+      "max": 361.9194444444444,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00796",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 16:07",
+          "done": "2026-05-08 16:07"
+        },
+        {
+          "picking": "CA1/IN/00795",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:54",
+          "done": "2026-05-08 15:55"
+        },
+        {
+          "picking": "CA1/IN/00794",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:43",
+          "done": "2026-05-08 15:44"
+        },
+        {
+          "picking": "CA1/RET/00976",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 14:32",
+          "done": "2026-05-08 14:34"
+        },
+        {
+          "picking": "CA1/IN/00793",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:33",
+          "done": "2026-05-08 13:33"
+        },
+        {
+          "picking": "CA1/IN/00792",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:32",
+          "done": "2026-05-08 13:32"
+        },
+        {
+          "picking": "CA1/IN/00791",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:30",
+          "done": "2026-05-08 13:30"
+        },
+        {
+          "picking": "CA1/IN/00790",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:25",
+          "done": "2026-05-08 13:25"
+        },
+        {
+          "picking": "CA1/IN/00789",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-08 12:47",
+          "done": "2026-05-08 12:51"
+        },
+        {
+          "picking": "CA1/RET/00975",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-07 16:18",
+          "done": "2026-05-07 16:26"
+        },
+        {
+          "picking": "CA1/IN/00787",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 15:01",
+          "done": "2026-05-07 15:02"
+        },
+        {
+          "picking": "CA1/IN/00786",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:48",
+          "done": "2026-05-07 14:49"
+        },
+        {
+          "picking": "CA1/IN/00785",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:39",
+          "done": "2026-05-07 14:40"
+        },
+        {
+          "picking": "CA1/IN/00784",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:25",
+          "done": "2026-05-07 14:26"
+        },
+        {
+          "picking": "CA1/IN/00783",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 19.3,
+          "scheduled": "2026-05-06 17:29",
+          "done": "2026-05-07 12:46"
+        },
+        {
+          "picking": "CA1/RET/00974",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.1,
+          "scheduled": "2026-05-06 20:00",
+          "done": "2026-05-06 20:03"
+        },
+        {
+          "picking": "CA1/RET/00973",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-05-05 18:27",
+          "done": "2026-05-05 18:27"
+        },
+        {
+          "picking": "CA1/IN/00781",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-05 17:04",
+          "done": "2026-05-05 17:23"
+        },
+        {
+          "picking": "CA1/IN/00780",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-04 17:25",
+          "done": "2026-05-04 17:32"
+        },
+        {
+          "picking": "CA1/IN/00779",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-04 17:05",
+          "done": "2026-05-04 17:18"
+        }
+      ],
+      "error": null
+    },
+    "180d": {
+      "valor": 9.99162627392493,
+      "n_recepciones": 447,
+      "min": -33.568888888888885,
+      "max": 500.6477777777778,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00796",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 16:07",
+          "done": "2026-05-08 16:07"
+        },
+        {
+          "picking": "CA1/IN/00795",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:54",
+          "done": "2026-05-08 15:55"
+        },
+        {
+          "picking": "CA1/IN/00794",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:43",
+          "done": "2026-05-08 15:44"
+        },
+        {
+          "picking": "CA1/RET/00976",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 14:32",
+          "done": "2026-05-08 14:34"
+        },
+        {
+          "picking": "CA1/IN/00793",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:33",
+          "done": "2026-05-08 13:33"
+        },
+        {
+          "picking": "CA1/IN/00792",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:32",
+          "done": "2026-05-08 13:32"
+        },
+        {
+          "picking": "CA1/IN/00791",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:30",
+          "done": "2026-05-08 13:30"
+        },
+        {
+          "picking": "CA1/IN/00790",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:25",
+          "done": "2026-05-08 13:25"
+        },
+        {
+          "picking": "CA1/IN/00789",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-08 12:47",
+          "done": "2026-05-08 12:51"
+        },
+        {
+          "picking": "CA1/RET/00975",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-07 16:18",
+          "done": "2026-05-07 16:26"
+        },
+        {
+          "picking": "CA1/IN/00787",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 15:01",
+          "done": "2026-05-07 15:02"
+        },
+        {
+          "picking": "CA1/IN/00786",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:48",
+          "done": "2026-05-07 14:49"
+        },
+        {
+          "picking": "CA1/IN/00785",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:39",
+          "done": "2026-05-07 14:40"
+        },
+        {
+          "picking": "CA1/IN/00784",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:25",
+          "done": "2026-05-07 14:26"
+        },
+        {
+          "picking": "CA1/IN/00783",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 19.3,
+          "scheduled": "2026-05-06 17:29",
+          "done": "2026-05-07 12:46"
+        },
+        {
+          "picking": "CA1/RET/00974",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.1,
+          "scheduled": "2026-05-06 20:00",
+          "done": "2026-05-06 20:03"
+        },
+        {
+          "picking": "CA1/RET/00973",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-05-05 18:27",
+          "done": "2026-05-05 18:27"
+        },
+        {
+          "picking": "CA1/IN/00781",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-05 17:04",
+          "done": "2026-05-05 17:23"
+        },
+        {
+          "picking": "CA1/IN/00780",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-04 17:25",
+          "done": "2026-05-04 17:32"
+        },
+        {
+          "picking": "CA1/IN/00779",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-04 17:05",
+          "done": "2026-05-04 17:18"
+        }
+      ],
+      "error": null
+    },
+    "365d": {
+      "valor": 12.475271769861465,
+      "n_recepciones": 786,
+      "min": -33.568888888888885,
+      "max": 508.22305555555556,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00796",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 16:07",
+          "done": "2026-05-08 16:07"
+        },
+        {
+          "picking": "CA1/IN/00795",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:54",
+          "done": "2026-05-08 15:55"
+        },
+        {
+          "picking": "CA1/IN/00794",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 15:43",
+          "done": "2026-05-08 15:44"
+        },
+        {
+          "picking": "CA1/RET/00976",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 14:32",
+          "done": "2026-05-08 14:34"
+        },
+        {
+          "picking": "CA1/IN/00793",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:33",
+          "done": "2026-05-08 13:33"
+        },
+        {
+          "picking": "CA1/IN/00792",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:32",
+          "done": "2026-05-08 13:32"
+        },
+        {
+          "picking": "CA1/IN/00791",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:30",
+          "done": "2026-05-08 13:30"
+        },
+        {
+          "picking": "CA1/IN/00790",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-08 13:25",
+          "done": "2026-05-08 13:25"
+        },
+        {
+          "picking": "CA1/IN/00789",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-08 12:47",
+          "done": "2026-05-08 12:51"
+        },
+        {
+          "picking": "CA1/RET/00975",
+          "proveedor": "Falabella Retail",
+          "horas": 0.1,
+          "scheduled": "2026-05-07 16:18",
+          "done": "2026-05-07 16:26"
+        },
+        {
+          "picking": "CA1/IN/00787",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 15:01",
+          "done": "2026-05-07 15:02"
+        },
+        {
+          "picking": "CA1/IN/00786",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:48",
+          "done": "2026-05-07 14:49"
+        },
+        {
+          "picking": "CA1/IN/00785",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:39",
+          "done": "2026-05-07 14:40"
+        },
+        {
+          "picking": "CA1/IN/00784",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-07 14:25",
+          "done": "2026-05-07 14:26"
+        },
+        {
+          "picking": "CA1/IN/00783",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 19.3,
+          "scheduled": "2026-05-06 17:29",
+          "done": "2026-05-07 12:46"
+        },
+        {
+          "picking": "CA1/RET/00974",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.1,
+          "scheduled": "2026-05-06 20:00",
+          "done": "2026-05-06 20:03"
+        },
+        {
+          "picking": "CA1/RET/00973",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-05-05 18:27",
+          "done": "2026-05-05 18:27"
+        },
+        {
+          "picking": "CA1/IN/00781",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-05 17:04",
+          "done": "2026-05-05 17:23"
+        },
+        {
+          "picking": "CA1/IN/00780",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-04 17:25",
+          "done": "2026-05-04 17:32"
+        },
+        {
+          "picking": "CA1/IN/00779",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-04 17:05",
+          "done": "2026-05-04 17:18"
+        }
+      ],
+      "error": null
+    }
+  }
 }
