@@ -84,6 +84,19 @@ desde parquet (super rápido, sin cuelgues).
 
 ---
 
+## ➡️ MIGRACIONES PENDIENTES
+
+### Mover "Análisis pedidos" a app Ventas
+**Eliminado del Ops** (commit 724f8fe) por ser información comercial, no operacional.
+El código está en commits anteriores si se quiere recuperar:
+- Mix por canal (B2C/B2B)
+- Mix por categoría / marca
+- Top SKUs vendidos
+- Detalle pedidos con filtros + Excel export
+**Acción futura:** crear Tab "Análisis pedidos" en `dashboard_ventas.py` con misma lógica.
+
+---
+
 ## 🟢 BAJA / NICE TO HAVE
 
 ### 6. Costo operativo total view (vista placeholder existente)
