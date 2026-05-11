@@ -1014,6 +1014,178 @@ def plan_auditoria_semanal(
 # ============================================================
 # PRODUCTIVIDAD POR PERÍODO (día / semana / mes)
 # ============================================================
+# ============================================================
+# DEVOLUCIONES POR ERROR (Pick Accuracy real)
+# ============================================================
+@st.cache_data(ttl=43200, show_spinner=False)
+def kpi_devoluciones_picking_error(dias: int = 90) -> Dict:
+    """Tasa REAL de errores de picking medida desde devoluciones.
+
+    Cuenta pickings tipo return (incoming desde cliente) cuyo origen es
+    una venta. Esto refleja el error que el CLIENTE detectó, no la
+    consistencia interna del sistema.
+
+    Returns:
+        valor: # devoluciones / # despachos en ventana
+        n_devoluciones, n_despachos
+    """
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return {"valor": None, "error": "Odoo no disponible"}
+
+    try:
+        desde = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+        # Devoluciones: pickings incoming con origin que sea una venta (return)
+        devoluciones = odoo.search_read(
+            "stock.picking",
+            [("state", "=", "done"),
+             ("date_done", ">=", desde),
+             ("picking_type_code", "=", "incoming"),
+             ("origin", "ilike", "S")],  # SO/Sxxx típico
+            ["id", "name", "origin", "partner_id", "date_done"],
+            limit=10000,
+        )
+        despachos = odoo.search_count(
+            "stock.picking",
+            [("state", "=", "done"),
+             ("date_done", ">=", desde),
+             ("picking_type_code", "=", "outgoing")],
+        )
+        n_dev = len(devoluciones)
+        n_des = despachos
+        return {
+            "valor": n_dev / n_des if n_des else None,
+            "n_devoluciones": n_dev,
+            "n_despachos": n_des,
+            "ventana_dias": dias,
+            "ejemplos": [{"ref": d.get("name"), "origen": d.get("origin"),
+                          "cliente": d.get("partner_id", [None, ""])[1] if d.get("partner_id") else "",
+                          "fecha": d.get("date_done", "")[:10]}
+                         for d in devoluciones[:20]],
+            "error": None,
+        }
+    except Exception as e:
+        return {"valor": None, "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+# ============================================================
+# PRODUCTIVIDAD POR PERÍODO (calendar + rolling)
+# ============================================================
+@st.cache_data(ttl=43200, show_spinner=False)
+def productividad_calendario(tipo: str = "mes", anio: int = None, mes: int = None) -> Dict:
+    """Productividad para un período CALENDARIO específico.
+
+    Args:
+        tipo: 'mes' (mes calendario), 'semana_de_mes' (semanas dentro de un mes),
+              'dia_especifico' (1 día concreto)
+        anio: año (default: actual)
+        mes: mes 1-12 (default: actual)
+
+    Returns:
+        items: [{periodo, n_pedidos, n_lineas, n_unidades, ...}]
+    """
+    from datetime import date as _date, timedelta as _td
+    import calendar
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return {"items": [], "error": "Odoo no disponible"}
+
+    hoy = _date.today()
+    anio = anio or hoy.year
+    mes = mes or hoy.month
+
+    items = []
+
+    try:
+        if tipo == "mes":
+            # Listado de últimos 12 meses
+            for i in range(11, -1, -1):
+                a, m = anio, mes - i
+                while m <= 0:
+                    m += 12
+                    a -= 1
+                desde = _date(a, m, 1)
+                if m == 12:
+                    hasta = _date(a + 1, 1, 1)
+                else:
+                    hasta = _date(a, m + 1, 1)
+                items.append(_calc_productividad(odoo, desde, hasta,
+                                                  f"{a}-{m:02d}"))
+        elif tipo == "semana_de_mes":
+            # Semanas dentro del mes (lunes a domingo)
+            n_dias = calendar.monthrange(anio, mes)[1]
+            d = _date(anio, mes, 1)
+            sem_n = 1
+            while d.month == mes and d.year == anio:
+                # Encontrar fin de semana (domingo)
+                fin_sem = d + _td(days=(6 - d.weekday()))
+                if fin_sem.month != mes or fin_sem.year != anio:
+                    fin_sem = _date(anio, mes, n_dias)
+                hasta = fin_sem + _td(days=1)
+                items.append(_calc_productividad(odoo, d, hasta,
+                                                  f"S{sem_n} ({d.strftime('%d/%m')}-{fin_sem.strftime('%d/%m')})"))
+                d = hasta
+                sem_n += 1
+        elif tipo == "dia_especifico":
+            # Días: hoy, ayer, ant., etc. (últimos 14 días)
+            for i in range(13, -1, -1):
+                d = hoy - _td(days=i)
+                hasta = d + _td(days=1)
+                items.append(_calc_productividad(odoo, d, hasta, d.strftime("%Y-%m-%d (%a)")))
+        return {"items": items, "tipo": tipo, "anio": anio, "mes": mes, "error": None}
+    except Exception as e:
+        return {"items": items, "error": f"{type(e).__name__}: {str(e)[:120]}"}
+
+
+def _calc_productividad(odoo, desde, hasta, label) -> Dict:
+    """Helper: calcula productividad para un rango específico."""
+    desde_s = desde.strftime("%Y-%m-%d")
+    hasta_s = hasta.strftime("%Y-%m-%d")
+    try:
+        pickings = odoo.search_read(
+            "stock.picking",
+            [("state", "=", "done"),
+             ("date_done", ">=", desde_s),
+             ("date_done", "<", hasta_s),
+             ("picking_type_code", "=", "outgoing")],
+            ["id"], limit=20000,
+        )
+        n_pedidos = len(pickings)
+        n_lineas = 0
+        n_unidades = 0
+        if pickings:
+            pid_ids = [p["id"] for p in pickings]
+            # Paginar por chunks de 100 picking_ids
+            for i in range(0, len(pid_ids), 100):
+                chunk = pid_ids[i:i + 100]
+                try:
+                    moves = odoo.search_read(
+                        "stock.move",
+                        [("picking_id", "in", chunk),
+                         ("state", "=", "done")],
+                        ["product_uom_qty", "quantity"],
+                        limit=20000,
+                    )
+                    n_lineas += len(moves)
+                    n_unidades += sum(m.get("quantity", 0) or 0 for m in moves)
+                except Exception:
+                    continue
+        return {
+            "periodo": label,
+            "fecha_desde": desde_s,
+            "fecha_hasta": hasta_s,
+            "n_pedidos": n_pedidos,
+            "n_lineas": n_lineas,
+            "n_unidades": int(n_unidades),
+            "uds_por_pedido": (n_unidades / n_pedidos) if n_pedidos else 0,
+            "lineas_por_pedido": (n_lineas / n_pedidos) if n_pedidos else 0,
+        }
+    except Exception as e:
+        return {"periodo": label, "error": str(e)[:100],
+                "n_pedidos": 0, "n_lineas": 0, "n_unidades": 0,
+                "uds_por_pedido": 0, "lineas_por_pedido": 0}
+
+
 @st.cache_data(ttl=43200, show_spinner=False)
 def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
     """Productividad operativa: pedidos despachados, unidades, líneas pickeadas.

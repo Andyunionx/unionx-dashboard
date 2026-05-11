@@ -62,6 +62,7 @@ def main():
         tendencia_mensual, kpi_cobertura_cycle_counts,
         kpi_merma_odoo, kpi_ajustes_inventario,
         plan_auditoria_semanal, productividad_periodo, forecast_volumen_picking,
+        kpi_devoluciones_picking_error, productividad_calendario,
     )
     # Limpiar cache de st (no usamos streamlit aquí pero los decorators lo intentan)
     try:
@@ -107,6 +108,20 @@ def main():
 
     # === Plan auditoría semanal ===
     snapshot["plan_auditoria"] = _safe_run("Plan auditoría", plan_auditoria_semanal, top_n_priorizar=50, dias_sin_ajuste=30); _save_partial(snapshot)
+
+    # === Pick Accuracy REAL (devoluciones por error) ===
+    snapshot["kpis"]["devoluciones_picking_error_90d"] = _safe_run(
+        "Devoluciones por error 90d", kpi_devoluciones_picking_error, dias=90); _save_partial(snapshot)
+    snapshot["kpis"]["devoluciones_picking_error_30d"] = _safe_run(
+        "Devoluciones por error 30d", kpi_devoluciones_picking_error, dias=30); _save_partial(snapshot)
+
+    # === Productividad calendario (últimos 12 meses + semanas mes actual + días) ===
+    snapshot["productividad_meses_12m"] = _safe_run(
+        "Prod meses calendario", productividad_calendario, tipo="mes"); _save_partial(snapshot)
+    snapshot["productividad_semanas_mes_actual"] = _safe_run(
+        "Prod semanas mes actual", productividad_calendario, tipo="semana_de_mes"); _save_partial(snapshot)
+    snapshot["productividad_dias_14d"] = _safe_run(
+        "Prod últimos 14 días", productividad_calendario, tipo="dia_especifico"); _save_partial(snapshot)
 
     # === OTIF para distintas ventanas (para Tab OTIF) ===
     snapshot["otif_ventanas"] = {}

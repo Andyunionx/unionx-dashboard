@@ -598,15 +598,38 @@ def render():
 
             # Pick Accuracy
             st.markdown("#### Pick Accuracy")
+            st.caption(
+                "⚠️ **Métrica débil sin escaneo de código de barras.** Mide consistencia "
+                "interna (qty pickeada = qty pedida en Odoo), NO el error físico real. "
+                "Ver 'Devoluciones por error' abajo para el dato del cliente."
+            )
             if pick_acc_t.get("error"):
                 st.warning(pick_acc_t["error"])
             else:
                 c1, c2, c3 = st.columns(3)
                 v = pick_acc_t.get('valor', 0) or 0
-                c1.metric("Pick Accuracy", f"{v*100:.2f}%",
-                          delta=f"{pick_acc_t.get('errores', 0)} errores")
+                c1.metric("Pick Accuracy (sistema)", f"{v*100:.2f}%",
+                          delta=f"{pick_acc_t.get('errores', 0)} errores",
+                          help="Consistencia qty pickeada vs pedida en Odoo")
                 c2.metric("Total moves done", f"{pick_acc_t.get('total', 0):,}")
-                c3.metric("Errores (qty mismatch)", f"{pick_acc_t.get('errores', 0):,}")
+                c3.metric("Errores qty mismatch", f"{pick_acc_t.get('errores', 0):,}")
+
+            # Pick Accuracy REAL: devoluciones por error
+            st.markdown("##### 📦 Tasa de devoluciones (Pick Accuracy real)")
+            st.caption("Pickings tipo return desde clientes / # despachos. Refleja errores que el cliente detectó.")
+            kpis_snap_pa = snap_pick.get("kpis", {}) if snap_pick else {}
+            dev_30d = kpis_snap_pa.get("devoluciones_picking_error_30d", {})
+            dev_90d = kpis_snap_pa.get("devoluciones_picking_error_90d", {})
+            cd1, cd2, cd3 = st.columns(3)
+            v30 = dev_30d.get("valor")
+            cd1.metric("Devoluciones 30d", f"{v30*100:.2f}%" if v30 is not None else "—",
+                       delta=f"{dev_30d.get('n_devoluciones', 0)} dev. / {dev_30d.get('n_despachos', 0)} despachos")
+            v90 = dev_90d.get("valor")
+            cd2.metric("Devoluciones 90d", f"{v90*100:.2f}%" if v90 is not None else "—",
+                       delta=f"{dev_90d.get('n_devoluciones', 0)} dev. / {dev_90d.get('n_despachos', 0)} despachos")
+            cd3.metric("Pick Accuracy REAL 30d",
+                       f"{(1-v30)*100:.2f}%" if v30 is not None else "—",
+                       help="100% - tasa devoluciones. Es la métrica que el cliente ve.")
 
             st.divider()
 
@@ -673,118 +696,98 @@ def render():
 
                 st.divider()
 
-                # Sub-tabs por período
-                prod_subtabs = st.tabs(["📅 Por día (últimos 30d)",
-                                         "📆 Por semana (últimas 12)",
-                                         "🗓️ Por mes (últimos 6)",
+                # Sub-tabs por período NATURAL (calendario, no rolling)
+                prod_subtabs = st.tabs(["🗓️ Por mes (últimos 12)",
+                                         "📆 Por semana (mes actual)",
+                                         "📅 Por día (últimos 14)",
                                          "🔮 Forecast 3 meses"])
 
+                # Leer snapshot precalculado
+                snap_prod = snap_pick if 'snap_pick' in dir() else cargar_snapshot()
+                prod_meses_data = (snap_prod.get("productividad_meses_12m", {}) or {}).get("items", [])
+                prod_sem_data = (snap_prod.get("productividad_semanas_mes_actual", {}) or {}).get("items", [])
+                prod_dias_data = (snap_prod.get("productividad_dias_14d", {}) or {}).get("items", [])
+
+                # ── Por MES (calendario) ─────────────────────────────────
                 with prod_subtabs[0]:
-                    st.markdown("##### Productividad diaria")
-                    if st.button("📥 Cargar datos diarios", type="primary",
-                                 key="prod_d_btn"):
-                        st.session_state['prod_d_loaded'] = True
-                    if st.session_state.get('prod_d_loaded'):
-                        with st.spinner("Consultando 30 días Odoo…"):
-                            prod_d = _safe_wms(productividad_periodo, periodo="dia",
-                                               n_periodos=30, default={"items": []})
-                        if prod_d.get("items"):
-                            df_d = pd.DataFrame(prod_d["items"])
-                            # Productividad diaria asumiendo horas/día estándar
-                            horas_dia_promedio = horas / 21  # 21 días hábiles aprox
-                            df_d["lineas_h"] = (df_d["n_lineas_pickeadas"] / horas_dia_promedio).round(1)
+                    st.markdown("##### Productividad por mes calendario")
+                    if prod_meses_data:
+                        df_m = pd.DataFrame(prod_meses_data)
+                        # Productividad: líneas / horas equipo (asumiendo horas del mes actual)
+                        df_m["lineas_h"] = (df_m["n_lineas"] / horas).round(1) if horas else 0
+                        df_m["uds_h"] = (df_m["n_unidades"] / horas).round(1) if horas else 0
 
-                            # Charts
-                            cc1, cc2 = st.columns(2)
-                            with cc1:
-                                st.markdown("**Pedidos / día**")
-                                st.bar_chart(df_d.set_index("periodo")["n_pedidos"], height=240)
-                            with cc2:
-                                st.markdown("**Líneas pickeadas / día**")
-                                st.bar_chart(df_d.set_index("periodo")["n_lineas_pickeadas"], height=240)
-                            st.markdown("**Unidades despachadas / día**")
-                            st.line_chart(df_d.set_index("periodo")["n_unidades_despachadas"], height=240)
+                        cm1, cm2 = st.columns(2)
+                        cm1.markdown("**Pedidos / mes**")
+                        cm1.bar_chart(df_m.set_index("periodo")["n_pedidos"], height=240)
+                        cm2.markdown("**Líneas pickeadas / mes**")
+                        cm2.bar_chart(df_m.set_index("periodo")["n_lineas"], height=240)
+                        st.markdown("**Productividad (líneas/h) por mes**")
+                        st.line_chart(df_m.set_index("periodo")["lineas_h"], height=240)
 
-                            # Tabla
-                            df_show = df_d[["periodo", "n_pedidos", "n_lineas_pickeadas",
-                                            "n_unidades_despachadas", "uds_por_pedido", "lineas_h"]].rename(
-                                columns={"periodo": "Día", "n_pedidos": "Pedidos",
-                                         "n_lineas_pickeadas": "Líneas",
-                                         "n_unidades_despachadas": "Unidades",
-                                         "uds_por_pedido": "Uds/pedido",
-                                         "lineas_h": "Líneas/h*"})
-                            df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
-                            st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
-                            st.caption(f"*Productividad asumiendo {horas_dia_promedio:.0f}h/día equipo")
+                        df_show = df_m[["periodo", "n_pedidos", "n_lineas",
+                                        "n_unidades", "uds_por_pedido", "lineas_h"]].rename(
+                            columns={"periodo": "Mes", "n_pedidos": "Pedidos",
+                                     "n_lineas": "Líneas", "n_unidades": "Unidades",
+                                     "uds_por_pedido": "Uds/pedido",
+                                     "lineas_h": "Líneas/h"})
+                        df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
+                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        st.caption(f"Productividad asume {horas:,.0f}h equipo/mes constante")
                     else:
-                        st.info("👆 Click 'Cargar datos diarios'.")
+                        st.info("Sin datos en snapshot. Esperá próxima actualización 00:00 Chile.")
 
+                # ── Por SEMANA (mes actual) ──────────────────────────────
                 with prod_subtabs[1]:
-                    st.markdown("##### Productividad semanal")
-                    if st.button("📥 Cargar datos semanales", type="primary",
-                                 key="prod_s_btn"):
-                        st.session_state['prod_s_loaded'] = True
-                    if st.session_state.get('prod_s_loaded'):
-                        with st.spinner("Consultando 12 semanas Odoo…"):
-                            prod_s = _safe_wms(productividad_periodo, periodo="semana",
-                                               n_periodos=12, default={"items": []})
-                        if prod_s.get("items"):
-                            df_s = pd.DataFrame(prod_s["items"])
-                            horas_sem = horas / 4.33
-                            df_s["lineas_h"] = (df_s["n_lineas_pickeadas"] / horas_sem).round(1)
+                    st.markdown(f"##### Productividad por semana — {mes_actual}")
+                    if prod_sem_data:
+                        df_s = pd.DataFrame(prod_sem_data)
+                        # Horas/semana proporcional (4.33 sem/mes)
+                        horas_sem = horas / 4.33 if horas else 0
+                        df_s["lineas_h"] = (df_s["n_lineas"] / horas_sem).round(1) if horas_sem else 0
 
-                            cs1, cs2 = st.columns(2)
-                            cs1.markdown("**Pedidos / semana**")
-                            cs1.bar_chart(df_s.set_index("periodo")["n_pedidos"], height=240)
-                            cs2.markdown("**Líneas / semana**")
-                            cs2.bar_chart(df_s.set_index("periodo")["n_lineas_pickeadas"], height=240)
-                            st.markdown("**Unidades despachadas / semana**")
-                            st.line_chart(df_s.set_index("periodo")["n_unidades_despachadas"], height=240)
+                        cs1, cs2 = st.columns(2)
+                        cs1.markdown("**Pedidos / semana**")
+                        cs1.bar_chart(df_s.set_index("periodo")["n_pedidos"], height=240)
+                        cs2.markdown("**Líneas / semana**")
+                        cs2.bar_chart(df_s.set_index("periodo")["n_lineas"], height=240)
 
-                            df_show = df_s[["periodo", "n_pedidos", "n_lineas_pickeadas",
-                                            "n_unidades_despachadas", "lineas_h"]].rename(
-                                columns={"periodo": "Semana", "n_pedidos": "Pedidos",
-                                         "n_lineas_pickeadas": "Líneas",
-                                         "n_unidades_despachadas": "Unidades",
-                                         "lineas_h": "Líneas/h*"})
-                            st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
-                            st.caption(f"*Productividad asumiendo {horas_sem:.0f}h/semana equipo")
+                        df_show = df_s[["periodo", "n_pedidos", "n_lineas",
+                                        "n_unidades", "lineas_h"]].rename(
+                            columns={"periodo": "Semana", "n_pedidos": "Pedidos",
+                                     "n_lineas": "Líneas", "n_unidades": "Unidades",
+                                     "lineas_h": "Líneas/h"})
+                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        st.caption(f"Productividad asume {horas_sem:.0f}h equipo/semana")
                     else:
-                        st.info("👆 Click 'Cargar datos semanales'.")
+                        st.info("Sin datos en snapshot.")
 
+                # ── Por DÍA (últimos 14) ─────────────────────────────────
                 with prod_subtabs[2]:
-                    st.markdown("##### Productividad mensual")
-                    if st.button("📥 Cargar datos mensuales", type="primary",
-                                 key="prod_m_btn"):
-                        st.session_state['prod_m_loaded'] = True
-                    if st.session_state.get('prod_m_loaded'):
-                        with st.spinner("Consultando 6 meses Odoo…"):
-                            prod_m = _safe_wms(productividad_periodo, periodo="mes",
-                                               n_periodos=6, default={"items": []})
-                        if prod_m.get("items"):
-                            df_m = pd.DataFrame(prod_m["items"])
-                            # Asumir mismas horas todos los meses (proxy)
-                            df_m["lineas_h"] = (df_m["n_lineas_pickeadas"] / horas).round(1)
+                    st.markdown("##### Productividad por día (últimos 14)")
+                    if prod_dias_data:
+                        df_d = pd.DataFrame(prod_dias_data)
+                        # Horas/día = horas mes / 21 días hábiles
+                        horas_dia = horas / 21 if horas else 0
+                        df_d["lineas_h"] = (df_d["n_lineas"] / horas_dia).round(1) if horas_dia else 0
 
-                            cm1, cm2 = st.columns(2)
-                            cm1.markdown("**Pedidos / mes**")
-                            cm1.bar_chart(df_m.set_index("periodo")["n_pedidos"], height=240)
-                            cm2.markdown("**Líneas / mes**")
-                            cm2.bar_chart(df_m.set_index("periodo")["n_lineas_pickeadas"], height=240)
-                            st.markdown("**Productividad líneas/h por mes**")
-                            st.line_chart(df_m.set_index("periodo")["lineas_h"], height=240)
+                        cd1, cd2 = st.columns(2)
+                        cd1.markdown("**Pedidos / día**")
+                        cd1.bar_chart(df_d.set_index("periodo")["n_pedidos"], height=240)
+                        cd2.markdown("**Líneas / día**")
+                        cd2.bar_chart(df_d.set_index("periodo")["n_lineas"], height=240)
 
-                            df_show = df_m[["periodo", "n_pedidos", "n_lineas_pickeadas",
-                                            "n_unidades_despachadas", "uds_por_pedido", "lineas_h"]].rename(
-                                columns={"periodo": "Mes", "n_pedidos": "Pedidos",
-                                         "n_lineas_pickeadas": "Líneas",
-                                         "n_unidades_despachadas": "Unidades",
-                                         "uds_por_pedido": "Uds/pedido",
-                                         "lineas_h": "Líneas/h"})
-                            df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
-                            st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        df_show = df_d[["periodo", "n_pedidos", "n_lineas",
+                                        "n_unidades", "uds_por_pedido", "lineas_h"]].rename(
+                            columns={"periodo": "Día", "n_pedidos": "Pedidos",
+                                     "n_lineas": "Líneas", "n_unidades": "Unidades",
+                                     "uds_por_pedido": "Uds/pedido",
+                                     "lineas_h": "Líneas/h"})
+                        df_show["Uds/pedido"] = df_show["Uds/pedido"].round(1)
+                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        st.caption(f"Productividad asume {horas_dia:.1f}h equipo/día hábil")
                     else:
-                        st.info("👆 Click 'Cargar datos mensuales'.")
+                        st.info("Sin datos en snapshot.")
 
                 with prod_subtabs[3]:
                     st.markdown("##### 🔮 Forecast volumen 3 meses adelante")
