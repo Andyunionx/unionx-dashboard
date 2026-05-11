@@ -2411,21 +2411,21 @@
         "MES": "2025-12",
         "n_pedidos": 978,
         "otif_empresa": 0.9570552147239264,
-        "otif_courier": 0.8813905930470347,
-        "otif_total": 0.869120654396728,
+        "otif_courier": 0.8834355828220859,
+        "otif_total": 0.8711656441717791,
         "otif_empresa_pct": 95.7,
-        "otif_courier_pct": 88.1,
-        "otif_total_pct": 86.9
+        "otif_courier_pct": 88.3,
+        "otif_total_pct": 87.1
       },
       {
         "MES": "2026-01",
         "n_pedidos": 5476,
         "otif_empresa": 0.9689554419284149,
-        "otif_courier": 0.922936449963477,
-        "otif_total": 0.9154492330168006,
+        "otif_courier": 0.9349890430971513,
+        "otif_total": 0.9275018261504748,
         "otif_empresa_pct": 96.9,
-        "otif_courier_pct": 92.3,
-        "otif_total_pct": 91.5
+        "otif_courier_pct": 93.5,
+        "otif_total_pct": 92.8
       },
       {
         "MES": "2026-02",
@@ -2439,10 +2439,10 @@
       },
       {
         "MES": "2026-03",
-        "n_pedidos": 9576,
-        "otif_empresa": 0.970342522974102,
-        "otif_courier": 0.9421470342522974,
-        "otif_total": 0.9301378446115288,
+        "n_pedidos": 9573,
+        "otif_empresa": 0.9703332288728717,
+        "otif_courier": 0.9421289042097566,
+        "otif_total": 0.9301159511125039,
         "otif_empresa_pct": 97.0,
         "otif_courier_pct": 94.2,
         "otif_total_pct": 93.0
@@ -2450,38 +2450,38 @@
       {
         "MES": "2026-04",
         "n_pedidos": 6521,
-        "otif_empresa": 0.9543014875019169,
-        "otif_courier": 0.9081429228645913,
-        "otif_total": 0.8923477994172673,
-        "otif_empresa_pct": 95.4,
-        "otif_courier_pct": 90.8,
-        "otif_total_pct": 89.2
+        "otif_empresa": 0.9572151510504524,
+        "otif_courier": 0.9110565864131268,
+        "otif_total": 0.895108112252722,
+        "otif_empresa_pct": 95.7,
+        "otif_courier_pct": 91.1,
+        "otif_total_pct": 89.5
       }
     ],
     "resumen_por_mes": {
       "2026-04": {
         "n_pedidos": 6521,
-        "otif_empresa_pct": 0.9543014875019169,
-        "otif_courier_pct": 0.9081429228645913,
-        "otif_total_pct": 0.8923477994172673,
-        "n_empresa_ok": 6223,
-        "n_courier_ok": 5922,
-        "n_otif_ok": 5819,
-        "dias_empresa_promedio": -502.8079521031624,
-        "dias_courier_promedio": -389.6621123733497,
+        "otif_empresa_pct": 0.9572151510504524,
+        "otif_courier_pct": 0.9110565864131268,
+        "otif_total_pct": 0.895108112252722,
+        "n_empresa_ok": 6242,
+        "n_courier_ok": 5941,
+        "n_otif_ok": 5837,
+        "dias_empresa_promedio": 668.7538768616613,
+        "dias_courier_promedio": -389.7217871948411,
         "mes": "2026-04",
         "error": null
       },
       "2026-03": {
-        "n_pedidos": 9576,
-        "otif_empresa_pct": 0.970342522974102,
-        "otif_courier_pct": 0.9421470342522974,
-        "otif_total_pct": 0.9301378446115288,
-        "n_empresa_ok": 9292,
-        "n_courier_ok": 9022,
-        "n_otif_ok": 8907,
-        "dias_empresa_promedio": 91.37198370416797,
-        "dias_courier_promedio": -144.7636059751384,
+        "n_pedidos": 9573,
+        "otif_empresa_pct": 0.9703332288728717,
+        "otif_courier_pct": 0.9421289042097566,
+        "otif_total_pct": 0.9301159511125039,
+        "n_empresa_ok": 9289,
+        "n_courier_ok": 9019,
+        "n_otif_ok": 8904,
+        "dias_empresa_promedio": 91.41017870205873,
+        "dias_courier_promedio": -144.82411955272232,
         "mes": "2026-03",
         "error": null
       },
@@ -2501,26 +2501,26 @@
       "2026-01": {
         "n_pedidos": 5476,
         "otif_empresa_pct": 0.9689554419284149,
-        "otif_courier_pct": 0.922936449963477,
-        "otif_total_pct": 0.9154492330168006,
+        "otif_courier_pct": 0.9349890430971513,
+        "otif_total_pct": 0.9275018261504748,
         "n_empresa_ok": 5306,
-        "n_courier_ok": 5054,
-        "n_otif_ok": 5013,
+        "n_courier_ok": 5120,
+        "n_otif_ok": 5079,
         "dias_empresa_promedio": -101.02320058458166,
-        "dias_courier_promedio": -1186.4134088417975,
+        "dias_courier_promedio": -631.223602484472,
         "mes": "2026-01",
         "error": null
       },
       "2025-12": {
         "n_pedidos": 978,
         "otif_empresa_pct": 0.9570552147239264,
-        "otif_courier_pct": 0.8813905930470347,
-        "otif_total_pct": 0.869120654396728,
+        "otif_courier_pct": 0.8834355828220859,
+        "otif_total_pct": 0.8711656441717791,
         "n_empresa_ok": 936,
-        "n_courier_ok": 862,
-        "n_otif_ok": 850,
+        "n_courier_ok": 864,
+        "n_otif_ok": 852,
         "dias_empresa_promedio": -0.15337423312883436,
-        "dias_courier_promedio": -235.64519427402863,
+        "dias_courier_promedio": -141.49488752556238,
         "mes": "2025-12",
         "error": null
       }
@@ -2550,12 +2550,12 @@
         {
           "CLIENTE": "PAGINAS",
           "n_pedidos": 776,
-          "otif_empresa": 0.895618556701031,
-          "otif_courier": 0.8131443298969072,
-          "otif_total": 0.7422680412371134,
-          "otif_empresa_pct": 89.6,
-          "otif_courier_pct": 81.3,
-          "otif_total_pct": 74.2
+          "otif_empresa": 0.9201030927835051,
+          "otif_courier": 0.8376288659793815,
+          "otif_total": 0.7654639175257731,
+          "otif_empresa_pct": 92.0,
+          "otif_courier_pct": 83.8,
+          "otif_total_pct": 76.5
         },
         {
           "CLIENTE": "WALMART",
@@ -2651,10 +2651,10 @@
         },
         {
           "CLIENTE": "PAGINAS",
-          "n_pedidos": 1295,
-          "otif_empresa": 0.9822393822393822,
-          "otif_courier": 0.9374517374517375,
-          "otif_total": 0.9227799227799228,
+          "n_pedidos": 1292,
+          "otif_empresa": 0.9821981424148607,
+          "otif_courier": 0.9373065015479877,
+          "otif_total": 0.9226006191950464,
           "otif_empresa_pct": 98.2,
           "otif_courier_pct": 93.7,
           "otif_total_pct": 92.3
@@ -2867,11 +2867,11 @@
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 980,
           "otif_empresa": 0.9714285714285714,
-          "otif_courier": 0.9020408163265307,
-          "otif_total": 0.9020408163265307,
+          "otif_courier": 0.9683673469387755,
+          "otif_total": 0.9683673469387755,
           "otif_empresa_pct": 97.1,
-          "otif_courier_pct": 90.2,
-          "otif_total_pct": 90.2
+          "otif_courier_pct": 96.8,
+          "otif_total_pct": 96.8
         },
         {
           "CLIENTE": "PAGINAS",
@@ -2907,11 +2907,11 @@
           "CLIENTE": "FALABELLA F",
           "n_pedidos": 410,
           "otif_empresa": 0.9780487804878049,
-          "otif_courier": 0.9439024390243902,
-          "otif_total": 0.9390243902439024,
+          "otif_courier": 0.9463414634146341,
+          "otif_total": 0.9414634146341463,
           "otif_empresa_pct": 97.8,
-          "otif_courier_pct": 94.4,
-          "otif_total_pct": 93.9
+          "otif_courier_pct": 94.6,
+          "otif_total_pct": 94.1
         },
         {
           "CLIENTE": "KITCHEN CENTER",
@@ -2999,11 +2999,11 @@
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 129,
           "otif_empresa": 0.9689922480620154,
-          "otif_courier": 0.9534883720930233,
-          "otif_total": 0.9534883720930233,
+          "otif_courier": 0.9689922480620154,
+          "otif_total": 0.9689922480620154,
           "otif_empresa_pct": 96.9,
-          "otif_courier_pct": 95.3,
-          "otif_total_pct": 95.3
+          "otif_courier_pct": 96.9,
+          "otif_total_pct": 96.9
         },
         {
           "CLIENTE": "WALMART",
@@ -3095,7 +3095,7 @@
         },
         {
           "CURIER": "home delivery corp",
-          "n_pedidos": 1266,
+          "n_pedidos": 1262,
           "otif_courier": 1.0,
           "dias_promedio": 0.0,
           "otif_courier_pct": 100.0
@@ -3122,18 +3122,18 @@
           "otif_courier_pct": 73.0
         },
         {
-          "CURIER": "Blue EXPRESS",
-          "n_pedidos": 334,
-          "otif_courier": 0.9161676646706587,
-          "dias_promedio": -139.6,
-          "otif_courier_pct": 91.6
-        },
-        {
           "CURIER": "RIPLEY",
           "n_pedidos": 323,
           "otif_courier": 0.47368421052631576,
           "dias_promedio": -2997.6,
           "otif_courier_pct": 47.4
+        },
+        {
+          "CURIER": "Blue EXPRESS",
+          "n_pedidos": 312,
+          "otif_courier": 0.9807692307692307,
+          "dias_promedio": -149.4,
+          "otif_courier_pct": 98.1
         },
         {
           "CURIER": "STARKEN",
@@ -3148,13 +3148,27 @@
           "otif_courier": 0.9849624060150376,
           "dias_promedio": -1.2,
           "otif_courier_pct": 98.5
+        },
+        {
+          "CURIER": "BLUE EXPRESS",
+          "n_pedidos": 23,
+          "otif_courier": 0.8260869565217391,
+          "dias_promedio": 0.0,
+          "otif_courier_pct": 82.6
+        },
+        {
+          "CURIER": "RETIRO EN BODEGA",
+          "n_pedidos": 5,
+          "otif_courier": 1.0,
+          "dias_promedio": 0.0,
+          "otif_courier_pct": 100.0
         }
       ],
       "2026-03": [
         {
           "CURIER": "RECIBELO",
-          "n_pedidos": 2639,
-          "otif_courier": 0.9473285335354301,
+          "n_pedidos": 2636,
+          "otif_courier": 0.947268588770865,
           "dias_promedio": -17.4,
           "otif_courier_pct": 94.7
         },
@@ -3333,9 +3347,9 @@
         {
           "CURIER": "HDC",
           "n_pedidos": 980,
-          "otif_courier": 0.9020408163265307,
-          "dias_promedio": -3524.1,
-          "otif_courier_pct": 90.2
+          "otif_courier": 0.9683673469387755,
+          "dias_promedio": -469.9,
+          "otif_courier_pct": 96.8
         },
         {
           "CURIER": "COLECTA",
@@ -3354,9 +3368,9 @@
         {
           "CURIER": "FALAFLEX",
           "n_pedidos": 339,
-          "otif_courier": 0.9410029498525073,
-          "dias_promedio": -271.5,
-          "otif_courier_pct": 94.1
+          "otif_courier": 0.943952802359882,
+          "dias_promedio": -135.7,
+          "otif_courier_pct": 94.4
         },
         {
           "CURIER": "WELIVERY",
@@ -3419,9 +3433,9 @@
         {
           "CURIER": "HDC",
           "n_pedidos": 129,
-          "otif_courier": 0.9534883720930233,
-          "dias_promedio": -713.8,
-          "otif_courier_pct": 95.3
+          "otif_courier": 0.9689922480620154,
+          "dias_promedio": 0.0,
+          "otif_courier_pct": 96.9
         },
         {
           "CURIER": "RECIBELO",
@@ -5991,16 +6005,16 @@
         },
         "resumen": {
           "n_ordenes": 9640,
-          "cancelacion_clp": 234435565870.0,
-          "quiebre_clp": 72739177694.0,
+          "cancelacion_clp": 1795387.4629360002,
+          "quiebre_clp": 392313.899144,
           "n_canceladas": 117,
-          "n_quiebres": 19,
-          "ns_empresa_pct": 0.9612033195020747,
-          "ns_courier_pct": 0.9183609958506224,
-          "otif_total_pct": 0.904045643153527,
-          "n_empresa_ok": 9266,
-          "n_courier_ok": 8853,
-          "n_otif_ok": 8715
+          "n_quiebres": 20,
+          "ns_empresa_pct": 0.9630705394190872,
+          "ns_courier_pct": 0.9202282157676348,
+          "otif_total_pct": 0.9058091286307054,
+          "n_empresa_ok": 9284,
+          "n_courier_ok": 8871,
+          "n_otif_ok": 8732
         },
         "por_cliente": [
           {
@@ -6026,12 +6040,12 @@
           {
             "CLIENTE": "PAGINAS",
             "ORDENES": 1439,
-            "A_TPO_EMP": 1339,
-            "A_TPO_COU": 1269,
-            "OTIF": 1196,
-            "NS_EMP_PCT": 0.9305,
-            "NS_COU_PCT": 0.8819,
-            "OTIF_PCT": 0.8311
+            "A_TPO_EMP": 1357,
+            "A_TPO_COU": 1287,
+            "OTIF": 1213,
+            "NS_EMP_PCT": 0.943,
+            "NS_COU_PCT": 0.8944,
+            "OTIF_PCT": 0.8429
           },
           {
             "CLIENTE": "WALMART",
@@ -6106,91 +6120,98 @@
           {
             "CLIENTE": "TOTAL",
             "ORDENES": 9640,
-            "A_TPO_EMP": 9266,
-            "NS_EMP_PCT": 0.9612033195020747,
-            "A_TPO_COU": 8853,
-            "NS_COU_PCT": 0.9183609958506224,
-            "OTIF": 8715,
-            "OTIF_PCT": 0.904045643153527
+            "A_TPO_EMP": 9284,
+            "NS_EMP_PCT": 0.9630705394190872,
+            "A_TPO_COU": 8871,
+            "NS_COU_PCT": 0.9202282157676348,
+            "OTIF": 8732,
+            "OTIF_PCT": 0.9058091286307054
           }
         ],
         "pareto_quiebres": [
           {
-            "SKU": "LHJOKWV-BK",
-            "monto": 26857142856,
-            "n_ordenes": 4,
-            "pct": 0.36922527456913157,
-            "pct_acumulado": 0.36922527456913157
+            "SKU": "1654207748340",
+            "monto": 102066.0,
+            "n_ordenes": 6,
+            "pct": 0.26016411914719434,
+            "pct_acumulado": 0.26016411914719434
           },
           {
-            "SKU": "3000181508",
-            "monto": 9235294118,
+            "SKU": "LVMONPOR-15",
+            "monto": 84025.21008,
             "n_ordenes": 1,
-            "pct": 0.1269645108836828,
-            "pct_acumulado": 0.49618978545281434
+            "pct": 0.21417851945428604,
+            "pct_acumulado": 0.4743426386014804
           },
           {
             "SKU": "LHSWVIBCR",
-            "monto": 6721848739,
+            "monto": 67218.48739,
             "n_ordenes": 1,
-            "pct": 0.09241029321609256,
-            "pct_acumulado": 0.588600078668907
-          },
-          {
-            "SKU": "LHJOKTRE-GR",
-            "monto": 6714285714,
-            "n_ordenes": 1,
-            "pct": 0.09230631864228289,
-            "pct_acumulado": 0.6809063973111898
-          },
-          {
-            "SKU": "LHJOKTRE-OR",
-            "monto": 6714285714,
-            "n_ordenes": 1,
-            "pct": 0.09230631864228289,
-            "pct_acumulado": 0.7732127159534727
-          },
-          {
-            "SKU": "137438G",
-            "monto": 4193277311,
-            "n_ordenes": 1,
-            "pct": 0.05764812641463073,
-            "pct_acumulado": 0.8308608423681034
-          },
-          {
-            "SKU": "74173",
-            "monto": 4193277311,
-            "n_ordenes": 1,
-            "pct": 0.05764812641463073,
-            "pct_acumulado": 0.8885089687827341
+            "pct": 0.1713385315602271,
+            "pct_acumulado": 0.6456811701617076
           },
           {
             "SKU": "BDANDDIDAC-GR",
-            "monto": 3406302521,
+            "monto": 34063.02521,
             "n_ordenes": 1,
-            "pct": 0.04682899407152597,
-            "pct_acumulado": 0.9353379628542601
+            "pct": 0.08682594545929423,
+            "pct_acumulado": 0.7325071156210018
+          },
+          {
+            "SKU": "LHJOKWV-BK",
+            "monto": 26857.142856,
+            "n_ordenes": 4,
+            "pct": 0.06845830064802778,
+            "pct_acumulado": 0.8009654162690296
           },
           {
             "SKU": "67327559384453",
-            "monto": 2520168067,
+            "monto": 25201.68067,
             "n_ordenes": 1,
-            "pct": 0.03464663949875639,
-            "pct_acumulado": 0.9699846023530164
+            "pct": 0.0642385618378248,
+            "pct_acumulado": 0.8652039781068545
           },
           {
             "SKU": "172462N",
-            "monto": 2183193277,
+            "monto": 21831.93277,
             "n_ordenes": 1,
-            "pct": 0.030013994469174264,
-            "pct_acumulado": 0.9999985968221907
+            "pct": 0.0556491442633964,
+            "pct_acumulado": 0.9208531223702509
           },
           {
-            "SKU": "1654207748340",
-            "monto": 102066,
-            "n_ordenes": 6,
-            "pct": 1.4031778092044484e-06,
-            "pct_acumulado": 0.9999999999999999
+            "SKU": "3000181508",
+            "monto": 9235.294118,
+            "n_ordenes": 1,
+            "pct": 0.023540573347390268,
+            "pct_acumulado": 0.9443936957176411
+          },
+          {
+            "SKU": "LHJOKTRE-OR",
+            "monto": 6714.285714,
+            "n_ordenes": 1,
+            "pct": 0.017114575162006946,
+            "pct_acumulado": 0.9615082708796481
+          },
+          {
+            "SKU": "LHJOKTRE-GR",
+            "monto": 6714.285714,
+            "n_ordenes": 1,
+            "pct": 0.017114575162006946,
+            "pct_acumulado": 0.9786228460416551
+          },
+          {
+            "SKU": "137438G",
+            "monto": 4193.277311,
+            "n_ordenes": 1,
+            "pct": 0.010688576979172602,
+            "pct_acumulado": 0.9893114230208276
+          },
+          {
+            "SKU": "74173",
+            "monto": 4193.277311,
+            "n_ordenes": 1,
+            "pct": 0.010688576979172602,
+            "pct_acumulado": 1.0000000000000002
           }
         ],
         "opciones_filtros": {
@@ -6200,6 +6221,7 @@
             "BLUEXPRESS",
             "Blue EXPRESS",
             "COLECTA",
+            "HDC",
             "RECIBELO",
             "RETIRO EN BODEGA",
             "RIPLEY",
@@ -6257,17 +6279,17 @@
           "key": "2026-03"
         },
         "resumen": {
-          "n_ordenes": 7077,
-          "cancelacion_clp": 520975271376.0,
-          "quiebre_clp": 35935434414.0,
+          "n_ordenes": 7074,
+          "cancelacion_clp": 3455375.487489,
+          "quiebre_clp": 272985.07563900005,
           "n_canceladas": 136,
           "n_quiebres": 12,
-          "ns_empresa_pct": 0.9666525363854741,
-          "ns_courier_pct": 0.9376854599406528,
-          "otif_total_pct": 0.9251095096792427,
-          "n_empresa_ok": 6841,
-          "n_courier_ok": 6636,
-          "n_otif_ok": 6547
+          "ns_empresa_pct": 0.9666383941193102,
+          "ns_courier_pct": 0.9376590330788804,
+          "otif_total_pct": 0.9250777495052305,
+          "n_empresa_ok": 6838,
+          "n_courier_ok": 6633,
+          "n_otif_ok": 6544
         },
         "por_cliente": [
           {
@@ -6302,13 +6324,13 @@
           },
           {
             "CLIENTE": "PAGINAS",
-            "ORDENES": 703,
-            "A_TPO_EMP": 698,
-            "A_TPO_COU": 617,
-            "OTIF": 614,
+            "ORDENES": 700,
+            "A_TPO_EMP": 695,
+            "A_TPO_COU": 614,
+            "OTIF": 611,
             "NS_EMP_PCT": 0.9929,
-            "NS_COU_PCT": 0.8777,
-            "OTIF_PCT": 0.8734
+            "NS_COU_PCT": 0.8771,
+            "OTIF_PCT": 0.8729
           },
           {
             "CLIENTE": "DUTY TRAVEL",
@@ -6382,85 +6404,85 @@
           },
           {
             "CLIENTE": "TOTAL",
-            "ORDENES": 7077,
-            "A_TPO_EMP": 6841,
-            "NS_EMP_PCT": 0.9666525363854741,
-            "A_TPO_COU": 6636,
-            "NS_COU_PCT": 0.9376854599406528,
-            "OTIF": 6547,
-            "OTIF_PCT": 0.9251095096792427
+            "ORDENES": 7074,
+            "A_TPO_EMP": 6838,
+            "NS_EMP_PCT": 0.9666383941193102,
+            "A_TPO_COU": 6633,
+            "NS_COU_PCT": 0.9376590330788804,
+            "OTIF": 6544,
+            "OTIF_PCT": 0.9250777495052305
           }
         ],
         "pareto_quiebres": [
           {
-            "SKU": "Pack84",
-            "monto": 8394957983,
+            "SKU": "Pack330",
+            "monto": 69739.0,
             "n_ordenes": 1,
-            "pct": 0.23361225820410364,
-            "pct_acumulado": 0.23361225820410364
-          },
-          {
-            "SKU": "MPM00073182470-1",
-            "monto": 8394957983,
-            "n_ordenes": 1,
-            "pct": 0.23361225820410364,
-            "pct_acumulado": 0.4672245164082073
-          },
-          {
-            "SKU": "SD06000060621",
-            "monto": 8394957983,
-            "n_ordenes": 1,
-            "pct": 0.23361225820410364,
-            "pct_acumulado": 0.700836774612311
+            "pct": 0.2554681783857811,
+            "pct_acumulado": 0.2554681783857811
           },
           {
             "SKU": "3950173",
-            "monto": 4871428572,
+            "monto": 48714.28572,
             "n_ordenes": 2,
-            "pct": 0.13556058668660903,
-            "pct_acumulado": 0.83639736129892
-          },
-          {
-            "SKU": "SD06000060712",
-            "monto": 3358823530,
-            "n_ordenes": 2,
-            "pct": 0.09346828791059344,
-            "pct_acumulado": 0.9298656492095134
-          },
-          {
-            "SKU": "27722",
-            "monto": 2520168067,
-            "n_ordenes": 1,
-            "pct": 0.07013044667739354,
-            "pct_acumulado": 0.999996095886907
-          },
-          {
-            "SKU": "Pack330",
-            "monto": 69739,
-            "n_ordenes": 1,
-            "pct": 1.940675022780038e-06,
-            "pct_acumulado": 0.9999980365619298
+            "pct": 0.17845036255542623,
+            "pct_acumulado": 0.43391854094120735
           },
           {
             "SKU": "LHSWFLOPK",
-            "monto": 40329,
+            "monto": 40329.0,
             "n_ordenes": 1,
-            "pct": 1.1222627653636579e-06,
-            "pct_acumulado": 0.9999991588246951
+            "pct": 0.14773335101048432,
+            "pct_acumulado": 0.5816518919516916
+          },
+          {
+            "SKU": "SD06000060712",
+            "monto": 33588.2353,
+            "n_ordenes": 2,
+            "pct": 0.12304055531745495,
+            "pct_acumulado": 0.7046924472691466
+          },
+          {
+            "SKU": "27722",
+            "monto": 25201.68067,
+            "n_ordenes": 1,
+            "pct": 0.09231889549642312,
+            "pct_acumulado": 0.7970113427655697
           },
           {
             "SKU": "1657222641841",
-            "monto": 25194,
+            "monto": 25194.0,
             "n_ordenes": 1,
-            "pct": 7.010907314977311e-07,
-            "pct_acumulado": 0.9999998599154266
+            "pct": 0.09229075963594788,
+            "pct_acumulado": 0.8893021024015176
+          },
+          {
+            "SKU": "Pack84",
+            "monto": 8394.957983,
+            "n_ordenes": 1,
+            "pct": 0.030752443016707744,
+            "pct_acumulado": 0.9200545454182254
+          },
+          {
+            "SKU": "MPM00073182470-1",
+            "monto": 8394.957983,
+            "n_ordenes": 1,
+            "pct": 0.030752443016707744,
+            "pct_acumulado": 0.9508069884349332
+          },
+          {
+            "SKU": "SD06000060621",
+            "monto": 8394.957983,
+            "n_ordenes": 1,
+            "pct": 0.030752443016707744,
+            "pct_acumulado": 0.9815594314516409
           },
           {
             "SKU": "72662",
-            "monto": 5034,
+            "monto": 5034.0,
             "n_ordenes": 1,
-            "pct": 1.4008457340476217e-07,
-            "pct_acumulado": 1.0
+            "pct": 0.0184405685483592,
+            "pct_acumulado": 1.0000000000000002
           }
         ],
         "opciones_filtros": {
@@ -6533,8 +6555,8 @@
         },
         "resumen": {
           "n_ordenes": 6818,
-          "cancelacion_clp": 350128212988.0,
-          "quiebre_clp": 54926213191.0,
+          "cancelacion_clp": 3126580.579966,
+          "quiebre_clp": 576044.310967,
           "n_canceladas": 116,
           "n_quiebres": 29,
           "ns_empresa_pct": 0.9725726019360517,
@@ -6668,109 +6690,109 @@
         ],
         "pareto_quiebres": [
           {
-            "SKU": "LHCAMACXPL",
-            "monto": 10082352942,
-            "n_ordenes": 2,
-            "pct": 0.18356177053276368,
-            "pct_acumulado": 0.18356177053276368
-          },
-          {
             "SKU": "LHNECKHUM-BK",
-            "monto": 9824380666,
+            "monto": 109159.6975,
             "n_ordenes": 9,
-            "pct": 0.17886506451549414,
-            "pct_acumulado": 0.3624268350482578
+            "pct": 0.18949878580825605,
+            "pct_acumulado": 0.18949878580825605
           },
           {
-            "SKU": "LHTOAMIC-BL",
-            "monto": 8394957983,
-            "n_ordenes": 1,
-            "pct": 0.1528406473937578,
-            "pct_acumulado": 0.5152674824420156
+            "SKU": "LHCAMACXPL",
+            "monto": 100823.52942,
+            "n_ordenes": 2,
+            "pct": 0.17502738504742546,
+            "pct_acumulado": 0.3645261708556815
           },
           {
             "SKU": "LHMALEXPBK-90",
-            "monto": 7562184874,
+            "monto": 75621.84874,
             "n_ordenes": 1,
-            "pct": 0.1376789775712976,
-            "pct_acumulado": 0.6529464600133132
+            "pct": 0.13127783279910243,
+            "pct_acumulado": 0.49580400365478394
           },
           {
             "SKU": "1571423280815",
-            "monto": 6721848739,
+            "monto": 67218.48739,
             "n_ordenes": 1,
-            "pct": 0.12237961345752153,
-            "pct_acumulado": 0.7753260734708348
-          },
-          {
-            "SKU": "137438G",
-            "monto": 6714285714,
-            "n_ordenes": 1,
-            "pct": 0.12224191918441188,
-            "pct_acumulado": 0.8975679926552467
-          },
-          {
-            "SKU": "LVMPADXXL-BK",
-            "monto": 4366386556,
-            "n_ordenes": 4,
-            "pct": 0.07949549590859942,
-            "pct_acumulado": 0.9770634885638461
-          },
-          {
-            "SKU": "72633",
-            "monto": 1259663866,
-            "n_ordenes": 1,
-            "pct": 0.02293374679990507,
-            "pct_acumulado": 0.9999972353637512
+            "pct": 0.11668978602906599,
+            "pct_acumulado": 0.6124937896838499
           },
           {
             "SKU": "SK3000BK",
-            "monto": 44356,
+            "monto": 44356.0,
             "n_ordenes": 2,
-            "pct": 8.075561270855644e-07,
-            "pct_acumulado": 0.9999980429198783
+            "pct": 0.07700102085122584,
+            "pct_acumulado": 0.6894948105350758
+          },
+          {
+            "SKU": "LVMPADXXL-BK",
+            "monto": 43663.86556,
+            "n_ordenes": 4,
+            "pct": 0.07579949099176396,
+            "pct_acumulado": 0.7652943015268397
           },
           {
             "SKU": "73730",
-            "monto": 33596,
+            "monto": 33596.0,
             "n_ordenes": 2,
-            "pct": 6.116569493544643e-07,
-            "pct_acumulado": 0.9999986545768276
+            "pct": 0.058321902257141844,
+            "pct_acumulado": 0.8236162037839816
           },
           {
             "SKU": "757450527808",
-            "monto": 21000,
+            "monto": 21000.0,
             "n_ordenes": 1,
-            "pct": 3.8233110895474913e-07,
-            "pct_acumulado": 0.9999990369079366
+            "pct": 0.03645552885462491,
+            "pct_acumulado": 0.8600717326386065
           },
           {
             "SKU": "66800469437952",
-            "monto": 16798,
+            "monto": 16798.0,
             "n_ordenes": 1,
-            "pct": 3.0582847467723217e-07,
-            "pct_acumulado": 0.9999993427364112
+            "pct": 0.029160951128570922,
+            "pct_acumulado": 0.8892326837671773
           },
           {
             "SKU": "1659991481176",
-            "monto": 16790,
+            "monto": 16790.0,
             "n_ordenes": 1,
-            "pct": 3.056828247309637e-07,
-            "pct_acumulado": 0.9999996484192359
+            "pct": 0.029147063308054874,
+            "pct_acumulado": 0.9183797470752322
           },
           {
             "SKU": "SIMOREXBAS-WD",
-            "monto": 14277,
+            "monto": 14277.0,
             "n_ordenes": 1,
-            "pct": 2.599305353593787e-07,
-            "pct_acumulado": 0.9999999083497713
+            "pct": 0.024784551688451426,
+            "pct_acumulado": 0.9431642987636836
+          },
+          {
+            "SKU": "72633",
+            "monto": 12596.63866,
+            "n_ordenes": 1,
+            "pct": 0.021867482101948273,
+            "pct_acumulado": 0.9650317808656318
+          },
+          {
+            "SKU": "LHTOAMIC-BL",
+            "monto": 8394.957983,
+            "n_ordenes": 1,
+            "pct": 0.01457345871345811,
+            "pct_acumulado": 0.97960523957909
+          },
+          {
+            "SKU": "137438G",
+            "monto": 6714.285714,
+            "n_ordenes": 1,
+            "pct": 0.011655849361186802,
+            "pct_acumulado": 0.9912610889402768
           },
           {
             "SKU": "72662",
-            "monto": 5034,
+            "monto": 5034.0,
             "n_ordenes": 1,
-            "pct": 9.165022868943844e-08,
-            "pct_acumulado": 1.0
+            "pct": 0.008738911059722944,
+            "pct_acumulado": 0.9999999999999997
           }
         ],
         "opciones_filtros": {
@@ -6831,16 +6853,16 @@
         },
         "resumen": {
           "n_ordenes": 5274,
-          "cancelacion_clp": 498530518388.0,
-          "quiebre_clp": 45272174031.0,
+          "cancelacion_clp": 4998748.311098,
+          "quiebre_clp": 434042.327745,
           "n_canceladas": 171,
           "n_quiebres": 18,
           "ns_empresa_pct": 0.9647326507394767,
-          "ns_courier_pct": 0.9086082669700417,
-          "otif_total_pct": 0.9002654531664771,
+          "ns_courier_pct": 0.9215017064846417,
+          "otif_total_pct": 0.913158892681077,
           "n_empresa_ok": 5088,
-          "n_courier_ok": 4792,
-          "n_otif_ok": 4748
+          "n_courier_ok": 4860,
+          "n_otif_ok": 4816
         },
         "por_cliente": [
           {
@@ -6857,11 +6879,11 @@
             "CLIENTE": "FALABELLA HDC",
             "ORDENES": 917,
             "A_TPO_EMP": 888,
-            "A_TPO_COU": 818,
-            "OTIF": 818,
+            "A_TPO_COU": 885,
+            "OTIF": 885,
             "NS_EMP_PCT": 0.9684,
-            "NS_COU_PCT": 0.892,
-            "OTIF_PCT": 0.892
+            "NS_COU_PCT": 0.9651,
+            "OTIF_PCT": 0.9651
           },
           {
             "CLIENTE": "MERCADO LIBRE C",
@@ -6897,11 +6919,11 @@
             "CLIENTE": "FALABELLA F",
             "ORDENES": 400,
             "A_TPO_EMP": 387,
-            "A_TPO_COU": 372,
-            "OTIF": 370,
+            "A_TPO_COU": 373,
+            "OTIF": 371,
             "NS_EMP_PCT": 0.9675,
-            "NS_COU_PCT": 0.93,
-            "OTIF_PCT": 0.925
+            "NS_COU_PCT": 0.9325,
+            "OTIF_PCT": 0.9275
           },
           {
             "CLIENTE": "KITCHEN CENTER",
@@ -6958,123 +6980,123 @@
             "ORDENES": 5274,
             "A_TPO_EMP": 5088,
             "NS_EMP_PCT": 0.9647326507394767,
-            "A_TPO_COU": 4792,
-            "NS_COU_PCT": 0.9086082669700417,
-            "OTIF": 4748,
-            "OTIF_PCT": 0.9002654531664771
+            "A_TPO_COU": 4860,
+            "NS_COU_PCT": 0.9215017064846417,
+            "OTIF": 4816,
+            "OTIF_PCT": 0.913158892681077
           }
         ],
         "pareto_quiebres": [
           {
-            "SKU": "200200B",
-            "monto": 8467226891,
-            "n_ordenes": 1,
-            "pct": 0.18702938553827986,
-            "pct_acumulado": 0.18702938553827986
-          },
-          {
-            "SKU": "SIMDESSOM",
-            "monto": 8394957983,
-            "n_ordenes": 1,
-            "pct": 0.1854330648502008,
-            "pct_acumulado": 0.3724624503884807
-          },
-          {
             "SKU": "Pack330",
-            "monto": 5648655462,
+            "monto": 56486.55462,
             "n_ordenes": 1,
-            "pct": 0.12477102288333002,
-            "pct_acumulado": 0.4972334732718107
+            "pct": 0.13014065912296433,
+            "pct_acumulado": 0.13014065912296433
           },
           {
             "SKU": "TD10000010708",
-            "monto": 5545378151,
+            "monto": 55453.78151,
             "n_ordenes": 1,
-            "pct": 0.12248976926097734,
-            "pct_acumulado": 0.6197232425327881
+            "pct": 0.12776122964343495,
+            "pct_acumulado": 0.2579018887663993
           },
           {
             "SKU": "1571423280815",
-            "monto": 5041176471,
+            "monto": 50411.76471,
             "n_ordenes": 1,
-            "pct": 0.11135264826354635,
-            "pct_acumulado": 0.7310758907963344
-          },
-          {
-            "SKU": "1610816087324",
-            "monto": 4193277311,
-            "n_ordenes": 1,
-            "pct": 0.09262372308713658,
-            "pct_acumulado": 0.823699613883471
-          },
-          {
-            "SKU": "PACK255",
-            "monto": 3947058824,
-            "n_ordenes": 1,
-            "pct": 0.08718509566819703,
-            "pct_acumulado": 0.910884709551668
+            "pct": 0.11614481235483773,
+            "pct_acumulado": 0.37404670112123706
           },
           {
             "SKU": "LHSHNUCO-GR",
-            "monto": 2203383580,
+            "monto": 44268.61345,
             "n_ordenes": 3,
-            "pct": 0.04866970997441473,
-            "pct_acumulado": 0.9595544195260828
-          },
-          {
-            "SKU": "1659990807310",
-            "monto": 1679831933,
-            "n_ordenes": 1,
-            "pct": 0.037105174844259514,
-            "pct_acumulado": 0.9966595943703422
-          },
-          {
-            "SKU": "6902221326232",
-            "monto": 151092437,
-            "n_ordenes": 1,
-            "pct": 0.0033374239305702406,
-            "pct_acumulado": 0.9999970183009125
+            "pct": 0.10199146631617878,
+            "pct_acumulado": 0.47603816743741584
           },
           {
             "SKU": "Pack397",
-            "monto": 39487,
+            "monto": 39487.0,
             "n_ordenes": 1,
-            "pct": 8.722134698669735e-07,
-            "pct_acumulado": 0.9999978905143824
+            "pct": 0.09097499823380964,
+            "pct_acumulado": 0.5670131656712255
+          },
+          {
+            "SKU": "PACK255",
+            "monto": 39470.58824,
+            "n_ordenes": 1,
+            "pct": 0.09093718680632681,
+            "pct_acumulado": 0.6579503524775523
           },
           {
             "SKU": "73678",
-            "monto": 38391,
+            "monto": 38391.0,
             "n_ordenes": 1,
-            "pct": 8.480043386852123e-07,
-            "pct_acumulado": 0.999998738518721
+            "pct": 0.0884498988830295,
+            "pct_acumulado": 0.7464002513605817
           },
           {
             "SKU": "Pack255",
-            "monto": 22681,
+            "monto": 22681.0,
             "n_ordenes": 1,
-            "pct": 5.009920659977417e-07,
-            "pct_acumulado": 0.999999239510787
+            "pct": 0.05225527224000396,
+            "pct_acumulado": 0.7986555236005857
           },
           {
             "SKU": "LHMOBI001-BL",
-            "monto": 21000,
+            "monto": 21000.0,
             "n_ordenes": 1,
-            "pct": 4.6386109016148213e-07,
-            "pct_acumulado": 0.9999997033718772
+            "pct": 0.04838237807151727,
+            "pct_acumulado": 0.8470379016721029
+          },
+          {
+            "SKU": "1659990807310",
+            "monto": 16798.31933,
+            "n_ordenes": 1,
+            "pct": 0.03870203032333984,
+            "pct_acumulado": 0.8857399319954428
+          },
+          {
+            "SKU": "6902221326232",
+            "monto": 15109.2437,
+            "n_ordenes": 1,
+            "pct": 0.03481053052705193,
+            "pct_acumulado": 0.9205504625224947
+          },
+          {
+            "SKU": "200200B",
+            "monto": 8467.226891,
+            "n_ordenes": 1,
+            "pct": 0.019507836793222846,
+            "pct_acumulado": 0.9400582993157176
+          },
+          {
+            "SKU": "SIMDESSOM",
+            "monto": 8394.957983,
+            "n_ordenes": 1,
+            "pct": 0.019341334810857525,
+            "pct_acumulado": 0.9593996341265751
           },
           {
             "SKU": "1660858101318",
-            "monto": 7555,
+            "monto": 7555.0,
             "n_ordenes": 1,
-            "pct": 1.6687954934142845e-07,
-            "pct_acumulado": 0.9999998702514264
+            "pct": 0.017406136491919664,
+            "pct_acumulado": 0.9768057706184948
           },
           {
             "SKU": "7500021502",
-            "monto": 5874,
+            "monto": 5874.0,
             "n_ordenes": 1,
-            "pct": 1.2974857350516885e-07,
+            "pct": 0.013533242323432972,
+            "pct_acumulado": 0.9903390129419278
+          },
+          {
+            "SKU": "1610816087324",
+            "monto": 4193.277311,
+            "n_ordenes": 1,
+            "pct": 0.009660987058072251,
             "pct_acumulado": 1.0
           }
         ],
@@ -7193,7 +7215,7 @@
         "error": null
       }
     },
-    "generado_en": "2026-05-11T14:09:37.420140"
+    "generado_en": "2026-05-11T15:23:51.210249"
   },
-  "otif_drive_actualizado": "2026-05-11T14:09:39.389341"
+  "otif_drive_actualizado": "2026-05-11T15:23:53.269273"
 }

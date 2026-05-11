@@ -342,12 +342,34 @@ def dashboard_otif_corte(corte_key: str, courier: str = None,
     n_total = int(f["otif_total"].sum())
 
     # $ Cancelación y $ Quiebre
+    # IMPORTANTE: el Sheet usa formato chileno (coma como decimal, ej: "6705,88")
+    # NO confundir con formato USA (coma como miles).
+    def _parse_clp(serie):
+        """Parsea montos CLP estilo chileno: '1.234,56' o '6705,88' o '8395'."""
+        s = serie.astype(str).str.strip().str.replace("$", "", regex=False).str.replace(" ", "", regex=False)
+        # Si tiene punto Y coma → formato chileno completo (punto=miles, coma=decimal)
+        # Si solo coma → coma es decimal
+        # Si solo punto → asumir decimal (raro)
+        # Si ninguno → entero
+        def _conv(v):
+            if not v or v == "nan":
+                return 0
+            if "." in v and "," in v:
+                # Chileno: 1.234,56 → 1234.56
+                v = v.replace(".", "").replace(",", ".")
+            elif "," in v:
+                # Coma decimal: 6705,88 → 6705.88
+                v = v.replace(",", ".")
+            try:
+                return float(v)
+            except Exception:
+                return 0
+        return s.apply(_conv)
+
     canc_col = next((c for c in f.columns if "CANCELACI" in c.upper()), None)
     quie_col = next((c for c in f.columns if "QUIEBRE" in c.upper()), None)
-    canc_serie = pd.to_numeric(f[canc_col].astype(str).str.replace("[$,. ]", "", regex=True),
-                                errors="coerce").fillna(0) if canc_col else pd.Series([0])
-    quie_serie = pd.to_numeric(f[quie_col].astype(str).str.replace("[$,. ]", "", regex=True),
-                                errors="coerce").fillna(0) if quie_col else pd.Series([0])
+    canc_serie = _parse_clp(f[canc_col]) if canc_col else pd.Series([0])
+    quie_serie = _parse_clp(f[quie_col]) if quie_col else pd.Series([0])
     canc_clp = float(canc_serie.sum())
     quie_clp = float(quie_serie.sum())
     n_canc = int((canc_serie > 0).sum())
@@ -394,10 +416,7 @@ def dashboard_otif_corte(corte_key: str, courier: str = None,
     if sku_col and quie_col:
         f_quie = f[quie_serie > 0].copy()
         if not f_quie.empty:
-            f_quie["quiebre_num"] = pd.to_numeric(
-                f_quie[quie_col].astype(str).str.replace("[$,. ]", "", regex=True),
-                errors="coerce"
-            ).fillna(0)
+            f_quie["quiebre_num"] = _parse_clp(f_quie[quie_col])
             pareto_g = f_quie.groupby(sku_col).agg(
                 monto=("quiebre_num", "sum"),
                 n_ordenes=("ORDEN", "count"),

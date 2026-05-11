@@ -487,21 +487,59 @@ def render():
             from views._ops_kpis_snapshot import cargar_snapshot as _cs_otif
             snap_otif_data = _cs_otif().get("otif_drive", {})
 
-            # Selector de corte (formato 26-25 estilo Apps Script)
+            # Selector AÑO + MES con comparativo año a año
             cortes_data = snap_otif_data.get("cortes_disponibles", [])
             if cortes_data and snap_otif_data.get("dashboard_por_corte"):
-                col_modo, col_periodo, _ = st.columns([1, 1, 2])
-                with col_modo:
-                    st.markdown("**MODO DE FECHA**")
-                    st.selectbox("modo", ["Corte OTIF (26-25) por fecha"],
-                                 index=0, key="otif_modo", label_visibility="collapsed")
-                with col_periodo:
-                    st.markdown("**PERIODO**")
-                    corte_keys = [c["key"] for c in cortes_data]
-                    corte_labels = {c["key"]: c["label"] for c in cortes_data}
-                    corte_sel = st.selectbox("corte", corte_keys, index=0,
-                                              format_func=lambda k: corte_labels.get(k, k),
-                                              key="otif_corte_sel", label_visibility="collapsed")
+                # Construir mapa año → meses disponibles
+                anios_meses = {}
+                for c in cortes_data:
+                    a, m = c["anio"], c["mes"]
+                    anios_meses.setdefault(a, []).append((m, c["key"], c["label"]))
+                anios_disp = sorted(anios_meses.keys(), reverse=True)
+                nombres_mes = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                               "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
+                col_anio, col_mes, col_comp = st.columns([1, 1, 1])
+                with col_anio:
+                    st.markdown("**AÑO**")
+                    anio_sel = st.selectbox("anio", anios_disp, index=0,
+                                              key="otif_anio", label_visibility="collapsed")
+                with col_mes:
+                    st.markdown("**MES**")
+                    meses_anio = sorted(anios_meses.get(anio_sel, []), key=lambda x: x[0], reverse=True)
+                    if meses_anio:
+                        mes_keys = [k for (m, k, _) in meses_anio]
+                        mes_labels = {k: f"{nombres_mes[m-1]} {anio_sel}" for (m, k, _) in meses_anio}
+                        corte_sel = st.selectbox("mes", mes_keys, index=0,
+                                                  format_func=lambda k: mes_labels.get(k, k),
+                                                  key="otif_mes_sel", label_visibility="collapsed")
+                        # Construir clave del año anterior mismo mes (para comparativo)
+                        mes_num = next((m for (m, k, _) in meses_anio if k == corte_sel), None)
+                    else:
+                        st.warning("Sin meses para este año")
+                        corte_sel = None
+                        mes_num = None
+                with col_comp:
+                    st.markdown("**COMPARAR CON**")
+                    opciones_comp = ["(Sin comparativo)"]
+                    if mes_num:
+                        # Buscar mismo mes en años anteriores
+                        for a in anios_disp:
+                            if a >= anio_sel:
+                                continue
+                            for (m, k, _) in anios_meses.get(a, []):
+                                if m == mes_num:
+                                    opciones_comp.append(f"{nombres_mes[m-1]} {a}")
+                    comp_sel_label = st.selectbox("comp", opciones_comp, index=0,
+                                                   key="otif_comp", label_visibility="collapsed")
+                    # Resolver clave del comparativo
+                    comp_key = None
+                    if comp_sel_label != "(Sin comparativo)" and mes_num:
+                        try:
+                            anio_comp = int(comp_sel_label.split()[-1])
+                            comp_key = f"{anio_comp}-{mes_num:02d}"
+                        except Exception:
+                            comp_key = None
 
                 dash = snap_otif_data.get("dashboard_por_corte", {}).get(corte_sel, {})
                 if not dash or dash.get("error"):
@@ -531,60 +569,100 @@ def render():
 
                     r = dash.get("resumen", {})
                     corte_info = dash.get("corte", {})
+                    # Resolver comparativo
+                    r_comp = None
+                    if comp_key:
+                        dash_comp = snap_otif_data.get("dashboard_por_corte", {}).get(comp_key, {})
+                        r_comp = dash_comp.get("resumen", {}) if dash_comp else None
                     st.caption(f"Periodo: **{corte_info.get('label', '')}** · "
                                f"**{r.get('n_ordenes', 0):,} órdenes** · "
                                f"Snapshot: {snap_otif_data.get('generado_en', '')[:16]}")
 
-                    # ── 5 KPI CARDS principales (estilo Apps Script) ─────
+                    # Helper: formato CLP chileno: $1.234.567 (sin abreviar)
+                    def _clp(v):
+                        try:
+                            return f"${v:,.0f}".replace(",", ".")
+                        except Exception:
+                            return f"${v}"
+
+                    # Helper: delta vs comparativo (formato breve)
+                    def _delta_pct(actual, comp):
+                        if comp is None or comp == 0:
+                            return None
+                        diff_pct = (actual - comp) / comp * 100
+                        return f"{diff_pct:+.1f}% vs comp."
+
+                    def _delta_pp(actual, comp):
+                        """Delta en puntos porcentuales para %s."""
+                        if comp is None:
+                            return None
+                        return f"{(actual - comp)*100:+.1f} pp vs comp."
+
+                    # ── 5 KPI CARDS principales (formato CLP completo) ────
                     k1, k2, k3, k4, k5 = st.columns(5)
 
                     canc_clp = r.get("cancelacion_clp", 0)
+                    canc_comp = (r_comp or {}).get("cancelacion_clp")
+                    canc_delta = _delta_pct(canc_clp, canc_comp) if canc_comp else ""
                     k1.markdown(f"""
                         <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
-                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">$ CANCELACIÓN</div>
-                          <div style="color:#ef4444;font-size:1.6rem;font-weight:700;line-height:1.3;">${canc_clp/1e6:,.1f}M</div>
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">$ CANCELACIÓN (TOTAL CLP)</div>
+                          <div style="color:#ef4444;font-size:1.5rem;font-weight:700;line-height:1.3;">{_clp(canc_clp)}</div>
                           <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_canceladas', 0)} órdenes afectadas</div>
-                          <div style="height:3px;background:#ef4444;border-radius:2px;margin-top:6px;"></div>
+                          <div style="color:#94a3b8;font-size:0.7rem;font-style:italic;">{canc_delta}</div>
+                          <div style="height:3px;background:#ef4444;border-radius:2px;margin-top:4px;"></div>
                         </div>
                     """, unsafe_allow_html=True)
 
                     quie_clp = r.get("quiebre_clp", 0)
+                    quie_comp = (r_comp or {}).get("quiebre_clp")
+                    quie_delta = _delta_pct(quie_clp, quie_comp) if quie_comp else ""
                     k2.markdown(f"""
                         <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
-                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">$ QUIEBRE</div>
-                          <div style="color:#eab308;font-size:1.6rem;font-weight:700;line-height:1.3;">${quie_clp/1e6:,.1f}M</div>
+                          <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">$ QUIEBRE (TOTAL CLP)</div>
+                          <div style="color:#eab308;font-size:1.5rem;font-weight:700;line-height:1.3;">{_clp(quie_clp)}</div>
                           <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_quiebres', 0)} órdenes afectadas</div>
-                          <div style="height:3px;background:#eab308;border-radius:2px;margin-top:6px;"></div>
+                          <div style="color:#94a3b8;font-size:0.7rem;font-style:italic;">{quie_delta}</div>
+                          <div style="height:3px;background:#eab308;border-radius:2px;margin-top:4px;"></div>
                         </div>
                     """, unsafe_allow_html=True)
 
                     ns_e = r.get("ns_empresa_pct") or 0
+                    ns_e_comp = (r_comp or {}).get("ns_empresa_pct")
+                    ns_e_delta = _delta_pp(ns_e, ns_e_comp) if ns_e_comp is not None else ""
                     k3.markdown(f"""
                         <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
                           <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">NS EMPRESA</div>
                           <div style="color:#22c55e;font-size:1.6rem;font-weight:700;line-height:1.3;">{ns_e*100:.1f}%</div>
                           <div style="color:#94a3b8;font-size:0.75rem;">Entregas a tiempo al courier</div>
-                          <div style="height:3px;background:#22c55e;border-radius:2px;margin-top:6px;width:{min(100, ns_e*100):.0f}%;"></div>
+                          <div style="color:#94a3b8;font-size:0.7rem;font-style:italic;">{ns_e_delta}</div>
+                          <div style="height:3px;background:#22c55e;border-radius:2px;margin-top:4px;width:{min(100, ns_e*100):.0f}%;"></div>
                         </div>
                     """, unsafe_allow_html=True)
 
                     ns_c = r.get("ns_courier_pct") or 0
+                    ns_c_comp = (r_comp or {}).get("ns_courier_pct")
+                    ns_c_delta = _delta_pp(ns_c, ns_c_comp) if ns_c_comp is not None else ""
                     k4.markdown(f"""
                         <div style="background:#1e293b;border-radius:8px;padding:12px;border:1px solid #334155;height:100%;">
                           <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">NS COURIER</div>
                           <div style="color:#22c55e;font-size:1.6rem;font-weight:700;line-height:1.3;">{ns_c*100:.1f}%</div>
                           <div style="color:#94a3b8;font-size:0.75rem;">Entregas a tiempo al cliente</div>
-                          <div style="height:3px;background:#22c55e;border-radius:2px;margin-top:6px;width:{min(100, ns_c*100):.0f}%;"></div>
+                          <div style="color:#94a3b8;font-size:0.7rem;font-style:italic;">{ns_c_delta}</div>
+                          <div style="height:3px;background:#22c55e;border-radius:2px;margin-top:4px;width:{min(100, ns_c*100):.0f}%;"></div>
                         </div>
                     """, unsafe_allow_html=True)
 
                     otif_t = r.get("otif_total_pct") or 0
+                    otif_t_comp = (r_comp or {}).get("otif_total_pct")
+                    otif_t_delta = _delta_pp(otif_t, otif_t_comp) if otif_t_comp is not None else ""
                     k5.markdown(f"""
                         <div style="background:#1e293b;border-radius:8px;padding:12px;border:2px solid #8b5cf6;height:100%;">
                           <div style="color:#94a3b8;font-size:0.7rem;letter-spacing:0.5px;">OTIF TOTAL</div>
                           <div style="color:#8b5cf6;font-size:1.6rem;font-weight:700;line-height:1.3;">{otif_t*100:.1f}%</div>
-                          <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_ordenes', 0)} órdenes - {r.get('n_otif_ok', 0)} OTIF</div>
-                          <div style="height:3px;background:#8b5cf6;border-radius:2px;margin-top:6px;width:{min(100, otif_t*100):.0f}%;"></div>
+                          <div style="color:#94a3b8;font-size:0.75rem;">{r.get('n_ordenes', 0)} órd / {r.get('n_otif_ok', 0)} OTIF</div>
+                          <div style="color:#94a3b8;font-size:0.7rem;font-style:italic;">{otif_t_delta}</div>
+                          <div style="height:3px;background:#8b5cf6;border-radius:2px;margin-top:4px;width:{min(100, otif_t*100):.0f}%;"></div>
                         </div>
                     """, unsafe_allow_html=True)
 
