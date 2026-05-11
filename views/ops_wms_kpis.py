@@ -254,18 +254,15 @@ def render():
             from views._ops_kpis_snapshot import snapshot_status
             ss_st = snapshot_status()
 
-            if ss_st["existe"] and ss_st["fresco"]:
-                st.success(f"📸 {ss_st['leyenda']}")
-            elif ss_st["existe"]:
-                st.warning(
-                    f"📸 {ss_st['leyenda']} · Consultando Odoo en vivo "
-                    "(próx. actualización automática 00:00 / 12:00 Chile)"
-                )
+            # Banner: siempre mostrar última info disponible (sin alarma si es viejo)
+            if ss_st["existe"]:
+                edad = ss_st.get("edad_horas", 0)
+                if edad <= 26:
+                    st.success(f"📸 Datos al {ss_st['generado_en'][:16]} · {edad:.0f}h atrás (próxima actualización auto: 00:00 Chile)")
+                else:
+                    st.info(f"📸 Última actualización: {ss_st['generado_en'][:16]} · {edad:.0f}h atrás (snapshot del día anterior — datos en vivo se regeneran 00:00 Chile)")
             else:
-                st.warning(
-                    "📸 Sin snapshot — consultando Odoo en vivo. Próx. actualización "
-                    "automática a las 00:00 o 12:00 Chile."
-                )
+                st.info("📸 Generando primer snapshot…")
 
             # Botón sutil para forzar bypass de cache (solo si necesario)
             with st.expander("🔄 Forzar refresh ahora (limpiar cache 12h)", expanded=False):
@@ -273,15 +270,9 @@ def render():
                     st.cache_data.clear()
                     st.rerun()
 
-            # SNAPSHOT ONLY — la app NUNCA consulta Odoo en runtime
-            if not (ss_st["existe"] and ss_st["fresco"]):
-                st.warning(
-                    "📸 **Snapshot pendiente.** Los KPIs se generan automáticamente "
-                    "a las 00:00 y 12:00 Chile via GH Action `sync_kpis_wms.yml`. "
-                    "Si necesitás datos ahora, dispará el workflow manualmente desde GitHub."
-                )
-            else:
-                # Modo snapshot: lectura instantánea del JSON pre-calculado
+            # SIEMPRE renderizar con la última info disponible del snapshot
+            if ss_st["existe"]:
+                # Modo snapshot: lectura instantánea del JSON
                 from views._ops_kpis_snapshot import cargar_snapshot
                 snap = cargar_snapshot()
                 kpis = snap.get("kpis", {})
@@ -503,23 +494,17 @@ def render():
             with col_period:
                 dias_otif = st.selectbox("Ventana", [7, 14, 30, 60, 90], index=2, key="otif_dias")
 
-            if ss_otif["existe"] and ss_otif["fresco"]:
+            if ss_otif["existe"]:
                 with col_period2:
                     st.success(f"📸 {ss_otif['leyenda']}")
 
             # Estrategia: snapshot si existe (instantáneo) → fallback Odoo en vivo
             # con cache 12h (no se cuelga, no pide click)
-            usar_snap_otif = ss_otif["existe"] and ss_otif["fresco"]
+            usar_snap_otif = ss_otif["existe"]
 
-            # SNAPSHOT ONLY — no consulta Odoo en runtime
-            if usar_snap_otif:
-                otif_b2c_t = _gov("b2c", dias_otif) or {"error": "Ventana no en snapshot"}
-                otif_b2b_t = _gov("b2b", dias_otif) or {"error": "Ventana no en snapshot"}
-            else:
-                with col_period2:
-                    st.warning("📸 Snapshot pendiente. Próx. actualización automática 00:00 / 12:00 Chile.")
-                otif_b2c_t = {"error": "Esperando primer snapshot"}
-                otif_b2b_t = {"error": "Esperando primer snapshot"}
+            # Siempre mostrar última info disponible del snapshot
+            otif_b2c_t = _gov("b2c", dias_otif) or snap_otif.get("kpis", {}).get("otif_b2c_30d", {})
+            otif_b2b_t = _gov("b2b", dias_otif) or snap_otif.get("kpis", {}).get("otif_b2b_30d", {})
 
             st.markdown("#### B2C (clientes finales)")
             if otif_b2c_t.get("error"):
@@ -588,32 +573,28 @@ def render():
                 dias_p = st.selectbox("Ventana", [7, 14, 30, 60, 90], index=2, key="pick_dias")
 
             # Banner del snapshot
-            if ss_pick["existe"] and ss_pick["fresco"]:
+            if ss_pick["existe"]:
                 with col_p2:
                     st.success(f"📸 {ss_pick['leyenda']} — datos instantáneos")
 
             # Estrategia: snapshot 30d (instantáneo) → fallback Odoo en vivo (cache 12h)
             usar_snapshot_pick = (
-                ss_pick["existe"] and ss_pick["fresco"] and dias_p == 30
+                ss_pick["existe"] and dias_p == 30
             )
 
-            # SNAPSHOT ONLY — la app NO consulta Odoo en runtime
-            if usar_snapshot_pick:
-                pick_acc_t = snap_pick.get("kpis", {}).get("pick_accuracy_30d", {"error": "Sin datos en snapshot"})
-                ofr_t = snap_pick.get("kpis", {}).get("ofr_30d", {"error": "Sin datos en snapshot"})
-                oct_t = snap_pick.get("kpis", {}).get("oct_30d", {"error": "Sin datos en snapshot"})
-            elif dias_p != 30:
+            # Siempre mostrar snapshot (aunque sea viejo). Si la ventana
+            # específica está en pick_ventanas, usarla. Si no, usar 30d default.
+            kpis_snap = snap_pick.get("kpis", {}) if snap_pick else {}
+            pick_ventanas_snap = snap_pick.get("pick_ventanas", {}) if snap_pick else {}
+
+            # Pick Accuracy: usar la ventana exacta si existe en snapshot
+            pick_acc_t = pick_ventanas_snap.get(f"{dias_p}d") or kpis_snap.get("pick_accuracy_30d", {})
+            # OFR y OCT solo se calculan para 30d en el snapshot
+            ofr_t = kpis_snap.get("ofr_30d", {})
+            oct_t = kpis_snap.get("oct_30d", {})
+            if dias_p != 30 and (not ofr_t or not oct_t):
                 with col_p2:
-                    st.info(f"ℹ️ Snapshot solo tiene ventana 30d. Cambiá filtro a 30d.")
-                pick_acc_t = {"error": "Ventana no en snapshot"}
-                ofr_t = {"error": "Ventana no en snapshot"}
-                oct_t = {"error": "Ventana no en snapshot"}
-            else:
-                with col_p2:
-                    st.warning("📸 Snapshot pendiente. Próx. actualización automática 00:00 / 12:00 Chile.")
-                pick_acc_t = {"error": "Esperando primer snapshot"}
-                ofr_t = {"error": "Esperando primer snapshot"}
-                oct_t = {"error": "Esperando primer snapshot"}
+                    st.caption(f"ℹ️ OFR/OCT mostrados son siempre 30d (snapshot)")
 
             # Pick Accuracy
             st.markdown("#### Pick Accuracy")
@@ -926,19 +907,14 @@ def render():
             with col_r:
                 dias_r = st.selectbox("Ventana", [30, 60, 90, 180, 365], index=2, key="rec_dias")
 
-            if ss_rec["existe"] and ss_rec["fresco"]:
+            if ss_rec["existe"]:
                 with col_r2:
                     st.success(f"📸 {ss_rec['leyenda']}")
 
-            usar_snap_rec = ss_rec["existe"] and ss_rec["fresco"]
+            usar_snap_rec = ss_rec["existe"]
 
-            # SNAPSHOT ONLY
-            if usar_snap_rec:
-                rec = _grv(dias_r) or {"error": "Ventana no en snapshot"}
-            else:
-                with col_r2:
-                    st.warning("📸 Snapshot pendiente. Próx. actualización automática 00:00 / 12:00 Chile.")
-                rec = {"error": "Esperando primer snapshot"}
+            # Siempre mostrar la última info disponible del snapshot
+            rec = _grv(dias_r) or snap_rec.get("kpis", {}).get("tiempo_recepcion_90d", {})
 
             if rec.get("error"):
                 st.warning(rec["error"])
@@ -957,11 +933,8 @@ def render():
 
             st.divider()
 
-            # Volumen movs: SNAPSHOT ONLY (90d)
-            if usar_snap_rec and dias_r == 90:
-                vol = snap_rec.get("kpis", {}).get("volumen_movs_90d", {"error": "Sin datos"})
-            else:
-                vol = {"error": "Solo disponible para ventana 90d en snapshot"}
+            # Volumen movs: siempre del snapshot (90d)
+            vol = snap_rec.get("kpis", {}).get("volumen_movs_90d", {})
             st.markdown("### 📊 Volumen movimientos por tipo")
             if vol.get("error"):
                 st.warning(vol["error"])

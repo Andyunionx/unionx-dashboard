@@ -18,8 +18,9 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT_FILE = PROJECT_ROOT / "data" / "kpis_wms" / "snapshot.json"
 
-# Snapshot considerado "fresco" si tiene menos de 14h (margen para 2x/día)
-MAX_AGE_HOURS = 14
+# Snapshot considerado "fresco" si tiene menos de 26h (margen para 1x/día)
+# IMPORTANTE: aunque sea viejo, SIEMPRE se muestra. Solo cambia el banner color.
+MAX_AGE_HOURS = 26
 
 
 @st.cache_data(ttl=300, show_spinner=False)
