@@ -37,6 +37,51 @@ OUT_DIR = PROJECT_ROOT / 'data' / 'comex'
 OUT_PARQUET = OUT_DIR / 'dimensiones_skus.parquet'
 OUT_RESUMEN = OUT_DIR / 'dimensiones_resumen.json'
 
+# === MAESTRA MANUAL DE CAJAS MASTER (override) ============================
+# Cuando Andrés tenga el archivo maestro de unidades por caja master, se
+# subscribe en una de estas dos rutas y este extractor lo usa como OVERRIDE
+# por encima de Odoo `product.packaging`. Si no existe, se usa solo Odoo.
+#
+# Formato JSON:  data/comex/maestra_cajas_master.json
+#   { "SKU-001": {"qty_caja_master": 24, "m3_caja_master": 0.045, "kg_caja_master": 12.5},
+#     "SKU-002": {"qty_caja_master": 12, "m3_caja_master": 0.030, "kg_caja_master": 8.0} }
+#
+# Formato Excel: data/comex/maestra_cajas_master.xlsx
+#   Hoja con columnas: SKU | qty_caja_master | m3_caja_master | kg_caja_master
+#   (los campos m3 y kg son opcionales; si vienen, OVERRIDE peso/volumen Odoo)
+MAESTRA_JSON = OUT_DIR / 'maestra_cajas_master.json'
+MAESTRA_XLSX = OUT_DIR / 'maestra_cajas_master.xlsx'
+
+
+def _cargar_maestra_manual() -> dict:
+    """Lee la maestra manual de cajas master si existe. JSON tiene prioridad."""
+    if MAESTRA_JSON.exists():
+        try:
+            with open(MAESTRA_JSON, encoding='utf-8') as f:
+                data = json.load(f)
+            # normalizar claves a string upper
+            return {str(k).strip().upper(): v for k, v in data.items()}
+        except Exception as e:
+            print(f"  WARN: no se pudo leer {MAESTRA_JSON}: {e}", flush=True)
+    if MAESTRA_XLSX.exists():
+        try:
+            df = pd.read_excel(MAESTRA_XLSX)
+            df.columns = [c.strip() for c in df.columns]
+            data = {}
+            for _, r in df.iterrows():
+                sku = str(r.get('SKU') or '').strip().upper()
+                if not sku:
+                    continue
+                data[sku] = {
+                    'qty_caja_master': float(r.get('qty_caja_master') or 0) or None,
+                    'm3_caja_master': float(r.get('m3_caja_master') or 0) or None,
+                    'kg_caja_master': float(r.get('kg_caja_master') or 0) or None,
+                }
+            return data
+        except Exception as e:
+            print(f"  WARN: no se pudo leer {MAESTRA_XLSX}: {e}", flush=True)
+    return {}
+
 ODOO_URL = os.environ.get('ODOO_URL', 'https://unionxb2b.odoo.com')
 ODOO_DB = os.environ.get('ODOO_DB', 'bmya-innovatek-sh-prd-6981800')
 ODOO_USER = (os.environ.get('OPS_ODOO_USER', '').strip()
@@ -131,6 +176,13 @@ def main():
     else:
         print(f"[5] Sin packagings cargados en Odoo (esperar maestra Andrés)", flush=True)
 
+    # Cargar maestra manual de cajas master (override de Odoo si existe)
+    maestra = _cargar_maestra_manual()
+    if maestra:
+        print(f"    Maestra manual cargada: {len(maestra)} SKUs override", flush=True)
+    else:
+        print(f"    Sin maestra manual (data/comex/maestra_cajas_master.json|xlsx) — usando solo Odoo", flush=True)
+
     # Construir dataset SKU-level
     print(f"[6] Construyendo dataset por línea de PI...", flush=True)
     rows = []
@@ -152,6 +204,24 @@ def main():
             qty_master = None
             nombre_pack = ''
             tiene_match = False
+
+        # Override con maestra manual si existe (prioridad sobre Odoo)
+        override = maestra.get(sku.upper())
+        usa_maestra = False
+        if override:
+            usa_maestra = True
+            qty_m = override.get('qty_caja_master')
+            m3_m = override.get('m3_caja_master')
+            kg_m = override.get('kg_caja_master')
+            if qty_m and qty_m > 0:
+                qty_master = qty_m
+                nombre_pack = nombre_pack or 'maestra manual'
+            if m3_m and m3_m > 0 and qty_m and qty_m > 0:
+                # Volumen unitario = m3 caja / unidades por caja
+                vol_unit = m3_m / qty_m
+            if kg_m and kg_m > 0 and qty_m and qty_m > 0:
+                # Peso unitario = kg caja / unidades por caja
+                peso_unit = kg_m / qty_m
 
         # Detectar volumen unitario anómalo (data quality Odoo)
         vol_anomalo = vol_unit > VOL_UNIT_ANOMALO_M3
@@ -176,6 +246,7 @@ def main():
             'packaging_nombre': nombre_pack,
             'cajas_master_estim': (cantidad / qty_master) if (qty_master and qty_master > 0) else None,
             'match_odoo': tiene_match,
+            'usa_maestra_manual': usa_maestra,
             'tiene_peso': peso_unit > 0,
             'tiene_volumen': vol_unit > 0,
             'volumen_anomalo': vol_anomalo,
@@ -241,6 +312,7 @@ def main():
     skus_peso = int(df_dim[df_dim['tiene_peso']]['sku'].nunique())
     skus_vol = int(df_dim[df_dim['tiene_volumen']]['sku'].nunique())
     skus_vol_anomalo = int(df_dim[df_dim['volumen_anomalo']]['sku'].nunique())
+    skus_maestra = int(df_dim[df_dim['usa_maestra_manual']]['sku'].nunique()) if 'usa_maestra_manual' in df_dim.columns else 0
 
     # Top SKUs anómalos (muestreables al user para que arregle Odoo)
     df_anom = df_dim[df_dim['volumen_anomalo']].drop_duplicates('sku')
@@ -255,6 +327,7 @@ def main():
         'sku_con_peso': skus_peso,
         'sku_con_volumen': skus_vol,
         'sku_volumen_anomalo': skus_vol_anomalo,
+        'sku_con_maestra_manual': skus_maestra,
         'cobertura_peso_pct': round(skus_peso / skus_total * 100, 1) if skus_total else 0,
         'cobertura_volumen_pct': round(skus_vol / skus_total * 100, 1) if skus_total else 0,
         'cobertura_volumen_confiable_pct': round((skus_vol - skus_vol_anomalo) / skus_total * 100, 1) if skus_total else 0,

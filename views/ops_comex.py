@@ -339,6 +339,25 @@ def _tab_volumen_pallets(df_dim: pd.DataFrame, resumen_dim: dict):
     sku_match = resumen_dim.get('sku_match_odoo', 0)
     sku_total = resumen_dim.get('sku_input', 0)
     sku_anom = resumen_dim.get('sku_volumen_anomalo', 0)
+    sku_maestra = resumen_dim.get('sku_con_maestra_manual', 0)
+
+    # Banner: estado de la maestra manual
+    if sku_maestra > 0:
+        st.success(
+            f"✅ Maestra manual de cajas master activa — {sku_maestra} SKU(s) "
+            "con override sobre Odoo (data/comex/maestra_cajas_master.json)."
+        )
+    else:
+        st.info(
+            "📥 **Sin maestra manual cargada.** Cuando tengas el archivo de "
+            "unidades por caja master:\n"
+            "1. Subir como `data/comex/maestra_cajas_master.json` (ver "
+            "`maestra_cajas_master.EJEMPLO.json`) o `maestra_cajas_master.xlsx` "
+            "con columnas `SKU | qty_caja_master | m3_caja_master | kg_caja_master`.\n"
+            "2. Correr `python extract_comex_dimensiones.py` o esperar el cron "
+            "(cada 3h vía `sync_comex.yml`).\n"
+            "3. Esta tab se actualiza automáticamente con los nuevos m³/pallets."
+        )
 
     # Header KPIs globales
     cols = st.columns(5)

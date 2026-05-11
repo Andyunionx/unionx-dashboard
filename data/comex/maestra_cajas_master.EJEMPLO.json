@@ -1,0 +1,28 @@
+{
+  "_INSTRUCCIONES": [
+    "Renombrar este archivo a 'maestra_cajas_master.json' (sin .EJEMPLO).",
+    "Una entrada por SKU. El SKU debe coincidir con default_code o barcode de Odoo.",
+    "Campos:",
+    "  qty_caja_master: cuántas unidades vienen en una caja master (REQUERIDO).",
+    "  m3_caja_master: m³ que ocupa una caja master cerrada (opcional).",
+    "  kg_caja_master: peso bruto de una caja master (opcional).",
+    "Si m3 y kg vienen, hacen OVERRIDE del weight/volume de Odoo.",
+    "Si solo viene qty_caja_master, se usan los m³/peso UNITARIOS de Odoo.",
+    "",
+    "Alternativa: subir Excel 'maestra_cajas_master.xlsx' con columnas:",
+    "  SKU | qty_caja_master | m3_caja_master | kg_caja_master",
+    "",
+    "Después correr: python extract_comex_dimensiones.py",
+    "(o esperar al cron de sync_comex.yml — corre cada 3h)"
+  ],
+  "SIMJULZOPO-30": {
+    "qty_caja_master": 4,
+    "m3_caja_master": 0.082,
+    "kg_caja_master": 18.5
+  },
+  "LVSILLLIT-BL": {
+    "qty_caja_master": 1,
+    "m3_caja_master": 0.18,
+    "kg_caja_master": 14.2
+  }
+}
