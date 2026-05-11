@@ -74,6 +74,19 @@ o desde PI/PL del agente COMEX.
 **Cuando esté disponible:** reactivar la sub-tab "Disponibilidad m³" del Stock LIVE
 y "Capacidad para próximos embarques" (forecasting de recepción).
 
+**Avance 2026-05-11:** ✅ Implementado `extract_comex_dimensiones.py` que cruza
+los SKUs en tránsito con `weight` y `volume` desde `product.template` Odoo y
+calcula m³/pallets/containers por PI. Resultado actual: 168/206 SKUs match Odoo
+(82%), cobertura volumen confiable 67%, 8 SKUs con volumen anómalo (>1m³/unid
+— probablemente cargados en cm³). Nueva tab "📐 Volumen / Pallets" en COMEX.
+
+**Pendiente para mejorar precisión:**
+1. Andrés cargar la maestra de unidades por caja master en Odoo (`product.packaging`)
+   o subir como JSON manual → permite calcular cajas master por PI
+2. Corregir los 8 SKUs con volumen anómalo en Odoo (lista visible en la tab)
+3. Pedir a operaciones que carguen `weight` y `volume` para los 33% de SKUs
+   sin dimensiones (incidencia visible en la tab nueva)
+
 ### 5. 🔄 Refactor v2: extract_wms_raw → parquets + cálculos en memoria
 **Estado:** Código ya creado (`extract_wms_raw.py` + `views/_ops_wms_raw_loader.py`)
 pero NO activo. La app sigue usando snapshot.json precalculado.
@@ -115,6 +128,9 @@ estricta "todo el pedido entregado", cambiar a `max(date_done)` por SO.
 
 ## ✅ COMPLETADOS RECIENTES (2026-05-09 a 2026-05-11)
 
+- COMEX: nueva tab "📐 Volumen / Pallets" → cruza SKUs en tránsito con
+  peso/volumen Odoo, estima m³/pallets/containers por PI, detecta SKUs con
+  volumen mal cargado en Odoo (`extract_comex_dimensiones.py`)
 - Tab Datos manuales → Equipo bodega: config base singleton + auto-cálculo horas
 - Cycle counts y Merma desde Odoo automático (no manual)
 - Plan auditoría semanal con priorización por rotación

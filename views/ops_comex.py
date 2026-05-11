@@ -17,6 +17,8 @@ COMEX_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'transito.parquet'
 COMEX_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'transito_resumen.json'
 VALIDACION_ODOO = PROJECT_ROOT / 'data' / 'comex' / 'validacion_odoo.parquet'
 VALIDACION_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'validacion_odoo_resumen.json'
+DIMENSIONES_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_skus.parquet'
+DIMENSIONES_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_resumen.json'
 STOCK_LIVE = PROJECT_ROOT / 'data' / 'stock' / 'skus.parquet'
 FC_SKUS_ANCHORED = PROJECT_ROOT / 'data' / 'forecast' / 'forecast_skus_anchored.parquet'
 
@@ -42,6 +44,21 @@ def _cargar_validacion_odoo() -> tuple[pd.DataFrame, dict]:
     if VALIDACION_RESUMEN.exists():
         try:
             resumen = json.load(open(VALIDACION_RESUMEN, encoding='utf-8'))
+        except Exception:
+            pass
+    return df, resumen
+
+
+@st.cache_data(ttl=900)
+def _cargar_dimensiones() -> tuple[pd.DataFrame, dict]:
+    """Lee dimensiones por SKU (peso/volumen Odoo) + resumen por PI."""
+    df = pd.DataFrame()
+    resumen = {}
+    if DIMENSIONES_PARQUET.exists():
+        df = pd.read_parquet(DIMENSIONES_PARQUET)
+    if DIMENSIONES_RESUMEN.exists():
+        try:
+            resumen = json.load(open(DIMENSIONES_RESUMEN, encoding='utf-8'))
         except Exception:
             pass
     return df, resumen
@@ -300,6 +317,155 @@ def _tab_triangulacion(df_transito: pd.DataFrame, df_stock: pd.DataFrame, df_fc:
         st.warning("⚠️ Sin data de stock LIVE en `data/stock/skus.parquet`. La triangulación cruza solo COMEX vs Forecast.")
 
 
+def _tab_volumen_pallets(df_dim: pd.DataFrame, resumen_dim: dict):
+    """Estimación m³ / pallets / containers por embarque, usando peso+volumen Odoo."""
+    if df_dim.empty or not resumen_dim:
+        st.info(
+            "⏳ Sin datos de dimensiones. Correr "
+            "`python extract_comex_dimensiones.py` (cruza SKUs en tránsito con "
+            "peso/volumen de `product.template` en Odoo)."
+        )
+        return
+
+    st.caption(
+        f"🕒 Generado: {resumen_dim.get('generado_en','')[:19]} · "
+        f"Fuente: Odoo `product.template` (weight, volume, packaging) · "
+        f"Cruzado con SKUs de `data/comex/transito.parquet`."
+    )
+
+    cob_peso = resumen_dim.get('cobertura_peso_pct', 0)
+    cob_vol = resumen_dim.get('cobertura_volumen_pct', 0)
+    cob_vol_ok = resumen_dim.get('cobertura_volumen_confiable_pct', 0)
+    sku_match = resumen_dim.get('sku_match_odoo', 0)
+    sku_total = resumen_dim.get('sku_input', 0)
+    sku_anom = resumen_dim.get('sku_volumen_anomalo', 0)
+
+    # Header KPIs globales
+    cols = st.columns(5)
+    cols[0].metric("Unidades totales", f"{resumen_dim.get('unidades_totales', 0):,.0f}")
+    cols[1].metric("Peso total", f"{resumen_dim.get('peso_total_kg', 0)/1000:,.1f} ton")
+    cols[2].metric(
+        "Volumen confiable",
+        f"{resumen_dim.get('volumen_total_m3', 0):,.1f} m³",
+        f"sin {sku_anom} SKUs anómalos" if sku_anom else None,
+    )
+    cols[3].metric("Pallets estimados", f"{resumen_dim.get('pallets_totales_estim', 0):,.1f}")
+    cols[4].metric("Match Odoo", f"{sku_match}/{sku_total}",
+                    f"{cob_peso:.0f}% peso · {cob_vol_ok:.0f}% vol OK")
+
+    if cob_peso < 80 or cob_vol_ok < 80:
+        st.warning(
+            f"⚠️ Cobertura baja en Odoo (peso {cob_peso:.0f}% · volumen confiable "
+            f"{cob_vol_ok:.0f}%). Las estimaciones por PI son **subestimaciones** "
+            "— completar `weight` y `volume` en `product.template` o esperar la "
+            "maestra de cajas master de Andrés."
+        )
+
+    # Bloque data quality: SKUs con volumen anómalo (mal cargado en Odoo)
+    skus_anom_top = resumen_dim.get('skus_volumen_anomalo_top', [])
+    if skus_anom_top:
+        with st.expander(
+            f"⚠️ {sku_anom} SKU(s) con volumen anómalo en Odoo "
+            "(>1 m³/unidad — probablemente cargado en cm³ por error)",
+            expanded=False,
+        ):
+            st.caption(
+                "El campo `volume` en `product.template` debe estar en m³. "
+                "Revisar y corregir en Odoo para que la estimación de m³/pallets "
+                "sea más precisa. Mientras tanto, estos SKUs se EXCLUYEN del cálculo."
+            )
+            df_anom = pd.DataFrame(skus_anom_top)
+            df_anom['volumen_unit_m3'] = df_anom['volumen_unit_m3'].apply(
+                lambda v: f'{v:,.2f} m³ (¡anómalo!)'
+            )
+            df_anom.columns = ['SKU', 'Producto', 'Volumen unit Odoo']
+            st.dataframe(df_anom, use_container_width=True, hide_index=True)
+
+    asunc = resumen_dim.get('asunciones', {})
+    st.caption(
+        f"📐 Asunciones: 1 pallet ≈ {asunc.get('m3_por_pallet', 1.2)} m³ · "
+        f"Container 20' ≈ {asunc.get('m3_container_20', 28)} m³ útiles · "
+        f"Container 40' HC ≈ {asunc.get('m3_container_40hc', 67)} m³ útiles."
+    )
+
+    st.divider()
+
+    # Tabla por PI
+    st.markdown("##### 📦 Resumen por PI / embarque")
+    pi_data = resumen_dim.get('por_pi', [])
+    if pi_data:
+        df_pi = pd.DataFrame(pi_data)
+        # Formato visible
+        df_show = df_pi[[
+            'pi', 'transporte', 'fecha_embarque', 'fecha_eta_bodega',
+            'skus_distintos', 'unidades_totales', 'peso_total_kg',
+            'volumen_total_m3', 'pallets_estim', 'containers_20_estim',
+            'containers_40hc_estim', 'cobertura_peso_pct', 'cobertura_volumen_pct',
+        ]].copy()
+        df_show['unidades_totales'] = df_show['unidades_totales'].apply(lambda v: f'{v:,.0f}')
+        df_show['peso_total_kg'] = df_show['peso_total_kg'].apply(
+            lambda v: f'{v/1000:,.2f} t' if v >= 1000 else f'{v:,.1f} kg'
+        )
+        df_show['volumen_total_m3'] = df_show['volumen_total_m3'].apply(lambda v: f'{v:,.2f} m³')
+        df_show['pallets_estim'] = df_show['pallets_estim'].apply(lambda v: f'{v:,.1f}')
+        df_show['containers_20_estim'] = df_show['containers_20_estim'].apply(lambda v: f'{v:,.2f}')
+        df_show['containers_40hc_estim'] = df_show['containers_40hc_estim'].apply(lambda v: f'{v:,.2f}')
+        df_show['cobertura_peso_pct'] = df_show['cobertura_peso_pct'].apply(lambda v: f'{v:.0f}%')
+        df_show['cobertura_volumen_pct'] = df_show['cobertura_volumen_pct'].apply(lambda v: f'{v:.0f}%')
+        df_show.columns = ['PI', 'Transp.', 'Embarque', 'ETA bodega', 'SKUs',
+                            'Unidades', 'Peso', 'Volumen', 'Pallets', 'Cont 20\'',
+                            'Cont 40\' HC', 'Cob. peso', 'Cob. vol']
+        st.dataframe(df_show, use_container_width=True, hide_index=True, height=380)
+
+    st.divider()
+
+    # Detalle SKU por PI
+    st.markdown("##### 🔍 Detalle SKU (cantidad × peso unit × vol unit)")
+    pis_disp = sorted(df_dim['pi'].dropna().unique())
+    pi_sel = st.selectbox("PI", ["Todos"] + pis_disp, key="comex_dim_pi_sel")
+    df_d = df_dim.copy() if pi_sel == "Todos" else df_dim[df_dim['pi'] == pi_sel]
+
+    cols_show = ['pi', 'sku', 'producto', 'cantidad',
+                  'peso_unit_kg', 'peso_total_kg',
+                  'volumen_unit_m3', 'volumen_total_m3',
+                  'qty_caja_master', 'cajas_master_estim', 'match_odoo']
+    df_disp = df_d[cols_show].copy()
+    df_disp['cantidad'] = df_disp['cantidad'].apply(lambda v: f'{v:,.0f}')
+    df_disp['peso_unit_kg'] = df_disp['peso_unit_kg'].apply(
+        lambda v: f'{v:,.3f} kg' if v > 0 else '—'
+    )
+    df_disp['peso_total_kg'] = df_disp['peso_total_kg'].apply(
+        lambda v: f'{v:,.1f} kg' if v > 0 else '—'
+    )
+    df_disp['volumen_unit_m3'] = df_disp['volumen_unit_m3'].apply(
+        lambda v: f'{v:,.4f} m³' if v > 0 else '—'
+    )
+    df_disp['volumen_total_m3'] = df_disp['volumen_total_m3'].apply(
+        lambda v: f'{v:,.3f} m³' if v > 0 else '—'
+    )
+    df_disp['qty_caja_master'] = df_disp['qty_caja_master'].apply(
+        lambda v: f'{v:,.0f}' if pd.notna(v) and v > 0 else '—'
+    )
+    df_disp['cajas_master_estim'] = df_disp['cajas_master_estim'].apply(
+        lambda v: f'{v:,.1f}' if pd.notna(v) and v > 0 else '—'
+    )
+    df_disp['match_odoo'] = df_disp['match_odoo'].apply(lambda v: '✅' if v else '🔴')
+    df_disp.columns = ['PI', 'SKU', 'Producto', 'Cantidad', 'Peso unit', 'Peso total',
+                        'Vol unit', 'Vol total', 'Caja master qty', 'Cajas estim', 'Odoo']
+    st.caption(f"{len(df_disp):,} líneas")
+    st.dataframe(df_disp, use_container_width=True, hide_index=True, height=420)
+
+    # SKUs sin match
+    sin_match = resumen_dim.get('skus_sin_match', [])
+    if sin_match:
+        with st.expander(f"🔴 SKUs sin match en Odoo ({len(sin_match)})", expanded=False):
+            st.caption(
+                "Estos SKUs no tienen registro en `product.product` por `default_code` "
+                "ni por `barcode`. Verificar que el código del sheet COMEX coincida con Odoo."
+            )
+            st.code('\n'.join(sin_match[:50]) + ('\n…' if len(sin_match) > 50 else ''))
+
+
 def render():
     with st.sidebar:
         st.markdown("### 🚢 **COMEX**")
@@ -312,6 +478,7 @@ def render():
     st.title("🚢 COMEX — Embarques en tránsito")
     df = _cargar_transito()
     df_val, val_resumen = _cargar_validacion_odoo()
+    df_dim, resumen_dim = _cargar_dimensiones()
 
     if COMEX_RESUMEN.exists():
         try:
@@ -328,10 +495,14 @@ def render():
     # La triangulación demanda · stock · tránsito vive en la app Planificación (futura).
     # Helpers _tab_triangulacion, _cargar_stock_live, _cargar_forecast_skus quedan en
     # este archivo para reutilización.
-    tab1, tab2, tab3 = st.tabs(["📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs", "📐 Volumen / Pallets"
+    ])
     with tab1:
         _tab_resumen(df, val_resumen)
     with tab2:
         _tab_por_pi(df, val_resumen)
     with tab3:
         _tab_detalle_skus(df)
+    with tab4:
+        _tab_volumen_pallets(df_dim, resumen_dim)

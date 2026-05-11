@@ -50,6 +50,13 @@ jobs:
         run: python extract_comex_validacion_odoo.py
         continue-on-error: true
 
+      - name: Cruce dimensiones SKU (peso/volumen Odoo) → m³ y pallets por PI
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_comex_dimensiones.py
+        continue-on-error: true
+
       - name: Commit parquet COMEX si cambio
         run: |
           git config --local user.email "actions@github.com"
