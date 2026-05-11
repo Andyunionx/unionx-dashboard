@@ -826,20 +826,128 @@ def render():
             if not equipo_t or not equipo_t.get("horas_total"):
                 st.info(f"📋 Cargá horas equipo de {mes_actual} en Tab Datos manuales → Equipo bodega.")
             else:
-                horas = equipo_t.get("horas_total", 0)
+                horas_mes = equipo_t.get("horas_total", 0)
                 personas = equipo_t.get("personas", 0)
-                # Datos del mes actual desde el snapshot (productividad_meses_12m)
+                # Snapshot data
                 snap_prod_pre = snap_pick if 'snap_pick' in dir() else cargar_snapshot()
                 meses_data_pre = (snap_prod_pre.get("productividad_meses_12m", {}) or {}).get("items", [])
-                # El último mes en la lista es el actual
-                mes_act_data = next((m for m in meses_data_pre if m.get("periodo") == mes_actual), {})
-                n_pedidos_mes = mes_act_data.get("n_pedidos", 0)
-                n_lineas_mes = mes_act_data.get("n_lineas", 0)
-                n_uds_mes = mes_act_data.get("n_unidades", 0)
-                n_dias_habiles = 21  # promedio mes UnionX (LJ+V)
+                sem_data_pre = (snap_prod_pre.get("productividad_semanas_mes_actual", {}) or {}).get("items", [])
+                dias_data_pre = (snap_prod_pre.get("productividad_dias_14d", {}) or {}).get("items", [])
+
+                # ════════════════════════════════════════════════════════
+                # SELECTOR DE PERÍODO (NUEVO)
+                # ════════════════════════════════════════════════════════
+                sp1, sp2, sp3 = st.columns([1, 2, 2])
+                with sp1:
+                    tipo_periodo = st.selectbox("Período",
+                        ["Mes", "Semana", "Día", "Año"],
+                        index=0, key="prod_tipo_periodo")
+
+                # Construir opciones específicas según tipo
+                opciones_periodo = []
+                if tipo_periodo == "Mes":
+                    opciones_periodo = [m.get("periodo", "") for m in meses_data_pre if m.get("periodo")]
+                    opciones_periodo = list(reversed(opciones_periodo))  # mes más reciente primero
+                elif tipo_periodo == "Semana":
+                    opciones_periodo = [s.get("periodo", "") for s in sem_data_pre if s.get("periodo")]
+                    opciones_periodo = list(reversed(opciones_periodo))
+                elif tipo_periodo == "Día":
+                    opciones_periodo = [d.get("periodo", "") for d in dias_data_pre if d.get("periodo")]
+                    opciones_periodo = list(reversed(opciones_periodo))
+                elif tipo_periodo == "Año":
+                    anios = sorted({m.get("periodo", "")[:4] for m in meses_data_pre if m.get("periodo")},
+                                   reverse=True)
+                    opciones_periodo = [a for a in anios if a]
+
+                with sp2:
+                    if opciones_periodo:
+                        periodo_sel = st.selectbox(f"Seleccionar {tipo_periodo.lower()}",
+                                                    opciones_periodo, index=0,
+                                                    key="prod_periodo_sel")
+                    else:
+                        st.warning("Sin datos en snapshot")
+                        periodo_sel = None
+                with sp3:
+                    st.markdown("&nbsp;", unsafe_allow_html=True)
+                    st.caption(f"Equipo: {personas} personas · Horario base: L-J 9h + V 6h")
+
+                # ════════════════════════════════════════════════════════
+                # CALCULAR DATOS Y HORAS SEGÚN PERÍODO SELECCIONADO
+                # ════════════════════════════════════════════════════════
+                # Defaults para Mes actual
+                n_pedidos_p = n_lineas_p = n_uds_p = 0
+                horas_p = 0       # horas totales del período (equipo)
+                n_dias_p = 21     # días hábiles del período
+                horas_dia_p = 0   # horas calendarias del día tipo
+                label_p = mes_actual
+
+                if periodo_sel and tipo_periodo == "Mes":
+                    label_p = periodo_sel
+                    data_p = next((m for m in meses_data_pre if m.get("periodo") == periodo_sel), {})
+                    n_pedidos_p = data_p.get("n_pedidos", 0)
+                    n_lineas_p = data_p.get("n_lineas", 0)
+                    n_uds_p = data_p.get("n_unidades", 0)
+                    # Calcular horas reales del mes con calendario
+                    try:
+                        from views._ops_data_helper import calcular_horas_estandar_mes
+                        h_calc = calcular_horas_estandar_mes(periodo_sel, personas)
+                        horas_p = h_calc.get("horas_total", horas_mes)
+                        n_dias_p = h_calc.get("n_dias_habiles", 21)
+                    except Exception:
+                        horas_p = horas_mes
+                        n_dias_p = 21
+                    horas_dia_p = horas_p / n_dias_p if n_dias_p else 0
+
+                elif periodo_sel and tipo_periodo == "Semana":
+                    label_p = periodo_sel
+                    data_p = next((s for s in sem_data_pre if s.get("periodo") == periodo_sel), {})
+                    n_pedidos_p = data_p.get("n_pedidos", 0)
+                    n_lineas_p = data_p.get("n_lineas", 0)
+                    n_uds_p = data_p.get("n_unidades", 0)
+                    n_dias_p = 5
+                    horas_dia_p = (4 * 9 + 6) / 5  # promedio L-V = 8.4h
+                    horas_p = horas_dia_p * n_dias_p * personas  # ~210h equipo
+
+                elif periodo_sel and tipo_periodo == "Día":
+                    label_p = periodo_sel
+                    data_p = next((d for d in dias_data_pre if d.get("periodo") == periodo_sel), {})
+                    n_pedidos_p = data_p.get("n_pedidos", 0)
+                    n_lineas_p = data_p.get("n_lineas", 0)
+                    n_uds_p = data_p.get("n_unidades", 0)
+                    n_dias_p = 1
+                    # Detectar V (viernes)
+                    es_viernes = "Fri" in periodo_sel or "Vie" in periodo_sel
+                    horas_dia_p = 6 if es_viernes else 9
+                    horas_p = horas_dia_p * personas
+
+                elif periodo_sel and tipo_periodo == "Año":
+                    label_p = periodo_sel
+                    meses_anio = [m for m in meses_data_pre if m.get("periodo", "").startswith(periodo_sel)]
+                    n_pedidos_p = sum(m.get("n_pedidos", 0) for m in meses_anio)
+                    n_lineas_p = sum(m.get("n_lineas", 0) for m in meses_anio)
+                    n_uds_p = sum(m.get("n_unidades", 0) for m in meses_anio)
+                    # Calcular horas anuales reales
+                    try:
+                        from views._ops_data_helper import calcular_horas_estandar_mes
+                        horas_p = sum(
+                            calcular_horas_estandar_mes(f"{periodo_sel}-{m:02d}", personas).get("horas_total", 0)
+                            for m in range(1, 13)
+                        )
+                        n_dias_p = 252  # aprox días hábiles año
+                    except Exception:
+                        horas_p = horas_mes * 12
+                        n_dias_p = 252
+                    horas_dia_p = horas_p / n_dias_p if n_dias_p else 8.4
+
+                # Compat con variables antiguas usadas abajo
+                n_pedidos_mes = n_pedidos_p
+                n_lineas_mes = n_lineas_p
+                n_uds_mes = n_uds_p
+                horas = horas_p
+                n_dias_habiles = n_dias_p
 
                 # KPI cards: 3 dimensiones × 3 vistas (persona/día · hora equipo · día equipo)
-                st.markdown(f"##### 📊 Productividad {mes_actual} · {personas} personas · {horas:,.0f}h")
+                st.markdown(f"##### 📊 Productividad {label_p} · {personas} personas · {horas:,.0f}h totales · {n_dias_habiles} días hábiles")
                 st.caption(
                     "Pedido = 1 cliente atendido · Línea = 1 SKU distinto pickeado · "
                     "Unidad = 1 ítem físico tomado · Más detalle abajo."
