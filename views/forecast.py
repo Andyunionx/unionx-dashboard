@@ -662,6 +662,72 @@ def _tab_mint(df_recon: pd.DataFrame, mint_meta: dict):
 
 
 # ============================================================
+# TAB Demanda por evento (Fase 2: bottom-up SKU x canal anchored)
+# ============================================================
+def _tab_demanda_evento(df_dem: pd.DataFrame, df_skus_anchor: pd.DataFrame, reco: dict):
+    if df_dem.empty:
+        st.info("⏳ Sin demanda por evento. Correr extract_forecast_skus_anchored.py")
+        return
+
+    st.caption("Demanda esperada por **SKU × evento** = forecast Prophet base × boost(elasticidad×descuento) × lift basket. "
+                "Stock futuro asumido disponible (la brecha contra stock = señal de compra).")
+
+    # Reconciliacion summary
+    if reco:
+        cols = st.columns(4)
+        cols[0].metric("Bottom-up SKUs", f"${reco.get('bottom_up_skus_anchored_$', 0)/1e6:.0f}M",
+                        f"{reco.get('rango_dias', 0)} días")
+        if reco.get('total_anchored_mismo_rango_$'):
+            cols[1].metric("TOTAL anchored mismo rango", f"${reco['total_anchored_mismo_rango_$']/1e6:.0f}M")
+            cols[2].metric("Cobertura SKUs top", f"{reco.get('cobertura_estimada_pct', 0):.0f}%",
+                            "del TOTAL anchored")
+            gap = reco.get('gap_pct', 0)
+            cols[3].metric("Gap (cola larga)", f"{gap:+.1f}%",
+                            "esperado negativo (top SKUs vs total)")
+
+    st.divider()
+
+    # Selector evento
+    eventos_disp = sorted(df_dem['evento'].dropna().unique().tolist())
+    if not eventos_disp:
+        st.info("Sin eventos en horizonte")
+        return
+
+    sel_evento = st.selectbox("Evento", eventos_disp, key='dem_evento')
+    df_e = df_dem[df_dem['evento'] == sel_evento].copy()
+
+    if df_e.empty:
+        return
+
+    st.markdown(f"##### Demanda esperada en **{sel_evento}**")
+    cols = st.columns(3)
+    cols[0].metric("SKUs en evento", df_e['sku'].nunique())
+    cols[1].metric("Unidades proyectadas", f"{df_e['unidades_proyectadas'].sum():,.0f}")
+    boost_total = (df_e['unidades_proyectadas'].sum() / df_e['unidades_base_sin_boost'].sum() - 1) * 100 if df_e['unidades_base_sin_boost'].sum() > 0 else 0
+    cols[2].metric("Boost total promedio", f"+{boost_total:.0f}%",
+                    "vs Prophet sin anclas")
+
+    # Top 30 SKUs por demanda
+    top30 = df_e.groupby(['sku', 'producto', 'marca', 'categoria_padre', 'canal'], as_index=False, dropna=False).agg(
+        unidades=('unidades_proyectadas', 'sum'),
+        boost=('boost_promedio', 'mean'),
+        lift_pct=('boost_lift_extra_pct', 'mean'),
+    ).sort_values('unidades', ascending=False).head(30)
+    top30['boost'] = top30['boost'].round(2).astype(str) + 'x'
+    top30['lift_pct'] = top30['lift_pct'].round(1).astype(str) + '%'
+
+    st.markdown("##### Top 30 SKUs × canal por demanda en este evento")
+    st.dataframe(
+        top30.rename(columns={
+            'sku': 'SKU', 'producto': 'Producto', 'marca': 'Marca',
+            'categoria_padre': 'Categoria', 'canal': 'Canal',
+            'unidades': 'Unidades', 'boost': 'Boost evento', 'lift_pct': 'Δ% vs base',
+        }),
+        use_container_width=True, hide_index=True, height=600,
+    )
+
+
+# ============================================================
 # Render principal
 # ============================================================
 def render():
@@ -705,10 +771,16 @@ def render():
     if resumen.get('generado_en'):
         st.caption(f"🕒 Generado: {resumen['generado_en'][:19]} · Eventos modelados: Cyber Day, CyberMonday, Black Friday, Día Madre/Padre, FFPP, Navidad + feriados Chile")
 
+    df_dem_evento = _cargar_parquet('forecast_demanda_por_evento.parquet')
+    df_skus_anchored = _cargar_parquet('forecast_skus_anchored.parquet')
+    reco_path = FC_DIR / 'reconciliation_bottom_up.json'
+    reco = json.load(open(reco_path, encoding='utf-8')) if reco_path.exists() else {}
+
     tabs = st.tabs([
         "📅 Cierre del mes", "📊 30 / 60 / 90 días", "📆 Año",
         "🔬 Componentes", "📈 Por canal", "🧬 Jerarquía / SKU",
         "🎯 Precision (MAPE)", "💰 Pricing & Basket", "🔗 MinT reconciliado",
+        "🛒 Demanda por evento (SKU)",
     ])
     with tabs[0]:
         _tab_cierre_mes(resumen, fc_diario)
@@ -729,3 +801,5 @@ def render():
         _tab_pricing_basket(df_elast_cat, df_elast_sku, df_basket)
     with tabs[8]:
         _tab_mint(df_recon, mint_meta)
+    with tabs[9]:
+        _tab_demanda_evento(df_dem_evento, df_skus_anchored, reco)

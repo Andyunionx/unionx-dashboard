@@ -79,6 +79,12 @@ jobs:
         run: python extract_forecast_anchored.py
         continue-on-error: true
 
+      - name: 6c. Forecast SKU x canal ANCHORED (Fase 2: elasticidad + basket + demanda)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_forecast_skus_anchored.py
+        continue-on-error: true
+
       - name: 6b. Reconciliacion MinT
         env:
           PYTHONIOENCODING: utf-8
