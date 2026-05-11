@@ -845,27 +845,33 @@ def render():
                     "Unidad = 1 ítem físico tomado · Más detalle abajo."
                 )
 
-                # Pre-cálculos
+                # ════════════════════════════════════════════════════════
+                # PRE-CÁLCULOS
+                # ════════════════════════════════════════════════════════
+                # Horario UnionX: L-J 9h + V 6h => promedio (4*9+6)/5 = 8.4h/día
+                # Por mes: 21 días hábiles aprox
+                horas_dia_calendar = horas / n_dias_habiles if n_dias_habiles else 0  # ~8.4h/día calendar
+                # POR PERSONA (cada operario individual)
                 ped_pers_dia = (n_pedidos_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
                 lin_pers_dia = (n_lineas_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
                 uds_pers_dia = (n_uds_mes / personas / n_dias_habiles) if (personas and n_dias_habiles) else 0
-                ped_pers_h = (n_pedidos_mes / horas) if horas else 0
-                lin_pers_h = (n_lineas_mes / horas) if horas else 0
-                uds_pers_h = (n_uds_mes / horas) if horas else 0
-                # Por hora EQUIPO ENTERO = total / horas_dia (9h estándar)
-                horas_dia_equipo = horas / n_dias_habiles if n_dias_habiles else 0
-                ped_eq_h = (n_pedidos_mes / n_dias_habiles / horas_dia_equipo) if (n_dias_habiles and horas_dia_equipo) else 0
-                lin_eq_h = (n_lineas_mes / n_dias_habiles / horas_dia_equipo) if (n_dias_habiles and horas_dia_equipo) else 0
-                uds_eq_h = (n_uds_mes / n_dias_habiles / horas_dia_equipo) if (n_dias_habiles and horas_dia_equipo) else 0
-                # Por DÍA equipo
+                ped_pers_h = (ped_pers_dia / horas_dia_calendar) if horas_dia_calendar else 0
+                lin_pers_h = (lin_pers_dia / horas_dia_calendar) if horas_dia_calendar else 0
+                uds_pers_h = (uds_pers_dia / horas_dia_calendar) if horas_dia_calendar else 0
+                # POR DÍA EQUIPO ENTERO (todos trabajando juntos)
                 ped_eq_dia = n_pedidos_mes / n_dias_habiles if n_dias_habiles else 0
                 lin_eq_dia = n_lineas_mes / n_dias_habiles if n_dias_habiles else 0
                 uds_eq_dia = n_uds_mes / n_dias_habiles if n_dias_habiles else 0
+                # POR HORA REAL del día (en 1h calendar, cuánto procesa el equipo entero)
+                ped_eq_h = ped_eq_dia / horas_dia_calendar if horas_dia_calendar else 0
+                lin_eq_h = lin_eq_dia / horas_dia_calendar if horas_dia_calendar else 0
+                uds_eq_h = uds_eq_dia / horas_dia_calendar if horas_dia_calendar else 0
+                # Mix
                 lineas_x_pedido = (n_lineas_mes / n_pedidos_mes) if n_pedidos_mes else 0
                 uds_x_pedido = (n_uds_mes / n_pedidos_mes) if n_pedidos_mes else 0
 
-                # FILA 1 — Por persona/día
-                st.markdown("**🧑 Por persona / día**")
+                # FILA 1 — Por persona (lo que produce CADA operario)
+                st.markdown(f"**🧑 Por persona** — lo que produce **cada operario individualmente**")
                 ck1, ck2, ck3 = st.columns(3)
                 ck1.metric("Pedidos / persona / día", f"{ped_pers_dia:.1f}",
                            delta=f"{ped_pers_h:.2f} ped/persona/h")
@@ -875,29 +881,35 @@ def render():
                 ck3.metric("Unidades / persona / día", f"{uds_pers_dia:.1f}",
                            delta=f"{uds_pers_h:.2f} uds/persona/h")
 
-                # FILA 2 — Por hora equipo (NUEVA)
-                st.markdown(f"**⏱️ Por hora trabajada (equipo entero, {horas_dia_equipo:.1f}h/día)**")
+                # FILA 2 — Por hora REAL del día (TODO el equipo trabajando junto)
+                st.markdown(
+                    f"**⏱️ Por hora del día** — lo que produce **el equipo entero** "
+                    f"en 1 hora calendaria (jornada típica: {horas_dia_calendar:.1f}h/día)"
+                )
                 ch1, ch2, ch3 = st.columns(3)
-                ch1.metric("Pedidos / hora (equipo)", f"{ped_eq_h:.1f}",
-                           delta=f"{ped_eq_dia/horas_dia_equipo*5:.0f} ped/h × {personas} pers." if horas_dia_equipo else None,
-                           help=f"{n_pedidos_mes:,} ped del mes / {n_dias_habiles} días / {horas_dia_equipo:.1f}h")
-                ch2.metric("Líneas / hora (equipo)", f"{lin_eq_h:.1f}",
-                           delta=f"{ped_eq_h * lineas_x_pedido:.1f} esperado por mix")
-                ch3.metric("Unidades / hora (equipo)", f"{uds_eq_h:.1f}",
-                           delta=f"{ped_eq_h * uds_x_pedido:.1f} esperado por mix")
+                ch1.metric("Pedidos / hora", f"{ped_eq_h:.1f}",
+                           delta=f"{personas} personas trabajando juntas",
+                           help=f"En 1h del día, el equipo entero ({personas} pers.) procesa {ped_eq_h:.1f} pedidos. "
+                                f"= {ped_eq_dia:.0f} ped/día / {horas_dia_calendar:.1f}h jornada")
+                ch2.metric("Líneas / hora", f"{lin_eq_h:.1f}",
+                           delta=f"{personas} personas trabajando juntas",
+                           help=f"En 1h del día, el equipo procesa {lin_eq_h:.1f} líneas (todos los SKUs distintos)")
+                ch3.metric("Unidades / hora", f"{uds_eq_h:.1f}",
+                           delta=f"{personas} personas trabajando juntas",
+                           help=f"En 1h del día, el equipo mueve {uds_eq_h:.1f} unidades físicas")
 
-                # FILA 3 — Equipo entero por día
-                st.markdown("**⚙️ Equipo entero / día**")
+                # FILA 3 — Equipo entero por día (totales agregados)
+                st.markdown(f"**⚙️ Por día (equipo entero)** — totales del día")
                 ce1, ce2, ce3, ce4 = st.columns(4)
                 ce1.metric("Pedidos / día", f"{ped_eq_dia:,.0f}",
-                           delta=f"{ped_eq_h:.1f} ped/h equipo")
+                           delta=f"≈ {ped_eq_h:.1f}/h del día")
                 ce2.metric("Líneas / día", f"{lin_eq_dia:,.0f}",
-                           delta=f"{lin_eq_h:.1f} lín/h equipo")
+                           delta=f"≈ {lin_eq_h:.1f}/h del día")
                 ce3.metric("Unidades / día", f"{uds_eq_dia:,.0f}",
-                           delta=f"{uds_eq_h:.1f} uds/h equipo")
+                           delta=f"≈ {uds_eq_h:.1f}/h del día")
                 ce4.metric("Mix promedio", f"{lineas_x_pedido:.2f} lín/ped",
                            delta=f"{uds_x_pedido:.1f} uds/ped",
-                           help="Pedidos chicos (mix bajo) = más rápidos por línea")
+                           help="Mix bajo (1 SKU/pedido) = pedidos chicos, picking más rápido")
 
                 st.divider()
 
