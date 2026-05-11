@@ -38,21 +38,23 @@ FC_DIARIO = OUT_DIR / 'forecast_diario.parquet'
 FC_RESUMEN = OUT_DIR / 'forecast_resumen.json'
 
 # === ANCLAS DE NEGOCIO (input del usuario) ===
-# Baseline: 1 mes de venta marketplaces+web normal = $313M
-# Share online sobre total = 61% promedio
-BASELINE_ONLINE_MES = 313_000_000  # M$
+# Andres: las tasas son contra meses normales DE 2026, no LY.
+# Baseline: 1 mes de venta marketplaces+web normal 2026 = $312M
+# (promedio ene+feb 2026, los meses cerrados mas limpios sin growth atipico ni eventos).
+# Share online sobre total = 61% promedio.
+#
+# Solo 4 eventos con ancla EXPLICITA. Los demas (Dia Madre/Padre/FFPP/Niño/etc.)
+# quedan indexados a la curva de crecimiento LY via holidays de Prophet.
+BASELINE_ONLINE_MES = 312_000_000
 SHARE_ONLINE = 0.61
 
 # Multiplicadores por evento (proporcion del BASELINE_ONLINE_MES en la VENTANA del evento)
 ANCLAS_2026 = [
     # (nombre, fecha_inicio, fecha_fin, multiplicador_online_sobre_baseline)
-    ('dia_madre',    '2026-05-03', '2026-05-10', 0.5),   # semana Día Madre
-    ('cyber_day',    '2026-06-01', '2026-06-04', 1.0),   # Cyber Day
-    ('dia_padre',    '2026-06-14', '2026-06-21', 0.5),   # semana Día Padre
-    ('ffpp',         '2026-09-08', '2026-09-18', 0.6),   # ~semana FFPP (10 dias = 0.6 mes)
-    ('cyber_monday', '2026-10-06', '2026-10-09', 1.0),   # CyberMonday
-    ('black_friday', '2026-11-26', '2026-11-30', 0.5),   # Black Friday
-    ('navidad',      '2026-12-05', '2026-12-25', 2.0),   # Navidad
+    ('cyber_day',    '2026-06-01', '2026-06-04', 1.0),   # Cyber Day = 1 mes normal en 4 dias
+    ('cyber_monday', '2026-10-06', '2026-10-09', 1.0),   # CyberMonday = 1 mes normal
+    ('black_friday', '2026-11-26', '2026-11-30', 0.5),   # Black Friday = 0.5 mes normal
+    ('navidad',      '2026-12-05', '2026-12-25', 2.0),   # Navidad (21d) = 2 meses normales
 ]
 
 
@@ -124,13 +126,25 @@ def main():
         print(f"   {nombre:>13} | {fi} -> {ff} | mult={mult:>3.1f} | "
               f"Prophet ${prophet_ventana/1e6:>5.0f}M -> Ancla ${ancla_total/1e6:>5.0f}M | factor={factor:.2f}", flush=True)
 
-    print(f"\n[2] Aplicando calibracion 0.85 a dias FUERA de eventos...", flush=True)
+    # Tambien excluir de la calibracion los dias con holiday detectado por Prophet
+    # (Dia Madre/Padre/FFPP/Niño/feriados Chile) — Andres: indexados a curva growth LY natural
+    comp_path = OUT_DIR / 'forecast_componentes.parquet'
+    if comp_path.exists():
+        comp = pd.read_parquet(comp_path)
+        comp['ds'] = pd.to_datetime(comp['ds'])
+        if 'holidays' in comp.columns:
+            umbral = comp['trend'].abs().mean() * 0.05 if 'trend' in comp.columns else 1_000_000
+            dias_holiday = set(comp[comp['holidays'].abs() > umbral]['ds'].dt.normalize())
+            fechas_evento_total.update(dias_holiday)
+            print(f"\n[2a] {len(dias_holiday)} dias adicionales con holiday Prophet (no se calibran)", flush=True)
+
+    print(f"\n[2b] Aplicando calibracion 0.85 a dias FUERA de eventos+holidays...", flush=True)
     mask_no_evento = ~fc_anual['ds'].dt.normalize().isin(fechas_evento_total)
     n_no_evento = mask_no_evento.sum()
     for col in ['yhat', 'yhat_lower', 'yhat_upper']:
         if col in fc_anual.columns:
             fc_anual.loc[mask_no_evento, col] = (fc_anual.loc[mask_no_evento, col] * 0.85).round(0)
-    print(f"   {n_no_evento} dias no-evento calibrados x 0.85", flush=True)
+    print(f"   {n_no_evento} dias normales calibrados x 0.85", flush=True)
 
     mask_no_evento_d = ~fc_diario['ds'].dt.normalize().isin(fechas_evento_total)
     for col in ['yhat', 'yhat_lower', 'yhat_upper']:
