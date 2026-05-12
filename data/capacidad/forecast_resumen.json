@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-05-11T20:47:39.499967",
+  "generado_en": "2026-05-11T20:54:31.803915",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1361,
   "capacidad_bodega_m3": 2449.7999999999997,
@@ -143,15 +143,124 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 450.8,
-  "pallets_total_salientes_horizonte": 812.3,
+  "pallets_total_salientes_horizonte": 426.4,
   "m3_total_entrante_horizonte": 540.9,
-  "m3_total_saliente_horizonte": 974.8,
+  "m3_total_saliente_horizonte": 511.6,
   "salidas_debug": {
+    "horizonte_dias": 90,
     "sku_con_vol_odoo": 648,
     "sku_fallback": 8,
     "fallback_vol_m3": 0.00562,
-    "demanda_no_cubierta_unidades_total": 467645.0,
-    "salidas_unidades_90d_total": 67887.0
+    "demanda_total_unidades_horizonte": 96128.0,
+    "demanda_cumplida_unidades": 45146.0,
+    "demanda_no_cubierta_unidades_total": 50982.0,
+    "pct_demanda_cumplida": 47.0,
+    "sku_sin_match_stock_count": 43,
+    "top_no_cubiertos": [
+      {
+        "sku": "1564150661249",
+        "unid_no_cubiertas": 12682.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1564150627423",
+        "unid_no_cubiertas": 7482.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "68658866289861",
+        "unid_no_cubiertas": 5352.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1597098592591",
+        "unid_no_cubiertas": 4845.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1597086499840",
+        "unid_no_cubiertas": 4743.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1659991379695",
+        "unid_no_cubiertas": 3272.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "68658868763602",
+        "unid_no_cubiertas": 3016.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LHMALEXPBK-70",
+        "unid_no_cubiertas": 2583.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LHBOIND-BK",
+        "unid_no_cubiertas": 1414.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1650301031879",
+        "unid_no_cubiertas": 393.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LHMOBROBK",
+        "unid_no_cubiertas": 385.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "Pack261",
+        "unid_no_cubiertas": 365.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVMONPOR-15",
+        "unid_no_cubiertas": 355.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVTECMCC-BK",
+        "unid_no_cubiertas": 349.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1660859424566",
+        "unid_no_cubiertas": 329.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "67933857637909",
+        "unid_no_cubiertas": 291.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "PACK34",
+        "unid_no_cubiertas": 248.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "67327559384453",
+        "unid_no_cubiertas": 224.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "CNS150",
+        "unid_no_cubiertas": 223.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1650302269777",
+        "unid_no_cubiertas": 208.0,
+        "sin_match_stock": true
+      }
+    ],
+    "skus_no_fisicos_excluidos": [
+      "Delivery_007"
+    ]
   },
   "stock_anomalies_count": 55,
   "top_stock_anomalies": [

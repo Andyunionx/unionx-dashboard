@@ -249,14 +249,17 @@ def render_forecast_capacidad():
     if sal_dbg:
         sk_odoo = sal_dbg.get('sku_con_vol_odoo', 0)
         sk_fb = sal_dbg.get('sku_fallback', 0)
-        fb_v = sal_dbg.get('fallback_vol_m3', 0)
+        dem_total = sal_dbg.get('demanda_total_unidades_horizonte', 0)
+        dem_cump = sal_dbg.get('demanda_cumplida_unidades', 0)
         no_cub = sal_dbg.get('demanda_no_cubierta_unidades_total', 0)
+        pct_cump = sal_dbg.get('pct_demanda_cumplida', 0)
+        excluidos = sal_dbg.get('skus_no_fisicos_excluidos', [])
         st.caption(
-            f"📤 **Salidas**: forecast venta limitado al stock + tránsito disponible · "
-            f"Cobertura volumen: {sk_odoo} SKUs Odoo + {sk_fb} con fallback "
-            f"({fb_v:.4f} m³/unid mediana) · "
-            f"⚠️ {no_cub:,.0f} unidades de demanda 90d NO cubiertas con stock+tránsito actuales "
-            "(señal de quiebres por SKU — revisar Stock Total filtrando 'CRÍTICO')"
+            f"📤 **Salidas (90d)**: forecast venta {dem_total:,.0f} unid · "
+            f"cumplible con stock+tránsito {dem_cump:,.0f} ({pct_cump:.0f}%) · "
+            f"NO cubierta {no_cub:,.0f} unid (revisar SKUs específicos abajo) · "
+            f"Cobertura volumen: {sk_odoo} SKUs Odoo + {sk_fb} fallback"
+            + (f" · Excluidos no físicos: {', '.join(excluidos[:3])}" if excluidos else "")
         )
 
     # ─── KPIs estado actual (POSICIONES) ─────────────────────────────────
@@ -407,6 +410,30 @@ def render_forecast_capacidad():
         f"Total saliente 90d: {resumen.get('pallets_total_salientes_horizonte', 0):,.0f} pallets "
         "(forecast venta convertido)"
     )
+
+    st.divider()
+
+    # ─── TOP SKUs NO CUBIERTOS (señal de reposición urgente) ──────────────
+    sal_dbg = resumen.get('salidas_debug', {})
+    top_no_cub = sal_dbg.get('top_no_cubiertos', [])
+    if top_no_cub:
+        st.markdown("##### 🔴 SKUs con quiebre proyectado (sin stock + sin tránsito)")
+        st.caption(
+            "Estos SKUs no alcanzan a cumplir la demanda forecast 90d. Si están "
+            "**sin match en stock** = no tienen stock actual NI llegan en próximos PIs. "
+            "Acción: incluir en la próxima orden a Steven o evaluar transporte aéreo."
+        )
+        df_nc = pd.DataFrame(top_no_cub)
+        df_nc['unid_no_cubiertas'] = df_nc['unid_no_cubiertas'].apply(lambda v: f'{v:,.0f}')
+        df_nc['sin_match_stock'] = df_nc['sin_match_stock'].apply(
+            lambda v: '🔴 sin stock ni tránsito' if v else '🟡 stock insuficiente'
+        )
+        df_nc.columns = ['SKU', 'Unid demanda 90d NO cubierta', 'Estado']
+        st.dataframe(df_nc.head(20), use_container_width=True, hide_index=True, height=420)
+        st.caption(
+            f"💡 Total no cubierto: {sal_dbg.get('demanda_no_cubierta_unidades_total', 0):,.0f} unidades "
+            f"distribuidas en {sal_dbg.get('sku_sin_match_stock_count', 0)} SKUs sin reposición."
+        )
 
     st.divider()
 
