@@ -128,6 +128,16 @@ estricta "todo el pedido entregado", cambiar a `max(date_done)` por SO.
 
 ## ✅ COMPLETADOS RECIENTES (2026-05-09 a 2026-05-11)
 
+- **Flujo automático forecast → operaciones** (end-to-end):
+  1. `sync_forecast.yml` (diario 02:00 Chile): Prophet venta → `forecast_skus_anchored.parquet`
+     → `extract_capacidad_forecast.py` (refresh capacidad bodega con forecast nuevo)
+     → `extract_volumen_operacional.py` (calcula pedidos/líneas/uds proyectados/día)
+  2. `sync_comex.yml` (cada 3h): tránsito + dimensiones + capacidad + volumen operacional
+     (refresca cuando cambian los PIs aunque no haya nuevo forecast)
+- Stock LIVE → "📊 Volumen operacional": pedidos/líneas/uds proyectados con
+  carga del equipo vs capacidad histórica P90 (ratios reales del snapshot WMS),
+  detección de días sobrecarga (>110%) e insights de planificación staff
+  (`extract_volumen_operacional.py` + `views/_ops_volumen_operacional_helper.py`).
 - Stock LIVE → "Capacidad para próximos embarques": **forecast funcional 90 días**
   combinando stock m³ actual (Odoo) + tránsito m³ por ETA (COMEX) + forecast
   venta diaria × volumen unitario. Gráfico Plotly con umbrales 70%/90%, marca

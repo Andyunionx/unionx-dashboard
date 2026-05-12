@@ -1,0 +1,101 @@
+{
+  "generado_en": "2026-05-11T21:07:01.264668",
+  "horizonte_dias": 90,
+  "ratios_equipo": {
+    "uds_por_pedido": 3.4412485255421466,
+    "lineas_por_pedido": 1.301152345522185,
+    "pedidos_dia_promedio": 524.8095238095239,
+    "pedidos_dia_p90": 877,
+    "unidades_dia_promedio": 1806.0,
+    "lineas_dia_promedio": 682.8571428571429,
+    "n_dias_observados": 21,
+    "fuente": "snapshot WMS últimos 21 días laborales"
+  },
+  "capacidad_pedidos_dia": 877.0,
+  "totales_horizonte": {
+    "pedidos_proyectados": 27934,
+    "lineas_proyectadas": 36344,
+    "unidades_demanda": 96128,
+    "dias_sobrecarga": 5,
+    "dias_atencion": 7
+  },
+  "pico": {
+    "fecha": "2026-06-22",
+    "pedidos_a_procesar": 1103.0,
+    "lineas_a_procesar": 1436.0,
+    "pct_carga_equipo": 125.8,
+    "alerta": "🔴 SOBRECARGA"
+  },
+  "primer_sobrecarga": {
+    "fecha": "2026-05-18",
+    "pedidos_a_procesar": 851.0,
+    "pct_carga_equipo": 97.0,
+    "alerta": "🟠 ATENCIÓN"
+  },
+  "top_semanas_volumen": [
+    {
+      "semana": "2026-W23",
+      "pedidos": 3011,
+      "lineas": 3918,
+      "unidades": 10360,
+      "dias_sobrecarga": 1,
+      "dias_atencion": 0
+    },
+    {
+      "semana": "2026-W26",
+      "pedidos": 2249,
+      "lineas": 2927,
+      "unidades": 7736,
+      "dias_sobrecarga": 1,
+      "dias_atencion": 0
+    },
+    {
+      "semana": "2026-W25",
+      "pedidos": 2243,
+      "lineas": 2918,
+      "unidades": 7712,
+      "dias_sobrecarga": 0,
+      "dias_atencion": 1
+    },
+    {
+      "semana": "2026-W31",
+      "pedidos": 2172,
+      "lineas": 2827,
+      "unidades": 7474,
+      "dias_sobrecarga": 1,
+      "dias_atencion": 0
+    },
+    {
+      "semana": "2026-W32",
+      "pedidos": 2157,
+      "lineas": 2806,
+      "unidades": 7423,
+      "dias_sobrecarga": 1,
+      "dias_atencion": 0
+    },
+    {
+      "semana": "2026-W30",
+      "pedidos": 2147,
+      "lineas": 2794,
+      "unidades": 7386,
+      "dias_sobrecarga": 1,
+      "dias_atencion": 0
+    },
+    {
+      "semana": "2026-W29",
+      "pedidos": 2121,
+      "lineas": 2758,
+      "unidades": 7300,
+      "dias_sobrecarga": 0,
+      "dias_atencion": 1
+    },
+    {
+      "semana": "2026-W28",
+      "pedidos": 2092,
+      "lineas": 2723,
+      "unidades": 7204,
+      "dias_sobrecarga": 0,
+      "dias_atencion": 1
+    }
+  ]
+}

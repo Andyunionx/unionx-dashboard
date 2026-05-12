@@ -107,10 +107,23 @@ jobs:
         run: python evaluar_alertas.py
         continue-on-error: true
 
+      - name: 9. Capacidad bodega (refresca con forecast nuevo)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_capacidad_forecast.py
+        continue-on-error: true
+
+      - name: 10. Volumen operacional (pedidos/lineas/uds/carga equipo)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_volumen_operacional.py
+        continue-on-error: true
+
       - name: Commit parquets si cambiaron
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions Forecast"
-          git add data/forecast/ data/pricing_historico/ data/stock_historico/
+          git add data/forecast/ data/pricing_historico/ data/stock_historico/ data/capacidad/
           git diff --staged --quiet || git commit -m "Forecast pipeline $(date -u +'%Y-%m-%d')"
           git push

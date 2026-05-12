@@ -366,6 +366,7 @@ def render():
             "🆓 Slots liberables (consolidar)",
             "🐢 Slotting subóptimo (relocar SKUs A)",
             "📥 Capacidad para próximos embarques",
+            "📊 Volumen operacional (pedidos/líneas)",
         ])
 
         # ── 4.1 Disponibilidad por posición (m³ pausado, ahora # posiciones) ──
@@ -579,6 +580,11 @@ def render():
         with slot_subtabs[3]:
             from views._ops_capacidad_forecast_helper import render_forecast_capacidad
             render_forecast_capacidad()
+
+        # ── 4.5 Volumen operacional (pedidos/líneas/uds proyectados) ────
+        with slot_subtabs[4]:
+            from views._ops_volumen_operacional_helper import render_volumen_operacional
+            render_volumen_operacional()
 
     # ============================================================
     # TAB 5 — USO DE POSICIONES

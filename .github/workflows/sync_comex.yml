@@ -64,6 +64,12 @@ jobs:
         run: python extract_capacidad_forecast.py
         continue-on-error: true
 
+      - name: Volumen operacional (pedidos/lineas/uds proyectados)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_volumen_operacional.py
+        continue-on-error: true
+
       - name: Commit parquet COMEX si cambio
         run: |
           git config --local user.email "actions@github.com"
