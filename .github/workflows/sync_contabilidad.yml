@@ -1,0 +1,54 @@
+name: "Sync Contabilidad (Cobranza Odoo + Libro Compras)"
+
+on:
+  schedule:
+    # Cada 6h: refresca documentos pendientes y procesa libro compras + cartolas
+    - cron: '0 */6 * * *'
+  push:
+    paths:
+      - 'data/contabilidad/**'
+      - 'extract_contabilidad_*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync_contabilidad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow openpyxl
+
+      - name: Extract Cobranza (documentos pendientes desde Odoo)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_contabilidad_cobranza.py
+        continue-on-error: true
+
+      - name: Procesar Centro Costos (libro compras + memoria)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_contabilidad_cc.py
+        continue-on-error: true
+
+      - name: Commit parquets si cambiaron
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Contabilidad"
+          git add data/contabilidad/
+          git diff --staged --quiet || git commit -m "Contabilidad snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
