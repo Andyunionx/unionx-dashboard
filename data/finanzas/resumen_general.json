@@ -1,0 +1,126 @@
+{
+  "generado_en": "2026-05-12T09:27:05.929107",
+  "archivo_origen": "Planificación Financiera 2026.xlsx",
+  "archivo_modificado": "2026-05-12T09:18:24.340000",
+  "hojas_procesadas": {
+    "pyl_mensual": {
+      "filas": 6126,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "seccion",
+        "linea",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\pyl_mensual.parquet",
+      "ok": true
+    },
+    "ppto_2026": {
+      "filas": 3030,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "codigo_cc",
+        "linea",
+        "seccion",
+        "valor_ppto"
+      ],
+      "archivo": "data\\finanzas\\ppto_2026.parquet",
+      "ok": true
+    },
+    "resumen_ytd": {
+      "filas": 54,
+      "columnas": [
+        "concepto",
+        "ytd_2026",
+        "ytd_ppto",
+        "ytd_2025",
+        "var_pct_ppto",
+        "var_pct_yoy",
+        "var_abs_ppto",
+        "var_abs_yoy"
+      ],
+      "archivo": "data\\finanzas\\resumen_ytd.parquet",
+      "ok": true
+    },
+    "kt": {
+      "filas": 2049,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "seccion",
+        "linea",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\kt.parquet",
+      "ok": true
+    },
+    "deuda": {
+      "filas": 2201,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "seccion",
+        "linea",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\deuda.parquet",
+      "ok": true
+    },
+    "metas_2026": {
+      "filas": 420,
+      "columnas": [
+        "kpi",
+        "tipo",
+        "fecha",
+        "year",
+        "month",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\metas_2026.parquet",
+      "ok": true
+    },
+    "fcst_eerr": {
+      "filas": 786,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "seccion",
+        "linea",
+        "valor_fcst"
+      ],
+      "archivo": "data\\finanzas\\fcst_eerr.parquet",
+      "ok": true
+    },
+    "dashboard_data": {
+      "filas": 345,
+      "columnas": [
+        "concepto",
+        "mes_label",
+        "mes_num",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\dashboard_data.parquet",
+      "ok": true
+    },
+    "analisis_financiero": {
+      "filas": 49,
+      "columnas": [
+        "seccion",
+        "concepto",
+        "ytd_2025",
+        "ytd_2026",
+        "var_abs",
+        "var_pct",
+        "nota"
+      ],
+      "archivo": "data\\finanzas\\analisis_financiero.parquet",
+      "ok": true
+    }
+  }
+}

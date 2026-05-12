@@ -1,0 +1,46 @@
+name: "Sync Finanzas (Planificación Financiera 2026)"
+
+on:
+  push:
+    paths:
+      - 'data/planillas/Planificación Financiera 2026.xlsx'
+      - 'extract_finanzas_planificacion.py'
+  schedule:
+    # Backup cada 6 horas por si se modificó sin disparar push
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync_finanzas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow openpyxl
+
+      - name: Extract Planificación Financiera → parquets
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_finanzas_planificacion.py
+
+      - name: Commit parquets si cambiaron
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Finanzas"
+          git add data/finanzas/
+          git diff --staged --quiet || git commit -m "Finanzas snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
