@@ -13,6 +13,8 @@ Flujo:
    - tipo_negocio = 'Fidelización CMR'
    - venta_bruta = Venta CMR Bruto (PVP)
    - venta_neta = Venta CMR Neto
+   - margen_front = venta_neta - costo_total (recalculado)
+   - margen_final = margen_front (comision/logistica/marketing en 0)
    (Comisión y envío CMR quedan FUERA del registro: por ahora solo venta y costo → margen directo)
 4. Reporta no-matches (CMR sheet sin equivalente en Turso) y duplicates.
 
@@ -178,15 +180,16 @@ def main():
 
     df_cmr = cargar_cmr_sheet()
 
-    # Para cada (fecha, sku) buscar candidatos en Turso (UnionX web / Shopify con bruta=0)
-    print(f"\n[2] Cargando candidatos Turso (UnionX web/Shopify con bruta=0 desde {CUTOFF_FECHA})...", flush=True)
-    # Canales candidatos: cualquier web propia (UnionX web, Shopify, Lhotse web, Simplit web).
+    # Candidatos: web bruta=0 (CMR no marcadas) + CMR ya existentes (para refresh de margen).
     # venta_bruta=0 es el marker tipico de CMR (pago lo procesa CMR, no la web).
+    print(f"\n[2] Cargando candidatos Turso (web bruta=0 + CMR existentes desde {CUTOFF_FECHA})...", flush=True)
     res = _q(f"""
-        SELECT rowid, pedido, sku, fecha_venta, canal, venta_bruta, tipo_negocio, documento
+        SELECT rowid, pedido, sku, fecha_venta, canal, venta_bruta, tipo_negocio, documento, costo_total
         FROM ventas
-        WHERE canal IN ('UnionX web', 'Shopify', 'Lhotse web', 'Simplit web')
-          AND venta_bruta = 0
+        WHERE (
+            (canal IN ('UnionX web', 'Shopify', 'Lhotse web', 'Simplit web') AND venta_bruta = 0)
+            OR (canal = 'CMR' AND tipo_negocio = 'Fidelización CMR')
+          )
           AND fecha_venta >= '{CUTOFF_FECHA}'
           AND tipo_movimiento = 'Venta'
         ORDER BY fecha_venta, pedido, sku
@@ -203,8 +206,9 @@ def main():
             'venta_bruta': float(_v(r, 5) or 0),
             'tipo_negocio': _v(r, 6),
             'documento': _v(r, 7),
+            'costo_total': float(_v(r, 8) or 0),
         })
-    print(f"   {len(candidatos)} candidatos en Turso", flush=True)
+    print(f"   {len(candidatos)} candidatos en Turso (web bruta=0 + CMR existentes)", flush=True)
 
     # Index candidatos por (fecha, sku) -> lista ordenada
     cand_idx = defaultdict(list)
@@ -239,6 +243,7 @@ def main():
                 'turso_pedido': chosen['pedido'],
                 'turso_canal_actual': chosen['canal'],
                 'turso_doc': chosen['documento'],
+                'turso_costo_total': chosen['costo_total'],
                 'venta_bruta_cmr': cmr['venta_bruta'],
                 'venta_neta_cmr': cmr['venta_neta'],
                 'comision_cmr': cmr['comision'],
@@ -268,14 +273,20 @@ def main():
         for i, m in enumerate(matches, 1):
             bruta = float(m['venta_bruta_cmr'] or 0)
             neta = float(m['venta_neta_cmr'] or 0)
+            costo = float(m.get('turso_costo_total') or 0)
+            margen_front = neta - costo
+            # margen_final = margen_front - comision - logistica - marketing
+            # Como ponemos comision=0, logistica=0, marketing=0 -> margen_final = margen_front
+            margen_final = margen_front
             rowid = int(m['turso_rowid'])
-            # Comision y logistica quedan en 0 (fuera del modelo venta-costo-margen directo)
             update_sql = (
                 f"UPDATE ventas SET "
                 f"canal = 'CMR', "
                 f"tipo_negocio = 'Fidelización CMR', "
                 f"venta_bruta = {bruta}, "
                 f"venta_neta = {neta}, "
+                f"margen_front = {margen_front}, "
+                f"margen_final = {margen_final}, "
                 f"comision = 0, "
                 f"comision_pct = 0, "
                 f"logistica = 0 "
