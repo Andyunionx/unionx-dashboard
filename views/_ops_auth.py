@@ -157,11 +157,11 @@ def _validar_odoo(email: str, password: str) -> tuple[bool, str, int]:
         return False, f"Error conectando a Odoo: {type(e).__name__}: {str(e)[:100]}", 0
 
 
-def _login_form():
+def _login_form(app_name: str = "Operaciones", icon: str = "🚢"):
     """Render del formulario de login."""
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("# 🚢 UnionX Operaciones")
+        st.markdown(f"# {icon} UnionX {app_name}")
         st.caption("Login con tu usuario Odoo · sesión válida 8 horas")
         st.markdown("---")
 
@@ -216,8 +216,12 @@ def _set_session(email: str, uid: int):
     st.session_state["authentication_status"] = True
 
 
-def require_login_ops():
+def require_login_ops(app_name: str = "Operaciones", icon: str = "🚢"):
     """Bloquea la app hasta login. Si hay cookie válida, auto-loguea sin pedir password.
+
+    Args:
+        app_name: nombre que aparece en el form de login (default "Operaciones")
+        icon: emoji que aparece junto al nombre (default "🚢")
 
     Si está autenticado: muestra info en sidebar y deja seguir.
     Si no: muestra form de login y st.stop().
@@ -257,5 +261,5 @@ def require_login_ops():
             return email
 
     # 3. No autenticado — mostrar form
-    _login_form()
+    _login_form(app_name=app_name, icon=icon)
     st.stop()

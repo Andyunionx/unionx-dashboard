@@ -59,7 +59,7 @@ with st.sidebar:
 
 # Auth: reutiliza el SSO Odoo de la app Operaciones (mismas credenciales)
 from views._ops_auth import require_login_ops  # noqa: E402
-require_login_ops()
+require_login_ops(app_name="Planificación", icon="📦")
 
 from views._ops_odoo_helper import odoo_status_indicator  # noqa: E402
 odoo_status_indicator()
