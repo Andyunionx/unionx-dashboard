@@ -165,7 +165,30 @@ def _generar_insights(df: pd.DataFrame, resumen: dict) -> list[dict]:
                 ),
             })
 
-    # ── 5. Distribución espacial (slotting óptimo) ────────────────────────
+    # ── 5. Demanda no cubierta (quiebres reales) ──────────────────────────
+    sal_dbg = resumen.get('salidas_debug', {})
+    no_cub = sal_dbg.get('demanda_no_cubierta_unidades_total', 0)
+    sal_unid = sal_dbg.get('salidas_unidades_90d_total', 1)
+    if no_cub > 0 and sal_unid > 0:
+        pct_no_cub = no_cub / (no_cub + sal_unid) * 100
+        if pct_no_cub > 15:
+            insights.append({
+                'tipo': '🔴 QUIEBRES PROYECTADOS',
+                'titulo': (f'{no_cub:,.0f} unidades de demanda 90d NO se cumplen '
+                            f'({pct_no_cub:.0f}% del total proyectado)'),
+                'accion': (
+                    "**Plan de aprovisionamiento urgente:**\n"
+                    "1. Identificar SKUs con quiebre crítico (Stock Total → filtro 🔴 CRÍTICO/QUIEBRE)\n"
+                    "2. Cruzar SKUs con quiebre vs PIs en tránsito — si NO viene en próximos 60d, "
+                    "incluir en próxima orden a Steven\n"
+                    "3. Para SKUs sin reposición programada → considerar transporte aéreo o "
+                    "proveedor alternativo local\n"
+                    "4. Revisar elasticidad: ¿se puede subir precio para enfriar demanda mientras "
+                    "llega reposición? (data en app Ventas → Análisis pricing)"
+                ),
+            })
+
+    # ── 6. Distribución espacial (slotting óptimo) ────────────────────────
     if pos_libres < pos_total * 0.10:
         insights.append({
             'tipo': '🔵 SLOTTING — zona caliente',
@@ -220,6 +243,21 @@ def render_forecast_capacidad():
         f"📐 Asunciones: posición ≈ {asunc.get('m3_por_posicion', 1.8)} m³ "
         f"(1×1,2×1,5m), 1 pallet apilable ≈ {asunc.get('m3_por_pallet_apilable', 1.2)} m³"
     )
+
+    # Cobertura de salidas (transparencia del modelo)
+    sal_dbg = resumen.get('salidas_debug', {})
+    if sal_dbg:
+        sk_odoo = sal_dbg.get('sku_con_vol_odoo', 0)
+        sk_fb = sal_dbg.get('sku_fallback', 0)
+        fb_v = sal_dbg.get('fallback_vol_m3', 0)
+        no_cub = sal_dbg.get('demanda_no_cubierta_unidades_total', 0)
+        st.caption(
+            f"📤 **Salidas**: forecast venta limitado al stock + tránsito disponible · "
+            f"Cobertura volumen: {sk_odoo} SKUs Odoo + {sk_fb} con fallback "
+            f"({fb_v:.4f} m³/unid mediana) · "
+            f"⚠️ {no_cub:,.0f} unidades de demanda 90d NO cubiertas con stock+tránsito actuales "
+            "(señal de quiebres por SKU — revisar Stock Total filtrando 'CRÍTICO')"
+        )
 
     # ─── KPIs estado actual (POSICIONES) ─────────────────────────────────
     pos_ocup_hoy = estado.get('posiciones_ocupadas_hoy', 0)

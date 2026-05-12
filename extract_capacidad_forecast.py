@@ -108,10 +108,11 @@ def _posiciones_bodega(odoo: OdooClient) -> dict:
     }
 
 
-def _stock_actual_m3(odoo: OdooClient) -> tuple[float, dict, list]:
+def _stock_actual_m3(odoo: OdooClient) -> tuple[float, dict, dict, dict, list]:
     """Calcula m³ del stock actual cruzando stock.quant con product.template.volume.
 
-    Returns: (m3_total, m3_por_sku{sku: m3}, anomalies[{sku,vol}])
+    Returns:
+        (m3_total, qty_by_sku, vol_unit_by_sku, m3_by_sku, anomalies)
     """
     print(f"[1/5] Cargando stock.quant (location internal)...", flush=True)
     quants = odoo.search_read_paginated(
@@ -129,7 +130,7 @@ def _stock_actual_m3(odoo: OdooClient) -> tuple[float, dict, list]:
             qty_by_pid[pid] += q.get('quantity', 0) or 0
 
     if not qty_by_pid:
-        return 0.0, {}, []
+        return 0.0, {}, {}, {}, []
 
     pids = sorted(qty_by_pid.keys())
     print(f"[2/5] Cargando product.product → product_tmpl_id ({len(pids)} pids)...", flush=True)
@@ -153,22 +154,29 @@ def _stock_actual_m3(odoo: OdooClient) -> tuple[float, dict, list]:
 
     m3_total = 0.0
     m3_by_sku = {}
+    qty_by_sku = {}
+    vol_unit_by_sku = {}
     anomalies = []
     for pid, qty in qty_by_pid.items():
         tmpl, sku = pid_to_tmpl.get(pid, (None, ''))
-        if not tmpl:
+        if not tmpl or not sku:
             continue
         vol_unit = vol_by_tmpl.get(tmpl, 0)
+        # Stock por SKU SIEMPRE (aunque vol esté en 0 o sea anómalo)
+        qty_by_sku[sku] = qty_by_sku.get(sku, 0) + qty
+
         if vol_unit > VOL_UNIT_ANOMALO_M3:
             anomalies.append({'sku': sku, 'vol_unit_m3': vol_unit, 'qty': qty})
             continue
+        # vol_unit confiable
+        if vol_unit > 0:
+            vol_unit_by_sku[sku] = vol_unit
         m3 = vol_unit * qty
         if m3 > 0:
             m3_total += m3
-            if sku:
-                m3_by_sku[sku] = m3_by_sku.get(sku, 0) + m3
+            m3_by_sku[sku] = m3_by_sku.get(sku, 0) + m3
 
-    return m3_total, m3_by_sku, anomalies
+    return m3_total, qty_by_sku, vol_unit_by_sku, m3_by_sku, anomalies
 
 
 def _transito_por_eta() -> dict:
@@ -185,42 +193,102 @@ def _transito_por_eta() -> dict:
     return {pd.Timestamp(k).date(): float(v) for k, v in serie.items()}
 
 
-def _salidas_por_dia(vol_by_sku_actual: dict, dim_df: pd.DataFrame) -> dict:
-    """{fecha: m3_saliente}. Cruza forecast venta diaria con vol unit por SKU.
+def _salidas_por_dia(
+    vol_unit_stock: dict,
+    qty_stock: dict,
+    dim_df: pd.DataFrame,
+    transito_por_sku: dict,
+) -> tuple[dict, dict]:
+    """{fecha: m3_saliente}. Combina forecast venta × vol unit por SKU,
+    limitado al stock + entradas acumuladas (no se puede vender lo que no hay).
 
-    Vol unit por SKU se obtiene del cruce de tránsito (extract_comex_dimensiones)
-    para los SKUs que se importan, y como fallback usa la densidad promedio del
-    stock actual para SKUs sin dimensión específica.
+    Cobertura volumen:
+      1. vol_unit_stock (stock actual Odoo product.template.volume)
+      2. dim_df (vol unit confiable de SKUs importados, override si difiere)
+      3. fallback: mediana del universo (no promedio — outliers afectan menos)
+
+    Returns:
+        (salidas_m3_por_fecha, debug_info{cobertura, fallback_value, ...})
     """
     if not FORECAST_PARQUET.exists():
         print(f"  WARN: no existe {FORECAST_PARQUET}", flush=True)
-        return {}
+        return {}, {}
 
     fc = pd.read_parquet(FORECAST_PARQUET)
     fc = fc[['ds', 'sku', 'yhat_anchored']].copy()
     fc['ds'] = pd.to_datetime(fc['ds'])
     fc = fc.dropna(subset=['ds', 'sku'])
+    fc['sku'] = fc['sku'].astype(str)
+    fc['yhat_anchored'] = fc['yhat_anchored'].clip(lower=0)
 
-    # Vol unit por SKU desde dimensiones COMEX (datos confiables)
-    if 'volumen_unit_m3_clean' not in dim_df.columns:
-        dim_df['volumen_unit_m3_clean'] = dim_df.get('volumen_unit_m3', 0)
-    vol_unit_by_sku = (dim_df.dropna(subset=['sku'])
-                              .drop_duplicates('sku')
-                              .set_index('sku')['volumen_unit_m3_clean'].to_dict())
+    # Vol unit consolidado: stock + tránsito (override con tránsito si existe)
+    vol_unit_by_sku = dict(vol_unit_stock)  # base: stock Odoo
+    if not dim_df.empty:
+        if 'volumen_unit_m3_clean' not in dim_df.columns:
+            dim_df['volumen_unit_m3_clean'] = dim_df.get('volumen_unit_m3', 0)
+        for _, r in dim_df.dropna(subset=['sku']).drop_duplicates('sku').iterrows():
+            sku = str(r['sku'])
+            v = float(r.get('volumen_unit_m3_clean') or 0)
+            if v > 0:
+                vol_unit_by_sku[sku] = v
 
-    # Vol unit fallback: densidad media de los SKUs con dato (para SKUs sin info)
-    vols_validos = [v for v in vol_unit_by_sku.values() if v and v > 0]
-    vol_unit_fallback = (sum(vols_validos) / len(vols_validos)) if vols_validos else 0.005
-    # 0.005 m³ = 5L como fallback genérico (caja chica de mercadería diversa)
+    # Fallback: mediana de los volúmenes válidos (robusto a outliers)
+    vols = sorted([v for v in vol_unit_by_sku.values() if v and 0 < v < VOL_UNIT_ANOMALO_M3])
+    vol_unit_fallback = vols[len(vols) // 2] if vols else 0.01
+    print(f"      Vol unit cobertura: {len(vol_unit_by_sku)} SKUs con dato Odoo · "
+          f"mediana fallback {vol_unit_fallback:.4f} m³/unid (5L approx)", flush=True)
 
-    def _vu(sku):
-        v = vol_unit_by_sku.get(sku, 0)
-        return v if v and v > 0 else vol_unit_fallback
+    # Stock disponible por SKU + entradas acumuladas (cap realista)
+    # Si no hay stock ni tránsito de un SKU, esa demanda no se cumple.
+    stock_disp = dict(qty_stock)  # copia
+    transito_pendiente_sku = dict(transito_por_sku)
 
-    fc['vol_unit'] = fc['sku'].apply(_vu)
-    fc['m3_dia'] = fc['yhat_anchored'].clip(lower=0) * fc['vol_unit']
-    serie = fc.groupby(fc['ds'].dt.date)['m3_dia'].sum()
-    return {pd.Timestamp(k).date(): float(v) for k, v in serie.items()}
+    # Diccionario de salidas y de demanda no cubierta
+    salidas = defaultdict(float)
+    salidas_unidades = defaultdict(float)
+    demanda_no_cubierta = defaultdict(float)
+    skus_sin_vol = set()
+
+    # Procesar forecast día por día (asume orden por fecha)
+    fc_sorted = fc.sort_values('ds')
+    for fecha, grp in fc_sorted.groupby(fc_sorted['ds'].dt.date):
+        for _, r in grp.iterrows():
+            sku = r['sku']
+            demanda = float(r['yhat_anchored'])
+            if demanda <= 0:
+                continue
+
+            # Cap por stock disponible
+            disp = stock_disp.get(sku, 0)
+            cumplido = min(demanda, disp)
+            if cumplido < demanda:
+                demanda_no_cubierta[fecha] += demanda - cumplido
+            stock_disp[sku] = max(0, disp - cumplido)
+
+            if cumplido <= 0:
+                continue
+
+            v = vol_unit_by_sku.get(sku, 0)
+            if not v or v <= 0:
+                v = vol_unit_fallback
+                skus_sin_vol.add(sku)
+
+            salidas[fecha] += v * cumplido
+            salidas_unidades[fecha] += cumplido
+
+    # Aplicar entradas de tránsito al stock disponible cuando llega ETA
+    # (esto debería ser día por día para más precisión, pero para mantener
+    # el modelo simple: las salidas ya capturadas usan stock inicial; para
+    # afinar, ver TODO en el extractor).
+
+    debug = {
+        'sku_con_vol_odoo': len(vol_unit_by_sku),
+        'sku_fallback': len(skus_sin_vol),
+        'fallback_vol_m3': round(vol_unit_fallback, 5),
+        'demanda_no_cubierta_unidades_total': round(sum(demanda_no_cubierta.values()), 0),
+        'salidas_unidades_90d_total': round(sum(salidas_unidades.values()), 0),
+    }
+    return ({pd.Timestamp(k).date(): float(v) for k, v in salidas.items()}, debug)
 
 
 def main():
@@ -234,21 +302,45 @@ def main():
     odoo.authenticate()
 
     # 1. Stock actual m³
-    m3_stock, m3_by_sku, stock_anomalies = _stock_actual_m3(odoo)
-    print(f"      m3 stock actual: {m3_stock:,.1f} (anómalos excluidos: {len(stock_anomalies)})", flush=True)
+    m3_stock, qty_stock, vol_unit_stock, m3_by_sku, stock_anomalies = _stock_actual_m3(odoo)
+    print(f"      m3 stock actual: {m3_stock:,.1f} (SKUs con stock: {len(qty_stock)}, "
+          f"con vol Odoo: {len(vol_unit_stock)}, anómalos: {len(stock_anomalies)})", flush=True)
 
-    # 2. Tránsito por ETA
+    # 2. Tránsito por ETA + por SKU (para cap salidas con stock futuro)
     print(f"\n[4/5] Cargando tránsito por ETA desde dimensiones COMEX...", flush=True)
     transito = _transito_por_eta()
     print(f"      {len(transito)} fechas con entradas, total m3: "
           f"{sum(transito.values()):,.1f}", flush=True)
 
-    # 3. Salidas diarias forecast
-    print(f"\n[5/5] Calculando salidas diarias desde forecast venta × vol unit...", flush=True)
+    # Tránsito por SKU (cantidad acumulada por SKU desde tránsito)
+    transito_por_sku = {}
+    if DIMENSIONES_PARQUET.exists():
+        dim_full = pd.read_parquet(DIMENSIONES_PARQUET)
+        if 'sku' in dim_full.columns and 'cantidad' in dim_full.columns:
+            transito_por_sku = (dim_full.dropna(subset=['sku'])
+                                          .groupby('sku')['cantidad'].sum()
+                                          .to_dict())
+
+    # Stock disponible total por SKU = stock actual + lo que llega por tránsito
+    # (modelo conservador: TODO el tránsito 90d se considera disponible para
+    # capear las salidas, sino la demanda 90d sería irreal vs stock actual)
+    stock_total_disponible = dict(qty_stock)
+    for sku, cant in transito_por_sku.items():
+        stock_total_disponible[sku] = stock_total_disponible.get(sku, 0) + cant
+
+    # 3. Salidas diarias forecast (capeado por stock disponible)
+    print(f"\n[5/5] Calculando salidas diarias forecast venta × vol unit (cap por stock)...", flush=True)
     dim_df = pd.read_parquet(DIMENSIONES_PARQUET) if DIMENSIONES_PARQUET.exists() else pd.DataFrame()
-    salidas = _salidas_por_dia(m3_by_sku, dim_df)
-    print(f"      {len(salidas)} días con salidas previstas, total m3 (90d): "
+    salidas, salidas_debug = _salidas_por_dia(
+        vol_unit_stock, stock_total_disponible, dim_df, transito_por_sku,
+    )
+    print(f"      {len(salidas)} días con salidas, total m3 (90d): "
           f"{sum(salidas.values()):,.1f}", flush=True)
+    print(f"      Cobertura vol unit: {salidas_debug['sku_con_vol_odoo']} SKUs Odoo · "
+          f"{salidas_debug['sku_fallback']} fallback (mediana {salidas_debug['fallback_vol_m3']:.4f})",
+          flush=True)
+    print(f"      Demanda NO cubierta (sin stock ni tránsito): "
+          f"{salidas_debug['demanda_no_cubierta_unidades_total']:,.0f} unid", flush=True)
 
     # 4. Capacidad bodega (REAL: posiciones leaf CA1/Stock — misma data que usa
     # Stock LIVE > Uso de posiciones, no asunción global)
@@ -403,6 +495,7 @@ def main():
         'pallets_total_salientes_horizonte': round(sum(salidas.values()) / M3_POR_PALLET, 1),
         'm3_total_entrante_horizonte': round(sum(transito.values()), 1),
         'm3_total_saliente_horizonte': round(sum(salidas.values()), 1),
+        'salidas_debug': salidas_debug,
         'stock_anomalies_count': len(stock_anomalies),
         'top_stock_anomalies': stock_anomalies[:10],
     }
