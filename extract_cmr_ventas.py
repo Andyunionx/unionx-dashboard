@@ -23,8 +23,9 @@ Modos:
 - DRY_RUN=0: ejecuta UPDATE.
 
 Output:
-- data/comex/cmr_matches.parquet (auditoria)
-- data/comex/cmr_resumen.json
+- data/cmr/cmr_matches.parquet (auditoria)
+- data/cmr/cmr_resumen.json
+- data/cmr/processed_cmr_names.json (set de cmr_name ya procesados — forward-only)
 """
 import json
 import os
@@ -180,6 +181,23 @@ def main():
 
     df_cmr = cargar_cmr_sheet()
 
+    # Cargar processed_cmr_names para filtrar a forward-only (no re-procesar lo viejo).
+    # Si el archivo no existe (primera corrida), procesa todo.
+    processed_path = OUT_DIR / 'processed_cmr_names.json'
+    processed_names = set()
+    if processed_path.exists():
+        try:
+            processed_names = set(json.load(open(processed_path, encoding='utf-8')))
+            print(f"\n   Procesados previamente: {len(processed_names)} cmr_names (forward-only mode)", flush=True)
+        except Exception:
+            pass
+    df_cmr_nuevos = df_cmr[~df_cmr['cmr_name'].isin(processed_names)].copy()
+    print(f"   Filas nuevas a procesar: {len(df_cmr_nuevos)} (de {len(df_cmr)} en sheet)", flush=True)
+    if df_cmr_nuevos.empty:
+        print(f"\n[OK] Nada nuevo que procesar. Saliendo.")
+        return
+    df_cmr = df_cmr_nuevos
+
     # Candidatos: web bruta=0 (CMR no marcadas) + CMR ya existentes (para refresh de margen).
     # venta_bruta=0 es el marker tipico de CMR (pago lo procesa CMR, no la web).
     print(f"\n[2] Cargando candidatos Turso (web bruta=0 + CMR existentes desde {CUTOFF_FECHA})...", flush=True)
@@ -267,6 +285,7 @@ def main():
             print(f"   {nm['cmr_name']} | {nm['cmr_fecha']} | {nm['sku']} | {nm['razon']}", flush=True)
 
     # UPDATE Turso si no DRY_RUN
+    ok_names = set()
     if matches and not DRY_RUN:
         print(f"\n[5] Ejecutando UPDATE en Turso ({len(matches)} filas)...", flush=True)
         ok_count = 0
@@ -295,12 +314,19 @@ def main():
             try:
                 _q(update_sql)
                 ok_count += 1
+                ok_names.add(m['cmr_name'])
             except Exception as e:
                 print(f"   [FAIL] {m['cmr_name']}: {str(e)[:80]}", flush=True)
                 continue
             if i % 25 == 0:
                 print(f"   ... {i}/{len(matches)} UPDATEs aplicados", flush=True)
         print(f"   ✓ UPDATE completado: {ok_count}/{len(matches)} OK", flush=True)
+
+        # Persistir el set de procesados (forward-only mode)
+        all_processed = processed_names | ok_names
+        with open(processed_path, 'w', encoding='utf-8') as f:
+            json.dump(sorted(all_processed), f, indent=2)
+        print(f"   Procesados acumulados: {len(all_processed)} cmr_names guardados en {processed_path.name}", flush=True)
     elif matches and DRY_RUN:
         print(f"\n[5] DRY_RUN: NO se ejecuta UPDATE. Set DRY_RUN=0 para aplicar.", flush=True)
 
