@@ -798,7 +798,9 @@ class VentasService(BaseOdooService):
             producto_id = linea['product_id'][0] if linea['product_id'] else None
             producto = productos_dict.get(producto_id, {})
 
-            # FIX: filtrar bodega 'El Volcán' (ventas offline cargadas a mano)
+            # FIX: filtrar bodega 'El Volcán' (defensa en profundidad — históricamente
+            # se llamaba así, hoy la bodega ya no tiene "volcán" en el nombre pero
+            # el filtro real efectivo está más abajo por canal_raw)
             bodega_nombre = orden.get('warehouse_id', [None, ''])[1] if orden.get('warehouse_id') else ''
             if 'volcán' in (bodega_nombre or '').lower() or 'volcan' in (bodega_nombre or '').lower():
                 continue
@@ -902,8 +904,13 @@ class VentasService(BaseOdooService):
             canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name)
 
             # FIX: filtrar canales que se cargan manualmente (offline) — no traer de Odoo
+            # El Volcán: SIEMPRE excluir. Es bodega de consignación; las ventas se cargan
+            # a mano (canal aparece como "El Volcan"/"El Volcán" en Odoo). Stock sí se
+            # contabiliza en otros módulos (es consignación nuestra).
+            canal_norm = (canal_raw or '').strip().lower().replace('á', 'a')
+            if canal_norm == 'el volcan':
+                continue
             # SAWA: solo excluir abril 2026 (cargado manual). Mayo en adelante sí auto-sync.
-            # El Volcán: ya se filtra arriba (siempre, por bodega).
             if canal_raw in ('Sawa', 'sawa', 'SAWA'):
                 fecha_venta_str = str(orden.get('date_order', ''))[:10]  # YYYY-MM-DD
                 if '2026-04-01' <= fecha_venta_str <= '2026-04-30':
