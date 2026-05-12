@@ -24,26 +24,17 @@ import sys
 from pathlib import Path
 
 import streamlit as st
+import streamlit_authenticator as stauth
+import yaml
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "finanzas-unionx" / "backend"))
 
 # Streamlit Cloud: exponer secretos como env vars
-for _key in (
-    "LIBSQL_URL",
-    "LIBSQL_AUTH_TOKEN",
-    "PLN_ODOO_USER",
-    "PLN_ODOO_PASSWORD",
-    "ODOO_URL",
-    "ODOO_DB",
-):
+for _key in ("LIBSQL_URL", "LIBSQL_AUTH_TOKEN", "ANDRES_ODOO_PASSWORD"):
     if _key in st.secrets and not os.environ.get(_key):
         os.environ[_key] = str(st.secrets[_key])
-
-# Alias: views/shared.py compartido busca ANDRES_ODOO_PASSWORD.
-if not os.environ.get("ANDRES_ODOO_PASSWORD") and os.environ.get("PLN_ODOO_PASSWORD"):
-    os.environ["ANDRES_ODOO_PASSWORD"] = os.environ["PLN_ODOO_PASSWORD"]
 
 st.set_page_config(
     page_title="UnionX Planificación",
@@ -52,17 +43,60 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+# ============================================================
+# AUTH (yaml/bcrypt — mismo mecanismo que dashboard_ventas)
+# ============================================================
+def _to_plain(obj):
+    if hasattr(obj, 'items') and not isinstance(obj, dict):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    if isinstance(obj, dict):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_to_plain(v) for v in obj]
+    return obj
+
+
+def _load_auth_config():
+    if 'auth' in st.secrets:
+        return _to_plain(st.secrets['auth'])
+    cfg_path = PROJECT_ROOT / 'auth_config.yaml'
+    if cfg_path.exists():
+        with open(cfg_path, encoding='utf-8') as f:
+            return yaml.safe_load(f)
+    return None
+
+
+auth_config = _load_auth_config()
+if not auth_config:
+    st.error("No hay configuración de autenticación.")
+    st.stop()
+
+authenticator = stauth.Authenticate(
+    auth_config['credentials'],
+    auth_config['cookie']['name'] + '_planificacion',  # cookie distinta a la de Ventas
+    auth_config['cookie']['key'],
+    auth_config['cookie']['expiry_days'],
+)
+try:
+    authenticator.login(location='main', key='login_main_plan')
+except Exception:
+    pass
+
+if st.session_state.get('authentication_status') is False:
+    st.error('Usuario o contraseña incorrectos')
+    st.stop()
+elif st.session_state.get('authentication_status') is None:
+    st.warning('Ingresá tu usuario y contraseña para acceder a Planificación')
+    st.stop()
+
+# Autenticado
 with st.sidebar:
     st.markdown("## 📦 **UnionX Planificación**")
     st.caption("Supply Chain Planning · 2026")
+    authenticator.logout('Cerrar sesión', 'sidebar')
+    st.write(f"👤 **{st.session_state.get('name', '')}**")
     st.divider()
-
-# Auth: reutiliza el SSO Odoo de la app Operaciones (mismas credenciales)
-from views._ops_auth import require_login_ops  # noqa: E402
-require_login_ops(app_name="Planificación", icon="📦")
-
-from views._ops_odoo_helper import odoo_status_indicator  # noqa: E402
-odoo_status_indicator()
 
 # ============================================================
 # NAVEGACIÓN
