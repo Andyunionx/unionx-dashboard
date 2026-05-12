@@ -162,6 +162,8 @@ _*.py
 !views/_ops_wms_raw_loader.py
 !views/_ops_otif_drive.py
 !views/_contribucion_loader.py
+!views/planning/_core.py
+!views/planning/_data_helpers.py
 # Permitir scripts en root
 !precalcular_kpis_wms.py
 !extract_wms_raw.py
