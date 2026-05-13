@@ -85,11 +85,19 @@ def _read_historico_parquet():
     return df
 
 
-@st.cache_resource(ttl=900, show_spinner="Cargando datos (primera vez ~10s)…")
+@st.cache_resource(ttl=21600, show_spinner="Cargando datos (primera vez ~60s)…")
 def get_local_db_path():
-    """SQLite local combinando histórico (parquet) + live (Turso). Auto-invalida 5 min."""
+    """SQLite local combinando histórico (parquet) + live (Turso). TTL 6h.
+
+    Si Turso es lento desde Streamlit Cloud, el build inicial puede tomar
+    1-2 min. TTL alto evita reconstruir varias veces al día.
+    """
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
+
+    import time as _t
+    build_started = _t.time()
+    BUILD_MAX_SECONDS = 240  # corta el loop de chunks si demora >4 min total
 
     print(f"[Local DB] Build {datetime.now()}", flush=True)
 
@@ -97,17 +105,16 @@ def get_local_db_path():
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
     headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
 
-    def turso_query(sql, retries=3):
+    def turso_query(sql, retries=2, timeout_s=45):
         body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
         last = None
         for i in range(retries):
             try:
-                r = requests.post(f"{libsql_url}/v2/pipeline", json=body, headers=headers, timeout=60)
+                r = requests.post(f"{libsql_url}/v2/pipeline", json=body, headers=headers, timeout=timeout_s)
                 r.raise_for_status()
                 return r.json()['results'][0]['response']['result']
             except (requests.exceptions.RequestException, KeyError) as e:
                 last = e
-                import time as _t
                 _t.sleep(2 ** i)
         raise last
 
@@ -165,11 +172,17 @@ def get_local_db_path():
         print(f"[Local DB] Histórico insertado OK", flush=True)
 
     # Live de Turso (con fallback si Turso falla — no romper el dashboard)
-    chunk_size = 50000
+    chunk_size = 25000  # más chico = chunks más rápidos
     last_rowid = 0
     chunks_turso = 0
+    turso_rows_loaded = 0
+    turso_error = None
     try:
         while True:
+            if _t.time() - build_started > BUILD_MAX_SECONDS:
+                turso_error = f"timeout build > {BUILD_MAX_SECONDS}s"
+                print(f"[Local DB][ABORT] {turso_error} tras {chunks_turso} chunks", flush=True)
+                break
             result = turso_query(
                 f"SELECT rowid, {cols_csv} FROM ventas "
                 f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
@@ -186,12 +199,14 @@ def get_local_db_path():
             conn.executemany(insert_sql, flat)
             conn.commit()
             chunks_turso += 1
-            print(f"[Local DB] Turso chunk {chunks_turso}: +{len(rows):,} filas (total {chunks_turso*chunk_size:,})", flush=True)
+            turso_rows_loaded += len(rows)
+            print(f"[Local DB] Turso chunk {chunks_turso}: +{len(rows):,} filas (total {turso_rows_loaded:,})", flush=True)
             if len(rows) < chunk_size:
                 break
-        print(f"[Local DB] Turso live OK: {chunks_turso} chunks", flush=True)
+        print(f"[Local DB] Turso live OK: {chunks_turso} chunks, {turso_rows_loaded:,} filas", flush=True)
     except Exception as e:
-        print(f"[Local DB][WARN] Turso fallo después de {chunks_turso} chunks: {type(e).__name__}. Dashboard usara solo histórico parquet.", flush=True)
+        turso_error = f"{type(e).__name__}: {str(e)[:120]}"
+        print(f"[Local DB][WARN] Turso fallo después de {chunks_turso} chunks: {turso_error}", flush=True)
 
     # dim_productos + metadata (con fallback)
     cols_p = ['sku', 'producto', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
@@ -224,10 +239,38 @@ def get_local_db_path():
 
     # Stats finales
     n_ventas = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
-    print(f"[Local DB] BUILD COMPLETO: {n_ventas:,} filas en ventas", flush=True)
+    max_fecha = conn.execute("SELECT MAX(fecha_venta) FROM ventas").fetchone()[0]
+    print(f"[Local DB] BUILD COMPLETO: {n_ventas:,} filas, max fecha {max_fecha}", flush=True)
 
+    # Guardar stats para que el sidebar las muestre
+    global _DB_BUILD_STATS
+    _DB_BUILD_STATS = {
+        'filas_total': n_ventas,
+        'filas_historico': len(df_hist) if not df_hist.empty else 0,
+        'filas_turso': turso_rows_loaded,
+        'chunks_turso': chunks_turso,
+        'turso_error': turso_error,
+        'max_fecha': max_fecha,
+        'build_duration_s': round(_t.time() - build_started, 1),
+        'built_at': datetime.now().isoformat(timespec='seconds'),
+    }
     conn.close()
     return str(tmp_path)
+
+
+_DB_BUILD_STATS: dict = {}
+
+
+def get_db_build_stats() -> dict:
+    """Stats del último build del SQLite local. Vacío si nunca se construyó."""
+    return dict(_DB_BUILD_STATS)
+
+
+def force_refresh_db_local():
+    """Limpia el cache_resource para forzar reconstrucción en el próximo acceso."""
+    get_local_db_path.clear()
+    cached_health.clear()
+    cached_filtros.clear()
 
 
 def get_service():

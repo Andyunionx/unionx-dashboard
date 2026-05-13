@@ -114,6 +114,36 @@ with st.sidebar:
     except Exception:
         pass
 
+    # Indicador del estado de la DB local (visible si Turso falló o no cargó)
+    try:
+        from views.shared import get_db_build_stats, force_refresh_db_local
+        stats = get_db_build_stats()
+        if stats:
+            turso_n = stats.get('filas_turso', 0)
+            err = stats.get('turso_error')
+            max_f = stats.get('max_fecha', '?')
+            if err or turso_n == 0:
+                st.markdown(
+                    "<div style='background:#FEE2E215;border-left:3px solid #DC2626;"
+                    "padding:6px 10px;border-radius:4px;font-size:0.8rem;'>"
+                    f"⚠️ <b>Turso no cargó</b><br>"
+                    f"Hist: {stats.get('filas_historico',0):,} · Turso: {turso_n:,}<br>"
+                    f"Max fecha: {max_f}<br>"
+                    f"<span style='color:#991B1B'>{(err or '—')[:80]}</span>"
+                    "</div>", unsafe_allow_html=True,
+                )
+            else:
+                st.caption(
+                    f"📊 DB local: {stats.get('filas_total',0):,} filas · "
+                    f"Turso {turso_n:,} en {stats.get('chunks_turso',0)} chunks · "
+                    f"max {max_f}"
+                )
+            if st.button("🔄 Forzar recarga DB", use_container_width=True, key="force_db_refresh"):
+                force_refresh_db_local()
+                st.rerun()
+    except Exception:
+        pass
+
     st.divider()
 
 # Auto-refresh cada 15 min via JS (alineado con TTL del cache local SQLite).
