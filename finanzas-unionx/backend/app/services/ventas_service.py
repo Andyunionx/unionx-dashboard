@@ -1073,7 +1073,8 @@ class VentasService(BaseOdooService):
                                 ratio = costo_orden / factura_total
                                 costo_nc = nc_amount_abs * ratio
 
-                        margen_nc = -nc_amount_abs + costo_nc  # mg = -venta + costo
+                        # margen NC = venta_neta - costo_total = (-nc_amount) - (-costo_nc) = -nc_amount + costo_nc
+                        margen_nc = -nc_amount_abs + costo_nc
 
                         # Crear fila de NC con signos NEGATIVOS (tipo: Devolución)
                         nc_data.append({
@@ -1111,8 +1112,8 @@ class VentasService(BaseOdooService):
                             'Venta bruta': -nc_amount_bruto_abs,  # NEGATIVO con IVA (compatible histórico)
                             'Venta Neta': -nc_amount_abs,         # NEGATIVO sin IVA
                             'Costo Unitario': 0,
-                            'Costo Total': costo_nc,  # POSITIVO: costo recuperado de la devolución
-                            'Margen Front': margen_nc,  # = -venta_neta + costo (menos negativo que -venta)
+                            'Costo Total': -costo_nc,  # NEGATIVO: la NC devuelve costo (consistente con venta_neta negativa)
+                            'Margen Front': margen_nc,  # = venta_neta - costo_total = -nc_amount - (-costo_nc) = -nc_amount + costo_nc
                             'Comision %': 0,
                             'Comisión': 0,
                             'Logística': 0,
