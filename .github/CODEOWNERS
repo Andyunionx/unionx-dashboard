@@ -1,0 +1,28 @@
+# CODEOWNERS
+# Andrés es owner por defecto de TODO. Los paths listados sin owner abajo
+# quedan LIBRES — terceros pueden mergear PRs ahí sin esperar approval.
+#
+# Cómo lo enforza GitHub:
+# 1. Branch protection en `main` exige "Require review from Code Owners"
+# 2. Si el PR toca un path donde Andrés es owner → debe aprobar Andrés
+# 3. Si el PR toca SOLO paths sin owner (planning) → mergea sin approval
+
+# Default: Andrés es owner de todo
+*                                       @Andyunionx
+
+# ============================================================
+# ZONA LIBRE PARA TERCEROS DE PLANIFICACIÓN
+# (sin owner = no requiere review obligatoria)
+# ============================================================
+/views/planning/
+/views/planning/contenido/
+/data/planificacion/
+/extract_proveedores_master.py
+/docs/planning/
+
+# ============================================================
+# ARQUITECTURA — VOLVEMOS A FORZAR OWNER (Andrés)
+# Estos archivos están en zona libre pero son críticos
+# ============================================================
+# (vacío por ahora — si en el futuro algo dentro de /views/planning/
+# se vuelve "intocable", agregar acá con @Andyunionx)
