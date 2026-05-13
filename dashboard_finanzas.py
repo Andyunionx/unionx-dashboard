@@ -96,6 +96,7 @@ with st.sidebar:
 # NAVEGACIÓN
 # ============================================================
 from views.fin_foto_mes import render as render_fin_foto_mes  # noqa
+from views.fin_control_gestion import render as render_fin_control_gestion  # noqa
 from views.fin_pyl_cc import render as render_fin_pyl_cc  # noqa
 from views.fin_pyl_linea_negocio import render as render_fin_pyl_ln  # noqa
 from views.fin_caja_deuda_kt import render as render_fin_caja_kt  # noqa
@@ -106,10 +107,15 @@ pages = {
         st.Page(render_fin_foto_mes, title="Foto del mes (V/H)", icon="📸",
                 url_path="fin-foto-mes", default=True),
     ],
-    "💵 P&L Control de Gestión": [
-        st.Page(render_fin_pyl_cc, title="P&L por Centro de Costo", icon="💵",
+    "💵 Control de Gestión": [
+        st.Page(render_fin_control_gestion,
+                title="PPTO vs FCST (Sheet Drive)", icon="💵",
+                url_path="fin-control-gestion"),
+        st.Page(render_fin_pyl_cc,
+                title="P&L por CC (archivo local)", icon="📋",
                 url_path="fin-pyl-cc"),
-        st.Page(render_fin_pyl_ln, title="P&L por Línea de Negocio", icon="📈",
+        st.Page(render_fin_pyl_ln,
+                title="P&L por Línea de Negocio", icon="📈",
                 url_path="fin-pyl-ln"),
     ],
     "💧 Caja & Balance": [

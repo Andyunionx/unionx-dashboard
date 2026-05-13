@@ -30,12 +30,30 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow openpyxl
+          pip install pandas pyarrow openpyxl gspread google-auth
 
       - name: Extract Planificación Financiera → parquets
         env:
           PYTHONIOENCODING: utf-8
         run: python extract_finanzas_planificacion.py
+
+      - name: Restaurar credentials.json desde secret (para Sheet de CG)
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+          fi
+
+      - name: Extract Control de Gestión (Sheet Drive P&L 2025-2026)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_finanzas_control_gestion.py
+        continue-on-error: true
+
+      - name: Limpiar credentials
+        if: always()
+        run: rm -f credentials.json
 
       - name: Commit parquets si cambiaron
         run: |
