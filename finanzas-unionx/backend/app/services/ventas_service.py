@@ -903,6 +903,16 @@ class VentasService(BaseOdooService):
                 website_name = w[1] if isinstance(w, (list, tuple)) and len(w) > 1 else str(w)
             canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name)
 
+            # Fusión de canales con variantes de capitalización (Drive y Odoo difieren)
+            CANAL_CANONICO = {
+                'sp digital': 'SP Digital',
+                'exporunning': 'ExpoRunning',
+            }
+            if canal_raw:
+                key = canal_raw.strip().lower()
+                if key in CANAL_CANONICO:
+                    canal_raw = CANAL_CANONICO[key]
+
             # FIX: filtrar canales que se cargan manualmente (offline) — no traer de Odoo
             # El Volcán: SIEMPRE excluir. Es bodega de consignación; las ventas se cargan
             # a mano (canal aparece como "El Volcan"/"El Volcán" en Odoo). Stock sí se
