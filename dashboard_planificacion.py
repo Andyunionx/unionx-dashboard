@@ -108,6 +108,7 @@ from views.planning.politicas import render as render_politicas
 from views.planning.negociacion import render as render_negociacion
 from views.planning.caja import render as render_caja
 from views.planning.liquidacion import render as render_liquidacion
+from views.forecast import render as render_forecast
 
 
 def render_resumen():
@@ -145,6 +146,10 @@ pages = {
     "🏠 Inicio": [
         st.Page(render_resumen, title="Resumen", icon="📦",
                 url_path="pln-resumen", default=True),
+    ],
+    "🔮 Forecast": [
+        st.Page(render_forecast, title="Proyección Prophet (mes/30-60-90d/año/componentes)",
+                icon="🔮", url_path="pln-forecast"),
     ],
     "🎯 Planificación": [
         st.Page(render_triada, title="Triada Stock+Llegadas+Demanda", icon="🎯",
