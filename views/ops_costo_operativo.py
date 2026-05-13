@@ -1,19 +1,20 @@
 """
-Vista Costo Operativo — App Operaciones.
+Vista Costo Operativo — App Operaciones (formato P&L estilo gerencial).
 
-Foco: FCST operación real vs Venta + Pedidos (no PPTO — eso vive en Finanzas).
+3 sub-tabs:
+  1. 📊 P&L Operaciones (cierre Q/mes)
+  2. 🔎 Detalle por Centro de Costo
+  3. 📋 Informe de Gestión (insights automáticos)
 
-Métricas que se ven acá:
-  - Costo operativo total FCST + YoY 2026 vs 2025
-  - Composición Fijo / Variable + % de cada uno
-  - Relación costo / venta % (benchmark Plan UnionX 8-12%)
-  - Relación costo / pedido (cruce snapshot WMS productividad)
-  - Costo / Contribución %
-  - Tendencia eficiencia mensual (ratio costo/venta)
-  - Proyección lineal costo según venta proyectada
-  - Punto de equilibrio (costos fijos / margen contribución)
-  - Designación de costos por línea de negocio (editor manual)
-  - Top CCs creciendo más vs año anterior (alertas ineficiencias)
+Datos:
+  - Costos: Sheet OPERACIONES 2025-2026 (Ppto + FCST=Real según Andrés)
+  - Ventas + Margen: módulo Ventas (data/historico/ventas_historico.parquet)
+
+Modelo "Fcst = Real": el FCST del Sheet representa lo efectivamente gastado/
+proyectado. La comparación Ppto vs Real es la métrica primaria.
+
+Sin desglose por canal en primera instancia (foco: cerrar costo operativo
+total empresa antes de distribuir por LN).
 """
 import io
 import json
@@ -33,12 +34,19 @@ RESUMEN = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo_resumen.json"
 WMS_SNAP = PROJECT_ROOT / "data" / "kpis_wms" / "snapshot.json"
 VENTAS_HIST = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 
+MESES_ES = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+            7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
+MESES_FULL = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
+              7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE",
+              11: "NOVIEMBRE", 12: "DICIEMBRE"}
 
-# Benchmarks Plan UnionX 2026-2028
-BENCH_COSTO_VENTA_OK = 12.0      # ≤12% es óptimo
-BENCH_COSTO_VENTA_ALERTA = 14.0  # >14% es problema
+# Sub-áreas del P&L (orden del Excel de Andrés)
+SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER", "UNIONX"]
 
 
+# ============================================================
+# DATA LOADING
+# ============================================================
 @st.cache_data(ttl=300)
 def _cargar() -> tuple[pd.DataFrame, dict]:
     df = pd.DataFrame()
@@ -54,68 +62,44 @@ def _cargar() -> tuple[pd.DataFrame, dict]:
     return df, res
 
 
-@st.cache_data(ttl=300)
-def _cargar_pedidos_mes() -> dict:
-    """Snapshot WMS → {YYYY-MM: # pedidos}."""
-    if not WMS_SNAP.exists():
-        return {}
-    try:
-        snap = json.load(open(WMS_SNAP, encoding="utf-8"))
-        for key in ("productividad_mes_6m", "productividad_meses_12m"):
-            p = snap.get(key, {})
-            items = p.get("items", []) if isinstance(p, dict) else []
-            if items:
-                return {
-                    it.get("periodo", ""): it.get("n_pedidos", 0)
-                    for it in items if it.get("n_pedidos", 0) > 0
-                }
-    except Exception:
-        pass
-    return {}
-
-
 @st.cache_data(ttl=600)
 def _cargar_ventas_mensual() -> pd.DataFrame:
-    """Lee parquet histórico de ventas y agrega por mes:
-    venta_bruta, venta_neta, margen_front, margen_final, n_pedidos."""
+    """Lee parquet histórico Ventas y agrega por mes (M CLP)."""
     if not VENTAS_HIST.exists():
         return pd.DataFrame()
     try:
         df = pd.read_parquet(VENTAS_HIST)
-        # Filtrar solo ventas (excluir devoluciones para gross figure)
-        # NOTA: si el user prefiere neto incluyendo NC, ajustar acá
         df["fecha_venta"] = pd.to_datetime(df["fecha_venta"], errors="coerce")
         df = df.dropna(subset=["fecha_venta"])
         df["year"] = df["fecha_venta"].dt.year
         df["month"] = df["fecha_venta"].dt.month
-        df["mes_iso"] = df["fecha_venta"].dt.strftime("%Y-%m")
-
-        agg = df.groupby(["year", "month", "mes_iso"], as_index=False).agg(
+        agg = df.groupby(["year", "month"], as_index=False).agg(
             venta_bruta=("venta_bruta", "sum"),
             venta_neta=("venta_neta", "sum"),
             margen_front=("margen_front", "sum"),
             margen_final=("margen_final", "sum"),
             n_pedidos=("pedido", "nunique"),
-            n_lineas=("sku", "count"),
-            n_unidades=("cantidad", "sum"),
         )
-        agg["fecha"] = pd.to_datetime(
-            agg["year"].astype(str) + "-" + agg["month"].astype(str) + "-01"
-        )
+        # CLP raw → M CLP (mismo orden que Sheet)
+        for c in ["venta_bruta", "venta_neta", "margen_front", "margen_final"]:
+            agg[c + "_m"] = agg[c] / 1000
         return agg
     except Exception:
         return pd.DataFrame()
 
 
-def _fmt_clp(v):
+# ============================================================
+# HELPERS DE FORMATO
+# ============================================================
+def _fmt_clp_m(v, signo: bool = False):
+    """Formato '$1,234' o '($1,234)' (negativo entre paréntesis estilo contable)."""
     if v is None or pd.isna(v) or v == 0:
         return "—"
     abs_v = abs(v)
-    if abs_v >= 1_000_000:
-        return f"${v/1e6:+,.1f}MM"
-    if abs_v >= 1_000:
-        return f"${v/1e3:+,.0f}M"
-    return f"${v:+,.0f}M"
+    sign = "" if v >= 0 else "−" if not signo else ""
+    if v < 0 and signo:
+        return f"({abs_v:,.0f})"
+    return f"{sign}{abs_v:,.0f}"
 
 
 def _fmt_pct(v):
@@ -124,638 +108,558 @@ def _fmt_pct(v):
     return f"{v:+.1f}%"
 
 
-def _kpi_html(label, valor, meta, color="#1F4E79"):
-    return f"""<div style="background:white;border-radius:12px;padding:16px 18px;
-    border:1px solid #E2E8F0;border-left:4px solid {color};
-    box-shadow:0 1px 3px rgba(0,0,0,0.05);height:100%;">
-    <div style="font-size:0.72rem;color:#64748B;text-transform:uppercase;
-    letter-spacing:0.5px;font-weight:600;margin-bottom:6px;">{label}</div>
-    <div style="font-size:1.5rem;font-weight:700;color:#1E293B;line-height:1.1;">{valor}</div>
-    <div style="font-size:0.72rem;color:#64748B;margin-top:8px;padding-top:8px;
-    border-top:1px solid #F1F5F9;">{meta}</div></div>"""
+def _color_var(v: float, es_costo: bool = True) -> str:
+    """Color para variación. Costos: var positiva (más gasto) es mala."""
+    if v is None or pd.isna(v):
+        return "#94A3B8"
+    if es_costo:
+        return "#16A34A" if v <= 5 else "#EA580C" if v <= 15 else "#DC2626"
+    return "#16A34A" if v >= -5 else "#EA580C" if v >= -15 else "#DC2626"
 
 
+# ============================================================
+# AGGREGATORS
+# ============================================================
+def _gasto_por_sub_area(df: pd.DataFrame, year: int, meses: list[int],
+                         escenario: str) -> dict[str, float]:
+    """Devuelve {sub_area: monto} del FCST/PPTO GASTO del año/meses."""
+    f = df[
+        (df["year"] == year)
+        & (df["month"].isin(meses))
+        & (df["escenario"] == escenario)
+        & (df["kpi"] == "GASTO")
+    ]
+    return f.groupby("sub_area")["valor"].sum().to_dict()
+
+
+def _venta_periodo(df_v: pd.DataFrame, year: int, meses: list[int]) -> float:
+    if df_v.empty:
+        return 0
+    f = df_v[(df_v["year"] == year) & (df_v["month"].isin(meses))]
+    return f["venta_bruta_m"].sum()
+
+
+# ============================================================
+# TAB 1: P&L OPERACIONES
+# ============================================================
+def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: int, meses: list[int]):
+    st.markdown(f"#### 📊 P&L Operaciones — {year}")
+    st.caption(
+        "Fuente: Costos = Sheet OPERACIONES (Ppto + Fcst) · "
+        "Venta = módulo Ventas. **Fcst = Real** según convención Andrés."
+    )
+
+    if not meses:
+        st.info("Selecciona al menos un mes")
+        return
+
+    # Construir filas: Ingresos | Gastos por sub-área | Total | Margen
+    rows = []
+    venta_ppto_total_acum = 0  # No tenemos Ppto Venta para Ops, usamos Real
+    venta_real_total_acum = 0
+    total_ppto_gastos_acum = 0
+    total_real_gastos_acum = 0
+
+    # Cabecera de columnas: por mes + acumulado
+    columnas = []
+    for m in meses:
+        columnas.append(("mes", m))
+    columnas.append(("acum", None))
+
+    # ───── INGRESOS POR VENTA ─────
+    for col_tipo, mes in columnas:
+        if col_tipo == "mes":
+            v_real = _venta_periodo(df_venta, year, [mes])
+        else:
+            v_real = _venta_periodo(df_venta, year, meses)
+        # Ppto venta = Real (módulo Ventas no tiene ppto de venta operacional)
+        if col_tipo == "mes":
+            pass
+
+    def _cell(ppto, real, es_costo=True, venta_real=None):
+        var_pct = ((real - ppto) / abs(ppto) * 100) if ppto else None
+        s_vta = (real / venta_real * 100) if (venta_real and venta_real != 0) else None
+        return ppto, real, var_pct, s_vta
+
+    # Construir DataFrame de display
+    headers = ["Concepto"]
+    for m in meses:
+        headers += [f"Ppto {MESES_ES[m]}", f"Real {MESES_ES[m]}",
+                    f"% Var {MESES_ES[m]}", f"% s/Vta {MESES_ES[m]}"]
+    headers += ["PPTO Acum", "REAL Acum", "% Var Acum", "% s/Vta Acum"]
+
+    data_rows = []
+
+    # Venta
+    venta_row = ["INGRESOS POR VENTA"] + [""] * (len(headers) - 1)
+    data_rows.append(venta_row)
+    venta_ppto_real_row = ["Venta Real"]
+    venta_acum = _venta_periodo(df_venta, year, meses)
+    for m in meses:
+        v = _venta_periodo(df_venta, year, [m])
+        venta_ppto_real_row += [_fmt_clp_m(v), _fmt_clp_m(v), "—", "—"]
+    venta_ppto_real_row += [_fmt_clp_m(venta_acum), _fmt_clp_m(venta_acum), "—", "—"]
+    data_rows.append(venta_ppto_real_row)
+
+    data_rows.append([""] * len(headers))
+
+    # GASTOS por sub-área
+    data_rows.append(["GASTOS OPERACIONES"] + [""] * (len(headers) - 1))
+
+    sub_area_data = {sa: {"ppto_meses": [], "real_meses": [],
+                            "ppto_acum": 0, "real_acum": 0} for sa in SUB_AREAS_PNL}
+    for sa in SUB_AREAS_PNL:
+        for m in meses:
+            ppto = _gasto_por_sub_area(df_costo, year, [m], "PPTO").get(sa, 0)
+            real = _gasto_por_sub_area(df_costo, year, [m], "FCST").get(sa, 0)
+            sub_area_data[sa]["ppto_meses"].append(ppto)
+            sub_area_data[sa]["real_meses"].append(real)
+        sub_area_data[sa]["ppto_acum"] = _gasto_por_sub_area(
+            df_costo, year, meses, "PPTO").get(sa, 0)
+        sub_area_data[sa]["real_acum"] = _gasto_por_sub_area(
+            df_costo, year, meses, "FCST").get(sa, 0)
+
+    for sa in SUB_AREAS_PNL:
+        sa_label = sa.title() if sa != "UNIONX" else "UnionX"
+        sa_label = sa_label if sa != "GRUPO ETER" else "Grupo Eter"
+        row = [sa_label]
+        for i, m in enumerate(meses):
+            ppto = sub_area_data[sa]["ppto_meses"][i]
+            real = sub_area_data[sa]["real_meses"][i]
+            v_mes = _venta_periodo(df_venta, year, [m])
+            var = ((abs(real) - abs(ppto)) / abs(ppto) * 100) if ppto else None
+            s_v = (abs(real) / v_mes * 100) if v_mes else None
+            row += [_fmt_clp_m(ppto), _fmt_clp_m(real),
+                    _fmt_pct(var), f"{s_v:.1f}%" if s_v else "—"]
+        # Acum
+        ppto_a = sub_area_data[sa]["ppto_acum"]
+        real_a = sub_area_data[sa]["real_acum"]
+        var_a = ((abs(real_a) - abs(ppto_a)) / abs(ppto_a) * 100) if ppto_a else None
+        s_v_a = (abs(real_a) / venta_acum * 100) if venta_acum else None
+        row += [_fmt_clp_m(ppto_a), _fmt_clp_m(real_a),
+                _fmt_pct(var_a), f"{s_v_a:.1f}%" if s_v_a else "—"]
+        data_rows.append(row)
+
+    # TOTAL GASTOS OPS
+    total_row = ["TOTAL GASTOS OPS"]
+    total_ppto_a = sum(sub_area_data[sa]["ppto_acum"] for sa in SUB_AREAS_PNL)
+    total_real_a = sum(sub_area_data[sa]["real_acum"] for sa in SUB_AREAS_PNL)
+    for i, m in enumerate(meses):
+        t_p = sum(sub_area_data[sa]["ppto_meses"][i] for sa in SUB_AREAS_PNL)
+        t_r = sum(sub_area_data[sa]["real_meses"][i] for sa in SUB_AREAS_PNL)
+        v_mes = _venta_periodo(df_venta, year, [m])
+        var = ((abs(t_r) - abs(t_p)) / abs(t_p) * 100) if t_p else None
+        s_v = (abs(t_r) / v_mes * 100) if v_mes else None
+        total_row += [_fmt_clp_m(t_p), _fmt_clp_m(t_r),
+                       _fmt_pct(var), f"{s_v:.1f}%" if s_v else "—"]
+    var_a = ((abs(total_real_a) - abs(total_ppto_a)) / abs(total_ppto_a) * 100) if total_ppto_a else None
+    s_v_a = (abs(total_real_a) / venta_acum * 100) if venta_acum else None
+    total_row += [_fmt_clp_m(total_ppto_a), _fmt_clp_m(total_real_a),
+                   _fmt_pct(var_a), f"{s_v_a:.1f}%" if s_v_a else "—"]
+    data_rows.append(total_row)
+
+    data_rows.append([""] * len(headers))
+
+    # MARGEN OPERATIVO
+    data_rows.append(["MARGEN OPERATIVO"] + [""] * (len(headers) - 1))
+    margen_row = ["Vta Real + Gastos Ops"]
+    for i, m in enumerate(meses):
+        v_mes = _venta_periodo(df_venta, year, [m])
+        t_r = sum(sub_area_data[sa]["real_meses"][i] for sa in SUB_AREAS_PNL)
+        margen = v_mes + t_r  # gastos son negativos
+        margen_row += ["", _fmt_clp_m(margen), "", ""]
+    margen_acum = venta_acum + total_real_a
+    margen_row += ["", _fmt_clp_m(margen_acum), "", ""]
+    data_rows.append(margen_row)
+
+    # % Margen Operativo
+    margen_pct_row = ["% Margen Operativo"]
+    for i, m in enumerate(meses):
+        v_mes = _venta_periodo(df_venta, year, [m])
+        t_r = sum(sub_area_data[sa]["real_meses"][i] for sa in SUB_AREAS_PNL)
+        margen = v_mes + t_r
+        pct = (margen / v_mes * 100) if v_mes else None
+        margen_pct_row += ["", f"{pct:.1f}%" if pct is not None else "—", "", ""]
+    pct_acum = (margen_acum / venta_acum * 100) if venta_acum else None
+    margen_pct_row += ["", f"{pct_acum:.1f}%" if pct_acum is not None else "—", "", ""]
+    data_rows.append(margen_pct_row)
+
+    df_show = pd.DataFrame(data_rows, columns=headers)
+    st.dataframe(df_show, use_container_width=True, hide_index=True, height=520)
+
+    # KPIs resumen abajo
+    st.markdown("---")
+    cols = st.columns(4)
+    cols[0].metric("Venta Real Acum", f"${venta_acum:,.0f} M")
+    cols[1].metric("Gastos Ops Acum", f"${abs(total_real_a):,.0f} M",
+                    f"{var_a:+.1f}% vs Ppto" if var_a is not None else None,
+                    delta_color="inverse")
+    cols[2].metric("Margen Operativo Acum", f"${margen_acum:,.0f} M")
+    cols[3].metric("% Margen Op Acum", f"{pct_acum:.1f}%" if pct_acum else "—")
+
+    # Descarga Excel
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as w:
+        df_show.to_excel(w, sheet_name="P&L Operaciones", index=False)
+    st.download_button(
+        "📥 Descargar P&L Operaciones (Excel)",
+        data=buf.getvalue(),
+        file_name=f"PnL_Operaciones_{year}_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+# ============================================================
+# TAB 2: DETALLE POR CENTRO DE COSTO
+# ============================================================
+def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
+                     year: int, meses: list[int]):
+    st.markdown(f"#### 🔎 Detalle por Centro de Costo — {year}")
+    st.caption(
+        "Drill-down: Sub-área › Centro de Costo › Cuenta Analítica · "
+        "Ppto vs Real (Fcst) · Desviación + % s/Venta"
+    )
+
+    if not meses:
+        st.info("Selecciona al menos un mes")
+        return
+
+    venta_acum = _venta_periodo(df_venta, year, meses)
+
+    # Filtro: solo gastos del año seleccionado
+    df_cc = df_costo[
+        (df_costo["year"] == year)
+        & (df_costo["month"].isin(meses))
+        & (df_costo["kpi"] == "GASTO")
+    ].copy()
+
+    if df_cc.empty:
+        st.info("Sin datos en el período seleccionado")
+        return
+
+    # Agregar por (centro_costo, cuenta_analitica, escenario, month)
+    df_pivot = df_cc.pivot_table(
+        index=["centro_costo", "cuenta_analitica"],
+        columns=["escenario", "month"],
+        values="valor",
+        aggfunc="sum",
+        fill_value=0,
+    )
+
+    # Aplanar columnas
+    df_flat = df_cc.groupby(["centro_costo", "cuenta_analitica", "escenario"])["valor"].sum().unstack("escenario", fill_value=0)
+    if "PPTO" not in df_flat.columns:
+        df_flat["PPTO"] = 0
+    if "FCST" not in df_flat.columns:
+        df_flat["FCST"] = 0
+    df_flat["Desv"] = df_flat["FCST"] - df_flat["PPTO"]
+    df_flat["% Var"] = df_flat.apply(
+        lambda r: ((abs(r["FCST"]) - abs(r["PPTO"])) / abs(r["PPTO"]) * 100)
+                   if r["PPTO"] else None,
+        axis=1,
+    )
+    df_flat["% s/Vta"] = df_flat["FCST"].apply(
+        lambda v: (abs(v) / venta_acum * 100) if venta_acum else None
+    )
+    df_flat = df_flat.reset_index().sort_values(
+        ["centro_costo", "FCST"], ascending=[True, True]
+    )
+
+    df_show = pd.DataFrame({
+        "Centro de Costo": df_flat["centro_costo"].str[:35],
+        "Cuenta Analítica": df_flat["cuenta_analitica"].str[:35],
+        "Ppto Acum": df_flat["PPTO"].apply(_fmt_clp_m),
+        "Real Acum": df_flat["FCST"].apply(_fmt_clp_m),
+        "Desv $": df_flat["Desv"].apply(_fmt_clp_m),
+        "% Var": df_flat["% Var"].apply(_fmt_pct),
+        "% s/Vta": df_flat["% s/Vta"].apply(
+            lambda v: f"{v:.2f}%" if pd.notna(v) else "—"),
+    })
+    st.dataframe(df_show, use_container_width=True, hide_index=True, height=560)
+
+    # Descarga Excel con detalle mensual completo
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as w:
+        df_pivot.to_excel(w, sheet_name="Detalle CC mensual")
+        df_flat.to_excel(w, sheet_name="Detalle CC acum", index=False)
+    st.download_button(
+        "📥 Descargar Detalle (Excel mensual + acumulado)",
+        data=buf.getvalue(),
+        file_name=f"Detalle_CC_{year}_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+# ============================================================
+# TAB 3: INFORME DE GESTIÓN
+# ============================================================
+def _tab_informe_gestion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
+                          year: int, meses: list[int], periodo_label: str):
+    st.markdown(f"#### 📋 Informe de Gestión — Operaciones {periodo_label} {year}")
+    st.caption("Análisis automático generado a partir de Ppto vs Real (Fcst)")
+
+    if not meses:
+        st.info("Selecciona al menos un mes")
+        return
+
+    venta_acum = _venta_periodo(df_venta, year, meses)
+
+    # ─── 1. ANÁLISIS DE VARIACIONES ────────────────────────────────
+    st.markdown("### 1. Análisis de Variaciones (Ppto vs Real)")
+
+    sa_data = []
+    for sa in SUB_AREAS_PNL:
+        ppto = _gasto_por_sub_area(df_costo, year, meses, "PPTO").get(sa, 0)
+        real = _gasto_por_sub_area(df_costo, year, meses, "FCST").get(sa, 0)
+        desv = real - ppto  # negativo si real < ppto (sobregasto si más negativo)
+        sobregasto = abs(real) - abs(ppto)  # positivo = gastó más de lo presupuestado
+        pct = (sobregasto / abs(ppto) * 100) if ppto else None
+        sa_data.append({
+            "sub_area": sa,
+            "ppto": ppto,
+            "real": real,
+            "sobregasto": sobregasto,
+            "pct": pct,
+        })
+
+    df_sa = pd.DataFrame(sa_data)
+    # Top 3 sobregasto (más positivo = peor)
+    top_3 = df_sa[df_sa["sobregasto"] > 0].nlargest(3, "sobregasto")
+
+    if not top_3.empty:
+        st.markdown(f"**Top {len(top_3)} sub-áreas con mayor sobregasto vs presupuesto:**")
+        # Driver principal: para cada sub-área, top 1 cuenta_analitica con mayor desv
+        rows_top = []
+        for _, r in top_3.iterrows():
+            sa = r["sub_area"]
+            df_sa_detail = df_costo[
+                (df_costo["year"] == year)
+                & (df_costo["month"].isin(meses))
+                & (df_costo["sub_area"] == sa)
+                & (df_costo["kpi"] == "GASTO")
+            ]
+            piv = df_sa_detail.groupby(["centro_costo", "cuenta_analitica", "escenario"])["valor"].sum().unstack("escenario", fill_value=0)
+            if "PPTO" not in piv.columns:
+                piv["PPTO"] = 0
+            if "FCST" not in piv.columns:
+                piv["FCST"] = 0
+            piv["sobregasto"] = piv["FCST"].abs() - piv["PPTO"].abs()
+            top_driver = piv.nlargest(1, "sobregasto")
+            if not top_driver.empty:
+                cc, cuenta = top_driver.index[0]
+                ppto_d = top_driver["PPTO"].iloc[0]
+                real_d = top_driver["FCST"].iloc[0]
+                driver = f"{cuenta or cc}: real {_fmt_clp_m(real_d)} vs ppto {_fmt_clp_m(ppto_d)}"
+            else:
+                driver = "—"
+
+            sa_label = sa.title() if sa not in ("UNIONX", "GRUPO ETER") else sa.replace("GRUPO ETER", "Grupo Eter").replace("UNIONX", "UnionX")
+            rows_top.append({
+                "Sub-Área": sa_label,
+                "Ppto": _fmt_clp_m(r["ppto"]),
+                "Real": _fmt_clp_m(r["real"]),
+                "Desviación": f"({_fmt_clp_m(r['sobregasto'])})" if r["sobregasto"] > 0 else _fmt_clp_m(r["sobregasto"]),
+                "% Desv.": _fmt_pct(r["pct"]),
+                "Driver principal": driver[:70],
+            })
+        st.dataframe(pd.DataFrame(rows_top), use_container_width=True, hide_index=True)
+    else:
+        st.success("✅ No hay sub-áreas con sobregasto vs presupuesto")
+
+    # Impacto en margen
+    sobregasto_total = df_sa[df_sa["sobregasto"] > 0]["sobregasto"].sum()
+    if sobregasto_total > 0 and venta_acum > 0:
+        impacto_pp = sobregasto_total / venta_acum * 100
+        st.markdown(
+            f"**Impacto en margen:**  El sobregasto acumulado de "
+            f"{len(top_3)} sub-áreas es ~${sobregasto_total:,.0f} M. "
+            f"Sobre la venta del período (${venta_acum:,.0f} M), esto representa "
+            f"**{impacto_pp:.2f} pp de margen perdido**. Por cada $1,000 adicionales "
+            f"en sobregasto, el margen cae ~{1000/venta_acum*100:.3f}%."
+        )
+
+    # Nota positiva: sub-área que ahorró
+    df_ahorro = df_sa[df_sa["sobregasto"] < -100]  # ahorró > $100 M
+    if not df_ahorro.empty:
+        ah_top = df_ahorro.nsmallest(1, "sobregasto").iloc[0]
+        sa_label = ah_top["sub_area"].title() if ah_top["sub_area"] not in ("UNIONX", "GRUPO ETER") else ah_top["sub_area"].replace("GRUPO ETER", "Grupo Eter").replace("UNIONX", "UnionX")
+        # % del total
+        total_real_abs = sum(abs(r["real"]) for _, r in df_sa.iterrows())
+        peso = (abs(ah_top["real"]) / total_real_abs * 100) if total_real_abs else 0
+        st.success(
+            f"✅ **Nota positiva: {sa_label}** — la sub-área más relevante "
+            f"({peso:.0f}% del gasto total de Ops) — cerró "
+            f"${abs(ah_top['sobregasto']):,.0f} M bajo presupuesto "
+            f"({ah_top['pct']:.1f}%), compensando los sobrecostos menores."
+        )
+
+    st.divider()
+
+    # ─── 2. COMPARATIVO vs FORECAST ───────────────────────────────
+    st.markdown("### 2. Comparativo vs Forecast")
+    st.caption("Dado que **Fcst = Real** en este modelo, la comparación Ppto vs Real refleja la eficiencia de la proyección inicial.")
+
+    total_ppto = df_sa["ppto"].sum()
+    total_real = df_sa["real"].sum()
+    ahorro = abs(total_ppto) - abs(total_real)  # positivo = ahorró
+    pct_ahorro = (ahorro / abs(total_ppto) * 100) if total_ppto else None
+
+    df_resumen = pd.DataFrame([{
+        "Resumen Gasto Ops": "Total Gastos Operacionales",
+        "Ppto": _fmt_clp_m(total_ppto),
+        "Real": _fmt_clp_m(total_real),
+        "Ahorro/(Sobrecosto)": (_fmt_clp_m(ahorro) if ahorro >= 0
+                                 else f"({_fmt_clp_m(-ahorro)})"),
+        "% Var": _fmt_pct(-pct_ahorro) if pct_ahorro is not None else "—",
+    }])
+    st.dataframe(df_resumen, use_container_width=True, hide_index=True)
+
+    # Ineficiencias detectadas (gasto puntual mes alto)
+    st.markdown("**⚠️ Ineficiencias no previstas detectadas:**")
+    ineficiencias = []
+    df_mes = df_costo[
+        (df_costo["year"] == year)
+        & (df_costo["month"].isin(meses))
+        & (df_costo["escenario"] == "FCST")
+        & (df_costo["kpi"] == "GASTO")
+    ]
+    # Por (sub_area, cuenta_analitica): ¿algún mes outlier vs promedio?
+    for (sa, ct), g in df_mes.groupby(["sub_area", "cuenta_analitica"]):
+        if len(g) < 2:
+            continue
+        montos = g["valor"].abs()
+        avg = montos.mean()
+        max_m = montos.max()
+        if max_m > avg * 2 and max_m > 500:  # outlier > 2x promedio Y > $500M
+            mes_max = g.loc[g["valor"].abs().idxmax(), "mes_text"]
+            ineficiencias.append(
+                f"- **{sa or '?'} / {ct or '?'}**: {mes_max.title()} concentra "
+                f"un pago atípico (${max_m:,.0f} M vs ${avg:,.0f} M promedio). "
+                "Posible facturación anual o cambio de plan no presupuestado."
+            )
+    if ineficiencias:
+        for i in ineficiencias[:5]:
+            st.markdown(i)
+    else:
+        st.markdown("- Sin outliers significativos detectados en el período")
+
+    st.divider()
+
+    # ─── 3. IMPACTO EN VENTAS ────────────────────────────────────
+    st.markdown("### 3. Impacto en Ventas — picos de venta vs eficiencia operativa")
+
+    # Tabla mes a mes con venta + gasto + ratio
+    rows_iv = []
+    for m in meses:
+        venta = _venta_periodo(df_venta, year, [m])
+        gasto = abs(sum(_gasto_por_sub_area(df_costo, year, [m], "FCST").get(sa, 0)
+                          for sa in SUB_AREAS_PNL))
+        ratio = (gasto / venta * 100) if venta else None
+        rows_iv.append({
+            "Mes": MESES_ES[m],
+            "Venta Real": _fmt_clp_m(venta),
+            "Gasto Ops": _fmt_clp_m(gasto),
+            "Costo/Venta %": f"{ratio:.1f}%" if ratio else "—",
+            "Status": ("🟢 OK" if ratio and ratio <= 12
+                        else ("🟡 Atención" if ratio and ratio <= 14
+                              else "🔴 Alerta")),
+        })
+    st.dataframe(pd.DataFrame(rows_iv), use_container_width=True, hide_index=True)
+
+    venta_total = sum(_venta_periodo(df_venta, year, [m]) for m in meses)
+    gasto_total = abs(sum(
+        _gasto_por_sub_area(df_costo, year, meses, "FCST").get(sa, 0)
+        for sa in SUB_AREAS_PNL
+    ))
+    ratio_total = (gasto_total / venta_total * 100) if venta_total else None
+
+    st.markdown(
+        f"**Resumen período {periodo_label}:** "
+        f"Ratio Costo Ops / Venta = **{ratio_total:.1f}%** "
+        f"({'🟢 dentro' if ratio_total and ratio_total <= 12 else '🟠 sobre'} "
+        f"benchmark Plan UnionX 8-12%)" if ratio_total else ""
+    )
+
+
+# ============================================================
+# RENDER PRINCIPAL
+# ============================================================
 def render():
     with st.sidebar:
         st.markdown("### 💰 **Costo Operativo**")
-        st.caption("FCST real vs Venta + Pedidos")
+        st.caption("P&L · Detalle CC · Informe Gestión")
         st.divider()
 
-    st.title("💰 Costo Operativo Total")
+    st.title("💰 Costo Operativo Total — Operaciones")
     st.caption(
-        "Resultado operación FCST × Venta × Pedidos · benchmark Plan UnionX "
-        "8-12% costo/venta · base: Sheet OPERACIONES 2025-2026"
-    )
-    st.caption(
-        "💡 **PPTO vs FCST se analiza en app Finanzas** (Control de Gestión). "
-        "Acá el foco es la operación real proyectada vs ingresos."
+        "Cierre P&L estilo gerencial · costos del Sheet OPERACIONES + "
+        "venta del módulo Ventas · sin desglose por canal (foco: cerrar costo "
+        "operativo total empresa)"
     )
 
-    df, res = _cargar()
-    if df.empty:
+    df_costo, res = _cargar()
+    df_venta = _cargar_ventas_mensual()
+
+    if df_costo.empty:
         st.warning("⏳ Sin datos. Correr `python extract_ops_costo_operativo.py`")
         return
 
     st.caption(
-        f"🕒 Generado: {res.get('generado_en','')[:19]} · "
-        f"{res.get('filas_procesadas',0):,} filas · "
-        f"{res.get('centros_costo_count',0)} CCs"
+        f"🕒 Costos generado: {res.get('generado_en','')[:19]} · "
+        f"Ventas parquet: {VENTAS_HIST.stat().st_mtime if VENTAS_HIST.exists() else '?'}"
     )
-    st.divider()
 
-    # ─── FILTROS ────────────────────────────────────────────────────────
-    col1, col2, col3 = st.columns([1, 2, 2])
+    # ─── SELECTORES PERÍODO ──────────────────────────────────────────
+    st.divider()
+    col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
-        years = sorted(df["year"].dropna().unique().astype(int).tolist())
-        year_actual = max(years) if years else 2026
-        year_sel = st.selectbox("Año análisis", years,
-                                  index=years.index(year_actual) if year_actual in years else len(years)-1)
+        years = sorted(df_costo["year"].dropna().unique().astype(int).tolist())
+        year_sel = st.selectbox("Año", years,
+                                  index=len(years) - 1 if years else 0)
     with col2:
-        areas = sorted(df["area"].dropna().unique().tolist())
-        area_sel = st.multiselect("Áreas (todas por default)", areas, default=areas)
+        modo = st.selectbox("Período", ["Q1", "Q2", "Q3", "Q4", "YTD", "Mes específico"])
     with col3:
-        st.caption(
-            "**Modelo:** la operación es UNA SOLA base que sirve a UNIONX + GRUPO ETER. "
-            "Los gastos están consolidados; abajo podés asignar % por LN."
-        )
-
-    df_fcst = df[(df["escenario"] == "FCST") & df["area"].isin(area_sel)].copy()
-    df_year = df_fcst[df_fcst["year"] == year_sel].copy()
-    df_year_ant = df_fcst[df_fcst["year"] == year_sel - 1].copy()
-
-    # ─── VENTAS REALES desde módulo Ventas (parquet histórico) ──────────
-    # Mucho más completo que la columna VENTA del Sheet (que tiene solo
-    # UNIONX subset). Convertido a M CLP para sumar con costos del Sheet.
-    df_ventas_all = _cargar_ventas_mensual()
-    df_ventas_year = pd.DataFrame()
-    df_ventas_ant = pd.DataFrame()
-    venta_year = 0
-    venta_ant = 0
-    margen_final_year = 0
-    margen_front_year = 0
-    pedidos_real_year = 0
-    if not df_ventas_all.empty:
-        df_ventas_year = df_ventas_all[df_ventas_all["year"] == year_sel]
-        df_ventas_ant = df_ventas_all[df_ventas_all["year"] == year_sel - 1]
-        # CLP raw → M CLP (dividir por 1000) para comparar con costos del Sheet
-        venta_year = df_ventas_year["venta_bruta"].sum() / 1000
-        venta_ant = df_ventas_ant["venta_bruta"].sum() / 1000
-        margen_final_year = df_ventas_year["margen_final"].sum() / 1000
-        margen_front_year = df_ventas_year["margen_front"].sum() / 1000
-        pedidos_real_year = int(df_ventas_year["n_pedidos"].sum())
-
-    # ─── KPIs PRINCIPALES (gasto del Sheet, venta del módulo Ventas) ─────
-    gasto_year = df_year[df_year["kpi"] == "GASTO"]["valor"].sum()
-    contrib_year = margen_final_year  # ← usa margen final del parquet ventas
-    gasto_ant = df_year_ant[df_year_ant["kpi"] == "GASTO"]["valor"].sum()
-
-    # Costos por tipo
-    fijo = df_year[(df_year["kpi"] == "GASTO") & (df_year["tipo_costo"] == "FIJO")]["valor"].sum()
-    variable = df_year[(df_year["kpi"] == "GASTO") & (df_year["tipo_costo"] == "VARIABLE")]["valor"].sum()
-    total_clasif = abs(fijo) + abs(variable)
-    pct_fijo = (abs(fijo) / total_clasif * 100) if total_clasif > 0 else 0
-    pct_variable = (abs(variable) / total_clasif * 100) if total_clasif > 0 else 0
-
-    # Ratios
-    costo_venta = (abs(gasto_year) / abs(venta_year) * 100) if venta_year else None
-    costo_venta_ant = (abs(gasto_ant) / abs(venta_ant) * 100) if venta_ant else None
-    yoy_gasto = ((abs(gasto_year) / abs(gasto_ant) - 1) * 100) if gasto_ant else None
-
-    # Pedidos: usar parquet ventas (más confiable que WMS snapshot)
-    pedidos_year = pedidos_real_year
-    if pedidos_year == 0:
-        # Fallback a WMS snapshot
-        pedidos_dict = _cargar_pedidos_mes()
-        pedidos_year = sum(v for k, v in pedidos_dict.items()
-                            if k.startswith(str(year_sel))) if pedidos_dict else 0
-    costo_pedido = (abs(gasto_year) * 1_000_000 / pedidos_year) if pedidos_year else None
-
-    # Costo / Margen contribución
-    costo_margen = (abs(gasto_year) / abs(margen_final_year) * 100) if margen_final_year else None
-
-    st.markdown(f"### 💰 KPIs principales {year_sel}")
-    st.caption(
-        f"💡 Venta + margen: módulo Ventas ({pedidos_year:,.0f} pedidos · "
-        f"{_fmt_clp(venta_year)} venta bruta) · Costo: Sheet OPERACIONES"
-    )
-
-    # Fila 1: Costo total + Composición
-    cols = st.columns(4)
-    cols[0].markdown(_kpi_html(
-        f"Costo Operativo FCST {year_sel}",
-        _fmt_clp(gasto_year),
-        (f"YoY vs {year_sel-1}: <b>{_fmt_pct(yoy_gasto)}</b>"
-         if yoy_gasto is not None else f"Sin data {year_sel-1}"),
-        "#DC2626" if yoy_gasto and yoy_gasto > 15 else "#1F4E79",
-    ), unsafe_allow_html=True)
-
-    color_cv = "#16A34A" if costo_venta and costo_venta <= BENCH_COSTO_VENTA_OK else (
-        "#EA580C" if costo_venta and costo_venta <= BENCH_COSTO_VENTA_ALERTA else "#DC2626")
-    cols[1].markdown(_kpi_html(
-        "Costo / Venta %",
-        f"{costo_venta:.1f}%" if costo_venta else "—",
-        (f"Año ant: <b>{costo_venta_ant:.1f}%</b> · Bench <b>8-12%</b>"
-         if costo_venta_ant else f"Benchmark Plan: <b>8-12%</b>"),
-        color_cv,
-    ), unsafe_allow_html=True)
-
-    cols[2].markdown(_kpi_html(
-        "Costo / Mg Contribución %",
-        f"{costo_margen:.1f}%" if costo_margen else "—",
-        f"Margen final año: <b>{_fmt_clp(margen_final_year)}</b><br>"
-        f"(% del margen consumido por costo op)",
-        "#7C3AED",
-    ), unsafe_allow_html=True)
-
-    cols[3].markdown(_kpi_html(
-        "Costo / Pedido",
-        f"${costo_pedido:,.0f}" if costo_pedido else "—",
-        f"FCST / {pedidos_year:,.0f} pedidos<br>(módulo Ventas)",
-        "#EA580C",
-    ), unsafe_allow_html=True)
-
-    # Fila 2: composición
-    st.markdown("<br>", unsafe_allow_html=True)
-    cols2 = st.columns(4)
-    cols2[0].markdown(_kpi_html(
-        "Venta Bruta",
-        _fmt_clp(venta_year),
-        f"YoY: <b>{_fmt_pct(((venta_year/venta_ant - 1)*100) if venta_ant else None)}</b><br>"
-        f"Año ant: {_fmt_clp(venta_ant)}",
-        "#16A34A",
-    ), unsafe_allow_html=True)
-    cols2[1].markdown(_kpi_html(
-        "Margen Frontal",
-        _fmt_clp(margen_front_year),
-        f"Margen / Venta: <b>"
-        f"{margen_front_year/venta_year*100:.1f}%</b>" if venta_year else "—",
-        "#0EA5E9",
-    ), unsafe_allow_html=True)
-    cols2[2].markdown(_kpi_html(
-        "Margen Final (contribución)",
-        _fmt_clp(margen_final_year),
-        f"Margen / Venta: <b>"
-        f"{margen_final_year/venta_year*100:.1f}%</b>" if venta_year else "—",
-        "#7C3AED",
-    ), unsafe_allow_html=True)
-    cols2[3].markdown(_kpi_html(
-        "Composición Costo",
-        f"{pct_fijo:.0f}% Fijo / {pct_variable:.0f}% Var",
-        f"Fijo: <b>{_fmt_clp(fijo)}</b><br>Variable: <b>{_fmt_clp(variable)}</b>",
-        "#1F4E79",
-    ), unsafe_allow_html=True)
-
-    st.divider()
-
-    # ─── COSTOS vs VENTA vs CONTRIBUCION MENSUAL ─────────────────────────
-    st.markdown("### 📈 Costo Operativo vs Venta vs Contribución — mensual")
-    st.caption("Costo: Sheet OPERACIONES (FCST) · Venta + Margen: módulo Ventas (real)")
-
-    # Costos mensuales del Sheet
-    df_costos_m = (df_year[df_year["kpi"] == "GASTO"]
-                    .groupby("fecha", as_index=False)["valor"].sum())
-    df_costos_m["costo_abs"] = df_costos_m["valor"].abs()
-
-    # Ventas mensuales del parquet (M CLP)
-    df_v_m = df_ventas_year.copy() if not df_ventas_year.empty else pd.DataFrame()
-    if not df_v_m.empty:
-        df_v_m["venta_m"] = df_v_m["venta_bruta"] / 1000
-        df_v_m["margen_m"] = df_v_m["margen_final"] / 1000
-
-    if not df_costos_m.empty or not df_v_m.empty:
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        if not df_costos_m.empty:
-            fig.add_trace(go.Bar(
-                x=df_costos_m["fecha"], y=df_costos_m["costo_abs"],
-                name="Costo operativo (FCST)", marker_color="#DC2626", opacity=0.85,
-                hovertemplate="%{x|%b %Y}<br>Costo: $%{y:,.0f}M<extra></extra>",
-            ), secondary_y=False)
-        if not df_v_m.empty:
-            fig.add_trace(go.Scatter(
-                x=df_v_m["fecha"], y=df_v_m["venta_m"],
-                name="Venta bruta (real)", mode="lines+markers",
-                line=dict(color="#16A34A", width=3),
-                marker=dict(size=10),
-                hovertemplate="%{x|%b %Y}<br>Venta: $%{y:,.0f}M<extra></extra>",
-            ), secondary_y=False)
-            fig.add_trace(go.Scatter(
-                x=df_v_m["fecha"], y=df_v_m["margen_m"],
-                name="Margen contribución", mode="lines+markers",
-                line=dict(color="#7C3AED", width=2.5, dash="dot"),
-                marker=dict(size=8),
-                hovertemplate="%{x|%b %Y}<br>Margen: $%{y:,.0f}M<extra></extra>",
-            ), secondary_y=False)
-
-            # Ratio costo/venta % (eje derecho)
-            df_merge = df_costos_m.merge(
-                df_v_m[["fecha", "venta_m"]], on="fecha", how="inner"
-            )
-            if not df_merge.empty:
-                df_merge["ratio_cv"] = df_merge["costo_abs"] / df_merge["venta_m"] * 100
-                fig.add_trace(go.Scatter(
-                    x=df_merge["fecha"], y=df_merge["ratio_cv"],
-                    name="Costo/Venta %", mode="lines+markers",
-                    line=dict(color="#EA580C", width=2.5),
-                    marker=dict(size=7, symbol="diamond"),
-                    hovertemplate="%{x|%b %Y}<br>Ratio: %{y:.1f}%<extra></extra>",
-                ), secondary_y=True)
-                fig.add_hline(y=BENCH_COSTO_VENTA_OK, line=dict(color="#16A34A", dash="dot"),
-                               secondary_y=True, annotation_text="12% benchmark",
-                               annotation_position="right")
-                fig.update_yaxes(
-                    title_text="Costo/Venta %", tickformat=".0f",
-                    secondary_y=True,
-                    range=[0, max(20, df_merge["ratio_cv"].max() * 1.2)],
-                )
-
-        fig.update_layout(
-            height=420,
-            xaxis=dict(title="Mes"),
-            hovermode="x unified",
-            margin=dict(t=20, b=40, l=70, r=70),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            legend=dict(orientation="h", y=1.05, x=0),
-        )
-        fig.update_yaxes(title_text="M CLP", tickformat=",.0f", secondary_y=False)
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.divider()
-
-    # ─── COMPOSICIÓN FIJO vs VARIABLE ───────────────────────────────────
-    st.markdown("### 🧊 Composición Fijo vs Variable")
-    c1, c2 = st.columns([1, 2])
-
-    with c1:
-        if total_clasif > 0:
-            fig_donut = go.Figure(go.Pie(
-                labels=["Fijo", "Variable"],
-                values=[abs(fijo), abs(variable)],
-                hole=0.55,
-                marker=dict(colors=["#1F4E79", "#EA580C"]),
-                textinfo="label+percent",
-                hovertemplate="%{label}<br>$%{value:,.0f}M (%{percent})<extra></extra>",
-            ))
-            fig_donut.update_layout(
-                height=300, margin=dict(t=10, b=10, l=10, r=10),
-                paper_bgcolor="rgba(0,0,0,0)",
-                showlegend=False,
-            )
-            st.plotly_chart(fig_donut, use_container_width=True)
-
-    with c2:
-        # Tendencia mensual fijo vs variable
-        df_fv = (df_year[df_year["kpi"] == "GASTO"]
-                  .groupby(["fecha", "tipo_costo"], as_index=False)["valor"].sum())
-        df_fv["valor_abs"] = df_fv["valor"].abs()
-        if not df_fv.empty:
-            fig_fv = go.Figure()
-            for tipo, color in [("FIJO", "#1F4E79"), ("VARIABLE", "#EA580C")]:
-                d = df_fv[df_fv["tipo_costo"] == tipo].sort_values("fecha")
-                if d.empty:
-                    continue
-                fig_fv.add_trace(go.Bar(
-                    x=d["fecha"], y=d["valor_abs"],
-                    name=tipo, marker_color=color,
-                    hovertemplate=f"<b>{tipo}</b><br>%{{x|%b %Y}}: $%{{y:,.0f}}M<extra></extra>",
-                ))
-            fig_fv.update_layout(
-                height=300, barmode="stack",
-                xaxis=dict(title="Mes"),
-                yaxis=dict(title="M CLP", tickformat=",.0f"),
-                margin=dict(t=20, b=40, l=60, r=20),
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                legend=dict(orientation="h", y=1.05, x=0),
-            )
-            st.plotly_chart(fig_fv, use_container_width=True)
-
-    st.divider()
-
-    # ─── COMPARATIVO YoY POR CC ─────────────────────────────────────────
-    st.markdown(f"### 📊 Centros de Costo — {year_sel} vs {year_sel-1} (YoY)")
-    df_cc_actual = (df_year[df_year["kpi"] == "GASTO"]
-                     .groupby("centro_costo")["valor"].sum().abs())
-    df_cc_ant = (df_year_ant[df_year_ant["kpi"] == "GASTO"]
-                  .groupby("centro_costo")["valor"].sum().abs())
-    cc_comp = pd.DataFrame({
-        f"{year_sel-1}": df_cc_ant,
-        f"{year_sel}": df_cc_actual,
-    }).fillna(0)
-    cc_comp["YoY abs"] = cc_comp[f"{year_sel}"] - cc_comp[f"{year_sel-1}"]
-    cc_comp["YoY %"] = cc_comp.apply(
-        lambda r: ((r[f"{year_sel}"] / r[f"{year_sel-1}"] - 1) * 100)
-                   if r[f"{year_sel-1}"] > 0 else None,
-        axis=1,
-    )
-    cc_comp = cc_comp.sort_values("YoY abs", ascending=False)
-
-    df_show = pd.DataFrame({
-        "Centro Costo": cc_comp.index,
-        f"{year_sel-1}": cc_comp[f"{year_sel-1}"].apply(_fmt_clp),
-        f"{year_sel}": cc_comp[f"{year_sel}"].apply(_fmt_clp),
-        "YoY abs": cc_comp["YoY abs"].apply(_fmt_clp),
-        "YoY %": cc_comp["YoY %"].apply(_fmt_pct),
-    })
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=380)
-
-    # ─── INSIGHTS DE INEFICIENCIAS ──────────────────────────────────────
-    st.markdown("### 🎯 Insights de ineficiencia")
-
-    insights = []
-
-    # 1. CCs con crecimiento desproporcionado YoY
-    top_crec = cc_comp[(cc_comp[f"{year_sel-1}"] > 1000)
-                         & (cc_comp["YoY %"].fillna(0) > 20)].head(5)
-    if not top_crec.empty:
-        for cc in top_crec.index:
-            pct = top_crec.at[cc, "YoY %"]
-            abs_yoy = top_crec.at[cc, "YoY abs"]
-            insights.append({
-                "tipo": "🟠 CC CRECIENDO DESPROPORCIONADO",
-                "titulo": f"{cc}: {pct:+.0f}% YoY ({_fmt_clp(abs_yoy)})",
-                "accion": (
-                    f"**Acción:** auditar gastos de **{cc}**.\n"
-                    f"- Revisar mes a mes si hay outliers\n"
-                    f"- Comparar contra evolución de pedidos/venta del año\n"
-                    f"- Si es fijo, evaluar renegociación. Si variable, revisar driver."
-                ),
-            })
-
-    # 2. Costo/Venta arriba del benchmark
-    if costo_venta and costo_venta > BENCH_COSTO_VENTA_ALERTA:
-        insights.append({
-            "tipo": "🔴 RATIO COSTO/VENTA SOBRE BENCHMARK",
-            "titulo": f"{costo_venta:.1f}% vs Plan UnionX 8-12% (>{BENCH_COSTO_VENTA_ALERTA}% es crítico)",
-            "accion": (
-                "**Acción:**\n"
-                "1. Identificar top 3 CCs con mayor peso (ver tabla arriba)\n"
-                "2. Verificar si la venta del Sheet está completa "
-                "(GRUPO ETER tiene poco/nada de venta cargada)\n"
-                "3. Si Costo está bien medido pero falta venta → consolidar ingreso real\n"
-                "4. Si Costo está sobre-estimado → revisar designación a UNIONX vs ETER"
-            ),
-        })
-
-    # 3. Ratio fijo > variable (poca flexibilidad)
-    if pct_fijo > 60:
-        insights.append({
-            "tipo": "🟡 ESTRUCTURA RÍGIDA",
-            "titulo": f"{pct_fijo:.0f}% costos fijos — poca flexibilidad ante baja de ventas",
-            "accion": (
-                "**Acción:**\n"
-                "1. Identificar costos fijos potencialmente convertibles a variables "
-                "(ej: subcontratación de logística pico)\n"
-                "2. Renegociar contratos largos para introducir % variable\n"
-                "3. Evaluar consolidación de bodegas si la rígida es arriendo"
-            ),
-        })
-
-    # 4. Sin ineficiencias
-    if not insights:
-        insights.append({
-            "tipo": "🟢 OPERACIÓN EFICIENTE",
-            "titulo": f"Costo/Venta {costo_venta:.1f}% bajo benchmark · sin CCs con crecimiento desproporcionado",
-            "accion": (
-                "Mantener monitoreo mensual. Buscar oportunidades de mejora:\n"
-                "1. Auditar costos variables (mayor margen de optimización)\n"
-                "2. Evaluar inversión en automatización (paga vs costos fijos actuales)"
-            ),
-        })
-
-    for ins in insights:
-        if ins["tipo"].startswith("🔴"):
-            st.error(f"**{ins['tipo']} — {ins['titulo']}**")
-        elif ins["tipo"].startswith("🟠"):
-            st.warning(f"**{ins['tipo']} — {ins['titulo']}**")
-        elif ins["tipo"].startswith("🟡"):
-            st.info(f"**{ins['tipo']} — {ins['titulo']}**")
+        meses_disp = sorted(df_costo[df_costo["year"] == year_sel]["month"]
+                              .dropna().unique().astype(int).tolist())
+        if modo == "Q1":
+            meses_sel = [1, 2, 3]
+            periodo_label = "Q1"
+        elif modo == "Q2":
+            meses_sel = [4, 5, 6]
+            periodo_label = "Q2"
+        elif modo == "Q3":
+            meses_sel = [7, 8, 9]
+            periodo_label = "Q3"
+        elif modo == "Q4":
+            meses_sel = [10, 11, 12]
+            periodo_label = "Q4"
+        elif modo == "YTD":
+            meses_sel = sorted(meses_disp)
+            periodo_label = f"YTD ({MESES_ES.get(min(meses_sel),'?')}-{MESES_ES.get(max(meses_sel),'?')})"
         else:
-            st.success(f"**{ins['tipo']} — {ins['titulo']}**")
-        st.markdown(ins["accion"])
-
-    st.divider()
-
-    # ─── PROYECCIÓN COSTO vs VENTA ──────────────────────────────────────
-    st.markdown("### 🔮 Proyección de costo según FCST de venta")
-    st.caption(
-        "Si la operación es base única, escala con la venta. Regresión lineal "
-        f"costo↔venta sobre {year_sel}. Permite simular qué costo tendrías si "
-        "la venta sube/baja un X%."
-    )
-
-    # Usar venta real del módulo Ventas + costo del Sheet
-    if not df_v_m.empty and not df_costos_m.empty:
-        df_reg = df_costos_m.merge(
-            df_v_m[["fecha", "venta_m"]], on="fecha", how="inner"
-        )
-        if df_reg.empty:
-            venta_m = costo_m = np.array([])
-        else:
-            venta_m = df_reg["venta_m"].values
-            costo_m = df_reg["costo_abs"].values
-        mask = (venta_m > 0) & (costo_m > 0) if len(venta_m) > 0 else np.array([], dtype=bool)
-        if mask.sum() >= 3:
-            x = venta_m[mask]
-            y = costo_m[mask]
-            # Regresión lineal y = a*x + b
-            a, b = np.polyfit(x, y, 1)
-            r2 = np.corrcoef(x, y)[0, 1] ** 2
-
-            col_sim1, col_sim2 = st.columns(2)
-            with col_sim1:
-                delta_venta = st.slider(
-                    "Variación de venta proyectada (%)", -30, 50, 0, step=5,
-                    key="costo_op_sim",
-                )
-                venta_avg = x.mean()
-                venta_sim = venta_avg * (1 + delta_venta / 100)
-                costo_sim = a * venta_sim + b
-                ratio_sim = costo_sim / venta_sim * 100 if venta_sim > 0 else 0
-
-                st.metric(
-                    f"Venta simulada (promedio mensual)",
-                    _fmt_clp(venta_sim),
-                    f"{delta_venta:+d}%" if delta_venta else None,
-                )
-                st.metric(
-                    "Costo proyectado",
-                    _fmt_clp(costo_sim),
-                    f"Ratio {ratio_sim:.1f}%",
-                    delta_color="inverse",
-                )
-
-            with col_sim2:
-                fig_reg = go.Figure()
-                fig_reg.add_trace(go.Scatter(
-                    x=x, y=y, mode="markers", name="Meses reales",
-                    marker=dict(size=10, color="#1F4E79"),
-                    hovertemplate="Venta: $%{x:,.0f}M<br>Costo: $%{y:,.0f}M<extra></extra>",
-                ))
-                # Línea regresión
-                xx = np.linspace(x.min() * 0.7, x.max() * 1.3, 50)
-                yy = a * xx + b
-                fig_reg.add_trace(go.Scatter(
-                    x=xx, y=yy, mode="lines", name=f"Regresión (R²={r2:.2f})",
-                    line=dict(color="#DC2626", dash="dash"),
-                ))
-                # Punto simulado
-                fig_reg.add_trace(go.Scatter(
-                    x=[venta_sim], y=[costo_sim],
-                    mode="markers+text", name="Simulación",
-                    marker=dict(size=18, color="#EA580C", symbol="star"),
-                    text=[f"{ratio_sim:.1f}%"], textposition="top center",
-                ))
-                fig_reg.update_layout(
-                    height=300,
-                    xaxis=dict(title="Venta mensual (M CLP)", tickformat=",.0f"),
-                    yaxis=dict(title="Costo mensual (M CLP)", tickformat=",.0f"),
-                    margin=dict(t=20, b=40, l=70, r=20),
-                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                )
-                st.plotly_chart(fig_reg, use_container_width=True)
-        else:
-            st.info("Necesito al menos 3 meses con venta (real) y costo para regresión")
-    else:
-        st.info("Sin datos de venta (módulo Ventas) o costo (Sheet) para regresión")
-
-    st.divider()
-
-    # ─── PUNTO DE EQUILIBRIO ────────────────────────────────────────────
-    st.markdown("### ⚖️ Punto de equilibrio")
-    st.caption(
-        "Venta necesaria para cubrir costos fijos (costos variables se "
-        "asumen proporcionales a venta)."
-    )
-
-    fijo_mensual = abs(fijo) / 12 if fijo else 0  # promedio mes
-    variable_mensual = abs(variable) / 12 if variable else 0
-    venta_mensual_avg = abs(venta_year) / 12 if venta_year else 0
-    # Margen contribución % = (Venta - Variable) / Venta
-    mc_pct = ((venta_mensual_avg - variable_mensual) / venta_mensual_avg
-               if venta_mensual_avg > 0 else 0)
-    # Break-even venta = Fijo / MC%
-    breakeven_venta = (fijo_mensual / mc_pct) if mc_pct > 0 else None
-    holgura_pct = ((venta_mensual_avg / breakeven_venta - 1) * 100
-                    if breakeven_venta and breakeven_venta > 0 else None)
-
-    be_cols = st.columns(4)
-    be_cols[0].metric("Costos Fijos mensuales", _fmt_clp(-fijo_mensual))
-    be_cols[1].metric("Margen Contribución %",
-                       f"{mc_pct*100:.1f}%" if mc_pct else "—")
-    be_cols[2].metric("Venta para break-even", _fmt_clp(breakeven_venta))
-    be_cols[3].metric(
-        "Holgura vs venta actual",
-        f"{holgura_pct:+.1f}%" if holgura_pct is not None else "—",
-        delta_color="normal",
-    )
-
-    st.divider()
-
-    # ─── DESIGNACIÓN POR LÍNEA DE NEGOCIO ────────────────────────────────
-    st.markdown("### 🎯 Designación de Costos por Línea de Negocio")
-    st.caption(
-        "La operación es UNA SOLA pero sirve a varias LN. Asigná % de los "
-        "costos fijos a cada LN según cuánto la usa. Default 100% UNIONX "
-        "porque GRUPO ETER tiene su operación propia."
-    )
-
-    asig_default = pd.DataFrame({
-        "Línea Negocio": ["UNIONX", "GRUPO ETER"],
-        "% Asignación": [100.0, 0.0],
-        "Driver sugerido": [
-            "Pedidos del canal / total pedidos",
-            "Pedidos del canal / total pedidos",
-        ],
-    })
-
-    edited = st.data_editor(
-        asig_default,
-        column_config={
-            "% Asignación": st.column_config.NumberColumn(
-                "% Asignación", min_value=0, max_value=100, step=1, format="%.0f%%",
-            ),
-        },
-        hide_index=True, use_container_width=True, num_rows="fixed",
-    )
-
-    total_pct = edited["% Asignación"].sum()
-    if abs(total_pct - 100) > 0.1:
-        st.warning(f"⚠️ Total de asignación: {total_pct:.0f}% (debería sumar 100%)")
-    else:
-        # Calcular cost-to-serve por LN
-        st.markdown("##### 💵 Cost-to-serve por Línea de Negocio")
-        df_serve = edited.copy()
-        df_serve["Costo asignado"] = (df_serve["% Asignación"] / 100
-                                        * abs(gasto_year))
-        # Venta por LN: TODA la venta del módulo Ventas asignada a UNIONX
-        # (módulo Ventas no separa LN — todo es UnionX consolidado).
-        # GRUPO ETER queda sin venta porque tiene operación propia separada.
-        venta_por_ln = {"UNIONX": venta_year, "GRUPO ETER": 0}
-        df_serve["Venta LN"] = df_serve["Línea Negocio"].map(venta_por_ln).fillna(0)
-        df_serve["Costo/Venta %"] = df_serve.apply(
-            lambda r: (r["Costo asignado"] / r["Venta LN"] * 100)
-                       if r["Venta LN"] > 0 else None,
-            axis=1,
-        )
-        df_show_serve = pd.DataFrame({
-            "Línea Negocio": df_serve["Línea Negocio"],
-            "% Asignación": df_serve["% Asignación"].apply(lambda v: f"{v:.0f}%"),
-            "Costo asignado": df_serve["Costo asignado"].apply(
-                lambda v: f"${v/1000:,.0f}MM"),
-            "Venta LN": df_serve["Venta LN"].apply(
-                lambda v: f"${v/1000:,.0f}MM" if v > 0 else "—"),
-            "Costo/Venta %": df_serve["Costo/Venta %"].apply(
-                lambda v: f"{v:.1f}%" if pd.notna(v) else "—"),
-        })
-        st.dataframe(df_show_serve, use_container_width=True, hide_index=True)
-
-    st.divider()
-
-    # ─── DETALLE TABLA ───────────────────────────────────────────────────
-    with st.expander("📋 Detalle: gasto por CC × mes (descarga Excel)"):
-        df_fcst_gasto = df_year[df_year["kpi"] == "GASTO"]
-        pivot = df_fcst_gasto.pivot_table(
-            index="centro_costo", columns="mes_text",
-            values="valor", aggfunc="sum", fill_value=0,
-        )
-        if not pivot.empty:
-            mes_order = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
-                         "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE",
-                         "DICIEMBRE"]
-            existing = [m for m in mes_order if m in pivot.columns]
-            if existing:
-                pivot = pivot[existing]
-            pivot["TOTAL"] = pivot.sum(axis=1)
-            pivot = pivot.sort_values("TOTAL")
-
-            pivot_disp = pivot.copy()
-            for c in pivot_disp.columns:
-                pivot_disp[c] = pivot_disp[c].apply(_fmt_clp)
-            st.dataframe(pivot_disp, use_container_width=True, height=420)
-
-            buf = io.BytesIO()
-            with pd.ExcelWriter(buf, engine="openpyxl") as w:
-                pivot.to_excel(w, sheet_name="Costo Op CC")
-            st.download_button(
-                "📥 Descargar Excel",
-                data=buf.getvalue(),
-                file_name=f"costo_operativo_{year_sel}_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mes_unico = st.selectbox(
+                "Mes", meses_disp,
+                format_func=lambda m: MESES_ES.get(m, str(m)),
             )
+            meses_sel = [mes_unico]
+            periodo_label = MESES_ES.get(mes_unico, str(mes_unico))
 
-    with st.expander("ℹ️ Sobre el modelo"):
-        st.markdown(f"""
-        **Fuente:** [Sheet OPERACIONES 2025-2026](https://docs.google.com/spreadsheets/d/1WXoQYwDwYVXGBIacAUgTpzb-aYXm2BXgXA0_EucKo7M/edit) · refresca cada 12h vía cron.
+        # Intersectar con meses disponibles
+        meses_sel = [m for m in meses_sel if m in meses_disp]
+        st.caption(f"📅 **{periodo_label} {year_sel}** · "
+                    f"meses cargados: {[MESES_ES[m] for m in meses_sel]}")
 
-        **Concepto clave:** la operación es **una sola base** que sirve a múltiples
-        líneas de negocio (UNIONX + GRUPO ETER) y canales. Los gastos están
-        consolidados en GRUPO ETER en el Sheet; la designación por LN se hace
-        editando los % arriba.
+    st.divider()
 
-        **Benchmarks Plan UnionX 2026-2028:**
-        - Costo logístico / venta: 8-12% (óptimo) · 12-14% (alerta) · >14% (crítico)
-        - Costo / pedido ↓ 10-15% YoY
-
-        **PPTO vs FCST** (presupuesto vs forecast) se analiza en
-        **app Finanzas → Control de Gestión** (mismo Sheet con dimensión Tipo).
-        Acá el foco es **FCST real vs Venta y Pedidos**.
-        """)
+    # ─── 3 SUB-TABS ──────────────────────────────────────────────────
+    tab1, tab2, tab3 = st.tabs([
+        "📊 P&L Operaciones",
+        "🔎 Detalle por Centro de Costo",
+        "📋 Informe de Gestión",
+    ])
+    with tab1:
+        _tab_pnl(df_costo, df_venta, year_sel, meses_sel)
+    with tab2:
+        _tab_detalle_cc(df_costo, df_venta, year_sel, meses_sel)
+    with tab3:
+        _tab_informe_gestion(df_costo, df_venta, year_sel, meses_sel, periodo_label)
