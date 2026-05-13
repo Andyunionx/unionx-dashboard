@@ -55,15 +55,34 @@ def _conectar_sheets():
 
 
 def _parse_clp(s):
+    """Parser CLP chileno robusto.
+
+    Formatos aceptados:
+      - "1.234.567"     → 1,234,567 (punto = miles)
+      - "1.234,56"      → 1,234.56  (punto miles + coma decimal)
+      - "1234,56"       → 1234.56   (coma decimal)
+      - "1234567"       → 1,234,567 (sin formato)
+      - "-1.541"        → -1,541    (punto = miles, NO decimal)
+
+    Heurística clave: si solo hay PUNTOS (sin coma) y el último grupo
+    tiene 3 dígitos, son separadores de miles. Si tiene 1 o 2 dígitos
+    DESPUÉS del punto, podría ser decimal — pero en CLP es muy raro,
+    así que asumimos miles excepto cuando hay coma explícita.
+    """
     if s is None or s == "" or pd.isna(s):
         return 0.0
     t = str(s).strip().replace("$", "").replace(" ", "").replace("\xa0", "")
     if not t:
         return 0.0
     if "," in t and "." in t:
+        # Formato 1.234,56 → punto miles + coma decimal
         t = t.replace(".", "").replace(",", ".")
     elif "," in t:
+        # Solo coma → es decimal
         t = t.replace(",", ".")
+    elif "." in t:
+        # Solo punto → es separador de miles (CLP raramente usa decimal sin coma)
+        t = t.replace(".", "")
     try:
         return float(t)
     except ValueError:
