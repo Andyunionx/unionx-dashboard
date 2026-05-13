@@ -1,4 +1,7 @@
-"""Shared helpers, data loaders y filtros para todas las views."""
+"""Shared helpers, data loaders y filtros para todas las views.
+
+(Test CODEOWNERS — esta línea se revierte si el ruleset funciona)
+"""
 import os
 import sqlite3
 import sys
