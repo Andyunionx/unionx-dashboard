@@ -1,0 +1,54 @@
+name: "Congelar mes (Turso → parquet histórico)"
+
+on:
+  schedule:
+    # Día 2 de cada mes 12:00 UTC = 09:00 Chile (después del cron de Odoo del día 1)
+    - cron: '0 12 2 * *'
+  workflow_dispatch:
+    inputs:
+      mes:
+        description: 'Mes a congelar YYYY-MM (default: mes anterior al actual)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow requests
+
+      - name: Congelar mes
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -n "${{ github.event.inputs.mes }}" ]; then
+            python extract_congelar_mes.py "${{ github.event.inputs.mes }}"
+          else
+            python extract_congelar_mes.py
+          fi
+
+      - name: Commit parquet histórico actualizado + CUTOFF
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Freeze"
+          git add data/historico/ventas_historico.parquet views/shared.py
+          git diff --staged --quiet || git commit -m "Freeze mes: histórico + CUTOFF actualizado $(date -u +'%Y-%m-%d')"
+          git push

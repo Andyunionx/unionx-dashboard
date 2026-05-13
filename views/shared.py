@@ -25,7 +25,7 @@ from db_client import get_db_path
 
 DB_PATH = get_db_path()
 HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
-CUTOFF_HISTORICO = '2026-04-01'
+CUTOFF_HISTORICO = '2026-05-01'
 
 
 # ============================================================
