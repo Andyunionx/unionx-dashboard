@@ -97,7 +97,7 @@ def get_local_db_path():
 
     import time as _t
     build_started = _t.time()
-    BUILD_MAX_SECONDS = 240  # corta el loop de chunks si demora >4 min total
+    BUILD_MAX_SECONDS = 360  # corta el loop de chunks si demora >6 min total
 
     print(f"[Local DB] Build {datetime.now()}", flush=True)
 
@@ -105,7 +105,7 @@ def get_local_db_path():
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
     headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
 
-    def turso_query(sql, retries=2, timeout_s=45):
+    def turso_query(sql, retries=3, timeout_s=90):
         body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
         last = None
         for i in range(retries):
@@ -115,7 +115,7 @@ def get_local_db_path():
                 return r.json()['results'][0]['response']['result']
             except (requests.exceptions.RequestException, KeyError) as e:
                 last = e
-                _t.sleep(2 ** i)
+                _t.sleep(1 + i * 2)  # 1s, 3s, 5s
         raise last
 
     tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local.db'
@@ -172,7 +172,8 @@ def get_local_db_path():
         print(f"[Local DB] Histórico insertado OK", flush=True)
 
     # Live de Turso (con fallback si Turso falla — no romper el dashboard)
-    chunk_size = 25000  # más chico = chunks más rápidos
+    # Chunks chicos (5K) porque Turso desde Streamlit Cloud sufre timeouts con responses grandes.
+    chunk_size = 5000
     last_rowid = 0
     chunks_turso = 0
     turso_rows_loaded = 0
