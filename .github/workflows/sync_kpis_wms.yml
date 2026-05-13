@@ -27,7 +27,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow requests streamlit libsql-client
+          pip install pandas pyarrow requests streamlit libsql-client gspread google-auth
 
       - name: Pre-calcular KPIs WMS
         env:
@@ -42,10 +42,28 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python precalcular_kpis_wms.py
 
+      - name: Restaurar credentials.json (para Sheet Costo Operativo)
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+          fi
+
+      - name: Extract Costo Operativo (Sheet Drive OPERACIONES 2025-2026)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_ops_costo_operativo.py
+        continue-on-error: true
+
+      - name: Limpiar credentials
+        if: always()
+        run: rm -f credentials.json
+
       - name: Commit snapshot si cambió
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions KPIs WMS Sync"
-          git add data/kpis_wms/
-          git diff --staged --quiet || git commit -m "KPIs WMS snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git add data/kpis_wms/ data/operaciones/
+          git diff --staged --quiet || git commit -m "KPIs WMS + costo op snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
