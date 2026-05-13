@@ -53,17 +53,26 @@ def _conectar_sheets():
 
 
 def _parse_clp(s):
-    """Limpia números chilenos: '-585,28', '-1.985', '-5.039', '982'."""
+    """Parser CLP chileno robusto.
+
+    Formatos:
+      "1.234.567"  → 1,234,567 (punto = miles)
+      "1.234,56"   → 1,234.56  (punto miles + coma decimal)
+      "1234,56"    → 1234.56   (coma decimal)
+      "-1.541"     → -1541     (punto = miles, NO decimal)
+    """
     if s is None or s == "" or pd.isna(s):
         return 0.0
     t = str(s).strip().replace("$", "").replace(" ", "").replace("\xa0", "")
     if not t:
         return 0.0
-    # Chileno: punto miles, coma decimal
     if "," in t and "." in t:
         t = t.replace(".", "").replace(",", ".")
     elif "," in t:
         t = t.replace(",", ".")
+    elif "." in t:
+        # Solo punto en CLP = separador de miles, NO decimal
+        t = t.replace(".", "")
     try:
         return float(t)
     except ValueError:
