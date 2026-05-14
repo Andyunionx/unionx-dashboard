@@ -1,0 +1,27 @@
+{
+  "fecha_ejecucion": "2026-05-14T13:30:43",
+  "canales": [
+    "CMR"
+  ],
+  "rango": {
+    "desde": "2026-04-01",
+    "hasta_excl": "2026-05-01"
+  },
+  "parquet": {
+    "filas_pre": 406124,
+    "filas_post": 406192,
+    "filas_removidas": 64,
+    "filas_agregadas": 132,
+    "venta_anterior": 3814360.0,
+    "venta_nueva": 5401239.209999999,
+    "delta_venta": 1586879.209999999
+  },
+  "resumen_por_canal": [
+    {
+      "canal": "CMR",
+      "filas": 132,
+      "venta": 5401239.21,
+      "margen": 2318335.685464279
+    }
+  ]
+}
