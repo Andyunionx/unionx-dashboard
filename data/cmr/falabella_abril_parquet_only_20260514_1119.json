@@ -1,0 +1,17 @@
+{
+  "fecha_ejecucion": "2026-05-14T11:19:22",
+  "canal": "Falabella",
+  "rango": {
+    "desde": "2026-04-01",
+    "hasta_excl": "2026-05-01"
+  },
+  "modo": "parquet_only (Turso pendiente por red lenta)",
+  "parquet": {
+    "filas_pre": 398095,
+    "filas_post": 406124,
+    "filas_falabella_removidas": 3896,
+    "venta_anterior": 91253999.0,
+    "venta_nueva": 99695114.88999999,
+    "delta_venta": 8441115.889999986
+  }
+}
