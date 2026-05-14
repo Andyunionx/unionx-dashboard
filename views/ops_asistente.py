@@ -1,8 +1,8 @@
 """
-🤖 Asistente IA — App Operaciones.
+🤖 Asistente IA — App Operaciones (Google Gemini, GRATIS).
 
-Chatbot con Claude (Anthropic) que tiene acceso en tiempo real a los
-datos de la app:
+Chatbot con Gemini 2.0 Flash que tiene acceso en tiempo real a los
+datos de la app via tool calling:
   - costo_operativo.parquet (Sheet OPERACIONES Drive)
   - control_gestion.parquet (Sheet P&L Finanzas)
   - ventas_historico.parquet (módulo Ventas)
@@ -10,14 +10,14 @@ datos de la app:
   - capacidad forecast (bodega + tránsito)
   - dimensiones COMEX
 
-Usa tool calling para que Claude pueda:
-  - Consultar costos por CC, período, sub-área, tipo costo
-  - Comparar años (YoY)
-  - Cruzar costos vs venta vs pedidos
-  - Detectar outliers e ineficiencias
-  - Proyectar costo según escenario de venta
+Tier gratuito Google AI Studio:
+  - 15 requests/min
+  - 1.500 requests/día
+  - 1M tokens/día (input + output)
+  → MÁS que suficiente para uso personal de Andrés.
 
-Requiere ANTHROPIC_API_KEY en Streamlit Secrets.
+Requiere GEMINI_API_KEY en Streamlit Secrets.
+Obtener gratis en: https://aistudio.google.com/apikey
 """
 import json
 import os
@@ -333,9 +333,9 @@ def tool_comex_transito() -> dict:
 
 
 # ============================================================
-# TOOL DEFINITIONS para Claude API
+# TOOL FUNCTIONS REGISTRY (Gemini usa Python functions directamente)
 # ============================================================
-TOOLS_DEF = [
+TOOLS_DEF_LEGACY = [
     {
         "name": "costo_operativo",
         "description": "Consulta gastos operativos (FCST=real) del Sheet "
@@ -512,12 +512,97 @@ Cuando el usuario te pregunte "¿por qué el número X?", tu flujo:
 
 
 # ============================================================
-# UI
+# UI — Google Gemini (gratis)
 # ============================================================
+SUGERENCIAS = [
+    "¿Por qué subió tanto Logística en Q1 2026?",
+    "¿Cuál es el ratio Costo/Venta YTD?",
+    "Comparame REMUNERACIONES 2026 vs 2025",
+    "¿Qué CC tuvo la mayor desviación Ppto vs Real?",
+    "¿Cuánto gastamos en arriendos este año?",
+    "¿Qué tan llena va a estar la bodega en 60 días?",
+]
+
+
+def _modo_consultas_directas():
+    """Modo fallback sin LLM: selectores + tools."""
+    st.divider()
+    st.markdown("### 📊 Modo consultas directas (sin LLM)")
+    st.caption("Mientras configurás Gemini, podés consultar las tools directamente:")
+
+    consulta = st.selectbox(
+        "Tipo de consulta",
+        [
+            "Costo Operativo por filtro",
+            "Comparar año vs año (YoY)",
+            "Top desviaciones Ppto vs Real",
+            "Ratio Costo/Venta",
+            "Drill-down Centro de Costo",
+            "Venta del período (módulo Ventas)",
+        ],
+    )
+
+    if consulta == "Costo Operativo por filtro":
+        cA, cB = st.columns(2)
+        y = cA.selectbox("Año", [2025, 2026], key="cd_y1")
+        mes_sel = cB.selectbox("Período", ["Todos", "Q1", "Q2", "Q3", "Q4"], key="cd_m1")
+        sa = st.selectbox("Sub-área", ["Todas", "LOGISTICA", "OPERACIONES",
+                                          "POSTVENTA", "GRUPO ETER", "UNIONX"],
+                            key="cd_sa1")
+        if st.button("Consultar", type="primary", key="cd_b1"):
+            m = {"Q1": [1,2,3], "Q2": [4,5,6], "Q3": [7,8,9], "Q4": [10,11,12]}.get(mes_sel)
+            r = tool_costo_operativo(year=y, meses=m,
+                                       sub_area=sa if sa != "Todas" else None)
+            st.json(r)
+
+    elif consulta == "Comparar año vs año (YoY)":
+        cA, cB = st.columns(2)
+        ya = cA.selectbox("Año actual", [2026, 2025], key="cd_y2a")
+        yb = cB.selectbox("Año anterior", [2025, 2024], key="cd_y2b")
+        if st.button("Comparar", type="primary", key="cd_b2"):
+            r = tool_comparar_yoy(year_actual=ya, year_anterior=yb)
+            st.json(r)
+
+    elif consulta == "Top desviaciones Ppto vs Real":
+        cA, cB = st.columns(2)
+        y = cA.selectbox("Año", [2026, 2025], key="cd_y3")
+        n = cB.slider("Top N", 3, 20, 5, key="cd_n3")
+        if st.button("Buscar", type="primary", key="cd_b3"):
+            r = tool_top_desviaciones(year=y, top_n=n)
+            st.json(r)
+
+    elif consulta == "Ratio Costo/Venta":
+        cA, cB = st.columns(2)
+        y = cA.selectbox("Año", [2026, 2025], key="cd_y4")
+        mes_sel = cB.selectbox("Período", ["YTD", "Q1", "Q2", "Q3", "Q4"], key="cd_m4")
+        if st.button("Calcular", type="primary", key="cd_b4"):
+            m = {"Q1": [1,2,3], "Q2": [4,5,6], "Q3": [7,8,9], "Q4": [10,11,12]}.get(mes_sel)
+            r = tool_ratio_costo_venta(year=y, meses=m)
+            st.json(r)
+
+    elif consulta == "Drill-down Centro de Costo":
+        ccs = tool_centros_costo_disponibles().get("centros_costo", [])
+        cA, cB = st.columns(2)
+        cc = cA.selectbox("Centro de Costo", ccs, key="cd_cc5")
+        y = cB.selectbox("Año", [2026, 2025], key="cd_y5")
+        if st.button("Drill-down", type="primary", key="cd_b5"):
+            r = tool_drilldown_cc(centro_costo=cc, year=y)
+            st.json(r)
+
+    elif consulta == "Venta del período (módulo Ventas)":
+        cA, cB = st.columns(2)
+        y = cA.selectbox("Año", [2026, 2025], key="cd_y6")
+        mes_sel = cB.selectbox("Período", ["YTD", "Q1", "Q2", "Q3", "Q4"], key="cd_m6")
+        if st.button("Consultar", type="primary", key="cd_b6"):
+            m = {"Q1": [1,2,3], "Q2": [4,5,6], "Q3": [7,8,9], "Q4": [10,11,12]}.get(mes_sel)
+            r = tool_venta_periodo(year=y, meses=m)
+            st.json(r)
+
+
 def render():
     with st.sidebar:
         st.markdown("### 🤖 **Asistente IA**")
-        st.caption("Pregúntame sobre los números")
+        st.caption("Gemini — gratis")
         st.divider()
         if st.button("🗑️ Limpiar conversación", use_container_width=True):
             st.session_state.pop("ops_chat_msgs", None)
@@ -525,105 +610,100 @@ def render():
 
     st.title("🤖 Asistente IA — Operaciones")
     st.caption(
-        "Hago preguntas sobre los datos: costos, ventas, eficiencias, "
-        "tendencias. Uso tools en vivo sobre los parquets del repo."
+        "Powered by Google Gemini (gratis · 1.500 reqs/día) · "
+        "10 tools sobre los parquets del repo en vivo"
     )
 
     # Check API key
-    api_key = (st.secrets.get("ANTHROPIC_API_KEY")
-                if hasattr(st, "secrets") else None) or os.environ.get("ANTHROPIC_API_KEY")
+    api_key = None
+    try:
+        api_key = st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        pass
     if not api_key:
-        st.error(
-            "⚠️ Falta `ANTHROPIC_API_KEY` en Streamlit Secrets. "
-            "Pedir a Andrés agregarla en Settings → Secrets de la app."
-        )
-        with st.expander("📋 ¿Cómo obtener una API key?"):
-            st.markdown(
-                "1. Ir a https://console.anthropic.com/\n"
-                "2. Login con cuenta de UnionX\n"
-                "3. Settings → API Keys → Create Key\n"
-                "4. Copiar y pegar en Streamlit Cloud → app `unionx-operaciones` "
-                "→ Settings → Secrets como:\n"
-                "```toml\nANTHROPIC_API_KEY = \"sk-ant-...\"\n```"
-            )
+        api_key = os.environ.get("GEMINI_API_KEY")
 
-        # Modo fallback: queries manuales
-        st.divider()
-        st.markdown("### 📊 Mientras tanto: consultas directas")
-        with st.expander("🔍 Costo Operativo por filtro"):
-            colA, colB = st.columns(2)
-            y = colA.selectbox("Año", [2025, 2026], key="man_y")
-            mes_opts = ["Todos", "Q1", "Q2", "Q3", "Q4"]
-            mes_sel = colB.selectbox("Período", mes_opts, key="man_m")
-            sa = st.selectbox("Sub-área (opcional)",
-                                ["Todas"] + ["LOGISTICA", "OPERACIONES",
-                                              "POSTVENTA", "GRUPO ETER", "UNIONX"],
-                                key="man_sa")
-            if st.button("Consultar", type="primary"):
-                m = None
-                if mes_sel == "Q1":
-                    m = [1, 2, 3]
-                elif mes_sel == "Q2":
-                    m = [4, 5, 6]
-                elif mes_sel == "Q3":
-                    m = [7, 8, 9]
-                elif mes_sel == "Q4":
-                    m = [10, 11, 12]
-                result = tool_costo_operativo(
-                    year=y, meses=m,
-                    sub_area=sa if sa != "Todas" else None,
-                )
-                st.json(result)
+    if not api_key:
+        st.warning("⚠️ Falta `GEMINI_API_KEY` en Streamlit Secrets para activar el chat.")
+        with st.expander("📋 ¿Cómo obtenerla? (es gratis, 2 minutos)", expanded=True):
+            st.markdown(
+                "1. Ir a **https://aistudio.google.com/apikey**\n"
+                "2. Login con tu cuenta Google\n"
+                "3. Click **Create API key** → seleccionar proyecto (o crear nuevo)\n"
+                "4. Copiar la key (empieza con `AIza...`)\n"
+                "5. En Streamlit Cloud → app `unionx-operaciones` → Settings → Secrets, agregar:\n"
+                "   ```toml\n"
+                "   GEMINI_API_KEY = \"AIza...\"\n"
+                "   ```\n"
+                "6. Reboot app\n\n"
+                "**Tier gratuito Gemini 2.0 Flash:**\n"
+                "- 15 requests por minuto\n"
+                "- 1.500 requests por día\n"
+                "- 1.000.000 tokens por día\n\n"
+                "→ Más que suficiente para uso personal."
+            )
+        _modo_consultas_directas()
         return
 
-    # Importar SDK Anthropic
+    # Importar SDK Gemini
     try:
-        import anthropic
+        from google import genai
+        from google.genai import types
     except ImportError:
         st.error(
-            "⚠️ Falta paquete `anthropic`. Agregalo a `requirements.txt`:\n"
-            "```\nanthropic>=0.39.0\n```"
+            "⚠️ Falta paquete `google-genai`. Agregar a requirements.txt:\n"
+            "```\ngoogle-genai>=0.7.0\n```"
         )
+        _modo_consultas_directas()
         return
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 
-    # Inicializar conversación
+    # Sistema prompt
+    system_prompt = """Sos un asistente experto en operaciones y finanzas de UnionX.
+
+Tenés acceso a tools para consultar datos REALES en tiempo real:
+- costo_operativo: gastos por año/mes/sub-area/CC/tipo/escenario (FCST=real, PPTO)
+- venta_periodo: venta neta/bruta/margen/pedidos del módulo Ventas
+- comparar_yoy: comparación año contra año
+- ratio_costo_venta: ratio + evaluación vs benchmark Plan UnionX (8-12%)
+- top_desviaciones: CCs con mayor sobregasto Ppto vs Real
+- drilldown_cc: desglose profundo de un CC (mes a mes + cuenta analítica)
+- centros_costo_disponibles: lista de CCs/sub-áreas/tipos
+- kpis_wms: productividad bodega
+- capacidad_bodega: forecast posiciones 90 días
+- comex_transito: PIs en tránsito
+
+CONTEXTO IMPORTANTE:
+- Modelo "Fcst = Real": el escenario FCST representa lo realmente gastado
+- Valores Sheet OPERACIONES están en MILES CLP (M$)
+- Valores módulo Ventas están en CLP raw (dividir por 1000 para comparar con costos)
+- Año actual: 2026
+- Sub-áreas: LOGISTICA, OPERACIONES, POSTVENTA, GRUPO ETER, UNIONX
+- Benchmark Plan UnionX: costo logístico/venta 8-12% óptimo
+
+ESTILO:
+- Conciso, español chileno
+- Números formato chileno (1.234.567)
+- Para "por qué" → llamar tools primero, no inventar
+- Variaciones: dar monto absoluto + % + qué CC lo explica
+- Sugerir acciones concretas si detectás ineficiencias
+"""
+
+    # Chat history
     if "ops_chat_msgs" not in st.session_state:
         st.session_state["ops_chat_msgs"] = []
 
     # Mostrar historial
     for msg in st.session_state["ops_chat_msgs"]:
-        if msg["role"] == "user":
-            with st.chat_message("user"):
-                st.markdown(msg["content"])
-        elif msg["role"] == "assistant":
-            # content puede ser str (respuesta final) o list (con tool_use)
-            with st.chat_message("assistant"):
-                if isinstance(msg["content"], str):
-                    st.markdown(msg["content"])
-                else:
-                    for block in msg["content"]:
-                        if block.get("type") == "text":
-                            st.markdown(block["text"])
-                        elif block.get("type") == "tool_use":
-                            with st.expander(f"🔧 Consultando: `{block['name']}`"):
-                                st.code(json.dumps(block.get("input", {}),
-                                                     indent=2, ensure_ascii=False))
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
-    # Sugerencias rápidas
+    # Sugerencias
     if not st.session_state["ops_chat_msgs"]:
         st.markdown("##### 💡 Ejemplos de preguntas")
         col1, col2 = st.columns(2)
-        sugerencias = [
-            "¿Por qué subió tanto Logística en Q1 2026?",
-            "¿Cuál es el ratio Costo/Venta YTD?",
-            "Comparame REMUNERACIONES 2026 vs 2025",
-            "¿Qué CC tuvo la mayor desviación Ppto vs Real?",
-            "¿Cuánto gastamos en arriendos este año?",
-            "¿Qué tan llena va a estar la bodega en 60 días?",
-        ]
-        for i, s in enumerate(sugerencias):
+        for i, s in enumerate(SUGERENCIAS):
             col = col1 if i % 2 == 0 else col2
             if col.button(s, key=f"sug_{i}", use_container_width=True):
                 st.session_state["_ops_chat_input"] = s
@@ -635,86 +715,74 @@ def render():
         user_input = st.session_state.pop("_ops_chat_input")
 
     if user_input:
-        # Agregar mensaje user
-        st.session_state["ops_chat_msgs"].append({
-            "role": "user", "content": user_input,
-        })
+        st.session_state["ops_chat_msgs"].append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
 
-        # Loop tool calling
         with st.chat_message("assistant"):
             placeholder = st.empty()
             placeholder.markdown("⏳ Pensando...")
 
-            messages_api = []
-            for m in st.session_state["ops_chat_msgs"]:
-                messages_api.append({"role": m["role"], "content": m["content"]})
-
             try:
-                # Loop: llamar API, si tool_use ejecutar y volver, repetir
-                max_iters = 6
-                for _ in range(max_iters):
-                    response = client.messages.create(
-                        model="claude-sonnet-4-5",
-                        max_tokens=2048,
-                        system=SYSTEM_PROMPT,
-                        tools=TOOLS_DEF,
-                        messages=messages_api,
-                    )
+                # Tool functions list para Gemini (auto function calling)
+                tool_funcs_list = [
+                    tool_costo_operativo, tool_comparar_yoy, tool_venta_periodo,
+                    tool_ratio_costo_venta, tool_centros_costo_disponibles,
+                    tool_drilldown_cc, tool_top_desviaciones, tool_kpis_wms,
+                    tool_capacidad_bodega, tool_comex_transito,
+                ]
 
-                    # ¿Hay tool_use?
-                    tool_uses = [b for b in response.content if b.type == "tool_use"]
-                    if not tool_uses:
-                        # Respuesta final
-                        text_blocks = [b.text for b in response.content if b.type == "text"]
-                        final_text = "\n\n".join(text_blocks)
-                        placeholder.markdown(final_text)
-                        st.session_state["ops_chat_msgs"].append({
-                            "role": "assistant", "content": final_text,
-                        })
-                        break
+                # Construir historial para Gemini
+                contents = []
+                for m in st.session_state["ops_chat_msgs"]:
+                    role = "user" if m["role"] == "user" else "model"
+                    contents.append({"role": role, "parts": [{"text": m["content"]}]})
 
-                    # Ejecutar cada tool_use
-                    # Agregar el mensaje del assistant con tool_use al historial API
-                    assistant_content = []
-                    for b in response.content:
-                        if b.type == "text":
-                            assistant_content.append({"type": "text", "text": b.text})
-                        elif b.type == "tool_use":
-                            assistant_content.append({
-                                "type": "tool_use", "id": b.id,
-                                "name": b.name, "input": b.input,
-                            })
-                    messages_api.append({"role": "assistant", "content": assistant_content})
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        tools=tool_funcs_list,
+                        temperature=0.2,
+                        # automatic_function_calling enabled por default cuando hay tools Python
+                    ),
+                )
 
-                    # Ejecutar tools
-                    tool_results = []
-                    for tu in tool_uses:
-                        fn = TOOL_FUNCS.get(tu.name)
-                        if fn is None:
-                            result = {"error": f"Tool {tu.name} no existe"}
-                        else:
-                            try:
-                                result = fn(**(tu.input or {}))
-                            except Exception as e:
-                                result = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
-                        with st.expander(f"🔧 `{tu.name}`", expanded=False):
-                            st.code(json.dumps(tu.input or {}, indent=2,
-                                                  ensure_ascii=False))
-                            st.code(json.dumps(result, indent=2,
-                                                  ensure_ascii=False, default=str))
-                        tool_results.append({
-                            "type": "tool_result",
-                            "tool_use_id": tu.id,
-                            "content": json.dumps(result, ensure_ascii=False, default=str),
-                        })
+                # Gemini ejecuta las funciones automáticamente y devuelve respuesta final
+                final_text = response.text or "(sin respuesta)"
 
-                    messages_api.append({"role": "user", "content": tool_results})
-                    placeholder.markdown("⏳ Analizando data...")
-                else:
-                    placeholder.markdown("⚠️ Se alcanzó el límite de iteraciones de tools.")
+                # Mostrar tools llamadas si las hubo (en automatic_function_calling.history)
+                try:
+                    afc = response.automatic_function_calling_history
+                    if afc:
+                        with st.expander(f"🔧 {len(afc)} llamadas a tools", expanded=False):
+                            for h in afc:
+                                # h es un Content con function_call o function_response
+                                if hasattr(h, "parts"):
+                                    for p in h.parts:
+                                        if hasattr(p, "function_call") and p.function_call:
+                                            st.markdown(f"**→ `{p.function_call.name}`**")
+                                            st.code(json.dumps(
+                                                dict(p.function_call.args), indent=2,
+                                                ensure_ascii=False, default=str,
+                                            ))
+                                        elif hasattr(p, "function_response") and p.function_response:
+                                            st.code(json.dumps(
+                                                dict(p.function_response.response or {}),
+                                                indent=2, ensure_ascii=False, default=str,
+                                            )[:1500])
+                except Exception:
+                    pass
+
+                placeholder.markdown(final_text)
+                st.session_state["ops_chat_msgs"].append({
+                    "role": "assistant", "content": final_text,
+                })
 
             except Exception as e:
-                placeholder.error(f"❌ Error: {type(e).__name__}: {str(e)[:300]}")
-                st.session_state["ops_chat_msgs"].pop()  # quitar último user msg para retry
+                msg = str(e)[:400]
+                placeholder.error(f"❌ Error Gemini: {type(e).__name__}: {msg}")
+                # Quitar último user msg para retry limpio
+                if st.session_state["ops_chat_msgs"]:
+                    st.session_state["ops_chat_msgs"].pop()
