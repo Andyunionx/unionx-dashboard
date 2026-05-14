@@ -1372,12 +1372,22 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         st.info("Necesito al menos 3 meses con venta + pedidos + costo.")
         return
 
-    venta = df_reg["venta_neta_m"].values
-    pedidos = df_reg["n_pedidos"].values
-    unidades = df_reg["n_unidades"].values
+    # Defensivo: si por alguna razón faltan columnas, usar arrays vacíos/zeros
+    venta = df_reg["venta_neta_m"].values if "venta_neta_m" in df_reg.columns else np.zeros(len(df_reg))
+    pedidos = df_reg["n_pedidos"].values if "n_pedidos" in df_reg.columns else np.ones(len(df_reg))
+    unidades = (df_reg["n_unidades"].values if "n_unidades" in df_reg.columns
+                  else df_reg.get("n_pedidos", pd.Series([0]*len(df_reg))).values)
     costo_t = df_reg["total_abs"].values
     costo_v = df_reg["var_abs"].values
     costo_f = df_reg["fijo_abs"].values
+
+    # Pre-calcular promedios (evita NameError downstream si alguna sección falla)
+    venta_avg = float(np.mean(venta)) if len(venta) > 0 else 0
+    pedidos_avg = float(np.mean(pedidos)) if len(pedidos) > 0 else 1
+    unidades_avg = float(np.mean(unidades)) if len(unidades) > 0 else 0
+    lineas_avg = (float(df_reg["n_lineas"].mean())
+                    if "n_lineas" in df_reg.columns else 0)
+    costo_total_clp = float(np.mean(costo_t)) * 1000 if len(costo_t) > 0 else 0  # M$ → $
 
     # AOV de la operación (ticket promedio)
     venta_neta_total_clp = float(df_reg["venta_neta"].sum())
@@ -1549,11 +1559,7 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         unsafe_allow_html=True,
     )
 
-    costo_total_clp = costo_t.mean() * 1000  # M$ → $
-    pedidos_avg = pedidos.mean()
-    unidades_avg = unidades.mean()
-    lineas_avg = df_reg["n_lineas"].mean()
-
+    # (pedidos_avg, unidades_avg, lineas_avg, costo_total_clp ya pre-calculados arriba)
     cpp = costo_total_clp / pedidos_avg if pedidos_avg else 0
     cpu = costo_total_clp / unidades_avg if unidades_avg else 0
     cpl = costo_total_clp / lineas_avg if lineas_avg else 0
@@ -1611,7 +1617,7 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         unsafe_allow_html=True,
     )
 
-    venta_avg = float(venta.mean())
+    # venta_avg ya pre-calculado arriba
     eventos = {
         "Mes promedio": 0, "Cyber Day": 80, "Black Friday": 100,
         "Navidad": 150, "Año Nuevo (caída)": -30, "Marzo": 25,
