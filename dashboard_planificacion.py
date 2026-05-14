@@ -110,6 +110,11 @@ from views.planning.caja import render as render_caja
 from views.planning.liquidacion import render as render_liquidacion
 from views.forecast import render as render_forecast
 
+# Vistas fuente (reuso de app Ventas — replican exacto lo que ve Ventas)
+from views.ventas_general import render as render_ventas_general
+from views.stock_live import render as render_stock_live
+from views.ops_comex import render as render_comex
+
 
 def render_resumen():
     """Página de inicio: status de fuentes y resumen ejecutivo."""
@@ -146,6 +151,14 @@ pages = {
     "🏠 Inicio": [
         st.Page(render_resumen, title="Resumen", icon="📦",
                 url_path="pln-resumen", default=True),
+    ],
+    "📥 Información fuente": [
+        st.Page(render_ventas_general, title="Ventas — Vista General", icon="📈",
+                url_path="pln-fuente-ventas"),
+        st.Page(render_stock_live, title="Stock LIVE", icon="📦",
+                url_path="pln-fuente-stock"),
+        st.Page(render_comex, title="COMEX en tránsito", icon="🚢",
+                url_path="pln-fuente-comex"),
     ],
     "🔮 Forecast": [
         st.Page(render_forecast, title="Proyección Prophet (mes/30-60-90d/año/componentes)",
