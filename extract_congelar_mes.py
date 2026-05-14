@@ -151,6 +151,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('mes', nargs='?', default=None,
                         help='YYYY-MM a congelar. Si se omite, mes anterior al actual.')
+    parser.add_argument('--force', action='store_true',
+                        help='Forzar sobreescritura aunque el parquet ya tenga más filas '
+                             '(perderá cargas manuales). Default: bloquear.')
     args = parser.parse_args()
 
     mes = args.mes or _mes_anterior()
@@ -186,6 +189,41 @@ def main():
     if df_nuevo.empty:
         print("   No hay filas para congelar. Saliendo.")
         sys.exit(0)
+
+    # 4b. LOCK: si el parquet local ya tiene MÁS filas que Turso para el mismo
+    # mes, significa que recibió cargas manuales (ej. desde Drive maestro) y
+    # NO debe sobreescribirse desde Turso (que podría estar incompleto).
+    fechas_hist = pd.to_datetime(df_hist['fecha_venta'], errors='coerce')
+    n_parquet_mes = int(((fechas_hist >= pd.Timestamp(desde))
+                         & (fechas_hist < pd.Timestamp(hasta))).sum())
+    if n_parquet_mes > len(df_nuevo):
+        venta_parquet = float(
+            pd.to_numeric(
+                df_hist.loc[(fechas_hist >= pd.Timestamp(desde))
+                            & (fechas_hist < pd.Timestamp(hasta)), 'venta_bruta'],
+                errors='coerce',
+            ).fillna(0).sum()
+        )
+        venta_turso = float(
+            pd.to_numeric(df_nuevo.get('venta_bruta', pd.Series(dtype=float)),
+                          errors='coerce').fillna(0).sum()
+        )
+        print()
+        print("=" * 80)
+        print(f"[LOCK] El parquet local para {mes} tiene MÁS filas que Turso:")
+        print(f"   Parquet local: {n_parquet_mes:,} filas, venta ${venta_parquet:,.0f}")
+        print(f"   Turso ahora:   {len(df_nuevo):,} filas, venta ${venta_turso:,.0f}")
+        print()
+        print("Esto suele indicar que el parquet tiene cargas manuales desde el")
+        print("Drive maestro (canales como El Volcán, CMR, Sawa, ajustes Falabella, etc.)")
+        print("que NO están en Turso porque el extractor no los genera.")
+        print()
+        print("Si querés FORZAR la sobrescritura desde Turso (perderás esos datos)")
+        print("ejecuta con --force.")
+        print("=" * 80)
+        if not getattr(args, 'force', False):
+            sys.exit(2)
+        print("[FORCE] Sobreescritura forzada por flag --force. Continuando…")
 
     # 4b. Coercionar dtypes para que match con parquet histórico (evitar errores Arrow)
     for col in df_nuevo.columns:
