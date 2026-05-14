@@ -226,6 +226,21 @@ def _th(content, bg="#1F4E79", color="#FFFFFF", colspan=1,
             f'text-transform:uppercase;letter-spacing:0.3px;{border}">{content}</th>')
 
 
+def _kpi_html(label: str, valor: str, meta: str = "", color: str = "#1F4E79") -> str:
+    """Card HTML estilo KPI con borde de color."""
+    return (
+        f'<div style="background:white;border-radius:12px;padding:16px 18px;'
+        f'border:1px solid #E2E8F0;border-left:4px solid {color};'
+        f'box-shadow:0 1px 3px rgba(0,0,0,0.05);height:100%;">'
+        f'<div style="font-size:0.72rem;color:#64748B;text-transform:uppercase;'
+        f'letter-spacing:0.5px;font-weight:600;margin-bottom:6px;">{label}</div>'
+        f'<div style="font-size:1.5rem;font-weight:700;color:#1E293B;'
+        f'line-height:1.1;">{valor}</div>'
+        f'<div style="font-size:0.72rem;color:#64748B;margin-top:8px;'
+        f'padding-top:8px;border-top:1px solid #F1F5F9;">{meta}</div></div>'
+    )
+
+
 # ============================================================
 # AGGREGATORS
 # ============================================================
