@@ -1,51 +1,51 @@
 """
-Vista Costo Operativo — App Operaciones (formato P&L estilo gerencial).
+Vista Costo Operativo — App Operaciones.
 
-3 sub-tabs:
-  1. 📊 P&L Operaciones (cierre Q/mes)
-  2. 🔎 Detalle por Centro de Costo
-  3. 📋 Informe de Gestión (insights automáticos)
+Replica visual del Excel gerencial de Andrés (3 vistas):
+  📊 P&L Operaciones (cierre Q/mes)
+  🔎 Detalle por Centro de Costo
+  📋 Informe de Gestión
+
+Formato:
+  - Headers azul oscuro / blanco (corporativo)
+  - Sub-headers por mes en gris
+  - Filas: Ingresos verde claro · Gastos detalle blanco · Total amarillo · Margen azul
+  - Números contables: negativos en (paréntesis) y rojo
+  - Variaciones coloreadas según signo
+  - Columna ACUMULADO destacada con header más oscuro
 
 Datos:
-  - Costos: Sheet OPERACIONES 2025-2026 (Ppto + FCST=Real según Andrés)
-  - Ventas + Margen: módulo Ventas (data/historico/ventas_historico.parquet)
-
-Modelo "Fcst = Real": el FCST del Sheet representa lo efectivamente gastado/
-proyectado. La comparación Ppto vs Real es la métrica primaria.
-
-Sin desglose por canal en primera instancia (foco: cerrar costo operativo
-total empresa antes de distribuir por LN).
+  - Costos: Sheet OPERACIONES 2025-2026 (Drive)
+  - Venta: módulo Ventas (parquet histórico)
 """
 import io
 import json
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
 
 
 PROJECT_ROOT = Path(__file__).parent.parent
 PARQUET = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
 RESUMEN = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo_resumen.json"
-WMS_SNAP = PROJECT_ROOT / "data" / "kpis_wms" / "snapshot.json"
 VENTAS_HIST = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 
-MESES_ES = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
-            7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
-MESES_FULL = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUNIO",
-              7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE", 10: "OCTUBRE",
-              11: "NOVIEMBRE", 12: "DICIEMBRE"}
+MESES_ES = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO",
+            6: "JUNIO", 7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE",
+            10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"}
+MESES_SHORT = {k: v[:3].title() for k, v in MESES_ES.items()}
 
-# Sub-áreas del P&L (orden del Excel de Andrés)
 SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER", "UNIONX"]
+SUB_AREA_LABEL = {
+    "LOGISTICA": "Logística", "OPERACIONES": "Operaciones",
+    "POSTVENTA": "Postventa", "GRUPO ETER": "Grupo Eter", "UNIONX": "UnionX",
+}
 
 
 # ============================================================
-# DATA LOADING
+# DATA
 # ============================================================
 @st.cache_data(ttl=300)
 def _cargar() -> tuple[pd.DataFrame, dict]:
@@ -64,7 +64,6 @@ def _cargar() -> tuple[pd.DataFrame, dict]:
 
 @st.cache_data(ttl=600)
 def _cargar_ventas_mensual() -> pd.DataFrame:
-    """Lee parquet histórico Ventas y agrega por mes (M CLP)."""
     if not VENTAS_HIST.exists():
         return pd.DataFrame()
     try:
@@ -80,54 +79,81 @@ def _cargar_ventas_mensual() -> pd.DataFrame:
             margen_final=("margen_final", "sum"),
             n_pedidos=("pedido", "nunique"),
         )
-        # CLP raw → M CLP (mismo orden que Sheet)
         for c in ["venta_bruta", "venta_neta", "margen_front", "margen_final"]:
-            agg[c + "_m"] = agg[c] / 1000
+            agg[c + "_m"] = agg[c] / 1000  # CLP → M CLP
         return agg
     except Exception:
         return pd.DataFrame()
 
 
 # ============================================================
-# HELPERS DE FORMATO
+# FORMATO CONTABLE
 # ============================================================
-def _fmt_clp_m(v, signo: bool = False):
-    """Formato '$1,234' o '($1,234)' (negativo entre paréntesis estilo contable)."""
+def _fmt_num(v, decimals: int = 0) -> str:
+    """Formato chileno: '32.615' o '(32.615)' para negativos."""
     if v is None or pd.isna(v) or v == 0:
         return "—"
     abs_v = abs(v)
-    sign = "" if v >= 0 else "−" if not signo else ""
-    if v < 0 and signo:
-        return f"({abs_v:,.0f})"
-    return f"{sign}{abs_v:,.0f}"
+    if decimals == 0:
+        s = f"{abs_v:,.0f}".replace(",", ".")
+    else:
+        s = f"{abs_v:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"({s})" if v < 0 else s
 
 
-def _fmt_pct(v):
+def _fmt_pct(v) -> str:
     if v is None or pd.isna(v):
-        return "—"
-    return f"{v:+.1f}%"
+        return ""
+    s = f"{abs(v):,.1f}%".replace(".", ",")
+    return f"({s})" if v < 0 else s
 
 
-def _color_var(v: float, es_costo: bool = True) -> str:
-    """Color para variación. Costos: var positiva (más gasto) es mala."""
+def _color_var(v, es_costo: bool = True) -> str:
+    """Color según signo. Costo: positivo (mas gasto) es malo. Margen: positivo es bueno."""
     if v is None or pd.isna(v):
-        return "#94A3B8"
+        return "#64748B"
     if es_costo:
-        return "#16A34A" if v <= 5 else "#EA580C" if v <= 15 else "#DC2626"
-    return "#16A34A" if v >= -5 else "#EA580C" if v >= -15 else "#DC2626"
+        if v > 5:
+            return "#DC2626"
+        if v > 0:
+            return "#EA580C"
+        return "#16A34A"
+    if v > 0:
+        return "#16A34A"
+    if v > -5:
+        return "#EA580C"
+    return "#DC2626"
+
+
+def _td(content, color="#1E293B", bg="#FFFFFF", weight="400", align="right",
+         border_l: str = "", border_r: str = "", padding="6px 10px"):
+    border = ""
+    if border_l:
+        border += f"border-left:{border_l};"
+    if border_r:
+        border += f"border-right:{border_r};"
+    return (f'<td style="padding:{padding};color:{color};background:{bg};'
+            f'font-weight:{weight};text-align:{align};{border}'
+            f'font-size:12px;">{content}</td>')
+
+
+def _th(content, bg="#1F4E79", color="#FFFFFF", colspan=1,
+         align="center", padding="8px 10px", border_l=""):
+    cs = f' colspan="{colspan}"' if colspan > 1 else ""
+    border = f"border-left:{border_l};" if border_l else ""
+    return (f'<th{cs} style="padding:{padding};background:{bg};color:{color};'
+            f'text-align:{align};font-size:11px;font-weight:700;'
+            f'text-transform:uppercase;letter-spacing:0.3px;{border}">{content}</th>')
 
 
 # ============================================================
 # AGGREGATORS
 # ============================================================
-def _gasto_por_sub_area(df: pd.DataFrame, year: int, meses: list[int],
-                         escenario: str) -> dict[str, float]:
-    """Devuelve {sub_area: monto} del FCST/PPTO GASTO del año/meses."""
+def _gasto_subarea(df: pd.DataFrame, year: int, meses: list[int],
+                    escenario: str) -> dict[str, float]:
     f = df[
-        (df["year"] == year)
-        & (df["month"].isin(meses))
-        & (df["escenario"] == escenario)
-        & (df["kpi"] == "GASTO")
+        (df["year"] == year) & (df["month"].isin(meses))
+        & (df["escenario"] == escenario) & (df["kpi"] == "GASTO")
     ]
     return f.groupby("sub_area")["valor"].sum().to_dict()
 
@@ -140,184 +166,287 @@ def _venta_periodo(df_v: pd.DataFrame, year: int, meses: list[int]) -> float:
 
 
 # ============================================================
-# TAB 1: P&L OPERACIONES
+# TAB 1: P&L OPERACIONES (HTML)
 # ============================================================
-def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: int, meses: list[int]):
-    st.markdown(f"#### 📊 P&L Operaciones — {year}")
-    st.caption(
-        "Fuente: Costos = Sheet OPERACIONES (Ppto + Fcst) · "
-        "Venta = módulo Ventas. **Fcst = Real** según convención Andrés."
+def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
+              year: int, meses: list[int], periodo_label: str):
+    st.markdown(
+        f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
+        f"P&L OPERACIONES — CIERRE {periodo_label} {year}</h3>"
+        f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
+        f"Fuente: Data_Gastos | Fcst = Real</p>",
+        unsafe_allow_html=True,
     )
 
     if not meses:
         st.info("Selecciona al menos un mes")
         return
 
-    # Construir filas: Ingresos | Gastos por sub-área | Total | Margen
-    rows = []
-    venta_ppto_total_acum = 0  # No tenemos Ppto Venta para Ops, usamos Real
-    venta_real_total_acum = 0
-    total_ppto_gastos_acum = 0
-    total_real_gastos_acum = 0
-
-    # Cabecera de columnas: por mes + acumulado
-    columnas = []
-    for m in meses:
-        columnas.append(("mes", m))
-    columnas.append(("acum", None))
-
-    # ───── INGRESOS POR VENTA ─────
-    for col_tipo, mes in columnas:
-        if col_tipo == "mes":
-            v_real = _venta_periodo(df_venta, year, [mes])
-        else:
-            v_real = _venta_periodo(df_venta, year, meses)
-        # Ppto venta = Real (módulo Ventas no tiene ppto de venta operacional)
-        if col_tipo == "mes":
-            pass
-
-    def _cell(ppto, real, es_costo=True, venta_real=None):
-        var_pct = ((real - ppto) / abs(ppto) * 100) if ppto else None
-        s_vta = (real / venta_real * 100) if (venta_real and venta_real != 0) else None
-        return ppto, real, var_pct, s_vta
-
-    # Construir DataFrame de display
-    headers = ["Concepto"]
-    for m in meses:
-        headers += [f"Ppto {MESES_ES[m]}", f"Real {MESES_ES[m]}",
-                    f"% Var {MESES_ES[m]}", f"% s/Vta {MESES_ES[m]}"]
-    headers += ["PPTO Acum", "REAL Acum", "% Var Acum", "% s/Vta Acum"]
-
-    data_rows = []
-
-    # Venta
-    venta_row = ["INGRESOS POR VENTA"] + [""] * (len(headers) - 1)
-    data_rows.append(venta_row)
-    venta_ppto_real_row = ["Venta Real"]
-    venta_acum = _venta_periodo(df_venta, year, meses)
-    for m in meses:
-        v = _venta_periodo(df_venta, year, [m])
-        venta_ppto_real_row += [_fmt_clp_m(v), _fmt_clp_m(v), "—", "—"]
-    venta_ppto_real_row += [_fmt_clp_m(venta_acum), _fmt_clp_m(venta_acum), "—", "—"]
-    data_rows.append(venta_ppto_real_row)
-
-    data_rows.append([""] * len(headers))
-
-    # GASTOS por sub-área
-    data_rows.append(["GASTOS OPERACIONES"] + [""] * (len(headers) - 1))
-
-    sub_area_data = {sa: {"ppto_meses": [], "real_meses": [],
-                            "ppto_acum": 0, "real_acum": 0} for sa in SUB_AREAS_PNL}
+    # Datos por sub-area por mes y acumulado
+    sub_data = {sa: {"ppto_m": [], "real_m": [], "ppto_a": 0, "real_a": 0}
+                  for sa in SUB_AREAS_PNL}
     for sa in SUB_AREAS_PNL:
         for m in meses:
-            ppto = _gasto_por_sub_area(df_costo, year, [m], "PPTO").get(sa, 0)
-            real = _gasto_por_sub_area(df_costo, year, [m], "FCST").get(sa, 0)
-            sub_area_data[sa]["ppto_meses"].append(ppto)
-            sub_area_data[sa]["real_meses"].append(real)
-        sub_area_data[sa]["ppto_acum"] = _gasto_por_sub_area(
-            df_costo, year, meses, "PPTO").get(sa, 0)
-        sub_area_data[sa]["real_acum"] = _gasto_por_sub_area(
-            df_costo, year, meses, "FCST").get(sa, 0)
+            sub_data[sa]["ppto_m"].append(
+                _gasto_subarea(df_costo, year, [m], "PPTO").get(sa, 0))
+            sub_data[sa]["real_m"].append(
+                _gasto_subarea(df_costo, year, [m], "FCST").get(sa, 0))
+        sub_data[sa]["ppto_a"] = _gasto_subarea(df_costo, year, meses, "PPTO").get(sa, 0)
+        sub_data[sa]["real_a"] = _gasto_subarea(df_costo, year, meses, "FCST").get(sa, 0)
 
-    for sa in SUB_AREAS_PNL:
-        sa_label = sa.title() if sa != "UNIONX" else "UnionX"
-        sa_label = sa_label if sa != "GRUPO ETER" else "Grupo Eter"
-        row = [sa_label]
-        for i, m in enumerate(meses):
-            ppto = sub_area_data[sa]["ppto_meses"][i]
-            real = sub_area_data[sa]["real_meses"][i]
-            v_mes = _venta_periodo(df_venta, year, [m])
-            var = ((abs(real) - abs(ppto)) / abs(ppto) * 100) if ppto else None
-            s_v = (abs(real) / v_mes * 100) if v_mes else None
-            row += [_fmt_clp_m(ppto), _fmt_clp_m(real),
-                    _fmt_pct(var), f"{s_v:.1f}%" if s_v else "—"]
-        # Acum
-        ppto_a = sub_area_data[sa]["ppto_acum"]
-        real_a = sub_area_data[sa]["real_acum"]
-        var_a = ((abs(real_a) - abs(ppto_a)) / abs(ppto_a) * 100) if ppto_a else None
-        s_v_a = (abs(real_a) / venta_acum * 100) if venta_acum else None
-        row += [_fmt_clp_m(ppto_a), _fmt_clp_m(real_a),
-                _fmt_pct(var_a), f"{s_v_a:.1f}%" if s_v_a else "—"]
-        data_rows.append(row)
+    venta_meses = [_venta_periodo(df_venta, year, [m]) for m in meses]
+    venta_acum = _venta_periodo(df_venta, year, meses)
 
-    # TOTAL GASTOS OPS
-    total_row = ["TOTAL GASTOS OPS"]
-    total_ppto_a = sum(sub_area_data[sa]["ppto_acum"] for sa in SUB_AREAS_PNL)
-    total_real_a = sum(sub_area_data[sa]["real_acum"] for sa in SUB_AREAS_PNL)
-    for i, m in enumerate(meses):
-        t_p = sum(sub_area_data[sa]["ppto_meses"][i] for sa in SUB_AREAS_PNL)
-        t_r = sum(sub_area_data[sa]["real_meses"][i] for sa in SUB_AREAS_PNL)
-        v_mes = _venta_periodo(df_venta, year, [m])
-        var = ((abs(t_r) - abs(t_p)) / abs(t_p) * 100) if t_p else None
-        s_v = (abs(t_r) / v_mes * 100) if v_mes else None
-        total_row += [_fmt_clp_m(t_p), _fmt_clp_m(t_r),
-                       _fmt_pct(var), f"{s_v:.1f}%" if s_v else "—"]
-    var_a = ((abs(total_real_a) - abs(total_ppto_a)) / abs(total_ppto_a) * 100) if total_ppto_a else None
-    s_v_a = (abs(total_real_a) / venta_acum * 100) if venta_acum else None
-    total_row += [_fmt_clp_m(total_ppto_a), _fmt_clp_m(total_real_a),
-                   _fmt_pct(var_a), f"{s_v_a:.1f}%" if s_v_a else "—"]
-    data_rows.append(total_row)
+    # Totales gastos
+    total_ppto_m = [sum(sub_data[sa]["ppto_m"][i] for sa in SUB_AREAS_PNL)
+                     for i in range(len(meses))]
+    total_real_m = [sum(sub_data[sa]["real_m"][i] for sa in SUB_AREAS_PNL)
+                     for i in range(len(meses))]
+    total_ppto_a = sum(sub_data[sa]["ppto_a"] for sa in SUB_AREAS_PNL)
+    total_real_a = sum(sub_data[sa]["real_a"] for sa in SUB_AREAS_PNL)
 
-    data_rows.append([""] * len(headers))
-
-    # MARGEN OPERATIVO
-    data_rows.append(["MARGEN OPERATIVO"] + [""] * (len(headers) - 1))
-    margen_row = ["Vta Real + Gastos Ops"]
-    for i, m in enumerate(meses):
-        v_mes = _venta_periodo(df_venta, year, [m])
-        t_r = sum(sub_area_data[sa]["real_meses"][i] for sa in SUB_AREAS_PNL)
-        margen = v_mes + t_r  # gastos son negativos
-        margen_row += ["", _fmt_clp_m(margen), "", ""]
+    # Margen
+    margen_meses = [v + r for v, r in zip(venta_meses, total_real_m)]
     margen_acum = venta_acum + total_real_a
-    margen_row += ["", _fmt_clp_m(margen_acum), "", ""]
-    data_rows.append(margen_row)
 
-    # % Margen Operativo
-    margen_pct_row = ["% Margen Operativo"]
-    for i, m in enumerate(meses):
-        v_mes = _venta_periodo(df_venta, year, [m])
-        t_r = sum(sub_area_data[sa]["real_meses"][i] for sa in SUB_AREAS_PNL)
-        margen = v_mes + t_r
-        pct = (margen / v_mes * 100) if v_mes else None
-        margen_pct_row += ["", f"{pct:.1f}%" if pct is not None else "—", "", ""]
-    pct_acum = (margen_acum / venta_acum * 100) if venta_acum else None
-    margen_pct_row += ["", f"{pct_acum:.1f}%" if pct_acum is not None else "—", "", ""]
-    data_rows.append(margen_pct_row)
+    def _row_data(label, valores_meses, ppto_meses=None, es_total=False,
+                    es_seccion=False, bg_label=None, color_label="#1E293B",
+                    bg_row=None, italic=False):
+        """Genera <tr>...</tr> para una fila del P&L."""
+        font_w = "700" if es_total or es_seccion else "400"
+        font_style = "italic" if italic else "normal"
+        bg_row = bg_row or "#FFFFFF"
+        bg_label_use = bg_label or bg_row
+        cells = []
+        # Etiqueta
+        label_html = (f'<td style="padding:6px 12px;background:{bg_label_use};'
+                       f'color:{color_label};font-weight:{font_w};font-size:12px;'
+                       f'font-style:{font_style};text-align:left;">{label}</td>')
+        cells.append(label_html)
+        # Por mes (4 cols cada uno)
+        # Si es solo etiqueta de sección, no agregar valores (se completan con vacío)
+        return cells
 
-    df_show = pd.DataFrame(data_rows, columns=headers)
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=520)
+    # ─── Construcción HTML ────────────────────────────────────────────
+    n_cols_mes = len(meses)
+    total_cols = 1 + n_cols_mes * 4 + 4  # label + 4xmes + 4 acum
 
-    # KPIs resumen abajo
-    st.markdown("---")
-    cols = st.columns(4)
-    cols[0].metric("Venta Real Acum", f"${venta_acum:,.0f} M")
-    cols[1].metric("Gastos Ops Acum", f"${abs(total_real_a):,.0f} M",
-                    f"{var_a:+.1f}% vs Ppto" if var_a is not None else None,
-                    delta_color="inverse")
-    cols[2].metric("Margen Operativo Acum", f"${margen_acum:,.0f} M")
-    cols[3].metric("% Margen Op Acum", f"{pct_acum:.1f}%" if pct_acum else "—")
+    # Header 1: meses agrupados
+    header_row1 = ["<tr>"]
+    header_row1.append(_th("CONCEPTO", bg="#1F4E79", padding="10px 12px",
+                            align="left"))
+    for m in meses:
+        header_row1.append(_th(MESES_ES[m], colspan=4, bg="#1F4E79",
+                                 border_l="2px solid #FFFFFF"))
+    header_row1.append(_th(f"ACUMULADO {periodo_label}", colspan=4,
+                             bg="#0D3A5F", border_l="2px solid #FFFFFF"))
+    header_row1.append("</tr>")
 
-    # Descarga Excel
-    buf = io.BytesIO()
-    with pd.ExcelWriter(buf, engine="openpyxl") as w:
-        df_show.to_excel(w, sheet_name="P&L Operaciones", index=False)
-    st.download_button(
-        "📥 Descargar P&L Operaciones (Excel)",
-        data=buf.getvalue(),
-        file_name=f"PnL_Operaciones_{year}_{datetime.now().strftime('%Y%m%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    # Header 2: Ppto/Real/%Var/%s/Vta repetido
+    header_row2 = ["<tr>"]
+    header_row2.append(_th("", bg="#2C5F8D", padding="6px 12px"))
+    for i in range(n_cols_mes + 1):  # +1 acumulado
+        bg = "#0D3A5F" if i == n_cols_mes else "#2C5F8D"
+        bl = "2px solid #FFFFFF" if i == 0 else ""
+        for j, sub in enumerate(["Ppto", "Real", "% Var", "% s/Vta"]):
+            border_l = "2px solid #FFFFFF" if j == 0 else ""
+            header_row2.append(_th(sub, bg=bg, padding="5px 8px",
+                                     border_l=border_l))
+    header_row2.append("</tr>")
+
+    # ─── ROWS ────────────────────────────────────────────────────────
+    rows_html = []
+
+    # Sección INGRESOS
+    rows_html.append(
+        f'<tr><td colspan="{total_cols}" style="background:#E8F5E9;'
+        f'color:#1B5E20;padding:8px 12px;font-weight:700;font-size:12px;'
+        f'text-transform:uppercase;letter-spacing:0.5px;">INGRESOS POR VENTA</td></tr>'
+    )
+    # Venta Ppto (no tenemos, dejamos vacío) — agregamos solo Venta Real
+    venta_row = ["<tr>"]
+    venta_row.append(_td("Venta Real", bg="#FFFFFF", weight="600", align="left",
+                          color="#1E293B"))
+    for v_mes in venta_meses:
+        venta_row.append(_td(_fmt_num(v_mes), bg="#FFFFFF", color="#1E293B",
+                              border_l="1px solid #E2E8F0"))
+        venta_row.append(_td(_fmt_num(v_mes), bg="#FFFFFF", color="#1E293B",
+                              weight="600"))
+        venta_row.append(_td("—", bg="#FFFFFF", color="#94A3B8"))
+        venta_row.append(_td("—", bg="#FFFFFF", color="#94A3B8"))
+    venta_row.append(_td(_fmt_num(venta_acum), bg="#F1F5F9", color="#1E293B",
+                          border_l="2px solid #1F4E79"))
+    venta_row.append(_td(_fmt_num(venta_acum), bg="#F1F5F9", color="#1E293B",
+                          weight="700"))
+    venta_row.append(_td("—", bg="#F1F5F9", color="#94A3B8"))
+    venta_row.append(_td("—", bg="#F1F5F9", color="#94A3B8"))
+    venta_row.append("</tr>")
+    rows_html.append("".join(venta_row))
+
+    # Comentario % Var Real vs Ppto (vacío porque no tenemos Ppto venta)
+    rows_html.append(f'<tr><td colspan="{total_cols}" style="background:#FFFFFF;'
+                      f'padding:4px 12px;color:#94A3B8;font-style:italic;'
+                      f'font-size:11px;">% Var Real vs Ppto: sin Ppto Venta cargado</td></tr>')
+
+    # Espacio
+    rows_html.append(f'<tr><td colspan="{total_cols}" style="height:6px;background:#FAFBFC;"></td></tr>')
+
+    # Sección GASTOS
+    rows_html.append(
+        f'<tr><td colspan="{total_cols}" style="background:#FFEBE6;'
+        f'color:#9F2A0E;padding:8px 12px;font-weight:700;font-size:12px;'
+        f'text-transform:uppercase;letter-spacing:0.5px;">GASTOS OPERACIONES</td></tr>'
     )
 
+    for sa in SUB_AREAS_PNL:
+        row = ["<tr>"]
+        row.append(_td(SUB_AREA_LABEL[sa], bg="#FFFFFF", align="left",
+                        weight="500", color="#1E293B"))
+        for i, m in enumerate(meses):
+            ppto = sub_data[sa]["ppto_m"][i]
+            real = sub_data[sa]["real_m"][i]
+            v_m = venta_meses[i]
+            var = ((abs(real) - abs(ppto)) / abs(ppto) * 100) if ppto else None
+            sv = (abs(real) / v_m * 100) if v_m else None
+            color_var_c = _color_var(var, es_costo=True)
+            row.append(_td(_fmt_num(ppto), bg="#FFFFFF", color="#475569",
+                            border_l="1px solid #E2E8F0"))
+            row.append(_td(_fmt_num(real), bg="#FFFFFF", color="#1E293B",
+                            weight="600"))
+            row.append(_td(_fmt_pct(var) if var is not None else "—",
+                            bg="#FFFFFF", color=color_var_c, weight="600"))
+            row.append(_td(_fmt_pct(sv) if sv is not None else "—",
+                            bg="#FFFFFF", color="#64748B"))
+        # Acumulado
+        ppto_a = sub_data[sa]["ppto_a"]
+        real_a = sub_data[sa]["real_a"]
+        var_a = ((abs(real_a) - abs(ppto_a)) / abs(ppto_a) * 100) if ppto_a else None
+        sv_a = (abs(real_a) / venta_acum * 100) if venta_acum else None
+        color_var_ac = _color_var(var_a, es_costo=True)
+        row.append(_td(_fmt_num(ppto_a), bg="#F1F5F9", color="#475569",
+                        border_l="2px solid #1F4E79"))
+        row.append(_td(_fmt_num(real_a), bg="#F1F5F9", color="#1E293B",
+                        weight="700"))
+        row.append(_td(_fmt_pct(var_a) if var_a is not None else "—",
+                        bg="#F1F5F9", color=color_var_ac, weight="700"))
+        row.append(_td(_fmt_pct(sv_a) if sv_a is not None else "—",
+                        bg="#F1F5F9", color="#475569"))
+        row.append("</tr>")
+        rows_html.append("".join(row))
+
+    # TOTAL GASTOS OPS
+    row = ["<tr>"]
+    row.append(_td("TOTAL GASTOS OPS", bg="#FFE082", align="left",
+                    weight="700", color="#7F4F00"))
+    for i in range(len(meses)):
+        t_p = total_ppto_m[i]
+        t_r = total_real_m[i]
+        v_m = venta_meses[i]
+        var = ((abs(t_r) - abs(t_p)) / abs(t_p) * 100) if t_p else None
+        sv = (abs(t_r) / v_m * 100) if v_m else None
+        color_var_c = _color_var(var, es_costo=True)
+        row.append(_td(_fmt_num(t_p), bg="#FFE082", color="#7F4F00", weight="700",
+                        border_l="1px solid #E2E8F0"))
+        row.append(_td(_fmt_num(t_r), bg="#FFE082", color="#7F4F00", weight="700"))
+        row.append(_td(_fmt_pct(var) if var is not None else "—",
+                        bg="#FFE082", color=color_var_c, weight="700"))
+        row.append(_td(_fmt_pct(sv) if sv is not None else "—",
+                        bg="#FFE082", color="#7F4F00", weight="700"))
+    var_a = ((abs(total_real_a) - abs(total_ppto_a)) / abs(total_ppto_a) * 100) if total_ppto_a else None
+    sv_a = (abs(total_real_a) / venta_acum * 100) if venta_acum else None
+    row.append(_td(_fmt_num(total_ppto_a), bg="#FFB74D", color="#7F4F00", weight="700",
+                    border_l="2px solid #1F4E79"))
+    row.append(_td(_fmt_num(total_real_a), bg="#FFB74D", color="#7F4F00", weight="700"))
+    row.append(_td(_fmt_pct(var_a) if var_a is not None else "—",
+                    bg="#FFB74D", color=_color_var(var_a, es_costo=True), weight="700"))
+    row.append(_td(_fmt_pct(sv_a) if sv_a is not None else "—",
+                    bg="#FFB74D", color="#7F4F00", weight="700"))
+    row.append("</tr>")
+    rows_html.append("".join(row))
+
+    # Espacio
+    rows_html.append(f'<tr><td colspan="{total_cols}" style="height:8px;background:#FAFBFC;"></td></tr>')
+
+    # Sección MARGEN
+    rows_html.append(
+        f'<tr><td colspan="{total_cols}" style="background:#E3F2FD;'
+        f'color:#0D47A1;padding:8px 12px;font-weight:700;font-size:12px;'
+        f'text-transform:uppercase;letter-spacing:0.5px;">MARGEN OPERATIVO</td></tr>'
+    )
+
+    # Vta + Gastos
+    row = ["<tr>"]
+    row.append(_td("Vta Real + Gastos Ops", bg="#FFFFFF", align="left",
+                    weight="700", color="#0D47A1"))
+    for i in range(len(meses)):
+        v_m = venta_meses[i]
+        m = margen_meses[i]
+        row.append(_td("", bg="#FFFFFF", border_l="1px solid #E2E8F0"))
+        row.append(_td(_fmt_num(m), bg="#FFFFFF", color="#0D47A1", weight="700"))
+        row.append(_td("", bg="#FFFFFF"))
+        row.append(_td("", bg="#FFFFFF"))
+    row.append(_td("", bg="#BBDEFB", border_l="2px solid #1F4E79"))
+    row.append(_td(_fmt_num(margen_acum), bg="#BBDEFB", color="#0D47A1", weight="700"))
+    row.append(_td("", bg="#BBDEFB"))
+    row.append(_td("", bg="#BBDEFB"))
+    row.append("</tr>")
+    rows_html.append("".join(row))
+
+    # % Margen Operativo
+    row = ["<tr>"]
+    row.append(_td("% Margen Operativo", bg="#FFFFFF", align="left",
+                    weight="600", color="#0D47A1", padding="6px 12px"))
+    for i in range(len(meses)):
+        v_m = venta_meses[i]
+        m = margen_meses[i]
+        pct = (m / v_m * 100) if v_m else None
+        row.append(_td("", bg="#FFFFFF", border_l="1px solid #E2E8F0"))
+        row.append(_td(_fmt_pct(pct) if pct is not None else "—",
+                        bg="#FFFFFF", color="#0D47A1", weight="700"))
+        row.append(_td("", bg="#FFFFFF"))
+        row.append(_td("", bg="#FFFFFF"))
+    pct_a = (margen_acum / venta_acum * 100) if venta_acum else None
+    row.append(_td("", bg="#BBDEFB", border_l="2px solid #1F4E79"))
+    row.append(_td(_fmt_pct(pct_a) if pct_a is not None else "—",
+                    bg="#BBDEFB", color="#0D47A1", weight="700"))
+    row.append(_td("", bg="#BBDEFB"))
+    row.append(_td("", bg="#BBDEFB"))
+    row.append("</tr>")
+    rows_html.append("".join(row))
+
+    # Tabla completa
+    table_html = (
+        '<div style="overflow-x:auto;border:1px solid #E2E8F0;border-radius:6px;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;">'
+        f'<thead>{"".join(header_row1)}{"".join(header_row2)}</thead>'
+        f'<tbody>{"".join(rows_html)}</tbody>'
+        '</table></div>'
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
+
+    # KPIs abajo
+    st.markdown("<br>", unsafe_allow_html=True)
+    cols = st.columns(4)
+    cols[0].metric("Venta Real Acum", _fmt_num(venta_acum))
+    cols[1].metric("Gastos Ops Acum", _fmt_num(abs(total_real_a)),
+                    f"{var_a:+.1f}% vs Ppto" if var_a is not None else None,
+                    delta_color="inverse")
+    cols[2].metric("Margen Op Acum", _fmt_num(margen_acum))
+    cols[3].metric("% Margen Op", f"{pct_a:.1f}%" if pct_a else "—")
+
 
 # ============================================================
-# TAB 2: DETALLE POR CENTRO DE COSTO
+# TAB 2: DETALLE POR CC (HTML)
 # ============================================================
 def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
-                     year: int, meses: list[int]):
-    st.markdown(f"#### 🔎 Detalle por Centro de Costo — {year}")
-    st.caption(
-        "Drill-down: Sub-área › Centro de Costo › Cuenta Analítica · "
-        "Ppto vs Real (Fcst) · Desviación + % s/Venta"
+                     year: int, meses: list[int], periodo_label: str):
+    st.markdown(
+        f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
+        f"ANÁLISIS FINANCIERO OPERACIONES — DETALLE POR CC {periodo_label} {year}</h3>"
+        f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
+        f"Desglose por Sub-Área › Centro de Costo › Cuenta Analítica | Ppto vs Real (Fcst) | Fuente: Data_Gastos</p>",
+        unsafe_allow_html=True,
     )
 
     if not meses:
@@ -326,77 +455,158 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 
     venta_acum = _venta_periodo(df_venta, year, meses)
 
-    # Filtro: solo gastos del año seleccionado
     df_cc = df_costo[
-        (df_costo["year"] == year)
-        & (df_costo["month"].isin(meses))
+        (df_costo["year"] == year) & (df_costo["month"].isin(meses))
         & (df_costo["kpi"] == "GASTO")
     ].copy()
-
     if df_cc.empty:
-        st.info("Sin datos en el período seleccionado")
+        st.info("Sin datos en el período")
         return
 
-    # Agregar por (centro_costo, cuenta_analitica, escenario, month)
-    df_pivot = df_cc.pivot_table(
+    # Pivot: por CC, cuenta_analitica, escenario, mes
+    rows_html = []
+    n_meses = len(meses)
+    # Header 1
+    header_row1 = ["<tr>"]
+    header_row1.append(_th("CC / Cuenta Analítica", bg="#1F4E79",
+                            padding="10px 12px", align="left"))
+    header_row1.append(_th("PPTO", colspan=n_meses + 1, bg="#1F4E79",
+                            border_l="2px solid #FFFFFF"))
+    header_row1.append(_th("REAL", colspan=n_meses + 1, bg="#A03A20",
+                            border_l="2px solid #FFFFFF"))
+    header_row1.append(_th("DESV. $", bg="#5E3A1B",
+                            border_l="2px solid #FFFFFF"))
+    header_row1.append(_th("% Var", bg="#5E3A1B"))
+    header_row1.append(_th(f"% s/Vta {periodo_label}", bg="#5E3A1B"))
+    header_row1.append("</tr>")
+
+    # Header 2: meses
+    header_row2 = ["<tr>"]
+    header_row2.append(_th("", bg="#2C5F8D", padding="5px"))
+    for m in meses:
+        header_row2.append(_th(f"Ppto {MESES_SHORT[m]}", bg="#2C5F8D",
+                                 padding="5px 8px",
+                                 border_l="1px solid #FFFFFF" if m == meses[0] else ""))
+    header_row2.append(_th(f"PPTO {periodo_label}", bg="#0D3A5F",
+                             padding="5px 8px",
+                             border_l="1px solid #FFFFFF"))
+    for m in meses:
+        header_row2.append(_th(f"Real {MESES_SHORT[m]}", bg="#B85B47",
+                                 padding="5px 8px",
+                                 border_l="1px solid #FFFFFF" if m == meses[0] else ""))
+    header_row2.append(_th(f"REAL {periodo_label}", bg="#7F2C16",
+                             padding="5px 8px",
+                             border_l="1px solid #FFFFFF"))
+    header_row2.append(_th("", bg="#5E3A1B", padding="5px",
+                             border_l="2px solid #FFFFFF"))
+    header_row2.append(_th("", bg="#5E3A1B", padding="5px"))
+    header_row2.append(_th("", bg="#5E3A1B", padding="5px"))
+    header_row2.append("</tr>")
+
+    # Filas: agrupar por CC, dentro detalle por cuenta_analitica
+    df_cc_grp = (df_cc.groupby(["centro_costo", "cuenta_analitica",
+                                  "escenario", "month"])
+                       ["valor"].sum().reset_index())
+    cc_order = (df_cc.groupby("centro_costo")["valor"].sum().abs()
+                       .sort_values(ascending=False).index.tolist())
+
+    bg_alt = ["#FFFFFF", "#F8FAFC"]
+
+    for cc in cc_order:
+        # Header de CC (fila azul claro)
+        rows_html.append(
+            f'<tr><td colspan="{1 + (n_meses+1)*2 + 3}" '
+            f'style="background:#DBEAFE;color:#1E40AF;padding:6px 12px;'
+            f'font-weight:700;font-size:11px;text-transform:uppercase;'
+            f'letter-spacing:0.5px;">{cc or "—"}</td></tr>'
+        )
+
+        # Cuentas analíticas dentro del CC
+        cuentas = df_cc[df_cc["centro_costo"] == cc]["cuenta_analitica"].dropna().unique()
+        for idx, cta in enumerate(sorted(cuentas)):
+            bg = bg_alt[idx % 2]
+            f_ct = df_cc[(df_cc["centro_costo"] == cc)
+                          & (df_cc["cuenta_analitica"] == cta)]
+            row = ["<tr>"]
+            row.append(_td(f"  {cta}", bg=bg, align="left", color="#1E293B",
+                            padding="5px 12px 5px 28px"))
+
+            ppto_ms = []
+            real_ms = []
+            for m in meses:
+                p = f_ct[(f_ct["escenario"] == "PPTO")
+                          & (f_ct["month"] == m)]["valor"].sum()
+                r = f_ct[(f_ct["escenario"] == "FCST")
+                          & (f_ct["month"] == m)]["valor"].sum()
+                ppto_ms.append(p)
+                real_ms.append(r)
+                row.append(_td(_fmt_num(p), bg=bg, color="#475569",
+                                border_l="1px solid #E2E8F0" if m == meses[0] else ""))
+            ppto_a = sum(ppto_ms)
+            real_a = sum(real_ms)
+            row.append(_td(_fmt_num(ppto_a), bg="#E0E7FF" if bg == "#FFFFFF" else "#C7D2FE",
+                            color="#1E293B", weight="700",
+                            border_l="2px solid #1F4E79"))
+            for i, m in enumerate(meses):
+                row.append(_td(_fmt_num(real_ms[i]), bg=bg, color="#1E293B",
+                                border_l="1px solid #E2E8F0" if i == 0 else ""))
+            row.append(_td(_fmt_num(real_a), bg="#FED7D2" if bg == "#FFFFFF" else "#FBCAB8",
+                            color="#1E293B", weight="700",
+                            border_l="2px solid #A03A20"))
+            desv = real_a - ppto_a
+            var = ((abs(real_a) - abs(ppto_a)) / abs(ppto_a) * 100) if ppto_a else None
+            sv = (abs(real_a) / venta_acum * 100) if venta_acum else None
+            row.append(_td(_fmt_num(desv), bg=bg,
+                            color=_color_var(var, es_costo=True), weight="600",
+                            border_l="2px solid #5E3A1B"))
+            row.append(_td(_fmt_pct(var) if var is not None else "—",
+                            bg=bg, color=_color_var(var, es_costo=True), weight="600"))
+            row.append(_td(f"{sv:.2f}%".replace(".", ",") if sv else "—",
+                            bg=bg, color="#64748B"))
+            row.append("</tr>")
+            rows_html.append("".join(row))
+
+    table_html = (
+        '<div style="overflow-x:auto;border:1px solid #E2E8F0;border-radius:6px;'
+        'max-height:680px;overflow-y:auto;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;">'
+        f'<thead style="position:sticky;top:0;z-index:1;">{"".join(header_row1)}{"".join(header_row2)}</thead>'
+        f'<tbody>{"".join(rows_html)}</tbody>'
+        '</table></div>'
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
+
+    # Excel descarga
+    df_export = df_cc.pivot_table(
         index=["centro_costo", "cuenta_analitica"],
-        columns=["escenario", "month"],
-        values="valor",
-        aggfunc="sum",
-        fill_value=0,
+        columns=["escenario", "month"], values="valor",
+        aggfunc="sum", fill_value=0,
     )
-
-    # Aplanar columnas
-    df_flat = df_cc.groupby(["centro_costo", "cuenta_analitica", "escenario"])["valor"].sum().unstack("escenario", fill_value=0)
-    if "PPTO" not in df_flat.columns:
-        df_flat["PPTO"] = 0
-    if "FCST" not in df_flat.columns:
-        df_flat["FCST"] = 0
-    df_flat["Desv"] = df_flat["FCST"] - df_flat["PPTO"]
-    df_flat["% Var"] = df_flat.apply(
-        lambda r: ((abs(r["FCST"]) - abs(r["PPTO"])) / abs(r["PPTO"]) * 100)
-                   if r["PPTO"] else None,
-        axis=1,
-    )
-    df_flat["% s/Vta"] = df_flat["FCST"].apply(
-        lambda v: (abs(v) / venta_acum * 100) if venta_acum else None
-    )
-    df_flat = df_flat.reset_index().sort_values(
-        ["centro_costo", "FCST"], ascending=[True, True]
-    )
-
-    df_show = pd.DataFrame({
-        "Centro de Costo": df_flat["centro_costo"].str[:35],
-        "Cuenta Analítica": df_flat["cuenta_analitica"].str[:35],
-        "Ppto Acum": df_flat["PPTO"].apply(_fmt_clp_m),
-        "Real Acum": df_flat["FCST"].apply(_fmt_clp_m),
-        "Desv $": df_flat["Desv"].apply(_fmt_clp_m),
-        "% Var": df_flat["% Var"].apply(_fmt_pct),
-        "% s/Vta": df_flat["% s/Vta"].apply(
-            lambda v: f"{v:.2f}%" if pd.notna(v) else "—"),
-    })
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=560)
-
-    # Descarga Excel con detalle mensual completo
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine="openpyxl") as w:
-        df_pivot.to_excel(w, sheet_name="Detalle CC mensual")
-        df_flat.to_excel(w, sheet_name="Detalle CC acum", index=False)
+        df_export.to_excel(w, sheet_name="Detalle CC")
     st.download_button(
-        "📥 Descargar Detalle (Excel mensual + acumulado)",
+        "📥 Descargar Excel",
         data=buf.getvalue(),
-        file_name=f"Detalle_CC_{year}_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        file_name=f"Detalle_CC_{periodo_label}_{year}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
 
 # ============================================================
-# TAB 3: INFORME DE GESTIÓN
+# TAB 3: INFORME DE GESTIÓN (HTML estilizado)
 # ============================================================
-def _tab_informe_gestion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
-                          year: int, meses: list[int], periodo_label: str):
-    st.markdown(f"#### 📋 Informe de Gestión — Operaciones {periodo_label} {year}")
-    st.caption("Análisis automático generado a partir de Ppto vs Real (Fcst)")
+def _tab_informe(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
+                  year: int, meses: list[int], periodo_label: str):
+    st.markdown(
+        f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
+        f"INFORME DE ANÁLISIS DE GESTIÓN — OPERACIONES {periodo_label} {year}</h3>"
+        f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
+        f"Management Report | Cierre Trimestral | Área: Operaciones | "
+        f"Fuente: PL Operaciones {periodo_label} → Data_Gastos | Fcst = Real</p>",
+        unsafe_allow_html=True,
+    )
 
     if not meses:
         st.info("Selecciona al menos un mes")
@@ -405,184 +615,305 @@ def _tab_informe_gestion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     venta_acum = _venta_periodo(df_venta, year, meses)
 
     # ─── 1. ANÁLISIS DE VARIACIONES ────────────────────────────────
-    st.markdown("### 1. Análisis de Variaciones (Ppto vs Real)")
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;'
+        'letter-spacing:0.5px;">1. ANÁLISIS DE VARIACIONES (Ppto vs Real)</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(f"<p style='font-size:13px;margin:0 0 8px 0;'>"
+                f"<b>Top 3 Sub-Áreas con mayor sobregasto vs presupuesto:</b></p>",
+                unsafe_allow_html=True)
 
     sa_data = []
     for sa in SUB_AREAS_PNL:
-        ppto = _gasto_por_sub_area(df_costo, year, meses, "PPTO").get(sa, 0)
-        real = _gasto_por_sub_area(df_costo, year, meses, "FCST").get(sa, 0)
-        desv = real - ppto  # negativo si real < ppto (sobregasto si más negativo)
-        sobregasto = abs(real) - abs(ppto)  # positivo = gastó más de lo presupuestado
+        ppto = _gasto_subarea(df_costo, year, meses, "PPTO").get(sa, 0)
+        real = _gasto_subarea(df_costo, year, meses, "FCST").get(sa, 0)
+        sobregasto = abs(real) - abs(ppto)
         pct = (sobregasto / abs(ppto) * 100) if ppto else None
-        sa_data.append({
-            "sub_area": sa,
-            "ppto": ppto,
-            "real": real,
-            "sobregasto": sobregasto,
-            "pct": pct,
-        })
-
+        sa_data.append({"sa": sa, "ppto": ppto, "real": real,
+                          "sobregasto": sobregasto, "pct": pct})
     df_sa = pd.DataFrame(sa_data)
-    # Top 3 sobregasto (más positivo = peor)
     top_3 = df_sa[df_sa["sobregasto"] > 0].nlargest(3, "sobregasto")
 
+    # Tabla top 3 con HTML
     if not top_3.empty:
-        st.markdown(f"**Top {len(top_3)} sub-áreas con mayor sobregasto vs presupuesto:**")
-        # Driver principal: para cada sub-área, top 1 cuenta_analitica con mayor desv
-        rows_top = []
-        for _, r in top_3.iterrows():
-            sa = r["sub_area"]
-            df_sa_detail = df_costo[
-                (df_costo["year"] == year)
-                & (df_costo["month"].isin(meses))
-                & (df_costo["sub_area"] == sa)
-                & (df_costo["kpi"] == "GASTO")
+        rows = []
+        rows.append(
+            "<tr>"
+            + _th("#", bg="#1F4E79", padding="8px") + _th("Sub-Área", bg="#1F4E79", align="left")
+            + _th(f"Ppto {periodo_label}", bg="#1F4E79")
+            + _th(f"Real {periodo_label}", bg="#1F4E79")
+            + _th("Desviación", bg="#1F4E79")
+            + _th("% Desv.", bg="#1F4E79")
+            + _th("Driver principal", bg="#1F4E79", align="left")
+            + "</tr>"
+        )
+        for i, (_, r) in enumerate(top_3.iterrows(), 1):
+            sa = r["sa"]
+            # Driver: top cuenta analítica con mayor sobregasto
+            df_sd = df_costo[
+                (df_costo["year"] == year) & (df_costo["month"].isin(meses))
+                & (df_costo["sub_area"] == sa) & (df_costo["kpi"] == "GASTO")
             ]
-            piv = df_sa_detail.groupby(["centro_costo", "cuenta_analitica", "escenario"])["valor"].sum().unstack("escenario", fill_value=0)
+            piv = (df_sd.groupby(["cuenta_analitica", "escenario"])["valor"]
+                          .sum().unstack("escenario", fill_value=0))
             if "PPTO" not in piv.columns:
                 piv["PPTO"] = 0
             if "FCST" not in piv.columns:
                 piv["FCST"] = 0
-            piv["sobregasto"] = piv["FCST"].abs() - piv["PPTO"].abs()
-            top_driver = piv.nlargest(1, "sobregasto")
-            if not top_driver.empty:
-                cc, cuenta = top_driver.index[0]
-                ppto_d = top_driver["PPTO"].iloc[0]
-                real_d = top_driver["FCST"].iloc[0]
-                driver = f"{cuenta or cc}: real {_fmt_clp_m(real_d)} vs ppto {_fmt_clp_m(ppto_d)}"
-            else:
-                driver = "—"
-
-            sa_label = sa.title() if sa not in ("UNIONX", "GRUPO ETER") else sa.replace("GRUPO ETER", "Grupo Eter").replace("UNIONX", "UnionX")
-            rows_top.append({
-                "Sub-Área": sa_label,
-                "Ppto": _fmt_clp_m(r["ppto"]),
-                "Real": _fmt_clp_m(r["real"]),
-                "Desviación": f"({_fmt_clp_m(r['sobregasto'])})" if r["sobregasto"] > 0 else _fmt_clp_m(r["sobregasto"]),
-                "% Desv.": _fmt_pct(r["pct"]),
-                "Driver principal": driver[:70],
-            })
-        st.dataframe(pd.DataFrame(rows_top), use_container_width=True, hide_index=True)
-    else:
-        st.success("✅ No hay sub-áreas con sobregasto vs presupuesto")
+            piv["sg"] = piv["FCST"].abs() - piv["PPTO"].abs()
+            top_d = piv.nlargest(1, "sg")
+            driver = "—"
+            if not top_d.empty:
+                cta = top_d.index[0]
+                rmax = top_d.iloc[0]
+                # Buscar en qué mes pasó
+                mes_max = df_sd[df_sd["cuenta_analitica"] == cta].sort_values(
+                    "valor", key=lambda s: s.abs(), ascending=False
+                )["mes_text"].iloc[0] if not df_sd[df_sd["cuenta_analitica"] == cta].empty else "?"
+                driver = (f"{cta}: {mes_max[:3].title()} ${abs(rmax['FCST']):,.0f} "
+                          f"vs ppto ${abs(rmax['PPTO']):,.0f}").replace(",", ".")
+            rows.append(
+                "<tr>"
+                + _td(str(i), bg="#FFFFFF", color="#1E293B", weight="700", align="center")
+                + _td(SUB_AREA_LABEL[sa], bg="#FFFFFF", color="#DC2626",
+                       weight="700", align="left")
+                + _td(_fmt_num(r["ppto"]), bg="#FFFFFF", color="#475569")
+                + _td(_fmt_num(r["real"]), bg="#FFFFFF", color="#1E293B", weight="600")
+                + _td(_fmt_num(-r["sobregasto"]), bg="#FFFFFF",
+                       color="#DC2626", weight="700")
+                + _td(_fmt_pct(r["pct"]), bg="#FFFFFF",
+                       color="#DC2626", weight="700")
+                + _td(driver, bg="#FFFFFF", color="#475569", align="left",
+                       padding="6px 10px")
+                + "</tr>"
+            )
+        st.markdown(
+            '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+            '<table style="border-collapse:collapse;width:100%;font-family:'
+            '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+            f'{"".join(rows)}'
+            '</table></div>',
+            unsafe_allow_html=True,
+        )
 
     # Impacto en margen
-    sobregasto_total = df_sa[df_sa["sobregasto"] > 0]["sobregasto"].sum()
-    if sobregasto_total > 0 and venta_acum > 0:
-        impacto_pp = sobregasto_total / venta_acum * 100
+    sg_total = df_sa[df_sa["sobregasto"] > 0]["sobregasto"].sum()
+    if sg_total > 0 and venta_acum > 0:
+        impacto_pp = sg_total / venta_acum * 100
         st.markdown(
-            f"**Impacto en margen:**  El sobregasto acumulado de "
-            f"{len(top_3)} sub-áreas es ~${sobregasto_total:,.0f} M. "
-            f"Sobre la venta del período (${venta_acum:,.0f} M), esto representa "
-            f"**{impacto_pp:.2f} pp de margen perdido**. Por cada $1,000 adicionales "
-            f"en sobregasto, el margen cae ~{1000/venta_acum*100:.3f}%."
+            f"<p style='font-size:13px;margin:12px 0 0 0;'><b>Impacto en margen:</b><br>"
+            f"El sobregasto acumulado de estas {len(top_3)} sub-áreas es ~${sg_total:,.0f}. "
+            f"Sobre la venta real {periodo_label} de ${venta_acum:,.0f}, esto representa "
+            f"<b>{impacto_pp:.2f} pp</b> de margen perdido. Por cada $1.000 adicionales "
+            f"en estas sub-áreas, el margen cae ~{1000/venta_acum*100:.3f}%.</p>",
+            unsafe_allow_html=True,
         )
 
-    # Nota positiva: sub-área que ahorró
-    df_ahorro = df_sa[df_sa["sobregasto"] < -100]  # ahorró > $100 M
+    # Nota positiva (sub-área que ahorró)
+    df_ahorro = df_sa[df_sa["sobregasto"] < -100]
     if not df_ahorro.empty:
-        ah_top = df_ahorro.nsmallest(1, "sobregasto").iloc[0]
-        sa_label = ah_top["sub_area"].title() if ah_top["sub_area"] not in ("UNIONX", "GRUPO ETER") else ah_top["sub_area"].replace("GRUPO ETER", "Grupo Eter").replace("UNIONX", "UnionX")
-        # % del total
+        ah = df_ahorro.nsmallest(1, "sobregasto").iloc[0]
         total_real_abs = sum(abs(r["real"]) for _, r in df_sa.iterrows())
-        peso = (abs(ah_top["real"]) / total_real_abs * 100) if total_real_abs else 0
-        st.success(
-            f"✅ **Nota positiva: {sa_label}** — la sub-área más relevante "
-            f"({peso:.0f}% del gasto total de Ops) — cerró "
-            f"${abs(ah_top['sobregasto']):,.0f} M bajo presupuesto "
-            f"({ah_top['pct']:.1f}%), compensando los sobrecostos menores."
+        peso = (abs(ah["real"]) / total_real_abs * 100) if total_real_abs else 0
+        st.markdown(
+            f'<div style="background:#E8F5E9;border-left:4px solid #16A34A;'
+            f'padding:10px 14px;margin:12px 0;border-radius:4px;font-size:13px;">'
+            f'<b style="color:#1B5E20;">✅ Nota positiva: {SUB_AREA_LABEL[ah["sa"]]}</b> — la sub-área '
+            f'más relevante ({peso:.0f}% del gasto total de Ops) — cerró '
+            f'<b>${abs(ah["sobregasto"]):,.0f} bajo presupuesto</b> ({ah["pct"]:.1f}%), '
+            f'compensando con creces los sobrecostos menores.'
+            f'</div>',
+            unsafe_allow_html=True,
         )
-
-    st.divider()
 
     # ─── 2. COMPARATIVO vs FORECAST ───────────────────────────────
-    st.markdown("### 2. Comparativo vs Forecast")
-    st.caption("Dado que **Fcst = Real** en este modelo, la comparación Ppto vs Real refleja la eficiencia de la proyección inicial.")
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;'
+        'letter-spacing:0.5px;">2. COMPARATIVO vs FORECAST</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<p style='font-size:13px;margin:0 0 8px 0;font-style:italic;color:#64748B;'>"
+        f"Dado que Fcst = Real en este modelo, la comparación Ppto vs Real refleja "
+        f"la eficiencia de la proyección inicial.</p>",
+        unsafe_allow_html=True,
+    )
 
     total_ppto = df_sa["ppto"].sum()
     total_real = df_sa["real"].sum()
-    ahorro = abs(total_ppto) - abs(total_real)  # positivo = ahorró
+    ahorro = abs(total_ppto) - abs(total_real)
     pct_ahorro = (ahorro / abs(total_ppto) * 100) if total_ppto else None
 
-    df_resumen = pd.DataFrame([{
-        "Resumen Gasto Ops": "Total Gastos Operacionales",
-        "Ppto": _fmt_clp_m(total_ppto),
-        "Real": _fmt_clp_m(total_real),
-        "Ahorro/(Sobrecosto)": (_fmt_clp_m(ahorro) if ahorro >= 0
-                                 else f"({_fmt_clp_m(-ahorro)})"),
-        "% Var": _fmt_pct(-pct_ahorro) if pct_ahorro is not None else "—",
-    }])
-    st.dataframe(df_resumen, use_container_width=True, hide_index=True)
+    rows = []
+    rows.append(
+        "<tr>"
+        + _th(f"Resumen Gasto Ops {periodo_label}", bg="#1F4E79", align="left")
+        + _th("Ppto", bg="#1F4E79")
+        + _th("Real", bg="#1F4E79")
+        + _th("Ahorro / (Sobrecosto)", bg="#1F4E79")
+        + _th("% Var", bg="#1F4E79")
+        + "</tr>"
+    )
+    color_ah = "#16A34A" if ahorro >= 0 else "#DC2626"
+    rows.append(
+        "<tr>"
+        + _td("Total Gastos Operacionales", bg="#FFFFFF", weight="600",
+               color="#1E293B", align="left")
+        + _td(_fmt_num(total_ppto), bg="#FFFFFF", color="#475569")
+        + _td(_fmt_num(total_real), bg="#FFFFFF", color="#1E293B", weight="600")
+        + _td(_fmt_num(ahorro if ahorro >= 0 else -ahorro),
+               bg="#FFFFFF", color=color_ah, weight="700")
+        + _td(_fmt_pct(-pct_ahorro) if pct_ahorro is not None else "—",
+               bg="#FFFFFF", color=color_ah, weight="700")
+        + "</tr>"
+    )
+    st.markdown(
+        '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+        f'{"".join(rows)}</table></div>',
+        unsafe_allow_html=True,
+    )
 
-    # Ineficiencias detectadas (gasto puntual mes alto)
-    st.markdown("**⚠️ Ineficiencias no previstas detectadas:**")
-    ineficiencias = []
+    # Ineficiencias
+    st.markdown(
+        f"<p style='font-size:13px;margin:14px 0 8px 0;'>"
+        f"<b>⚠️ Ineficiencias no previstas detectadas:</b></p>",
+        unsafe_allow_html=True,
+    )
+
     df_mes = df_costo[
-        (df_costo["year"] == year)
-        & (df_costo["month"].isin(meses))
-        & (df_costo["escenario"] == "FCST")
-        & (df_costo["kpi"] == "GASTO")
+        (df_costo["year"] == year) & (df_costo["month"].isin(meses))
+        & (df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")
     ]
-    # Por (sub_area, cuenta_analitica): ¿algún mes outlier vs promedio?
+    inef = []
     for (sa, ct), g in df_mes.groupby(["sub_area", "cuenta_analitica"]):
         if len(g) < 2:
             continue
         montos = g["valor"].abs()
         avg = montos.mean()
         max_m = montos.max()
-        if max_m > avg * 2 and max_m > 500:  # outlier > 2x promedio Y > $500M
+        if max_m > avg * 2 and max_m > 500:
             mes_max = g.loc[g["valor"].abs().idxmax(), "mes_text"]
-            ineficiencias.append(
-                f"- **{sa or '?'} / {ct or '?'}**: {mes_max.title()} concentra "
-                f"un pago atípico (${max_m:,.0f} M vs ${avg:,.0f} M promedio). "
-                "Posible facturación anual o cambio de plan no presupuestado."
-            )
-    if ineficiencias:
-        for i in ineficiencias[:5]:
-            st.markdown(i)
-    else:
-        st.markdown("- Sin outliers significativos detectados en el período")
+            inef.append({
+                "sa": sa, "cta": ct,
+                "mes": mes_max, "max": max_m, "avg": avg,
+            })
+    inef.sort(key=lambda x: x["max"], reverse=True)
 
-    st.divider()
+    if inef:
+        items_html = []
+        for i in inef[:5]:
+            items_html.append(
+                f'<li style="margin:4px 0;font-size:13px;">'
+                f'<b>{i["sa"] or "?"} / {i["cta"] or "?"}:</b> '
+                f'{i["mes"][:3].title()} concentra un pago atípico '
+                f'(${i["max"]:,.0f} vs ${i["avg"]:,.0f} promedio mensual). '
+                f'Posible facturación anual o cambio de plan no presupuestado.'
+                f'</li>'
+            )
+        st.markdown(
+            f'<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
+            f'padding:10px 14px;margin:8px 0;border-radius:4px;">'
+            f'<ul style="margin:0;padding-left:20px;">{"".join(items_html)}</ul>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div style="background:#E8F5E9;border-left:4px solid #16A34A;'
+            'padding:10px 14px;margin:8px 0;border-radius:4px;font-size:13px;">'
+            'Sin outliers significativos detectados en el período.</div>',
+            unsafe_allow_html=True,
+        )
 
     # ─── 3. IMPACTO EN VENTAS ────────────────────────────────────
-    st.markdown("### 3. Impacto en Ventas — picos de venta vs eficiencia operativa")
-
-    # Tabla mes a mes con venta + gasto + ratio
-    rows_iv = []
-    for m in meses:
-        venta = _venta_periodo(df_venta, year, [m])
-        gasto = abs(sum(_gasto_por_sub_area(df_costo, year, [m], "FCST").get(sa, 0)
-                          for sa in SUB_AREAS_PNL))
-        ratio = (gasto / venta * 100) if venta else None
-        rows_iv.append({
-            "Mes": MESES_ES[m],
-            "Venta Real": _fmt_clp_m(venta),
-            "Gasto Ops": _fmt_clp_m(gasto),
-            "Costo/Venta %": f"{ratio:.1f}%" if ratio else "—",
-            "Status": ("🟢 OK" if ratio and ratio <= 12
-                        else ("🟡 Atención" if ratio and ratio <= 14
-                              else "🔴 Alerta")),
-        })
-    st.dataframe(pd.DataFrame(rows_iv), use_container_width=True, hide_index=True)
-
-    venta_total = sum(_venta_periodo(df_venta, year, [m]) for m in meses)
-    gasto_total = abs(sum(
-        _gasto_por_sub_area(df_costo, year, meses, "FCST").get(sa, 0)
-        for sa in SUB_AREAS_PNL
-    ))
-    ratio_total = (gasto_total / venta_total * 100) if venta_total else None
-
     st.markdown(
-        f"**Resumen período {periodo_label}:** "
-        f"Ratio Costo Ops / Venta = **{ratio_total:.1f}%** "
-        f"({'🟢 dentro' if ratio_total and ratio_total <= 12 else '🟠 sobre'} "
-        f"benchmark Plan UnionX 8-12%)" if ratio_total else ""
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;'
+        'letter-spacing:0.5px;">3. IMPACTO EN VENTAS — PICOS DE VENTA vs EFICIENCIA OPERATIVA</div>',
+        unsafe_allow_html=True,
     )
+
+    rows = []
+    rows.append(
+        "<tr>"
+        + _th("Mes", bg="#1F4E79", align="left")
+        + _th("Venta Real", bg="#1F4E79")
+        + _th("Gasto Ops", bg="#1F4E79")
+        + _th("Costo / Venta %", bg="#1F4E79")
+        + _th("Status", bg="#1F4E79")
+        + "</tr>"
+    )
+    for m in meses:
+        v = _venta_periodo(df_venta, year, [m])
+        g = abs(sum(_gasto_subarea(df_costo, year, [m], "FCST").get(sa, 0)
+                      for sa in SUB_AREAS_PNL))
+        ratio = (g / v * 100) if v else None
+        if ratio is None:
+            status, color = "—", "#94A3B8"
+        elif ratio <= 12:
+            status, color = "🟢 OK", "#16A34A"
+        elif ratio <= 14:
+            status, color = "🟡 Atención", "#EA580C"
+        else:
+            status, color = "🔴 Alerta", "#DC2626"
+        rows.append(
+            "<tr>"
+            + _td(MESES_SHORT[m], bg="#FFFFFF", weight="600", color="#1E293B", align="left")
+            + _td(_fmt_num(v), bg="#FFFFFF", color="#1E293B")
+            + _td(_fmt_num(g), bg="#FFFFFF", color="#1E293B")
+            + _td(f"{ratio:.1f}%".replace(".", ",") if ratio else "—",
+                   bg="#FFFFFF", color=color, weight="700")
+            + _td(status, bg="#FFFFFF", color=color, weight="600")
+            + "</tr>"
+        )
+    # Acumulado
+    g_t = abs(sum(_gasto_subarea(df_costo, year, meses, "FCST").get(sa, 0)
+                    for sa in SUB_AREAS_PNL))
+    ratio_t = (g_t / venta_acum * 100) if venta_acum else None
+    if ratio_t is None:
+        status_t, color_t = "—", "#94A3B8"
+    elif ratio_t <= 12:
+        status_t, color_t = "🟢 OK", "#16A34A"
+    elif ratio_t <= 14:
+        status_t, color_t = "🟡 Atención", "#EA580C"
+    else:
+        status_t, color_t = "🔴 Alerta", "#DC2626"
+    rows.append(
+        "<tr>"
+        + _td(periodo_label, bg="#1F4E79", color="#FFFFFF", weight="700", align="left")
+        + _td(_fmt_num(venta_acum), bg="#1F4E79", color="#FFFFFF", weight="700")
+        + _td(_fmt_num(g_t), bg="#1F4E79", color="#FFFFFF", weight="700")
+        + _td(f"{ratio_t:.1f}%".replace(".", ",") if ratio_t else "—",
+               bg="#1F4E79", color="#FFFFFF", weight="700")
+        + _td(status_t, bg="#1F4E79", color="#FFFFFF", weight="700")
+        + "</tr>"
+    )
+    st.markdown(
+        '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+        f'{"".join(rows)}</table></div>',
+        unsafe_allow_html=True,
+    )
+
+    if ratio_t is not None:
+        msg = ("<b>dentro</b>" if ratio_t <= 12 else "<b>sobre</b>")
+        st.markdown(
+            f"<p style='font-size:13px;margin:14px 0 0 0;'>"
+            f"<b>Resumen período {periodo_label}:</b> Ratio Costo Ops / Venta = "
+            f"<b style='color:{color_t};'>{ratio_t:.1f}%</b> "
+            f"({msg} benchmark Plan UnionX 8-12%).</p>",
+            unsafe_allow_html=True,
+        )
 
 
 # ============================================================
-# RENDER PRINCIPAL
+# RENDER
 # ============================================================
 def render():
     with st.sidebar:
@@ -591,11 +922,6 @@ def render():
         st.divider()
 
     st.title("💰 Costo Operativo Total — Operaciones")
-    st.caption(
-        "Cierre P&L estilo gerencial · costos del Sheet OPERACIONES + "
-        "venta del módulo Ventas · sin desglose por canal (foco: cerrar costo "
-        "operativo total empresa)"
-    )
 
     df_costo, res = _cargar()
     df_venta = _cargar_ventas_mensual()
@@ -605,61 +931,53 @@ def render():
         return
 
     st.caption(
-        f"🕒 Costos generado: {res.get('generado_en','')[:19]} · "
-        f"Ventas parquet: {VENTAS_HIST.stat().st_mtime if VENTAS_HIST.exists() else '?'}"
+        f"🕒 Costos: {res.get('generado_en','')[:19]} · "
+        f"Costos: Sheet OPERACIONES (Drive) · Venta: módulo Ventas (parquet)"
     )
-
-    # ─── SELECTORES PERÍODO ──────────────────────────────────────────
     st.divider()
+
     col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
         years = sorted(df_costo["year"].dropna().unique().astype(int).tolist())
-        year_sel = st.selectbox("Año", years,
-                                  index=len(years) - 1 if years else 0)
+        year_sel = st.selectbox("Año", years, index=len(years) - 1 if years else 0)
     with col2:
         modo = st.selectbox("Período", ["Q1", "Q2", "Q3", "Q4", "YTD", "Mes específico"])
-    with col3:
-        meses_disp = sorted(df_costo[df_costo["year"] == year_sel]["month"]
-                              .dropna().unique().astype(int).tolist())
-        if modo == "Q1":
-            meses_sel = [1, 2, 3]
-            periodo_label = "Q1"
-        elif modo == "Q2":
-            meses_sel = [4, 5, 6]
-            periodo_label = "Q2"
-        elif modo == "Q3":
-            meses_sel = [7, 8, 9]
-            periodo_label = "Q3"
-        elif modo == "Q4":
-            meses_sel = [10, 11, 12]
-            periodo_label = "Q4"
-        elif modo == "YTD":
-            meses_sel = sorted(meses_disp)
-            periodo_label = f"YTD ({MESES_ES.get(min(meses_sel),'?')}-{MESES_ES.get(max(meses_sel),'?')})"
-        else:
-            mes_unico = st.selectbox(
-                "Mes", meses_disp,
-                format_func=lambda m: MESES_ES.get(m, str(m)),
-            )
-            meses_sel = [mes_unico]
-            periodo_label = MESES_ES.get(mes_unico, str(mes_unico))
+    meses_disp = sorted(df_costo[df_costo["year"] == year_sel]["month"]
+                          .dropna().unique().astype(int).tolist())
+    if modo == "Q1":
+        meses_sel, periodo_label = [1, 2, 3], "Q1"
+    elif modo == "Q2":
+        meses_sel, periodo_label = [4, 5, 6], "Q2"
+    elif modo == "Q3":
+        meses_sel, periodo_label = [7, 8, 9], "Q3"
+    elif modo == "Q4":
+        meses_sel, periodo_label = [10, 11, 12], "Q4"
+    elif modo == "YTD":
+        meses_sel = sorted(meses_disp)
+        periodo_label = "YTD"
+    else:
+        with col3:
+            mes_unico = st.selectbox("Mes", meses_disp,
+                                       format_func=lambda m: MESES_ES.get(m, str(m)))
+        meses_sel = [mes_unico]
+        periodo_label = MESES_ES.get(mes_unico, str(mes_unico))[:3].title()
+    meses_sel = [m for m in meses_sel if m in meses_disp]
 
-        # Intersectar con meses disponibles
-        meses_sel = [m for m in meses_sel if m in meses_disp]
-        st.caption(f"📅 **{periodo_label} {year_sel}** · "
-                    f"meses cargados: {[MESES_ES[m] for m in meses_sel]}")
+    with col3:
+        if modo != "Mes específico":
+            st.caption(f"📅 **{periodo_label} {year_sel}** · Meses: "
+                        f"{', '.join(MESES_SHORT.get(m, str(m)) for m in meses_sel)}")
 
     st.divider()
 
-    # ─── 3 SUB-TABS ──────────────────────────────────────────────────
     tab1, tab2, tab3 = st.tabs([
         "📊 P&L Operaciones",
         "🔎 Detalle por Centro de Costo",
         "📋 Informe de Gestión",
     ])
     with tab1:
-        _tab_pnl(df_costo, df_venta, year_sel, meses_sel)
+        _tab_pnl(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab2:
-        _tab_detalle_cc(df_costo, df_venta, year_sel, meses_sel)
+        _tab_detalle_cc(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab3:
-        _tab_informe_gestion(df_costo, df_venta, year_sel, meses_sel, periodo_label)
+        _tab_informe(df_costo, df_venta, year_sel, meses_sel, periodo_label)
