@@ -25,6 +25,7 @@ from db_client import get_db_path
 
 DB_PATH = get_db_path()
 HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+MES_ACTUAL_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
 CUTOFF_HISTORICO = '2026-05-01'
 
 
@@ -171,43 +172,58 @@ def get_local_db_path():
         df_hist[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
         print(f"[Local DB] Histórico insertado OK", flush=True)
 
-    # Live de Turso (con fallback si Turso falla — no romper el dashboard)
-    # Chunks chicos (5K) porque Turso desde Streamlit Cloud sufre timeouts con responses grandes.
-    chunk_size = 5000
-    last_rowid = 0
-    chunks_turso = 0
+    # Mes actual desde parquet pre-generado por GH Actions cada hora.
+    # Esto reemplaza los chunks live a Turso (que sufren ReadTimeout por latencia EU↔US).
+    # Si el parquet no existe (primera vez después de mergear este código), fallback a Turso.
     turso_rows_loaded = 0
+    chunks_turso = 0
     turso_error = None
-    try:
-        while True:
-            if _t.time() - build_started > BUILD_MAX_SECONDS:
-                turso_error = f"timeout build > {BUILD_MAX_SECONDS}s"
-                print(f"[Local DB][ABORT] {turso_error} tras {chunks_turso} chunks", flush=True)
-                break
-            result = turso_query(
-                f"SELECT rowid, {cols_csv} FROM ventas "
-                f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
-                f"ORDER BY rowid LIMIT {chunk_size}"
-            )
-            rows = result['rows']
-            if not rows:
-                break
-            flat = []
-            for r in rows:
-                vals = [c.get('value') if isinstance(c, dict) else c for c in r]
-                last_rowid = int(vals[0])
-                flat.append(tuple(vals[1:]))
-            conn.executemany(insert_sql, flat)
-            conn.commit()
-            chunks_turso += 1
-            turso_rows_loaded += len(rows)
-            print(f"[Local DB] Turso chunk {chunks_turso}: +{len(rows):,} filas (total {turso_rows_loaded:,})", flush=True)
-            if len(rows) < chunk_size:
-                break
-        print(f"[Local DB] Turso live OK: {chunks_turso} chunks, {turso_rows_loaded:,} filas", flush=True)
-    except Exception as e:
-        turso_error = f"{type(e).__name__}: {str(e)[:120]}"
-        print(f"[Local DB][WARN] Turso fallo después de {chunks_turso} chunks: {turso_error}", flush=True)
+    if MES_ACTUAL_PARQUET.exists():
+        try:
+            df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
+            print(f"[Local DB] Mes actual parquet: {len(df_mes):,} filas", flush=True)
+            df_mes[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
+            turso_rows_loaded = len(df_mes)
+            chunks_turso = 1
+            print(f"[Local DB] Mes actual insertado OK", flush=True)
+        except Exception as e:
+            turso_error = f"mes_actual_parquet: {type(e).__name__}: {str(e)[:120]}"
+            print(f"[Local DB][WARN] {turso_error}", flush=True)
+    else:
+        # Fallback legacy: chunks live a Turso
+        print(f"[Local DB] {MES_ACTUAL_PARQUET.name} no existe — fallback chunks Turso", flush=True)
+        chunk_size = 5000
+        last_rowid = 0
+        try:
+            while True:
+                if _t.time() - build_started > BUILD_MAX_SECONDS:
+                    turso_error = f"timeout build > {BUILD_MAX_SECONDS}s"
+                    print(f"[Local DB][ABORT] {turso_error} tras {chunks_turso} chunks", flush=True)
+                    break
+                result = turso_query(
+                    f"SELECT rowid, {cols_csv} FROM ventas "
+                    f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
+                    f"ORDER BY rowid LIMIT {chunk_size}"
+                )
+                rows = result['rows']
+                if not rows:
+                    break
+                flat = []
+                for r in rows:
+                    vals = [c.get('value') if isinstance(c, dict) else c for c in r]
+                    last_rowid = int(vals[0])
+                    flat.append(tuple(vals[1:]))
+                conn.executemany(insert_sql, flat)
+                conn.commit()
+                chunks_turso += 1
+                turso_rows_loaded += len(rows)
+                print(f"[Local DB] Turso chunk {chunks_turso}: +{len(rows):,} filas (total {turso_rows_loaded:,})", flush=True)
+                if len(rows) < chunk_size:
+                    break
+            print(f"[Local DB] Turso live OK: {chunks_turso} chunks, {turso_rows_loaded:,} filas", flush=True)
+        except Exception as e:
+            turso_error = f"{type(e).__name__}: {str(e)[:120]}"
+            print(f"[Local DB][WARN] Turso fallo después de {chunks_turso} chunks: {turso_error}", flush=True)
 
     # dim_productos + metadata (con fallback)
     cols_p = ['sku', 'producto', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
