@@ -1,0 +1,58 @@
+name: "Sync mes actual a parquet"
+
+on:
+  schedule:
+    # Cada hora en el minuto :30 (después del sync_diario que corre en :00)
+    - cron: '30 * * * *'
+  workflow_dispatch:
+    inputs:
+      mes:
+        description: 'YYYY-MM (default: mes actual)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow libsql-client
+
+      - name: Descargar mes actual desde Turso
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -n "${{ github.event.inputs.mes }}" ]; then
+            python extract_mes_actual_a_parquet.py --mes "${{ github.event.inputs.mes }}"
+          else
+            python extract_mes_actual_a_parquet.py
+          fi
+
+      - name: Commit si cambió
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Sync Mes"
+          git add data/historico/ventas_mes_actual.parquet
+          if git diff --staged --quiet; then
+            echo "Sin cambios, nada que commitear"
+          else
+            git commit -m "Sync mes actual: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
