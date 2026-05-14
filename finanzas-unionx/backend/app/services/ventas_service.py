@@ -66,9 +66,47 @@ class VentasService(BaseOdooService):
 
         # PASO 4: Facturas y Notas de Crédito
         progress(40, "Extrayendo facturas y notas de crédito...")
-        facturas, totales_netos, ncs = self._extraer_facturas_y_nc(invoice_ids_all, periodo_inicio, periodo_fin, ordenes=ordenes)
+        facturas, totales_netos, ncs, nc_lineas = self._extraer_facturas_y_nc(invoice_ids_all, periodo_inicio, periodo_fin, ordenes=ordenes)
         facturas_dict = {f['id']: f for f in facturas}
         print(f"  [OK] {len(facturas):,} facturas")
+
+        # PASO 4b: Enriquecer productos y sale.order.line con refs de NC (cross-month)
+        # Productos referenciados por NC que no estén en productos_dict (NC revierte pedidos
+        # de meses anteriores → sus productos pueden no estar cargados).
+        prod_ids_nc = {ln['product_id'][0] for ln in nc_lineas if ln.get('product_id')}
+        prod_ids_faltantes = list(prod_ids_nc - set(productos.keys()))
+        if prod_ids_faltantes:
+            print(f"  [INFO] Cargando {len(prod_ids_faltantes)} productos extra de NC cross-month...")
+            extras = self.odoo.execute_in_batches(
+                'product.product',
+                prod_ids_faltantes,
+                ['id', 'name', 'default_code', 'qty_available'],
+                batch_size=100,
+            )
+            for p in extras:
+                productos[p['id']] = p
+
+        # sale.order.line referenciadas por NC (para purchase_price exacto)
+        sale_lines_dict = {ln['id']: ln for ln in lineas}
+        sol_ids_nc = set()
+        for ln in nc_lineas:
+            for sid in (ln.get('sale_line_ids') or []):
+                sol_ids_nc.add(sid)
+        sol_faltantes = list(sol_ids_nc - set(sale_lines_dict.keys()))
+        if sol_faltantes:
+            print(f"  [INFO] Cargando {len(sol_faltantes)} sale.order.line extra (NC cross-month)...")
+            try:
+                extras_sol = self.odoo.execute_in_batches(
+                    'sale.order.line',
+                    sol_faltantes,
+                    ['id', 'name', 'order_id', 'product_id', 'product_uom_qty',
+                     'qty_delivered', 'purchase_price', 'price_subtotal', 'price_total'],
+                    batch_size=100,
+                )
+                for sl in extras_sol:
+                    sale_lines_dict[sl['id']] = sl
+            except Exception as e:
+                print(f"  [WARN] Error cargando sale.order.line extra: {str(e)[:100]}")
 
         # PASO 5: Cargar planillas de enriquecimiento
         progress(50, "Cargando planillas...")
@@ -80,7 +118,8 @@ class VentasService(BaseOdooService):
         progress(60, "Construyendo dataset RAW...")
         df_raw = self._construir_dataset_raw(
             lineas, ordenes_dict, productos, facturas_dict,
-            totales_netos, ncs, maestra_canales, matriz_productos
+            totales_netos, ncs, maestra_canales, matriz_productos,
+            nc_lineas=nc_lineas, sale_lines_dict=sale_lines_dict,
         )
         print(f"  [OK] {len(df_raw):,} filas")
 
@@ -133,7 +172,7 @@ class VentasService(BaseOdooService):
 
         # PASO 4: Facturas y Notas de Crédito
         progress(55, "Extrayendo facturas y notas de crédito...")
-        facturas, totales_netos_por_orden = self._extraer_facturas_y_nc(invoice_ids_all, periodo_inicio, periodo_fin, ordenes=ordenes)
+        facturas, totales_netos_por_orden, _ncs, _nc_lineas = self._extraer_facturas_y_nc(invoice_ids_all, periodo_inicio, periodo_fin, ordenes=ordenes)
         facturas_dict = {f['id']: f for f in facturas}
         print(f"  [OK] {len(facturas):,} facturas y NC cargadas")
 
@@ -365,7 +404,8 @@ class VentasService(BaseOdooService):
                         'id', 'name', 'state', 'invoice_date', 'create_date',
                         'company_id', 'l10n_latam_document_number', 'move_type',
                         'amount_total', 'amount_untaxed',
-                        'reversed_entry_id', 'ref', 'partner_id'
+                        'reversed_entry_id', 'ref', 'partner_id',
+                        'invoice_line_ids',
                     ],
                     batch_size=50
                 )
@@ -443,12 +483,40 @@ class VentasService(BaseOdooService):
             if orden_id:
                 totales_netos_por_orden[orden_id] = total_neto
 
+        # Extraer account.move.line de las NCs (para crear filas por SKU en vez de NC agregada)
+        nc_line_ids_all = []
+        for nc in ncs:
+            nc_line_ids_all.extend(nc.get('invoice_line_ids') or [])
+
+        nc_lineas = []
+        if nc_line_ids_all:
+            print(f"    [INFO] Extrayendo {len(nc_line_ids_all):,} líneas de NC (account.move.line)...")
+            try:
+                nc_lineas_raw = self.odoo.execute_in_batches(
+                    'account.move.line',
+                    nc_line_ids_all,
+                    [
+                        'id', 'move_id', 'product_id', 'quantity',
+                        'price_subtotal', 'price_total', 'sale_line_ids',
+                        'display_type',
+                    ],
+                    batch_size=100,
+                )
+                # Solo líneas de producto (descartar secciones/notas)
+                nc_lineas = [
+                    ln for ln in nc_lineas_raw
+                    if ln.get('display_type') in (False, None, '', 'product')
+                ]
+            except Exception as e:
+                print(f"    [WARN] Error extrayendo líneas NC: {str(e)[:100]}")
+                nc_lineas = []
+
         print(f"    [INFO] Facturas cargadas: {len(facturas)}")
-        print(f"    [INFO] Notas de crédito encontradas: {len(ncs)}")
+        print(f"    [INFO] Notas de crédito encontradas: {len(ncs)} ({len(nc_lineas)} líneas)")
         print(f"    [INFO] Órdenes con totales netos calculados: {len(totales_netos_por_orden)}")
 
-        # Retornar facturas, totales netos Y notas de crédito (para líneas separadas de NC)
-        return facturas, totales_netos_por_orden, ncs
+        # Retornar facturas, totales netos, NCs Y líneas de NC (para detalle por SKU)
+        return facturas, totales_netos_por_orden, ncs, nc_lineas
 
     # ========== PASO 5: Construir dataset ==========
     def _construir_dataset(self, lineas: list, ordenes_dict: dict, productos_dict: dict,
@@ -687,7 +755,8 @@ class VentasService(BaseOdooService):
 
     def _construir_dataset_raw(self, lineas: list, ordenes_dict: dict, productos_dict: dict,
                               facturas_dict: dict, totales_netos: dict, ncs: list,
-                              maestra_canales: pd.DataFrame, matriz_productos: pd.DataFrame) -> pd.DataFrame:
+                              maestra_canales: pd.DataFrame, matriz_productos: pd.DataFrame,
+                              nc_lineas: list = None, sale_lines_dict: dict = None) -> pd.DataFrame:
         """
         Construye el DataFrame en FORMATO RAW exacto (40 columnas).
 
@@ -994,8 +1063,59 @@ class VentasService(BaseOdooService):
 
         df = pd.DataFrame(data)
 
-        # AGREGAR LÍNEAS SEPARADAS PARA NOTAS DE CRÉDITO (para auditoría y trazabilidad)
-        # Las NC aparecen como líneas separadas con signos negativos, NO neteadas en la venta original
+        # Helper: lookup de matriz productos por SKU (mismo formato que el bloque de ventas)
+        def _matriz_lookup(sku_val):
+            out = {
+                'categoria_macro': '', 'categoria_padre': '', 'categoria_hijo': '',
+                'categoria_comercial': '', 'marca': '', 'proveedor': '',
+                'pack': '', 'estado_sku': '', 'tipo_marca': '',
+            }
+            if matriz_productos.empty or not sku_val:
+                return out
+            sku_col = 'SKU' if 'SKU' in matriz_productos.columns else 'Referencia interna'
+            matriz_sku_str = matriz_productos[sku_col].astype(str).str.strip()
+            match = matriz_productos[matriz_sku_str == str(sku_val).strip()]
+            if match.empty:
+                return out
+            row = match.iloc[0]
+            for col in matriz_productos.columns:
+                c_lower = col.lower()
+                v = row.get(col, '')
+                if pd.isna(v): v = ''
+                if 'macro' in c_lower:
+                    out['categoria_macro'] = v
+                elif 'padre' in c_lower and 'macro' not in c_lower:
+                    out['categoria_padre'] = v
+                elif 'hijo' in c_lower:
+                    out['categoria_hijo'] = v
+                elif 'comercial' in c_lower:
+                    out['categoria_comercial'] = v
+                elif col == 'Marca':
+                    out['marca'] = v
+                elif col == 'Proveedor':
+                    out['proveedor'] = v
+                elif col == 'Pack':
+                    out['pack'] = v
+                elif col == 'In/out':
+                    out['estado_sku'] = v
+                elif col == 'Estado marca':
+                    out['tipo_marca'] = v
+            return out
+
+        # Indexar líneas NC por move_id (NC id) para lookup rápido
+        nc_lineas_by_move = {}
+        if nc_lineas:
+            for nl in nc_lineas:
+                mid = nl['move_id'][0] if nl.get('move_id') else None
+                if mid is None:
+                    continue
+                nc_lineas_by_move.setdefault(mid, []).append(nl)
+        if sale_lines_dict is None:
+            sale_lines_dict = {ln['id']: ln for ln in lineas}
+
+        # AGREGAR LÍNEAS SEPARADAS PARA NOTAS DE CRÉDITO (una fila por SKU devuelto)
+        # Si la NC tiene invoice_line_ids → una fila por línea con SKU/marca/costo exactos.
+        # Si no tiene líneas (fallback) → una fila agregada con costo proporcional (legacy).
         if ncs:
             nc_data = []
 
@@ -1086,50 +1206,130 @@ class VentasService(BaseOdooService):
                         # margen NC = venta_neta - costo_total = (-nc_amount) - (-costo_nc) = -nc_amount + costo_nc
                         margen_nc = -nc_amount_abs + costo_nc
 
-                        # Crear fila de NC con signos NEGATIVOS (tipo: Devolución)
-                        nc_data.append({
-                            'Tipo Movimiento': 'Devolución',
-                            'Bodega': orden_orig.get('warehouse_id', [None, ''])[1] if orden_orig.get('warehouse_id') else '',
-                            'Documento': nc.get('name', ''),  # Número de NC
-                            'Fecha Documento': fecha_nc,
-                            'Pedido': orden_orig.get('name', ''),  # Referencia a la orden original
-                            'Estado Pedido': orden_orig.get('state', ''),
-                            'Tipo Despacho': '',
-                            'SKU': '',  # NC no tiene SKU específico
-                            'Canal': canal_nc,
-                            'Fecha Venta': fecha_nc.split(' ')[0] if fecha_nc else '',
-                            'Hora Venta': hora_nc,
-                            'Producto': f"Nota de Crédito de {factura_orig.get('name', 'Factura')}",
-                            'Categoría macro': '',
-                            'Categoría padre': '',
-                            'Categoría hijo': '',
-                            'Categoría comercial': '',
-                            'Estado SKU': '',
-                            'Pack': '',
-                            'Marca': '',
-                            'Proveedor': '',
-                            'Tipo Marca': '',
-                            'Tipo Compra': '',
-                            'Tipo Negocio': tipo_negocio_nc,
-                            'KAM': kam_nc,
-                            'Estado Canal': '',
-                            'Año venta': fecha_dt.year if pd.notna(fecha_dt) else '',
-                            'Mes venta': fecha_dt.month if pd.notna(fecha_dt) else '',
-                            'Semana venta': fecha_dt.isocalendar()[1] if pd.notna(fecha_dt) else '',
-                            'Día semana': fecha_dt.dayofweek if pd.notna(fecha_dt) else '',
-                            'Hora venta': hora_nc,
-                            'Cantidad': 1,  # NC es un documento único
-                            'Venta bruta': -nc_amount_bruto_abs,  # NEGATIVO con IVA (compatible histórico)
-                            'Venta Neta': -nc_amount_abs,         # NEGATIVO sin IVA
-                            'Costo Unitario': 0,
-                            'Costo Total': -costo_nc,  # NEGATIVO: la NC devuelve costo (consistente con venta_neta negativa)
-                            'Margen Front': margen_nc,  # = venta_neta - costo_total = -nc_amount - (-costo_nc) = -nc_amount + costo_nc
-                            'Comision %': 0,
-                            'Comisión': 0,
-                            'Logística': 0,
-                            'Marketing': 0,
-                            'Mg final': margen_nc
-                        })
+                        bodega_nc = orden_orig.get('warehouse_id', [None, ''])[1] if orden_orig.get('warehouse_id') else ''
+                        pedido_nc = orden_orig.get('name', '')
+                        estado_ped_nc = orden_orig.get('state', '')
+                        anio_nc = fecha_dt.year if pd.notna(fecha_dt) else ''
+                        mes_nc = fecha_dt.month if pd.notna(fecha_dt) else ''
+                        sem_nc = fecha_dt.isocalendar()[1] if pd.notna(fecha_dt) else ''
+                        dia_nc = fecha_dt.dayofweek if pd.notna(fecha_dt) else ''
+                        fecha_v_nc = fecha_nc.split(' ')[0] if fecha_nc else ''
+
+                        lineas_nc = nc_lineas_by_move.get(nc_id, []) if nc_id else []
+
+                        if lineas_nc:
+                            # B1: una fila por línea de la NC, con SKU/marca/categoría reales
+                            # y costo exacto del sale.order.line original.
+                            for nl in lineas_nc:
+                                prod_id_nc = nl['product_id'][0] if nl.get('product_id') else None
+                                producto_nc = productos_dict.get(prod_id_nc, {}) if prod_id_nc else {}
+                                sku_nc = producto_nc.get('default_code', '') or ''
+                                prod_nombre_nc = producto_nc.get('name', '') or ''
+
+                                m = _matriz_lookup(sku_nc)
+
+                                # purchase_price del sale.order.line original (costo congelado al momento de venta)
+                                costo_unit_nc = 0
+                                for sid in (nl.get('sale_line_ids') or []):
+                                    sl = sale_lines_dict.get(sid)
+                                    if sl and sl.get('purchase_price'):
+                                        costo_unit_nc = sl['purchase_price']
+                                        break
+
+                                qty_nc = nl.get('quantity', 0) or 0
+                                venta_neta_ln = -(nl.get('price_subtotal', 0) or 0)
+                                venta_bruta_ln = -(nl.get('price_total', 0) or (nl.get('price_subtotal', 0) or 0) * 1.19)
+                                costo_total_ln = -(costo_unit_nc * qty_nc)
+                                margen_ln = venta_neta_ln - costo_total_ln  # = -venta + costo recuperado
+
+                                nc_data.append({
+                                    'Tipo Movimiento': 'Devolución',
+                                    'Bodega': bodega_nc,
+                                    'Documento': nc.get('name', ''),
+                                    'Fecha Documento': fecha_nc,
+                                    'Pedido': pedido_nc,
+                                    'Estado Pedido': estado_ped_nc,
+                                    'Tipo Despacho': '',
+                                    'SKU': sku_nc,
+                                    'Canal': canal_nc,
+                                    'Fecha Venta': fecha_v_nc,
+                                    'Hora Venta': hora_nc,
+                                    'Producto': prod_nombre_nc or f"Nota de Crédito de {factura_orig.get('name', 'Factura')}",
+                                    'Categoría macro': m['categoria_macro'],
+                                    'Categoría padre': m['categoria_padre'],
+                                    'Categoría hijo': m['categoria_hijo'],
+                                    'Categoría comercial': m['categoria_comercial'],
+                                    'Estado SKU': m['estado_sku'],
+                                    'Pack': m['pack'],
+                                    'Marca': m['marca'],
+                                    'Proveedor': m['proveedor'],
+                                    'Tipo Marca': m['tipo_marca'],
+                                    'Tipo Compra': '',
+                                    'Tipo Negocio': tipo_negocio_nc,
+                                    'KAM': kam_nc,
+                                    'Estado Canal': '',
+                                    'Año venta': anio_nc,
+                                    'Mes venta': mes_nc,
+                                    'Semana venta': sem_nc,
+                                    'Día semana': dia_nc,
+                                    'Hora venta': hora_nc,
+                                    'Cantidad': -qty_nc,  # NEGATIVO: cantidad devuelta
+                                    'Venta bruta': venta_bruta_ln,
+                                    'Venta Neta': venta_neta_ln,
+                                    'Costo Unitario': costo_unit_nc,
+                                    'Costo Total': costo_total_ln,
+                                    'Margen Front': margen_ln,
+                                    'Comision %': 0,
+                                    'Comisión': 0,
+                                    'Logística': 0,
+                                    'Marketing': 0,
+                                    'Mg final': margen_ln,
+                                })
+                        else:
+                            # Fallback legacy: NC sin invoice_line_ids → fila agregada con costo proporcional
+                            nc_data.append({
+                                'Tipo Movimiento': 'Devolución',
+                                'Bodega': bodega_nc,
+                                'Documento': nc.get('name', ''),
+                                'Fecha Documento': fecha_nc,
+                                'Pedido': pedido_nc,
+                                'Estado Pedido': estado_ped_nc,
+                                'Tipo Despacho': '',
+                                'SKU': '',
+                                'Canal': canal_nc,
+                                'Fecha Venta': fecha_v_nc,
+                                'Hora Venta': hora_nc,
+                                'Producto': f"Nota de Crédito de {factura_orig.get('name', 'Factura')}",
+                                'Categoría macro': '',
+                                'Categoría padre': '',
+                                'Categoría hijo': '',
+                                'Categoría comercial': '',
+                                'Estado SKU': '',
+                                'Pack': '',
+                                'Marca': '',
+                                'Proveedor': '',
+                                'Tipo Marca': '',
+                                'Tipo Compra': '',
+                                'Tipo Negocio': tipo_negocio_nc,
+                                'KAM': kam_nc,
+                                'Estado Canal': '',
+                                'Año venta': anio_nc,
+                                'Mes venta': mes_nc,
+                                'Semana venta': sem_nc,
+                                'Día semana': dia_nc,
+                                'Hora venta': hora_nc,
+                                'Cantidad': 1,
+                                'Venta bruta': -nc_amount_bruto_abs,
+                                'Venta Neta': -nc_amount_abs,
+                                'Costo Unitario': 0,
+                                'Costo Total': -costo_nc,
+                                'Margen Front': margen_nc,
+                                'Comision %': 0,
+                                'Comisión': 0,
+                                'Logística': 0,
+                                'Marketing': 0,
+                                'Mg final': margen_nc,
+                            })
 
             # Agregar las filas de NC al DataFrame
             if nc_data:
