@@ -102,6 +102,7 @@ with st.sidebar:
 # NAVEGACIÓN
 # ============================================================
 from views.planning.triada import render as render_triada
+from views.planning.triada_proyectada import render as render_triada_proyectada
 from views.planning.compras import render as render_compras
 from views.planning.proveedores import render as render_proveedores
 from views.planning.politicas import render as render_politicas
@@ -165,7 +166,9 @@ pages = {
                 icon="🔮", url_path="pln-forecast"),
     ],
     "🎯 Planificación": [
-        st.Page(render_triada, title="Triada Stock+Llegadas+Demanda", icon="🎯",
+        st.Page(render_triada_proyectada, title="Triada Proyectada (baseline + live)",
+                icon="🎯", url_path="pln-triada-proyectada"),
+        st.Page(render_triada, title="Triada (legacy)", icon="📊",
                 url_path="pln-triada"),
         st.Page(render_compras, title="Propuesta de compras", icon="🛒",
                 url_path="pln-compras"),
