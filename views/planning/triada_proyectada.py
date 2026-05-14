@@ -28,26 +28,27 @@ def _kpi_metric(col, label, value, help=None):
 
 
 def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
-    """Agrega df por las claves dadas, sumando unidades. Ordena desc por stock_baseline."""
+    """Agrega df por las claves dadas, sumando unidades. Ordena desc por stock fin mes actual."""
     if df.empty:
         return df
-    mes_cols = [f'stock_mes_{i}' for i in range(1, horiz + 1)]
+    stock_cols = [f'stock_mes_{i}' for i in range(1, horiz + 1)]
+    trans_cols = [f'transito_mes_{i}' for i in range(1, horiz + 1)]
     agg_dict = {
         'sku': 'nunique',
         'stock_baseline': 'sum',
         'ventas_acum': 'sum',
-        'transito_llegado': 'sum',
-        'stock_hoy_est': 'sum',
+        'transito_mes_actual': 'sum',
+        'stock_fin_mes_actual': 'sum',
         'transito_pendiente': 'sum',
         'forecast_total': 'sum',
     }
-    for c in mes_cols:
+    for c in stock_cols + trans_cols:
         if c in df.columns:
             agg_dict[c] = 'sum'
 
     g = df.groupby(claves, dropna=False).agg(agg_dict).reset_index()
     g = g.rename(columns={'sku': 'n_skus'})
-    return g.sort_values('stock_hoy_est', ascending=False)
+    return g.sort_values('stock_fin_mes_actual', ascending=False)
 
 
 def render():
@@ -86,11 +87,15 @@ def render():
     st.divider()
 
     # ---- Controles ----
-    cc1, cc2, cc3 = st.columns([1, 1, 2])
+    cc1, cc2, cc3 = st.columns([1, 1, 1])
     horizonte = cc1.slider("Horizonte (meses)", 3, 18, 12, step=3)
     ocultar_sin_stock = cc2.checkbox(
         "Ocultar SKUs sin stock ni tránsito", value=True,
-        help="No mostrar SKUs con stock_hoy_est ≤ 0 y sin tránsito por venir",
+        help="SKUs inactivos (sin baseline, sin ventas, sin tránsito)",
+    )
+    mostrar_transito_desg = cc3.checkbox(
+        "Desagregar tránsito por mes", value=False,
+        help="Agregar cols Trán Mes +1, +2, ... mostrando llegadas por mes",
     )
 
     # Forecast manual: aún no implementado
@@ -121,19 +126,15 @@ def render():
             on='sku', how='left',
         )
 
-    # ---- Marcar quiebre actual (stock_hoy_est ≤ 0 = mes_quiebre 0) ----
-    df_proy.loc[df_proy['stock_hoy_est'] <= 0, 'mes_quiebre'] = df_proy.loc[
-        df_proy['stock_hoy_est'] <= 0, 'mes_quiebre'].fillna(0)
-
     # ---- Filtrar SKUs muertos (sin actividad) ----
     # "Sin stock" = sin baseline + sin ventas desde baseline + sin tránsito = SKU inactivo
-    # Mantenemos visibles los en quiebre actual (stock_hoy_est ≤ 0) si tienen actividad
+    # Mantenemos visibles los en quiebre actual (stock_fin_mes_actual ≤ 0) si tienen actividad
     if ocultar_sin_stock:
         mask = (
             (df_proy['stock_baseline'] > 0)
             | (df_proy['ventas_acum'] > 0)
             | (df_proy['transito_pendiente'] > 0)
-            | (df_proy['transito_llegado'] > 0)
+            | (df_proy['transito_mes_actual'] > 0)
         )
         df_proy = df_proy[mask].copy()
 
@@ -167,19 +168,32 @@ def render():
         "📁 Marca → Cat Padre → Cat Hijo",
     ])
 
-    mes_cols = [f'stock_mes_{i}' for i in range(1, horizonte + 1)]
+    stock_cols = [f'stock_mes_{i}' for i in range(1, horizonte + 1)]
+    trans_cols = [f'transito_mes_{i}' for i in range(1, horizonte + 1)]
+    mes_actual_nombre = pd.Timestamp.today().strftime('%b %Y').lower()
     column_config_base = {
-        'stock_baseline': st.column_config.NumberColumn('Stock 11/05', format='%.0f'),
-        'ventas_acum': st.column_config.NumberColumn('Ventas LIVE', format='%.0f'),
-        'transito_llegado': st.column_config.NumberColumn('Trán llegado', format='%.0f'),
-        'stock_hoy_est': st.column_config.NumberColumn('Stock hoy', format='%.0f'),
-        'transito_pendiente': st.column_config.NumberColumn('Trán pendiente', format='%.0f'),
+        'stock_baseline': st.column_config.NumberColumn('Stock 11/05', format='%.0f',
+            help='Foto del Excel FCST al 11/05 10:00'),
+        'ventas_acum': st.column_config.NumberColumn('Ventas post-11/05', format='%.0f',
+            help='Ventas reales acumuladas desde 11/05 (LIVE Turso)'),
+        'transito_mes_actual': st.column_config.NumberColumn(f'Trán {mes_actual_nombre}', format='%.0f',
+            help='Tránsito con ETA dentro del mes actual (ya recibido o por recibir)'),
+        'stock_fin_mes_actual': st.column_config.NumberColumn(f'Stock fin {mes_actual_nombre}', format='%.0f',
+            help='= baseline − ventas + tránsito mes actual'),
+        'transito_pendiente': st.column_config.NumberColumn('Trán pendiente', format='%.0f',
+            help='Total tránsito por llegar en los meses siguientes'),
         'forecast_total': st.column_config.NumberColumn('Fcst total', format='%.0f'),
-        'mes_quiebre': st.column_config.NumberColumn('Mes quiebre', format='%.0f'),
+        'mes_quiebre': st.column_config.NumberColumn('Mes quiebre', format='%.0f',
+            help='0 = ya en quiebre. 1 = stock < 0 al fin del mes +1. etc.'),
     }
-    for c in mes_cols:
+    for c in stock_cols:
         w = c.replace('stock_mes_', '')
-        column_config_base[c] = st.column_config.NumberColumn(f'Mes +{w}', format='%.0f')
+        column_config_base[c] = st.column_config.NumberColumn(f'Stock fin Mes +{w}', format='%.0f',
+            help=f'Stock al final del mes +{w} = stock fin mes anterior − ventas/fcst mes +{w} + tránsito mes +{w}')
+    for c in trans_cols:
+        w = c.replace('transito_mes_', '')
+        column_config_base[c] = st.column_config.NumberColumn(f'Trán Mes +{w}', format='%.0f',
+            help=f'Tránsito que llega en el mes +{w}')
 
     # ---- Tab 1: por SKU ----
     with tab1:
@@ -201,9 +215,9 @@ def render():
                 view['sku'].astype(str).str.lower().str.contains(q, na=False)
                 | view['producto'].astype(str).str.lower().str.contains(q, na=False)
             ]
-        view = view.sort_values('stock_hoy_est', ascending=False)
+        view = view.sort_values('stock_fin_mes_actual', ascending=False)
 
-        st.markdown(f"**{len(view):,} de {len(df_proy):,} SKUs** (ordenado por stock hoy desc)")
+        st.markdown(f"**{len(view):,} de {len(df_proy):,} SKUs** (ordenado por stock fin mes actual)")
         col_config_sku = dict(column_config_base)
         col_config_sku.update({
             'sku': st.column_config.TextColumn('SKU', width='small'),
@@ -212,15 +226,17 @@ def render():
             'categoria_hijo': st.column_config.TextColumn('Cat Hijo', width='small'),
             'producto': st.column_config.TextColumn('Producto', width='medium'),
         })
-        # Reordenar para mostrar categorías junto a marca
         cols_show = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'producto',
-                     'stock_baseline', 'ventas_acum', 'transito_llegado',
-                     'stock_hoy_est', 'transito_pendiente', 'forecast_total',
-                     'mes_quiebre'] + mes_cols
+                     'stock_baseline', 'ventas_acum', 'transito_mes_actual',
+                     'stock_fin_mes_actual', 'transito_pendiente', 'forecast_total',
+                     'mes_quiebre'] + stock_cols
+        if mostrar_transito_desg:
+            # Intercalar transito_mes_M después de cada stock_mes_M (opcional)
+            cols_show = cols_show + trans_cols
         cols_show = [c for c in cols_show if c in view.columns]
         try:
             sty = view[cols_show].style.background_gradient(
-                cmap='RdYlGn', subset=[c for c in mes_cols if c in cols_show],
+                cmap='RdYlGn', subset=[c for c in stock_cols if c in cols_show],
                 vmin=-50, vmax=500,
             )
             st.dataframe(sty, use_container_width=True, hide_index=True,
@@ -236,20 +252,34 @@ def render():
             mime='text/csv', key='dl_sku',
         )
 
-    # ---- Tab 2: por Marca ----
-    with tab2:
-        g = _agrupar(df_proy, ['marca'], horizonte)
-        st.markdown(f"**{len(g):,} marcas activas** (ordenadas por stock hoy desc)")
+    def _render_grupo(g, label_claves, vmax):
         col_config_g = dict(column_config_base)
-        col_config_g['marca'] = st.column_config.TextColumn('Marca', width='medium')
         col_config_g['n_skus'] = st.column_config.NumberColumn('SKUs', format='%d')
+        for k in label_claves:
+            col_config_g[k[0]] = st.column_config.TextColumn(k[1], width=k[2])
+        # cols a mostrar
+        base_cols = (list(c[0] for c in label_claves) + ['n_skus', 'stock_baseline',
+                     'ventas_acum', 'transito_mes_actual', 'stock_fin_mes_actual',
+                     'transito_pendiente', 'forecast_total']) + stock_cols
+        if mostrar_transito_desg:
+            base_cols = base_cols + trans_cols
+        cols_show = [c for c in base_cols if c in g.columns]
         try:
-            sty = g.style.background_gradient(cmap='RdYlGn', subset=mes_cols, vmin=-100, vmax=2000)
+            sty = g[cols_show].style.background_gradient(
+                cmap='RdYlGn', subset=[c for c in stock_cols if c in cols_show],
+                vmin=-50, vmax=vmax,
+            )
             st.dataframe(sty, use_container_width=True, hide_index=True,
                          column_config=col_config_g, height=600)
         except Exception:
-            st.dataframe(g, use_container_width=True, hide_index=True,
+            st.dataframe(g[cols_show], use_container_width=True, hide_index=True,
                          column_config=col_config_g, height=600)
+
+    # ---- Tab 2: por Marca ----
+    with tab2:
+        g = _agrupar(df_proy, ['marca'], horizonte)
+        st.markdown(f"**{len(g):,} marcas activas** (ordenado por stock fin mes actual)")
+        _render_grupo(g, [('marca', 'Marca', 'medium')], vmax=2000)
 
     # ---- Tab 3: Marca → Cat Padre ----
     with tab3:
@@ -257,20 +287,9 @@ def render():
             st.warning("Sin columna categoria_padre disponible (master no cargado).")
         else:
             g = _agrupar(df_proy, ['marca', 'categoria_padre'], horizonte)
-            st.markdown(f"**{len(g):,} grupos Marca × Cat Padre** (ordenado por stock hoy desc)")
-            col_config_g = dict(column_config_base)
-            col_config_g.update({
-                'marca': st.column_config.TextColumn('Marca', width='small'),
-                'categoria_padre': st.column_config.TextColumn('Cat Padre', width='medium'),
-                'n_skus': st.column_config.NumberColumn('SKUs', format='%d'),
-            })
-            try:
-                sty = g.style.background_gradient(cmap='RdYlGn', subset=mes_cols, vmin=-50, vmax=1000)
-                st.dataframe(sty, use_container_width=True, hide_index=True,
-                             column_config=col_config_g, height=600)
-            except Exception:
-                st.dataframe(g, use_container_width=True, hide_index=True,
-                             column_config=col_config_g, height=600)
+            st.markdown(f"**{len(g):,} grupos Marca × Cat Padre**")
+            _render_grupo(g, [('marca', 'Marca', 'small'),
+                              ('categoria_padre', 'Cat Padre', 'medium')], vmax=1000)
 
     # ---- Tab 4: Marca → Cat Padre → Cat Hijo ----
     with tab4:
@@ -279,20 +298,9 @@ def render():
         else:
             g = _agrupar(df_proy, ['marca', 'categoria_padre', 'categoria_hijo'], horizonte)
             st.markdown(f"**{len(g):,} grupos Marca × Cat Padre × Cat Hijo**")
-            col_config_g = dict(column_config_base)
-            col_config_g.update({
-                'marca': st.column_config.TextColumn('Marca', width='small'),
-                'categoria_padre': st.column_config.TextColumn('Cat Padre', width='small'),
-                'categoria_hijo': st.column_config.TextColumn('Cat Hijo', width='medium'),
-                'n_skus': st.column_config.NumberColumn('SKUs', format='%d'),
-            })
-            try:
-                sty = g.style.background_gradient(cmap='RdYlGn', subset=mes_cols, vmin=-30, vmax=500)
-                st.dataframe(sty, use_container_width=True, hide_index=True,
-                             column_config=col_config_g, height=600)
-            except Exception:
-                st.dataframe(g, use_container_width=True, hide_index=True,
-                             column_config=col_config_g, height=600)
+            _render_grupo(g, [('marca', 'Marca', 'small'),
+                              ('categoria_padre', 'Cat Padre', 'small'),
+                              ('categoria_hijo', 'Cat Hijo', 'medium')], vmax=500)
 
     # ---- Validación expandible ----
     st.divider()
@@ -300,13 +308,13 @@ def render():
         if df_live.empty:
             st.warning("No hay stock_live cargado. Corre sync o espera cron 06:00 AM.")
         else:
-            df_val = df_proy[['sku', 'marca', 'stock_baseline', 'ventas_acum', 'stock_hoy_est']].copy()
+            df_val = df_proy[['sku', 'marca', 'stock_baseline', 'ventas_acum', 'stock_fin_mes_actual']].copy()
             df_val = df_val.merge(
                 df_live[['sku', 'stock_total']].rename(columns={'stock_total': 'stock_live'}),
                 on='sku', how='left',
             )
             df_val['stock_live'] = df_val['stock_live'].fillna(0)
-            df_val['gap'] = df_val['stock_hoy_est'] - df_val['stock_live']
+            df_val['gap'] = df_val['stock_fin_mes_actual'] - df_val['stock_live']
 
             v1, v2, v3 = st.columns(3)
             v1.metric("SKUs match (gap < 1)", f"{int((df_val['gap'].abs() < 1).sum()):,}")
@@ -319,7 +327,8 @@ def render():
             st.dataframe(top_gap.nlargest(30, 'abs_gap').drop(columns='abs_gap'),
                          use_container_width=True, hide_index=True)
             st.info(
-                "Gap = stock_hoy_est − stock_live. Positivo = live tiene menos unidades "
-                "(movimientos no contabilizados). Negativo = live tiene más (bodegas "
-                "no mapeadas o compras recibidas no tracked en tránsito)."
+                "Gap = stock_fin_mes_actual − stock_live (Odoo). Positivo = la triada "
+                "estima más stock del que hay en Odoo (movimientos no contabilizados, "
+                "mermas). Negativo = Odoo tiene más (bodegas no mapeadas, compras "
+                "recibidas no tracked en tránsito)."
             )

@@ -493,46 +493,57 @@ def proyectar_stock_mensual(
     for sku in skus:
         s_base = float(stock_ini.get(sku, 0))
         v_acum = float(ventas_acum.get(sku, 0))
+        # Mes 0 = mes actual (mayo). Tránsito mes 0 = TODO lo que llega
+        # durante mayo (ya recibido o por recibir antes de fin de mes).
         t_mes0 = transito_mes.get((sku, 0), 0)
-        stock_hoy = s_base - v_acum + t_mes0
+        # Stock fin mes actual = baseline − ventas reales (parte ya transcurrida) + tránsito mayo
+        stock_fin_mes_actual = s_base - v_acum + t_mes0
 
         stocks = []
-        s = stock_hoy
+        s = stock_fin_mes_actual
+        transitos_por_mes = []
         for m in range(1, horizonte_meses + 1):
             f_m = forecast_mes.get((sku, m), 0)
             t_m = transito_mes.get((sku, m), 0)
+            transitos_por_mes.append(t_m)
             s = s - f_m + t_m
             stocks.append(s)
 
-        mes_quiebre = next((i + 1 for i, x in enumerate(stocks) if x < 0), None)
-        transito_pend = sum(transito_mes.get((sku, m), 0) for m in range(1, horizonte_meses + 1))
+        # Mes de quiebre: si stock_fin_mes_actual ≤ 0, mes 0; si no, primer m ≥ 1 con stock < 0
+        mes_quiebre = 0 if stock_fin_mes_actual <= 0 else next(
+            (i + 1 for i, x in enumerate(stocks) if x < 0), None)
+
+        transito_pend = sum(transitos_por_mes)
 
         row = {
             'sku': sku,
             'stock_baseline': s_base,
             'ventas_acum': v_acum,
-            'transito_llegado': t_mes0,
-            'stock_hoy_est': stock_hoy,
+            'transito_mes_actual': t_mes0,
+            'stock_fin_mes_actual': stock_fin_mes_actual,
             'transito_pendiente': transito_pend,
             'forecast_total': sum(forecast_mes.get((sku, m), 0) for m in range(1, horizonte_meses + 1)),
             'mes_quiebre': mes_quiebre,
         }
         for i, s_m in enumerate(stocks, start=1):
             row[f'stock_mes_{i}'] = s_m
+        for i, t_m in enumerate(transitos_por_mes, start=1):
+            row[f'transito_mes_{i}'] = t_m
         rows.append(row)
 
     df = pd.DataFrame(rows)
     if df.empty:
         return df
 
-    # Enriquecer con marca/producto desde baseline
     info = df_baseline[['sku', 'marca', 'producto']].drop_duplicates(subset='sku')
     df = df.merge(info, on='sku', how='left')
 
-    mes_cols = [f'stock_mes_{i}' for i in range(1, horizonte_meses + 1)]
+    stock_cols = [f'stock_mes_{i}' for i in range(1, horizonte_meses + 1)]
+    trans_cols = [f'transito_mes_{i}' for i in range(1, horizonte_meses + 1)]
     cols_order = (['sku', 'marca', 'producto', 'stock_baseline', 'ventas_acum',
-                   'transito_llegado', 'stock_hoy_est', 'transito_pendiente',
-                   'forecast_total', 'mes_quiebre'] + mes_cols)
+                   'transito_mes_actual', 'stock_fin_mes_actual',
+                   'transito_pendiente', 'forecast_total', 'mes_quiebre']
+                  + stock_cols + trans_cols)
     return df[[c for c in cols_order if c in df.columns]]
 
 
