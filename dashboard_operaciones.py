@@ -85,8 +85,13 @@ from views.ops_plan_estrategico import render as render_ops_plan
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
 from views.alertas_negocio import render_ops as render_alertas_negocio_ops
+from views.ops_asistente import render as render_ops_asistente
 
 pages = {
+    "🤖 Asistente IA": [
+        st.Page(render_ops_asistente, title="Pregúntame", icon="🤖",
+                url_path="ops-asistente"),
+    ],
     "🚢 COMEX": [
         st.Page(render_ops_comex, title="Embarques activos", icon="📦",
                 url_path="ops-comex", default=True),
