@@ -159,10 +159,36 @@ def _gasto_subarea(df: pd.DataFrame, year: int, meses: list[int],
 
 
 def _venta_periodo(df_v: pd.DataFrame, year: int, meses: list[int]) -> float:
+    """Venta NETA del período (M CLP) — neta = bruta − devoluciones/NC."""
     if df_v.empty:
         return 0
     f = df_v[(df_v["year"] == year) & (df_v["month"].isin(meses))]
-    return f["venta_bruta_m"].sum()
+    return f["venta_neta_m"].sum()
+
+
+def _gasto_subarea_tipo(df: pd.DataFrame, year: int, meses: list[int],
+                          escenario: str, tipo_costo: str) -> dict[str, float]:
+    """Gasto por sub-área filtrado por tipo_costo (FIJO/VARIABLE)."""
+    f = df[
+        (df["year"] == year) & (df["month"].isin(meses))
+        & (df["escenario"] == escenario) & (df["kpi"] == "GASTO")
+        & (df["tipo_costo"] == tipo_costo)
+    ]
+    return f.groupby("sub_area")["valor"].sum().to_dict()
+
+
+def _tipo_costo_predominante(df: pd.DataFrame, year: int, meses: list[int],
+                                cc: str) -> str:
+    """Devuelve 'FIJO' o 'VARIABLE' según qué tipo predomine para el CC."""
+    f = df[
+        (df["year"] == year) & (df["month"].isin(meses))
+        & (df["centro_costo"] == cc) & (df["kpi"] == "GASTO")
+        & (df["escenario"] == "FCST")
+    ]
+    if f.empty:
+        return ""
+    counts = f.groupby("tipo_costo")["valor"].sum().abs().sort_values(ascending=False)
+    return counts.index[0] if len(counts) > 0 else ""
 
 
 # ============================================================
@@ -265,7 +291,7 @@ def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     )
     # Venta Ppto (no tenemos, dejamos vacío) — agregamos solo Venta Real
     venta_row = ["<tr>"]
-    venta_row.append(_td("Venta Real", bg="#FFFFFF", weight="600", align="left",
+    venta_row.append(_td("Venta Neta", bg="#FFFFFF", weight="600", align="left",
                           color="#1E293B"))
     for v_mes in venta_meses:
         venta_row.append(_td(_fmt_num(v_mes), bg="#FFFFFF", color="#1E293B",
@@ -513,12 +539,33 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     bg_alt = ["#FFFFFF", "#F8FAFC"]
 
     for cc in cc_order:
-        # Header de CC (fila azul claro)
+        # Header de CC con TIPO COSTO + total + % s/venta
+        cc_data = df_cc[df_cc["centro_costo"] == cc]
+        tipo_pred = _tipo_costo_predominante(df_costo, year, meses, cc)
+        cc_real_total = cc_data[cc_data["escenario"] == "FCST"]["valor"].sum()
+        cc_ppto_total = cc_data[cc_data["escenario"] == "PPTO"]["valor"].sum()
+        cc_pct_vta = (abs(cc_real_total) / venta_acum * 100) if venta_acum else 0
+
+        # Tag color según tipo
+        tipo_tag = ""
+        if tipo_pred == "FIJO":
+            tipo_tag = ('<span style="background:#1F4E79;color:#FFFFFF;'
+                          'padding:2px 8px;border-radius:10px;font-size:10px;'
+                          'margin-left:8px;font-weight:700;">FIJO</span>')
+        elif tipo_pred == "VARIABLE":
+            tipo_tag = ('<span style="background:#EA580C;color:#FFFFFF;'
+                          'padding:2px 8px;border-radius:10px;font-size:10px;'
+                          'margin-left:8px;font-weight:700;">VARIABLE</span>')
+
+        cc_summary = (f'{cc or "—"}{tipo_tag}'
+                       f'<span style="float:right;font-weight:600;color:#1E40AF;'
+                       f'font-size:11px;">Real: {_fmt_num(cc_real_total)} · '
+                       f'{cc_pct_vta:.2f}% s/Vta</span>')
         rows_html.append(
             f'<tr><td colspan="{1 + (n_meses+1)*2 + 3}" '
             f'style="background:#DBEAFE;color:#1E40AF;padding:6px 12px;'
             f'font-weight:700;font-size:11px;text-transform:uppercase;'
-            f'letter-spacing:0.5px;">{cc or "—"}</td></tr>'
+            f'letter-spacing:0.5px;">{cc_summary}</td></tr>'
         )
 
         # Cuentas analíticas dentro del CC
@@ -911,6 +958,507 @@ def _tab_informe(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
             unsafe_allow_html=True,
         )
 
+    # ─── 4. BENCHMARK ────────────────────────────────────────────
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;'
+        'letter-spacing:0.5px;">4. BENCHMARK vs PLAN ESTRATÉGICO UNIONX 2026-2028</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Calcular métricas vs benchmarks Plan UnionX
+    fijo_t = sum(_gasto_subarea_tipo(df_costo, year, meses, "FCST", "FIJO").get(sa, 0)
+                  for sa in SUB_AREAS_PNL)
+    var_t = sum(_gasto_subarea_tipo(df_costo, year, meses, "FCST", "VARIABLE").get(sa, 0)
+                 for sa in SUB_AREAS_PNL)
+    total_clasif = abs(fijo_t) + abs(var_t)
+    pct_var = (abs(var_t) / total_clasif * 100) if total_clasif > 0 else 0
+
+    bench_rows = []
+    bench_rows.append(
+        "<tr>"
+        + _th("Indicador", bg="#1F4E79", align="left")
+        + _th("Real Período", bg="#1F4E79")
+        + _th("Meta UnionX", bg="#1F4E79")
+        + _th("Benchmark Industria", bg="#1F4E79")
+        + _th("Status", bg="#1F4E79")
+        + "</tr>"
+    )
+    benchmarks = [
+        {
+            "ind": "Costo Operativo / Venta",
+            "real": ratio_t if ratio_t else 0,
+            "meta": "8-12%", "industria": "10-15%",
+            "ok": (ratio_t and ratio_t <= 12),
+            "atencion": (ratio_t and ratio_t <= 14),
+            "fmt": "pct",
+        },
+        {
+            "ind": "% Costos Variables (flexibilidad)",
+            "real": pct_var,
+            "meta": "≥50%", "industria": "40-60%",
+            "ok": pct_var >= 50, "atencion": pct_var >= 35,
+            "fmt": "pct",
+        },
+        {
+            "ind": "Costo / Pedido",
+            "real": (abs(g_t) * 1_000_000 / df_venta[
+                (df_venta["year"] == year) & (df_venta["month"].isin(meses))
+            ]["n_pedidos"].sum()) if (not df_venta.empty
+                                       and df_venta[(df_venta["year"] == year)
+                                                      & (df_venta["month"].isin(meses))]
+                                                      ["n_pedidos"].sum() > 0) else 0,
+            "meta": "↓ 10-15% YoY", "industria": "$800K-1.5MM",
+            "ok": True, "atencion": True,
+            "fmt": "clp",
+        },
+    ]
+
+    for b in benchmarks:
+        if b["fmt"] == "pct":
+            real_fmt = f"{b['real']:.1f}%".replace(".", ",")
+        else:
+            real_fmt = f"${b['real']:,.0f}".replace(",", ".")
+
+        if b["ok"]:
+            status, color = "🟢 Cumple", "#16A34A"
+        elif b["atencion"]:
+            status, color = "🟡 Atención", "#EA580C"
+        else:
+            status, color = "🔴 Bajo meta", "#DC2626"
+
+        bench_rows.append(
+            "<tr>"
+            + _td(b["ind"], bg="#FFFFFF", color="#1E293B", weight="600", align="left")
+            + _td(real_fmt, bg="#FFFFFF", color=color, weight="700")
+            + _td(b["meta"], bg="#FFFFFF", color="#475569")
+            + _td(b["industria"], bg="#FFFFFF", color="#64748B")
+            + _td(status, bg="#FFFFFF", color=color, weight="700")
+            + "</tr>"
+        )
+
+    st.markdown(
+        '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+        f'{"".join(bench_rows)}</table></div>',
+        unsafe_allow_html=True,
+    )
+
+    # Sumario benchmark
+    st.markdown(
+        f'<p style="font-size:12px;color:#64748B;margin:10px 0 0 0;font-style:italic;">'
+        f'Benchmarks Plan UnionX 2026-2028: costo/pedido ↓ 10-15% YoY · '
+        f'costo logístico/venta 8-12% óptimo · margen contribución ≥35% · '
+        f'EBITDA ≥12%. Benchmark industria: retail multi-canal CL.'
+        f'</p>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# TAB 4: COMPARATIVO YoY
+# ============================================================
+def _tab_yoy(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
+              year: int, meses: list[int], periodo_label: str):
+    year_ant = year - 1
+    st.markdown(
+        f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
+        f"COMPARATIVO YoY — {periodo_label} {year} vs {year_ant}</h3>"
+        f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
+        f"Análisis evolución año contra año por sub-área y CC</p>",
+        unsafe_allow_html=True,
+    )
+
+    if not meses:
+        st.info("Selecciona al menos un mes")
+        return
+
+    # Datos por sub-área ambos años
+    rows_html = []
+    headers = (
+        "<tr>"
+        + _th("SUB-ÁREA", bg="#1F4E79", align="left")
+        + _th(f"Real {year_ant}", bg="#475569")
+        + _th(f"Real {year}", bg="#1F4E79")
+        + _th("Var $", bg="#1F4E79")
+        + _th("Var %", bg="#1F4E79")
+        + _th(f"% s/Vta {year_ant}", bg="#475569")
+        + _th(f"% s/Vta {year}", bg="#1F4E79")
+        + _th("Δ pp", bg="#1F4E79")
+        + "</tr>"
+    )
+
+    venta_actual = _venta_periodo(df_venta, year, meses)
+    venta_ant = _venta_periodo(df_venta, year_ant, meses)
+
+    yoy_data = []
+    for sa in SUB_AREAS_PNL:
+        real_act = _gasto_subarea(df_costo, year, meses, "FCST").get(sa, 0)
+        real_ant = _gasto_subarea(df_costo, year_ant, meses, "FCST").get(sa, 0)
+        var_abs = abs(real_act) - abs(real_ant)
+        var_pct = (var_abs / abs(real_ant) * 100) if real_ant else None
+        pct_v_act = (abs(real_act) / venta_actual * 100) if venta_actual else 0
+        pct_v_ant = (abs(real_ant) / venta_ant * 100) if venta_ant else 0
+        delta_pp = pct_v_act - pct_v_ant
+        yoy_data.append({
+            "sa": sa, "real_act": real_act, "real_ant": real_ant,
+            "var_abs": var_abs, "var_pct": var_pct,
+            "pct_v_act": pct_v_act, "pct_v_ant": pct_v_ant, "delta_pp": delta_pp,
+        })
+        color_var = _color_var(var_pct, es_costo=True)
+        color_pp = _color_var(delta_pp, es_costo=True)
+        rows_html.append(
+            "<tr>"
+            + _td(SUB_AREA_LABEL[sa], bg="#FFFFFF", weight="600",
+                   color="#1E293B", align="left")
+            + _td(_fmt_num(real_ant), bg="#FFFFFF", color="#475569")
+            + _td(_fmt_num(real_act), bg="#FFFFFF", color="#1E293B", weight="700")
+            + _td(_fmt_num(-var_abs), bg="#FFFFFF", color=color_var, weight="600")
+            + _td(_fmt_pct(var_pct) if var_pct is not None else "—",
+                   bg="#FFFFFF", color=color_var, weight="700")
+            + _td(f"{pct_v_ant:.2f}%".replace(".", ","),
+                   bg="#FFFFFF", color="#475569")
+            + _td(f"{pct_v_act:.2f}%".replace(".", ","),
+                   bg="#FFFFFF", color="#1E293B", weight="600")
+            + _td(f"{delta_pp:+.2f} pp".replace(".", ","),
+                   bg="#FFFFFF", color=color_pp, weight="700")
+            + "</tr>"
+        )
+
+    # Total
+    df_yoy = pd.DataFrame(yoy_data)
+    real_act_t = df_yoy["real_act"].sum()
+    real_ant_t = df_yoy["real_ant"].sum()
+    var_t = abs(real_act_t) - abs(real_ant_t)
+    var_pct_t = (var_t / abs(real_ant_t) * 100) if real_ant_t else None
+    pct_v_act_t = (abs(real_act_t) / venta_actual * 100) if venta_actual else 0
+    pct_v_ant_t = (abs(real_ant_t) / venta_ant * 100) if venta_ant else 0
+    delta_t = pct_v_act_t - pct_v_ant_t
+    rows_html.append(
+        "<tr>"
+        + _td("TOTAL", bg="#FFE082", color="#7F4F00", weight="700", align="left")
+        + _td(_fmt_num(real_ant_t), bg="#FFE082", color="#7F4F00", weight="700")
+        + _td(_fmt_num(real_act_t), bg="#FFE082", color="#7F4F00", weight="700")
+        + _td(_fmt_num(-var_t), bg="#FFE082",
+               color=_color_var(var_pct_t, es_costo=True), weight="700")
+        + _td(_fmt_pct(var_pct_t) if var_pct_t is not None else "—",
+               bg="#FFE082", color=_color_var(var_pct_t, es_costo=True), weight="700")
+        + _td(f"{pct_v_ant_t:.2f}%".replace(".", ","),
+               bg="#FFE082", color="#7F4F00", weight="700")
+        + _td(f"{pct_v_act_t:.2f}%".replace(".", ","),
+               bg="#FFE082", color="#7F4F00", weight="700")
+        + _td(f"{delta_t:+.2f} pp".replace(".", ","),
+               bg="#FFE082", color=_color_var(delta_t, es_costo=True), weight="700")
+        + "</tr>"
+    )
+
+    st.markdown(
+        '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+        f'<thead>{headers}</thead><tbody>{"".join(rows_html)}</tbody></table></div>',
+        unsafe_allow_html=True,
+    )
+
+    # KPIs YoY
+    st.markdown("<br>", unsafe_allow_html=True)
+    cols = st.columns(4)
+    cols[0].metric(f"Venta neta {year}", _fmt_num(venta_actual),
+                    f"{((venta_actual/venta_ant-1)*100):+.1f}% YoY"
+                    if venta_ant else None)
+    cols[1].metric(f"Gasto Op {year}", _fmt_num(abs(real_act_t)),
+                    f"{var_pct_t:+.1f}% YoY" if var_pct_t is not None else None,
+                    delta_color="inverse")
+    cols[2].metric(f"% Costo/Vta {year}", f"{pct_v_act_t:.1f}%",
+                    f"{delta_t:+.1f} pp YoY", delta_color="inverse")
+    cols[3].metric("Eficiencia",
+                    "Mejorando" if delta_t < -0.5 else
+                    "Empeorando" if delta_t > 0.5 else "Estable")
+
+    st.divider()
+
+    # Detalle por CC YoY
+    st.markdown("<h4 style='color:#1F4E79;'>📊 Detalle YoY por Centro de Costo</h4>",
+                  unsafe_allow_html=True)
+
+    cc_yoy = []
+    for cc in df_costo[df_costo["kpi"] == "GASTO"]["centro_costo"].dropna().unique():
+        if not cc:
+            continue
+        f_act = df_costo[
+            (df_costo["year"] == year) & (df_costo["month"].isin(meses))
+            & (df_costo["centro_costo"] == cc) & (df_costo["escenario"] == "FCST")
+            & (df_costo["kpi"] == "GASTO")
+        ]["valor"].sum()
+        f_ant = df_costo[
+            (df_costo["year"] == year_ant) & (df_costo["month"].isin(meses))
+            & (df_costo["centro_costo"] == cc) & (df_costo["escenario"] == "FCST")
+            & (df_costo["kpi"] == "GASTO")
+        ]["valor"].sum()
+        cc_yoy.append({"cc": cc, "act": f_act, "ant": f_ant,
+                         "var_abs": abs(f_act) - abs(f_ant),
+                         "var_pct": ((abs(f_act) - abs(f_ant)) / abs(f_ant) * 100)
+                                     if f_ant else None})
+    cc_yoy = sorted(cc_yoy, key=lambda x: x["var_abs"], reverse=True)
+
+    cc_rows = ["<tr>" + _th("Centro Costo", bg="#1F4E79", align="left")
+                + _th(f"Real {year_ant}", bg="#475569")
+                + _th(f"Real {year}", bg="#1F4E79")
+                + _th("Var $", bg="#1F4E79")
+                + _th("Var %", bg="#1F4E79") + "</tr>"]
+    for x in cc_yoy[:15]:
+        c = _color_var(x["var_pct"], es_costo=True)
+        cc_rows.append(
+            "<tr>"
+            + _td(x["cc"], bg="#FFFFFF", color="#1E293B", weight="500", align="left")
+            + _td(_fmt_num(x["ant"]), bg="#FFFFFF", color="#475569")
+            + _td(_fmt_num(x["act"]), bg="#FFFFFF", color="#1E293B", weight="600")
+            + _td(_fmt_num(-x["var_abs"]), bg="#FFFFFF", color=c, weight="600")
+            + _td(_fmt_pct(x["var_pct"]) if x["var_pct"] is not None else "—",
+                   bg="#FFFFFF", color=c, weight="700")
+            + "</tr>"
+        )
+    st.markdown(
+        '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+        f'{"".join(cc_rows)}</table></div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# TAB 5: PROYECCIÓN & PUNTO DE EQUILIBRIO
+# ============================================================
+def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
+                     year: int, periodo_label: str):
+    import numpy as np
+    import plotly.graph_objects as go
+
+    st.markdown(
+        f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
+        f"INTELIGENCIA DE NEGOCIO — Proyección de Costos & Equilibrio</h3>"
+        f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
+        f"Modelo regresión costo↔venta · simulador eventos · punto de equilibrio</p>",
+        unsafe_allow_html=True,
+    )
+
+    # Construir histórico mes a mes (todo el data disponible)
+    df_hist_costo = (df_costo[(df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]
+                       .groupby(["year", "month", "tipo_costo"])["valor"]
+                       .sum().reset_index())
+    if df_hist_costo.empty or df_venta.empty:
+        st.info("Sin data suficiente para proyección")
+        return
+
+    df_costo_pivot = df_hist_costo.pivot_table(
+        index=["year", "month"], columns="tipo_costo",
+        values="valor", aggfunc="sum", fill_value=0,
+    ).reset_index()
+    if "FIJO" not in df_costo_pivot.columns:
+        df_costo_pivot["FIJO"] = 0
+    if "VARIABLE" not in df_costo_pivot.columns:
+        df_costo_pivot["VARIABLE"] = 0
+    df_costo_pivot["TOTAL"] = df_costo_pivot["FIJO"] + df_costo_pivot["VARIABLE"]
+
+    df_merge = df_costo_pivot.merge(
+        df_venta[["year", "month", "venta_neta_m", "n_pedidos"]],
+        on=["year", "month"], how="inner",
+    )
+    df_merge["fijo_abs"] = df_merge["FIJO"].abs()
+    df_merge["var_abs"] = df_merge["VARIABLE"].abs()
+    df_merge["total_abs"] = df_merge["TOTAL"].abs()
+
+    # ─── REGRESIÓN: costo variable vs venta ─────────────────────────
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;">'
+        '1. MODELO REGRESIÓN COSTO ↔ VENTA</div>',
+        unsafe_allow_html=True,
+    )
+
+    mask = (df_merge["venta_neta_m"] > 0) & (df_merge["total_abs"] > 0)
+    df_reg = df_merge[mask].copy()
+
+    if len(df_reg) >= 3:
+        x = df_reg["venta_neta_m"].values
+        y_var = df_reg["var_abs"].values
+        y_fij = df_reg["fijo_abs"].values
+        y_tot = df_reg["total_abs"].values
+
+        a_var, b_var = np.polyfit(x, y_var, 1)
+        a_fij, b_fij = np.polyfit(x, y_fij, 1)
+        a_tot, b_tot = np.polyfit(x, y_tot, 1)
+        r2_tot = np.corrcoef(x, y_tot)[0, 1] ** 2
+
+        # Métricas modelo
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Costo VARIABLE / Venta",
+                     f"{a_var*100:.2f}%",
+                     f"+ ${b_var:,.0f} fijo".replace(",", "."))
+        col2.metric("Costo FIJO / Venta",
+                     f"{a_fij*100:.2f}%",
+                     f"+ ${b_fij:,.0f} base".replace(",", "."))
+        col3.metric("R² modelo total", f"{r2_tot:.3f}",
+                     "Muy bueno" if r2_tot > 0.8 else "Aceptable" if r2_tot > 0.5 else "Bajo")
+
+        st.caption(
+            f"📊 Modelo: **Costo Total ≈ {a_tot*100:.2f}% × Venta + ${b_tot:,.0f}**".replace(",", ".")
+        )
+
+        # ─── SIMULADOR EVENTOS ─────────────────────────────────
+        st.markdown(
+            '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+            'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;">'
+            '2. SIMULADOR DE EVENTOS — proyección costo según escenario venta</div>',
+            unsafe_allow_html=True,
+        )
+
+        venta_avg = float(x.mean())
+        eventos_default = {
+            "Mes promedio": 0,
+            "Cyber Day (Oct/Nov)": 80,
+            "Black Friday (Nov)": 100,
+            "Navidad (Dic)": 150,
+            "Año Nuevo (Ene)": -30,
+            "Marzo (vuelta clases)": 25,
+        }
+
+        col_a, col_b = st.columns([1, 2])
+        with col_a:
+            evento = st.selectbox("Escenario", list(eventos_default.keys()),
+                                    key="ev_costo_op")
+            delta_v = st.slider(
+                "Ajuste fino venta (%)", -50, 200,
+                eventos_default[evento], step=5,
+                key="ev_costo_op_slider",
+            )
+            v_sim = venta_avg * (1 + delta_v / 100)
+            c_var_sim = a_var * v_sim + b_var
+            c_fij_sim = a_fij * v_sim + b_fij
+            c_tot_sim = c_var_sim + c_fij_sim
+            ratio_sim = (c_tot_sim / v_sim * 100) if v_sim > 0 else 0
+
+            st.markdown("---")
+            st.metric("Venta proyectada", _fmt_num(v_sim),
+                       f"{delta_v:+d}% vs promedio")
+            st.metric("Costo proyectado total", _fmt_num(c_tot_sim))
+            st.metric("Costo Variable", _fmt_num(c_var_sim),
+                       f"{a_var*100:.1f}% de venta")
+            st.metric("Costo Fijo", _fmt_num(c_fij_sim))
+            st.metric("Ratio Costo/Venta", f"{ratio_sim:.1f}%",
+                       "🟢 OK" if ratio_sim <= 12 else "🟡 Atención" if ratio_sim <= 14 else "🔴 Alerta")
+
+        with col_b:
+            # Gráfico regresión + simulación
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=x, y=y_tot, mode="markers", name="Meses históricos",
+                marker=dict(size=12, color="#1F4E79"),
+                hovertemplate="Venta: %{x:,.0f}<br>Costo: %{y:,.0f}<extra></extra>",
+            ))
+            xx = np.linspace(x.min() * 0.5, x.max() * 2.5, 50)
+            yy = a_tot * xx + b_tot
+            fig.add_trace(go.Scatter(
+                x=xx, y=yy, mode="lines", name=f"Regresión (R²={r2_tot:.2f})",
+                line=dict(color="#DC2626", width=2, dash="dash"),
+            ))
+            fig.add_trace(go.Scatter(
+                x=[v_sim], y=[c_tot_sim], mode="markers+text",
+                name=f"{evento}",
+                marker=dict(size=22, color="#EA580C", symbol="star"),
+                text=[f" {ratio_sim:.1f}%"], textposition="top center",
+                textfont=dict(size=14, color="#EA580C"),
+            ))
+            fig.update_layout(
+                height=400,
+                xaxis=dict(title="Venta neta mensual (M CLP)", tickformat=",.0f"),
+                yaxis=dict(title="Costo operativo (M CLP)", tickformat=",.0f"),
+                margin=dict(t=20, b=40, l=70, r=20),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                legend=dict(orientation="h", y=1.05, x=0),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        # ─── ACCIONES SUGERIDAS ─────────────────────────────────
+        st.markdown(
+            '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+            'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;">'
+            '3. ACCIONES SUGERIDAS</div>',
+            unsafe_allow_html=True,
+        )
+
+        acciones = []
+        if ratio_sim > 14:
+            acciones.append({
+                "color": "#DC2626", "tipo": "🔴 CRÍTICA",
+                "txt": f"Ratio proyectado {ratio_sim:.1f}% sobrepasa benchmark 12-14%. "
+                        f"Renegociar contratos variables, optimizar logística antes del evento.",
+            })
+        if delta_v > 50:
+            extra_pal = (v_sim - venta_avg) * 0.001 * 0.5  # heurística
+            acciones.append({
+                "color": "#EA580C", "tipo": "🟠 PREPARAR",
+                "txt": f"Venta proyectada +{delta_v}% requiere reforzar staff bodega "
+                        f"(+~{int(delta_v/10)}%), pre-empacar B2B, ampliar ventana courier.",
+            })
+        if delta_v < -20:
+            acciones.append({
+                "color": "#7C3AED", "tipo": "🔵 EFICIENCIA",
+                "txt": f"Caída venta {delta_v}% expone exceso de costos fijos "
+                        f"(${c_fij_sim:,.0f}). Revisar arriendos, sub-contratación.".replace(",", "."),
+            })
+        if not acciones:
+            acciones.append({
+                "color": "#16A34A", "tipo": "🟢 OK",
+                "txt": "Escenario dentro de rangos saludables. Mantener monitoreo.",
+            })
+
+        for a in acciones:
+            st.markdown(
+                f'<div style="background:#FFFFFF;border-left:4px solid {a["color"]};'
+                f'padding:10px 14px;margin:6px 0;border-radius:4px;font-size:13px;">'
+                f'<b style="color:{a["color"]};">{a["tipo"]}</b><br>{a["txt"]}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        # ─── PUNTO DE EQUILIBRIO ─────────────────────────────────
+        st.markdown(
+            '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+            'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;">'
+            '4. PUNTO DE EQUILIBRIO OPERACIONAL</div>',
+            unsafe_allow_html=True,
+        )
+
+        # Asumiendo margen contribución = 100% - costo variable %
+        mc_pct = 1 - a_var  # MC% = 1 - cVariable/venta
+        # Costo fijo mensual (intercept + costo fijo medio)
+        cf_mensual = (df_reg["fijo_abs"].mean()) + b_fij
+        breakeven = (cf_mensual / mc_pct) if mc_pct > 0 else None
+        venta_avg_real = df_reg["venta_neta_m"].mean()
+        holgura_pct = ((venta_avg_real / breakeven - 1) * 100) if breakeven else None
+
+        be_cols = st.columns(4)
+        be_cols[0].metric("Costo Fijo mensual", _fmt_num(cf_mensual))
+        be_cols[1].metric("Margen Contribución %",
+                            f"{mc_pct*100:.1f}%",
+                            f"costo variable {a_var*100:.1f}%")
+        be_cols[2].metric("VENTA BREAK-EVEN", _fmt_num(breakeven),
+                            "Venta mínima para cubrir fijos")
+        be_cols[3].metric("Holgura vs venta promedio",
+                            f"{holgura_pct:+.1f}%" if holgura_pct is not None else "—",
+                            "Verde si >0%")
+
+        st.caption(
+            f"💡 Necesitás vender al menos **${breakeven:,.0f} M/mes** "
+            f"para cubrir tus costos fijos. Tu venta promedio es ${venta_avg_real:,.0f} M "
+            f"({holgura_pct:+.0f}% sobre el equilibrio).".replace(",", ".")
+        )
+    else:
+        st.info("Necesito al menos 3 meses con venta y costo para construir el modelo.")
+
 
 # ============================================================
 # RENDER
@@ -970,10 +1518,12 @@ def render():
 
     st.divider()
 
-    tab1, tab2, tab3 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 P&L Operaciones",
         "🔎 Detalle por Centro de Costo",
         "📋 Informe de Gestión",
+        "📈 Comparativo YoY",
+        "🔮 Proyección & Equilibrio",
     ])
     with tab1:
         _tab_pnl(df_costo, df_venta, year_sel, meses_sel, periodo_label)
@@ -981,3 +1531,7 @@ def render():
         _tab_detalle_cc(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab3:
         _tab_informe(df_costo, df_venta, year_sel, meses_sel, periodo_label)
+    with tab4:
+        _tab_yoy(df_costo, df_venta, year_sel, meses_sel, periodo_label)
+    with tab5:
+        _tab_proyeccion(df_costo, df_venta, year_sel, periodo_label)
