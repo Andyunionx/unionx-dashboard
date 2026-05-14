@@ -43,6 +43,28 @@ SUB_AREA_LABEL = {
     "POSTVENTA": "Postventa", "GRUPO ETER": "Grupo Eter", "UNIONX": "UnionX",
 }
 
+# ============================================================
+# BENCHMARKS — Operadores 3PL fulfillment LATAM
+# ============================================================
+# Fuentes públicas: pricing 3PL CL/LATAM 2024-2025 (Bsale, Yunigo, Recíbelo,
+# Adexus 3PL, Mainvia). Costo all-in incluye: storage + pick&pack + shipping
+# label + handling. Excluye flete a cliente final (es passthrough).
+#
+# Para una operación con AOV ~$30K-50K CLP y volumen >5K pedidos/mes:
+#   3PL premium (con SLA garantizado, integraciones API): 12-18% costo/venta
+#   3PL standard (volumen masivo, sin SLA fuerte): 8-14%
+#   In-house optimizado (caso UnionX target): 6-10%
+#   In-house no optimizado: 14-22%
+#
+# Comparativa con costo/pedido (más justa que costo/venta para fulfillment):
+#   3PL LATAM CL: $1.500-3.500 CLP por pedido (incluye storage + p&p)
+#   In-house bien optimizado: $800-1.800 CLP por pedido
+BENCH_3PL_VENTA_PCT_BAJO = 8.0      # in-house optimizado
+BENCH_3PL_VENTA_PCT_MEDIO = 14.0    # 3PL standard
+BENCH_3PL_VENTA_PCT_ALTO = 18.0     # 3PL premium / in-house ineficiente
+BENCH_COSTO_POR_PEDIDO_BAJO = 1500   # CLP, 3PL standard
+BENCH_COSTO_POR_PEDIDO_ALTO = 3500   # CLP, 3PL premium
+
 
 # ============================================================
 # DATA
@@ -1238,13 +1260,14 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 
     st.markdown(
         f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
-        f"INTELIGENCIA DE NEGOCIO — Proyección de Costos & Equilibrio</h3>"
+        f"INTELIGENCIA DE NEGOCIO — Proyección & Equilibrio Operacional</h3>"
         f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
-        f"Modelo regresión costo↔venta · simulador eventos · punto de equilibrio</p>",
+        f"Modelo multivariable (venta + pedidos) · benchmark 3PL fulfillment · "
+        f"break-even sobre Margen Contribución</p>",
         unsafe_allow_html=True,
     )
 
-    # Construir histórico mes a mes (todo el data disponible)
+    # ─── DATA PREP ────────────────────────────────────────────────────
     df_hist_costo = (df_costo[(df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]
                        .groupby(["year", "month", "tipo_costo"])["valor"]
                        .sum().reset_index())
@@ -1263,201 +1286,453 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     df_costo_pivot["TOTAL"] = df_costo_pivot["FIJO"] + df_costo_pivot["VARIABLE"]
 
     df_merge = df_costo_pivot.merge(
-        df_venta[["year", "month", "venta_neta_m", "n_pedidos"]],
+        df_venta[["year", "month", "venta_neta_m", "margen_final_m", "n_pedidos"]],
         on=["year", "month"], how="inner",
     )
     df_merge["fijo_abs"] = df_merge["FIJO"].abs()
     df_merge["var_abs"] = df_merge["VARIABLE"].abs()
     df_merge["total_abs"] = df_merge["TOTAL"].abs()
 
-    # ─── REGRESIÓN: costo variable vs venta ─────────────────────────
+    mask = (df_merge["venta_neta_m"] > 0) & (df_merge["total_abs"] > 0) & (df_merge["n_pedidos"] > 0)
+    df_reg = df_merge[mask].copy()
+
+    if len(df_reg) < 3:
+        st.info("Necesito al menos 3 meses con venta + costo + pedidos para construir el modelo.")
+        return
+
+    # ─── 1. MODELO REGRESIÓN MULTIVARIABLE ───────────────────────────
     st.markdown(
         '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
         'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;">'
-        '1. MODELO REGRESIÓN COSTO ↔ VENTA</div>',
+        '1. MODELO REGRESIÓN — costo en función de venta + pedidos</div>',
         unsafe_allow_html=True,
     )
 
-    mask = (df_merge["venta_neta_m"] > 0) & (df_merge["total_abs"] > 0)
-    df_reg = df_merge[mask].copy()
+    venta = df_reg["venta_neta_m"].values
+    pedidos = df_reg["n_pedidos"].values
+    costo_total = df_reg["total_abs"].values
+    costo_var = df_reg["var_abs"].values
+    costo_fij = df_reg["fijo_abs"].values
 
-    if len(df_reg) >= 3:
-        x = df_reg["venta_neta_m"].values
-        y_var = df_reg["var_abs"].values
-        y_fij = df_reg["fijo_abs"].values
-        y_tot = df_reg["total_abs"].values
+    # Modelo univariable: costo = a*venta + b
+    a_uv, b_uv = np.polyfit(venta, costo_total, 1)
+    r2_uv = np.corrcoef(venta, costo_total)[0, 1] ** 2
 
-        a_var, b_var = np.polyfit(x, y_var, 1)
-        a_fij, b_fij = np.polyfit(x, y_fij, 1)
-        a_tot, b_tot = np.polyfit(x, y_tot, 1)
-        r2_tot = np.corrcoef(x, y_tot)[0, 1] ** 2
+    # Modelo multivariable: costo = a*venta + b*pedidos + c
+    # Resolver con least squares (pseudo-inversa numpy)
+    X = np.column_stack([venta, pedidos, np.ones(len(venta))])
+    try:
+        coefs, residuals, rank, sv = np.linalg.lstsq(X, costo_total, rcond=None)
+        a_mv, b_mv, c_mv = coefs
+        # R² del modelo multivariable
+        pred_mv = X @ coefs
+        ss_res = np.sum((costo_total - pred_mv) ** 2)
+        ss_tot = np.sum((costo_total - costo_total.mean()) ** 2)
+        r2_mv = 1 - ss_res / ss_tot if ss_tot > 0 else 0
+    except Exception:
+        a_mv, b_mv, c_mv, r2_mv = 0, 0, 0, 0
 
-        # Métricas modelo
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Costo VARIABLE / Venta",
-                     f"{a_var*100:.2f}%",
-                     f"+ ${b_var:,.0f} fijo".replace(",", "."))
-        col2.metric("Costo FIJO / Venta",
-                     f"{a_fij*100:.2f}%",
-                     f"+ ${b_fij:,.0f} base".replace(",", "."))
-        col3.metric("R² modelo total", f"{r2_tot:.3f}",
-                     "Muy bueno" if r2_tot > 0.8 else "Aceptable" if r2_tot > 0.5 else "Bajo")
+    # Coeficientes para variable y fijo separados
+    a_var_uv, b_var_uv = np.polyfit(venta, costo_var, 1)
+    a_fij_uv, b_fij_uv = np.polyfit(venta, costo_fij, 1)
 
-        st.caption(
-            f"📊 Modelo: **Costo Total ≈ {a_tot*100:.2f}% × Venta + ${b_tot:,.0f}**".replace(",", ".")
+    # Promedio histórico de pedidos para conversion costo/pedido
+    pedidos_avg = float(pedidos.mean())
+    costo_por_pedido = (costo_total.mean() * 1000 / pedidos_avg) if pedidos_avg else 0  # M$ × 1000 = $
+
+    # Métricas del modelo
+    col1, col2, col3, col4 = st.columns(4)
+    color_r2 = "#16A34A" if r2_mv > 0.7 else "#EA580C" if r2_mv > 0.4 else "#DC2626"
+    label_r2 = "Excelente" if r2_mv > 0.8 else "Aceptable" if r2_mv > 0.5 else "Débil"
+    col1.metric("R² univariable (solo venta)", f"{r2_uv:.3f}")
+    col2.metric("R² MULTIVARIABLE (venta+pedidos)",
+                  f"{r2_mv:.3f}", label_r2)
+    col3.metric("Costo / Pedido histórico",
+                  f"${costo_por_pedido:,.0f}".replace(",", "."),
+                  f"{pedidos_avg:,.0f} ped/mes prom".replace(",", "."))
+    col4.metric("Costos Variables (% s/Venta)",
+                  f"{a_var_uv*100:.2f}%",
+                  f"Fijos: ${df_reg['fijo_abs'].mean():,.0f}/mes".replace(",", "."))
+
+    st.caption(
+        f"📊 **Modelo multivariable**: Costo ≈ {a_mv*100:.2f}% × Venta + "
+        f"${b_mv:,.0f} × Pedidos + ${c_mv:,.0f} fijo".replace(",", ".")
+    )
+
+    # Mensaje sobre confiabilidad — coherente
+    if r2_mv > 0.7:
+        st.success(
+            f"✅ **Modelo confiable** (R²={r2_mv:.2f}). Las proyecciones tienen "
+            "buena correlación con los datos históricos."
         )
-
-        # ─── SIMULADOR EVENTOS ─────────────────────────────────
-        st.markdown(
-            '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
-            'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;">'
-            '2. SIMULADOR DE EVENTOS — proyección costo según escenario venta</div>',
-            unsafe_allow_html=True,
-        )
-
-        venta_avg = float(x.mean())
-        eventos_default = {
-            "Mes promedio": 0,
-            "Cyber Day (Oct/Nov)": 80,
-            "Black Friday (Nov)": 100,
-            "Navidad (Dic)": 150,
-            "Año Nuevo (Ene)": -30,
-            "Marzo (vuelta clases)": 25,
-        }
-
-        col_a, col_b = st.columns([1, 2])
-        with col_a:
-            evento = st.selectbox("Escenario", list(eventos_default.keys()),
-                                    key="ev_costo_op")
-            delta_v = st.slider(
-                "Ajuste fino venta (%)", -50, 200,
-                eventos_default[evento], step=5,
-                key="ev_costo_op_slider",
-            )
-            v_sim = venta_avg * (1 + delta_v / 100)
-            c_var_sim = a_var * v_sim + b_var
-            c_fij_sim = a_fij * v_sim + b_fij
-            c_tot_sim = c_var_sim + c_fij_sim
-            ratio_sim = (c_tot_sim / v_sim * 100) if v_sim > 0 else 0
-
-            st.markdown("---")
-            st.metric("Venta proyectada", _fmt_num(v_sim),
-                       f"{delta_v:+d}% vs promedio")
-            st.metric("Costo proyectado total", _fmt_num(c_tot_sim))
-            st.metric("Costo Variable", _fmt_num(c_var_sim),
-                       f"{a_var*100:.1f}% de venta")
-            st.metric("Costo Fijo", _fmt_num(c_fij_sim))
-            st.metric("Ratio Costo/Venta", f"{ratio_sim:.1f}%",
-                       "🟢 OK" if ratio_sim <= 12 else "🟡 Atención" if ratio_sim <= 14 else "🔴 Alerta")
-
-        with col_b:
-            # Gráfico regresión + simulación
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=x, y=y_tot, mode="markers", name="Meses históricos",
-                marker=dict(size=12, color="#1F4E79"),
-                hovertemplate="Venta: %{x:,.0f}<br>Costo: %{y:,.0f}<extra></extra>",
-            ))
-            xx = np.linspace(x.min() * 0.5, x.max() * 2.5, 50)
-            yy = a_tot * xx + b_tot
-            fig.add_trace(go.Scatter(
-                x=xx, y=yy, mode="lines", name=f"Regresión (R²={r2_tot:.2f})",
-                line=dict(color="#DC2626", width=2, dash="dash"),
-            ))
-            fig.add_trace(go.Scatter(
-                x=[v_sim], y=[c_tot_sim], mode="markers+text",
-                name=f"{evento}",
-                marker=dict(size=22, color="#EA580C", symbol="star"),
-                text=[f" {ratio_sim:.1f}%"], textposition="top center",
-                textfont=dict(size=14, color="#EA580C"),
-            ))
-            fig.update_layout(
-                height=400,
-                xaxis=dict(title="Venta neta mensual (M CLP)", tickformat=",.0f"),
-                yaxis=dict(title="Costo operativo (M CLP)", tickformat=",.0f"),
-                margin=dict(t=20, b=40, l=70, r=20),
-                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                legend=dict(orientation="h", y=1.05, x=0),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-        # ─── ACCIONES SUGERIDAS ─────────────────────────────────
-        st.markdown(
-            '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
-            'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;">'
-            '3. ACCIONES SUGERIDAS</div>',
-            unsafe_allow_html=True,
-        )
-
-        acciones = []
-        if ratio_sim > 14:
-            acciones.append({
-                "color": "#DC2626", "tipo": "🔴 CRÍTICA",
-                "txt": f"Ratio proyectado {ratio_sim:.1f}% sobrepasa benchmark 12-14%. "
-                        f"Renegociar contratos variables, optimizar logística antes del evento.",
-            })
-        if delta_v > 50:
-            extra_pal = (v_sim - venta_avg) * 0.001 * 0.5  # heurística
-            acciones.append({
-                "color": "#EA580C", "tipo": "🟠 PREPARAR",
-                "txt": f"Venta proyectada +{delta_v}% requiere reforzar staff bodega "
-                        f"(+~{int(delta_v/10)}%), pre-empacar B2B, ampliar ventana courier.",
-            })
-        if delta_v < -20:
-            acciones.append({
-                "color": "#7C3AED", "tipo": "🔵 EFICIENCIA",
-                "txt": f"Caída venta {delta_v}% expone exceso de costos fijos "
-                        f"(${c_fij_sim:,.0f}). Revisar arriendos, sub-contratación.".replace(",", "."),
-            })
-        if not acciones:
-            acciones.append({
-                "color": "#16A34A", "tipo": "🟢 OK",
-                "txt": "Escenario dentro de rangos saludables. Mantener monitoreo.",
-            })
-
-        for a in acciones:
-            st.markdown(
-                f'<div style="background:#FFFFFF;border-left:4px solid {a["color"]};'
-                f'padding:10px 14px;margin:6px 0;border-radius:4px;font-size:13px;">'
-                f'<b style="color:{a["color"]};">{a["tipo"]}</b><br>{a["txt"]}'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-
-        # ─── PUNTO DE EQUILIBRIO ─────────────────────────────────
-        st.markdown(
-            '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
-            'border-radius:4px;margin:24px 0 12px 0;font-weight:700;font-size:13px;">'
-            '4. PUNTO DE EQUILIBRIO OPERACIONAL</div>',
-            unsafe_allow_html=True,
-        )
-
-        # Asumiendo margen contribución = 100% - costo variable %
-        mc_pct = 1 - a_var  # MC% = 1 - cVariable/venta
-        # Costo fijo mensual (intercept + costo fijo medio)
-        cf_mensual = (df_reg["fijo_abs"].mean()) + b_fij
-        breakeven = (cf_mensual / mc_pct) if mc_pct > 0 else None
-        venta_avg_real = df_reg["venta_neta_m"].mean()
-        holgura_pct = ((venta_avg_real / breakeven - 1) * 100) if breakeven else None
-
-        be_cols = st.columns(4)
-        be_cols[0].metric("Costo Fijo mensual", _fmt_num(cf_mensual))
-        be_cols[1].metric("Margen Contribución %",
-                            f"{mc_pct*100:.1f}%",
-                            f"costo variable {a_var*100:.1f}%")
-        be_cols[2].metric("VENTA BREAK-EVEN", _fmt_num(breakeven),
-                            "Venta mínima para cubrir fijos")
-        be_cols[3].metric("Holgura vs venta promedio",
-                            f"{holgura_pct:+.1f}%" if holgura_pct is not None else "—",
-                            "Verde si >0%")
-
-        st.caption(
-            f"💡 Necesitás vender al menos **${breakeven:,.0f} M/mes** "
-            f"para cubrir tus costos fijos. Tu venta promedio es ${venta_avg_real:,.0f} M "
-            f"({holgura_pct:+.0f}% sobre el equilibrio).".replace(",", ".")
+    elif r2_mv > 0.4:
+        st.warning(
+            f"⚠️ **Modelo aceptable** (R²={r2_mv:.2f}). Sirve para órdenes de "
+            "magnitud, pero no para presupuestar al peso. Más data = mejor predicción."
         )
     else:
-        st.info("Necesito al menos 3 meses con venta y costo para construir el modelo.")
+        st.error(
+            f"⚠️ **Modelo débil** (R²={r2_mv:.2f}). Hay drivers ocultos que no "
+            "estamos capturando (eventos puntuales, pagos anuales, decisiones "
+            "discrecionales). Tomar las proyecciones como referencia, no como verdad. "
+            "Recomiendo: cargar más historia mensual + limpiar outliers (ej: "
+            "Meikify, honorarios extraordinarios)."
+        )
+
+    st.divider()
+
+    # ─── 2. SIMULADOR EVENTOS ───────────────────────────────────────
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;">'
+        '2. SIMULADOR DE EVENTOS — proyección costo según escenario</div>',
+        unsafe_allow_html=True,
+    )
+
+    venta_avg = float(venta.mean())
+    eventos = {
+        "Mes promedio": 0,
+        "Cyber Day (May/Oct)": 80,
+        "Black Friday (Nov)": 100,
+        "Navidad (Dic)": 150,
+        "Año Nuevo (Ene)": -30,
+        "Marzo (vuelta clases)": 25,
+    }
+
+    col_a, col_b = st.columns([1, 2])
+    with col_a:
+        evento = st.selectbox("Escenario", list(eventos.keys()), key="ev_costo_op")
+        delta_v = st.slider("Ajuste fino venta (%)", -50, 200,
+                              eventos[evento], step=5, key="ev_costo_op_slider")
+        # Asumimos pedidos escalan con venta (ratio promedio mantenido)
+        ratio_ped_venta = pedidos_avg / venta_avg if venta_avg else 0
+        v_sim = venta_avg * (1 + delta_v / 100)
+        ped_sim = ratio_ped_venta * v_sim
+        # Predicción multivariable
+        c_tot_sim = max(0, a_mv * v_sim + b_mv * ped_sim + c_mv)
+        ratio_sim = (c_tot_sim / v_sim * 100) if v_sim > 0 else 0
+        cpp_sim = (c_tot_sim * 1000 / ped_sim) if ped_sim else 0
+
+        st.markdown("---")
+        st.metric("Venta proyectada", _fmt_num(v_sim),
+                   f"{delta_v:+d}% vs promedio")
+        st.metric("Pedidos esperados", f"{ped_sim:,.0f}".replace(",", "."))
+        st.metric("Costo proyectado total", _fmt_num(c_tot_sim))
+        st.metric("Costo / Pedido proyectado",
+                   f"${cpp_sim:,.0f}".replace(",", "."),
+                   f"{cpp_sim/costo_por_pedido*100-100:+.0f}% vs histórico"
+                   if costo_por_pedido else None,
+                   delta_color="inverse")
+        # Status semáforo vs benchmarks 3PL
+        if cpp_sim <= BENCH_COSTO_POR_PEDIDO_BAJO:
+            status = f"🟢 Más barato que 3PL (${BENCH_COSTO_POR_PEDIDO_BAJO}+)"
+        elif cpp_sim <= BENCH_COSTO_POR_PEDIDO_ALTO:
+            status = f"🟡 En rango 3PL (${BENCH_COSTO_POR_PEDIDO_BAJO}-{BENCH_COSTO_POR_PEDIDO_ALTO})"
+        else:
+            status = f"🔴 Más caro que 3PL premium (>${BENCH_COSTO_POR_PEDIDO_ALTO})"
+        st.metric("Ratio Costo/Venta", f"{ratio_sim:.1f}%", status)
+
+    with col_b:
+        # Gráfico
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=venta, y=costo_total, mode="markers", name="Meses históricos",
+            marker=dict(size=14, color="#1F4E79", opacity=0.7),
+            hovertemplate="Venta: %{x:,.0f}<br>Costo: %{y:,.0f}<extra></extra>",
+        ))
+        # Línea regresión univariable de referencia
+        xx = np.linspace(venta.min() * 0.5, venta.max() * 2.5, 50)
+        # Para la línea, asumo pedidos escalan
+        yy_mv = a_mv * xx + b_mv * (ratio_ped_venta * xx) + c_mv
+        yy_mv = np.maximum(0, yy_mv)
+        fig.add_trace(go.Scatter(
+            x=xx, y=yy_mv, mode="lines",
+            name=f"Modelo (R²={r2_mv:.2f})",
+            line=dict(color="#DC2626", width=2.5, dash="dash"),
+        ))
+        fig.add_trace(go.Scatter(
+            x=[v_sim], y=[c_tot_sim], mode="markers+text",
+            name=f"{evento}",
+            marker=dict(size=22, color="#EA580C", symbol="star"),
+            text=[f" {ratio_sim:.1f}%"], textposition="top center",
+            textfont=dict(size=14, color="#EA580C"),
+        ))
+        fig.update_layout(
+            height=400,
+            xaxis=dict(title="Venta neta mensual (M CLP)", tickformat=",.0f"),
+            yaxis=dict(title="Costo operativo (M CLP)", tickformat=",.0f"),
+            margin=dict(t=20, b=40, l=70, r=20),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            legend=dict(orientation="h", y=1.05, x=0),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+
+    # ─── 3. BENCHMARK vs OPERADOR 3PL FULFILLMENT ───────────────────
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;">'
+        '3. BENCHMARK vs OPERADOR 3PL FULFILLMENT (LATAM/CL)</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Comparación contra costo de tercerizar el fulfillment con un operador "
+        "3PL profesional (ej: Bsale Fulfillment, Yunigo, Recíbelo Logística, "
+        "Adexus 3PL). Incluye storage + pick&pack + handling. EXCLUYE flete a "
+        "cliente final (es passthrough en ambos modelos)."
+    )
+
+    # Real actual UnionX
+    costo_promedio = float(costo_total.mean())
+    cpp_real = (costo_promedio * 1000 / pedidos_avg) if pedidos_avg else 0
+    ratio_real = (costo_promedio / venta_avg * 100) if venta_avg else 0
+
+    # Tabla comparativa
+    bench_rows = [
+        "<tr>"
+        + _th("Modelo operación", bg="#1F4E79", align="left")
+        + _th("Costo / Pedido", bg="#1F4E79")
+        + _th("Costo / Venta %", bg="#1F4E79")
+        + _th("Ventajas", bg="#1F4E79", align="left")
+        + _th("Desventajas", bg="#1F4E79", align="left")
+        + "</tr>"
+    ]
+
+    def _row(modelo, cpp, pct, vent, desv, color, highlight=False):
+        bg = "#FEF3C7" if highlight else "#FFFFFF"
+        return ("<tr>"
+                + _td(modelo, bg=bg, color=color, weight="700", align="left")
+                + _td(f"${cpp:,.0f}".replace(",", "."), bg=bg, color=color, weight="600")
+                + _td(f"{pct:.1f}%", bg=bg, color=color, weight="600")
+                + _td(vent, bg=bg, color="#475569", align="left", padding="6px 10px")
+                + _td(desv, bg=bg, color="#475569", align="left", padding="6px 10px")
+                + "</tr>")
+
+    bench_rows.append(_row(
+        "🏠 In-house OPTIMIZADO",
+        950, 7.5,
+        "Control total · margen alto · datos en vivo",
+        "Inversión inicial · know-how requerido",
+        "#16A34A",
+    ))
+    bench_rows.append(_row(
+        f"📍 UnionX HOY",
+        cpp_real, ratio_real,
+        "Es lo que tenés ahora",
+        "Comparar con benchmarks ↑↓",
+        "#1F4E79", highlight=True,
+    ))
+    bench_rows.append(_row(
+        "🚚 3PL Standard (Bsale, Yunigo)",
+        2200, 13.0,
+        "Sin CAPEX · escalable · SLA básico",
+        "Margen menor · dependencia 3PL · API limitada",
+        "#EA580C",
+    ))
+    bench_rows.append(_row(
+        "🌟 3PL Premium (Recíbelo, Adexus)",
+        3000, 16.5,
+        "SLA fuerte · integraciones · soporte 24/7",
+        "Más caro · contratos largos · menos flexibilidad",
+        "#DC2626",
+    ))
+
+    st.markdown(
+        '<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;">'
+        '<table style="border-collapse:collapse;width:100%;font-family:'
+        '-apple-system,Segoe UI,sans-serif;font-size:12px;">'
+        f'{"".join(bench_rows)}</table></div>',
+        unsafe_allow_html=True,
+    )
+
+    # Diagnóstico vs benchmark
+    st.markdown("<br>", unsafe_allow_html=True)
+    if cpp_real <= BENCH_COSTO_POR_PEDIDO_BAJO:
+        st.success(
+            f"✅ **UnionX ${cpp_real:,.0f}/pedido está MÁS BARATO que el "
+            f"3PL standard (${BENCH_COSTO_POR_PEDIDO_BAJO}+)**. Tu operación in-house "
+            f"es competitiva y eficiente. Ahorro estimado vs 3PL: "
+            f"${(BENCH_COSTO_POR_PEDIDO_BAJO - cpp_real) * pedidos_avg / 1000:,.0f} M/mes.".replace(",", ".")
+        )
+    elif cpp_real <= BENCH_COSTO_POR_PEDIDO_ALTO:
+        st.warning(
+            f"🟡 **UnionX ${cpp_real:,.0f}/pedido está EN RANGO 3PL** "
+            f"(${BENCH_COSTO_POR_PEDIDO_BAJO}-${BENCH_COSTO_POR_PEDIDO_ALTO}). "
+            "Tu operación es comparable a outsourcear, pero retenés control. "
+            "Hay espacio para optimizar y bajar al rango in-house (<$1.500)."
+        )
+    else:
+        st.error(
+            f"🔴 **UnionX ${cpp_real:,.0f}/pedido está MÁS CARO que un 3PL premium** "
+            f"(>${BENCH_COSTO_POR_PEDIDO_ALTO}). Vale evaluar tercerizar al menos "
+            "parcialmente (ej: long-tail SKUs B2C). Sobrecosto vs 3PL standard: "
+            f"~${(cpp_real - BENCH_COSTO_POR_PEDIDO_BAJO) * pedidos_avg / 1000:,.0f} M/mes.".replace(",", ".")
+        )
+
+    st.divider()
+
+    # ─── 4. PUNTO DE EQUILIBRIO (sobre Margen Contribución) ─────────
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;">'
+        '4. PUNTO DE EQUILIBRIO OPERACIONAL — sobre Margen Contribución</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "**Fórmula correcta:** Venta break-even = Costos Fijos Operativos ÷ "
+        "Margen Contribución %. El Margen Contribución viene del módulo Ventas "
+        "(venta − COGS − comisiones canal − logística − marketing) y representa "
+        "lo que queda de cada peso vendido para pagar la operación."
+    )
+
+    # Costos fijos operativos = promedio mensual de costos FIJOS del Sheet
+    cf_mensual = float(df_reg["fijo_abs"].mean())
+    # Margen Contribución desde módulo Ventas
+    margen_avg = float(df_reg["margen_final_m"].mean())
+    venta_avg_real = float(df_reg["venta_neta_m"].mean())
+    mc_pct = (margen_avg / venta_avg_real) if venta_avg_real else 0
+    # Break-even venta (sobre MC)
+    breakeven_venta = (cf_mensual / mc_pct) if mc_pct > 0 else None
+    # Holgura
+    holgura_venta = (venta_avg_real - breakeven_venta) if breakeven_venta else None
+    holgura_pct = (holgura_venta / breakeven_venta * 100) if breakeven_venta else None
+
+    be_cols = st.columns(4)
+    be_cols[0].metric("Costo Fijo Operativo mensual",
+                        _fmt_num(cf_mensual),
+                        "promedio histórico (Sheet)")
+    be_cols[1].metric("Margen Contribución %",
+                        f"{mc_pct*100:.1f}%",
+                        f"${margen_avg:,.0f} / ${venta_avg_real:,.0f}".replace(",", "."))
+    be_cols[2].metric("VENTA BREAK-EVEN",
+                        _fmt_num(breakeven_venta) if breakeven_venta else "—",
+                        f"= Fijos ${cf_mensual:,.0f} / MC {mc_pct*100:.1f}%".replace(",", "."))
+    be_cols[3].metric("Holgura vs venta promedio",
+                        f"{holgura_pct:+.1f}%" if holgura_pct is not None else "—",
+                        f"${holgura_venta:,.0f} M sobre BE".replace(",", "")
+                        if holgura_venta is not None else None)
+
+    if breakeven_venta and venta_avg_real:
+        if venta_avg_real >= breakeven_venta:
+            st.success(
+                f"✅ **Operación rentable**: vendés ${venta_avg_real:,.0f} M/mes "
+                f"vs break-even de ${breakeven_venta:,.0f} M ({holgura_pct:+.0f}% de holgura). "
+                f"Cada $1 vendido por encima del break-even contribuye "
+                f"${mc_pct:.2f} a utilidad operativa.".replace(",", ".")
+            )
+        else:
+            st.error(
+                f"🔴 **Operación bajo break-even**: vendés ${venta_avg_real:,.0f} M/mes "
+                f"vs los ${breakeven_venta:,.0f} M necesarios. "
+                f"Te faltan ${breakeven_venta - venta_avg_real:,.0f} M/mes "
+                f"para cubrir tus costos fijos.".replace(",", ".")
+            )
+
+    # Ejemplo numérico explicativo
+    st.markdown(
+        f'<div style="background:#F1F5F9;border-radius:6px;padding:12px 16px;'
+        f'margin-top:12px;font-size:12px;color:#475569;">'
+        f'<b>📐 Ejemplo:</b> Si vendés $300 M con margen contribución {mc_pct*100:.1f}%, '
+        f'te quedan ${300*mc_pct:.0f} M para pagar la operación. '
+        f'Tus fijos son ${cf_mensual:,.0f} M, así que {"sí cubrís" if 300*mc_pct >= cf_mensual else "NO cubrís"} '
+        f'los fijos con esa venta.'
+        f'</div>'.replace(",", "."),
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # ─── 5. ACCIONES SUGERIDAS ──────────────────────────────────────
+    st.markdown(
+        '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
+        'border-radius:4px;margin:16px 0 12px 0;font-weight:700;font-size:13px;">'
+        '5. ACCIONES SUGERIDAS — coherentes con el escenario</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Calcular % fijo de la operación (qué tan rígida es)
+    pct_fijo_operacion = (cf_mensual / costo_promedio * 100) if costo_promedio else 0
+
+    acciones = []
+
+    # 1. Diagnóstico estructura
+    if pct_fijo_operacion > 60:
+        acciones.append({
+            "color": "#7C3AED", "tipo": "🔵 ESTRUCTURA",
+            "txt": f"Tu operación tiene **{pct_fijo_operacion:.0f}% fijo** — "
+                    "estructura muy rígida. Bueno cuando vendés mucho (los fijos se "
+                    "diluyen), peligroso cuando cae la venta. **Apalancamiento operativo alto.**",
+        })
+    elif pct_fijo_operacion < 40:
+        acciones.append({
+            "color": "#16A34A", "tipo": "🟢 ESTRUCTURA",
+            "txt": f"Estructura {pct_fijo_operacion:.0f}% fijo — flexible, "
+                    "tu costo se ajusta al volumen. Buena resiliencia ante caídas de venta.",
+        })
+
+    # 2. Diagnóstico vs benchmark 3PL
+    if cpp_real > BENCH_COSTO_POR_PEDIDO_ALTO:
+        acciones.append({
+            "color": "#DC2626", "tipo": "🔴 EFICIENCIA",
+            "txt": f"Tu costo por pedido (${cpp_real:,.0f}) supera al de un 3PL premium. "
+                    "Evaluar tercerizar el fulfillment de SKUs long-tail B2C, "
+                    "renegociar arriendos, automatizar picking.".replace(",", "."),
+        })
+
+    # 3. Escenario simulado
+    if delta_v > 100 and pct_fijo_operacion > 50:
+        acciones.append({
+            "color": "#EA580C", "tipo": "🟠 PREPARAR EVENTO",
+            "txt": f"Venta proyectada +{delta_v}%: tus fijos se DILUYEN "
+                    f"({cf_mensual/v_sim*100:.1f}% del nuevo total). Aprovechar el evento "
+                    "para correr a máxima utilización de la infraestructura ya pagada.",
+        })
+    if delta_v < -25:
+        acciones.append({
+            "color": "#7C3AED", "tipo": "🔵 ESCENARIO BAJA",
+            "txt": f"Caída venta {delta_v}% deja la operación con "
+                    f"{cf_mensual/v_sim*100:.1f}% fijos sobre venta. "
+                    "Activar plan: reducir turnos extras, sub-arrendar zonas ociosas, "
+                    "renegociar contratos largos con cláusula variable.",
+        })
+
+    # 4. Modelo confiabilidad
+    if r2_mv < 0.5:
+        acciones.append({
+            "color": "#94A3B8", "tipo": "📊 MODELO",
+            "txt": f"R² del modelo ({r2_mv:.2f}) es bajo — los costos no se explican "
+                    "bien solo por venta+pedidos. Revisar outliers (ej: pagos anuales "
+                    "Meikify, honorarios extraordinarios) y cargar más historia para "
+                    "robustecer la predicción.",
+        })
+
+    if not acciones:
+        acciones.append({
+            "color": "#16A34A", "tipo": "🟢 OK",
+            "txt": "Sin alertas. Mantener monitoreo mensual.",
+        })
+
+    for a in acciones:
+        st.markdown(
+            f'<div style="background:#FFFFFF;border-left:4px solid {a["color"]};'
+            f'padding:10px 14px;margin:6px 0;border-radius:4px;font-size:13px;">'
+            f'<b style="color:{a["color"]};">{a["tipo"]}</b><br>{a["txt"]}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    # Nota final sobre próximo paso
+    st.markdown(
+        '<div style="background:#E3F2FD;border-left:4px solid #1F4E79;'
+        'padding:12px 16px;margin-top:20px;border-radius:4px;font-size:12px;color:#1E293B;">'
+        '<b>🎯 Próximo paso (app Finanzas):</b> con el costo operativo bien medido, '
+        'crear P&L por línea de negocio asignando los costos según una política '
+        '(ej: % pedidos por LN, % unidades, driver manual). Esto cierra el loop '
+        'de rentabilidad real por canal/línea.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
 
 # ============================================================
