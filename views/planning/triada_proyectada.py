@@ -1,8 +1,8 @@
-"""Vista núcleo: Triada Proyectada por SKU × semana.
+"""Vista núcleo: Triada Proyectada por SKU × mes.
 
-Toma el baseline al 11/05 + ventas reales acumuladas + tránsito con ETAs
-+ forecast manual (opcional) → proyecta stock semana a semana y señala
-cuándo cada SKU cruza a quiebre.
+Toma el baseline al 11/05 + ventas LIVE (Turso ventas, agregado por SKU)
++ tránsito con ETAs + forecast manual (opcional, mensual) → proyecta
+stock mes a mes y señala cuándo cada SKU cruza a quiebre.
 
 Sin forecast manual cargado, la demanda futura asume 0 → el stock solo
 cae por ventas reales y sube por tránsitos. Es el piso conservador.
@@ -12,195 +12,314 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from views.planning._core import proyectar_stock_semanal
+from views.planning._core import proyectar_stock_mensual
 from views.planning._data_helpers import (
     BASELINE_DATE,
+    cargar_planif_master,
     cargar_planif_stock_baseline,
     cargar_planif_stock_live,
     cargar_planif_transito_live,
-    cargar_planif_ventas_diarias,
+    cargar_ventas_live_desde_baseline,
 )
+
+
+def _kpi_metric(col, label, value, help=None):
+    col.metric(label, value, help=help)
+
+
+def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
+    """Agrega df por las claves dadas, sumando unidades. Ordena desc por stock_baseline."""
+    if df.empty:
+        return df
+    mes_cols = [f'stock_mes_{i}' for i in range(1, horiz + 1)]
+    agg_dict = {
+        'sku': 'nunique',
+        'stock_baseline': 'sum',
+        'ventas_acum': 'sum',
+        'transito_llegado': 'sum',
+        'stock_hoy_est': 'sum',
+        'transito_pendiente': 'sum',
+        'forecast_total': 'sum',
+    }
+    for c in mes_cols:
+        if c in df.columns:
+            agg_dict[c] = 'sum'
+
+    g = df.groupby(claves, dropna=False).agg(agg_dict).reset_index()
+    g = g.rename(columns={'sku': 'n_skus'})
+    return g.sort_values('stock_hoy_est', ascending=False)
 
 
 def render():
     st.title("🎯 Triada Proyectada")
     st.caption(
-        f"Stock baseline ({BASELINE_DATE}) − ventas reales (acumuladas desde el baseline) "
-        f"+ tránsito (con ETAs) − forecast futuro = stock proyectado por semana."
+        f"Stock baseline ({BASELINE_DATE}) − ventas LIVE (desde baseline) "
+        f"+ tránsito (con ETAs) − forecast manual = stock proyectado mensual."
     )
 
     # ---- Cargar fuentes ----
-    with st.spinner("Cargando baseline + live..."):
+    with st.spinner("Cargando baseline + master + live..."):
         df_base = cargar_planif_stock_baseline()
-        df_ventas = cargar_planif_ventas_diarias()
+        df_master = cargar_planif_master()
+        df_ventas = cargar_ventas_live_desde_baseline()  # LIVE direct from Turso ventas
         df_trans = cargar_planif_transito_live()
         df_live = cargar_planif_stock_live()
 
     if df_base.empty:
-        st.error(
-            "No hay baseline cargado. Corre `extract_baseline_planificacion.py` "
-            "para subir el snapshot al 11/05."
-        )
+        st.error("No hay baseline cargado. Corre `extract_baseline_planificacion.py`.")
         st.stop()
+
+    # ---- Normalizar SKU tipos para merge ----
+    for d in (df_base, df_master, df_ventas, df_trans):
+        if not d.empty and 'sku' in d.columns:
+            d['sku'] = d['sku'].astype(str)
 
     # ---- KPIs top ----
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("SKUs baseline", f"{len(df_base):,}")
-    c2.metric("Días ventas acumuladas",
+    c2.metric("Días desde baseline",
               (pd.Timestamp.today().normalize() - pd.Timestamp(BASELINE_DATE)).days)
-    c3.metric("SKUs con venta desde baseline",
+    c3.metric("SKUs con venta (live)",
               f"{df_ventas['sku'].nunique() if not df_ventas.empty else 0:,}")
-    c4.metric("Tránsito vigente (PIs)",
-              f"{df_trans['pi'].nunique() if not df_trans.empty else 0:,}")
+    c4.metric("PIs en tránsito", f"{df_trans['pi'].nunique() if not df_trans.empty else 0:,}")
 
     st.divider()
 
     # ---- Controles ----
     cc1, cc2, cc3 = st.columns([1, 1, 2])
-    horizonte = cc1.slider("Horizonte (semanas)", 4, 24, 12, step=4,
-                            help="Cuántas semanas hacia adelante proyectar")
-    incluir_forecast = cc2.checkbox(
-        "Usar forecast manual", value=False,
-        help="Si no hay forecast cargado, la demanda futura asume 0 (piso conservador)",
+    horizonte = cc1.slider("Horizonte (meses)", 3, 18, 12, step=3)
+    ocultar_sin_stock = cc2.checkbox(
+        "Ocultar SKUs sin stock ni tránsito", value=True,
+        help="No mostrar SKUs con stock_hoy_est ≤ 0 y sin tránsito por venir",
     )
 
-    # Forecast manual: pendiente (vista propia en otra pestaña). Por ahora vacío.
+    # Forecast manual: aún no implementado
     df_forecast = None
-    if incluir_forecast:
-        st.info("Forecast manual aún no implementado — usando demanda futura = 0 igual.")
 
     # ---- Calcular proyección ----
-    with st.spinner(f"Proyectando stock semana 1 a {horizonte}..."):
-        df_proy = proyectar_stock_semanal(
+    with st.spinner(f"Proyectando stock mes 1 a {horizonte}..."):
+        df_proy = proyectar_stock_mensual(
             df_baseline=df_base,
-            df_ventas_diarias=df_ventas,
+            df_ventas=df_ventas,
             df_transito=df_trans,
             df_forecast_manual=df_forecast,
             baseline_date=BASELINE_DATE,
-            horizonte_semanas=horizonte,
+            horizonte_meses=horizonte,
         )
 
     if df_proy.empty:
         st.warning("Sin SKUs para proyectar.")
         st.stop()
 
+    # ---- Enriquecer con master (marca + cat padre + cat hijo) ----
+    if not df_master.empty:
+        cols_master = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'ranking_comercial']
+        cols_present = [c for c in cols_master if c in df_master.columns]
+        # Sobrescribir marca del baseline con la del master (más limpia)
+        df_proy = df_proy.drop(columns=['marca'], errors='ignore').merge(
+            df_master[cols_present].drop_duplicates(subset='sku'),
+            on='sku', how='left',
+        )
+
+    # ---- Marcar quiebre actual (stock_hoy_est ≤ 0 = mes_quiebre 0) ----
+    df_proy.loc[df_proy['stock_hoy_est'] <= 0, 'mes_quiebre'] = df_proy.loc[
+        df_proy['stock_hoy_est'] <= 0, 'mes_quiebre'].fillna(0)
+
+    # ---- Filtrar SKUs muertos (sin actividad) ----
+    # "Sin stock" = sin baseline + sin ventas desde baseline + sin tránsito = SKU inactivo
+    # Mantenemos visibles los en quiebre actual (stock_hoy_est ≤ 0) si tienen actividad
+    if ocultar_sin_stock:
+        mask = (
+            (df_proy['stock_baseline'] > 0)
+            | (df_proy['ventas_acum'] > 0)
+            | (df_proy['transito_pendiente'] > 0)
+            | (df_proy['transito_llegado'] > 0)
+        )
+        df_proy = df_proy[mask].copy()
+
+    # ---- Limpieza marca/categorías para agrupación ----
+    for c in ('marca', 'categoria_padre', 'categoria_hijo'):
+        if c in df_proy.columns:
+            df_proy[c] = df_proy[c].fillna('(sin clasificar)').replace(
+                {'nan': '(sin clasificar)', 'None': '(sin clasificar)', '': '(sin clasificar)'}
+            )
+
     # ---- KPIs proyección ----
     st.markdown("### Resumen proyección")
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("SKUs proyectados", f"{len(df_proy):,}")
-    n_quiebre = int(df_proy['sem_quiebre'].notna().sum())
-    k2.metric("SKUs con quiebre proyectado", f"{n_quiebre:,}",
-              help="Quiebre dentro del horizonte (stock_proyectado < 0)")
-    n_cr = int((df_proy['sem_quiebre'].fillna(99) <= 4).sum())
-    k3.metric("🔴 Quiebre < 4 semanas", f"{n_cr:,}")
-    n_ur = int((df_proy['sem_quiebre'].fillna(99).between(5, 8)).sum())
-    k4.metric("🟠 Quiebre 5-8 semanas", f"{n_ur:,}")
+    k1.metric("SKUs activos", f"{len(df_proy):,}")
+    n_quiebre = int(df_proy['mes_quiebre'].notna().sum())
+    k2.metric("Quiebre proyectado", f"{n_quiebre:,}",
+              help="SKUs que cruzan stock < 0 dentro del horizonte")
+    n_cr = int((df_proy['mes_quiebre'].fillna(99) <= 1).sum())
+    k3.metric("🔴 Quiebre YA o mes 1", f"{n_cr:,}",
+              help="Mes 0 = ya en quiebre (stock hoy ≤ 0). Mes 1 = quiebre proyectado en el mes 1.")
+    n_ur = int((df_proy['mes_quiebre'].fillna(99).between(2, 3)).sum())
+    k4.metric("🟠 Quiebre mes 2-3", f"{n_ur:,}")
 
     st.divider()
 
-    # ---- Filtros ----
-    f1, f2, f3 = st.columns([1, 1, 2])
-    marcas = ['(todas)'] + sorted(df_proy['marca'].dropna().unique().tolist())
-    marca_sel = f1.selectbox("Marca", marcas)
-    solo_quiebre = f2.checkbox("Solo SKUs con quiebre proyectado", value=False)
-    busqueda = f3.text_input("Buscar SKU / producto", placeholder="Texto libre")
+    # ---- Tabs: SKU detalle / Agrupación ----
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📋 Por SKU",
+        "🏷️ Por Marca",
+        "📂 Marca → Cat Padre",
+        "📁 Marca → Cat Padre → Cat Hijo",
+    ])
 
-    view = df_proy.copy()
-    if marca_sel != '(todas)':
-        view = view[view['marca'] == marca_sel]
-    if solo_quiebre:
-        view = view[view['sem_quiebre'].notna()]
-    if busqueda:
-        q = busqueda.lower()
-        view = view[
-            view['sku'].astype(str).str.lower().str.contains(q, na=False)
-            | view['producto'].astype(str).str.lower().str.contains(q, na=False)
-        ]
-
-    # Ordenar por urgencia (sem_quiebre ASC, NaN al final)
-    view = view.sort_values('sem_quiebre', na_position='last')
-
-    st.markdown(f"### Tabla por SKU ({len(view):,} de {len(df_proy):,})")
-    st.caption("Stock baseline = foto al 11/05. Stock sem N = proyección al final de la semana N.")
-
-    # Estilos: gradiente rojo (negativos) → amarillo (bajos) → verde (positivos)
-    semana_cols = [c for c in view.columns if c.startswith('stock_sem_')]
-    column_config = {
-        'sku': st.column_config.TextColumn('SKU', width='small'),
-        'marca': st.column_config.TextColumn('Marca', width='small'),
-        'producto': st.column_config.TextColumn('Producto', width='medium'),
+    mes_cols = [f'stock_mes_{i}' for i in range(1, horizonte + 1)]
+    column_config_base = {
         'stock_baseline': st.column_config.NumberColumn('Stock 11/05', format='%.0f'),
-        'ventas_acum': st.column_config.NumberColumn('Ventas acum', format='%.0f'),
+        'ventas_acum': st.column_config.NumberColumn('Ventas LIVE', format='%.0f'),
         'transito_llegado': st.column_config.NumberColumn('Trán llegado', format='%.0f'),
-        'stock_hoy_est': st.column_config.NumberColumn('Stock hoy est.', format='%.0f',
-                                                       help='baseline − ventas + tránsito_llegado'),
+        'stock_hoy_est': st.column_config.NumberColumn('Stock hoy', format='%.0f'),
         'transito_pendiente': st.column_config.NumberColumn('Trán pendiente', format='%.0f'),
-        'forecast_total': st.column_config.NumberColumn('Forecast total', format='%.0f'),
-        'sem_quiebre': st.column_config.NumberColumn('Sem quiebre', format='%.0f',
-                                                      help='Primera semana con stock proyectado < 0'),
+        'forecast_total': st.column_config.NumberColumn('Fcst total', format='%.0f'),
+        'mes_quiebre': st.column_config.NumberColumn('Mes quiebre', format='%.0f'),
     }
-    for c in semana_cols:
-        w = c.replace('stock_sem_', '')
-        column_config[c] = st.column_config.NumberColumn(f'Sem +{w}', format='%.0f')
+    for c in mes_cols:
+        w = c.replace('stock_mes_', '')
+        column_config_base[c] = st.column_config.NumberColumn(f'Mes +{w}', format='%.0f')
 
-    # Aplicar styling con gradiente en cols de proyección
-    try:
-        sty = view.style.background_gradient(
-            cmap='RdYlGn', subset=semana_cols, vmin=-50, vmax=200,
-        ).format({c: '{:,.0f}' for c in (['stock_baseline', 'ventas_acum',
-                                          'transito_llegado', 'stock_hoy_est',
-                                          'transito_pendiente', 'forecast_total']
-                                          + semana_cols)})
-        st.dataframe(sty, use_container_width=True, hide_index=True,
-                     column_config=column_config, height=600)
-    except Exception:
-        # Fallback sin styling si falla
-        st.dataframe(view, use_container_width=True, hide_index=True,
-                     column_config=column_config, height=600)
+    # ---- Tab 1: por SKU ----
+    with tab1:
+        # Filtros
+        f1, f2, f3 = st.columns([1, 1, 2])
+        marcas = ['(todas)'] + sorted(df_proy['marca'].dropna().unique().tolist())
+        marca_sel = f1.selectbox("Marca", marcas, key='sku_marca')
+        solo_quiebre = f2.checkbox("Solo SKUs con quiebre", value=False, key='sku_quiebre')
+        busqueda = f3.text_input("Buscar SKU / producto", placeholder="texto libre", key='sku_buscar')
 
-    # ---- Download ----
-    st.download_button(
-        "⬇️ Descargar proyección CSV",
-        data=view.to_csv(index=False).encode('utf-8'),
-        file_name=f"triada_proyectada_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
-        mime='text/csv',
-    )
+        view = df_proy.copy()
+        if marca_sel != '(todas)':
+            view = view[view['marca'] == marca_sel]
+        if solo_quiebre:
+            view = view[view['mes_quiebre'].notna()]
+        if busqueda:
+            q = busqueda.lower()
+            view = view[
+                view['sku'].astype(str).str.lower().str.contains(q, na=False)
+                | view['producto'].astype(str).str.lower().str.contains(q, na=False)
+            ]
+        view = view.sort_values('stock_hoy_est', ascending=False)
 
-    # ---- Validación baseline contra live ----
-    st.divider()
-    with st.expander("🔍 Validación baseline vs stock live", expanded=False):
-        if df_live.empty:
-            st.warning("No hay stock_live cargado. Corre `sync_planificacion.py` o "
-                        "espera al cron de 06:00 AM.")
+        st.markdown(f"**{len(view):,} de {len(df_proy):,} SKUs** (ordenado por stock hoy desc)")
+        col_config_sku = dict(column_config_base)
+        col_config_sku.update({
+            'sku': st.column_config.TextColumn('SKU', width='small'),
+            'marca': st.column_config.TextColumn('Marca', width='small'),
+            'categoria_padre': st.column_config.TextColumn('Cat Padre', width='small'),
+            'categoria_hijo': st.column_config.TextColumn('Cat Hijo', width='small'),
+            'producto': st.column_config.TextColumn('Producto', width='medium'),
+        })
+        # Reordenar para mostrar categorías junto a marca
+        cols_show = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'producto',
+                     'stock_baseline', 'ventas_acum', 'transito_llegado',
+                     'stock_hoy_est', 'transito_pendiente', 'forecast_total',
+                     'mes_quiebre'] + mes_cols
+        cols_show = [c for c in cols_show if c in view.columns]
+        try:
+            sty = view[cols_show].style.background_gradient(
+                cmap='RdYlGn', subset=[c for c in mes_cols if c in cols_show],
+                vmin=-50, vmax=500,
+            )
+            st.dataframe(sty, use_container_width=True, hide_index=True,
+                         column_config=col_config_sku, height=600)
+        except Exception:
+            st.dataframe(view[cols_show], use_container_width=True, hide_index=True,
+                         column_config=col_config_sku, height=600)
+
+        st.download_button(
+            "⬇️ Descargar CSV",
+            data=view[cols_show].to_csv(index=False).encode('utf-8'),
+            file_name=f"triada_proyectada_sku_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
+            mime='text/csv', key='dl_sku',
+        )
+
+    # ---- Tab 2: por Marca ----
+    with tab2:
+        g = _agrupar(df_proy, ['marca'], horizonte)
+        st.markdown(f"**{len(g):,} marcas activas** (ordenadas por stock hoy desc)")
+        col_config_g = dict(column_config_base)
+        col_config_g['marca'] = st.column_config.TextColumn('Marca', width='medium')
+        col_config_g['n_skus'] = st.column_config.NumberColumn('SKUs', format='%d')
+        try:
+            sty = g.style.background_gradient(cmap='RdYlGn', subset=mes_cols, vmin=-100, vmax=2000)
+            st.dataframe(sty, use_container_width=True, hide_index=True,
+                         column_config=col_config_g, height=600)
+        except Exception:
+            st.dataframe(g, use_container_width=True, hide_index=True,
+                         column_config=col_config_g, height=600)
+
+    # ---- Tab 3: Marca → Cat Padre ----
+    with tab3:
+        if 'categoria_padre' not in df_proy.columns:
+            st.warning("Sin columna categoria_padre disponible (master no cargado).")
         else:
-            # Comparar: stock_baseline − ventas_acum ≈ stock_live
-            df_val = df_proy[['sku', 'stock_baseline', 'ventas_acum', 'stock_hoy_est']].copy()
+            g = _agrupar(df_proy, ['marca', 'categoria_padre'], horizonte)
+            st.markdown(f"**{len(g):,} grupos Marca × Cat Padre** (ordenado por stock hoy desc)")
+            col_config_g = dict(column_config_base)
+            col_config_g.update({
+                'marca': st.column_config.TextColumn('Marca', width='small'),
+                'categoria_padre': st.column_config.TextColumn('Cat Padre', width='medium'),
+                'n_skus': st.column_config.NumberColumn('SKUs', format='%d'),
+            })
+            try:
+                sty = g.style.background_gradient(cmap='RdYlGn', subset=mes_cols, vmin=-50, vmax=1000)
+                st.dataframe(sty, use_container_width=True, hide_index=True,
+                             column_config=col_config_g, height=600)
+            except Exception:
+                st.dataframe(g, use_container_width=True, hide_index=True,
+                             column_config=col_config_g, height=600)
+
+    # ---- Tab 4: Marca → Cat Padre → Cat Hijo ----
+    with tab4:
+        if 'categoria_hijo' not in df_proy.columns:
+            st.warning("Sin columna categoria_hijo disponible (master no cargado).")
+        else:
+            g = _agrupar(df_proy, ['marca', 'categoria_padre', 'categoria_hijo'], horizonte)
+            st.markdown(f"**{len(g):,} grupos Marca × Cat Padre × Cat Hijo**")
+            col_config_g = dict(column_config_base)
+            col_config_g.update({
+                'marca': st.column_config.TextColumn('Marca', width='small'),
+                'categoria_padre': st.column_config.TextColumn('Cat Padre', width='small'),
+                'categoria_hijo': st.column_config.TextColumn('Cat Hijo', width='medium'),
+                'n_skus': st.column_config.NumberColumn('SKUs', format='%d'),
+            })
+            try:
+                sty = g.style.background_gradient(cmap='RdYlGn', subset=mes_cols, vmin=-30, vmax=500)
+                st.dataframe(sty, use_container_width=True, hide_index=True,
+                             column_config=col_config_g, height=600)
+            except Exception:
+                st.dataframe(g, use_container_width=True, hide_index=True,
+                             column_config=col_config_g, height=600)
+
+    # ---- Validación expandible ----
+    st.divider()
+    with st.expander("🔍 Validación baseline vs stock live (Odoo)", expanded=False):
+        if df_live.empty:
+            st.warning("No hay stock_live cargado. Corre sync o espera cron 06:00 AM.")
+        else:
+            df_val = df_proy[['sku', 'marca', 'stock_baseline', 'ventas_acum', 'stock_hoy_est']].copy()
             df_val = df_val.merge(
                 df_live[['sku', 'stock_total']].rename(columns={'stock_total': 'stock_live'}),
                 on='sku', how='left',
             )
             df_val['stock_live'] = df_val['stock_live'].fillna(0)
             df_val['gap'] = df_val['stock_hoy_est'] - df_val['stock_live']
-            df_val['gap_pct'] = df_val.apply(
-                lambda r: (r['gap'] / r['stock_baseline'] * 100) if r['stock_baseline'] > 0 else None,
-                axis=1,
-            )
-
-            n_match = int((df_val['gap'].abs() < 1).sum())
-            n_diff = len(df_val) - n_match
-            top_gap = df_val[df_val['gap'].abs() > 5].nlargest(20, 'gap', keep='all')
 
             v1, v2, v3 = st.columns(3)
-            v1.metric("SKUs OK (gap < 1)", f"{n_match:,}")
-            v2.metric("SKUs con gap > 1", f"{n_diff:,}")
+            v1.metric("SKUs match (gap < 1)", f"{int((df_val['gap'].abs() < 1).sum()):,}")
+            v2.metric("SKUs con gap", f"{int((df_val['gap'].abs() >= 1).sum()):,}")
             v3.metric("Gap absoluto total", f"{df_val['gap'].abs().sum():,.0f}")
 
-            st.caption("Top 20 SKUs con mayor gap absoluto:")
-            st.dataframe(top_gap, use_container_width=True, hide_index=True)
-
+            top_gap = df_val[df_val['gap'].abs() > 5].copy()
+            top_gap['abs_gap'] = top_gap['gap'].abs()
+            st.caption("Top 30 SKUs con mayor gap:")
+            st.dataframe(top_gap.nlargest(30, 'abs_gap').drop(columns='abs_gap'),
+                         use_container_width=True, hide_index=True)
             st.info(
-                "💡 Gap = stock_baseline − ventas_acum − stock_live. Si es positivo, "
-                "el live tiene MENOS unidades de lo esperado por la triada (movimientos "
-                "no contabilizados, mermas, ajustes Odoo). Si es negativo, el live tiene "
-                "MÁS unidades (compras recibidas no en tránsito o bodegas no mapeadas)."
+                "Gap = stock_hoy_est − stock_live. Positivo = live tiene menos unidades "
+                "(movimientos no contabilizados). Negativo = live tiene más (bodegas "
+                "no mapeadas o compras recibidas no tracked en tránsito)."
             )
