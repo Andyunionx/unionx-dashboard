@@ -1,0 +1,37 @@
+{
+  "fecha_ejecucion": "2026-05-14T10:12:10",
+  "canales": [
+    "Sawa",
+    "El Volcan"
+  ],
+  "rango": {
+    "desde": "2026-04-01",
+    "hasta_excl": "2026-05-01"
+  },
+  "turso": {
+    "filas_eliminadas_previo": 0,
+    "filas_insertadas": 237
+  },
+  "parquet": {
+    "filas_pre": 397858,
+    "filas_post_clean": 397858,
+    "filas_final": 398095,
+    "filas_agregadas": 237
+  },
+  "resumen_por_canal": [
+    {
+      "canal": "El Volcan",
+      "filas": 165,
+      "uds": 231.0,
+      "venta_bruta": 6083186.8,
+      "margen_front": 3064647.430161265
+    },
+    {
+      "canal": "Sawa",
+      "filas": 72,
+      "uds": 89.0,
+      "venta_bruta": 2653262.08,
+      "margen_front": 1204408.8977250885
+    }
+  ]
+}
