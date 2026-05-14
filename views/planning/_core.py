@@ -394,6 +394,138 @@ def detectar_drift_categorias(df_metricas: pd.DataFrame, top_pct: float = 0.20) 
                'score']].rename(columns={'categoria_comercial': 'categoria_actual'})
 
 
+def proyectar_stock_semanal(
+    df_baseline: pd.DataFrame,
+    df_ventas_diarias: pd.DataFrame,
+    df_transito: pd.DataFrame,
+    df_forecast_manual: pd.DataFrame | None = None,
+    baseline_date: str = '2026-05-11',
+    horizonte_semanas: int = 12,
+) -> pd.DataFrame:
+    """Proyecta el stock por SKU × semana desde la baseline hasta el horizonte.
+
+    Fórmula por semana t (desde baseline_date):
+      stock_proy(t) = stock_baseline
+                    - ventas_reales(baseline → min(hoy, t))
+                    - forecast_manual(max(hoy, baseline) → t)
+                    + tránsito_llegadas(baseline → t)
+
+    Args:
+        df_baseline: planif_stock_baseline (cols sku, stock_total, ...)
+        df_ventas_diarias: planif_ventas_diarias_sku (cols sku, fecha, unidades)
+        df_transito: planif_transito_live (cols sku, cantidad, fecha_eta_bodega)
+        df_forecast_manual: opcional, cols [sku, fecha, unidades] (demanda futura)
+        baseline_date: fecha del baseline (string YYYY-MM-DD)
+        horizonte_semanas: cuántas semanas hacia adelante proyectar
+
+    Returns:
+        DataFrame con cols [sku, marca, producto, stock_baseline,
+                            ventas_acum, transito_pendiente,
+                            stock_sem_1, stock_sem_2, ..., stock_sem_N,
+                            semana_quiebre, dias_hasta_quiebre]
+    """
+    if df_baseline.empty:
+        return pd.DataFrame()
+
+    hoy = pd.Timestamp.today().normalize()
+    base_ts = pd.Timestamp(baseline_date)
+
+    # Stock baseline por SKU (usar stock_total — incluye bodega ppal+full+tiendas+reserva)
+    stock_ini = df_baseline.set_index('sku')['stock_total'].fillna(0).astype(float)
+
+    # Ventas acumuladas desde baseline hasta hoy (ya en Turso planif_ventas_diarias_sku)
+    ventas_acum = pd.Series(dtype=float)
+    if not df_ventas_diarias.empty:
+        v = df_ventas_diarias.copy()
+        v['fecha'] = pd.to_datetime(v['fecha'], errors='coerce')
+        v = v[(v['fecha'] >= base_ts) & (v['fecha'] <= hoy)]
+        ventas_acum = v.groupby('sku')['unidades'].sum().astype(float)
+
+    # Forecast manual por semana (si existe)
+    forecast_sem = {}  # {(sku, semana_num): unidades}
+    if df_forecast_manual is not None and not df_forecast_manual.empty:
+        f = df_forecast_manual.copy()
+        f['fecha'] = pd.to_datetime(f['fecha'], errors='coerce')
+        # Agrupar por semana relativa a hoy
+        for _, r in f.iterrows():
+            sem_num = ((r['fecha'] - hoy).days // 7) + 1
+            if 1 <= sem_num <= horizonte_semanas:
+                key = (r['sku'], sem_num)
+                forecast_sem[key] = forecast_sem.get(key, 0) + r['unidades']
+
+    # Tránsito: ETAs por semana relativa
+    transito_sem = {}  # {(sku, semana_num): unidades}
+    if not df_transito.empty:
+        t = df_transito.copy()
+        t['_eta'] = t['fecha_eta_bodega'].fillna(t.get('fecha_eta_chile'))
+        t = t.dropna(subset=['_eta', 'cantidad'])
+        for _, r in t.iterrows():
+            eta = pd.Timestamp(r['_eta']).normalize()
+            if eta < base_ts:
+                continue  # ya llegó antes del baseline
+            sem_num = ((eta - hoy).days // 7) + 1
+            sem_num = max(0, sem_num)  # llegadas anteriores a "hoy" cuentan en sem 0
+            if sem_num <= horizonte_semanas:
+                key = (r['sku'], sem_num)
+                transito_sem[key] = transito_sem.get(key, 0) + r['cantidad']
+
+    # Construir proyección por SKU
+    skus = sorted(set(stock_ini.index)
+                  | set(ventas_acum.index)
+                  | {k[0] for k in forecast_sem}
+                  | {k[0] for k in transito_sem})
+
+    rows = []
+    for sku in skus:
+        s_base = float(stock_ini.get(sku, 0))
+        v_acum = float(ventas_acum.get(sku, 0))
+        # Tránsito ya llegado (sem 0) suma al stock disponible hoy
+        t_sem0 = transito_sem.get((sku, 0), 0)
+        # Stock "hoy" estimado = baseline - ventas + tránsito_ya_llegado
+        stock_hoy = s_base - v_acum + t_sem0
+
+        # Proyección semana a semana
+        stocks = []
+        s = stock_hoy
+        for w in range(1, horizonte_semanas + 1):
+            f_w = forecast_sem.get((sku, w), 0)
+            t_w = transito_sem.get((sku, w), 0)
+            s = s - f_w + t_w
+            stocks.append(s)
+
+        # Semana de quiebre (primer w con stock < 0)
+        sem_quiebre = next((i + 1 for i, x in enumerate(stocks) if x < 0), None)
+
+        row = {
+            'sku': sku,
+            'stock_baseline': s_base,
+            'ventas_acum': v_acum,
+            'transito_llegado': t_sem0,
+            'stock_hoy_est': stock_hoy,
+            'transito_pendiente': sum(transito_sem.get((sku, w), 0) for w in range(1, horizonte_semanas + 1)),
+            'forecast_total': sum(forecast_sem.get((sku, w), 0) for w in range(1, horizonte_semanas + 1)),
+            'sem_quiebre': sem_quiebre,
+        }
+        for i, s_w in enumerate(stocks, start=1):
+            row[f'stock_sem_{i}'] = s_w
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+
+    # Enriquecer con marca/producto desde baseline
+    info = df_baseline[['sku', 'marca', 'producto']].drop_duplicates(subset='sku')
+    df = df.merge(info, on='sku', how='left')
+
+    # Reordenar columnas
+    semana_cols = [f'stock_sem_{i}' for i in range(1, horizonte_semanas + 1)]
+    cols_order = (['sku', 'marca', 'producto', 'stock_baseline', 'ventas_acum',
+                   'transito_llegado', 'stock_hoy_est', 'transito_pendiente',
+                   'forecast_total', 'sem_quiebre'] + semana_cols)
+    return df[[c for c in cols_order if c in df.columns]]
+
+
 def detectar_sobrestock(df_triada: pd.DataFrame, df_politicas: pd.DataFrame) -> pd.DataFrame:
     """SKUs con cobertura > política máxima (candidatos a liquidación)."""
     if df_triada.empty or df_politicas.empty:
