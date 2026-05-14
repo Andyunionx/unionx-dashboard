@@ -194,6 +194,29 @@ def cargar_planif_transito_baseline(snapshot_date: str = BASELINE_DATE) -> pd.Da
 
 
 @st.cache_data(ttl=300, show_spinner=False)
+def cargar_ventas_live_desde_baseline(baseline_date: str = BASELINE_DATE) -> pd.DataFrame:
+    """Ventas LIVE desde Turso `ventas` agregadas por SKU × día desde baseline.
+
+    A diferencia de `cargar_planif_ventas_diarias` (que lee la tabla pre-agregada
+    por el cron diario), esta función va directo a `ventas` (live cada hora) y
+    agrega on-the-fly. Cache 5 min.
+    """
+    try:
+        return _turso_df(
+            "SELECT sku, fecha_venta AS fecha, "
+            "SUM(COALESCE(cantidad,0)) AS unidades, "
+            "SUM(COALESCE(venta_bruta,0)) AS venta_neta, "
+            "SUM(COALESCE(margen_front,0)) AS margen_front "
+            "FROM ventas WHERE fecha_venta >= ? AND sku IS NOT NULL AND sku != '' "
+            "GROUP BY sku, fecha_venta",
+            [baseline_date],
+        )
+    except Exception as e:
+        st.warning(f"No pude leer ventas live: {e}")
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=300, show_spinner=False)
 def cargar_planif_ventas_diarias() -> pd.DataFrame:
     """Ventas reales agregadas SKU × día (desde 11/05). Sync diario."""
     try:
