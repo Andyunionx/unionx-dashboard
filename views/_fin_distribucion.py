@@ -35,6 +35,7 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 COSTO_OP_PARQUET = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
 VENTAS_PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
+PYL_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "pyl_mensual.parquet"
 
 
 # ============================================================
@@ -96,8 +97,14 @@ def cargar_costos_operativos(year: int, meses: list[int] | None = None,
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def cargar_ventas_canal_ln(year: int, meses: list[int] | None = None) -> pd.DataFrame:
-    """Devuelve por (canal, tipo_negocio): n_pedidos, n_unidades, venta_neta."""
+def cargar_ventas_canal_ln(year: int, meses: list[int] | None = None,
+                            canales: list[str] | None = None,
+                            kams: list[str] | None = None,
+                            tipos_negocio: list[str] | None = None) -> pd.DataFrame:
+    """Devuelve por (canal, tipo_negocio, kam): n_pedidos, n_unidades, venta_neta.
+
+    Filtros opcionales para alinear con los del KAM.
+    """
     if not VENTAS_PARQUET.exists():
         return pd.DataFrame()
     df = pd.read_parquet(VENTAS_PARQUET)
@@ -110,17 +117,92 @@ def cargar_ventas_canal_ln(year: int, meses: list[int] | None = None) -> pd.Data
     if f.empty:
         return pd.DataFrame()
 
-    # Limpiar tipo_negocio vacío
+    # Limpiar campos vacíos
     f["tipo_negocio"] = f["tipo_negocio"].fillna("(sin clasif)").replace("", "(sin clasif)")
     f["canal"] = f["canal"].fillna("(sin canal)").replace("", "(sin canal)")
+    if "kam" in f.columns:
+        f["kam"] = f["kam"].fillna("(sin KAM)").replace("", "(sin KAM)")
 
-    agg = f.groupby(["canal", "tipo_negocio"], as_index=False).agg(
+    # Aplicar filtros opcionales
+    if canales:
+        f = f[f["canal"].isin(canales)]
+    if kams and "kam" in f.columns:
+        f = f[f["kam"].isin(kams)]
+    if tipos_negocio:
+        f = f[f["tipo_negocio"].isin(tipos_negocio)]
+    if f.empty:
+        return pd.DataFrame()
+
+    group_cols = ["canal", "tipo_negocio"]
+    if "kam" in f.columns:
+        group_cols.append("kam")
+
+    agg = f.groupby(group_cols, as_index=False).agg(
         n_pedidos=("pedido", "nunique"),
         n_unidades=("cantidad", "sum"),
         venta_neta=("venta_neta", "sum"),
     )
     agg = agg[agg["venta_neta"] > 0].copy()
     return agg
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_gav(year: int, meses: list[int] | None = None) -> float:
+    """Lee la línea 'Gastos de Administración y Venta' del P&L para el período.
+
+    Retorna el monto en valor POSITIVO (gasto), en miles de CLP (M$) según
+    cómo está almacenado en el parquet.
+    """
+    if not PYL_PARQUET.exists():
+        return 0.0
+    df = pd.read_parquet(PYL_PARQUET)
+    f = df[
+        (df["year"] == year) &
+        (df["linea"].str.contains("Gastos de Administración y Venta",
+                                   regex=False, na=False))
+    ].copy()
+    if meses:
+        f = f[f["month"].isin(meses)]
+    if f.empty:
+        return 0.0
+    return float(abs(f["valor"].sum()))
+
+
+def distribuir_monto_a_dimension(
+    monto: float,
+    df_ventas: pd.DataFrame,
+    driver: str,
+    dimension: str = "canal",
+) -> dict:
+    """Distribuye un monto único a la dimensión elegida usando un driver.
+
+    dimension: "canal" | "tipo_negocio" | "kam"
+    Retorna: {valor_dimension: monto_asignado}.
+    """
+    if df_ventas.empty or monto <= 0:
+        return {}
+    if dimension not in df_ventas.columns:
+        return {}
+
+    if driver == "pedidos":
+        col = "n_pedidos"
+    elif driver == "unidades":
+        col = "n_unidades"
+    elif driver == "venta":
+        col = "venta_neta"
+    elif driver == "equitativo":
+        valores = df_ventas[dimension].unique()
+        n = len(valores)
+        return {v: monto / n for v in valores} if n > 0 else {}
+    else:
+        col = "venta_neta"
+
+    agg = df_ventas.groupby(dimension)[col].sum()
+    total = agg.sum()
+    if total <= 0:
+        n = len(agg)
+        return {v: monto / n for v in agg.index} if n > 0 else {}
+    return {v: monto * (agg[v] / total) for v in agg.index}
 
 
 # ============================================================

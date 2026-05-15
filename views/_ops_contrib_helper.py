@@ -214,3 +214,122 @@ def contribucion_por_canal(year: int, meses: list[int] | None = None) -> pd.Data
     )
     agg = agg.sort_values("venta", ascending=False)
     return agg
+
+
+# ============================================================
+# FUNCIONES MULTI-DIMENSIÓN (filtros + agrupaciones flexibles)
+# ============================================================
+def _aplicar_filtros(df: pd.DataFrame, year: int | None = None,
+                     meses: list[int] | None = None,
+                     canales: list[str] | None = None,
+                     kams: list[str] | None = None,
+                     tipos_negocio: list[str] | None = None,
+                     trimestres: list[int] | None = None) -> pd.DataFrame:
+    """Aplica filtros multi-dimensión al DataFrame KAM."""
+    f = df.copy()
+    if year is not None:
+        f = f[f["year"] == year]
+    if meses:
+        f = f[f["month"].isin(meses)]
+    if trimestres and "trimestre" in f.columns:
+        tr_str = [f"Q{t}" if isinstance(t, int) else str(t) for t in trimestres]
+        tr_num = [str(t) for t in trimestres]
+        f = f[f["trimestre"].astype(str).isin(tr_str + tr_num)]
+    if canales:
+        f = f[f["canal"].isin(canales)]
+    if kams and "kam" in f.columns:
+        f = f[f["kam"].isin(kams)]
+    if tipos_negocio and "tipo_negocio" in f.columns:
+        f = f[f["tipo_negocio"].isin(tipos_negocio)]
+    return f
+
+
+def contribucion_filtrada(year: int | None = None,
+                          meses: list[int] | None = None,
+                          canales: list[str] | None = None,
+                          kams: list[str] | None = None,
+                          tipos_negocio: list[str] | None = None,
+                          trimestres: list[int] | None = None,
+                          desglose_por: str = "canal") -> pd.DataFrame:
+    """Aplica filtros y agrupa por la dimensión `desglose_por`.
+
+    desglose_por: una de {"canal", "kam", "tipo_negocio"}.
+
+    Retorna DataFrame con columnas:
+      [<desglose_por>, venta, costo, margen_dir, comisiones, contribucion, mc_pct]
+    """
+    df = cargar_contribucion_kam()
+    if df.empty:
+        return pd.DataFrame()
+
+    f = _aplicar_filtros(df, year, meses, canales, kams, tipos_negocio, trimestres)
+    if f.empty:
+        return pd.DataFrame()
+
+    if desglose_por not in f.columns:
+        return pd.DataFrame()
+
+    agg = f.groupby(desglose_por, as_index=False).agg(
+        venta=("Venta REAL KAM", "sum"),
+        costo=("Costo Venta KAM", "sum"),
+        margen_dir=("Margen Directo KAM", "sum"),
+        comisiones=("Total Comisiones KAM", "sum"),
+        contribucion=("resultado_contrib", "sum"),
+    )
+    agg["mc_pct"] = agg.apply(
+        lambda r: (r["contribucion"] / r["venta"] * 100) if r["venta"] else 0,
+        axis=1,
+    )
+    return agg.sort_values("venta", ascending=False)
+
+
+def contribucion_total(year: int | None = None,
+                       meses: list[int] | None = None,
+                       canales: list[str] | None = None,
+                       kams: list[str] | None = None,
+                       tipos_negocio: list[str] | None = None,
+                       trimestres: list[int] | None = None) -> dict:
+    """Totales consolidados con filtros aplicados."""
+    df = cargar_contribucion_kam()
+    if df.empty:
+        return {}
+    f = _aplicar_filtros(df, year, meses, canales, kams, tipos_negocio, trimestres)
+    if f.empty:
+        return {}
+    venta = float(f["Venta REAL KAM"].sum())
+    contrib = float(f["resultado_contrib"].sum())
+    return {
+        "venta": venta,
+        "costo": float(f["Costo Venta KAM"].sum()),
+        "margen_dir": float(f["Margen Directo KAM"].sum()),
+        "comisiones": float(f["Total Comisiones KAM"].sum()),
+        "contribucion": contrib,
+        "mc_pct": (contrib / venta * 100) if venta else 0,
+        "n_filas": len(f),
+    }
+
+
+def dimensiones_disponibles(year: int | None = None) -> dict:
+    """Devuelve listas de valores disponibles para los selectores.
+
+    Returns dict con: anios, meses, trimestres, canales, kams, tipos_negocio.
+    """
+    df = cargar_contribucion_kam()
+    if df.empty:
+        return {"canales": [], "kams": [], "tipos_negocio": [],
+                "anios": [], "meses": [], "trimestres": []}
+
+    f = df if year is None else df[df["year"] == year]
+
+    return {
+        "anios":         sorted(df["year"].unique().tolist()) if "year" in df.columns else [],
+        "meses":         sorted(f["month"].unique().tolist()) if "month" in f.columns else [],
+        "trimestres":    sorted(f["trimestre"].astype(str).unique().tolist())
+                          if "trimestre" in f.columns else [],
+        "canales":       sorted(f["canal"].dropna().unique().tolist())
+                          if "canal" in f.columns else [],
+        "kams":          sorted(f["kam"].dropna().unique().tolist())
+                          if "kam" in f.columns else [],
+        "tipos_negocio": sorted(f["tipo_negocio"].dropna().unique().tolist())
+                          if "tipo_negocio" in f.columns else [],
+    }
