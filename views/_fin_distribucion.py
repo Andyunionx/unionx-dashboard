@@ -137,6 +137,34 @@ def cargar_costos_operativos(year: int, meses: list[int] | None = None,
 
 
 @st.cache_data(ttl=600, show_spinner=False)
+def cargar_costos_op_mensual(year: int, meses: list[int] | None = None) -> pd.DataFrame:
+    """Devuelve costos por (sub_area, centro_costo, cuenta_analitica,
+    tipo_costo, escenario, month) en CLP enteros (positivos).
+
+    A diferencia de `cargar_costos_operativos()`, NO agrega meses ni
+    escenario — útil para construir tablas mensuales PPTO vs FCST.
+    """
+    if not COSTO_OP_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(COSTO_OP_PARQUET)
+    df = df[(df["year"] == year) & (df["kpi"] == "GASTO")].copy()
+    if meses:
+        df = df[df["month"].isin(meses)]
+    if df.empty:
+        return pd.DataFrame()
+
+    # Mantener PPTO y FCST. Convertir a positivo + CLP enteros (parquet en miles)
+    df["valor_pos"] = df["valor"].abs() * 1000
+
+    group_cols = ["sub_area", "centro_costo", "tipo_costo", "escenario", "month"]
+    if "cuenta_analitica" in df.columns:
+        group_cols.insert(2, "cuenta_analitica")
+
+    agg = df.groupby(group_cols, as_index=False).agg(monto=("valor_pos", "sum"))
+    return agg
+
+
+@st.cache_data(ttl=600, show_spinner=False)
 def cargar_ventas_canal_ln(year: int, meses: list[int] | None = None,
                             canales: list[str] | None = None,
                             kams: list[str] | None = None,
@@ -184,6 +212,93 @@ def cargar_ventas_canal_ln(year: int, meses: list[int] | None = None,
     )
     agg = agg[agg["venta_neta"] > 0].copy()
     return agg
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_ventas_canal_ln_mensual(year: int, meses: list[int] | None = None) -> pd.DataFrame:
+    """Versión mensual: mantiene `month` en el groupby para calcular pesos
+    por mes específico. Se usa para distribuir costos OP de cada mes."""
+    if not VENTAS_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(VENTAS_PARQUET)
+    df["fecha_venta"] = pd.to_datetime(df["fecha_venta"], errors="coerce")
+    df["year"] = df["fecha_venta"].dt.year
+    df["month"] = df["fecha_venta"].dt.month
+    f = df[df["year"] == year].copy()
+    if meses:
+        f = f[f["month"].isin(meses)]
+    if f.empty:
+        return pd.DataFrame()
+
+    f["tipo_negocio"] = f["tipo_negocio"].fillna("(sin clasif)").replace("", "(sin clasif)")
+    f["canal"] = f["canal"].fillna("(sin canal)").replace("", "(sin canal)")
+    if "kam" in f.columns:
+        f["kam"] = f["kam"].fillna("(sin KAM)").replace("", "(sin KAM)")
+
+    group_cols = ["month", "canal", "tipo_negocio"]
+    if "kam" in f.columns:
+        group_cols.append("kam")
+
+    agg = f.groupby(group_cols, as_index=False).agg(
+        n_pedidos=("pedido", "nunique"),
+        n_unidades=("cantidad", "sum"),
+        venta_neta=("venta_neta", "sum"),
+    )
+    agg = agg[agg["venta_neta"] > 0].copy()
+    return agg
+
+
+def distribuir_costos_mensual_a_canal(
+    df_costos_mensual: pd.DataFrame,
+    df_ventas_mensual: pd.DataFrame,
+    canal_objetivo: str,
+    driver_override: dict | None = None,
+) -> pd.DataFrame:
+    """Para CADA fila de df_costos_mensual (mes × CC × cuenta_analitica ×
+    escenario), calcula la porción asignada al canal_objetivo según el
+    driver del CC y los pesos del mes correspondiente.
+
+    Retorna DataFrame con cols:
+      [sub_area, centro_costo, cuenta_analitica, tipo_costo, escenario,
+       month, monto_canal, driver, monto_total]
+
+    `monto_canal` = cuánto del CC se asigna al canal_objetivo en ese mes.
+    `monto_total` = total del CC en el mes (info para ratio).
+    """
+    if df_costos_mensual.empty or df_ventas_mensual.empty:
+        return pd.DataFrame()
+
+    overrides = driver_override or {}
+    rows = []
+
+    for _, c in df_costos_mensual.iterrows():
+        cc = c["centro_costo"]
+        driver = overrides.get(cc, driver_default(cc))
+        mes = c["month"]
+
+        # Pesos del MES específico
+        v_mes = df_ventas_mensual[df_ventas_mensual["month"] == mes]
+        if v_mes.empty:
+            peso_canal = 0
+        else:
+            asig = distribuir_monto_a_dimension(
+                c["monto"], v_mes, driver, dimension="canal",
+            )
+            peso_canal = asig.get(canal_objetivo, 0)
+
+        rows.append({
+            "sub_area": c.get("sub_area", ""),
+            "centro_costo": cc,
+            "cuenta_analitica": c.get("cuenta_analitica", "—"),
+            "tipo_costo": c.get("tipo_costo", ""),
+            "escenario": c["escenario"],
+            "month": mes,
+            "monto_canal": peso_canal,
+            "monto_total": c["monto"],
+            "driver": driver,
+        })
+
+    return pd.DataFrame(rows)
 
 
 @st.cache_data(ttl=600, show_spinner=False)
