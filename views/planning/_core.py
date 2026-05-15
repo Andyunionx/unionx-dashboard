@@ -406,6 +406,10 @@ def proyectar_stock_mensual(
     df_forecast_manual: pd.DataFrame | None = None,
     baseline_date: str = '2026-05-11',
     horizonte_meses: int = 12,
+    ventas_y1_mismo: pd.DataFrame | None = None,
+    ventas_y1_resto: pd.DataFrame | None = None,
+    crec_floor: float = 0.2,
+    crec_ceil: float = 5.0,
 ) -> pd.DataFrame:
     """Proyecta el stock por SKU × mes desde la baseline.
 
@@ -459,9 +463,38 @@ def proyectar_stock_mensual(
         ventas_acum = v.groupby('sku')['unidades'].sum().astype(float)
         run_rate = ventas_acum / dias_transcurridos
 
-    # Proyección de venta total para el mes actual (incluye el resto del mes)
-    # venta_proy_mes_actual = venta_acum + run_rate × días_restantes
-    venta_proy_mes_actual = ventas_acum + (run_rate * dias_restantes_mes)
+    # Proyección estacional: usar curva año pasado × crecimiento por SKU.
+    # Si no hay venta año pasado mismo periodo → fallback run-rate lineal.
+    y1_mismo = pd.Series(dtype=float)
+    y1_resto = pd.Series(dtype=float)
+    if ventas_y1_mismo is not None and not ventas_y1_mismo.empty:
+        y1_mismo = ventas_y1_mismo.set_index('sku')['uds'].astype(float)
+    if ventas_y1_resto is not None and not ventas_y1_resto.empty:
+        y1_resto = ventas_y1_resto.set_index('sku')['uds'].astype(float)
+
+    def _proy_resto(sku):
+        v_acum_sku = float(ventas_acum.get(sku, 0))
+        y_mismo_sku = float(y1_mismo.get(sku, 0))
+        y_resto_sku = float(y1_resto.get(sku, 0))
+        # Caso estacional: hay venta año pasado en el mismo periodo
+        if y_mismo_sku > 0:
+            crec = v_acum_sku / y_mismo_sku if y_mismo_sku > 0 else 1.0
+            crec = max(crec_floor, min(crec_ceil, crec))
+            return y_resto_sku * crec, crec, 'estacional'
+        # Fallback: SKU sin historia el año pasado mismo periodo → run-rate lineal
+        rr = float(run_rate.get(sku, 0))
+        return rr * dias_restantes_mes, None, 'run-rate'
+
+    # Pre-computar para todos los SKUs que tendrán fila
+    venta_proy_mes_actual = {}
+    crecimiento_aplicado = {}
+    fuente_proy = {}
+    for sku in set(ventas_acum.index) | set(y1_resto.index):
+        resto, crec, fuente = _proy_resto(sku)
+        venta_proy_mes_actual[sku] = float(ventas_acum.get(sku, 0)) + resto
+        crecimiento_aplicado[sku] = crec
+        fuente_proy[sku] = fuente
+    venta_proy_mes_actual = pd.Series(venta_proy_mes_actual, dtype=float)
 
     # Forecast manual por mes (si existe)
     forecast_mes = {}  # {(sku, mes_num): unidades}
@@ -498,6 +531,7 @@ def proyectar_stock_mensual(
     # Construir proyección
     skus = sorted(set(stock_ini.index)
                   | set(ventas_acum.index)
+                  | (set(y1_resto.index) if not y1_resto.empty else set())
                   | {k[0] for k in forecast_mes}
                   | {k[0] for k in transito_mes})
 
@@ -534,6 +568,10 @@ def proyectar_stock_mensual(
             'stock_baseline': s_base,
             'ventas_acum': v_acum,
             'run_rate_diario': rr,
+            'venta_y1_mismo': float(y1_mismo.get(sku, 0)) if not y1_mismo.empty else 0,
+            'venta_y1_resto': float(y1_resto.get(sku, 0)) if not y1_resto.empty else 0,
+            'crec_vs_y1': crecimiento_aplicado.get(sku),
+            'fuente_proy_mes': fuente_proy.get(sku, 'sin_dato'),
             'venta_proy_mes_actual': v_proy_mes,
             'transito_mes_actual': t_mes0,
             'stock_fin_mes_actual': stock_fin_mes_actual,
@@ -557,7 +595,8 @@ def proyectar_stock_mensual(
     stock_cols = [f'stock_mes_{i}' for i in range(1, horizonte_meses + 1)]
     trans_cols = [f'transito_mes_{i}' for i in range(1, horizonte_meses + 1)]
     cols_order = (['sku', 'marca', 'producto', 'stock_baseline', 'ventas_acum',
-                   'run_rate_diario', 'venta_proy_mes_actual',
+                   'run_rate_diario', 'venta_y1_mismo', 'venta_y1_resto',
+                   'crec_vs_y1', 'fuente_proy_mes', 'venta_proy_mes_actual',
                    'transito_mes_actual', 'stock_fin_mes_actual',
                    'transito_pendiente_3m', 'forecast_total', 'mes_quiebre']
                   + stock_cols + trans_cols)
