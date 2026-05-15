@@ -193,24 +193,34 @@ def cargar_planif_transito_baseline(snapshot_date: str = BASELINE_DATE) -> pd.Da
         return pd.DataFrame()
 
 
+LINEAS_NEGOCIO_PLANIFICACION = ['Marketplace', 'Páginas propias', 'Fidelización']
+
+
 @st.cache_data(ttl=300, show_spinner=False)
-def cargar_ventas_live_desde_baseline(baseline_date: str = BASELINE_DATE) -> pd.DataFrame:
+def cargar_ventas_live_desde_baseline(baseline_date: str = BASELINE_DATE,
+                                       lineas_negocio: tuple = None) -> pd.DataFrame:
     """Ventas LIVE desde Turso `ventas` agregadas por SKU × día desde baseline.
 
-    A diferencia de `cargar_planif_ventas_diarias` (que lee la tabla pre-agregada
-    por el cron diario), esta función va directo a `ventas` (live cada hora) y
-    agrega on-the-fly. Cache 5 min.
+    Va directo a `ventas` (live cada hora) y agrega on-the-fly. Cache 5 min.
+
+    Args:
+        baseline_date: filtra fecha_venta >= baseline_date
+        lineas_negocio: si pasas tupla de tipo_negocio (ej. ('Marketplace','Páginas propias',
+            'Fidelización')) filtra por esas. Si None, sin filtro de línea.
     """
     try:
-        return _turso_df(
-            "SELECT sku, fecha_venta AS fecha, "
-            "SUM(COALESCE(cantidad,0)) AS unidades, "
-            "SUM(COALESCE(venta_bruta,0)) AS venta_neta, "
-            "SUM(COALESCE(margen_front,0)) AS margen_front "
-            "FROM ventas WHERE fecha_venta >= ? AND sku IS NOT NULL AND sku != '' "
-            "GROUP BY sku, fecha_venta",
-            [baseline_date],
-        )
+        sql = ("SELECT sku, fecha_venta AS fecha, "
+               "SUM(COALESCE(cantidad,0)) AS unidades, "
+               "SUM(COALESCE(venta_bruta,0)) AS venta_neta, "
+               "SUM(COALESCE(margen_front,0)) AS margen_front "
+               "FROM ventas WHERE fecha_venta >= ? AND sku IS NOT NULL AND sku != '' ")
+        args = [baseline_date]
+        if lineas_negocio:
+            placeholders = ','.join(['?'] * len(lineas_negocio))
+            sql += f"AND tipo_negocio IN ({placeholders}) "
+            args.extend(list(lineas_negocio))
+        sql += "GROUP BY sku, fecha_venta"
+        return _turso_df(sql, args)
     except Exception as e:
         st.warning(f"No pude leer ventas live: {e}")
         return pd.DataFrame()

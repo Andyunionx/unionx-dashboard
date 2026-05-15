@@ -15,6 +15,7 @@ import streamlit as st
 from views.planning._core import proyectar_stock_mensual
 from views.planning._data_helpers import (
     BASELINE_DATE,
+    LINEAS_NEGOCIO_PLANIFICACION,
     cargar_planif_master,
     cargar_planif_stock_baseline,
     cargar_planif_stock_live,
@@ -37,9 +38,11 @@ def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
         'sku': 'nunique',
         'stock_baseline': 'sum',
         'ventas_acum': 'sum',
+        'run_rate_diario': 'sum',
+        'venta_proy_mes_actual': 'sum',
         'transito_mes_actual': 'sum',
         'stock_fin_mes_actual': 'sum',
-        'transito_pendiente': 'sum',
+        'transito_pendiente_3m': 'sum',
         'forecast_total': 'sum',
     }
     for c in stock_cols + trans_cols:
@@ -54,15 +57,19 @@ def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
 def render():
     st.title("🎯 Triada Proyectada")
     st.caption(
-        f"Stock baseline ({BASELINE_DATE}) − ventas LIVE (desde baseline) "
-        f"+ tránsito (con ETAs) − forecast manual = stock proyectado mensual."
+        f"Stock baseline ({BASELINE_DATE}) − venta proyectada mes actual (real + run-rate) "
+        f"+ tránsito (con ETAs) − forecast manual meses futuros = stock proyectado mensual. "
+        f"Ventas filtradas: **{' + '.join(LINEAS_NEGOCIO_PLANIFICACION)}**."
     )
 
     # ---- Cargar fuentes ----
     with st.spinner("Cargando baseline + master + live..."):
         df_base = cargar_planif_stock_baseline()
         df_master = cargar_planif_master()
-        df_ventas = cargar_ventas_live_desde_baseline()  # LIVE direct from Turso ventas
+        # Ventas filtradas por líneas de negocio del FCST: Marketplace + Páginas propias + Fidelización
+        df_ventas = cargar_ventas_live_desde_baseline(
+            lineas_negocio=tuple(LINEAS_NEGOCIO_PLANIFICACION),
+        )
         df_trans = cargar_planif_transito_live()
         df_live = cargar_planif_stock_live()
 
@@ -175,16 +182,21 @@ def render():
         'stock_baseline': st.column_config.NumberColumn('Stock 11/05', format='%.0f',
             help='Foto del Excel FCST al 11/05 10:00'),
         'ventas_acum': st.column_config.NumberColumn('Ventas post-11/05', format='%.0f',
-            help='Ventas reales acumuladas desde 11/05 (LIVE Turso)'),
+            help='Ventas reales acumuladas desde 11/05 (LIVE Turso, líneas filtradas)'),
+        'run_rate_diario': st.column_config.NumberColumn('Run-rate (u/día)', format='%.2f',
+            help='Promedio diario = ventas_acum / días_transcurridos_post_baseline'),
+        'venta_proy_mes_actual': st.column_config.NumberColumn(f'Venta proy {mes_actual_nombre}', format='%.0f',
+            help='Proyección de venta TOTAL del mes actual = ventas_acum + run_rate × días_restantes'),
         'transito_mes_actual': st.column_config.NumberColumn(f'Trán {mes_actual_nombre}', format='%.0f',
             help='Tránsito con ETA dentro del mes actual (ya recibido o por recibir)'),
         'stock_fin_mes_actual': st.column_config.NumberColumn(f'Stock fin {mes_actual_nombre}', format='%.0f',
-            help='= baseline − ventas + tránsito mes actual'),
-        'transito_pendiente': st.column_config.NumberColumn('Trán pendiente', format='%.0f',
-            help='Total tránsito por llegar en los meses siguientes'),
-        'forecast_total': st.column_config.NumberColumn('Fcst total', format='%.0f'),
+            help='= baseline − venta proyectada mes + tránsito mes'),
+        'transito_pendiente_3m': st.column_config.NumberColumn('Trán pend +3m', format='%.0f',
+            help='Tránsito por llegar en los próximos 3 meses (mes +1, +2, +3)'),
+        'forecast_total': st.column_config.NumberColumn('Fcst total', format='%.0f',
+            help='Forecast manual total cargado para los meses futuros'),
         'mes_quiebre': st.column_config.NumberColumn('Mes quiebre', format='%.0f',
-            help='0 = ya en quiebre. 1 = stock < 0 al fin del mes +1. etc.'),
+            help='0 = ya en quiebre. N = stock < 0 al fin del mes +N'),
     }
     for c in stock_cols:
         w = c.replace('stock_mes_', '')
@@ -227,11 +239,11 @@ def render():
             'producto': st.column_config.TextColumn('Producto', width='medium'),
         })
         cols_show = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'producto',
-                     'stock_baseline', 'ventas_acum', 'transito_mes_actual',
-                     'stock_fin_mes_actual', 'transito_pendiente', 'forecast_total',
+                     'stock_baseline', 'ventas_acum', 'run_rate_diario',
+                     'venta_proy_mes_actual', 'transito_mes_actual',
+                     'stock_fin_mes_actual', 'transito_pendiente_3m', 'forecast_total',
                      'mes_quiebre'] + stock_cols
         if mostrar_transito_desg:
-            # Intercalar transito_mes_M después de cada stock_mes_M (opcional)
             cols_show = cols_show + trans_cols
         cols_show = [c for c in cols_show if c in view.columns]
         try:
@@ -259,8 +271,9 @@ def render():
             col_config_g[k[0]] = st.column_config.TextColumn(k[1], width=k[2])
         # cols a mostrar
         base_cols = (list(c[0] for c in label_claves) + ['n_skus', 'stock_baseline',
-                     'ventas_acum', 'transito_mes_actual', 'stock_fin_mes_actual',
-                     'transito_pendiente', 'forecast_total']) + stock_cols
+                     'ventas_acum', 'run_rate_diario', 'venta_proy_mes_actual',
+                     'transito_mes_actual', 'stock_fin_mes_actual',
+                     'transito_pendiente_3m', 'forecast_total']) + stock_cols
         if mostrar_transito_desg:
             base_cols = base_cols + trans_cols
         cols_show = [c for c in base_cols if c in g.columns]
