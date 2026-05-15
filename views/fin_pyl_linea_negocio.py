@@ -104,18 +104,32 @@ def render():
 
     if not dims["anios"]:
         # Diagnóstico detallado
-        st.error("❌ **Sin datos del Sheet KAM**")
+        st.error("❌ **Sin datos del Sheet KAM ni del parquet de fallback**")
         if estado.get("error"):
             st.code(f"Detalle del error: {estado['error']}", language="text")
         st.markdown(
-            "**Posibles causas:**\n"
-            "1. ❌ El service account no tiene acceso al Sheet "
-            "(compartirlo con `union-x-revenue-bot@union-x-revenue.iam.gserviceaccount.com`)\n"
-            "2. ❌ La hoja `Análisis de Resultados` no existe o cambió de nombre\n"
-            "3. ❌ Falta `gcp_service_account` en Streamlit Secrets\n"
-            "4. ❌ El Sheet existe pero está vacío"
+            "**Para resolver:**\n"
+            "- 🔧 **Solución rápida:** correr `python extract_kam_contribucion.py` "
+            "localmente y commitear el parquet generado en `data/finanzas/contribucion_kam.parquet`\n"
+            "- 🌐 **Solución de largo plazo:** agregar `gcp_service_account` a "
+            "los Streamlit Secrets de la app Finanzas (copiando desde la app Operaciones)"
         )
         return
+
+    # Banner si los datos vienen del parquet local (no del Sheet en vivo)
+    if estado.get("fuente") == "parquet_local":
+        from datetime import datetime as _dt
+        from views._ops_contrib_helper import KAM_FALLBACK_PARQUET
+        try:
+            mod_ts = _dt.fromtimestamp(KAM_FALLBACK_PARQUET.stat().st_mtime)
+            mod_str = mod_ts.strftime("%d/%m/%Y %H:%M")
+        except Exception:
+            mod_str = "fecha desconocida"
+        st.info(
+            f"📦 **Fuente: parquet local** (cache del Sheet KAM al {mod_str}). "
+            f"Para datos en vivo, configurá `gcp_service_account` en Streamlit Secrets "
+            f"de la app Finanzas."
+        )
 
     # ─── FILTROS (compactos, agrupados visualmente) ─────────────────────
     st.markdown(
