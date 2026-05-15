@@ -22,6 +22,7 @@ import streamlit as st
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SHEET_ID_CONTRIB = "1O7bRbY3v7Wc8atMu2I4PJ-pgA_Sy0-g57-iz0CSu4m4"
+KAM_FALLBACK_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "contribucion_kam.parquet"
 
 
 def _gspread_client():
@@ -55,9 +56,9 @@ def _parse_num(val):
 
 
 # Estado de la última carga (para diagnóstico en la UI)
-_LAST_LOAD_STATUS = {"ok": False, "error": None, "n_filas": 0,
-                      "anios": [], "meses_por_anio": {}, "canales": [],
-                      "kams": [], "tipos_negocio": []}
+_LAST_LOAD_STATUS = {"ok": False, "error": None, "fuente": None,
+                      "n_filas": 0, "anios": [], "meses_por_anio": {},
+                      "canales": [], "kams": [], "tipos_negocio": []}
 
 
 def estado_ultima_carga() -> dict:
@@ -147,7 +148,8 @@ def cargar_contribucion_kam() -> pd.DataFrame:
 
         # Guardar diagnóstico
         _LAST_LOAD_STATUS.update({
-            "ok": True, "error": None, "n_filas": len(df),
+            "ok": True, "error": None, "fuente": "sheet_live",
+            "n_filas": len(df),
             "anios": sorted(df["year"].unique().tolist()),
             "meses_por_anio": {
                 int(y): sorted(df[df["year"] == y]["month"].unique().tolist())
@@ -163,9 +165,42 @@ def cargar_contribucion_kam() -> pd.DataFrame:
 
         return df
     except Exception as e:
+        # FALLBACK: leer parquet local si existe (generado por
+        # extract_kam_contribucion.py)
+        if KAM_FALLBACK_PARQUET.exists():
+            try:
+                df_fallback = pd.read_parquet(KAM_FALLBACK_PARQUET)
+                _LAST_LOAD_STATUS.update({
+                    "ok": True,
+                    "error": None,
+                    "fuente": "parquet_local",
+                    "n_filas": len(df_fallback),
+                    "anios": sorted(df_fallback["year"].unique().tolist()),
+                    "meses_por_anio": {
+                        int(y): sorted(df_fallback[df_fallback["year"] == y]["month"].unique().tolist())
+                        for y in df_fallback["year"].unique()
+                    },
+                    "canales": sorted(df_fallback["canal"].dropna().unique().tolist())
+                               if "canal" in df_fallback.columns else [],
+                    "kams": sorted(df_fallback["kam"].dropna().unique().tolist())
+                            if "kam" in df_fallback.columns else [],
+                    "tipos_negocio": sorted(df_fallback["tipo_negocio"].dropna().unique().tolist())
+                                      if "tipo_negocio" in df_fallback.columns else [],
+                })
+                return df_fallback
+            except Exception as e2:
+                _LAST_LOAD_STATUS.update({
+                    "ok": False,
+                    "error": f"Sheet falló ({type(e).__name__}) y fallback "
+                              f"parquet también ({type(e2).__name__})",
+                })
+                return pd.DataFrame()
+
         _LAST_LOAD_STATUS.update({
             "ok": False,
-            "error": f"{type(e).__name__}: {str(e)[:200]}",
+            "error": f"{type(e).__name__}: {str(e)[:200]}. "
+                      f"Tampoco hay parquet local en "
+                      f"{KAM_FALLBACK_PARQUET.name}.",
         })
         return pd.DataFrame()
 
