@@ -121,10 +121,30 @@ def cargar_politicas_stock() -> pd.DataFrame:
 
 
 # ============================================================
-# Loaders Turso — tablas planif_* (Fases 1+2)
+# Loaders Turso — tablas planif_* (Fases 1+2+3)
 # ============================================================
 
 BASELINE_DATE = '2026-05-11'
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def cargar_forecast_manual_mensual() -> pd.DataFrame:
+    """Forecast PPTO por SKU × mes (formato 'YYYY-MM').
+
+    Tabla `planif_forecast_manual` se llena con `extract_forecast_ppto_a_turso.py`
+    leyendo del FCST FINAL XLSX las cols `Venta PPTO ENE26..ENE27`.
+    """
+    try:
+        df = _turso_df(
+            "SELECT sku, mes, unidades, fuente, ts_actualizado "
+            "FROM planif_forecast_manual WHERE unidades IS NOT NULL"
+        )
+        if not df.empty:
+            df['unidades'] = pd.to_numeric(df['unidades'], errors='coerce').fillna(0)
+            df['sku'] = df['sku'].astype(str)
+        return df
+    except Exception:
+        return pd.DataFrame(columns=['sku', 'mes', 'unidades', 'fuente', 'ts_actualizado'])
 
 
 def _turso_client():

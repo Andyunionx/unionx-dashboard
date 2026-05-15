@@ -1,11 +1,9 @@
 """Vista núcleo: Triada Proyectada por SKU × mes.
 
-Toma el baseline al 11/05 + ventas LIVE (Turso ventas, agregado por SKU)
-+ tránsito con ETAs + forecast manual (opcional, mensual) → proyecta
-stock mes a mes y señala cuándo cada SKU cruza a quiebre.
-
-Sin forecast manual cargado, la demanda futura asume 0 → el stock solo
-cae por ventas reales y sube por tránsitos. Es el piso conservador.
+Baseline 11/05 + ventas LIVE (Turso, filtradas Marketplace+Web+Fidelización)
++ tránsito (con ETAs) + forecast PPTO mensual (extraído del FCST FINAL XLSX)
+→ stock proyectado mes a mes. Mes actual: ventas reales + curva estacional 2025
+para proyectar el resto. Meses futuros: PPTO cargado del XLSX.
 """
 from __future__ import annotations
 
@@ -16,6 +14,7 @@ from views.planning._core import proyectar_stock_mensual
 from views.planning._data_helpers import (
     BASELINE_DATE,
     LINEAS_NEGOCIO_PLANIFICACION,
+    cargar_forecast_manual_mensual,
     cargar_planif_master,
     cargar_planif_stock_baseline,
     cargar_planif_stock_live,
@@ -25,12 +24,8 @@ from views.planning._data_helpers import (
 )
 
 
-def _kpi_metric(col, label, value, help=None):
-    col.metric(label, value, help=help)
-
-
 def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
-    """Agrega df por las claves dadas, sumando unidades. Ordena desc por stock fin mes actual."""
+    """Agrega df por las claves dadas, sumando unidades. Ordena por stock fin mes actual desc."""
     if df.empty:
         return df
     stock_cols = [f'stock_mes_{i}' for i in range(1, horiz + 1)]
@@ -39,8 +34,6 @@ def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
         'sku': 'nunique',
         'stock_baseline': 'sum',
         'ventas_acum': 'sum',
-        'venta_y1_mismo': 'sum',
-        'venta_y1_resto': 'sum',
         'venta_proy_mes_actual': 'sum',
         'transito_mes_actual': 'sum',
         'stock_fin_mes_actual': 'sum',
@@ -59,33 +52,31 @@ def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
 def render():
     st.title("🎯 Triada Proyectada")
     st.caption(
-        f"Stock baseline ({BASELINE_DATE}) − venta proy mes (real + curva 2025 × crecimiento) "
-        f"+ tránsito (con ETAs) − forecast manual meses futuros = stock proyectado mensual. "
+        f"Stock baseline ({BASELINE_DATE}) − venta proy mes (real + curva 2025) "
+        f"+ tránsito (ETAs) − PPTO meses futuros (FCST XLSX) = stock proyectado mensual. "
         f"Ventas filtradas: **{' + '.join(LINEAS_NEGOCIO_PLANIFICACION)}**."
     )
 
     # ---- Cargar fuentes ----
-    with st.spinner("Cargando baseline + master + live + año pasado..."):
+    with st.spinner("Cargando baseline + master + live + año pasado + PPTOs..."):
         df_base = cargar_planif_stock_baseline()
         df_master = cargar_planif_master()
-        # Ventas filtradas por líneas de negocio: Marketplace + Páginas propias + Fidelización
         df_ventas = cargar_ventas_live_desde_baseline(
             lineas_negocio=tuple(LINEAS_NEGOCIO_PLANIFICACION),
         )
         df_trans = cargar_planif_transito_live()
         df_live = cargar_planif_stock_live()
-        # Año pasado (mismo período + resto del mes) para proyección estacional
         hoy_str = pd.Timestamp.today().strftime('%Y-%m-%d')
         y1 = cargar_ventas_year_minus_1(
             baseline_date=BASELINE_DATE, hoy=hoy_str,
             lineas_negocio=tuple(LINEAS_NEGOCIO_PLANIFICACION),
         )
+        df_fcst_manual = cargar_forecast_manual_mensual()
 
     if df_base.empty:
         st.error("No hay baseline cargado. Corre `extract_baseline_planificacion.py`.")
         st.stop()
 
-    # ---- Normalizar SKU tipos para merge ----
     for d in (df_base, df_master, df_ventas, df_trans):
         if not d.empty and 'sku' in d.columns:
             d['sku'] = d['sku'].astype(str)
@@ -110,13 +101,17 @@ def render():
     )
     mostrar_transito_desg = cc3.checkbox(
         "Desagregar tránsito por mes", value=False,
-        help="Agregar cols Trán Mes +1, +2, ... mostrando llegadas por mes",
+        help="Agregar cols Trán Mes +1, +2, ...",
     )
 
-    # Forecast manual: aún no implementado
+    # ---- Forecast manual mensual (Vta PPTO desde XLSX) → mes_offset ----
     df_forecast = None
+    if not df_fcst_manual.empty:
+        df_forecast = df_fcst_manual[['sku', 'mes', 'unidades']].copy()
+        df_forecast['fecha'] = pd.to_datetime(df_forecast['mes'] + '-15', errors='coerce')
+        df_forecast = df_forecast[['sku', 'fecha', 'unidades']]
 
-    # ---- Calcular proyección (estacional con curva 2025 + crecimiento por SKU) ----
+    # ---- Calcular proyección ----
     with st.spinner(f"Proyectando stock mes 1 a {horizonte}..."):
         df_proy = proyectar_stock_mensual(
             df_baseline=df_base,
@@ -133,19 +128,15 @@ def render():
         st.warning("Sin SKUs para proyectar.")
         st.stop()
 
-    # ---- Enriquecer con master (marca + cat padre + cat hijo) ----
+    # ---- Enriquecer con master ----
     if not df_master.empty:
         cols_master = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'ranking_comercial']
         cols_present = [c for c in cols_master if c in df_master.columns]
-        # Sobrescribir marca del baseline con la del master (más limpia)
         df_proy = df_proy.drop(columns=['marca'], errors='ignore').merge(
             df_master[cols_present].drop_duplicates(subset='sku'),
             on='sku', how='left',
         )
 
-    # ---- Filtrar SKUs muertos (sin actividad) ----
-    # "Sin stock" = sin baseline + sin ventas desde baseline + sin tránsito = SKU inactivo
-    # Mantenemos visibles los en quiebre actual (stock_fin_mes_actual ≤ 0) si tienen actividad
     if ocultar_sin_stock:
         mask = (
             (df_proy['stock_baseline'] > 0)
@@ -155,29 +146,33 @@ def render():
         )
         df_proy = df_proy[mask].copy()
 
-    # ---- Limpieza marca/categorías para agrupación ----
     for c in ('marca', 'categoria_padre', 'categoria_hijo'):
         if c in df_proy.columns:
             df_proy[c] = df_proy[c].fillna('(sin clasificar)').replace(
                 {'nan': '(sin clasificar)', 'None': '(sin clasificar)', '': '(sin clasificar)'}
             )
 
+    mes_actual_nombre = pd.Timestamp.today().strftime('%b %Y').lower()
+
     # ---- KPIs proyección ----
     st.markdown("### Resumen proyección")
-    k1, k2, k3, k4 = st.columns(4)
+    k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric("SKUs activos", f"{len(df_proy):,}")
+    total_proy = df_proy['venta_proy_mes_actual'].sum()
+    total_real = df_proy['ventas_acum'].sum()
+    k2.metric(f"Venta proy {mes_actual_nombre}", f"{total_proy:,.0f}",
+              delta=f"{total_proy - total_real:+,.0f} resto del mes",
+              help=f"Total proyectado mes = real {total_real:,.0f} + estimación resto (curva 2025 × crec)")
     n_quiebre = int(df_proy['mes_quiebre'].notna().sum())
-    k2.metric("Quiebre proyectado", f"{n_quiebre:,}",
-              help="SKUs que cruzan stock < 0 dentro del horizonte")
+    k3.metric("Quiebre proyectado", f"{n_quiebre:,}",
+              help="SKUs con stock < 0 en algún mes del horizonte")
     n_cr = int((df_proy['mes_quiebre'].fillna(99) <= 1).sum())
-    k3.metric("🔴 Quiebre YA o mes 1", f"{n_cr:,}",
-              help="Mes 0 = ya en quiebre (stock hoy ≤ 0). Mes 1 = quiebre proyectado en el mes 1.")
+    k4.metric("🔴 Quiebre YA o mes 1", f"{n_cr:,}")
     n_ur = int((df_proy['mes_quiebre'].fillna(99).between(2, 3)).sum())
-    k4.metric("🟠 Quiebre mes 2-3", f"{n_ur:,}")
+    k5.metric("🟠 Quiebre mes 2-3", f"{n_ur:,}")
 
     st.divider()
 
-    # ---- Tabs: SKU detalle / Agrupación ----
     tab1, tab2, tab3, tab4 = st.tabs([
         "📋 Por SKU",
         "🏷️ Por Marca",
@@ -187,47 +182,33 @@ def render():
 
     stock_cols = [f'stock_mes_{i}' for i in range(1, horizonte + 1)]
     trans_cols = [f'transito_mes_{i}' for i in range(1, horizonte + 1)]
-    mes_actual_nombre = pd.Timestamp.today().strftime('%b %Y').lower()
+
     column_config_base = {
-        'stock_baseline': st.column_config.NumberColumn('Stock 11/05', format='%.0f',
-            help='Foto del Excel FCST al 11/05 10:00'),
+        'stock_baseline': st.column_config.NumberColumn('Stock 11/05', format='%.0f'),
         'ventas_acum': st.column_config.NumberColumn('Ventas post-11/05', format='%.0f',
-            help='Ventas reales acumuladas desde 11/05 (LIVE Turso, líneas filtradas)'),
-        'run_rate_diario': st.column_config.NumberColumn('Run-rate (u/día)', format='%.2f',
-            help='Promedio diario = ventas_acum / días_transcurridos_post_baseline'),
-        'venta_y1_mismo': st.column_config.NumberColumn('Vta 2025 mismo per', format='%.0f',
-            help='Ventas año pasado en mismo rango de días (11→hoy)'),
-        'venta_y1_resto': st.column_config.NumberColumn('Vta 2025 resto mes', format='%.0f',
-            help='Ventas año pasado del resto del mes (hoy+1 → fin mes)'),
-        'crec_vs_y1': st.column_config.NumberColumn('Crec vs 2025', format='%.2fx',
-            help='Crecimiento = ventas 2026 mismo per / ventas 2025 mismo per. Cap [0.2x..5x]. Si no hay venta 2025 → fallback run-rate.'),
-        'fuente_proy_mes': st.column_config.TextColumn('Fuente proy', width='small',
-            help='estacional = usa curva 2025 × crecimiento. run-rate = fallback lineal'),
-        'venta_proy_mes_actual': st.column_config.NumberColumn(f'Venta proy {mes_actual_nombre}', format='%.0f',
-            help='Proyección de venta TOTAL del mes = real_acum + (venta 2025 resto × crecimiento)'),
-        'transito_mes_actual': st.column_config.NumberColumn(f'Trán {mes_actual_nombre}', format='%.0f',
-            help='Tránsito con ETA dentro del mes actual (ya recibido o por recibir)'),
-        'stock_fin_mes_actual': st.column_config.NumberColumn(f'Stock fin {mes_actual_nombre}', format='%.0f',
-            help='= baseline − venta proyectada mes + tránsito mes'),
+            help='Ventas reales acumuladas desde 11/05 (LIVE Turso)'),
+        'venta_proy_mes_actual': st.column_config.NumberColumn(f'Venta proy {mes_actual_nombre}',
+            format='%.0f',
+            help='Proyección TOTAL del mes = real_acum + estimación resto (curva 2025 × crec)'),
+        'transito_mes_actual': st.column_config.NumberColumn(f'Trán {mes_actual_nombre}',
+            format='%.0f', help='Tránsito con ETA dentro del mes actual'),
+        'stock_fin_mes_actual': st.column_config.NumberColumn(f'Stock fin {mes_actual_nombre}',
+            format='%.0f', help='= baseline − venta_proy_mes + tránsito_mes_actual'),
         'transito_pendiente_3m': st.column_config.NumberColumn('Trán pend +3m', format='%.0f',
-            help='Tránsito por llegar en los próximos 3 meses (mes +1, +2, +3)'),
-        'forecast_total': st.column_config.NumberColumn('Fcst total', format='%.0f',
-            help='Forecast manual total cargado para los meses futuros'),
+            help='Tránsito por llegar mes +1, +2, +3'),
+        'forecast_total': st.column_config.NumberColumn('PPTO total', format='%.0f',
+            help='Suma Vta PPTO de los meses futuros (FCST XLSX)'),
         'mes_quiebre': st.column_config.NumberColumn('Mes quiebre', format='%.0f',
-            help='0 = ya en quiebre. N = stock < 0 al fin del mes +N'),
+            help='0 = ya en quiebre. N = stock<0 al fin del mes +N'),
     }
     for c in stock_cols:
         w = c.replace('stock_mes_', '')
-        column_config_base[c] = st.column_config.NumberColumn(f'Stock fin Mes +{w}', format='%.0f',
-            help=f'Stock al final del mes +{w} = stock fin mes anterior − ventas/fcst mes +{w} + tránsito mes +{w}')
+        column_config_base[c] = st.column_config.NumberColumn(f'Stock fin Mes +{w}', format='%.0f')
     for c in trans_cols:
         w = c.replace('transito_mes_', '')
-        column_config_base[c] = st.column_config.NumberColumn(f'Trán Mes +{w}', format='%.0f',
-            help=f'Tránsito que llega en el mes +{w}')
+        column_config_base[c] = st.column_config.NumberColumn(f'Trán Mes +{w}', format='%.0f')
 
-    # ---- Tab 1: por SKU ----
     with tab1:
-        # Filtros
         f1, f2, f3 = st.columns([1, 1, 2])
         marcas = ['(todas)'] + sorted(df_proy['marca'].dropna().unique().tolist())
         marca_sel = f1.selectbox("Marca", marcas, key='sku_marca')
@@ -257,8 +238,7 @@ def render():
             'producto': st.column_config.TextColumn('Producto', width='medium'),
         })
         cols_show = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'producto',
-                     'stock_baseline', 'ventas_acum', 'venta_y1_mismo', 'venta_y1_resto',
-                     'crec_vs_y1', 'fuente_proy_mes', 'venta_proy_mes_actual',
+                     'stock_baseline', 'ventas_acum', 'venta_proy_mes_actual',
                      'transito_mes_actual', 'stock_fin_mes_actual',
                      'transito_pendiente_3m', 'forecast_total',
                      'mes_quiebre'] + stock_cols
@@ -288,10 +268,8 @@ def render():
         col_config_g['n_skus'] = st.column_config.NumberColumn('SKUs', format='%d')
         for k in label_claves:
             col_config_g[k[0]] = st.column_config.TextColumn(k[1], width=k[2])
-        # cols a mostrar
         base_cols = (list(c[0] for c in label_claves) + ['n_skus', 'stock_baseline',
-                     'ventas_acum', 'venta_y1_mismo', 'venta_y1_resto',
-                     'venta_proy_mes_actual', 'transito_mes_actual',
+                     'ventas_acum', 'venta_proy_mes_actual', 'transito_mes_actual',
                      'stock_fin_mes_actual', 'transito_pendiente_3m',
                      'forecast_total']) + stock_cols
         if mostrar_transito_desg:
@@ -308,26 +286,23 @@ def render():
             st.dataframe(g[cols_show], use_container_width=True, hide_index=True,
                          column_config=col_config_g, height=600)
 
-    # ---- Tab 2: por Marca ----
     with tab2:
         g = _agrupar(df_proy, ['marca'], horizonte)
-        st.markdown(f"**{len(g):,} marcas activas** (ordenado por stock fin mes actual)")
+        st.markdown(f"**{len(g):,} marcas activas**")
         _render_grupo(g, [('marca', 'Marca', 'medium')], vmax=2000)
 
-    # ---- Tab 3: Marca → Cat Padre ----
     with tab3:
         if 'categoria_padre' not in df_proy.columns:
-            st.warning("Sin columna categoria_padre disponible (master no cargado).")
+            st.warning("Sin columna categoria_padre disponible.")
         else:
             g = _agrupar(df_proy, ['marca', 'categoria_padre'], horizonte)
             st.markdown(f"**{len(g):,} grupos Marca × Cat Padre**")
             _render_grupo(g, [('marca', 'Marca', 'small'),
                               ('categoria_padre', 'Cat Padre', 'medium')], vmax=1000)
 
-    # ---- Tab 4: Marca → Cat Padre → Cat Hijo ----
     with tab4:
         if 'categoria_hijo' not in df_proy.columns:
-            st.warning("Sin columna categoria_hijo disponible (master no cargado).")
+            st.warning("Sin columna categoria_hijo disponible.")
         else:
             g = _agrupar(df_proy, ['marca', 'categoria_padre', 'categoria_hijo'], horizonte)
             st.markdown(f"**{len(g):,} grupos Marca × Cat Padre × Cat Hijo**")
@@ -335,13 +310,14 @@ def render():
                               ('categoria_padre', 'Cat Padre', 'small'),
                               ('categoria_hijo', 'Cat Hijo', 'medium')], vmax=500)
 
-    # ---- Validación expandible ----
+    # ---- Validación ----
     st.divider()
     with st.expander("🔍 Validación baseline vs stock live (Odoo)", expanded=False):
         if df_live.empty:
-            st.warning("No hay stock_live cargado. Corre sync o espera cron 06:00 AM.")
+            st.warning("No hay stock_live cargado. Espera cron 06:00 AM.")
         else:
-            df_val = df_proy[['sku', 'marca', 'stock_baseline', 'ventas_acum', 'stock_fin_mes_actual']].copy()
+            df_val = df_proy[['sku', 'marca', 'stock_baseline', 'ventas_acum',
+                              'stock_fin_mes_actual']].copy()
             df_val = df_val.merge(
                 df_live[['sku', 'stock_total']].rename(columns={'stock_total': 'stock_live'}),
                 on='sku', how='left',
@@ -350,45 +326,41 @@ def render():
             df_val['gap'] = df_val['stock_fin_mes_actual'] - df_val['stock_live']
 
             v1, v2, v3 = st.columns(3)
-            v1.metric("SKUs match (gap < 1)", f"{int((df_val['gap'].abs() < 1).sum()):,}")
+            v1.metric("SKUs match (gap<1)", f"{int((df_val['gap'].abs() < 1).sum()):,}")
             v2.metric("SKUs con gap", f"{int((df_val['gap'].abs() >= 1).sum()):,}")
             v3.metric("Gap absoluto total", f"{df_val['gap'].abs().sum():,.0f}")
-
             top_gap = df_val[df_val['gap'].abs() > 5].copy()
             top_gap['abs_gap'] = top_gap['gap'].abs()
             st.caption("Top 30 SKUs con mayor gap:")
             st.dataframe(top_gap.nlargest(30, 'abs_gap').drop(columns='abs_gap'),
                          use_container_width=True, hide_index=True)
-            st.info(
-                "Gap = stock_fin_mes_actual − stock_live (Odoo). Positivo = la triada "
-                "estima más stock del que hay en Odoo (movimientos no contabilizados, "
-                "mermas). Negativo = Odoo tiene más (bodegas no mapeadas, compras "
-                "recibidas no tracked en tránsito)."
-            )
 
-    # ---- Footer: metodología de proyección ----
+    # ---- Footer metodología ----
     st.divider()
-    with st.expander("ℹ️ Cómo se proyecta la venta del mes actual", expanded=False):
+    with st.expander("ℹ️ Cómo se proyectan venta + stock", expanded=False):
         st.markdown(f"""
-        **Método estacional (cuando el SKU tiene historia 2025):**
+        **Mes actual ({mes_actual_nombre}) — proyección estacional automática:**
+
+        Cuando el SKU tiene historia 2025:
         ```
-        crecimiento = ventas_2026_mismos_días / ventas_2025_mismos_días
+        crecimiento = ventas_2026_mismos_días / ventas_2025_mismos_días  (cap 0.2x..5x)
         proyección_resto_mes = ventas_2025_resto_del_mes × crecimiento
         venta_proy_total = ventas_reales_2026 + proyección_resto_mes
         ```
-        El crecimiento se acota entre **0.2x y 5x** para evitar outliers
-        (SKUs con 1-2 ventas en 2025 generaban crecimientos absurdos).
 
-        **Fallback run-rate lineal (cuando NO hay venta 2025 mismo periodo):**
+        Fallback run-rate lineal (sin venta 2025 mismo periodo):
         ```
-        proyección_resto_mes = (ventas_2026 / días_transcurridos) × días_restantes
+        proyección_resto = (ventas_2026 / días_transcurridos) × días_restantes
         ```
 
-        **Filtro de ventas**: solo se consideran las líneas de negocio:
-        `{', '.join(LINEAS_NEGOCIO_PLANIFICACION)}`. Distribución (B2B),
-        Corporativo, Marketing y otros quedan fuera del modelo.
+        **Meses futuros — desde Forecast Manual (Vta PPTO):**
+        Cargado desde el archivo `FORECAST FINAL SKU 26-27 V2.xlsx` cols
+        `Venta PPTO ENE26..ENE27` mediante el script `extract_forecast_ppto_a_turso.py`
+        → tabla Turso `planif_forecast_manual`. Si un SKU no tiene PPTO para un mes,
+        la demanda futura asume 0.
 
-        **Tránsito**: se asigna al mes calendario de su `fecha_eta_bodega`
-        (fallback `fecha_eta_chile`). El tránsito del mes actual incluye
-        TODO lo que llega entre baseline y fin de mes (pasado y futuro).
+        **Filtro ventas**: solo `{', '.join(LINEAS_NEGOCIO_PLANIFICACION)}`.
+
+        **Tránsito**: ETA `fecha_eta_bodega` (fallback `fecha_eta_chile`).
+        Mes actual incluye TODO lo que llega entre baseline y fin de mes.
         """)
