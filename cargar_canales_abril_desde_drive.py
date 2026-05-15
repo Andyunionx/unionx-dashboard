@@ -63,6 +63,7 @@ DRIVE_TO_DB = {
     'Margen Front': 'margen_front', 'Comision %': 'comision_pct',
     'Comisión': 'comision', 'Logística': 'logistica', 'Marketing': 'marketing',
     'Mg final': 'margen_final',
+    'Pedido Marketplace': 'pedido_marketplace', 'Ref Cliente': 'client_order_ref',
 }
 COLS_DB = list(DRIVE_TO_DB.values())
 COLS_PARQUET = COLS_DB + ['venta_neta']
@@ -151,6 +152,12 @@ def main():
     df = pd.read_excel(io.BytesIO(raw), sheet_name='RAW')
     df = _coercer(df)
     print(f"   Drive RAW: {len(df):,} filas")
+
+    # Normalización canónica del canal (Sp→SP Digital, Mercado Libre Chile, etc.)
+    from _canal_normalize import normalizar_columna_canal, normalizar_canal
+    df = normalizar_columna_canal(df, col='canal')
+    canales = [normalizar_canal(c) for c in canales]
+    print(f"   Canales (normalizados): {canales}")
 
     desde_ts = pd.Timestamp(DESDE)
     hasta_ts = pd.Timestamp(HASTA)

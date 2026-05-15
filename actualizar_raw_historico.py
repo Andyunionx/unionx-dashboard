@@ -73,6 +73,8 @@ RAW_TO_DB = {
     'Logística': 'logistica',
     'Marketing': 'marketing',
     'Mg final': 'margen_final',
+    'Pedido Marketplace': 'pedido_marketplace',
+    'Ref Cliente': 'client_order_ref',
 }
 
 

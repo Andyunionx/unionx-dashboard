@@ -1023,6 +1023,8 @@ class VentasService(BaseOdooService):
                     'Documento': factura.get('name', '') if factura else '',
                     'Fecha Documento': factura.get('invoice_date', '') if factura else '',
                     'Pedido': orden.get('name', ''),
+                    'Pedido Marketplace': orden.get('channel_order_reference', '') or '',
+                    'Ref Cliente': orden.get('client_order_ref', '') or '',
                     'Estado Pedido': orden.get('state', ''),
                     'Tipo Despacho': '',
                     'SKU': sku,
@@ -1248,6 +1250,8 @@ class VentasService(BaseOdooService):
                                     'Documento': nc.get('name', ''),
                                     'Fecha Documento': fecha_nc,
                                     'Pedido': pedido_nc,
+                                    'Pedido Marketplace': orden_orig.get('channel_order_reference', '') or '',
+                                    'Ref Cliente': orden_orig.get('client_order_ref', '') or '',
                                     'Estado Pedido': estado_ped_nc,
                                     'Tipo Despacho': '',
                                     'SKU': sku_nc,
@@ -1293,6 +1297,8 @@ class VentasService(BaseOdooService):
                                 'Documento': nc.get('name', ''),
                                 'Fecha Documento': fecha_nc,
                                 'Pedido': pedido_nc,
+                                'Pedido Marketplace': orden_orig.get('channel_order_reference', '') or '',
+                                'Ref Cliente': orden_orig.get('client_order_ref', '') or '',
                                 'Estado Pedido': estado_ped_nc,
                                 'Tipo Despacho': '',
                                 'SKU': '',
@@ -1345,7 +1351,8 @@ class VentasService(BaseOdooService):
             'Tipo Marca', 'Tipo Compra', 'Tipo Negocio', 'KAM', 'Estado Canal',
             'Año venta', 'Mes venta', 'Semana venta', 'Día semana', 'Hora venta',
             'Cantidad', 'Venta bruta', 'Venta Neta', 'Costo Unitario', 'Costo Total', 'Margen Front',
-            'Comision %', 'Comisión', 'Logística', 'Marketing', 'Mg final'
+            'Comision %', 'Comisión', 'Logística', 'Marketing', 'Mg final',
+            'Pedido Marketplace', 'Ref Cliente'
         ]
 
         # Asegurar que todas las columnas existan
