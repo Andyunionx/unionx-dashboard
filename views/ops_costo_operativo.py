@@ -1327,16 +1327,18 @@ def _tab_yoy(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 # TAB 5: PROYECCIÓN & PUNTO DE EQUILIBRIO
 # ============================================================
 def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
-                     year: int, periodo_label: str):
+                     year: int, periodo_label: str,
+                     meses_sel: list[int] | None = None):
     import numpy as np
     import plotly.graph_objects as go
+    from views._ops_contrib_helper import contribucion_periodo, contribucion_por_canal
 
     st.markdown(
         f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
         f"INTELIGENCIA DE NEGOCIO — Proyección & Equilibrio Operacional</h3>"
         f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
         f"Multivariable (venta + pedidos + unidades) · benchmark fulfillment 3PL · "
-        f"break-even sobre Margen Contribución · cuándo escalar fijos</p>",
+        f"break-even sobre Margen Contribución (Sheet KAM) · cuándo escalar fijos</p>",
         unsafe_allow_html=True,
     )
 
@@ -1381,25 +1383,56 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     costo_v = df_reg["var_abs"].values
     costo_f = df_reg["fijo_abs"].values
 
-    # Pre-calcular promedios (evita NameError downstream si alguna sección falla)
-    venta_avg = float(np.mean(venta)) if len(venta) > 0 else 0
-    pedidos_avg = float(np.mean(pedidos)) if len(pedidos) > 0 else 1
-    unidades_avg = float(np.mean(unidades)) if len(unidades) > 0 else 0
-    lineas_avg = (float(df_reg["n_lineas"].mean())
-                    if "n_lineas" in df_reg.columns else 0)
-    costo_total_clp = float(np.mean(costo_t)) * 1000 if len(costo_t) > 0 else 0  # M$ → $
+    # ─── Filtrado al PERÍODO SELECCIONADO (Q1 2026, etc.) ────────
+    # Los KPIs unitarios (sec 2) y el AOV usan SOLO el período seleccionado.
+    # La regresión (sec 1) usa TODO el histórico para máxima confiabilidad.
+    if meses_sel:
+        df_periodo = df_reg[(df_reg["year"] == year) & (df_reg["month"].isin(meses_sel))].copy()
+    else:
+        df_periodo = df_reg[df_reg["year"] == year].copy()
 
-    # AOV de la operación (ticket promedio)
-    venta_neta_total_clp = float(df_reg["venta_neta"].sum())
-    pedidos_total = float(pedidos.sum())
+    # Si el período no tiene data suficiente, fallback al histórico completo
+    if len(df_periodo) == 0:
+        df_periodo = df_reg.copy()
+        usando_periodo = False
+    else:
+        usando_periodo = True
+
+    # Promedios PERÍODO SELECCIONADO (lo que el user ve en KPIs)
+    venta_avg = float(df_periodo["venta_neta_m"].mean()) if not df_periodo.empty else 0
+    pedidos_avg = float(df_periodo["n_pedidos"].mean()) if not df_periodo.empty else 1
+    unidades_avg = float(df_periodo["n_unidades"].mean()) if not df_periodo.empty else 0
+    lineas_avg = (float(df_periodo["n_lineas"].mean())
+                    if "n_lineas" in df_periodo.columns and not df_periodo.empty else 0)
+    costo_total_clp = float(df_periodo["total_abs"].mean()) * 1000 if not df_periodo.empty else 0
+    cf_periodo = float(df_periodo["fijo_abs"].mean()) if not df_periodo.empty else 0
+    cv_periodo = float(df_periodo["var_abs"].mean()) if not df_periodo.empty else 0
+
+    # AOV del PERÍODO SELECCIONADO
+    venta_neta_total_clp = float(df_periodo["venta_neta"].sum())
+    pedidos_total = float(df_periodo["n_pedidos"].sum())
     aov = venta_neta_total_clp / pedidos_total if pedidos_total else 0
     objetivo = _objetivo_por_aov(aov)
+
+    # ─── MARGEN CONTRIBUCIÓN desde Sheet KAM (oficial) ───────────
+    contrib_data = contribucion_periodo(year=year, meses=meses_sel)
+    if "error" in contrib_data:
+        # Fallback al parquet (no oficial)
+        margen_contrib_clp = float(df_periodo["margen_final_m"].sum() * 1000) if not df_periodo.empty else 0
+        venta_real_kam_clp = venta_neta_total_clp
+        mc_pct = (margen_contrib_clp / venta_real_kam_clp * 100) if venta_real_kam_clp else 0
+        fuente_mc = "parquet ventas (fallback)"
+    else:
+        margen_contrib_clp = contrib_data["contribucion_clp"]
+        venta_real_kam_clp = contrib_data["venta_real_clp"]
+        mc_pct = contrib_data["mc_pct"]
+        fuente_mc = "Sheet KAM 'Análisis de Resultados' (oficial)"
 
     # ─── 0. CONTEXTO + AOV ────────────────────────────────────────
     st.markdown(
         '<div style="background:#0D3A5F;color:#FFFFFF;padding:10px 16px;'
         'border-radius:4px;margin:12px 0;font-weight:700;font-size:13px;">'
-        '0. CONTEXTO DE TU OPERACIÓN — qué objetivo apuntar</div>',
+        f'0. CONTEXTO DE TU OPERACIÓN — período {periodo_label} {year}</div>',
         unsafe_allow_html=True,
     )
     cc1, cc2, cc3 = st.columns(3)
@@ -1410,11 +1443,33 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
                  "según AOV de tu operación")
     cc3.metric("Costo / Venta OBJETIVO",
                  f"{objetivo['pct_min']}% - {objetivo['pct_max']}%",
-                 "ratio óptimo vs tu AOV")
-    st.caption(
-        "💡 **Importante:** los benchmarks NO son absolutos. Lo correcto depende de "
-        "tu AOV (ticket promedio). Una operación con AOV $5K NO puede tener mismo "
-        "costo/pedido que una con AOV $500K. Acá el objetivo está calculado para tu AOV."
+                 "= AOV × % objetivo")
+
+    # Ejemplo CONCRETO con tus números
+    cpp_target_min = objetivo["cpp_min"]
+    cpp_target_max = objetivo["cpp_max"]
+    pct_target_calc_min = (cpp_target_min / aov * 100) if aov else 0
+    pct_target_calc_max = (cpp_target_max / aov * 100) if aov else 0
+
+    st.markdown(
+        f'<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
+        f'padding:12px 14px;border-radius:4px;margin-top:8px;font-size:13px;'
+        f'color:#1E293B;">'
+        f'<b>📐 ¿Por qué el objetivo cambia según AOV?</b><br><br>'
+        f'Tu AOV es <b>${aov:,.0f}</b>. Si gastás <b>${cpp_target_min:,.0f}/pedido</b> '
+        f'en operación → eso es <b>{pct_target_calc_min:.1f}%</b> del valor del pedido. '
+        f'Si gastás <b>${cpp_target_max:,.0f}/pedido</b> → es <b>{pct_target_calc_max:.1f}%</b>.<br><br>'
+        f'Por eso "8-12% costo/venta" es <b>relativo</b>: '
+        f'<ul style="margin:6px 0 0 0;padding-left:20px;">'
+        f'<li>Si vendés <b>productos chicos</b> (AOV $10K) y gastás $1.200/pedido → 12% (caro)</li>'
+        f'<li>Si vendés <b>productos grandes</b> (AOV $200K) y gastás $1.200/pedido → 0.6% (regalado)</li>'
+        f'<li>Mismo costo, diferente eficiencia según valor del pedido</li>'
+        f'</ul>'
+        f'<br><b>El objetivo correcto para UnionX dado AOV ${aov:,.0f}:</b> apuntar a '
+        f'<b>${cpp_target_min:,.0f}-${cpp_target_max:,.0f}/pedido</b> '
+        f'(que equivale a {pct_target_calc_min:.1f}-{pct_target_calc_max:.1f}% del valor del pedido).'
+        f'</div>'.replace(",", "."),
+        unsafe_allow_html=True,
     )
 
     st.divider()
@@ -1765,51 +1820,86 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     st.markdown(
         '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
         'border-radius:4px;margin:12px 0;font-weight:700;font-size:13px;">'
-        '5. PUNTO DE EQUILIBRIO — sobre Margen Contribución (REAL del módulo Ventas)</div>',
+        '5. PUNTO DE EQUILIBRIO — Margen Contribución desde Sheet KAM (oficial)</div>',
         unsafe_allow_html=True,
     )
 
-    cf_mensual = float(df_reg["fijo_abs"].mean())
-    margen_avg = float(df_reg["margen_final_m"].mean())
-    venta_avg_real = float(df_reg["venta_neta_m"].mean())
-    mc_pct = (margen_avg / venta_avg_real) if venta_avg_real else 0
-    breakeven = (cf_mensual / mc_pct) if mc_pct > 0 else None
-    holgura_pct = ((venta_avg_real / breakeven - 1) * 100) if breakeven else None
+    # MC viene del Sheet KAM (oficial), NO del parquet
+    cf_mensual_periodo = cf_periodo  # ya filtrado al período
+    venta_periodo_m = (venta_real_kam_clp / 1000)  # M CLP
+    margen_periodo_m = (margen_contrib_clp / 1000)  # M CLP
+    n_meses_periodo = len(meses_sel) if meses_sel else 12
+    cf_total_periodo = cf_mensual_periodo * n_meses_periodo  # CF acumulado del período
+
+    mc_pct_dec = mc_pct / 100  # de % a decimal
+    breakeven = (cf_total_periodo / mc_pct_dec) if mc_pct_dec > 0 else None
+    holgura_pct = ((venta_periodo_m / breakeven - 1) * 100) if breakeven else None
 
     cM, cF = st.columns([2, 1])
     with cM:
         be1, be2, be3, be4 = st.columns(4)
-        be1.metric("Costo Fijo Op mensual", _fmt_num(cf_mensual))
-        be2.metric("Margen Contrib %", f"{mc_pct*100:.1f}%",
-                     f"${margen_avg:,.0f} / ${venta_avg_real:,.0f}".replace(",", "."))
-        be3.metric("Venta BREAK-EVEN", _fmt_num(breakeven) if breakeven else "—")
-        be4.metric("Holgura vs venta",
-                     f"{holgura_pct:+.1f}%" if holgura_pct is not None else "—")
+        be1.metric(f"Costo Fijo Op {periodo_label}",
+                     _fmt_num(cf_total_periodo),
+                     f"{cf_mensual_periodo:,.0f}/mes × {n_meses_periodo} meses".replace(",", "."))
+        be2.metric("Margen Contrib %",
+                     f"{mc_pct:.1f}%",
+                     f"Sheet KAM ({contrib_data.get('n_filas', 0)} filas)"
+                     if "error" not in contrib_data else "fallback parquet")
+        be3.metric(f"Venta BREAK-EVEN {periodo_label}",
+                     _fmt_num(breakeven) if breakeven else "—",
+                     f"= Fijos / MC%")
+        be4.metric("Holgura vs venta real",
+                     f"{holgura_pct:+.1f}%" if holgura_pct is not None else "—",
+                     f"venta {venta_periodo_m:,.0f} vs BE".replace(",", "."))
 
-        if breakeven and venta_avg_real >= breakeven:
+        if breakeven and venta_periodo_m >= breakeven:
             st.success(
-                f"✅ Operación rentable: vendés ${venta_avg_real:,.0f} M vs BE de "
-                f"${breakeven:,.0f} M. Cada $1 sobre BE aporta ${mc_pct:.2f} a "
-                f"utilidad operativa.".replace(",", ".")
+                f"✅ **Operación rentable {periodo_label}**: vendés "
+                f"${venta_periodo_m:,.0f} M vs break-even de ${breakeven:,.0f} M. "
+                f"Cada $1 vendido sobre el BE aporta **${mc_pct/100:.2f}** a utilidad operativa.".replace(",", ".")
             )
         elif breakeven:
             st.error(
-                f"🔴 Bajo break-even: faltan ${breakeven - venta_avg_real:,.0f} M/mes "
-                f"para cubrir fijos.".replace(",", ".")
+                f"🔴 **Bajo break-even {periodo_label}**: faltan "
+                f"${breakeven - venta_periodo_m:,.0f} M para cubrir fijos.".replace(",", ".")
             )
     with cF:
         st.markdown(
-            '<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
-            'padding:10px 14px;border-radius:4px;font-size:12px;color:#1E293B;">'
-            '<b>📚 ¿Qué es el Margen de Contribución?</b><br>'
-            'Es lo que queda de cada peso vendido DESPUÉS de pagar los costos '
-            'directos del producto (COGS, comisiones canal, logística, marketing).<br><br>'
-            '<b>Fórmula:</b> MC = Margen Final / Venta Neta<br>'
-            '<b>Origen:</b> módulo Ventas (parquet), columna <code>margen_final</code>.<br><br>'
-            'Sirve para saber cuánto te queda para pagar la operación. El break-even '
-            'es cuando MC × Venta = Costos Fijos.'
-            '</div>',
+            f'<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
+            f'padding:10px 14px;border-radius:4px;font-size:12px;color:#1E293B;">'
+            f'<b>📚 Margen Contribución (oficial)</b><br>'
+            f'<b>Fuente:</b> {fuente_mc}<br><br>'
+            f'<b>Cálculo:</b> Margen Directo KAM − Total Comisiones KAM<br>'
+            f'(donde Margen Directo = Venta REAL − Costo Venta · Comisiones = '
+            f'Comisión Venta + Comisión Envío + Marketing)<br><br>'
+            f'<b>Tu MC actual:</b> {mc_pct:.1f}%<br>'
+            f'<b>Venta REAL KAM:</b> ${venta_real_kam_clp/1e6:,.0f} MM<br>'
+            f'<b>Contribución:</b> ${margen_contrib_clp/1e6:,.0f} MM<br><br>'
+            f'Si la app de Ventas → Contribución muestra otro %, decime para '
+            f'sincronizar fórmulas exactas.'
+            f'</div>',
             unsafe_allow_html=True,
+        )
+
+    # Mostrar MC también por canal (para futuro split)
+    df_canal = contribucion_por_canal(year=year, meses=meses_sel)
+    if not df_canal.empty and len(df_canal) >= 2:
+        st.markdown(
+            "<h5 style='color:#1F4E79;margin:14px 0 6px 0;'>📊 Margen Contribución por canal</h5>"
+            "<p style='font-size:11px;color:#64748B;margin:0 0 6px 0;'>Para distribuir "
+            "costo operativo por canal en P&L LN (próxima iteración Finanzas)</p>",
+            unsafe_allow_html=True,
+        )
+        df_show = df_canal.head(10).copy()
+        df_show["Venta"] = df_show["venta"].apply(lambda v: f"${v/1e6:,.1f} MM".replace(",", "."))
+        df_show["Margen Dir"] = df_show["margen_dir"].apply(lambda v: f"${v/1e6:,.1f} MM".replace(",", "."))
+        df_show["Comisiones"] = df_show["comisiones"].apply(lambda v: f"${v/1e6:,.1f} MM".replace(",", "."))
+        df_show["Contribución"] = df_show["contribucion"].apply(lambda v: f"${v/1e6:,.1f} MM".replace(",", "."))
+        df_show["MC %"] = df_show["mc_pct"].apply(lambda v: f"{v:.1f}%")
+        st.dataframe(
+            df_show[["canal", "Venta", "Margen Dir", "Comisiones", "Contribución", "MC %"]]
+                   .rename(columns={"canal": "Canal"}),
+            use_container_width=True, hide_index=True, height=320,
         )
 
     st.divider()
@@ -1818,62 +1908,125 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     st.markdown(
         '<div style="background:#1F4E79;color:#FFFFFF;padding:10px 16px;'
         'border-radius:4px;margin:12px 0;font-weight:700;font-size:13px;">'
-        '6. CUÁNDO HAY QUE ESCALAR (o achicar) COSTOS FIJOS</div>',
+        '6. CUÁNDO HAY QUE SUMAR (O REDUCIR) PERSONAL/BODEGA</div>',
         unsafe_allow_html=True,
     )
-    st.caption(
-        "Modelo: si el variable es ~lineal con pedidos pero el fijo NO escala, "
-        "hay un punto donde el equipo/bodega se satura y hay que sumar otra persona "
-        "o m³ de bodega. Estos son los umbrales recomendados."
+    st.markdown(
+        '<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
+        'padding:12px 14px;border-radius:4px;margin:8px 0;font-size:13px;color:#1E293B;">'
+        '<b>📚 Lógica del modelo:</b><br>'
+        'Tus costos fijos (sueldos, arriendos) NO crecen automáticamente cuando '
+        'aumentan los pedidos. En cambio, tu equipo y bodega tienen una <b>capacidad máxima</b>. '
+        'Cuando los pedidos se acercan a esa capacidad, hay que <b>sumar gente o espacio</b>. '
+        'Cuando bajan mucho, hay <b>capacidad ociosa</b> que cuesta plata.<br><br>'
+        '<b>Asunciones del cálculo</b> (ajustables si me decís tus números reales):<br>'
+        '• 1 persona FTE bodega = $1.500.000/mes (sueldo + cargas)<br>'
+        '• 1 FTE puede procesar ~1.500 pedidos/mes (250 pedidos/semana, B2C estándar)<br>'
+        '• Bodega base = $5.000.000/mes (~500 m³, incluye arriendo + servicios)'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
-    # Heurística simple: capacidad por unidad de fijo
-    # Asumimos que 1 persona FTE bodega = $1.5MM/mes y maneja ~1500 pedidos/mes
+    # Asunciones (declarado como input mostrado, no oculto)
     PEDIDOS_POR_FTE = 1500
-    COSTO_FTE_MENSUAL = 1500
-    M3_BODEGA_BASE = 500  # m³ por bodega base
-    COSTO_BODEGA_MENSUAL = 5000  # $5MM/mes por bodega base
+    COSTO_FTE_MENSUAL = 1500       # M CLP por mes
+    M3_BODEGA_BASE = 500
+    COSTO_BODEGA_MENSUAL = 5000    # M CLP por mes
 
-    # Capacidad actual asumida desde fijos
-    n_ftes_actual = max(1, cf_mensual / COSTO_FTE_MENSUAL)
+    # Estimación capacidad actual a partir de costos fijos
+    # (asumimos que la mayor parte del fijo son sueldos)
+    cf_mensual_estimado = cf_periodo  # del período seleccionado
+    pct_sueldos_en_fijos = 0.6  # heurística: 60% del fijo son sueldos
+    sueldos_estim = cf_mensual_estimado * pct_sueldos_en_fijos
+    n_ftes_actual = max(1, sueldos_estim / COSTO_FTE_MENSUAL)
     capacidad_pedidos = n_ftes_actual * PEDIDOS_POR_FTE
-    utilizacion_pct = (pedidos_avg / capacidad_pedidos * 100) if capacidad_pedidos else 0
+    pedidos_periodo_avg = pedidos_avg
+    utilizacion_pct = (pedidos_periodo_avg / capacidad_pedidos * 100) if capacidad_pedidos else 0
 
-    e1, e2, e3 = st.columns(3)
-    e1.metric("FTEs implícitos en fijos",
+    # KPIs claros
+    e1, e2, e3, e4 = st.columns(4)
+    e1.metric(f"Tus pedidos/mes ({periodo_label})",
+                f"{pedidos_periodo_avg:,.0f}".replace(",", "."),
+                "promedio del período")
+    e2.metric("FTEs equivalentes ahora",
                 f"{n_ftes_actual:.1f}",
-                f"asumiendo ${COSTO_FTE_MENSUAL/1000:.1f}M/FTE")
-    e2.metric("Capacidad teórica pedidos/mes",
-                f"{capacidad_pedidos:,.0f}".replace(",", "."),
-                f"a {PEDIDOS_POR_FTE}/FTE")
-    e3.metric("Utilización actual",
+                f"~{sueldos_estim:,.0f} M/mes en sueldos".replace(",", "."))
+    e3.metric("Capacidad teórica máxima",
+                f"{capacidad_pedidos:,.0f} ped/mes".replace(",", "."),
+                f"= {n_ftes_actual:.0f} FTE × {PEDIDOS_POR_FTE} ped")
+    e4.metric("Utilización del equipo",
                 f"{utilizacion_pct:.0f}%",
-                f"{pedidos_avg:,.0f} / {capacidad_pedidos:,.0f}".replace(",", "."))
+                f"{pedidos_periodo_avg:,.0f} de {capacidad_pedidos:,.0f}".replace(",", "."))
 
+    # Diagnóstico claro con número concreto
+    pedidos_libres = capacidad_pedidos - pedidos_periodo_avg
     if utilizacion_pct < 60:
         st.info(
-            f"🟦 **Sub-utilizado** ({utilizacion_pct:.0f}%): tenés capacidad ociosa. "
-            f"Antes de sumar fijos, asegurarte de saturar lo que tenés. "
-            f"Podrías procesar hasta {capacidad_pedidos - pedidos_avg:.0f} pedidos extra/mes "
-            f"sin sumar costos fijos."
+            f"🟦 **Estás SUB-UTILIZADO ({utilizacion_pct:.0f}%)** — "
+            f"tu equipo podría procesar {pedidos_libres:,.0f} pedidos extra/mes sin sumar nadie. "
+            f"Antes de pensar en achicar, **prueba aumentar venta** "
+            f"(MKT push, promos) para usar la capacidad pagada.".replace(",", ".")
         )
     elif utilizacion_pct < 85:
         st.success(
-            f"🟢 **Utilización óptima** ({utilizacion_pct:.0f}%): zona dulce. "
-            f"Tenés margen para crecer sin sumar fijos hasta ~{capacidad_pedidos:,.0f} pedidos/mes."
-            .replace(",", ".")
+            f"🟢 **Utilización ÓPTIMA ({utilizacion_pct:.0f}%)** — zona dulce. "
+            f"Podés crecer hasta ~{capacidad_pedidos*0.85:,.0f} pedidos/mes sin sumar gente. "
+            f"Tenés colchón para {capacidad_pedidos*0.85 - pedidos_periodo_avg:,.0f} pedidos más.".replace(",", ".")
         )
     elif utilizacion_pct < 100:
         st.warning(
-            f"🟠 **Cerca del límite** ({utilizacion_pct:.0f}%): empezar a planear "
-            f"el siguiente FTE (+${COSTO_FTE_MENSUAL/1000:.1f}M fijo/mes). "
-            f"Cuando llegues a {capacidad_pedidos:.0f} pedidos/mes consistentes, sumar."
+            f"🟠 **Cerca del LÍMITE ({utilizacion_pct:.0f}%)** — empezar a planear el "
+            f"siguiente FTE. Cuando consistentemente superes los **{int(capacidad_pedidos*0.95):,} pedidos/mes**, "
+            f"sumar 1 persona (+${COSTO_FTE_MENSUAL:,} M fijo/mes).".replace(",", ".")
         )
     else:
+        ftes_extra = max(1, round((pedidos_periodo_avg / capacidad_pedidos - 1) * n_ftes_actual + 0.5))
         st.error(
-            f"🔴 **SATURADO** ({utilizacion_pct:.0f}%): ya superás capacidad teórica. "
-            f"Necesitás sumar al menos {(pedidos_avg/capacidad_pedidos - 1) * n_ftes_actual:.1f} FTEs "
-            f"o evaluar tercerizar overflow con un 3PL puntual."
+            f"🔴 **SATURADO ({utilizacion_pct:.0f}%)** — ya superás tu capacidad. "
+            f"Necesitás sumar **{ftes_extra} FTEs** (~+${ftes_extra * COSTO_FTE_MENSUAL:,} M/mes fijo) "
+            f"o tercerizar overflow con 3PL puntual (~$2.000-3.000/pedido extra, variable).".replace(",", ".")
+        )
+
+    # ─── 6.b PROYECCIÓN DE QUIEBRE DE CAPACIDAD ────────────────
+    st.markdown(
+        "<h5 style='color:#1F4E79;margin:18px 0 6px 0;'>📈 ¿Cuándo vas a tocar el techo?</h5>",
+        unsafe_allow_html=True,
+    )
+    # Proyección crecimiento simple: si crecés a tasa X% mensual,
+    # ¿en cuántos meses superás capacidad?
+    cP1, cP2 = st.columns(2)
+    with cP1:
+        crecimiento_mensual = st.slider(
+            "Crecimiento esperado pedidos/mes (%)", -10, 30, 5, step=1,
+            key="esc_crec",
+            help="Tasa esperada de crecimiento mensual de pedidos. Histórico típico 2-5%.",
+        )
+    with cP2:
+        st.markdown(
+            f"<p style='margin:8px 0 0 0;font-size:13px;'>"
+            f"Si crecés <b>{crecimiento_mensual}% por mes</b> sostenido:</p>",
+            unsafe_allow_html=True,
+        )
+
+    # Calcular meses hasta saturación
+    if crecimiento_mensual > 0 and pedidos_periodo_avg > 0:
+        # peds_t = peds_actual × (1 + r)^t
+        # peds_t = capacidad → t = log(cap/peds) / log(1+r)
+        if pedidos_periodo_avg < capacidad_pedidos:
+            meses_a_saturar = np.log(capacidad_pedidos / pedidos_periodo_avg) / np.log(1 + crecimiento_mensual / 100)
+            meses_a_saturar = int(np.ceil(meses_a_saturar))
+            st.info(
+                f"⏰ **Saturás tu capacidad actual en ~{meses_a_saturar} meses** "
+                f"({pedidos_periodo_avg:,.0f} → {capacidad_pedidos:,.0f} pedidos/mes). "
+                f"**Decisión clave:** ¿sumás 1 FTE antes (planificado) o lo hacés cuando "
+                f"empieza a colapsar (reactivo)?".replace(",", ".")
+            )
+        else:
+            st.error(f"🔴 Ya estás saturado, necesitás sumar AHORA.")
+    elif crecimiento_mensual <= 0:
+        st.success(
+            f"📉 Con crecimiento {crecimiento_mensual}% no vas a saturar. "
+            f"Eventualmente podrías evaluar **achicar** si la baja es sostenida 2+ meses."
         )
 
     # Tabla de umbrales
@@ -2000,4 +2153,4 @@ def render():
     with tab4:
         _tab_yoy(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab5:
-        _tab_proyeccion(df_costo, df_venta, year_sel, periodo_label)
+        _tab_proyeccion(df_costo, df_venta, year_sel, periodo_label, meses_sel)
