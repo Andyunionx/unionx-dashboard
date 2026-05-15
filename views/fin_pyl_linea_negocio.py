@@ -1,22 +1,32 @@
 """
 Vista P&L por Línea de Negocio — App Finanzas.
 
-Construye P&L COMPLETO por canal (y por línea de negocio en cascada) cruzando
-3 fuentes:
+Construye un P&L COMPLETO con MONTOS REALES (no estimados) cruzando 4 fuentes:
 
   1. Sheet KAM "Análisis de Resultados" (oficial)
      → Venta REAL · Costo Venta · Margen Directo · Comisiones · Contribución
+     → Segmentado por: Canal · KAM · Tipo Negocio (LN) · Año · Mes · Trimestre
 
   2. Sheet OPERACIONES (extraído a costo_operativo.parquet)
-     → Costo operativo por CC × sub_area (asociado a Grupo Eter como holding)
+     → Costo operativo por CC × sub-área (asociado a Grupo Eter como holding)
 
-  3. Parquet ventas_historico
-     → # pedidos · # unidades · venta neta por canal y tipo_negocio (LN)
+  3. P&L corporativo (pyl_mensual.parquet)
+     → "Gastos de Administración y Venta" (GAV) — distribuido por driver venta
 
-La distribución del costo operativo a cada canal usa drivers configurables
-por tipo de costo. Defaults inteligentes (REMUNERACIONES → pedidos, INSUMOS →
-unidades, ARRIENDOS → pedidos, SEGUROS → venta, etc.) con override manual
-en la UI.
+  4. Parquet ventas_historico
+     → # pedidos · # unidades · venta para drivers de distribución
+
+Estructura del P&L (las 7 líneas que pidió Andrés):
+  1. Ingreso por Venta
+  2. Margen Directo
+  3. Comisiones
+  4. Margen de Contribución
+  5. Costos Operativos (distribuidos por driver: pedidos / unidades / venta)
+  6. Costos P&L GAV (distribuidos por % venta)
+  7. EBIT
+
+Filtros: Año · Trimestre · Mes · Canal · KAM · LN
+Desglose elegible: Canal | LN | KAM
 """
 from datetime import datetime
 from pathlib import Path
@@ -24,20 +34,25 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from views._ops_contrib_helper import contribucion_por_canal, contribucion_periodo
+from views._ops_contrib_helper import (
+    contribucion_filtrada,
+    contribucion_total,
+    dimensiones_disponibles,
+    estado_ultima_carga,
+)
 from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
-    armar_pyl_por_canal,
     cargar_costos_operativos,
+    cargar_gav,
     cargar_ventas_canal_ln,
-    distribuir_costo_a_canales,
+    distribuir_monto_a_dimension,
     driver_default,
 )
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Paleta P&L (mismo estilo que ops_costo_operativo)
+# Paleta P&L
 COLOR_HDR = "#1E293B"
 COLOR_TOTAL = "#0F172A"
 COLOR_SUBTOTAL = "#475569"
@@ -64,135 +79,239 @@ def _fmt_pct(v, signo=False):
     return f"{sig}{v:.1f}%"
 
 
+def _label_dim(d: str) -> str:
+    return {"canal": "Canal", "tipo_negocio": "Línea de Negocio", "kam": "KAM"}.get(d, d)
+
+
 # ============================================================
 # RENDER
 # ============================================================
 def render():
     with st.sidebar:
         st.markdown("### 📈 **P&L por LN**")
-        st.caption("Margen real por canal y línea de negocio")
+        st.caption("Margen real por canal/KAM/LN")
         st.divider()
 
     st.title("📈 P&L por Línea de Negocio")
     st.caption(
-        "Margen real por CANAL y por LÍNEA DE NEGOCIO, cruzando contribución "
-        "oficial KAM con distribución del costo operativo del holding"
+        "Cruce KAM (oficial) + Costos Operativos + GAV del P&L corporativo. "
+        "Filtros multi-dimensión y desglose flexible."
     )
 
-    # ─── Selectores de período ──────────────────────────────────────────
-    year_actual = datetime.now().year
-    col1, col2, col3 = st.columns([1, 2, 2])
-    with col1:
-        year = st.selectbox("Año", [year_actual, year_actual - 1], index=0)
-    with col2:
-        periodo = st.radio(
-            "Período",
-            ["YTD", "Q1 (E-M)", "Q2 (A-J)", "Q3 (J-S)", "Q4 (O-D)", "Mes específico"],
+    # ─── Cargar dimensiones disponibles ─────────────────────────────────
+    dims = dimensiones_disponibles()
+    estado = estado_ultima_carga()
+
+    if not dims["anios"]:
+        # Diagnóstico detallado
+        st.error("❌ **Sin datos del Sheet KAM**")
+        if estado.get("error"):
+            st.code(f"Detalle del error: {estado['error']}", language="text")
+        st.markdown(
+            "**Posibles causas:**\n"
+            "1. ❌ El service account no tiene acceso al Sheet "
+            "(compartirlo con `union-x-revenue-bot@union-x-revenue.iam.gserviceaccount.com`)\n"
+            "2. ❌ La hoja `Análisis de Resultados` no existe o cambió de nombre\n"
+            "3. ❌ Falta `gcp_service_account` en Streamlit Secrets\n"
+            "4. ❌ El Sheet existe pero está vacío"
+        )
+        return
+
+    # ─── FILTROS (compactos, agrupados visualmente) ─────────────────────
+    st.markdown(
+        '<div style="background:#F8FAFC;padding:14px 18px;border-radius:10px;'
+        'border:1px solid #E2E8F0;margin-bottom:14px;">'
+        '<div style="font-weight:600;color:#475569;font-size:0.85rem;'
+        'margin-bottom:10px;">🎛️ FILTROS</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Fila 1: Año + Período + Selector específico
+    f1c1, f1c2, f1c3 = st.columns([1, 2, 3])
+    with f1c1:
+        year_actual = datetime.now().year
+        year_default = year_actual if year_actual in dims["anios"] else dims["anios"][-1]
+        year = st.selectbox("📅 Año", dims["anios"],
+                             index=dims["anios"].index(year_default),
+                             label_visibility="visible")
+    dims_year = dimensiones_disponibles(year)
+
+    with f1c2:
+        modo_periodo = st.radio(
+            "🗓️ Período", ["YTD", "Trimestre", "Mes(es)"],
             horizontal=True, index=0,
         )
 
-    if periodo == "YTD":
-        meses_sel = list(range(1, datetime.now().month + 1)) if year == year_actual else list(range(1, 13))
+    meses_sel = []
+    if modo_periodo == "YTD":
+        if year == year_actual:
+            meses_sel = list(range(1, datetime.now().month + 1))
+        else:
+            meses_sel = list(range(1, 13))
         periodo_label = f"YTD {year}"
-    elif periodo.startswith("Q1"):
-        meses_sel = [1, 2, 3]
-        periodo_label = f"Q1 {year}"
-    elif periodo.startswith("Q2"):
-        meses_sel = [4, 5, 6]
-        periodo_label = f"Q2 {year}"
-    elif periodo.startswith("Q3"):
-        meses_sel = [7, 8, 9]
-        periodo_label = f"Q3 {year}"
-    elif periodo.startswith("Q4"):
-        meses_sel = [10, 11, 12]
-        periodo_label = f"Q4 {year}"
+        with f1c3:
+            st.markdown(f"<div style='padding-top:28px;color:#64748B;'>"
+                         f"Meses incluidos: <code>{meses_sel}</code></div>",
+                         unsafe_allow_html=True)
+    elif modo_periodo == "Trimestre":
+        with f1c3:
+            trim_options = ["Q1", "Q2", "Q3", "Q4"]
+            trims = st.multiselect("Trimestre(s)", trim_options,
+                                     default=[trim_options[0]],
+                                     label_visibility="collapsed",
+                                     placeholder="Selecciona Q1/Q2/Q3/Q4")
+            mapa_q = {1: [1, 2, 3], 2: [4, 5, 6], 3: [7, 8, 9], 4: [10, 11, 12]}
+            for t in trims:
+                meses_sel.extend(mapa_q[int(t.replace("Q", ""))])
+            periodo_label = f"{', '.join(trims) or '?'} {year}"
     else:
-        with col3:
-            mes = st.number_input("Mes", min_value=1, max_value=12,
-                                   value=datetime.now().month, step=1)
-        meses_sel = [mes]
-        periodo_label = f"{mes:02d}/{year}"
+        with f1c3:
+            meses_sel = st.multiselect(
+                "Mes(es)", list(range(1, 13)),
+                default=[datetime.now().month] if year == year_actual else [1],
+                format_func=lambda m: f"{m:02d}",
+                label_visibility="collapsed",
+                placeholder="Selecciona uno o más meses",
+            )
+            periodo_label = f"Meses {meses_sel} {year}"
 
-    st.markdown(f"**Período seleccionado:** `{periodo_label}` · meses {meses_sel}")
-    st.divider()
+    # Fila 2: Filtros multi-dim
+    f2c1, f2c2, f2c3 = st.columns(3)
+    with f2c1:
+        canales_sel = st.multiselect(
+            "📺 Canal", dims_year["canales"], default=[],
+            placeholder="Todos los canales",
+        )
+    with f2c2:
+        kams_sel = st.multiselect(
+            "👤 KAM", dims_year["kams"], default=[],
+            placeholder="Todos los KAMs",
+        )
+    with f2c3:
+        lns_sel = st.multiselect(
+            "🏷️ Línea de Negocio", dims_year["tipos_negocio"], default=[],
+            placeholder="Todas las LNs",
+        )
 
-    # ─── Cargar inputs ──────────────────────────────────────────────────
-    with st.spinner("📥 Cargando datos (KAM + Costos OP + Ventas)..."):
-        df_contrib = contribucion_por_canal(year, meses_sel)
+    # Fila 3: Desglose
+    f3c1, f3c2 = st.columns([2, 5])
+    with f3c1:
+        st.markdown("<div style='font-weight:600;color:#475569;padding-top:8px;'>"
+                     "🔀 Desglosar por:</div>", unsafe_allow_html=True)
+    with f3c2:
+        desglose = st.radio(
+            "Desglose", ["canal", "tipo_negocio", "kam"],
+            format_func=lambda x: {
+                "canal": "📺 Canal",
+                "tipo_negocio": "🏷️ Línea de Negocio",
+                "kam": "👤 KAM",
+            }[x],
+            horizontal=True, index=0, label_visibility="collapsed",
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Banner período activo
+    st.markdown(
+        f'<div style="background:#EFF6FF;border-left:4px solid #3B82F6;'
+        f'padding:8px 14px;border-radius:4px;margin-bottom:14px;'
+        f'font-size:0.88rem;color:#1E40AF;">'
+        f'<strong>Período activo:</strong> {periodo_label} · '
+        f'meses {sorted(set(meses_sel))} · '
+        f'desglosado por <strong>{_label_dim(desglose)}</strong>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    # ─── Cargar inputs filtrados ────────────────────────────────────────
+    canales_f = canales_sel or None
+    kams_f = kams_sel or None
+    lns_f = lns_sel or None
+
+    with st.spinner("📥 Cargando datos (KAM + Costos OP + Ventas + GAV)..."):
+        df_contrib = contribucion_filtrada(
+            year=year, meses=meses_sel,
+            canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
+            desglose_por=desglose,
+        )
         df_costos = cargar_costos_operativos(year, meses_sel, escenario="FCST")
-        df_ventas = cargar_ventas_canal_ln(year, meses_sel)
+        df_ventas = cargar_ventas_canal_ln(
+            year, meses_sel,
+            canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
+        )
+        gav_total = cargar_gav(year, meses_sel)
 
-    # Validaciones
     if df_contrib.empty:
         st.error(
-            "❌ Sin datos de contribución KAM para el período. "
-            "Verifica acceso al Sheet `Análisis de Resultados` o cambia de período."
+            f"❌ **Sin datos KAM para los filtros aplicados.**\n\n"
+            f"- Período: `{periodo_label}` · meses {sorted(set(meses_sel))}\n"
+            f"- Canales: `{canales_sel or 'todos'}`\n"
+            f"- KAMs: `{kams_sel or 'todos'}`\n"
+            f"- LNs: `{lns_sel or 'todas'}`"
         )
+        meses_disponibles_anio = estado.get("meses_por_anio", {}).get(year, [])
+        if meses_disponibles_anio:
+            st.info(
+                f"ℹ️ **El Sheet KAM tiene datos para {year} en los meses:** "
+                f"`{meses_disponibles_anio}`. Probá con uno de esos."
+            )
+        else:
+            anios_disp = estado.get("anios", [])
+            st.info(
+                f"ℹ️ **Años con datos en el Sheet:** `{anios_disp}`. "
+                f"El año {year} no tiene datos cargados."
+            )
         return
-    if df_costos.empty:
-        st.warning(
-            "⚠️ Sin costos operativos FCST para el período. "
-            "El P&L mostrará solo Contribución (sin asignación de costo OP)."
-        )
-    if df_ventas.empty:
-        st.warning(
-            "⚠️ Sin ventas históricas para el período. "
-            "No se puede distribuir costo operativo (faltan drivers)."
-        )
 
     # ─── Resumen consolidado ────────────────────────────────────────────
-    res = contribucion_periodo(year, meses_sel)
-    venta_total = res.get("venta_real_clp", 0)
-    contrib_total = res.get("contribucion_clp", 0)
+    res = contribucion_total(
+        year=year, meses=meses_sel,
+        canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
+    )
+    venta_total = res.get("venta", 0)
+    contrib_total = res.get("contribucion", 0)
     costo_op_total = df_costos["monto"].sum() if not df_costos.empty else 0
-    ebit_total = contrib_total - costo_op_total
+    ebit_total = contrib_total - costo_op_total - gav_total
     mc_pct = res.get("mc_pct", 0)
     ebit_pct = (ebit_total / venta_total * 100) if venta_total else 0
 
-    st.markdown("### 📊 Consolidado del período")
+    st.markdown("### 📊 Consolidado del período (con filtros)")
     k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric("Venta REAL", f"${_fmt_clp(venta_total / 1000)} M")
     k2.metric("Contribución", f"${_fmt_clp(contrib_total / 1000)} M",
               delta=_fmt_pct(mc_pct))
-    k3.metric("Costo OP asignar", f"${_fmt_clp(costo_op_total / 1000)} M")
-    k4.metric("EBIT estimado", f"${_fmt_clp(ebit_total / 1000)} M",
+    k3.metric("Costo OP", f"${_fmt_clp(costo_op_total / 1000)} M")
+    k4.metric("GAV", f"${_fmt_clp(gav_total / 1000)} M")
+    k5.metric("EBIT estimado", f"${_fmt_clp(ebit_total / 1000)} M",
               delta=_fmt_pct(ebit_pct))
-    k5.metric("Canales activos", f"{len(df_contrib)}")
 
     st.divider()
 
     # ─── Tabs ───────────────────────────────────────────────────────────
-    tab_pyl, tab_drivers, tab_ln, tab_detalle, tab_help = st.tabs([
-        "💰 P&L por Canal",
-        "🎚️ Drivers de distribución",
-        "🏷️ Por Línea de Negocio",
-        "📋 Detalle de costos",
+    tab_pyl, tab_drivers, tab_detalle, tab_help = st.tabs([
+        "💰 P&L (7 líneas)",
+        "🎚️ Drivers",
+        "📋 Detalle",
         "ℹ️ Cómo se calcula",
     ])
 
-    # ─────────────────────────────────────────────────────────────────────
-    # TAB DRIVERS (primero, porque condiciona el P&L)
-    # ─────────────────────────────────────────────────────────────────────
+    # ─── TAB DRIVERS ────────────────────────────────────────────────────
     with tab_drivers:
         st.markdown(
-            "### 🎚️ Configuración de drivers por Centro de Costo\n"
-            "Cada CC se distribuye a los canales según un driver. "
-            "Edita la tabla abajo para sobrescribir el driver default."
+            f"### 🎚️ Drivers por Centro de Costo\n"
+            f"Cada CC se distribuye a los valores de la dimensión "
+            f"`{_label_dim(desglose)}` según un driver."
         )
         st.info(
             "**Drivers disponibles:**\n"
-            "- 🟢 `pedidos` — proporcional a # pedidos del canal "
-            "(operadores procesan pedidos)\n"
-            "- 🟡 `unidades` — proporcional a # unidades despachadas "
-            "(insumos físicos: cartón, etiquetas)\n"
-            "- 🔵 `venta` — proporcional a venta neta del canal "
-            "(servicios proporcionales al revenue: seguros, asesoría)\n"
-            "- ⚪ `equitativo` — reparto igual entre canales activos "
-            "(SaaS, suscripciones)"
+            "- 🟢 `pedidos` — proporcional a # pedidos\n"
+            "- 🟡 `unidades` — proporcional a # unidades despachadas\n"
+            "- 🔵 `venta` — proporcional a venta neta\n"
+            "- ⚪ `equitativo` — reparto igual"
         )
 
         if df_costos.empty:
-            st.warning("Sin costos para configurar.")
+            st.warning("Sin costos operativos para el período seleccionado.")
         else:
             df_drivers_ui = df_costos.copy()
             df_drivers_ui["driver"] = df_drivers_ui["centro_costo"].apply(driver_default)
@@ -209,8 +328,7 @@ def render():
 
             edited = st.data_editor(
                 df_drivers_ui,
-                use_container_width=True,
-                hide_index=True,
+                use_container_width=True, hide_index=True,
                 disabled=["Sub-área", "Centro de Costo", "F/V", "Monto (M$)"],
                 column_config={
                     "Driver": st.column_config.SelectboxColumn(
@@ -225,14 +343,11 @@ def render():
                 key="drivers_editor",
             )
 
-            # Reconstruir override
             driver_override = {}
             for _, r in edited.iterrows():
                 cc = r["Centro de Costo"]
                 if r["Driver"] != driver_default(cc):
                     driver_override[cc] = r["Driver"]
-
-            # Guardar en session_state para que tab P&L lo use
             st.session_state["fin_pyl_driver_override"] = driver_override
 
             if driver_override:
@@ -241,135 +356,67 @@ def render():
                     f"{', '.join(list(driver_override.keys())[:5])}"
                     f"{'...' if len(driver_override) > 5 else ''}"
                 )
-            else:
-                st.caption("✓ Usando todos los drivers default.")
 
-        # Tabla resumen de defaults
+        st.markdown("---")
+        st.markdown(
+            "**Driver de GAV:** `% venta` (no editable — gastos administrativos "
+            "del corporativo se asocian al revenue)."
+        )
+
         st.markdown("---")
         st.markdown("**Mapping default por tipo de costo:**")
         df_defaults = pd.DataFrame([
             {"Centro de Costo": k, "Driver default": v}
             for k, v in DRIVER_DEFAULT_POR_CC.items()
-            if "Ó" not in k and "Á" not in k and "Í" not in k  # evitar duplicados acentos
+            if "Ó" not in k and "Á" not in k and "Í" not in k
         ])
         st.dataframe(df_defaults, use_container_width=True, hide_index=True)
 
-    # Recuperar override de session_state
+    # Recuperar override
     driver_override = st.session_state.get("fin_pyl_driver_override", {})
 
-    # Distribuir
-    df_distrib = pd.DataFrame()
+    # ─── CALCULAR DISTRIBUCIONES ────────────────────────────────────────
+    costo_op_por_dim = {}
     if not df_costos.empty and not df_ventas.empty:
-        df_distrib = distribuir_costo_a_canales(df_costos, df_ventas, driver_override)
+        for _, c in df_costos.iterrows():
+            cc = c["centro_costo"]
+            driver = driver_override.get(cc, driver_default(cc))
+            asignacion = distribuir_monto_a_dimension(
+                c["monto"], df_ventas, driver, dimension=desglose,
+            )
+            for k, v in asignacion.items():
+                costo_op_por_dim[k] = costo_op_por_dim.get(k, 0) + v
 
-    # ─────────────────────────────────────────────────────────────────────
-    # TAB P&L POR CANAL
-    # ─────────────────────────────────────────────────────────────────────
+    gav_por_dim = distribuir_monto_a_dimension(
+        gav_total, df_ventas, "venta", dimension=desglose,
+    ) if (gav_total > 0 and not df_ventas.empty) else {}
+
+    # ─── TAB P&L ────────────────────────────────────────────────────────
     with tab_pyl:
-        st.markdown("### 💰 P&L por Canal de Venta")
+        st.markdown(f"### 💰 P&L por **{_label_dim(desglose)}**")
         st.caption(
-            f"Período `{periodo_label}` · Contribución oficial KAM + "
-            f"costo operativo distribuido"
+            f"Período `{periodo_label}` · Filtros: "
+            f"{len(canales_sel) or 'todos'} canal(es), "
+            f"{len(kams_sel) or 'todos'} KAM(s), "
+            f"{len(lns_sel) or 'todas'} LN(s)"
         )
 
-        df_pyl = armar_pyl_por_canal(df_contrib, df_distrib)
-        if df_pyl.empty:
-            st.warning("Sin datos para construir el P&L.")
+        df_pyl_table = _construir_pyl_7lineas(
+            df_contrib, costo_op_por_dim, gav_por_dim, desglose,
+        )
+
+        if df_pyl_table.empty:
+            st.warning("No hay datos para mostrar.")
         else:
-            # Renderizar HTML
-            html = _render_pyl_html(df_pyl)
+            html = _render_pyl_html(df_pyl_table)
             st.markdown(html, unsafe_allow_html=True)
 
-            # Insights
             st.markdown("---")
-            _render_insights_canal(df_pyl)
+            _render_insights(df_pyl_table, desglose)
 
-    # ─────────────────────────────────────────────────────────────────────
-    # TAB POR LÍNEA DE NEGOCIO
-    # ─────────────────────────────────────────────────────────────────────
-    with tab_ln:
-        st.markdown("### 🏷️ Resumen por Línea de Negocio")
-        st.caption(
-            "Las líneas de negocio se identifican por `tipo_negocio` en ventas: "
-            "Marketplace · Páginas propias · Fidelización · Distribución · Corporativo"
-        )
-
-        if df_ventas.empty:
-            st.warning("Sin datos de ventas para clasificar por LN.")
-        else:
-            # Sumar pedidos/unidades/venta por LN
-            ln_summary = df_ventas.groupby("tipo_negocio", as_index=False).agg(
-                n_pedidos=("n_pedidos", "sum"),
-                n_unidades=("n_unidades", "sum"),
-                venta_neta=("venta_neta", "sum"),
-            ).sort_values("venta_neta", ascending=False)
-
-            # Asignar costo OP por LN proporcional a ventas (default driver venta)
-            costo_op_total_distrib = (
-                df_distrib["monto"].sum() if not df_distrib.empty else 0
-            )
-            total_venta_ln = ln_summary["venta_neta"].sum()
-            ln_summary["costo_op_asignado"] = (
-                ln_summary["venta_neta"] / total_venta_ln * costo_op_total_distrib
-                if total_venta_ln > 0 else 0
-            )
-
-            # MC% promedio aplicado proporcional al consolidado
-            ln_summary["contribucion_est"] = ln_summary["venta_neta"] * (mc_pct / 100)
-            ln_summary["ebit_est"] = (
-                ln_summary["contribucion_est"] - ln_summary["costo_op_asignado"]
-            )
-            ln_summary["mc_pct"] = mc_pct
-            ln_summary["ebit_pct"] = (
-                ln_summary["ebit_est"] / ln_summary["venta_neta"] * 100
-            ).where(ln_summary["venta_neta"] > 0, 0)
-
-            # Formato display
-            df_disp = ln_summary[[
-                "tipo_negocio", "venta_neta", "n_pedidos", "n_unidades",
-                "contribucion_est", "costo_op_asignado", "ebit_est",
-                "mc_pct", "ebit_pct",
-            ]].rename(columns={
-                "tipo_negocio": "Línea de Negocio",
-                "venta_neta": "Venta",
-                "n_pedidos": "# Pedidos",
-                "n_unidades": "# Unidades",
-                "contribucion_est": "Contribución (est)",
-                "costo_op_asignado": "Costo OP",
-                "ebit_est": "EBIT (est)",
-                "mc_pct": "MC %",
-                "ebit_pct": "EBIT %",
-            })
-
-            st.dataframe(
-                df_disp.style.format({
-                    "Venta": "${:,.0f}",
-                    "# Pedidos": "{:,.0f}",
-                    "# Unidades": "{:,.0f}",
-                    "Contribución (est)": "${:,.0f}",
-                    "Costo OP": "${:,.0f}",
-                    "EBIT (est)": "${:,.0f}",
-                    "MC %": "{:.1f}%",
-                    "EBIT %": "{:.1f}%",
-                }).background_gradient(subset=["EBIT %"], cmap="RdYlGn", vmin=-20, vmax=30),
-                use_container_width=True,
-                hide_index=True,
-            )
-
-            st.info(
-                "ℹ️ **Limitación actual:** la contribución por LN se estima "
-                "aplicando el MC% consolidado a la venta de cada LN. Para tener "
-                "MC real por LN necesitaríamos que el Sheet KAM segmente también "
-                "por línea de negocio, no solo por canal. **Roadmap H2:** "
-                "agregar columna `tipo_negocio` en el Sheet KAM."
-            )
-
-    # ─────────────────────────────────────────────────────────────────────
-    # TAB DETALLE
-    # ─────────────────────────────────────────────────────────────────────
+    # ─── TAB DETALLE ────────────────────────────────────────────────────
     with tab_detalle:
-        st.markdown("### 📋 Detalle de costos a distribuir")
-
+        st.markdown("### 📋 Costos a distribuir")
         if df_costos.empty:
             st.info("Sin costos en el período.")
         else:
@@ -396,82 +443,150 @@ def render():
                 f"Variable `${_fmt_clp(tot_var / 1000)} M` · "
                 f"Total `${_fmt_clp((tot_fijo + tot_var) / 1000)} M`"
             )
+            st.markdown(f"**+ GAV (P&L corporativo):** `${_fmt_clp(gav_total / 1000)} M`")
 
-        if not df_distrib.empty:
-            st.markdown("---")
-            st.markdown("### 🎯 Distribución resultante por canal")
-            pivot = df_distrib.pivot_table(
-                index="centro_costo",
-                columns="canal",
-                values="monto",
-                aggfunc="sum",
-                fill_value=0,
-            )
-            pivot["TOTAL"] = pivot.sum(axis=1)
-            pivot = (pivot / 1000).round(0)
+        st.markdown("---")
+        st.markdown(f"### 📊 Volumen por {_label_dim(desglose)}")
+        if df_ventas.empty:
+            st.info("Sin ventas en el período.")
+        else:
+            agg = df_ventas.groupby(desglose, as_index=False).agg(
+                n_pedidos=("n_pedidos", "sum"),
+                n_unidades=("n_unidades", "sum"),
+                venta_neta=("venta_neta", "sum"),
+            ).sort_values("venta_neta", ascending=False)
+            agg["% venta"] = (agg["venta_neta"] / agg["venta_neta"].sum() * 100).round(1)
+
             st.dataframe(
-                pivot.style.format("{:,.0f}").background_gradient(cmap="Blues"),
-                use_container_width=True,
+                agg.style.format({
+                    "n_pedidos": "{:,.0f}",
+                    "n_unidades": "{:,.0f}",
+                    "venta_neta": "${:,.0f}",
+                    "% venta": "{:.1f}%",
+                }),
+                use_container_width=True, hide_index=True,
             )
 
-    # ─────────────────────────────────────────────────────────────────────
-    # TAB AYUDA
-    # ─────────────────────────────────────────────────────────────────────
+    # ─── TAB AYUDA ──────────────────────────────────────────────────────
     with tab_help:
         st.markdown("""
-### 🧭 Cómo se construye este P&L
+### 🧭 Estructura del P&L (7 líneas)
 
-#### Paso 1 — Contribución por canal (KAM)
-Lectura del Sheet **"Análisis de Resultados"** del KAM. Para cada canal:
-```
-Contribución = Margen Directo KAM − Total Comisiones KAM
-             = (Venta − Costo Venta) − (Com. Venta + Com. Envío + Marketing)
-```
-Esta es la **fuente oficial** del margen por canal.
+| # | Línea | Origen | Cómo se calcula |
+|---|---|---|---|
+| 1 | **Ingreso por Venta** | Sheet KAM | `Venta REAL KAM` (suma con filtros) |
+| 2 | **Margen Directo** | Sheet KAM | `Venta − Costo Venta` |
+| 3 | **Comisiones** | Sheet KAM | `Comisión Venta + Comisión Envío + Marketing` |
+| 4 | **Margen de Contribución** | Sheet KAM | `Margen Directo − Comisiones` ✅ oficial |
+| 5 | **Costos Operativos** | Sheet OPERACIONES | Distribuido por driver según CC: `pedidos` / `unidades` / `venta` / `equitativo` |
+| 6 | **Costos P&L GAV** | P&L corporativo | `Gastos Administración y Venta` distribuido por `% venta` |
+| 7 | **EBIT** | Calculado | `Margen de Contribución − Costos OP − GAV` |
 
-#### Paso 2 — Costo Operativo del holding
-Lectura del Sheet **OPERACIONES** (vía `costo_operativo.parquet`). Como el
-costo operativo está cargado a **Grupo Eter** (holding), no a un canal
-específico, hay que distribuirlo.
+#### Filtros disponibles
+- **Año** · **Trimestre / Mes(es)** · **Canal** · **KAM** · **Línea de Negocio**
+- Los filtros se aplican simultáneamente a las 4 fuentes
+- Vacío = "todos"
 
-#### Paso 3 — Distribución a canales (drivers)
-Cada **Centro de Costo** se distribuye proporcionalmente a un **driver**
-del canal. La elección del driver depende de la naturaleza del costo:
+#### Desglose flexible
+La tabla se desglosa por la dimensión que elijas:
+- **Canal de Venta** — rentabilidad por marketplace/canal
+- **Línea de Negocio** — comparar Marketplace vs Páginas propias vs Distribución
+- **KAM** — performance del equipo comercial
 
-| Tipo de Costo | Driver default | Lógica |
+#### Drivers de distribución del Costo OP
+
+| Tipo de Costo | Driver default | Por qué |
 |---|---|---|
 | REMUNERACIONES | # pedidos | Operadores procesan pedidos |
-| INSUMOS (cartón, etiquetas) | # unidades | Escala con volumen físico |
+| INSUMOS | # unidades | Cartón/etiquetas escalan con volumen físico |
 | ARRIENDOS | # pedidos | Proxy de uso de bodega |
-| HONORARIOS | % venta | Asesoría/servicios escalan con revenue |
-| SEGUROS | % venta | Cobertura proporcional al stock movido |
-| MOVILIZACIÓN | # pedidos | Cada despacho genera transporte |
-| MANTENCIÓN | # pedidos | Uso de equipos |
-| GASTOS OFICINA | % venta | Servicios generales |
-| SUSCRIPCIÓN/SW | equitativo | SaaS independiente del volumen |
+| HONORARIOS, SEGUROS, GASTOS OFICINA | % venta | Servicios proporcionales al revenue |
+| MOVILIZACIÓN, MANTENCIÓN | # pedidos | Cada despacho/uso de equipo |
+| SUSCRIPCIÓN/SOFTWARE | equitativo | SaaS independiente del volumen |
 
-**Override manual:** en la tab "🎚️ Drivers" puedes cambiar el driver de
-cada CC individualmente. La asignación se recalcula al instante.
-
-#### Paso 4 — P&L final
-```
-Venta REAL              ← KAM
-(-) Costo Venta         ← KAM
-= Margen Directo
-(-) Comisiones          ← KAM (venta + envío + marketing)
-= Contribución          ← KAM oficial
-(-) Costo OP asignado   ← Distribuido por drivers
-= EBIT por canal
-```
-
-#### Limitaciones conocidas
-- **MC por LN estimado:** se aplica el MC% consolidado a cada LN (el
-  Sheet KAM no segmenta por línea de negocio todavía). Roadmap H2: pedir
-  a KAM agregar columna `tipo_negocio`.
-- **Arriendo bodega:** ideal sería m³ ocupado, hoy usamos # pedidos.
-- **Costo OP de Grupo Eter holding:** se distribuye proporcionalmente
-  asumiendo que apoya a todos los canales (no hay servicios exclusivos).
+#### Driver de GAV
+**Fijo en `% venta`** — los gastos administrativos del corporativo se asocian
+naturalmente al revenue generado por cada canal/LN/KAM.
         """)
+
+
+# ============================================================
+# CONSTRUCCIÓN DEL P&L (7 LÍNEAS)
+# ============================================================
+def _construir_pyl_7lineas(df_contrib: pd.DataFrame,
+                            costo_op_por_dim: dict,
+                            gav_por_dim: dict,
+                            desglose: str) -> pd.DataFrame:
+    """Devuelve DataFrame con filas = 7 líneas P&L + MC%/EBIT%, cols = valores + TOTAL."""
+    if df_contrib.empty:
+        return pd.DataFrame()
+
+    valores = df_contrib[desglose].tolist()
+    contrib_dict = df_contrib.set_index(desglose).to_dict("index")
+
+    rows = []
+    for label in [
+        "Ingreso por Venta",
+        "Margen Directo",
+        "Comisiones",
+        "Margen de Contribución",
+        "Costos Operativos",
+        "Costos P&L GAV",
+        "EBIT",
+    ]:
+        row = {"Línea P&L": label}
+        for v in valores:
+            c = contrib_dict.get(v, {})
+            venta = c.get("venta", 0)
+            md = c.get("margen_dir", 0)
+            com = c.get("comisiones", 0)
+            mc = c.get("contribucion", 0)
+            cop = costo_op_por_dim.get(v, 0)
+            gav = gav_por_dim.get(v, 0)
+            ebit = mc - cop - gav
+
+            if label == "Ingreso por Venta":
+                row[v] = venta
+            elif label == "Margen Directo":
+                row[v] = md
+            elif label == "Comisiones":
+                row[v] = -com
+            elif label == "Margen de Contribución":
+                row[v] = mc
+            elif label == "Costos Operativos":
+                row[v] = -cop
+            elif label == "Costos P&L GAV":
+                row[v] = -gav
+            elif label == "EBIT":
+                row[v] = ebit
+        row["TOTAL"] = sum(row[v] for v in valores)
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    # Filas de % al final
+    venta_t = sum(contrib_dict.get(v, {}).get("venta", 0) for v in valores)
+    mc_t = sum(contrib_dict.get(v, {}).get("contribucion", 0) for v in valores)
+    cop_t = sum(costo_op_por_dim.get(v, 0) for v in valores)
+    gav_t = sum(gav_por_dim.get(v, 0) for v in valores)
+    ebit_t = mc_t - cop_t - gav_t
+
+    row_mcpct = {"Línea P&L": "MC %"}
+    row_ebitpct = {"Línea P&L": "EBIT %"}
+    for v in valores:
+        c = contrib_dict.get(v, {})
+        venta = c.get("venta", 0)
+        mc = c.get("contribucion", 0)
+        cop = costo_op_por_dim.get(v, 0)
+        gav = gav_por_dim.get(v, 0)
+        ebit = mc - cop - gav
+        row_mcpct[v] = (mc / venta * 100) if venta else 0
+        row_ebitpct[v] = (ebit / venta * 100) if venta else 0
+    row_mcpct["TOTAL"] = (mc_t / venta_t * 100) if venta_t else 0
+    row_ebitpct["TOTAL"] = (ebit_t / venta_t * 100) if venta_t else 0
+
+    df = pd.concat([df, pd.DataFrame([row_mcpct, row_ebitpct])], ignore_index=True)
+    return df
 
 
 # ============================================================
@@ -479,8 +594,8 @@ Venta REAL              ← KAM
 # ============================================================
 def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
     """Genera HTML estilo Excel con colores y subtotales destacados."""
-    canales = [c for c in df_pyl.columns if c not in ("Línea P&L", "TOTAL")]
-    cols_orden = ["Línea P&L"] + canales + ["TOTAL"]
+    cols_valores = [c for c in df_pyl.columns if c not in ("Línea P&L", "TOTAL")]
+    cols_orden = ["Línea P&L"] + cols_valores + ["TOTAL"]
 
     html = ['<div style="overflow-x:auto;">']
     html.append(
@@ -502,20 +617,25 @@ def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
     html.append("<tbody>")
     for _, row in df_pyl.iterrows():
         label = row["Línea P&L"]
-        es_subtotal = label in ("Margen Directo", "Contribución", "EBIT")
+        es_subtotal = label in ("Margen Directo", "Margen de Contribución")
+        es_ebit = label == "EBIT"
         es_pct = label in ("MC %", "EBIT %")
-        es_costo_op = label == "Costo Op asignado"
 
-        if es_subtotal:
-            bg = "#F1F5F9"
-            font_weight = "700"
-            color = COLOR_SUBTOTAL
-            border = "border-top:1px solid #94A3B8;"
-        elif label == "EBIT" or label == "EBIT %":
+        if es_ebit:
             bg = "#0F172A"
             font_weight = "700"
             color = "white"
             border = "border-top:2px solid #0F172A;"
+        elif es_subtotal:
+            bg = "#F1F5F9"
+            font_weight = "700"
+            color = COLOR_SUBTOTAL
+            border = "border-top:1px solid #94A3B8;"
+        elif es_pct:
+            bg = "#FEFCE8"
+            font_weight = "600"
+            color = "#854D0E"
+            border = ""
         else:
             bg = "white"
             font_weight = "400"
@@ -525,16 +645,12 @@ def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
         html.append(
             f'<tr style="background:{bg};color:{color};font-weight:{font_weight};{border}">'
         )
-        # Label
-        html.append(
-            f'<td style="padding:8px 12px;text-align:left;">{label}</td>'
-        )
-        # Valores
-        for col in canales + ["TOTAL"]:
+        html.append(f'<td style="padding:8px 12px;text-align:left;">{label}</td>')
+
+        for col in cols_valores + ["TOTAL"]:
             v = row[col]
             if es_pct:
                 txt = _fmt_pct(v)
-                # Color según signo
                 if v >= 35:
                     val_color = COLOR_POSITIVO
                 elif v >= 15:
@@ -546,10 +662,11 @@ def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
                     f'color:{val_color};font-weight:600;">{txt}</td>'
                 )
             else:
-                txt = _fmt_clp(v / 1000)  # mostrar en M
-                # Color: rojo para negativos, verde para positivos
-                if v < 0:
-                    val_color = COLOR_NEGATIVO if not (label in ("EBIT",)) else color
+                txt = _fmt_clp(v / 1000)
+                if v < 0 and not es_ebit:
+                    val_color = COLOR_NEGATIVO
+                elif es_ebit and v < 0:
+                    val_color = "#FCA5A5"
                 else:
                     val_color = color
                 html.append(
@@ -561,46 +678,45 @@ def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
     html.append("</tbody></table></div>")
     html.append(
         '<p style="font-size:11px;color:#64748B;margin-top:6px;">'
-        "Cifras en M$ · (números) = negativos · MC% / EBIT% sobre venta del canal"
+        "Cifras en M$ · (números) = negativos · MC% / EBIT% sobre venta de la columna"
         "</p>"
     )
     return "".join(html)
 
 
-def _render_insights_canal(df_pyl: pd.DataFrame):
+def _render_insights(df_pyl: pd.DataFrame, desglose: str):
     """Insights automáticos del P&L."""
-    canales = [c for c in df_pyl.columns if c not in ("Línea P&L", "TOTAL")]
-    if not canales:
+    cols_valores = [c for c in df_pyl.columns if c not in ("Línea P&L", "TOTAL")]
+    if not cols_valores:
         return
 
-    # Extraer EBIT y EBIT% por canal
     fila_ebit = df_pyl[df_pyl["Línea P&L"] == "EBIT"]
     fila_ebit_pct = df_pyl[df_pyl["Línea P&L"] == "EBIT %"]
-    fila_venta = df_pyl[df_pyl["Línea P&L"] == "Venta REAL"]
-    fila_contrib = df_pyl[df_pyl["Línea P&L"] == "Contribución"]
-    fila_cop = df_pyl[df_pyl["Línea P&L"] == "Costo Op asignado"]
+    fila_venta = df_pyl[df_pyl["Línea P&L"] == "Ingreso por Venta"]
+    fila_mc = df_pyl[df_pyl["Línea P&L"] == "Margen de Contribución"]
+    fila_cop = df_pyl[df_pyl["Línea P&L"] == "Costos Operativos"]
+    fila_gav = df_pyl[df_pyl["Línea P&L"] == "Costos P&L GAV"]
 
     if fila_ebit.empty:
         return
 
-    ebits = {c: fila_ebit.iloc[0][c] for c in canales}
-    ebits_pct = {c: fila_ebit_pct.iloc[0][c] for c in canales}
-    ventas = {c: fila_venta.iloc[0][c] for c in canales}
-    contribs = {c: fila_contrib.iloc[0][c] for c in canales}
-    cops = {c: -fila_cop.iloc[0][c] for c in canales}  # convertir a positivo
+    ebits = {c: fila_ebit.iloc[0][c] for c in cols_valores}
+    ebits_pct = {c: fila_ebit_pct.iloc[0][c] for c in cols_valores}
+    ventas = {c: fila_venta.iloc[0][c] for c in cols_valores}
+    mcs = {c: fila_mc.iloc[0][c] for c in cols_valores}
+    cops = {c: -fila_cop.iloc[0][c] for c in cols_valores}
+    gavs = {c: -fila_gav.iloc[0][c] for c in cols_valores}
 
-    # Filtrar canales con venta significativa (>1% del total)
     venta_total = sum(ventas.values())
-    canales_relevantes = [c for c in canales if ventas[c] > venta_total * 0.01]
-
-    if not canales_relevantes:
+    relevantes = [c for c in cols_valores if ventas[c] > venta_total * 0.01]
+    if not relevantes:
         return
 
-    mejor = max(canales_relevantes, key=lambda c: ebits_pct[c])
-    peor = min(canales_relevantes, key=lambda c: ebits_pct[c])
-    canales_perdiendo = [c for c in canales_relevantes if cops[c] > contribs[c]]
+    mejor = max(relevantes, key=lambda c: ebits_pct[c])
+    peor = min(relevantes, key=lambda c: ebits_pct[c])
+    perdiendo = [c for c in relevantes if (cops[c] + gavs[c]) > mcs[c]]
 
-    st.markdown("### 💡 Insights")
+    st.markdown(f"### 💡 Insights por {_label_dim(desglose)}")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.success(
@@ -622,12 +738,10 @@ def _render_insights_canal(df_pyl: pd.DataFrame):
                 f"EBIT abs: `${_fmt_clp(ebits[peor] / 1000)} M`"
             )
     with c3:
-        if canales_perdiendo:
+        if perdiendo:
             st.error(
-                f"🚨 **Costo OP > Contribución** en:  \n"
-                + "  \n".join(f"• {c}" for c in canales_perdiendo[:5])
+                f"🚨 **Costos > Contribución** en:  \n"
+                + "  \n".join(f"• {c}" for c in perdiendo[:5])
             )
         else:
-            st.success(
-                "✅ **Todos los canales relevantes** cubren su costo operativo asignado."
-            )
+            st.success("✅ Todos los segmentos relevantes cubren su asignación de costos.")
