@@ -150,7 +150,7 @@ def render():
         mask = (
             (df_proy['stock_baseline'] > 0)
             | (df_proy['ventas_acum'] > 0)
-            | (df_proy['transito_pendiente'] > 0)
+            | (df_proy['transito_pendiente_3m'] > 0)
             | (df_proy['transito_mes_actual'] > 0)
         )
         df_proy = df_proy[mask].copy()
