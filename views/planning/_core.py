@@ -435,7 +435,13 @@ def proyectar_stock_mensual(
 
     hoy = pd.Timestamp.today().normalize()
     base_ts = pd.Timestamp(baseline_date)
-    # Fin de cada mes futuro (mes M = último día calendario M meses adelante)
+    # Fin de mes calendario actual
+    fin_mes_actual = (hoy.replace(day=1) + pd.DateOffset(months=1)) - pd.Timedelta(days=1)
+    # Días transcurridos post-baseline (inclusive) y días restantes del mes actual
+    dias_transcurridos = max(1, (hoy - base_ts).days + 1)
+    dias_restantes_mes = max(0, (fin_mes_actual - hoy).days)
+
+    # Fin de cada mes futuro
     fin_mes = {}
     for m in range(1, horizonte_meses + 1):
         target = hoy + pd.DateOffset(months=m)
@@ -443,13 +449,19 @@ def proyectar_stock_mensual(
 
     stock_ini = df_baseline.set_index('sku')['stock_total'].fillna(0).astype(float)
 
-    # Ventas acumuladas desde baseline hasta hoy
+    # Ventas acumuladas desde baseline hasta hoy + run-rate diario por SKU
     ventas_acum = pd.Series(dtype=float)
+    run_rate = pd.Series(dtype=float)
     if not df_ventas.empty:
         v = df_ventas.copy()
         v['fecha'] = pd.to_datetime(v['fecha'], errors='coerce')
         v = v[(v['fecha'] >= base_ts) & (v['fecha'] <= hoy)]
         ventas_acum = v.groupby('sku')['unidades'].sum().astype(float)
+        run_rate = ventas_acum / dias_transcurridos
+
+    # Proyección de venta total para el mes actual (incluye el resto del mes)
+    # venta_proy_mes_actual = venta_acum + run_rate × días_restantes
+    venta_proy_mes_actual = ventas_acum + (run_rate * dias_restantes_mes)
 
     # Forecast manual por mes (si existe)
     forecast_mes = {}  # {(sku, mes_num): unidades}
@@ -493,11 +505,13 @@ def proyectar_stock_mensual(
     for sku in skus:
         s_base = float(stock_ini.get(sku, 0))
         v_acum = float(ventas_acum.get(sku, 0))
-        # Mes 0 = mes actual (mayo). Tránsito mes 0 = TODO lo que llega
-        # durante mayo (ya recibido o por recibir antes de fin de mes).
+        rr = float(run_rate.get(sku, 0))
+        # Proyección venta TOTAL mes actual = real_acum + run_rate × dias_restantes
+        v_proy_mes = float(venta_proy_mes_actual.get(sku, 0)) if not venta_proy_mes_actual.empty else v_acum
+        # Mes 0 = mes actual. Tránsito mes 0 = TODO lo que llega durante el mes calendario
         t_mes0 = transito_mes.get((sku, 0), 0)
-        # Stock fin mes actual = baseline − ventas reales (parte ya transcurrida) + tránsito mayo
-        stock_fin_mes_actual = s_base - v_acum + t_mes0
+        # Stock fin mes actual = baseline − venta_proy_total_mes + tránsito_mes
+        stock_fin_mes_actual = s_base - v_proy_mes + t_mes0
 
         stocks = []
         s = stock_fin_mes_actual
@@ -509,19 +523,21 @@ def proyectar_stock_mensual(
             s = s - f_m + t_m
             stocks.append(s)
 
-        # Mes de quiebre: si stock_fin_mes_actual ≤ 0, mes 0; si no, primer m ≥ 1 con stock < 0
         mes_quiebre = 0 if stock_fin_mes_actual <= 0 else next(
             (i + 1 for i, x in enumerate(stocks) if x < 0), None)
 
-        transito_pend = sum(transitos_por_mes)
+        # Tránsito pendiente = solo +3 meses (jun, jul, ago para baseline mayo)
+        transito_pend_3m = sum(transitos_por_mes[:3])
 
         row = {
             'sku': sku,
             'stock_baseline': s_base,
             'ventas_acum': v_acum,
+            'run_rate_diario': rr,
+            'venta_proy_mes_actual': v_proy_mes,
             'transito_mes_actual': t_mes0,
             'stock_fin_mes_actual': stock_fin_mes_actual,
-            'transito_pendiente': transito_pend,
+            'transito_pendiente_3m': transito_pend_3m,
             'forecast_total': sum(forecast_mes.get((sku, m), 0) for m in range(1, horizonte_meses + 1)),
             'mes_quiebre': mes_quiebre,
         }
@@ -541,8 +557,9 @@ def proyectar_stock_mensual(
     stock_cols = [f'stock_mes_{i}' for i in range(1, horizonte_meses + 1)]
     trans_cols = [f'transito_mes_{i}' for i in range(1, horizonte_meses + 1)]
     cols_order = (['sku', 'marca', 'producto', 'stock_baseline', 'ventas_acum',
+                   'run_rate_diario', 'venta_proy_mes_actual',
                    'transito_mes_actual', 'stock_fin_mes_actual',
-                   'transito_pendiente', 'forecast_total', 'mes_quiebre']
+                   'transito_pendiente_3m', 'forecast_total', 'mes_quiebre']
                   + stock_cols + trans_cols)
     return df[[c for c in cols_order if c in df.columns]]
 
