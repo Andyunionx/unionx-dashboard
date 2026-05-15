@@ -88,15 +88,99 @@ def _label_dim(d: str) -> str:
 # RENDER
 # ============================================================
 def render():
+    # ─── CSS profesional ─────────────────────────────────────────────────
+    st.markdown("""
+    <style>
+    /* Tipografía y spacing más profesional */
+    .stMarkdown h1 { font-weight: 600; letter-spacing: -0.02em; color: #0F172A; }
+    .stMarkdown h3 { font-weight: 600; color: #1E293B; margin-top: 1.2rem; }
+    .stCaption { color: #64748B; }
+
+    /* KPI metrics más cuidados */
+    [data-testid="stMetric"] {
+        background: white;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    [data-testid="stMetricLabel"] {
+        font-size: 0.75rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748B !important;
+        font-weight: 600;
+    }
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #0F172A !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* Cards de filtros */
+    .pyl-filter-card {
+        background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 14px;
+    }
+    .pyl-filter-card-title {
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.78rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    /* Banner período activo más sobrio */
+    .pyl-banner {
+        background: #EFF6FF;
+        border-left: 3px solid #3B82F6;
+        padding: 10px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        font-size: 0.88rem;
+        color: #1E3A8A;
+    }
+    .pyl-banner-ok {
+        background: #F0FDF4;
+        border-left-color: #16A34A;
+        color: #14532D;
+    }
+    .pyl-banner-warn {
+        background: #FEF3C7;
+        border-left-color: #F59E0B;
+        color: #78350F;
+    }
+    .pyl-banner-error {
+        background: #FEF2F2;
+        border-left-color: #DC2626;
+        color: #7F1D1D;
+    }
+
+    /* Tabs un poco más grandes */
+    button[data-baseweb="tab"] {
+        font-weight: 500;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     with st.sidebar:
-        st.markdown("### 📈 **P&L por LN**")
-        st.caption("Margen real por canal/KAM/LN")
+        st.markdown("### **P&L por LN**")
+        st.caption("Margen real por canal · KAM · línea de negocio")
         st.divider()
 
-    st.title("📈 P&L por Línea de Negocio")
+    st.title("P&L por Línea de Negocio")
     st.caption(
-        "Cruce KAM (oficial) + Costos Operativos + GAV del P&L corporativo. "
-        "Filtros multi-dimensión y desglose flexible."
+        "Cruce de Contribución KAM (oficial) + Costos Operativos + GAV "
+        "del Control de Gestión. Filtros multi-dimensión, desglose flexible "
+        "y validación de calce con el P&L corporativo."
     )
 
     # ─── Cargar dimensiones disponibles ─────────────────────────────────
@@ -227,13 +311,21 @@ def render():
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Banner período activo
+    hay_filtro_dim = bool(canales_sel or kams_sel or lns_sel)
+    filtros_resumen = []
+    if canales_sel:
+        filtros_resumen.append(f"{len(canales_sel)} canal(es)")
+    if kams_sel:
+        filtros_resumen.append(f"{len(kams_sel)} KAM(s)")
+    if lns_sel:
+        filtros_resumen.append(f"{len(lns_sel)} LN(s)")
+    filtros_txt = " · ".join(filtros_resumen) if filtros_resumen else "sin filtros (todo el universo)"
+
     st.markdown(
-        f'<div style="background:#EFF6FF;border-left:4px solid #3B82F6;'
-        f'padding:8px 14px;border-radius:4px;margin-bottom:14px;'
-        f'font-size:0.88rem;color:#1E40AF;">'
+        f'<div class="pyl-banner">'
         f'<strong>Período activo:</strong> {periodo_label} · '
-        f'meses {sorted(set(meses_sel))} · '
-        f'desglosado por <strong>{_label_dim(desglose)}</strong>'
+        f'desglose por <strong>{_label_dim(desglose)}</strong> · '
+        f'<strong>Filtros:</strong> {filtros_txt}'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -387,14 +479,29 @@ def render():
     k5.metric("EBIT estimado", f"${_fmt_clp(ebit_total / 1_000_000)} MM",
               delta=_fmt_pct(ebit_pct))
 
+    # ─── Cobertura del filtro (% que representa el subset filtrado) ────
+    _render_cobertura_filtro(
+        df_ventas_drivers, df_ventas_filtrado,
+        costo_op_total_periodo, costo_op_asignado,
+        gav_total_periodo, gav_asignado,
+        hay_filtro=hay_filtro_dim,
+    )
+
+    # ─── Alarma de calce (¿la suma distribuida = total?) ───────────────
+    _render_alarma_calce(
+        df_costos, df_gav, df_ventas_drivers, df_contrib,
+        desglose, driver_override,
+    )
+
     st.divider()
 
     # ─── Tabs ───────────────────────────────────────────────────────────
-    tab_pyl, tab_drivers, tab_detalle, tab_help = st.tabs([
+    tab_pyl, tab_drivers, tab_detalle, tab_help, tab_roadmap = st.tabs([
         "💰 P&L (7 líneas)",
         "🎚️ Drivers",
         "📋 Detalle",
         "ℹ️ Cómo se calcula",
+        "🚀 Roadmap",
     ])
 
     # ─── TAB DRIVERS ────────────────────────────────────────────────────
@@ -752,6 +859,96 @@ La tabla se desglosa por la dimensión que elijas:
 - **KAM** — performance del equipo comercial
         """)
 
+    # ─── TAB ROADMAP ────────────────────────────────────────────────────
+    with tab_roadmap:
+        st.markdown("## 🚀 Roadmap del P&L por LN")
+
+        st.markdown("### ✅ Hecho hasta ahora")
+        st.success("""
+- ✅ Estructura 7 líneas (Venta → MD → Comisiones → MC → Costo OP → GAV → EBIT)
+- ✅ Filtros multi-dim: Año · Período · Canal · KAM · LN
+- ✅ Desglose flexible: Canal | LN | KAM
+- ✅ Drivers configurables por CC
+- ✅ GAV "puro" (sin duplicar con Costo OP)
+- ✅ Drilldown costo OP con cuenta analítica
+- ✅ Cobertura del filtro (% pedidos/unidades/venta)
+- ✅ Alarma de calce (suma distribuida = total del período)
+- ✅ Fallback parquet KAM (sin depender de credentials Sheet)
+""")
+
+        st.markdown("### 🔜 Próximas iteraciones (priorizadas)")
+
+        st.markdown("""
+**5. EBIT Mensual + Forecast** ⏳ *próximo*
+- Vista evolución mensual del EBIT real por canal/LN/KAM
+- Forecast EBIT futuro:
+  - Costos variables: inducidos por forecast de venta (unidades/pedidos/venta por producto×canal)
+  - Costos fijos: promedio histórico
+  - GAV: promedio histórico
+- Comparativa Real vs PPTO vs FCST
+- Sensitivity: ¿qué pasa si crece la venta 10%?
+
+**6. GAV más específico** ⏳ *próximo*
+- Asignación directa de costos fijos por canal:
+  - Gerente comercial → asignado a sus canales
+  - KAM → su canal específico
+  - Planner → línea(s) de negocio
+  - Equipo producto → categoría/marca
+- Tabla manual de mapping editable en UI
+- Persistencia en Turso o JSON local
+""")
+
+        st.markdown("### 💡 Ideas adicionales (para discutir)")
+        st.info("""
+**Análisis comercial**
+- 📊 Comparativa PPTO vs Real por canal (cumplimiento %)
+- 📈 Gráfico waterfall del P&L (Venta → ... → EBIT con caídas visuales)
+- 🏆 Top 5 canales que MÁS aportan EBIT (vs los que más restan)
+- 🚨 Lista de canales que NUNCA logran cubrir su Costo OP+GAV
+
+**Performance & alertas**
+- 🔔 Alerta automática: canal con EBIT% < umbral (ej: < -10%)
+- 📉 Tendencia: canales con EBIT% deteriorándose mes a mes
+- 💸 Análisis de break-even por canal: ¿cuánta venta necesita para EBIT=0?
+
+**Operacional**
+- 📥 Export del P&L completo a Excel (con formato)
+- 📅 Comparación período vs período anterior (Δ% / Δ$)
+- 🔗 Link directo desde un canal/LN/KAM al detalle en la app de Ventas
+- 📧 Reporte automático mensual al CEO con el P&L consolidado
+
+**Drivers más finos**
+- 📦 m³ ocupado por canal (en vez de # pedidos como proxy de bodega)
+- ⏱️ Horas-hombre dedicadas por canal (para REMUNERACIONES)
+- 💳 % pedidos con pago tarjeta (para comisiones bancarias)
+
+**Modelado**
+- 🎯 What-if: ajustar drivers manualmente y ver impacto en EBIT
+- 🤖 Sugerir driver óptimo por CC usando regresión vs venta histórica
+- 📊 Análisis de cohorts de clientes por canal
+""")
+
+        st.markdown("### 🐞 Limitaciones conocidas (técnicas)")
+        st.warning("""
+- ⚠️ **GAV ↔ KAM**: el control de gestión no segmenta GAV por KAM, así que la
+  asignación a KAM individual es proxy (% venta del KAM). Se resuelve con
+  el mapping manual de "costos fijos por canal" (item 6 arriba).
+- ⚠️ **Arriendo**: hoy se distribuye por # unidades como proxy de m³.
+  Lo ideal sería medir m³ reales por canal en bodega.
+- ⚠️ **Canales fuera de KAM**: si hay un canal en ventas que no está en KAM,
+  su porción de costo se "pierde" al filtrar (ver alarma de calce arriba).
+""")
+
+        st.markdown("### 📝 Pendiente del usuario")
+        st.markdown("""
+- ¿Querés que el cron `sync_finanzas.yml` corra el extractor del KAM también?
+  Hoy hay que correr manualmente `python extract_kam_contribucion.py` cada vez
+  que cambian datos en el Sheet KAM.
+- ¿El driver default de cada CC tiene sentido o querés revisar alguno?
+- ¿La lista de "áreas operativas a excluir" (OPERACIONES, LOGISTICA, POSTVENTA)
+  es completa o falta alguna?
+""")
+
 
 # ============================================================
 # CONSTRUCCIÓN DEL P&L (7 LÍNEAS)
@@ -989,3 +1186,147 @@ def _render_insights(df_pyl: pd.DataFrame, desglose: str):
             )
         else:
             st.success("✅ Todos los segmentos relevantes cubren su asignación de costos.")
+
+
+# ============================================================
+# COBERTURA DEL FILTRO (% del subset visible sobre total)
+# ============================================================
+def _render_cobertura_filtro(
+    df_ventas_drivers: pd.DataFrame,
+    df_ventas_filtrado: pd.DataFrame,
+    costo_op_total_periodo: float,
+    costo_op_asignado: float,
+    gav_total_periodo: float,
+    gav_asignado: float,
+    hay_filtro: bool,
+):
+    """Si hay filtro activo, muestra qué % del universo total cubre el subset
+    filtrado (en pedidos, unidades, venta) y cómo eso se traduce en costo
+    asignado."""
+    if not hay_filtro:
+        return  # sin filtro = 100% siempre, no hace falta mostrar
+
+    if df_ventas_drivers.empty or df_ventas_filtrado.empty:
+        return
+
+    pct_pedidos = (df_ventas_filtrado["n_pedidos"].sum() /
+                    df_ventas_drivers["n_pedidos"].sum() * 100) if df_ventas_drivers["n_pedidos"].sum() else 0
+    pct_unidades = (df_ventas_filtrado["n_unidades"].sum() /
+                     df_ventas_drivers["n_unidades"].sum() * 100) if df_ventas_drivers["n_unidades"].sum() else 0
+    pct_venta = (df_ventas_filtrado["venta_neta"].sum() /
+                  df_ventas_drivers["venta_neta"].sum() * 100) if df_ventas_drivers["venta_neta"].sum() else 0
+
+    pct_op = (costo_op_asignado / costo_op_total_periodo * 100) if costo_op_total_periodo else 0
+    pct_gav = (gav_asignado / gav_total_periodo * 100) if gav_total_periodo else 0
+
+    st.markdown(
+        f'<div style="background:#F8FAFC;border:1px solid #E2E8F0;'
+        f'border-radius:8px;padding:12px 16px;margin:10px 0;font-size:0.85rem;">'
+        f'<strong style="color:#475569;">📐 Cobertura del filtro vs universo total del período:</strong>'
+        f'<div style="display:flex;gap:24px;margin-top:8px;flex-wrap:wrap;">'
+        f'<div>🛒 Pedidos: <strong>{pct_pedidos:.1f}%</strong></div>'
+        f'<div>📦 Unidades: <strong>{pct_unidades:.1f}%</strong></div>'
+        f'<div>💰 Venta: <strong>{pct_venta:.1f}%</strong></div>'
+        f'<div style="border-left:1px solid #CBD5E1;padding-left:24px;">'
+        f'⚙️ Costo OP asignado: <strong>{pct_op:.1f}%</strong> '
+        f'(${costo_op_asignado/1_000_000:,.1f}/{costo_op_total_periodo/1_000_000:,.1f} MM)'
+        f'</div>'
+        f'<div>🏢 GAV asignado: <strong>{pct_gav:.1f}%</strong> '
+        f'(${gav_asignado/1_000_000:,.1f}/{gav_total_periodo/1_000_000:,.1f} MM)'
+        f'</div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# ALARMA DE CALCE (¿la suma distribuida = total del período?)
+# ============================================================
+def _render_alarma_calce(
+    df_costos: pd.DataFrame,
+    df_gav: pd.DataFrame,
+    df_ventas_drivers: pd.DataFrame,
+    df_contrib: pd.DataFrame,
+    desglose: str,
+    driver_override: dict,
+):
+    """Valida que la SUMA del costo OP + GAV distribuido a TODAS las
+    dimensiones (no solo las visibles) cuadre con el total del período.
+
+    Si no calza, indica que hay canales/LNs/KAMs en df_ventas que NO están
+    en df_contrib (KAM no los tiene cargados) → su porción de costo
+    quedaría 'huérfana' al usar valores_visibles.
+    """
+    if df_costos.empty or df_ventas_drivers.empty:
+        return
+
+    # Distribuir TODO sin filtrar a valores_visibles
+    costo_op_distribuido_total = 0.0
+    for _, c in df_costos.iterrows():
+        cc = c["centro_costo"]
+        driver = driver_override.get(cc, driver_default(cc))
+        asig = distribuir_monto_a_dimension(
+            c["monto"], df_ventas_drivers, driver, dimension=desglose,
+        )
+        costo_op_distribuido_total += sum(asig.values())
+
+    gav_distribuido_total = 0.0
+    for _, g in df_gav.iterrows():
+        driver = driver_default_gav(g["area"])
+        asig = distribuir_monto_a_dimension(
+            g["monto"], df_ventas_drivers, driver, dimension=desglose,
+        )
+        gav_distribuido_total += sum(asig.values())
+
+    costo_op_total = df_costos["monto"].sum()
+    gav_total = df_gav["monto"].sum() if not df_gav.empty else 0
+
+    # Diferencias en MM (tolerancia 0.1 MM = 100 mil CLP)
+    dif_op = abs(costo_op_total - costo_op_distribuido_total) / 1_000_000
+    dif_gav = abs(gav_total - gav_distribuido_total) / 1_000_000
+
+    # Verificar canales en ventas que NO están en KAM
+    valores_kam = set(df_contrib[desglose].tolist()) if not df_contrib.empty else set()
+    valores_ventas = set(df_ventas_drivers[desglose].dropna().unique().tolist()) if desglose in df_ventas_drivers.columns else set()
+    fuera_de_kam = valores_ventas - valores_kam
+
+    if dif_op < 0.1 and dif_gav < 0.1 and not fuera_de_kam:
+        st.markdown(
+            f'<div class="pyl-banner pyl-banner-ok">'
+            f'✅ <strong>Calce correcto:</strong> el 100% del Costo OP '
+            f'(${costo_op_total/1_000_000:,.1f} MM) y del GAV '
+            f'(${gav_total/1_000_000:,.1f} MM) está distribuido a los canales/LN/KAMs.'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        msgs = []
+        if dif_op >= 0.1:
+            msgs.append(
+                f"💰 Costo OP: total ${costo_op_total/1_000_000:,.1f} MM "
+                f"vs distribuido ${costo_op_distribuido_total/1_000_000:,.1f} MM "
+                f"(diferencia ${dif_op:,.1f} MM)"
+            )
+        if dif_gav >= 0.1:
+            msgs.append(
+                f"🏢 GAV: total ${gav_total/1_000_000:,.1f} MM "
+                f"vs distribuido ${gav_distribuido_total/1_000_000:,.1f} MM "
+                f"(diferencia ${dif_gav:,.1f} MM)"
+            )
+        if fuera_de_kam:
+            ejemplos = list(fuera_de_kam)[:5]
+            msgs.append(
+                f"⚠️ {len(fuera_de_kam)} {_label_dim(desglose).lower()}(s) en "
+                f"ventas históricas <strong>NO están en KAM</strong>: "
+                f"{', '.join(ejemplos)}{'...' if len(fuera_de_kam) > 5 else ''}. "
+                f"Su porción de costo se 'pierde' al filtrar."
+            )
+
+        st.markdown(
+            f'<div class="pyl-banner pyl-banner-warn">'
+            f'⚠️ <strong>ALARMA DE CALCE:</strong><br>'
+            + "<br>".join(f"• {m}" for m in msgs) +
+            f'</div>',
+            unsafe_allow_html=True,
+        )
