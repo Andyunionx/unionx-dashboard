@@ -249,11 +249,30 @@ def render():
             canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
             desglose_por=desglose,
         )
-        df_costos = cargar_costos_operativos(year, meses_sel, escenario="FCST")
-        df_ventas = cargar_ventas_canal_ln(
+        df_costos = cargar_costos_operativos(
+            year, meses_sel, escenario="FCST",
+            incluir_cuenta_analitica=True,
+        )
+        # IMPORTANTE: dos versiones de ventas
+        # 1. df_ventas_drivers = TODA la venta del período (sin filtros)
+        #    Se usa para calcular pesos de distribución del costo OP/GAV.
+        #    Bug fix: si filtramos a "Canal=ML", df_ventas_filtrado tendría
+        #    solo ML → pesos serían 100% para ML → ML recibiría TODO el
+        #    costo operativo (que es ABSURDO porque ese costo es de toda
+        #    la operación, no solo de ML).
+        # 2. df_ventas_filtrado = solo lo del filtro, para mostrar
+        #    volúmenes en tab Detalle.
+        df_ventas_drivers = cargar_ventas_canal_ln(
+            year, meses_sel,
+            canales=None, kams=None, tipos_negocio=None,  # SIN FILTROS
+        )
+        df_ventas_filtrado = cargar_ventas_canal_ln(
             year, meses_sel,
             canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
         )
+        # Alias para retrocompatibilidad de las secciones que muestran info
+        df_ventas = df_ventas_filtrado
+
         # GAV "puro" por área (sin duplicar lo operativo)
         df_gav = cargar_gav_corporativo(year, meses_sel, escenario="FCST")
         gav_total = df_gav["monto"].sum() if not df_gav.empty else 0
@@ -280,15 +299,70 @@ def render():
             )
         return
 
-    # ─── Resumen consolidado ────────────────────────────────────────────
+    # ─── Recuperar override drivers (desde tab Drivers en session_state) ─
+    driver_override = st.session_state.get("fin_pyl_driver_override", {})
+
+    # ─── DISTRIBUIR COSTOS AHORA (antes del resumen) ────────────────────
+    # Necesitamos los montos asignados a las dimensiones VISIBLES para
+    # calcular el EBIT correcto (no usar totales absolutos del período).
+    valores_visibles = set(df_contrib[desglose].tolist())
+
+    costo_op_por_dim = {}
+    costo_op_drilldown = []
+    if not df_costos.empty and not df_ventas_drivers.empty:
+        for _, c in df_costos.iterrows():
+            cc = c["centro_costo"]
+            driver = driver_override.get(cc, driver_default(cc))
+            asignacion = distribuir_monto_a_dimension(
+                c["monto"], df_ventas_drivers, driver, dimension=desglose,
+            )
+            for k, v in asignacion.items():
+                if k not in valores_visibles:
+                    continue
+                costo_op_por_dim[k] = costo_op_por_dim.get(k, 0) + v
+                costo_op_drilldown.append({
+                    "Sub-área": c["sub_area"],
+                    "Centro de Costo": cc,
+                    "Cuenta Analítica": c.get("cuenta_analitica", "—"),
+                    "Driver": driver,
+                    _label_dim(desglose): k,
+                    "Monto": v,
+                })
+
+    gav_por_dim = {}
+    gav_drilldown = []
+    if not df_gav.empty and not df_ventas_drivers.empty:
+        for _, g in df_gav.iterrows():
+            area = g["area"]
+            driver = driver_default_gav(area)
+            asignacion = distribuir_monto_a_dimension(
+                g["monto"], df_ventas_drivers, driver, dimension=desglose,
+            )
+            for k, v in asignacion.items():
+                if k not in valores_visibles:
+                    continue
+                gav_por_dim[k] = gav_por_dim.get(k, 0) + v
+                gav_drilldown.append({
+                    "Área GAV": area,
+                    "Driver": driver,
+                    _label_dim(desglose): k,
+                    "Monto": v,
+                })
+
+    # ─── Resumen consolidado (usa montos ASIGNADOS al filtro visible) ──
     res = contribucion_total(
         year=year, meses=meses_sel,
         canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
     )
     venta_total = res.get("venta", 0)
     contrib_total = res.get("contribucion", 0)
-    costo_op_total = df_costos["monto"].sum() if not df_costos.empty else 0
-    ebit_total = contrib_total - costo_op_total - gav_total
+    # MONTOS DEL PERÍODO (info — no afectados por filtro)
+    costo_op_total_periodo = df_costos["monto"].sum() if not df_costos.empty else 0
+    gav_total_periodo = df_gav["monto"].sum() if not df_gav.empty else 0
+    # MONTOS ASIGNADOS A LOS FILTROS VISIBLES (lo que se resta para EBIT)
+    costo_op_asignado = sum(costo_op_por_dim.values())
+    gav_asignado = sum(gav_por_dim.values())
+    ebit_total = contrib_total - costo_op_asignado - gav_asignado
     mc_pct = res.get("mc_pct", 0)
     ebit_pct = (ebit_total / venta_total * 100) if venta_total else 0
 
@@ -297,9 +371,19 @@ def render():
     k1.metric("Venta REAL", f"${_fmt_clp(venta_total / 1_000_000)} MM")
     k2.metric("Contribución", f"${_fmt_clp(contrib_total / 1_000_000)} MM",
               delta=_fmt_pct(mc_pct))
-    k3.metric("Costo OP", f"${_fmt_clp(costo_op_total / 1_000_000)} MM")
-    k4.metric("GAV puro", f"${_fmt_clp(gav_total / 1_000_000)} MM",
-              help="GAV del control de gestión SIN áreas operativas (Operaciones, Logística, Postventa) para evitar duplicar con Costo OP")
+    k3.metric(
+        "Costo OP asignado",
+        f"${_fmt_clp(costo_op_asignado / 1_000_000)} MM",
+        help=f"Total Costo OP del período: ${_fmt_clp(costo_op_total_periodo / 1_000_000)} MM. "
+             f"Acá se muestra solo lo asignado a los filtros aplicados, según los drivers.",
+    )
+    k4.metric(
+        "GAV asignado",
+        f"${_fmt_clp(gav_asignado / 1_000_000)} MM",
+        help=f"Total GAV puro del período: ${_fmt_clp(gav_total_periodo / 1_000_000)} MM. "
+             f"GAV = control_gestion menos áreas operativas (sin duplicar con Costo OP). "
+             f"Acá se muestra solo lo asignado a los filtros visibles.",
+    )
     k5.metric("EBIT estimado", f"${_fmt_clp(ebit_total / 1_000_000)} MM",
               delta=_fmt_pct(ebit_pct))
 
@@ -390,49 +474,9 @@ def render():
         ])
         st.dataframe(df_defaults, use_container_width=True, hide_index=True)
 
-    # Recuperar override
-    driver_override = st.session_state.get("fin_pyl_driver_override", {})
-
-    # ─── CALCULAR DISTRIBUCIONES ────────────────────────────────────────
-    # COSTO OP: cada CC con su driver, agregado por dimensión
-    # Detalle por CC para drilldown: {(cc, dim_value): monto}
-    costo_op_por_dim = {}
-    costo_op_drilldown = []  # filas: {cc, sub_area, driver, dim, monto}
-    if not df_costos.empty and not df_ventas.empty:
-        for _, c in df_costos.iterrows():
-            cc = c["centro_costo"]
-            driver = driver_override.get(cc, driver_default(cc))
-            asignacion = distribuir_monto_a_dimension(
-                c["monto"], df_ventas, driver, dimension=desglose,
-            )
-            for k, v in asignacion.items():
-                costo_op_por_dim[k] = costo_op_por_dim.get(k, 0) + v
-                costo_op_drilldown.append({
-                    "Sub-área": c["sub_area"],
-                    "Centro de Costo": cc,
-                    "Driver": driver,
-                    _label_dim(desglose): k,
-                    "Monto": v,
-                })
-
-    # GAV: cada ÁREA con su driver natural (no monolítico por venta)
-    gav_por_dim = {}
-    gav_drilldown = []  # filas: {area, driver, dim, monto}
-    if not df_gav.empty and not df_ventas.empty:
-        for _, g in df_gav.iterrows():
-            area = g["area"]
-            driver = driver_default_gav(area)
-            asignacion = distribuir_monto_a_dimension(
-                g["monto"], df_ventas, driver, dimension=desglose,
-            )
-            for k, v in asignacion.items():
-                gav_por_dim[k] = gav_por_dim.get(k, 0) + v
-                gav_drilldown.append({
-                    "Área GAV": area,
-                    "Driver": driver,
-                    _label_dim(desglose): k,
-                    "Monto": v,
-                })
+    # NOTA: la distribución (costo_op_por_dim, gav_por_dim, drilldowns)
+    # ya se calculó arriba antes del resumen consolidado, para que los
+    # KPIs reflejen la asignación correcta a los filtros visibles.
 
     # ─── TAB P&L ────────────────────────────────────────────────────────
     with tab_pyl:
@@ -516,16 +560,21 @@ def render():
                 lambda cc: driver_override.get(cc, driver_default(cc))
             )
             df_show["monto_MM"] = (df_show["monto"] / 1_000_000).round(1)
-            df_show = df_show[[
-                "sub_area", "centro_costo", "tipo_costo", "monto_MM", "driver"
-            ]].rename(columns={
+            # Incluir cuenta_analitica si está disponible (desglose más fino)
+            cols_show = ["sub_area", "centro_costo"]
+            if "cuenta_analitica" in df_show.columns:
+                cols_show.append("cuenta_analitica")
+            cols_show.extend(["tipo_costo", "monto_MM", "driver"])
+            df_show = df_show[cols_show].rename(columns={
                 "sub_area": "Sub-área",
                 "centro_costo": "Centro de Costo",
+                "cuenta_analitica": "Cuenta Analítica",
                 "tipo_costo": "F/V",
                 "monto_MM": "Monto (MM$)",
                 "driver": "Driver",
             })
-            st.dataframe(df_show, use_container_width=True, hide_index=True)
+            st.dataframe(df_show, use_container_width=True, hide_index=True,
+                          height=380)
 
             tot_fijo = df_costos[df_costos["tipo_costo"] == "FIJO"]["monto"].sum()
             tot_var = df_costos[df_costos["tipo_costo"] == "VARIABLE"]["monto"].sum()

@@ -104,10 +104,14 @@ def driver_default(centro_costo: str) -> str:
 # ============================================================
 @st.cache_data(ttl=600, show_spinner=False)
 def cargar_costos_operativos(year: int, meses: list[int] | None = None,
-                              escenario: str = "FCST") -> pd.DataFrame:
-    """Devuelve costos agregados por (sub_area, centro_costo, tipo_costo) en
-    valores POSITIVOS y en **CLP enteros** (el parquet viene en miles, se
-    multiplica × 1000 para alinear con el KAM que viene en CLP enteros)."""
+                              escenario: str = "FCST",
+                              incluir_cuenta_analitica: bool = False) -> pd.DataFrame:
+    """Devuelve costos agregados en valores POSITIVOS y **CLP enteros**
+    (parquet viene en miles → se multiplica × 1000 para alinear con KAM).
+
+    Si `incluir_cuenta_analitica=True`, agrupa también por cuenta_analitica
+    (desglose más fino: REMUNERACIONES > ADMINISTRATIVO, GERENCIA, etc.).
+    """
     if not COSTO_OP_PARQUET.exists():
         return pd.DataFrame()
     df = pd.read_parquet(COSTO_OP_PARQUET)
@@ -121,8 +125,12 @@ def cargar_costos_operativos(year: int, meses: list[int] | None = None,
 
     # Convertir a positivo Y a CLP enteros (parquet viene en miles)
     df["valor_pos"] = df["valor"].abs() * 1000
-    agg = df.groupby(["sub_area", "centro_costo", "tipo_costo"],
-                     as_index=False).agg(monto=("valor_pos", "sum"))
+
+    group_cols = ["sub_area", "centro_costo", "tipo_costo"]
+    if incluir_cuenta_analitica and "cuenta_analitica" in df.columns:
+        group_cols.append("cuenta_analitica")
+
+    agg = df.groupby(group_cols, as_index=False).agg(monto=("valor_pos", "sum"))
     agg = agg[agg["monto"] > 0].copy()
     agg = agg.sort_values("monto", ascending=False).reset_index(drop=True)
     return agg
