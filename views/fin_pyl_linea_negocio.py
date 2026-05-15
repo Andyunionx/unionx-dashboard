@@ -454,6 +454,53 @@ def render():
             html = _render_pyl_html(df_pyl_table)
             st.markdown(html, unsafe_allow_html=True)
 
+            # Expander con cálculo del Costo OP y GAV (cómo se distribuye)
+            with st.expander("🔬 ¿Cómo se calculan Costo OP y GAV?",
+                              expanded=False):
+                st.markdown(
+                    f"**Costo Operativo total del período:** "
+                    f"`${_fmt_clp(sum(c['monto'] for c in [{'monto': r['Monto']} for r in costo_op_drilldown]) / 1_000_000) if costo_op_drilldown else '0'} MM`"
+                )
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    st.markdown("**Costo OP por Centro de Costo:**")
+                    if costo_op_drilldown:
+                        df_op_resumen = pd.DataFrame(costo_op_drilldown)
+                        agg_op = df_op_resumen.groupby(
+                            ["Sub-área", "Centro de Costo", "Driver"],
+                            as_index=False,
+                        ).agg(Monto=("Monto", "sum"))
+                        agg_op["Monto (MM$)"] = (agg_op["Monto"] / 1_000_000).round(1)
+                        agg_op = agg_op[["Sub-área", "Centro de Costo",
+                                          "Driver", "Monto (MM$)"]]
+                        agg_op = agg_op.sort_values("Monto (MM$)", ascending=False)
+                        st.dataframe(agg_op, use_container_width=True,
+                                      hide_index=True, height=280)
+                    else:
+                        st.info("Sin costos OP en el período.")
+                with ec2:
+                    st.markdown("**GAV por área:**")
+                    if gav_drilldown:
+                        df_gav_resumen = pd.DataFrame(gav_drilldown)
+                        agg_gav = df_gav_resumen.groupby(
+                            ["Área GAV", "Driver"],
+                            as_index=False,
+                        ).agg(Monto=("Monto", "sum"))
+                        agg_gav["Monto (MM$)"] = (agg_gav["Monto"] / 1_000_000).round(1)
+                        agg_gav = agg_gav[["Área GAV", "Driver", "Monto (MM$)"]]
+                        agg_gav = agg_gav.sort_values("Monto (MM$)", ascending=False)
+                        st.dataframe(agg_gav, use_container_width=True,
+                                      hide_index=True, height=280)
+                    else:
+                        st.info("Sin GAV en el período.")
+
+                st.markdown(
+                    "💡 **Para ver el detalle de cómo cada Centro de Costo se "
+                    f"distribuye a cada {_label_dim(desglose).lower()}** (matriz "
+                    "completa con todos los valores), andá al tab **'📋 Detalle'** → "
+                    "Sección 3 y 4."
+                )
+
             st.markdown("---")
             _render_insights(df_pyl_table, desglose)
 
@@ -531,12 +578,13 @@ def render():
             pivot["TOTAL"] = pivot.sum(axis=1)
             pivot = (pivot / 1_000_000).round(1)  # MM
             pivot = pivot.sort_values("TOTAL", ascending=False)
-            st.dataframe(
-                pivot.style.format("{:,.1f}").background_gradient(
+            try:
+                styled = pivot.style.format("{:,.1f}").background_gradient(
                     cmap="Reds", subset=[c for c in pivot.columns if c != "TOTAL"]
-                ),
-                use_container_width=True,
-            )
+                )
+            except (ImportError, ModuleNotFoundError):
+                styled = pivot.style.format("{:,.1f}")
+            st.dataframe(styled, use_container_width=True)
             st.caption("Cifras en MM$. Cada fila se distribuye según su driver.")
         else:
             st.info("Sin distribución calculada.")
@@ -556,12 +604,13 @@ def render():
             pivot_g["TOTAL"] = pivot_g.sum(axis=1)
             pivot_g = (pivot_g / 1_000_000).round(1)
             pivot_g = pivot_g.sort_values("TOTAL", ascending=False)
-            st.dataframe(
-                pivot_g.style.format("{:,.1f}").background_gradient(
+            try:
+                styled_g = pivot_g.style.format("{:,.1f}").background_gradient(
                     cmap="Blues", subset=[c for c in pivot_g.columns if c != "TOTAL"]
-                ),
-                use_container_width=True,
-            )
+                )
+            except (ImportError, ModuleNotFoundError):
+                styled_g = pivot_g.style.format("{:,.1f}")
+            st.dataframe(styled_g, use_container_width=True)
             st.caption("Cifras en MM$. Cada área se distribuye con su driver propio.")
 
         st.markdown("---")
