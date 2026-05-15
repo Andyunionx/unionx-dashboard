@@ -54,6 +54,17 @@ def _parse_num(val):
         return 0
 
 
+# Estado de la última carga (para diagnóstico en la UI)
+_LAST_LOAD_STATUS = {"ok": False, "error": None, "n_filas": 0,
+                      "anios": [], "meses_por_anio": {}, "canales": [],
+                      "kams": [], "tipos_negocio": []}
+
+
+def estado_ultima_carga() -> dict:
+    """Devuelve el estado de la última carga del Sheet KAM (para debug en la UI)."""
+    return dict(_LAST_LOAD_STATUS)
+
+
 @st.cache_data(ttl=1800, show_spinner=False)
 def cargar_contribucion_kam() -> pd.DataFrame:
     """Lee la hoja 'Análisis de Resultados' y devuelve DataFrame con
@@ -64,6 +75,9 @@ def cargar_contribucion_kam() -> pd.DataFrame:
         ws = sh.worksheet("Análisis de Resultados")
         raw = ws.get_all_values()
         if not raw:
+            _LAST_LOAD_STATUS.update({
+                "ok": False,
+                "error": "El Sheet existe pero está vacío (sin filas)."})
             return pd.DataFrame()
 
         # Deduplicar headers
@@ -131,8 +145,28 @@ def cargar_contribucion_kam() -> pd.DataFrame:
         df["year"] = df["year"].astype(int)
         df["month"] = df["month"].astype(int)
 
+        # Guardar diagnóstico
+        _LAST_LOAD_STATUS.update({
+            "ok": True, "error": None, "n_filas": len(df),
+            "anios": sorted(df["year"].unique().tolist()),
+            "meses_por_anio": {
+                int(y): sorted(df[df["year"] == y]["month"].unique().tolist())
+                for y in df["year"].unique()
+            },
+            "canales": sorted(df["canal"].dropna().unique().tolist())
+                       if "canal" in df.columns else [],
+            "kams": sorted(df["kam"].dropna().unique().tolist())
+                    if "kam" in df.columns else [],
+            "tipos_negocio": sorted(df["tipo_negocio"].dropna().unique().tolist())
+                              if "tipo_negocio" in df.columns else [],
+        })
+
         return df
-    except Exception:
+    except Exception as e:
+        _LAST_LOAD_STATUS.update({
+            "ok": False,
+            "error": f"{type(e).__name__}: {str(e)[:200]}",
+        })
         return pd.DataFrame()
 
 

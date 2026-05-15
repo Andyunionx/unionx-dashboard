@@ -38,6 +38,7 @@ from views._ops_contrib_helper import (
     contribucion_filtrada,
     contribucion_total,
     dimensiones_disponibles,
+    estado_ultima_carga,
 )
 from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
@@ -99,26 +100,45 @@ def render():
 
     # ─── Cargar dimensiones disponibles ─────────────────────────────────
     dims = dimensiones_disponibles()
+    estado = estado_ultima_carga()
+
     if not dims["anios"]:
-        st.error(
-            "❌ Sin datos del Sheet KAM. Verifica acceso a "
-            "`Análisis de Contribución` → hoja `Análisis de Resultados`."
+        # Diagnóstico detallado
+        st.error("❌ **Sin datos del Sheet KAM**")
+        if estado.get("error"):
+            st.code(f"Detalle del error: {estado['error']}", language="text")
+        st.markdown(
+            "**Posibles causas:**\n"
+            "1. ❌ El service account no tiene acceso al Sheet "
+            "(compartirlo con `union-x-revenue-bot@union-x-revenue.iam.gserviceaccount.com`)\n"
+            "2. ❌ La hoja `Análisis de Resultados` no existe o cambió de nombre\n"
+            "3. ❌ Falta `gcp_service_account` en Streamlit Secrets\n"
+            "4. ❌ El Sheet existe pero está vacío"
         )
         return
 
-    # ─── Filtros (top, en grid) ─────────────────────────────────────────
-    st.markdown("### 🎛️ Filtros")
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
+    # ─── FILTROS (compactos, agrupados visualmente) ─────────────────────
+    st.markdown(
+        '<div style="background:#F8FAFC;padding:14px 18px;border-radius:10px;'
+        'border:1px solid #E2E8F0;margin-bottom:14px;">'
+        '<div style="font-weight:600;color:#475569;font-size:0.85rem;'
+        'margin-bottom:10px;">🎛️ FILTROS</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Fila 1: Año + Período + Selector específico
+    f1c1, f1c2, f1c3 = st.columns([1, 2, 3])
+    with f1c1:
         year_actual = datetime.now().year
         year_default = year_actual if year_actual in dims["anios"] else dims["anios"][-1]
-        year = st.selectbox("Año", dims["anios"],
-                             index=dims["anios"].index(year_default))
+        year = st.selectbox("📅 Año", dims["anios"],
+                             index=dims["anios"].index(year_default),
+                             label_visibility="visible")
     dims_year = dimensiones_disponibles(year)
 
-    with col2:
+    with f1c2:
         modo_periodo = st.radio(
-            "Período", ["YTD", "Trimestre", "Mes(es)"],
+            "🗓️ Período", ["YTD", "Trimestre", "Mes(es)"],
             horizontal=True, index=0,
         )
 
@@ -129,56 +149,79 @@ def render():
         else:
             meses_sel = list(range(1, 13))
         periodo_label = f"YTD {year}"
+        with f1c3:
+            st.markdown(f"<div style='padding-top:28px;color:#64748B;'>"
+                         f"Meses incluidos: <code>{meses_sel}</code></div>",
+                         unsafe_allow_html=True)
     elif modo_periodo == "Trimestre":
-        with col3:
+        with f1c3:
             trim_options = ["Q1", "Q2", "Q3", "Q4"]
-            trims = st.multiselect("Trimestres", trim_options,
-                                     default=[trim_options[0]])
+            trims = st.multiselect("Trimestre(s)", trim_options,
+                                     default=[trim_options[0]],
+                                     label_visibility="collapsed",
+                                     placeholder="Selecciona Q1/Q2/Q3/Q4")
             mapa_q = {1: [1, 2, 3], 2: [4, 5, 6], 3: [7, 8, 9], 4: [10, 11, 12]}
             for t in trims:
                 meses_sel.extend(mapa_q[int(t.replace("Q", ""))])
-            periodo_label = f"{', '.join(trims)} {year}"
+            periodo_label = f"{', '.join(trims) or '?'} {year}"
     else:
-        with col3:
+        with f1c3:
             meses_sel = st.multiselect(
-                "Meses", list(range(1, 13)),
+                "Mes(es)", list(range(1, 13)),
                 default=[datetime.now().month] if year == year_actual else [1],
                 format_func=lambda m: f"{m:02d}",
+                label_visibility="collapsed",
+                placeholder="Selecciona uno o más meses",
             )
             periodo_label = f"Meses {meses_sel} {year}"
 
-    # Filtros multi-dim
-    col4, col5, col6 = st.columns(3)
-    with col4:
+    # Fila 2: Filtros multi-dim
+    f2c1, f2c2, f2c3 = st.columns(3)
+    with f2c1:
         canales_sel = st.multiselect(
-            "Canal", dims_year["canales"], default=[],
-            help="Vacío = todos los canales",
+            "📺 Canal", dims_year["canales"], default=[],
+            placeholder="Todos los canales",
         )
-    with col5:
+    with f2c2:
         kams_sel = st.multiselect(
-            "KAM", dims_year["kams"], default=[],
-            help="Vacío = todos los KAMs",
+            "👤 KAM", dims_year["kams"], default=[],
+            placeholder="Todos los KAMs",
         )
-    with col6:
+    with f2c3:
         lns_sel = st.multiselect(
-            "Línea de Negocio", dims_year["tipos_negocio"], default=[],
-            help="Vacío = todas las LNs",
+            "🏷️ Línea de Negocio", dims_year["tipos_negocio"], default=[],
+            placeholder="Todas las LNs",
         )
 
-    # Selector de desglose
-    desglose = st.radio(
-        "🔀 **Desglosar tabla por:**",
-        ["canal", "tipo_negocio", "kam"],
-        format_func=lambda x: {
-            "canal": "📺 Canal de Venta",
-            "tipo_negocio": "🏷️ Línea de Negocio",
-            "kam": "👤 KAM",
-        }[x],
-        horizontal=True, index=0,
-    )
+    # Fila 3: Desglose
+    f3c1, f3c2 = st.columns([2, 5])
+    with f3c1:
+        st.markdown("<div style='font-weight:600;color:#475569;padding-top:8px;'>"
+                     "🔀 Desglosar por:</div>", unsafe_allow_html=True)
+    with f3c2:
+        desglose = st.radio(
+            "Desglose", ["canal", "tipo_negocio", "kam"],
+            format_func=lambda x: {
+                "canal": "📺 Canal",
+                "tipo_negocio": "🏷️ Línea de Negocio",
+                "kam": "👤 KAM",
+            }[x],
+            horizontal=True, index=0, label_visibility="collapsed",
+        )
 
-    st.markdown(f"**Período:** `{periodo_label}` · meses {sorted(set(meses_sel))}")
-    st.divider()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Banner período activo
+    st.markdown(
+        f'<div style="background:#EFF6FF;border-left:4px solid #3B82F6;'
+        f'padding:8px 14px;border-radius:4px;margin-bottom:14px;'
+        f'font-size:0.88rem;color:#1E40AF;">'
+        f'<strong>Período activo:</strong> {periodo_label} · '
+        f'meses {sorted(set(meses_sel))} · '
+        f'desglosado por <strong>{_label_dim(desglose)}</strong>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     # ─── Cargar inputs filtrados ────────────────────────────────────────
     canales_f = canales_sel or None
@@ -200,10 +243,24 @@ def render():
 
     if df_contrib.empty:
         st.error(
-            f"❌ Sin datos KAM para los filtros aplicados. "
-            f"Período: {periodo_label}, canales: {canales_sel or 'todos'}, "
-            f"KAMs: {kams_sel or 'todos'}, LNs: {lns_sel or 'todas'}."
+            f"❌ **Sin datos KAM para los filtros aplicados.**\n\n"
+            f"- Período: `{periodo_label}` · meses {sorted(set(meses_sel))}\n"
+            f"- Canales: `{canales_sel or 'todos'}`\n"
+            f"- KAMs: `{kams_sel or 'todos'}`\n"
+            f"- LNs: `{lns_sel or 'todas'}`"
         )
+        meses_disponibles_anio = estado.get("meses_por_anio", {}).get(year, [])
+        if meses_disponibles_anio:
+            st.info(
+                f"ℹ️ **El Sheet KAM tiene datos para {year} en los meses:** "
+                f"`{meses_disponibles_anio}`. Probá con uno de esos."
+            )
+        else:
+            anios_disp = estado.get("anios", [])
+            st.info(
+                f"ℹ️ **Años con datos en el Sheet:** `{anios_disp}`. "
+                f"El año {year} no tiene datos cargados."
+            )
         return
 
     # ─── Resumen consolidado ────────────────────────────────────────────
