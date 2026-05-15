@@ -42,12 +42,9 @@ from views._ops_contrib_helper import (
 )
 from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
-    cargar_costos_op_mensual,
     cargar_costos_operativos,
     cargar_gav_corporativo,
     cargar_ventas_canal_ln,
-    cargar_ventas_canal_ln_mensual,
-    distribuir_costos_mensual_a_canal,
     distribuir_monto_a_dimension,
     driver_default,
     driver_default_gav,
@@ -499,12 +496,10 @@ def render():
     st.divider()
 
     # ─── Tabs ───────────────────────────────────────────────────────────
-    (tab_pyl, tab_drivers, tab_detalle, tab_mensual,
-     tab_help, tab_roadmap) = st.tabs([
+    tab_pyl, tab_drivers, tab_detalle, tab_help, tab_roadmap = st.tabs([
         "💰 P&L (7 líneas)",
         "🎚️ Drivers",
         "📋 Detalle",
-        "📊 Detalle Mensual",
         "ℹ️ Cómo se calcula",
         "🚀 Roadmap",
     ])
@@ -795,61 +790,6 @@ def render():
                 }),
                 use_container_width=True, hide_index=True,
             )
-
-    # ─── TAB DETALLE MENSUAL (estilo Operaciones) ────────────────────────
-    with tab_mensual:
-        st.markdown(
-            "### 📊 Detalle mensual del Costo Operativo (PPTO vs FCST)\n"
-            "Mismo formato que **Operaciones → Costo Operativo Total → Detalle CC**, "
-            "pero con los valores **distribuidos al canal seleccionado**."
-        )
-
-        # Solo permite filtrar por UN canal (porque es ancho)
-        canales_disponibles = sorted(set(df_contrib["canal"].tolist())) \
-            if "canal" in df_contrib.columns else \
-            sorted(set(df_ventas_drivers["canal"].dropna().tolist()))
-
-        if not canales_disponibles:
-            st.info("Sin canales disponibles en el período.")
-        else:
-            st.markdown(
-                "**Selecciona un canal para ver su desglose mensual.** "
-                "Si no querés filtrar y ver el TOTAL operativo, elegí 'Todos'."
-            )
-            opciones = ["Todos (sin distribuir)"] + canales_disponibles
-            # Default: si hay filtro de canal aplicado, usar ese
-            default_idx = 0
-            if canales_sel and len(canales_sel) == 1 and canales_sel[0] in canales_disponibles:
-                default_idx = canales_disponibles.index(canales_sel[0]) + 1
-            canal_obj = st.selectbox(
-                "Canal", opciones, index=default_idx,
-                key="detalle_mensual_canal",
-            )
-
-            # Cargar datos mensuales
-            df_costos_mes = cargar_costos_op_mensual(year, meses_sel)
-            df_ventas_mes = cargar_ventas_canal_ln_mensual(year, meses_sel)
-
-            if df_costos_mes.empty:
-                st.warning("Sin costos operativos en el período.")
-            elif canal_obj == "Todos (sin distribuir)":
-                # Mostrar valores totales (sin distribuir) — igual a Operaciones
-                _render_tabla_detalle_mensual(
-                    df_costos_mes, meses_sel, periodo_label, year,
-                    canal_obj=None,
-                )
-            else:
-                # Distribuir cada mes al canal y mostrar
-                df_distrib = distribuir_costos_mensual_a_canal(
-                    df_costos_mes, df_ventas_mes, canal_obj, driver_override,
-                )
-                if df_distrib.empty:
-                    st.warning(f"No se pudo distribuir al canal {canal_obj}.")
-                else:
-                    _render_tabla_detalle_mensual(
-                        df_distrib, meses_sel, periodo_label, year,
-                        canal_obj=canal_obj,
-                    )
 
     # ─── TAB AYUDA ──────────────────────────────────────────────────────
     with tab_help:
@@ -1390,228 +1330,3 @@ def _render_alarma_calce(
             f'</div>',
             unsafe_allow_html=True,
         )
-
-
-# ============================================================
-# TABLA DETALLE MENSUAL (formato estilo Operaciones)
-# ============================================================
-MESES_SHORT = {
-    1: "ENE", 2: "FEB", 3: "MAR", 4: "ABR", 5: "MAY", 6: "JUN",
-    7: "JUL", 8: "AGO", 9: "SEP", 10: "OCT", 11: "NOV", 12: "DIC",
-}
-
-
-def _fmt_num_clp(v):
-    """Formato CLP entero con paréntesis para negativos. v en MM si quieres
-    pasarlo dividido. Aquí asume v en CLP enteros y lo divide por 1MM."""
-    if v is None or pd.isna(v) or v == 0:
-        return "—"
-    n = abs(v) / 1_000_000
-    s = f"{n:,.1f}".replace(",", "_").replace(".", ",").replace("_", ".")
-    return f"({s})" if v < 0 else s
-
-
-def _color_var_costo(var_pct):
-    """Color para variación de costos: verde si < 0 (ahorró), rojo si > 5%."""
-    if var_pct is None or pd.isna(var_pct):
-        return "#64748B"
-    if var_pct < -2:
-        return "#16A34A"
-    if var_pct < 5:
-        return "#F59E0B"
-    return "#DC2626"
-
-
-def _render_tabla_detalle_mensual(df: pd.DataFrame, meses: list[int],
-                                    periodo_label: str, year: int,
-                                    canal_obj: str | None):
-    """Renderiza tabla HTML estilo Operaciones (PPTO ENE/FEB/MAR/Q1 + REAL
-    ENE/FEB/MAR/Q1 + DESV $ + %VAR + %S/Vta).
-
-    Si canal_obj es None: muestra el TOTAL operativo (mismo que Operaciones).
-    Si es un canal: muestra los valores YA DISTRIBUIDOS a ese canal.
-    """
-    if df.empty:
-        st.info("Sin datos.")
-        return
-
-    # Detectar si viene del distribuidor (tiene `monto_canal`) o es total
-    es_distribuido = "monto_canal" in df.columns
-    valor_col = "monto_canal" if es_distribuido else "monto"
-
-    titulo = (
-        f"DETALLE COSTO OPERATIVO ASIGNADO A {canal_obj.upper()} — {periodo_label} {year}"
-        if canal_obj else
-        f"DETALLE COSTO OPERATIVO TOTAL (sin distribuir) — {periodo_label} {year}"
-    )
-
-    st.markdown(
-        f"<h4 style='color:#1F4E79;margin:8px 0 4px 0;'>{titulo}</h4>"
-        f"<p style='color:#64748B;font-size:11px;margin:0 0 12px 0;'>"
-        f"Sub-Área › Centro de Costo › Cuenta Analítica · "
-        f"PPTO vs FCST mensual · cifras en MM$</p>",
-        unsafe_allow_html=True,
-    )
-
-    n_meses = len(meses)
-    rows_html = []
-
-    # Headers
-    h1 = ['<tr>']
-    h1.append('<th rowspan="2" style="background:#1F4E79;color:white;'
-              'padding:10px 12px;text-align:left;font-size:11px;'
-              'border-bottom:1px solid #FFF;">CC / Cuenta Analítica</th>')
-    h1.append(f'<th colspan="{n_meses + 1}" style="background:#1F4E79;'
-              'color:white;padding:8px;text-align:center;font-size:11px;'
-              'border-left:2px solid #FFF;">PPTO</th>')
-    h1.append(f'<th colspan="{n_meses + 1}" style="background:#A03A20;'
-              'color:white;padding:8px;text-align:center;font-size:11px;'
-              'border-left:2px solid #FFF;">FCST / REAL</th>')
-    h1.append('<th rowspan="2" style="background:#5E3A1B;color:white;'
-              'padding:10px 8px;text-align:right;font-size:11px;'
-              'border-left:2px solid #FFF;">DESV $</th>')
-    h1.append('<th rowspan="2" style="background:#5E3A1B;color:white;'
-              'padding:10px 8px;text-align:right;font-size:11px;">% VAR</th>')
-    h1.append('</tr>')
-
-    h2 = ['<tr>']
-    for m in meses:
-        h2.append(f'<th style="background:#2C5F8D;color:white;padding:5px 8px;'
-                  f'text-align:right;font-size:10px;border-left:1px solid #FFF;">'
-                  f'PPTO {MESES_SHORT[m]}</th>')
-    h2.append(f'<th style="background:#0D3A5F;color:white;padding:5px 8px;'
-              f'text-align:right;font-size:10px;border-left:2px solid #FFF;">'
-              f'PPTO {periodo_label}</th>')
-    for m in meses:
-        h2.append(f'<th style="background:#B85B47;color:white;padding:5px 8px;'
-                  f'text-align:right;font-size:10px;border-left:1px solid #FFF;">'
-                  f'FCST {MESES_SHORT[m]}</th>')
-    h2.append(f'<th style="background:#7F2C16;color:white;padding:5px 8px;'
-              f'text-align:right;font-size:10px;border-left:2px solid #FFF;">'
-              f'FCST {periodo_label}</th>')
-    h2.append('</tr>')
-
-    # Agrupar por (sub_area, centro_costo) → cuentas analíticas
-    df_grp = df.copy()
-    if "cuenta_analitica" not in df_grp.columns:
-        df_grp["cuenta_analitica"] = "—"
-
-    # Totales por CC para ordenar
-    cc_totales = df_grp.groupby("centro_costo")[valor_col].sum().abs()
-    cc_order = cc_totales.sort_values(ascending=False).index.tolist()
-
-    bg_alt = ["#FFFFFF", "#F8FAFC"]
-
-    for cc in cc_order:
-        cc_data = df_grp[df_grp["centro_costo"] == cc]
-        sub_area = cc_data["sub_area"].iloc[0] if "sub_area" in cc_data.columns else ""
-        tipo_costo = cc_data["tipo_costo"].iloc[0] if "tipo_costo" in cc_data.columns else ""
-        cc_total_real = cc_data[cc_data["escenario"] == "FCST"][valor_col].sum()
-
-        # Tag F/V
-        tag = ""
-        if tipo_costo == "FIJO":
-            tag = ('<span style="background:#1F4E79;color:#FFF;padding:1px 6px;'
-                   'border-radius:8px;font-size:9px;margin-left:6px;'
-                   'font-weight:700;">FIJO</span>')
-        elif tipo_costo == "VARIABLE":
-            tag = ('<span style="background:#EA580C;color:#FFF;padding:1px 6px;'
-                   'border-radius:8px;font-size:9px;margin-left:6px;'
-                   'font-weight:700;">VARIABLE</span>')
-
-        cc_label = (f'{sub_area} › <strong>{cc}</strong>{tag}'
-                    f'<span style="float:right;color:#1E40AF;">'
-                    f'FCST: {_fmt_num_clp(cc_total_real)} MM</span>')
-        rows_html.append(
-            f'<tr><td colspan="{1 + (n_meses+1)*2 + 2}" '
-            f'style="background:#DBEAFE;color:#1E40AF;padding:6px 12px;'
-            f'font-weight:600;font-size:11px;">{cc_label}</td></tr>'
-        )
-
-        # Cuentas analíticas
-        cuentas = sorted(cc_data["cuenta_analitica"].dropna().unique().tolist())
-        for idx, cta in enumerate(cuentas):
-            bg = bg_alt[idx % 2]
-            f_ct = cc_data[cc_data["cuenta_analitica"] == cta]
-
-            row = ['<tr>']
-            row.append(f'<td style="background:{bg};padding:4px 12px 4px 28px;'
-                       f'color:#1E293B;font-size:11px;text-align:left;">{cta}</td>')
-
-            ppto_ms = []
-            real_ms = []
-            for m in meses:
-                p = f_ct[(f_ct["escenario"] == "PPTO") &
-                          (f_ct["month"] == m)][valor_col].sum()
-                r = f_ct[(f_ct["escenario"] == "FCST") &
-                          (f_ct["month"] == m)][valor_col].sum()
-                ppto_ms.append(p)
-                real_ms.append(r)
-
-            # PPTO mensuales
-            for i, p in enumerate(ppto_ms):
-                bl = "border-left:1px solid #E2E8F0;" if i == 0 else ""
-                row.append(f'<td style="background:{bg};padding:4px 8px;'
-                           f'text-align:right;color:#475569;font-size:11px;'
-                           f'{bl}">{_fmt_num_clp(p)}</td>')
-            # PPTO total
-            ppto_t = sum(ppto_ms)
-            ppto_bg = "#E0E7FF" if bg == "#FFFFFF" else "#C7D2FE"
-            row.append(f'<td style="background:{ppto_bg};padding:4px 8px;'
-                       f'text-align:right;color:#1E293B;font-weight:700;'
-                       f'font-size:11px;border-left:2px solid #1F4E79;">'
-                       f'{_fmt_num_clp(ppto_t)}</td>')
-
-            # REAL mensuales
-            for i, r in enumerate(real_ms):
-                bl = "border-left:1px solid #E2E8F0;" if i == 0 else ""
-                row.append(f'<td style="background:{bg};padding:4px 8px;'
-                           f'text-align:right;color:#1E293B;font-size:11px;'
-                           f'{bl}">{_fmt_num_clp(r)}</td>')
-            # REAL total
-            real_t = sum(real_ms)
-            real_bg = "#FED7D2" if bg == "#FFFFFF" else "#FBCAB8"
-            row.append(f'<td style="background:{real_bg};padding:4px 8px;'
-                       f'text-align:right;color:#1E293B;font-weight:700;'
-                       f'font-size:11px;border-left:2px solid #A03A20;">'
-                       f'{_fmt_num_clp(real_t)}</td>')
-
-            # DESV $
-            desv = real_t - ppto_t
-            row.append(f'<td style="background:{bg};padding:4px 8px;'
-                       f'text-align:right;color:{_color_var_costo(((abs(real_t)-abs(ppto_t))/abs(ppto_t)*100) if ppto_t else None)};'
-                       f'font-weight:600;font-size:11px;'
-                       f'border-left:2px solid #5E3A1B;">{_fmt_num_clp(desv)}</td>')
-            # % VAR
-            var = (((abs(real_t) - abs(ppto_t)) / abs(ppto_t)) * 100) if ppto_t else None
-            var_txt = f"{var:+.1f}%".replace(".", ",") if var is not None else "—"
-            row.append(f'<td style="background:{bg};padding:4px 8px;'
-                       f'text-align:right;color:{_color_var_costo(var)};'
-                       f'font-weight:600;font-size:11px;">{var_txt}</td>')
-
-            row.append('</tr>')
-            rows_html.append("".join(row))
-
-    table_html = (
-        '<div style="overflow-x:auto;border:1px solid #E2E8F0;border-radius:6px;'
-        'max-height:680px;overflow-y:auto;">'
-        '<table style="border-collapse:collapse;width:100%;'
-        'font-family:-apple-system,Segoe UI,sans-serif;">'
-        f'<thead style="position:sticky;top:0;z-index:1;">{"".join(h1)}{"".join(h2)}</thead>'
-        f'<tbody>{"".join(rows_html)}</tbody>'
-        '</table></div>'
-    )
-    st.markdown(table_html, unsafe_allow_html=True)
-
-    # Totales generales
-    total_ppto = df_grp[df_grp["escenario"] == "PPTO"][valor_col].sum()
-    total_real = df_grp[df_grp["escenario"] == "FCST"][valor_col].sum()
-    desv_total = total_real - total_ppto
-    var_total = ((abs(total_real) - abs(total_ppto)) / abs(total_ppto) * 100) if total_ppto else None
-
-    st.markdown("---")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("PPTO Total", f"${_fmt_num_clp(total_ppto)} MM")
-    c2.metric("FCST Total", f"${_fmt_num_clp(total_real)} MM")
-    c3.metric("DESV $", f"${_fmt_num_clp(desv_total)} MM")
-    c4.metric("% VAR", f"{var_total:+.1f}%" if var_total is not None else "—")
