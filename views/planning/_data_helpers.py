@@ -196,6 +196,60 @@ def cargar_planif_transito_baseline(snapshot_date: str = BASELINE_DATE) -> pd.Da
 LINEAS_NEGOCIO_PLANIFICACION = ['Marketplace', 'Páginas propias', 'Fidelización']
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def cargar_ventas_year_minus_1(baseline_date: str, hoy: str,
+                                lineas_negocio: tuple) -> dict:
+    """Trae ventas del año pasado en 2 períodos: mismo y resto del mes.
+
+    Args:
+        baseline_date: '2026-05-11' (string ISO date)
+        hoy: '2026-05-15'
+        lineas_negocio: tupla de tipo_negocio para filtrar
+
+    Returns:
+        {
+          'mismo_periodo': DataFrame [sku, uds]  ← 2025-05-11 → 2025-05-15
+          'resto_mes':    DataFrame [sku, uds]  ← 2025-05-16 → 2025-05-31
+        }
+    """
+    try:
+        base = pd.Timestamp(baseline_date)
+        hoy_ts = pd.Timestamp(hoy)
+        fin_mes = (hoy_ts.replace(day=1) + pd.DateOffset(months=1)) - pd.Timedelta(days=1)
+
+        py_base = (base - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
+        py_hoy = (hoy_ts - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
+        py_dia_sig = (hoy_ts - pd.DateOffset(years=1) + pd.Timedelta(days=1)).strftime('%Y-%m-%d')
+        py_fin_mes = (fin_mes - pd.DateOffset(years=1)).strftime('%Y-%m-%d')
+
+        placeholders = ','.join(['?'] * len(lineas_negocio))
+        # Mismo período: py_base → py_hoy (inclusive)
+        sql_mismo = (f"SELECT sku, SUM(COALESCE(cantidad,0)) AS uds "
+                     f"FROM ventas WHERE fecha_venta >= ? AND fecha_venta <= ? "
+                     f"AND sku IS NOT NULL AND sku != '' "
+                     f"AND tipo_negocio IN ({placeholders}) GROUP BY sku")
+        sql_resto = (f"SELECT sku, SUM(COALESCE(cantidad,0)) AS uds "
+                     f"FROM ventas WHERE fecha_venta >= ? AND fecha_venta <= ? "
+                     f"AND sku IS NOT NULL AND sku != '' "
+                     f"AND tipo_negocio IN ({placeholders}) GROUP BY sku")
+        df_mismo = _turso_df(sql_mismo, [py_base, py_hoy] + list(lineas_negocio))
+        df_resto = _turso_df(sql_resto, [py_dia_sig, py_fin_mes] + list(lineas_negocio))
+        for d in (df_mismo, df_resto):
+            if not d.empty:
+                d['uds'] = pd.to_numeric(d['uds'], errors='coerce').fillna(0)
+                d['sku'] = d['sku'].astype(str)
+        return {
+            'mismo_periodo': df_mismo,
+            'resto_mes': df_resto,
+            'rango_mismo': (py_base, py_hoy),
+            'rango_resto': (py_dia_sig, py_fin_mes),
+        }
+    except Exception as e:
+        st.warning(f"No pude leer ventas año pasado: {e}")
+        return {'mismo_periodo': pd.DataFrame(), 'resto_mes': pd.DataFrame(),
+                'rango_mismo': (None, None), 'rango_resto': (None, None)}
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def cargar_ventas_live_desde_baseline(baseline_date: str = BASELINE_DATE,
                                        lineas_negocio: tuple = None) -> pd.DataFrame:

@@ -21,6 +21,7 @@ from views.planning._data_helpers import (
     cargar_planif_stock_live,
     cargar_planif_transito_live,
     cargar_ventas_live_desde_baseline,
+    cargar_ventas_year_minus_1,
 )
 
 
@@ -38,7 +39,8 @@ def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
         'sku': 'nunique',
         'stock_baseline': 'sum',
         'ventas_acum': 'sum',
-        'run_rate_diario': 'sum',
+        'venta_y1_mismo': 'sum',
+        'venta_y1_resto': 'sum',
         'venta_proy_mes_actual': 'sum',
         'transito_mes_actual': 'sum',
         'stock_fin_mes_actual': 'sum',
@@ -57,21 +59,27 @@ def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
 def render():
     st.title("🎯 Triada Proyectada")
     st.caption(
-        f"Stock baseline ({BASELINE_DATE}) − venta proyectada mes actual (real + run-rate) "
+        f"Stock baseline ({BASELINE_DATE}) − venta proy mes (real + curva 2025 × crecimiento) "
         f"+ tránsito (con ETAs) − forecast manual meses futuros = stock proyectado mensual. "
         f"Ventas filtradas: **{' + '.join(LINEAS_NEGOCIO_PLANIFICACION)}**."
     )
 
     # ---- Cargar fuentes ----
-    with st.spinner("Cargando baseline + master + live..."):
+    with st.spinner("Cargando baseline + master + live + año pasado..."):
         df_base = cargar_planif_stock_baseline()
         df_master = cargar_planif_master()
-        # Ventas filtradas por líneas de negocio del FCST: Marketplace + Páginas propias + Fidelización
+        # Ventas filtradas por líneas de negocio: Marketplace + Páginas propias + Fidelización
         df_ventas = cargar_ventas_live_desde_baseline(
             lineas_negocio=tuple(LINEAS_NEGOCIO_PLANIFICACION),
         )
         df_trans = cargar_planif_transito_live()
         df_live = cargar_planif_stock_live()
+        # Año pasado (mismo período + resto del mes) para proyección estacional
+        hoy_str = pd.Timestamp.today().strftime('%Y-%m-%d')
+        y1 = cargar_ventas_year_minus_1(
+            baseline_date=BASELINE_DATE, hoy=hoy_str,
+            lineas_negocio=tuple(LINEAS_NEGOCIO_PLANIFICACION),
+        )
 
     if df_base.empty:
         st.error("No hay baseline cargado. Corre `extract_baseline_planificacion.py`.")
@@ -108,7 +116,7 @@ def render():
     # Forecast manual: aún no implementado
     df_forecast = None
 
-    # ---- Calcular proyección ----
+    # ---- Calcular proyección (estacional con curva 2025 + crecimiento por SKU) ----
     with st.spinner(f"Proyectando stock mes 1 a {horizonte}..."):
         df_proy = proyectar_stock_mensual(
             df_baseline=df_base,
@@ -117,6 +125,8 @@ def render():
             df_forecast_manual=df_forecast,
             baseline_date=BASELINE_DATE,
             horizonte_meses=horizonte,
+            ventas_y1_mismo=y1['mismo_periodo'],
+            ventas_y1_resto=y1['resto_mes'],
         )
 
     if df_proy.empty:
@@ -185,8 +195,16 @@ def render():
             help='Ventas reales acumuladas desde 11/05 (LIVE Turso, líneas filtradas)'),
         'run_rate_diario': st.column_config.NumberColumn('Run-rate (u/día)', format='%.2f',
             help='Promedio diario = ventas_acum / días_transcurridos_post_baseline'),
+        'venta_y1_mismo': st.column_config.NumberColumn('Vta 2025 mismo per', format='%.0f',
+            help='Ventas año pasado en mismo rango de días (11→hoy)'),
+        'venta_y1_resto': st.column_config.NumberColumn('Vta 2025 resto mes', format='%.0f',
+            help='Ventas año pasado del resto del mes (hoy+1 → fin mes)'),
+        'crec_vs_y1': st.column_config.NumberColumn('Crec vs 2025', format='%.2fx',
+            help='Crecimiento = ventas 2026 mismo per / ventas 2025 mismo per. Cap [0.2x..5x]. Si no hay venta 2025 → fallback run-rate.'),
+        'fuente_proy_mes': st.column_config.TextColumn('Fuente proy', width='small',
+            help='estacional = usa curva 2025 × crecimiento. run-rate = fallback lineal'),
         'venta_proy_mes_actual': st.column_config.NumberColumn(f'Venta proy {mes_actual_nombre}', format='%.0f',
-            help='Proyección de venta TOTAL del mes actual = ventas_acum + run_rate × días_restantes'),
+            help='Proyección de venta TOTAL del mes = real_acum + (venta 2025 resto × crecimiento)'),
         'transito_mes_actual': st.column_config.NumberColumn(f'Trán {mes_actual_nombre}', format='%.0f',
             help='Tránsito con ETA dentro del mes actual (ya recibido o por recibir)'),
         'stock_fin_mes_actual': st.column_config.NumberColumn(f'Stock fin {mes_actual_nombre}', format='%.0f',
@@ -239,9 +257,10 @@ def render():
             'producto': st.column_config.TextColumn('Producto', width='medium'),
         })
         cols_show = ['sku', 'marca', 'categoria_padre', 'categoria_hijo', 'producto',
-                     'stock_baseline', 'ventas_acum', 'run_rate_diario',
-                     'venta_proy_mes_actual', 'transito_mes_actual',
-                     'stock_fin_mes_actual', 'transito_pendiente_3m', 'forecast_total',
+                     'stock_baseline', 'ventas_acum', 'venta_y1_mismo', 'venta_y1_resto',
+                     'crec_vs_y1', 'fuente_proy_mes', 'venta_proy_mes_actual',
+                     'transito_mes_actual', 'stock_fin_mes_actual',
+                     'transito_pendiente_3m', 'forecast_total',
                      'mes_quiebre'] + stock_cols
         if mostrar_transito_desg:
             cols_show = cols_show + trans_cols
@@ -271,9 +290,10 @@ def render():
             col_config_g[k[0]] = st.column_config.TextColumn(k[1], width=k[2])
         # cols a mostrar
         base_cols = (list(c[0] for c in label_claves) + ['n_skus', 'stock_baseline',
-                     'ventas_acum', 'run_rate_diario', 'venta_proy_mes_actual',
-                     'transito_mes_actual', 'stock_fin_mes_actual',
-                     'transito_pendiente_3m', 'forecast_total']) + stock_cols
+                     'ventas_acum', 'venta_y1_mismo', 'venta_y1_resto',
+                     'venta_proy_mes_actual', 'transito_mes_actual',
+                     'stock_fin_mes_actual', 'transito_pendiente_3m',
+                     'forecast_total']) + stock_cols
         if mostrar_transito_desg:
             base_cols = base_cols + trans_cols
         cols_show = [c for c in base_cols if c in g.columns]
