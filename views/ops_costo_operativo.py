@@ -48,7 +48,8 @@ SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER",
                   "UNIONX", "UNION X"]
 SUB_AREA_LABEL = {
     "LOGISTICA": "Logística", "OPERACIONES": "Operaciones",
-    "POSTVENTA": "Postventa", "GRUPO ETER": "Grupo Eter", "UNIONX": "UnionX",
+    "POSTVENTA": "Postventa", "GRUPO ETER": "Grupo Eter",
+    "UNIONX": "UnionX", "UNION X": "UnionX",
 }
 
 # ============================================================
@@ -465,7 +466,7 @@ def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 
     for sa in SUB_AREAS_PNL:
         row = ["<tr>"]
-        row.append(_td(SUB_AREA_LABEL[sa], bg="#FFFFFF", align="left",
+        row.append(_td(SUB_AREA_LABEL.get(sa, sa), bg="#FFFFFF", align="left",
                         weight="500", color="#1E293B"))
         for i, m in enumerate(meses):
             ppto = sub_data[sa]["ppto_m"][i]
@@ -863,7 +864,7 @@ def _tab_informe(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
             rows.append(
                 "<tr>"
                 + _td(str(i), bg="#FFFFFF", color="#1E293B", weight="700", align="center")
-                + _td(SUB_AREA_LABEL[sa], bg="#FFFFFF", color="#DC2626",
+                + _td(SUB_AREA_LABEL.get(sa, sa), bg="#FFFFFF", color="#DC2626",
                        weight="700", align="left")
                 + _td(_fmt_num(r["ppto"]), bg="#FFFFFF", color="#475569")
                 + _td(_fmt_num(r["real"]), bg="#FFFFFF", color="#1E293B", weight="600")
@@ -906,7 +907,7 @@ def _tab_informe(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         st.markdown(
             f'<div style="background:#E8F5E9;border-left:4px solid #16A34A;'
             f'padding:10px 14px;margin:12px 0;border-radius:4px;font-size:13px;">'
-            f'<b style="color:#1B5E20;">✅ Nota positiva: {SUB_AREA_LABEL[ah["sa"]]}</b> — la sub-área '
+            f'<b style="color:#1B5E20;">✅ Nota positiva: {SUB_AREA_LABEL.get(ah["sa"], ah["sa"])}</b> — la sub-área '
             f'más relevante ({peso:.0f}% del gasto total de Ops) — cerró '
             f'<b>${abs(ah["sobregasto"]):,.0f} bajo presupuesto</b> ({ah["pct"]:.1f}%), '
             f'compensando con creces los sobrecostos menores.'
@@ -1249,7 +1250,7 @@ def _tab_yoy(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         color_pp = _color_var(delta_pp, es_costo=True)
         rows_html.append(
             "<tr>"
-            + _td(SUB_AREA_LABEL[sa], bg="#FFFFFF", weight="600",
+            + _td(SUB_AREA_LABEL.get(sa, sa), bg="#FFFFFF", weight="600",
                    color="#1E293B", align="left")
             + _td(_fmt_num(real_ant), bg="#FFFFFF", color="#475569")
             + _td(_fmt_num(real_act), bg="#FFFFFF", color="#1E293B", weight="700")
