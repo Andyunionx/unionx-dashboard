@@ -43,10 +43,11 @@ from views._ops_contrib_helper import (
 from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
     cargar_costos_operativos,
-    cargar_gav,
+    cargar_gav_corporativo,
     cargar_ventas_canal_ln,
     distribuir_monto_a_dimension,
     driver_default,
+    driver_default_gav,
 )
 
 
@@ -253,7 +254,9 @@ def render():
             year, meses_sel,
             canales=canales_f, kams=kams_f, tipos_negocio=lns_f,
         )
-        gav_total = cargar_gav(year, meses_sel)
+        # GAV "puro" por área (sin duplicar lo operativo)
+        df_gav = cargar_gav_corporativo(year, meses_sel, escenario="FCST")
+        gav_total = df_gav["monto"].sum() if not df_gav.empty else 0
 
     if df_contrib.empty:
         st.error(
@@ -291,12 +294,13 @@ def render():
 
     st.markdown("### 📊 Consolidado del período (con filtros)")
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("Venta REAL", f"${_fmt_clp(venta_total / 1000)} M")
-    k2.metric("Contribución", f"${_fmt_clp(contrib_total / 1000)} M",
+    k1.metric("Venta REAL", f"${_fmt_clp(venta_total / 1_000_000)} MM")
+    k2.metric("Contribución", f"${_fmt_clp(contrib_total / 1_000_000)} MM",
               delta=_fmt_pct(mc_pct))
-    k3.metric("Costo OP", f"${_fmt_clp(costo_op_total / 1000)} M")
-    k4.metric("GAV", f"${_fmt_clp(gav_total / 1000)} M")
-    k5.metric("EBIT estimado", f"${_fmt_clp(ebit_total / 1000)} M",
+    k3.metric("Costo OP", f"${_fmt_clp(costo_op_total / 1_000_000)} MM")
+    k4.metric("GAV puro", f"${_fmt_clp(gav_total / 1_000_000)} MM",
+              help="GAV del control de gestión SIN áreas operativas (Operaciones, Logística, Postventa) para evitar duplicar con Costo OP")
+    k5.metric("EBIT estimado", f"${_fmt_clp(ebit_total / 1_000_000)} MM",
               delta=_fmt_pct(ebit_pct))
 
     st.divider()
@@ -390,7 +394,10 @@ def render():
     driver_override = st.session_state.get("fin_pyl_driver_override", {})
 
     # ─── CALCULAR DISTRIBUCIONES ────────────────────────────────────────
+    # COSTO OP: cada CC con su driver, agregado por dimensión
+    # Detalle por CC para drilldown: {(cc, dim_value): monto}
     costo_op_por_dim = {}
+    costo_op_drilldown = []  # filas: {cc, sub_area, driver, dim, monto}
     if not df_costos.empty and not df_ventas.empty:
         for _, c in df_costos.iterrows():
             cc = c["centro_costo"]
@@ -400,10 +407,32 @@ def render():
             )
             for k, v in asignacion.items():
                 costo_op_por_dim[k] = costo_op_por_dim.get(k, 0) + v
+                costo_op_drilldown.append({
+                    "Sub-área": c["sub_area"],
+                    "Centro de Costo": cc,
+                    "Driver": driver,
+                    _label_dim(desglose): k,
+                    "Monto": v,
+                })
 
-    gav_por_dim = distribuir_monto_a_dimension(
-        gav_total, df_ventas, "venta", dimension=desglose,
-    ) if (gav_total > 0 and not df_ventas.empty) else {}
+    # GAV: cada ÁREA con su driver natural (no monolítico por venta)
+    gav_por_dim = {}
+    gav_drilldown = []  # filas: {area, driver, dim, monto}
+    if not df_gav.empty and not df_ventas.empty:
+        for _, g in df_gav.iterrows():
+            area = g["area"]
+            driver = driver_default_gav(area)
+            asignacion = distribuir_monto_a_dimension(
+                g["monto"], df_ventas, driver, dimension=desglose,
+            )
+            for k, v in asignacion.items():
+                gav_por_dim[k] = gav_por_dim.get(k, 0) + v
+                gav_drilldown.append({
+                    "Área GAV": area,
+                    "Driver": driver,
+                    _label_dim(desglose): k,
+                    "Monto": v,
+                })
 
     # ─── TAB P&L ────────────────────────────────────────────────────────
     with tab_pyl:
@@ -430,7 +459,8 @@ def render():
 
     # ─── TAB DETALLE ────────────────────────────────────────────────────
     with tab_detalle:
-        st.markdown("### 📋 Costos a distribuir")
+        # ─── Sección 1: Costos OP a distribuir ──────────────────────────
+        st.markdown("### 📋 1) Costos Operativos a distribuir")
         if df_costos.empty:
             st.info("Sin costos en el período.")
         else:
@@ -438,14 +468,14 @@ def render():
             df_show["driver"] = df_show["centro_costo"].apply(
                 lambda cc: driver_override.get(cc, driver_default(cc))
             )
-            df_show["monto_M"] = (df_show["monto"] / 1000).round(0)
+            df_show["monto_MM"] = (df_show["monto"] / 1_000_000).round(1)
             df_show = df_show[[
-                "sub_area", "centro_costo", "tipo_costo", "monto_M", "driver"
+                "sub_area", "centro_costo", "tipo_costo", "monto_MM", "driver"
             ]].rename(columns={
                 "sub_area": "Sub-área",
                 "centro_costo": "Centro de Costo",
                 "tipo_costo": "F/V",
-                "monto_M": "Monto (M$)",
+                "monto_MM": "Monto (MM$)",
                 "driver": "Driver",
             })
             st.dataframe(df_show, use_container_width=True, hide_index=True)
@@ -453,11 +483,86 @@ def render():
             tot_fijo = df_costos[df_costos["tipo_costo"] == "FIJO"]["monto"].sum()
             tot_var = df_costos[df_costos["tipo_costo"] == "VARIABLE"]["monto"].sum()
             st.markdown(
-                f"**Totales:** Fijo `${_fmt_clp(tot_fijo / 1000)} M` · "
-                f"Variable `${_fmt_clp(tot_var / 1000)} M` · "
-                f"Total `${_fmt_clp((tot_fijo + tot_var) / 1000)} M`"
+                f"**Totales OP:** Fijo `${_fmt_clp(tot_fijo / 1_000_000)} MM` · "
+                f"Variable `${_fmt_clp(tot_var / 1_000_000)} MM` · "
+                f"**Total `${_fmt_clp((tot_fijo + tot_var) / 1_000_000)} MM`**"
             )
-            st.markdown(f"**+ GAV (P&L corporativo):** `${_fmt_clp(gav_total / 1000)} M`")
+
+        # ─── Sección 2: GAV "puro" por área ─────────────────────────────
+        st.markdown("---")
+        st.markdown("### 🏢 2) GAV por área (sin operativo)")
+        st.caption(
+            "Áreas del Control de Gestión Drive, **excluyendo** OPERACIONES, "
+            "LOGÍSTICA y POSTVENTA (ya están en la tabla de arriba)."
+        )
+        if df_gav.empty:
+            st.info("Sin GAV en el período.")
+        else:
+            df_gav_show = df_gav.copy()
+            df_gav_show["driver"] = df_gav_show["area"].apply(driver_default_gav)
+            df_gav_show["monto_MM"] = (df_gav_show["monto"] / 1_000_000).round(1)
+            df_gav_show = df_gav_show[["area", "monto_MM", "driver"]].rename(columns={
+                "area": "Área",
+                "monto_MM": "Monto (MM$)",
+                "driver": "Driver",
+            })
+            st.dataframe(df_gav_show, use_container_width=True, hide_index=True)
+            st.markdown(
+                f"**Total GAV puro:** `${_fmt_clp(gav_total / 1_000_000)} MM`"
+            )
+
+        # ─── Sección 3: Drilldown — Costo OP asignado a cada dimensión ─
+        st.markdown("---")
+        st.markdown(f"### 🎯 3) Drilldown: Costo OP asignado por {_label_dim(desglose)}")
+        st.caption(
+            f"Cómo cada Centro de Costo se reparte a cada {_label_dim(desglose).lower()} "
+            f"según su driver."
+        )
+        if costo_op_drilldown:
+            df_dr = pd.DataFrame(costo_op_drilldown)
+            # Pivot: filas = CC, cols = dimensión, valor = monto
+            pivot = df_dr.pivot_table(
+                index=["Sub-área", "Centro de Costo", "Driver"],
+                columns=_label_dim(desglose),
+                values="Monto",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            pivot["TOTAL"] = pivot.sum(axis=1)
+            pivot = (pivot / 1_000_000).round(1)  # MM
+            pivot = pivot.sort_values("TOTAL", ascending=False)
+            st.dataframe(
+                pivot.style.format("{:,.1f}").background_gradient(
+                    cmap="Reds", subset=[c for c in pivot.columns if c != "TOTAL"]
+                ),
+                use_container_width=True,
+            )
+            st.caption("Cifras en MM$. Cada fila se distribuye según su driver.")
+        else:
+            st.info("Sin distribución calculada.")
+
+        # ─── Sección 4: Drilldown — GAV por área a cada dimensión ──────
+        st.markdown("---")
+        st.markdown(f"### 🏢 4) Drilldown: GAV asignado por {_label_dim(desglose)}")
+        if gav_drilldown:
+            df_gdr = pd.DataFrame(gav_drilldown)
+            pivot_g = df_gdr.pivot_table(
+                index=["Área GAV", "Driver"],
+                columns=_label_dim(desglose),
+                values="Monto",
+                aggfunc="sum",
+                fill_value=0,
+            )
+            pivot_g["TOTAL"] = pivot_g.sum(axis=1)
+            pivot_g = (pivot_g / 1_000_000).round(1)
+            pivot_g = pivot_g.sort_values("TOTAL", ascending=False)
+            st.dataframe(
+                pivot_g.style.format("{:,.1f}").background_gradient(
+                    cmap="Blues", subset=[c for c in pivot_g.columns if c != "TOTAL"]
+                ),
+                use_container_width=True,
+            )
+            st.caption("Cifras en MM$. Cada área se distribuye con su driver propio.")
 
         st.markdown("---")
         st.markdown(f"### 📊 Volumen por {_label_dim(desglose)}")
@@ -493,8 +598,49 @@ def render():
 | 3 | **Comisiones** | Sheet KAM | `Comisión Venta + Comisión Envío + Marketing` |
 | 4 | **Margen de Contribución** | Sheet KAM | `Margen Directo − Comisiones` ✅ oficial |
 | 5 | **Costos Operativos** | Sheet OPERACIONES | Distribuido por driver según CC: `pedidos` / `unidades` / `venta` / `equitativo` |
-| 6 | **Costos P&L GAV** | P&L corporativo | `Gastos Administración y Venta` distribuido por `% venta` |
-| 7 | **EBIT** | Calculado | `Margen de Contribución − Costos OP − GAV` |
+| 6 | **Costos P&L GAV** | Control de Gestión Drive | Solo áreas NO operativas (sin OPS/LOG/PV); cada área distribuida con su driver |
+| 7 | **EBIT** | Calculado | `Margen de Contribución − Costos OP − GAV puro` |
+
+#### ⚙️ Unidades
+**Todas las cifras se muestran en MM$ (millones de pesos chilenos).**
+Internamente se trabaja en CLP enteros (KAM viene en CLP, Sheet OPERACIONES y
+Control Gestión vienen en miles → se multiplican × 1000 para alinear).
+
+#### 🚫 Cómo evitamos duplicar GAV con Costo OP
+El P&L corporativo agrupa TODO el gasto bajo "Gastos de Administración y Venta".
+Si lo sumáramos completo al Costo OP, duplicaríamos los gastos operativos.
+Solución: usar el **Control de Gestión Drive** que separa por área. Excluimos
+áreas operativas (OPERACIONES, LOGÍSTICA, POSTVENTA) que ya están en el Sheet
+OPERACIONES, y nos quedamos con el "GAV puro" (COMERCIAL, FIN/ADMIN, GRUPO ETER,
+MARKETING, LEGALES).
+
+#### Drivers de distribución del Costo OP
+
+| Tipo de Costo | Driver default | Por qué |
+|---|---|---|
+| REMUNERACIONES | # pedidos | Operadores procesan pedidos |
+| INSUMOS | # unidades | Cartón/etiquetas escalan con volumen físico |
+| ARRIENDOS | # unidades | Proxy de m³ ocupado en bodega |
+| HONORARIOS, SEGUROS, GASTOS OFICINA | % venta | Servicios proporcionales al revenue |
+| MOVILIZACIÓN, MANTENCIÓN | # pedidos | Cada despacho/uso de equipo |
+| SUSCRIPCIÓN/SOFTWARE | equitativo | SaaS independiente del volumen |
+
+#### Drivers de distribución del GAV (por área)
+
+| Área | Driver default | Por qué |
+|---|---|---|
+| COMERCIAL | % venta | KAMs/comercial escalan con revenue |
+| MARKETING | % venta | Inversión proporcional al canal |
+| FINANZAS Y ADMIN | % venta | Backoffice escala con volumen $$ |
+| GRUPO ETER | equitativo | Holding apoya a todos por igual |
+| LEGALES Y NOTARIALES | equitativo | Servicios corporativos |
+
+#### ⚠️ Limitación: GAV ↔ KAM
+El GAV se distribuye con drivers genéricos por canal/LN. **No se puede
+relacionar un KAM específico con su GAV asignado** — el control de gestión
+no tiene esa segmentación. Pendiente futuro: armar tabla manual de "costos
+fijos por canal" (gerente, KAM, planner, equipo producto) para tener
+asignación directa.
 
 #### Filtros disponibles
 - **Año** · **Trimestre / Mes(es)** · **Canal** · **KAM** · **Línea de Negocio**
@@ -506,21 +652,6 @@ La tabla se desglosa por la dimensión que elijas:
 - **Canal de Venta** — rentabilidad por marketplace/canal
 - **Línea de Negocio** — comparar Marketplace vs Páginas propias vs Distribución
 - **KAM** — performance del equipo comercial
-
-#### Drivers de distribución del Costo OP
-
-| Tipo de Costo | Driver default | Por qué |
-|---|---|---|
-| REMUNERACIONES | # pedidos | Operadores procesan pedidos |
-| INSUMOS | # unidades | Cartón/etiquetas escalan con volumen físico |
-| ARRIENDOS | # pedidos | Proxy de uso de bodega |
-| HONORARIOS, SEGUROS, GASTOS OFICINA | % venta | Servicios proporcionales al revenue |
-| MOVILIZACIÓN, MANTENCIÓN | # pedidos | Cada despacho/uso de equipo |
-| SUSCRIPCIÓN/SOFTWARE | equitativo | SaaS independiente del volumen |
-
-#### Driver de GAV
-**Fijo en `% venta`** — los gastos administrativos del corporativo se asocian
-naturalmente al revenue generado por cada canal/LN/KAM.
         """)
 
 
@@ -676,7 +807,7 @@ def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
                     f'color:{val_color};font-weight:600;">{txt}</td>'
                 )
             else:
-                txt = _fmt_clp(v / 1000)
+                txt = _fmt_clp(v / 1_000_000)
                 if v < 0 and not es_ebit:
                     val_color = COLOR_NEGATIVO
                 elif es_ebit and v < 0:
@@ -692,7 +823,8 @@ def _render_pyl_html(df_pyl: pd.DataFrame) -> str:
     html.append("</tbody></table></div>")
     html.append(
         '<p style="font-size:11px;color:#64748B;margin-top:6px;">'
-        "Cifras en M$ · (números) = negativos · MC% / EBIT% sobre venta de la columna"
+        "Cifras en MM$ (millones de pesos) · (números) = negativos · "
+        "MC% / EBIT% sobre venta de la columna"
         "</p>"
     )
     return "".join(html)
@@ -736,20 +868,20 @@ def _render_insights(df_pyl: pd.DataFrame, desglose: str):
         st.success(
             f"🏆 **Más rentable:** {mejor}  \n"
             f"EBIT %: `{_fmt_pct(ebits_pct[mejor])}`  \n"
-            f"EBIT abs: `${_fmt_clp(ebits[mejor] / 1000)} M`"
+            f"EBIT abs: `${_fmt_clp(ebits[mejor] / 1_000_000)} MM`"
         )
     with c2:
         if ebits_pct[peor] < 0:
             st.error(
                 f"⚠️ **Pierde plata:** {peor}  \n"
                 f"EBIT %: `{_fmt_pct(ebits_pct[peor])}`  \n"
-                f"EBIT abs: `${_fmt_clp(ebits[peor] / 1000)} M`"
+                f"EBIT abs: `${_fmt_clp(ebits[peor] / 1_000_000)} MM`"
             )
         else:
             st.warning(
                 f"📉 **Menos rentable:** {peor}  \n"
                 f"EBIT %: `{_fmt_pct(ebits_pct[peor])}`  \n"
-                f"EBIT abs: `${_fmt_clp(ebits[peor] / 1000)} M`"
+                f"EBIT abs: `${_fmt_clp(ebits[peor] / 1_000_000)} MM`"
             )
     with c3:
         if perdiendo:

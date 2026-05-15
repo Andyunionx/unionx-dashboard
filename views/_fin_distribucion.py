@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 COSTO_OP_PARQUET = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
 VENTAS_PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 PYL_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "pyl_mensual.parquet"
+CONTROL_GESTION_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "control_gestion.parquet"
 
 
 # ============================================================
@@ -45,7 +46,7 @@ DRIVER_DEFAULT_POR_CC = {
     "REMUNERACIONES":                "pedidos",
     "BENEFICIOS PERSONAL":           "pedidos",
     "HONORARIOS":                    "venta",
-    "ARRIENDOS":                     "pedidos",
+    "ARRIENDOS":                     "unidades",   # mejor proxy de m³ ocupado
     "INSUMOS":                       "unidades",
     "SEGUROS":                       "venta",
     "MOVILIZACION TRANSPORTE Y COLACION": "pedidos",
@@ -56,6 +57,36 @@ DRIVER_DEFAULT_POR_CC = {
     "SUSCRIPCION Y PUBLICACIONES":   "equitativo",
     "SUSCRIPCIÓN Y PUBLICACIONES":   "equitativo",
 }
+
+
+# ============================================================
+# DRIVERS POR ÁREA DEL GAV "PURO" (control_gestion sin operaciones)
+# ============================================================
+DRIVER_DEFAULT_POR_AREA_GAV = {
+    "COMERCIAL":                  "venta",       # KAMs/comercial escalan con revenue
+    "MARKETING":                  "venta",       # inversión proporcional al canal
+    "FINANZAS Y ADMINISTRACION":  "venta",       # backoffice escala con volumen $$
+    "FINANZAS Y ADMINISTRACIÓN":  "venta",
+    "GRUPO ETER":                 "equitativo",  # holding apoya a todos por igual
+    "LEGALES Y NOTARIALES":       "equitativo",  # servicios corporativos
+    "UNIONX":                     "venta",
+    "UNION X":                    "venta",
+    "TIENDA":                     "venta",
+}
+
+# Áreas del control_gestion que SON operativas (ya están en costo_operativo,
+# excluir para evitar duplicación)
+AREAS_OPERATIVAS_EXCLUIR = {
+    "OPERACIONES", "LOGISTICA", "POSTVENTA",
+}
+
+
+def driver_default_gav(area: str) -> str:
+    """Driver para una sub-área del GAV (control de gestión)."""
+    if not area:
+        return "venta"
+    a = area.upper().strip()
+    return DRIVER_DEFAULT_POR_AREA_GAV.get(a, "venta")
 
 
 def driver_default(centro_costo: str) -> str:
@@ -75,7 +106,8 @@ def driver_default(centro_costo: str) -> str:
 def cargar_costos_operativos(year: int, meses: list[int] | None = None,
                               escenario: str = "FCST") -> pd.DataFrame:
     """Devuelve costos agregados por (sub_area, centro_costo, tipo_costo) en
-    valores POSITIVOS (gastos)."""
+    valores POSITIVOS y en **CLP enteros** (el parquet viene en miles, se
+    multiplica × 1000 para alinear con el KAM que viene en CLP enteros)."""
     if not COSTO_OP_PARQUET.exists():
         return pd.DataFrame()
     df = pd.read_parquet(COSTO_OP_PARQUET)
@@ -87,8 +119,8 @@ def cargar_costos_operativos(year: int, meses: list[int] | None = None,
     if df.empty:
         return pd.DataFrame()
 
-    # Convertir a positivo (los gastos vienen negativos)
-    df["valor_pos"] = df["valor"].abs()
+    # Convertir a positivo Y a CLP enteros (parquet viene en miles)
+    df["valor_pos"] = df["valor"].abs() * 1000
     agg = df.groupby(["sub_area", "centro_costo", "tipo_costo"],
                      as_index=False).agg(monto=("valor_pos", "sum"))
     agg = agg[agg["monto"] > 0].copy()
@@ -147,25 +179,59 @@ def cargar_ventas_canal_ln(year: int, meses: list[int] | None = None,
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def cargar_gav(year: int, meses: list[int] | None = None) -> float:
-    """Lee la línea 'Gastos de Administración y Venta' del P&L para el período.
+def cargar_gav_corporativo(year: int, meses: list[int] | None = None,
+                            escenario: str = "FCST") -> pd.DataFrame:
+    """Lee `control_gestion.parquet` y devuelve el GAV "puro" — solo áreas
+    NO operativas (excluye OPERACIONES, LOGISTICA, POSTVENTA porque ya
+    están en `costo_operativo.parquet` y se duplicarían).
 
-    Retorna el monto en valor POSITIVO (gasto), en miles de CLP (M$) según
-    cómo está almacenado en el parquet.
+    Retorna DataFrame con cols: [area, monto] en CLP enteros (positivos).
     """
-    if not PYL_PARQUET.exists():
-        return 0.0
-    df = pd.read_parquet(PYL_PARQUET)
-    f = df[
-        (df["year"] == year) &
-        (df["linea"].str.contains("Gastos de Administración y Venta",
-                                   regex=False, na=False))
-    ].copy()
+    if not CONTROL_GESTION_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(CONTROL_GESTION_PARQUET)
+    df = df[(df["year"] == year) &
+            (df["escenario"] == escenario) &
+            (df["kpi"] == "GASTO")].copy()
     if meses:
-        f = f[f["month"].isin(meses)]
-    if f.empty:
+        df = df[df["month"].isin(meses)]
+    if df.empty:
+        return pd.DataFrame()
+
+    # Excluir áreas operativas (ya en costo_operativo)
+    def _norm(a):
+        if not a:
+            return ""
+        return (str(a).upper().strip()
+                .replace("Ó", "O").replace("Á", "A").replace("É", "E")
+                .replace("Í", "I").replace("Ú", "U"))
+
+    df["area_norm"] = df["area"].apply(_norm)
+    df = df[~df["area_norm"].isin(AREAS_OPERATIVAS_EXCLUIR)].copy()
+    if df.empty:
+        return pd.DataFrame()
+
+    # Convertir a positivo + CLP enteros (parquet en miles)
+    df["valor_pos"] = df["valor"].abs() * 1000
+
+    # Quitar áreas vacías
+    df = df[df["area_norm"] != ""].copy()
+
+    agg = df.groupby("area", as_index=False).agg(monto=("valor_pos", "sum"))
+    agg = agg[agg["monto"] > 0].copy()
+    agg = agg.sort_values("monto", ascending=False).reset_index(drop=True)
+    return agg
+
+
+# Alias retro-compat (la vista vieja la importaba como cargar_gav)
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_gav(year: int, meses: list[int] | None = None) -> float:
+    """[DEPRECADO — usar cargar_gav_corporativo()] Devuelve el TOTAL del GAV
+    puro en CLP enteros, sumando todas las áreas no operativas."""
+    df = cargar_gav_corporativo(year, meses)
+    if df.empty:
         return 0.0
-    return float(abs(f["valor"].sum()))
+    return float(df["monto"].sum())
 
 
 def distribuir_monto_a_dimension(
