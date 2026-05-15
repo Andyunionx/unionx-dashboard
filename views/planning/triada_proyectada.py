@@ -24,6 +24,51 @@ from views.planning._data_helpers import (
 )
 
 
+def _build_excel_mensual(df_proy: pd.DataFrame, horizonte: int) -> bytes:
+    """Construye un XLSX con bloques mes a mes por SKU.
+
+    Para cada SKU emite cols base (sku, marca, cat padre, cat hijo, producto)
+    y por cada mes M (0=mes actual, 1..N=futuros):
+      Stock Ini M | Tránsito M | Venta M | Stock Fin M
+
+    Validación: Stock Fin mes N debe coincidir con Stock Ini mes N+1.
+    """
+    import io
+    hoy = pd.Timestamp.today().normalize()
+    base = df_proy[['sku', 'marca', 'categoria_padre', 'categoria_hijo',
+                     'producto']].copy() if 'producto' in df_proy.columns else df_proy[
+                     ['sku', 'marca', 'categoria_padre', 'categoria_hijo']].copy()
+
+    # Mes 0 = mes actual: ini = stock_baseline, trán = transito_mes_actual,
+    # vta = venta_proy_mes_actual, fin = stock_fin_mes_actual
+    mes_label_0 = hoy.strftime('%b %y').replace('.', '').title()
+    base[f'Stock Ini {mes_label_0}'] = df_proy['stock_baseline'].values
+    base[f'Tránsito {mes_label_0}'] = df_proy['transito_mes_actual'].values
+    base[f'Venta {mes_label_0}'] = df_proy['venta_proy_mes_actual'].values
+    base[f'Stock Fin {mes_label_0}'] = df_proy['stock_fin_mes_actual'].values
+
+    # Meses futuros 1..N
+    for m in range(1, horizonte + 1):
+        mes_dt = hoy + pd.DateOffset(months=m)
+        label = mes_dt.strftime('%b %y').replace('.', '').title()
+        stock_ini_col = f'stock_fin_mes_actual' if m == 1 else f'stock_mes_{m - 1}'
+        base[f'Stock Ini {label}'] = df_proy[stock_ini_col].values if stock_ini_col in df_proy.columns else 0
+        base[f'Tránsito {label}'] = (
+            df_proy[f'transito_mes_{m}'].values if f'transito_mes_{m}' in df_proy.columns else 0
+        )
+        base[f'Venta {label}'] = (
+            df_proy[f'fcst_mes_{m}'].values if f'fcst_mes_{m}' in df_proy.columns else 0
+        )
+        base[f'Stock Fin {label}'] = (
+            df_proy[f'stock_mes_{m}'].values if f'stock_mes_{m}' in df_proy.columns else 0
+        )
+
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        base.to_excel(writer, sheet_name='Mes a Mes', index=False)
+    return buf.getvalue()
+
+
 def _agrupar(df: pd.DataFrame, claves: list, horiz: int) -> pd.DataFrame:
     """Agrega df por las claves dadas, sumando unidades. Ordena por stock fin mes actual desc."""
     if df.empty:
@@ -256,11 +301,23 @@ def render():
             st.dataframe(view[cols_show], use_container_width=True, hide_index=True,
                          column_config=col_config_sku, height=600)
 
-        st.download_button(
-            "⬇️ Descargar CSV",
+        d1, d2 = st.columns(2)
+        d1.download_button(
+            "⬇️ Descargar CSV (vista actual)",
             data=view[cols_show].to_csv(index=False).encode('utf-8'),
             file_name=f"triada_proyectada_sku_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
             mime='text/csv', key='dl_sku',
+        )
+        # Excel mensual: Stock Ini / Tránsito / Vta / Stock Fin × mes
+        excel_bytes = _build_excel_mensual(view, horizonte)
+        d2.download_button(
+            "⬇️ Descargar Excel mensual (Ini / Trán / Vta / Fin)",
+            data=excel_bytes,
+            file_name=f"triada_mes_a_mes_{pd.Timestamp.today().strftime('%Y%m%d')}.xlsx",
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            key='dl_xlsx_mes',
+            help='Una fila por SKU con bloques Mes M: Stock inicial, Tránsito, Venta, Stock final. '
+                 'Stock final mes N = Stock inicial mes N+1 (validación interna).',
         )
 
     def _render_grupo(g, label_claves, vmax):

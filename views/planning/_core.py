@@ -550,10 +550,12 @@ def proyectar_stock_mensual(
         stocks = []
         s = stock_fin_mes_actual
         transitos_por_mes = []
+        fcsts_por_mes = []
         for m in range(1, horizonte_meses + 1):
             f_m = forecast_mes.get((sku, m), 0)
             t_m = transito_mes.get((sku, m), 0)
             transitos_por_mes.append(t_m)
+            fcsts_por_mes.append(f_m)
             s = s - f_m + t_m
             stocks.append(s)
 
@@ -583,6 +585,8 @@ def proyectar_stock_mensual(
             row[f'stock_mes_{i}'] = s_m
         for i, t_m in enumerate(transitos_por_mes, start=1):
             row[f'transito_mes_{i}'] = t_m
+        for i, f_m in enumerate(fcsts_por_mes, start=1):
+            row[f'fcst_mes_{i}'] = f_m
         rows.append(row)
 
     df = pd.DataFrame(rows)
@@ -594,12 +598,13 @@ def proyectar_stock_mensual(
 
     stock_cols = [f'stock_mes_{i}' for i in range(1, horizonte_meses + 1)]
     trans_cols = [f'transito_mes_{i}' for i in range(1, horizonte_meses + 1)]
+    fcst_cols = [f'fcst_mes_{i}' for i in range(1, horizonte_meses + 1)]
     cols_order = (['sku', 'marca', 'producto', 'stock_baseline', 'ventas_acum',
                    'run_rate_diario', 'venta_y1_mismo', 'venta_y1_resto',
                    'crec_vs_y1', 'fuente_proy_mes', 'venta_proy_mes_actual',
                    'transito_mes_actual', 'stock_fin_mes_actual',
                    'transito_pendiente_3m', 'forecast_total', 'mes_quiebre']
-                  + stock_cols + trans_cols)
+                  + stock_cols + trans_cols + fcst_cols)
     return df[[c for c in cols_order if c in df.columns]]
 
 
