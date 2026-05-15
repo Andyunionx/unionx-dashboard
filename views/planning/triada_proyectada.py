@@ -365,3 +365,30 @@ def render():
                 "mermas). Negativo = Odoo tiene más (bodegas no mapeadas, compras "
                 "recibidas no tracked en tránsito)."
             )
+
+    # ---- Footer: metodología de proyección ----
+    st.divider()
+    with st.expander("ℹ️ Cómo se proyecta la venta del mes actual", expanded=False):
+        st.markdown(f"""
+        **Método estacional (cuando el SKU tiene historia 2025):**
+        ```
+        crecimiento = ventas_2026_mismos_días / ventas_2025_mismos_días
+        proyección_resto_mes = ventas_2025_resto_del_mes × crecimiento
+        venta_proy_total = ventas_reales_2026 + proyección_resto_mes
+        ```
+        El crecimiento se acota entre **0.2x y 5x** para evitar outliers
+        (SKUs con 1-2 ventas en 2025 generaban crecimientos absurdos).
+
+        **Fallback run-rate lineal (cuando NO hay venta 2025 mismo periodo):**
+        ```
+        proyección_resto_mes = (ventas_2026 / días_transcurridos) × días_restantes
+        ```
+
+        **Filtro de ventas**: solo se consideran las líneas de negocio:
+        `{', '.join(LINEAS_NEGOCIO_PLANIFICACION)}`. Distribución (B2B),
+        Corporativo, Marketing y otros quedan fuera del modelo.
+
+        **Tránsito**: se asigna al mes calendario de su `fecha_eta_bodega`
+        (fallback `fecha_eta_chile`). El tránsito del mes actual incluye
+        TODO lo que llega entre baseline y fin de mes (pasado y futuro).
+        """)
