@@ -1911,27 +1911,42 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         '6. CUÁNDO HAY QUE SUMAR (O REDUCIR) PERSONAL/BODEGA</div>',
         unsafe_allow_html=True,
     )
+    # ─── Calcular costo bodega real desde Sheet (MEGACENTRO CORDILLERA) ─────
+    df_mega = df_costo[
+        (df_costo["kpi"] == "GASTO") & (df_costo["escenario"] == "FCST")
+        & (df_costo["cuenta_analitica"].str.contains("MEGACENTRO CORDILLERA", case=False, na=False))
+        & (~df_costo["cuenta_analitica"].str.contains("GGCC", case=False, na=False))
+    ]
+    if not df_mega.empty:
+        mega_mensual = float(df_mega.groupby(["year", "month"])["valor"].sum().abs().mean())
+    else:
+        mega_mensual = 11000  # fallback ~$11M/mes
+
+    M2_BODEGA_ACTUAL = 1500
+    COSTO_M2_MENSUAL = (mega_mensual / M2_BODEGA_ACTUAL) * 1000  # CLP/m²/mes
+
     st.markdown(
-        '<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
-        'padding:12px 14px;border-radius:4px;margin:8px 0;font-size:13px;color:#1E293B;">'
-        '<b>📚 Lógica del modelo:</b><br>'
-        'Tus costos fijos (sueldos, arriendos) NO crecen automáticamente cuando '
-        'aumentan los pedidos. En cambio, tu equipo y bodega tienen una <b>capacidad máxima</b>. '
-        'Cuando los pedidos se acercan a esa capacidad, hay que <b>sumar gente o espacio</b>. '
-        'Cuando bajan mucho, hay <b>capacidad ociosa</b> que cuesta plata.<br><br>'
-        '<b>Asunciones del cálculo</b> (ajustables si me decís tus números reales):<br>'
-        '• 1 persona FTE bodega = $1.500.000/mes (sueldo + cargas)<br>'
-        '• 1 FTE puede procesar ~1.500 pedidos/mes (250 pedidos/semana, B2C estándar)<br>'
-        '• Bodega base = $5.000.000/mes (~500 m³, incluye arriendo + servicios)'
-        '</div>',
+        f'<div style="background:#FFF8E1;border-left:4px solid #F59E0B;'
+        f'padding:12px 14px;border-radius:4px;margin:8px 0;font-size:13px;color:#1E293B;">'
+        f'<b>📚 Lógica del modelo:</b><br>'
+        f'Tus costos fijos NO crecen automáticamente cuando aumentan los pedidos. '
+        f'Tu equipo y bodega tienen una <b>capacidad máxima</b>. Cuando los pedidos se '
+        f'acercan a esa capacidad, hay que <b>sumar gente o espacio</b>. '
+        f'Cuando bajan mucho, hay <b>capacidad ociosa</b> que cuesta plata.<br><br>'
+        f'<b>Asunciones calibradas con tus datos reales:</b><br>'
+        f'• 1 <b>operador FTE bodega</b> = <b>$1.000.000/mes</b> (sueldo bruto + cargas patronales típico CL)<br>'
+        f'• 1 operador puede procesar ~<b>1.500 pedidos/mes</b> (~250/semana, B2C estándar)<br>'
+        f'• Bodega actual <b>{M2_BODEGA_ACTUAL:,} m²</b> (Megacentro Cordillera)<br>'
+        f'• Costo Megacentro: <b>${mega_mensual:,.0f} M/mes</b> (real del Sheet)<br>'
+        f'  → <b>${COSTO_M2_MENSUAL:,.0f} CLP/m²/mes</b> (calculado: arriendo / m²)'
+        f'</div>'.replace(",", "."),
         unsafe_allow_html=True,
     )
 
-    # Asunciones (declarado como input mostrado, no oculto)
+    # Asunciones (calibradas con datos reales UnionX)
     PEDIDOS_POR_FTE = 1500
-    COSTO_FTE_MENSUAL = 1500       # M CLP por mes
-    M3_BODEGA_BASE = 500
-    COSTO_BODEGA_MENSUAL = 5000    # M CLP por mes
+    COSTO_FTE_MENSUAL = 1000       # M$ — operador bodega típico CL
+    M2_BODEGA_BASE = M2_BODEGA_ACTUAL  # 1500 m² actual
 
     # Estimación capacidad actual a partir de costos fijos
     # (asumimos que la mayor parte del fijo son sueldos)
@@ -2029,19 +2044,61 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
             f"Eventualmente podrías evaluar **achicar** si la baja es sostenida 2+ meses."
         )
 
+    # ─── 6.c SIMULADOR ESPACIO BODEGA ─────────────────────────────────
+    st.markdown(
+        "<h5 style='color:#1F4E79;margin:18px 0 6px 0;'>🏭 Simulador espacio bodega</h5>",
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        f"Tu bodega actual: **{M2_BODEGA_BASE:,} m²** a "
+        f"**${COSTO_M2_MENSUAL:,.0f} CLP/m²/mes**. "
+        f"Si necesitás más espacio (sumar pallets, picking adicional, recepción), "
+        f"calculá el costo extra:".replace(",", ".")
+    )
+    sB1, sB2 = st.columns([1, 2])
+    with sB1:
+        m2_extra = st.slider("m² adicionales a contratar", 0, 1500, 0, step=50,
+                                key="esc_m2_extra")
+        costo_m2_extra_mes = m2_extra * COSTO_M2_MENSUAL  # CLP
+        costo_m2_extra_anual = costo_m2_extra_mes * 12
+        st.metric("Costo extra mensual",
+                    f"${costo_m2_extra_mes/1e6:,.1f} MM/mes".replace(",", "."))
+        st.metric("Costo extra anual",
+                    f"${costo_m2_extra_anual/1e6:,.1f} MM/año".replace(",", "."))
+    with sB2:
+        if m2_extra > 0:
+            m2_total = M2_BODEGA_BASE + m2_extra
+            costo_total_mes = (mega_mensual * 1000) + costo_m2_extra_mes
+            st.markdown(
+                f"<div style='background:#F1F5F9;padding:14px;border-radius:8px;font-size:13px;'>"
+                f"<b>Si sumás {m2_extra:,} m²:</b><br>"
+                f"• Bodega total: <b>{m2_total:,} m²</b> ({m2_extra/M2_BODEGA_BASE*100:+.0f}% espacio)<br>"
+                f"• Arriendo total: <b>${costo_total_mes/1e6:,.1f} MM/mes</b> "
+                f"(antes ${mega_mensual:,.0f} M)<br>"
+                f"• Aumento de tu costo fijo total: ~<b>{costo_m2_extra_mes/1000/cf_periodo*100:+.1f}%</b> sobre el fijo actual<br><br>"
+                f"<b>¿Vale la pena?</b> Si los nuevos pedidos que vas a procesar generan "
+                f"más de <b>${costo_m2_extra_mes/1000/mc_pct_dec if mc_pct_dec > 0 else 0:,.0f} M/mes</b> de venta extra "
+                f"(MC {mc_pct:.0f}%), te conviene. Si no, vas a perder margen."
+                f"</div>".replace(",", "."),
+                unsafe_allow_html=True,
+            )
+
     # Tabla de umbrales
-    st.markdown("<h5 style='color:#1F4E79;margin:14px 0 6px 0;'>📏 Umbrales de escalamiento sugeridos</h5>",
+    st.markdown("<h5 style='color:#1F4E79;margin:18px 0 6px 0;'>📏 Umbrales de escalamiento sugeridos</h5>",
                   unsafe_allow_html=True)
     umbrales = [
-        ("Sumar 1 FTE bodega",
+        ("Sumar 1 operador FTE bodega",
           f"Cuando pedidos/mes > {int(capacidad_pedidos * 0.85):,}".replace(",", "."),
-          f"+${COSTO_FTE_MENSUAL/1000:.1f}M fijo/mes"),
-        ("Reducir 1 FTE bodega",
+          f"+${COSTO_FTE_MENSUAL:,} M fijo/mes (operador)".replace(",", ".")),
+        ("Reducir 1 operador FTE",
           f"Si pedidos/mes < {int((n_ftes_actual - 1) * PEDIDOS_POR_FTE * 0.7):,} sostenido 2+ meses".replace(",", "."),
-          f"−${COSTO_FTE_MENSUAL/1000:.1f}M/mes"),
-        ("Sumar bodega o m³ adicional",
+          f"−${COSTO_FTE_MENSUAL:,} M/mes".replace(",", ".")),
+        (f"Sumar 100 m² de bodega",
           f"Cuando ocupación >85% por 60 días seguidos",
-          f"+${COSTO_BODEGA_MENSUAL/1000:.1f}M/mes (~{M3_BODEGA_BASE} m³)"),
+          f"+${COSTO_M2_MENSUAL*100/1000:,.1f} M/mes ($/m² real Megacentro)".replace(",", ".")),
+        (f"Sumar 500 m² de bodega",
+          f"Cuando proyectás crecer >50% en 6 meses",
+          f"+${COSTO_M2_MENSUAL*500/1000:,.1f} M/mes".replace(",", ".")),
         ("Tercerizar overflow con 3PL puntual",
           f"En picos +50% sobre capacidad sin sumar fijo permanente",
           f"~${BENCH_CPP_RANGO_3PL}/pedido extra (variable)"),
