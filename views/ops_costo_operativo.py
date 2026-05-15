@@ -28,8 +28,14 @@ import streamlit as st
 
 
 PROJECT_ROOT = Path(__file__).parent.parent
-PARQUET = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
-RESUMEN = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo_resumen.json"
+# Fuente PRINCIPAL: P&L Control de Gestión Drive (data completa, oficial).
+# El Sheet OPERACIONES 2025-2026 era una vista incompleta; la fuente de
+# verdad es el Sheet del P&L que carga Andrés con TODAS las cuentas y meses.
+PARQUET = PROJECT_ROOT / "data" / "finanzas" / "control_gestion.parquet"
+RESUMEN = PROJECT_ROOT / "data" / "finanzas" / "control_gestion_resumen.json"
+# Fallback al parquet viejo (deprecado) si el nuevo no está disponible
+PARQUET_LEGACY = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
+RESUMEN_LEGACY = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo_resumen.json"
 VENTAS_HIST = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 
 MESES_ES = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO",
@@ -37,7 +43,9 @@ MESES_ES = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO",
             10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"}
 MESES_SHORT = {k: v[:3].title() for k, v in MESES_ES.items()}
 
-SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER", "UNIONX"]
+# Sub-áreas que se consideran "operativas" (filtro al cargar del P&L)
+SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER",
+                  "UNIONX", "UNION X"]
 SUB_AREA_LABEL = {
     "LOGISTICA": "Logística", "OPERACIONES": "Operaciones",
     "POSTVENTA": "Postventa", "GRUPO ETER": "Grupo Eter", "UNIONX": "UnionX",
@@ -127,16 +135,52 @@ def _objetivo_por_aov(aov_clp: float) -> dict:
 # ============================================================
 @st.cache_data(ttl=300)
 def _cargar() -> tuple[pd.DataFrame, dict]:
+    """Carga datos de costos del P&L Control de Gestión filtrado a sub-áreas
+    operativas. Si el parquet nuevo no existe, cae al legacy."""
     df = pd.DataFrame()
     res = {}
+
+    # 1. Intentar el parquet nuevo (P&L Control de Gestión)
     if PARQUET.exists():
-        df = pd.read_parquet(PARQUET)
-        df["fecha"] = pd.to_datetime(df["fecha"])
+        df_full = pd.read_parquet(PARQUET)
+        # Filtrar a sub-áreas operativas
+        df = df_full[df_full["sub_area"].isin(SUB_AREAS_PNL)].copy()
+        # Agregar (sumar) por (year, month, escenario, kpi, sub_area, area,
+        # tipo_costo, centro_costo, cuenta_analitica). El control_gestion
+        # tiene desglose por canal/LN — se suman porque la vista de
+        # Operaciones es agregada total operativa.
+        group_cols = [c for c in [
+            "year", "month", "mes_text", "escenario", "kpi",
+            "sub_area", "area", "tipo_costo",
+            "centro_costo", "cuenta_analitica",
+        ] if c in df.columns]
+        df = df.groupby(group_cols, as_index=False, dropna=False).agg(
+            valor=("valor", "sum"),
+        )
+        df["fecha"] = pd.to_datetime(
+            df["year"].astype(str) + "-" + df["month"].astype(str) + "-01",
+            errors="coerce",
+        )
+
     if RESUMEN.exists():
         try:
             res = json.load(open(RESUMEN, encoding="utf-8"))
+            res["fuente_real"] = "P&L Control de Gestión Drive (filtrado a "
+            res["fuente_real"] += "sub-áreas operativas)"
         except Exception:
             pass
+
+    # 2. Fallback al parquet legacy si el nuevo no existe
+    if df.empty and PARQUET_LEGACY.exists():
+        df = pd.read_parquet(PARQUET_LEGACY)
+        df["fecha"] = pd.to_datetime(df["fecha"])
+        if RESUMEN_LEGACY.exists():
+            try:
+                res = json.load(open(RESUMEN_LEGACY, encoding="utf-8"))
+                res["fuente_real"] = "Sheet OPERACIONES 2025-2026 (legacy, INCOMPLETO)"
+            except Exception:
+                pass
+
     return df, res
 
 
@@ -2154,9 +2198,10 @@ def render():
         st.warning("⏳ Sin datos. Correr `python extract_ops_costo_operativo.py`")
         return
 
+    fuente = res.get("fuente_real", "P&L Control de Gestión Drive")
     st.caption(
         f"🕒 Costos: {res.get('generado_en','')[:19]} · "
-        f"Costos: Sheet OPERACIONES (Drive) · Venta: módulo Ventas (parquet)"
+        f"Fuente: {fuente} · Venta: módulo Ventas (parquet)"
     )
     st.divider()
 
