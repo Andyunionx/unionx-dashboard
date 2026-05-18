@@ -492,7 +492,7 @@ operativa (definida por Andrés):
 
             from views._ops_pedidos_helper import (
                 cargar_ventas_para_pedidos, pedidos_por_periodo,
-                detalle_canales_por_segmento,
+                kpis_volumen_por_periodo, detalle_canales_por_segmento,
             )
             import plotly.graph_objects as go
             from datetime import datetime as _dt_pb
@@ -501,14 +501,29 @@ operativa (definida por Andrés):
             if df_v.empty:
                 st.info("Sin datos de ventas históricas. Correr `python actualizar_raw_historico.py`.")
             else:
+                # ─── Selector de MÉTRICA (aplica a los 3 sub-tabs) ──────
+                METRICAS = {
+                    "📦 Pedidos": ("pedidos", "Pedidos únicos"),
+                    "🔢 Unidades": ("unidades", "Unidades despachadas"),
+                    "📋 Líneas": ("lineas", "SKU-líneas pickeadas"),
+                }
+                metrica_label = st.radio(
+                    "Métrica a visualizar:",
+                    list(METRICAS.keys()),
+                    horizontal=True,
+                    key="kpi_b2b_metrica",
+                )
+                metrica_key, metrica_subtitulo = METRICAS[metrica_label]
+
                 sub_tabs_ped = st.tabs([
                     "🗓️ Mes (últimos 12)",
                     "📅 Semana (últimas 12)",
                     "📆 Día (últimos 30)",
+                    "📊 Tabla combinada (3 métricas)",
                     "🔍 Auditoría regla",
                 ])
 
-                def _render_pedidos(df_pivot, titulo_periodo):
+                def _render_pedidos(df_pivot, titulo_periodo, subtitulo_metrica):
                     if df_pivot.empty:
                         st.info("Sin datos.")
                         return
@@ -536,7 +551,7 @@ operativa (definida por Andrés):
                     fig.update_layout(
                         barmode="stack", height=320,
                         margin=dict(t=20, b=40, l=60, r=20),
-                        yaxis=dict(title="Pedidos únicos", tickformat=",.0f"),
+                        yaxis=dict(title=subtitulo_metrica, tickformat=",.0f"),
                         xaxis=dict(title=titulo_periodo),
                         paper_bgcolor="rgba(0,0,0,0)",
                         plot_bgcolor="rgba(0,0,0,0)",
@@ -561,17 +576,83 @@ operativa (definida por Andrés):
 
                 with sub_tabs_ped[0]:
                     _render_pedidos(
-                        pedidos_por_periodo(df_v, "mes", 12), "Mes"
+                        pedidos_por_periodo(df_v, "mes", 12, metrica_key),
+                        "Mes", metrica_subtitulo,
                     )
                 with sub_tabs_ped[1]:
                     _render_pedidos(
-                        pedidos_por_periodo(df_v, "semana", 12), "Semana"
+                        pedidos_por_periodo(df_v, "semana", 12, metrica_key),
+                        "Semana", metrica_subtitulo,
                     )
                 with sub_tabs_ped[2]:
                     _render_pedidos(
-                        pedidos_por_periodo(df_v, "dia", 30), "Día"
+                        pedidos_por_periodo(df_v, "dia", 30, metrica_key),
+                        "Día", metrica_subtitulo,
                     )
+
                 with sub_tabs_ped[3]:
+                    st.markdown(
+                        "**Tabla combinada:** Pedidos + Unidades + Líneas "
+                        "por período, separado B2B/B2C. Útil para calcular "
+                        "KPIs derivados (unid/pedido, líneas/pedido, etc.)."
+                    )
+                    granul = st.radio(
+                        "Granularidad",
+                        ["Mes (últimos 12)", "Semana (últimas 12)", "Día (últimos 30)"],
+                        horizontal=True, key="combo_granul",
+                    )
+                    if "Mes" in granul:
+                        df_combo = kpis_volumen_por_periodo(df_v, "mes", 12)
+                    elif "Semana" in granul:
+                        df_combo = kpis_volumen_por_periodo(df_v, "semana", 12)
+                    else:
+                        df_combo = kpis_volumen_por_periodo(df_v, "dia", 30)
+
+                    if df_combo.empty:
+                        st.info("Sin datos.")
+                    else:
+                        # KPIs derivados
+                        df_kpis = df_combo.copy()
+                        df_kpis["Unid/Pedido B2B"] = (
+                            df_kpis["Unidades B2B"] / df_kpis["Pedidos B2B"]
+                        ).replace([float("inf"), -float("inf")], 0).fillna(0).round(2)
+                        df_kpis["Unid/Pedido B2C"] = (
+                            df_kpis["Unidades B2C"] / df_kpis["Pedidos B2C"]
+                        ).replace([float("inf"), -float("inf")], 0).fillna(0).round(2)
+                        df_kpis["Líneas/Pedido B2B"] = (
+                            df_kpis["Líneas B2B"] / df_kpis["Pedidos B2B"]
+                        ).replace([float("inf"), -float("inf")], 0).fillna(0).round(2)
+                        df_kpis["Líneas/Pedido B2C"] = (
+                            df_kpis["Líneas B2C"] / df_kpis["Pedidos B2C"]
+                        ).replace([float("inf"), -float("inf")], 0).fillna(0).round(2)
+
+                        st.dataframe(
+                            df_kpis.style.format({
+                                "Pedidos B2B": "{:,.0f}",
+                                "Pedidos B2C": "{:,.0f}",
+                                "Pedidos Total": "{:,.0f}",
+                                "Unidades B2B": "{:,.0f}",
+                                "Unidades B2C": "{:,.0f}",
+                                "Unidades Total": "{:,.0f}",
+                                "Líneas B2B": "{:,.0f}",
+                                "Líneas B2C": "{:,.0f}",
+                                "Líneas Total": "{:,.0f}",
+                                "% B2B (pedidos)": "{:.1f}%",
+                                "Unid/Pedido B2B": "{:.2f}",
+                                "Unid/Pedido B2C": "{:.2f}",
+                                "Líneas/Pedido B2B": "{:.2f}",
+                                "Líneas/Pedido B2C": "{:.2f}",
+                            }),
+                            use_container_width=True,
+                            height=480,
+                        )
+
+                        st.caption(
+                            "**Cómo se calcula:** Pedidos = `nunique(pedido)` · "
+                            "Unidades = `sum(cantidad)` solo movimientos Venta · "
+                            "Líneas = `nunique(pedido + sku)` (SKU-líneas pickeadas)."
+                        )
+                with sub_tabs_ped[4]:
                     st.markdown(
                         "**Auditoría:** detalle por (canal × bodega × segmento) "
                         "para validar la clasificación."

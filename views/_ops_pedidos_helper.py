@@ -77,11 +77,18 @@ def clasificar_segmento(canal, tipo_negocio, bodega=None) -> str:
 
 @st.cache_data(ttl=600, show_spinner=False)
 def cargar_ventas_para_pedidos() -> pd.DataFrame:
-    """Carga ventas históricas con cols mínimas + clasificación B2B/B2C."""
+    """Carga ventas históricas con cols mínimas + clasificación B2B/B2C.
+
+    Incluye `sku`, `cantidad` y `tipo_movimiento` para poder calcular:
+      - pedidos (nunique de `pedido`)
+      - unidades (suma de `cantidad`, solo movimientos de venta)
+      - líneas (nunique de `pedido + sku` = SKU-líneas pickeadas)
+    """
     if not VENTAS_PARQUET.exists():
         return pd.DataFrame()
 
-    cols = ["fecha_venta", "pedido", "canal", "tipo_negocio", "bodega"]
+    cols = ["fecha_venta", "pedido", "canal", "tipo_negocio", "bodega",
+            "sku", "cantidad", "tipo_movimiento"]
     df = pd.read_parquet(VENTAS_PARQUET, columns=cols)
     df["fecha_venta"] = pd.to_datetime(df["fecha_venta"], errors="coerce")
     df = df.dropna(subset=["fecha_venta", "pedido"]).copy()
@@ -101,28 +108,54 @@ def cargar_ventas_para_pedidos() -> pd.DataFrame:
     return df
 
 
+def _periodo_col(df: pd.DataFrame, granularidad: str) -> pd.Series:
+    """Devuelve columna `periodo` según granularidad."""
+    if granularidad == "mes":
+        return df["fecha_venta"].dt.to_period("M").astype(str)
+    if granularidad == "semana":
+        return df["fecha_venta"].dt.to_period("W-SUN").astype(str)
+    if granularidad == "dia":
+        return df["fecha_venta"].dt.date.astype(str)
+    raise ValueError(f"granularidad inválida: {granularidad}")
+
+
 def pedidos_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
-                         n_periodos: int = 12) -> pd.DataFrame:
+                         n_periodos: int = 12,
+                         metrica: str = "pedidos") -> pd.DataFrame:
     """Devuelve DataFrame pivot: periodo × {B2B, B2C, Total, % B2B}.
 
     granularidad: 'mes' | 'semana' | 'dia'
     n_periodos: cuántos períodos mostrar (los últimos N)
+    metrica: 'pedidos' | 'unidades' | 'lineas'
+      - 'pedidos': # pedidos únicos (nunique de `pedido`)
+      - 'unidades': suma de `cantidad` (solo `tipo_movimiento == Venta`,
+        en valor absoluto — devoluciones se cuentan pero no descuentan)
+      - 'lineas': # de combinaciones únicas (pedido, sku) = líneas pickeadas
     """
     if df.empty:
         return pd.DataFrame()
 
     d = df.copy()
-    if granularidad == "mes":
-        d["periodo"] = d["fecha_venta"].dt.to_period("M").astype(str)
-    elif granularidad == "semana":
-        d["periodo"] = d["fecha_venta"].dt.to_period("W-SUN").astype(str)
-    elif granularidad == "dia":
-        d["periodo"] = d["fecha_venta"].dt.date.astype(str)
-    else:
-        raise ValueError(f"granularidad inválida: {granularidad}")
+    d["periodo"] = _periodo_col(d, granularidad)
 
-    agg = d.groupby(["periodo", "segmento"])["pedido"].nunique().reset_index(name="n_pedidos")
-    pivot = agg.pivot(index="periodo", columns="segmento", values="n_pedidos").fillna(0)
+    if metrica == "pedidos":
+        agg = d.groupby(["periodo", "segmento"])["pedido"].nunique()
+    elif metrica == "unidades":
+        # Solo movimientos de Venta, valor absoluto (devoluciones cuentan
+        # como movimiento operativo aunque inviertan signo)
+        d_ven = d[d["tipo_movimiento"].fillna("").str.lower() == "venta"].copy()
+        if d_ven.empty:
+            d_ven = d.copy()  # fallback si no hay tipo_movimiento
+        d_ven["cantidad_abs"] = d_ven["cantidad"].abs()
+        agg = d_ven.groupby(["periodo", "segmento"])["cantidad_abs"].sum()
+    elif metrica == "lineas":
+        d["lin_key"] = d["pedido"].astype(str) + "||" + d["sku"].astype(str)
+        agg = d.groupby(["periodo", "segmento"])["lin_key"].nunique()
+    else:
+        raise ValueError(f"metrica inválida: {metrica}")
+
+    agg = agg.reset_index(name="valor")
+    pivot = agg.pivot(index="periodo", columns="segmento", values="valor").fillna(0)
     if "B2B" not in pivot.columns:
         pivot["B2B"] = 0
     if "B2C" not in pivot.columns:
@@ -132,6 +165,34 @@ def pedidos_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
     pivot = pivot[["B2B", "B2C", "Total", "% B2B"]]
     pivot = pivot.sort_index()
     return pivot.tail(n_periodos)
+
+
+def kpis_volumen_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
+                                n_periodos: int = 12) -> pd.DataFrame:
+    """Devuelve DataFrame combinado con TODAS las métricas por período.
+
+    Columnas: B2B_Ped, B2C_Ped, Total_Ped, B2B_Un, B2C_Un, Total_Un,
+              B2B_Lin, B2C_Lin, Total_Lin, % B2B (sobre pedidos)
+    """
+    if df.empty:
+        return pd.DataFrame()
+
+    p_ped = pedidos_por_periodo(df, granularidad, n_periodos, "pedidos")
+    p_un = pedidos_por_periodo(df, granularidad, n_periodos, "unidades")
+    p_lin = pedidos_por_periodo(df, granularidad, n_periodos, "lineas")
+
+    out = pd.DataFrame(index=p_ped.index)
+    out["Pedidos B2B"] = p_ped["B2B"]
+    out["Pedidos B2C"] = p_ped["B2C"]
+    out["Pedidos Total"] = p_ped["Total"]
+    out["Unidades B2B"] = p_un["B2B"]
+    out["Unidades B2C"] = p_un["B2C"]
+    out["Unidades Total"] = p_un["Total"]
+    out["Líneas B2B"] = p_lin["B2B"]
+    out["Líneas B2C"] = p_lin["B2C"]
+    out["Líneas Total"] = p_lin["Total"]
+    out["% B2B (pedidos)"] = p_ped["% B2B"]
+    return out
 
 
 def detalle_canales_por_segmento(df: pd.DataFrame, year: int = None,
