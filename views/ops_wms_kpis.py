@@ -454,52 +454,61 @@ def render():
             st.markdown("---")
             st.markdown("### 📊 Total Pedidos por período (B2B vs B2C)")
 
-            with st.expander("ℹ️ Regla de clasificación B2B/B2C", expanded=False):
+            with st.expander("ℹ️ Regla de clasificación B2B/B2C + fuente de datos", expanded=False):
                 st.markdown("""
-**No hay flag B2B/B2C directo en las ventas históricas.** Aplicamos esta regla
-operativa (definida por Andrés):
+#### 📦 Fuente de datos
+
+**Principal:** módulo de inventario de Odoo (`stock.picking` + `stock.move`).
+Mide los movimientos REALES de despacho (date_done), no las ventas
+facturadas. Cache 12h.
+
+**Fallback:** parquet `ventas_historico` (snapshot de ventas extraídas).
+Se usa solo si Odoo no responde. Los tiempos pueden diferir.
 
 #### 🅱️ B2B si se cumple CUALQUIERA de estas condiciones:
 
-**1. La `bodega` es una bodega de fulfillment externo** (olas internas
-   desde CA1/Carrascal a los retailers):
-   - `Bodega Fulfillment Mercado Libre`
-   - `Bodega Fulfillment Falabella`
-   - `Bodega Fulfillment Paris`
-   - `Bodega Fulfillment Ripley`
-   - `Bodega Fulfillment Walmart`
+**Para fuente Odoo inventario:**
+1. El `picking_type` contiene palabras como `FULFILLMENT`, `FULL`, `B2B`,
+   `RETAIL`, `TIENDA` (ej: "FUL/MERCADO LIBRE/Salida").
+2. El `partner` contiene un retailer conocido: Falabella, Walmart, Paris,
+   Cencosud, Ripley, Dimarsa, El Volcán, UnionX B2B, Mercado Libre.
 
-**2. El `canal` es uno de los retailers / B2B directos:**
-   - `UnionX B2B`
-   - `Falabella tienda` (Falabella Retail)
-   - `Paris tienda` (Cencosud Retail)
-   - `Walmart tienda` (Walmart Retail)
-   - `Ripley tienda`
-   - `El Volcan`
-   - `Dimarsa`
-
-**3. El `canal` contiene `"B2B"`** (catch-all para variantes futuras).
-
-**4. El `tipo_negocio`** es `Distribución` o `Corporativo`.
+**Para fuente parquet ventas (fallback):**
+1. La `bodega` es de fulfillment externo (Bodega Fulfillment ML/Falabella/etc.)
+2. El `canal` es un retailer (UnionX B2B, Falabella tienda, Paris tienda, etc.)
+3. El `canal` contiene `"B2B"`.
+4. El `tipo_negocio` es `Distribución` o `Corporativo`.
 
 #### 🅲️ B2C = todo lo demás
-(Marketplace consumer final, Páginas propias web, Fidelización, Marketing)
-
-> **Nota:** Las ventas con canal=*Mercado Libre* desde `Bodega Fulfillment ML`
-> cuentan como B2B porque son **olas de envío interno al fulfillment** de ML,
-> no ventas directas a consumidor final.
+(Consumidor final del marketplace, web, etc.)
                 """)
 
             from views._ops_pedidos_helper import (
-                cargar_ventas_para_pedidos, pedidos_por_periodo,
+                cargar_volumen_unificado, pedidos_por_periodo,
                 kpis_volumen_por_periodo, detalle_canales_por_segmento,
             )
             import plotly.graph_objects as go
             from datetime import datetime as _dt_pb
 
-            df_v = cargar_ventas_para_pedidos()
+            df_v, _fuente = cargar_volumen_unificado(meses_atras=12)
+
+            # Banner de fuente
+            if _fuente == "odoo_inventario":
+                st.success(
+                    "📦 **Fuente: Odoo inventario** (`stock.picking` + `stock.move`) — "
+                    "datos reales del módulo de despacho, no de ventas. "
+                    "Cache 12h, refresh manual con el botón 'Forzar refresh' arriba."
+                )
+            elif _fuente == "parquet_ventas":
+                st.warning(
+                    "⚠️ **Fuente: parquet ventas históricas** (fallback). "
+                    "Odoo inventario no respondió. Los tiempos pueden diferir de "
+                    "los movimientos de inventario reales."
+                )
+
             if df_v.empty:
-                st.info("Sin datos de ventas históricas. Correr `python actualizar_raw_historico.py`.")
+                st.info("Sin datos. Verifica conexión Odoo o corre "
+                        "`python actualizar_raw_historico.py` como fallback.")
             else:
                 # ─── Selector de MÉTRICA (aplica a los 3 sub-tabs) ──────
                 METRICAS = {
@@ -653,6 +662,8 @@ operativa (definida por Andrés):
                             "Líneas = `nunique(pedido + sku)` (SKU-líneas pickeadas)."
                         )
                 with sub_tabs_ped[4]:
+                    es_odoo_audit = "picking_id" in df_v.columns
+                    fecha_col_audit = "fecha_done" if es_odoo_audit else "fecha_venta"
                     st.markdown(
                         "**Auditoría:** detalle por (canal × bodega × segmento) "
                         "para validar la clasificación."
@@ -661,13 +672,13 @@ operativa (definida por Andrés):
                     cau1, cau2 = st.columns(2)
                     with cau1:
                         y_au = st.selectbox(
-                            "Año", sorted(df_v["fecha_venta"].dt.year.unique(),
+                            "Año", sorted(df_v[fecha_col_audit].dt.year.unique(),
                                             reverse=True),
                             key="audit_b2b_year",
                         )
                     with cau2:
                         meses_disp_au = sorted(
-                            df_v[df_v["fecha_venta"].dt.year == y_au]["fecha_venta"]
+                            df_v[df_v[fecha_col_audit].dt.year == y_au][fecha_col_audit]
                                 .dt.month.unique()
                         )
                         m_au = st.selectbox(
@@ -681,13 +692,14 @@ operativa (definida por Andrés):
                     else:
                         b2b_filas = det[det["segmento"] == "B2B"]
                         b2c_filas = det[det["segmento"] == "B2C"]
+                        # Columnas dinámicas según fuente
+                        col1_name = "Picking Type" if es_odoo_audit else "Canal"
+                        col2_name = "Partner" if es_odoo_audit else "Bodega"
                         c1, c2 = st.columns(2)
                         with c1:
                             st.markdown(f"##### 🅱️ B2B — {int(b2b_filas['n_pedidos'].sum()):,} pedidos".replace(",", "."))
                             st.dataframe(
-                                b2b_filas[["canal", "bodega", "n_pedidos"]].rename(columns={
-                                    "canal": "Canal",
-                                    "bodega": "Bodega",
+                                b2b_filas[[col1_name, col2_name, "n_pedidos"]].rename(columns={
                                     "n_pedidos": "# Pedidos",
                                 }),
                                 use_container_width=True, hide_index=True,
@@ -696,16 +708,14 @@ operativa (definida por Andrés):
                         with c2:
                             st.markdown(f"##### 🅲️ B2C — {int(b2c_filas['n_pedidos'].sum()):,} pedidos".replace(",", "."))
                             st.dataframe(
-                                b2c_filas[["canal", "bodega", "n_pedidos"]].rename(columns={
-                                    "canal": "Canal",
-                                    "bodega": "Bodega",
+                                b2c_filas[[col1_name, col2_name, "n_pedidos"]].rename(columns={
                                     "n_pedidos": "# Pedidos",
                                 }),
                                 use_container_width=True, hide_index=True,
                                 height=400,
                             )
                         st.caption(
-                            "Si ves un canal/bodega clasificado incorrectamente, "
+                            f"Si ves un {col1_name.lower()}/{col2_name.lower()} mal clasificado, "
                             "decime y ajustamos la regla en `_ops_pedidos_helper.py`."
                         )
 

@@ -2,23 +2,26 @@
 Helper para KPI "Total Pedidos por período (B2B vs B2C)" en la app de
 Operaciones (tab Resumen de KPIs WMS).
 
-Lee `data/historico/ventas_historico.parquet` y agrega pedidos únicos
-por (mes / semana / día) separando B2B y B2C.
+FUENTE PRINCIPAL: módulo de inventario de Odoo (stock.picking + stock.move).
+FUENTE FALLBACK: data/historico/ventas_historico.parquet (snapshot ventas).
 
-REGLA B2B / B2C (definida por Andrés, no hay flag directo en el parquet):
+DIFERENCIA TIEMPOS:
+  - Ventas (parquet): momento en que se registra/factura la venta
+  - Inventario (Odoo): momento real del picking/despacho (date_done)
+  Para KPIs operativos de productividad, lo correcto es Odoo.
 
+REGLA B2B / B2C aplicada a pickings de Odoo:
   B2B si:
-    1. bodega ∈ {Bodega Fulfillment ML / Falabella / Paris / Ripley / Walmart}
-       → movimientos internos a bodegas fulfillment externas
-    2. canal ∈ {UnionX B2B, El Volcan, Dimarsa, Falabella tienda,
-                Paris tienda, Walmart tienda, Ripley tienda}
-       → venta directa a retailers (Falabella Retail, Cencosud Retail,
-         Walmart Retail) + B2B explícito
-    3. canal contiene 'B2B' (catch-all para variantes futuras)
-    4. tipo_negocio ∈ {Distribución, Corporativo}
-
-  B2C = todo lo demás
+    1. picking_type tiene 'Fulfillment' en nombre
+       (ej: "FUL/MERCADO LIBRE/Salida") → traslado a bodega fulfillment
+    2. partner_id.name contiene uno de los retailers conocidos:
+       Falabella, Walmart, Paris, Ripley, Dimarsa, El Volcán, Cencosud,
+       UnionX B2B
+    3. partner_id es de tipo company (no person)
+       → criterio amplio que captura mayoristas / corporativos
+  B2C = todo lo demás (consumidor final de marketplace o web)
 """
+from datetime import datetime, date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -30,8 +33,9 @@ VENTAS_PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet
 
 
 # ============================================================
-# REGLAS B2B (case-insensitive — se normalizan a UPPER al comparar)
+# REGLAS B2B
 # ============================================================
+# Para fuente PARQUET (campos: canal, tipo_negocio, bodega)
 BODEGAS_FULFILLMENT_B2B = {
     "BODEGA FULFILLMENT MERCADO LIBRE",
     "BODEGA FULFILLMENT FALABELLA",
@@ -39,50 +43,168 @@ BODEGAS_FULFILLMENT_B2B = {
     "BODEGA FULFILLMENT RIPLEY",
     "BODEGA FULFILLMENT WALMART",
 }
-
 CANALES_B2B_EXPLICITOS = {
-    "UNIONX B2B",
-    "EL VOLCAN",
-    "EL VOLCÁN",
-    "DIMARSA",
-    "FALABELLA TIENDA",   # Falabella Retail
-    "PARIS TIENDA",       # Paris/Cencosud Retail
-    "WALMART TIENDA",     # Walmart Retail
-    "RIPLEY TIENDA",
+    "UNIONX B2B", "EL VOLCAN", "EL VOLCÁN", "DIMARSA",
+    "FALABELLA TIENDA", "PARIS TIENDA", "WALMART TIENDA", "RIPLEY TIENDA",
 }
-
 B2B_TIPOS_NEGOCIO = {"distribución", "distribucion", "corporativo"}
 
+# Para fuente ODOO (campos: picking_type_name, partner_name)
+KEYWORDS_PICKING_TYPE_B2B = [
+    "FULFILLMENT", "FULL", "B2B", "RETAIL", "TIENDA",
+]
+KEYWORDS_PARTNER_B2B = [
+    "FALABELLA", "WALMART", "PARIS", "CENCOSUD", "RIPLEY",
+    "DIMARSA", "EL VOLCAN", "EL VOLCÁN",
+    "UNIONX B2B", "MERCADO LIBRE", "MELI",
+]
 
+
+# ============================================================
+# CLASIFICADORES
+# ============================================================
 def clasificar_segmento(canal, tipo_negocio, bodega=None) -> str:
-    """Devuelve 'B2B' o 'B2C' según la regla operativa de Andrés."""
+    """Clasificación B2B/B2C para fuente PARQUET (legacy fallback)."""
     bodega_u = str(bodega or "").upper().strip()
     canal_u = str(canal or "").upper().strip()
     tipo_l = str(tipo_negocio or "").lower().strip()
 
-    # Regla 1: bodega de fulfillment externo → B2B
     if bodega_u in BODEGAS_FULFILLMENT_B2B:
         return "B2B"
-    # Regla 2: canal B2B explícito
     if canal_u in CANALES_B2B_EXPLICITOS:
         return "B2B"
-    # Regla 3: canal contiene 'B2B'
     if "B2B" in canal_u:
         return "B2B"
-    # Regla 4: tipo_negocio mayorista
     if tipo_l in B2B_TIPOS_NEGOCIO:
         return "B2B"
     return "B2C"
 
 
+def clasificar_segmento_picking(picking_type_name, partner_name) -> str:
+    """Clasificación B2B/B2C para fuente ODOO."""
+    pt_u = str(picking_type_name or "").upper().strip()
+    pn_u = str(partner_name or "").upper().strip()
+
+    for kw in KEYWORDS_PICKING_TYPE_B2B:
+        if kw in pt_u:
+            return "B2B"
+    for kw in KEYWORDS_PARTNER_B2B:
+        if kw in pn_u:
+            return "B2B"
+    return "B2C"
+
+
+# ============================================================
+# FUENTE 1: ODOO INVENTARIO (PRINCIPAL)
+# ============================================================
+@st.cache_data(ttl=43200, show_spinner="📦 Consultando Odoo inventario...")
+def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
+    """Carga pickings DONE de los últimos N meses desde Odoo inventario.
+
+    Retorna DataFrame con cols:
+      [picking_id, fecha_done, picking_type_name, partner_name, segmento,
+       n_unidades, n_lineas]
+
+    Usa stock.picking (cabecera) + stock.move (líneas).
+    Cache 12h para no martillar Odoo.
+    """
+    from views._ops_odoo_helper import get_ops_odoo_client
+
+    odoo = get_ops_odoo_client()
+    if odoo is None:
+        return pd.DataFrame()
+
+    try:
+        # Rango de fechas
+        desde = (datetime.now().replace(day=1)
+                  - timedelta(days=meses_atras * 31)).strftime("%Y-%m-%d")
+        hasta = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        # Pickings DONE en rango — outgoing (al cliente) + internal (a otra bodega)
+        pickings = odoo.search_read(
+            "stock.picking",
+            [("state", "=", "done"),
+             ("date_done", ">=", desde),
+             ("date_done", "<", hasta),
+             ("picking_type_code", "in", ["outgoing", "internal"])],
+            ["id", "name", "date_done", "picking_type_id", "partner_id",
+             "picking_type_code"],
+            limit=200000,
+        )
+        if not pickings:
+            return pd.DataFrame()
+
+        df_p = pd.DataFrame(pickings)
+        df_p["picking_id"] = df_p["id"]
+        df_p["fecha_done"] = pd.to_datetime(df_p["date_done"], errors="coerce")
+        df_p["picking_type_name"] = df_p["picking_type_id"].apply(
+            lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
+        df_p["partner_name"] = df_p["partner_id"].apply(
+            lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
+
+        # Clasificación B2B/B2C
+        df_p["segmento"] = df_p.apply(
+            lambda r: clasificar_segmento_picking(
+                r["picking_type_name"], r["partner_name"]),
+            axis=1,
+        )
+
+        # Moves agregados por picking (líneas + unidades)
+        # Estrategia: read_group para evitar traer 2M de moves individuales
+        pids = df_p["picking_id"].tolist()
+
+        # Chunked read_group si hay muchos pickings
+        chunk_size = 1000
+        moves_agg = []
+        for i in range(0, len(pids), chunk_size):
+            chunk = pids[i:i + chunk_size]
+            try:
+                # read_group: agrupa por picking_id y devuelve count + sum
+                rg = odoo._execute_with_retry(
+                    "read_group",
+                    "stock.move",
+                    [("picking_id", "in", chunk), ("state", "=", "done")],
+                    {"fields": ["picking_id", "quantity_done:sum"],
+                     "groupby": ["picking_id"],
+                     "lazy": False},
+                )
+                for r in rg:
+                    pid_raw = r.get("picking_id")
+                    pid_val = pid_raw[0] if isinstance(pid_raw, list) else pid_raw
+                    moves_agg.append({
+                        "picking_id": pid_val,
+                        "n_lineas": r.get("__count", r.get("picking_id_count", 0)),
+                        "n_unidades": r.get("quantity_done", 0) or 0,
+                    })
+            except Exception:
+                # Fallback: count manual (más lento)
+                continue
+
+        df_m = pd.DataFrame(moves_agg) if moves_agg else pd.DataFrame(
+            columns=["picking_id", "n_lineas", "n_unidades"])
+
+        # Merge
+        df = df_p.merge(df_m, on="picking_id", how="left")
+        df["n_lineas"] = df["n_lineas"].fillna(0).astype(int)
+        df["n_unidades"] = df["n_unidades"].fillna(0)
+
+        return df[["picking_id", "fecha_done", "picking_type_name",
+                   "partner_name", "segmento", "n_unidades", "n_lineas"]]
+
+    except Exception as e:
+        st.warning(f"⚠️ Error consultando Odoo: {type(e).__name__}: {str(e)[:120]}")
+        return pd.DataFrame()
+
+
+# ============================================================
+# FUENTE 2: PARQUET (FALLBACK / legacy ventas)
+# ============================================================
 @st.cache_data(ttl=600, show_spinner=False)
 def cargar_ventas_para_pedidos() -> pd.DataFrame:
     """Carga ventas históricas con cols mínimas + clasificación B2B/B2C.
 
-    Incluye `sku`, `cantidad` y `tipo_movimiento` para poder calcular:
-      - pedidos (nunique de `pedido`)
-      - unidades (suma de `cantidad`, solo movimientos de venta)
-      - líneas (nunique de `pedido + sku` = SKU-líneas pickeadas)
+    [DEPRECADO — usar cargar_volumen_inventario_odoo()]
+    Mantengo como fallback si Odoo no responde.
     """
     if not VENTAS_PARQUET.exists():
         return pd.DataFrame()
@@ -93,7 +215,6 @@ def cargar_ventas_para_pedidos() -> pd.DataFrame:
     df["fecha_venta"] = pd.to_datetime(df["fecha_venta"], errors="coerce")
     df = df.dropna(subset=["fecha_venta", "pedido"]).copy()
 
-    # Vectorizado (más rápido que apply para 400K filas)
     bodega_u = df["bodega"].fillna("").astype(str).str.upper().str.strip()
     canal_u = df["canal"].fillna("").astype(str).str.upper().str.strip()
     tipo_l = df["tipo_negocio"].fillna("").astype(str).str.lower().str.strip()
@@ -108,14 +229,17 @@ def cargar_ventas_para_pedidos() -> pd.DataFrame:
     return df
 
 
-def _periodo_col(df: pd.DataFrame, granularidad: str) -> pd.Series:
-    """Devuelve columna `periodo` según granularidad."""
+# ============================================================
+# AGREGADORES POR PERÍODO (unificados para ambas fuentes)
+# ============================================================
+def _periodo_col(serie_fecha: pd.Series, granularidad: str) -> pd.Series:
+    """Convierte una serie de fechas en un string de período."""
     if granularidad == "mes":
-        return df["fecha_venta"].dt.to_period("M").astype(str)
+        return serie_fecha.dt.to_period("M").astype(str)
     if granularidad == "semana":
-        return df["fecha_venta"].dt.to_period("W-SUN").astype(str)
+        return serie_fecha.dt.to_period("W-SUN").astype(str)
     if granularidad == "dia":
-        return df["fecha_venta"].dt.date.astype(str)
+        return serie_fecha.dt.date.astype(str)
     raise ValueError(f"granularidad inválida: {granularidad}")
 
 
@@ -124,33 +248,43 @@ def pedidos_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
                          metrica: str = "pedidos") -> pd.DataFrame:
     """Devuelve DataFrame pivot: periodo × {B2B, B2C, Total, % B2B}.
 
-    granularidad: 'mes' | 'semana' | 'dia'
-    n_periodos: cuántos períodos mostrar (los últimos N)
+    Soporta ambas fuentes — detecta automáticamente:
+      - Odoo: cols [picking_id, fecha_done, n_unidades, n_lineas, segmento]
+      - Parquet: cols [pedido, fecha_venta, sku, cantidad, segmento]
+
     metrica: 'pedidos' | 'unidades' | 'lineas'
-      - 'pedidos': # pedidos únicos (nunique de `pedido`)
-      - 'unidades': suma de `cantidad` (solo `tipo_movimiento == Venta`,
-        en valor absoluto — devoluciones se cuentan pero no descuentan)
-      - 'lineas': # de combinaciones únicas (pedido, sku) = líneas pickeadas
     """
     if df.empty:
         return pd.DataFrame()
 
+    es_odoo = "picking_id" in df.columns
+
     d = df.copy()
-    d["periodo"] = _periodo_col(d, granularidad)
+    if es_odoo:
+        d["periodo"] = _periodo_col(d["fecha_done"], granularidad)
+    else:
+        d["periodo"] = _periodo_col(d["fecha_venta"], granularidad)
 
     if metrica == "pedidos":
-        agg = d.groupby(["periodo", "segmento"])["pedido"].nunique()
+        if es_odoo:
+            agg = d.groupby(["periodo", "segmento"])["picking_id"].nunique()
+        else:
+            agg = d.groupby(["periodo", "segmento"])["pedido"].nunique()
     elif metrica == "unidades":
-        # Solo movimientos de Venta, valor absoluto (devoluciones cuentan
-        # como movimiento operativo aunque inviertan signo)
-        d_ven = d[d["tipo_movimiento"].fillna("").str.lower() == "venta"].copy()
-        if d_ven.empty:
-            d_ven = d.copy()  # fallback si no hay tipo_movimiento
-        d_ven["cantidad_abs"] = d_ven["cantidad"].abs()
-        agg = d_ven.groupby(["periodo", "segmento"])["cantidad_abs"].sum()
+        if es_odoo:
+            agg = d.groupby(["periodo", "segmento"])["n_unidades"].sum()
+        else:
+            d_ven = d[d["tipo_movimiento"].fillna("").str.lower() == "venta"].copy()
+            if d_ven.empty:
+                d_ven = d.copy()
+            d_ven["cantidad_abs"] = d_ven["cantidad"].abs()
+            agg = d_ven.groupby(["periodo", "segmento"])["cantidad_abs"].sum()
     elif metrica == "lineas":
-        d["lin_key"] = d["pedido"].astype(str) + "||" + d["sku"].astype(str)
-        agg = d.groupby(["periodo", "segmento"])["lin_key"].nunique()
+        if es_odoo:
+            agg = d.groupby(["periodo", "segmento"])["n_lineas"].sum()
+        else:
+            d["lin_key"] = d["pedido"].astype(str) + "||" + d["sku"].astype(str)
+            agg = d.groupby(["periodo", "segmento"])["lin_key"].nunique()
     else:
         raise ValueError(f"metrica inválida: {metrica}")
 
@@ -169,11 +303,7 @@ def pedidos_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
 
 def kpis_volumen_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
                                 n_periodos: int = 12) -> pd.DataFrame:
-    """Devuelve DataFrame combinado con TODAS las métricas por período.
-
-    Columnas: B2B_Ped, B2C_Ped, Total_Ped, B2B_Un, B2C_Un, Total_Un,
-              B2B_Lin, B2C_Lin, Total_Lin, % B2B (sobre pedidos)
-    """
+    """Tabla combinada con las 3 métricas: Pedidos, Unidades, Líneas."""
     if df.empty:
         return pd.DataFrame()
 
@@ -195,24 +325,57 @@ def kpis_volumen_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
     return out
 
 
+# ============================================================
+# AUDITORÍA (detalle para validar regla)
+# ============================================================
 def detalle_canales_por_segmento(df: pd.DataFrame, year: int = None,
                                    month: int = None) -> pd.DataFrame:
-    """Devuelve detalle de pedidos por (canal, bodega, segmento) para
-    auditar la clasificación. Útil para validar la regla en la UI."""
+    """Detalle por (canal/picking_type × bodega/partner × segmento)."""
     if df.empty:
         return pd.DataFrame()
+    es_odoo = "picking_id" in df.columns
     d = df.copy()
+    fecha_col = "fecha_done" if es_odoo else "fecha_venta"
+
     if year is not None:
-        d = d[d["fecha_venta"].dt.year == year]
+        d = d[d[fecha_col].dt.year == year]
     if month is not None:
-        d = d[d["fecha_venta"].dt.month == month]
+        d = d[d[fecha_col].dt.month == month]
     if d.empty:
         return pd.DataFrame()
 
-    agg = d.groupby(["segmento", "canal", "bodega"], dropna=False)["pedido"].nunique().reset_index(
-        name="n_pedidos",
-    )
+    if es_odoo:
+        agg = d.groupby(
+            ["segmento", "picking_type_name", "partner_name"], dropna=False,
+        )["picking_id"].nunique().reset_index(name="n_pedidos")
+        agg = agg.rename(columns={
+            "picking_type_name": "Picking Type",
+            "partner_name": "Partner",
+        })
+    else:
+        agg = d.groupby(
+            ["segmento", "canal", "bodega"], dropna=False,
+        )["pedido"].nunique().reset_index(name="n_pedidos")
+        agg = agg.rename(columns={"canal": "Canal", "bodega": "Bodega"})
+
     agg = agg[agg["n_pedidos"] > 0].sort_values(
         ["segmento", "n_pedidos"], ascending=[True, False],
     )
     return agg
+
+
+# ============================================================
+# LOADER UNIFICADO (Odoo > parquet)
+# ============================================================
+def cargar_volumen_unificado(meses_atras: int = 12) -> tuple[pd.DataFrame, str]:
+    """Intenta Odoo primero. Si falla, cae al parquet.
+
+    Retorna (df, fuente) donde fuente es 'odoo_inventario' o 'parquet_ventas'.
+    """
+    df = cargar_volumen_inventario_odoo(meses_atras=meses_atras)
+    if not df.empty:
+        return df, "odoo_inventario"
+    df = cargar_ventas_para_pedidos()
+    if not df.empty:
+        return df, "parquet_ventas"
+    return pd.DataFrame(), "ninguna"
