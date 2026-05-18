@@ -103,6 +103,7 @@ with st.sidebar:
 # ============================================================
 from views.planning.triada import render as render_triada
 from views.planning.triada_proyectada import render as render_triada_proyectada
+from views.planning.audit_stock_inicio_mes import render as render_audit_stock
 from views.planning.compras import render as render_compras
 from views.planning.proveedores import render as render_proveedores
 from views.planning.politicas import render as render_politicas
@@ -186,6 +187,10 @@ pages = {
                 url_path="pln-caja"),
         st.Page(render_liquidacion, title="Liquidación sobre-stock", icon="🔻",
                 url_path="pln-liquidacion"),
+    ],
+    "🔍 Auditoría": [
+        st.Page(render_audit_stock, title="Stock inicio mes (planif vs Odoo)",
+                icon="🔍", url_path="pln-audit-stock"),
     ],
 }
 
