@@ -611,7 +611,8 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
         f"ANÁLISIS FINANCIERO OPERACIONES — DETALLE POR CC {periodo_label} {year}</h3>"
         f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
-        f"Desglose por Sub-Área › Centro de Costo › Cuenta Analítica | Ppto vs Real (Fcst) | Fuente: Data_Gastos</p>",
+        f"Desglose por Centro de Costo › Cuenta Analítica | PPTO vs FCST mensual | "
+        f"Fuente: P&L 2025-2026 Control de Gestión Drive</p>",
         unsafe_allow_html=True,
     )
 
@@ -619,15 +620,72 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         st.info("Selecciona al menos un mes")
         return
 
-    venta_acum = _venta_periodo(df_venta, year, meses)
+    # ─── Cargar DIRECTAMENTE del control_gestion.parquet (P&L Drive)
+    # para evitar problemas con el agg de _cargar() y poder controlar
+    # qué sub-areas incluir según preferencia del usuario.
+    from pathlib import Path as _Path
+    PYL_PATH = _Path(__file__).parent.parent / "data" / "finanzas" / "control_gestion.parquet"
+    if not PYL_PATH.exists():
+        st.warning(f"⚠️ Falta {PYL_PATH.name}. Cae al df_costo del wrapper.")
+        df_pyl = df_costo.copy()
+    else:
+        df_pyl = pd.read_parquet(PYL_PATH)
 
-    df_cc = df_costo[
-        (df_costo["year"] == year) & (df_costo["month"].isin(meses))
-        & (df_costo["kpi"] == "GASTO")
+    # Selector de sub-áreas a incluir (default: operativas)
+    sub_disponibles = sorted([s for s in df_pyl["sub_area"].dropna().unique()
+                                if s and s.strip()])
+    sub_default = [s for s in sub_disponibles
+                    if s in {"LOGISTICA", "OPERACIONES", "POSTVENTA",
+                              "GRUPO ETER", "UNIONX", "UNION X"}]
+    cs1, cs2 = st.columns([4, 1])
+    with cs1:
+        sub_sel = st.multiselect(
+            "📦 Sub-áreas a incluir (default: operativas)",
+            sub_disponibles,
+            default=sub_default,
+            help="Por defecto sólo se muestran las sub-áreas operativas. "
+                  "Si querés ver costos de COMERCIAL, FINANZAS, MARKETING, etc. "
+                  "agrégalos al filtro.",
+            key="detcc_sub_areas",
+        )
+    with cs2:
+        if st.button("✅ Todas", key="detcc_all_subs"):
+            st.session_state["detcc_sub_areas"] = sub_disponibles
+            st.rerun()
+
+    # Filtrar al período + sub-áreas elegidas + GASTO
+    df_cc = df_pyl[
+        (df_pyl["year"] == year)
+        & (df_pyl["month"].isin(meses))
+        & (df_pyl["kpi"] == "GASTO")
+        & (df_pyl["sub_area"].isin(sub_sel))
     ].copy()
     if df_cc.empty:
-        st.info("Sin datos en el período")
+        st.info("Sin datos en el período / sub-áreas seleccionadas")
         return
+
+    # AGG por (CC, cuenta_analitica, escenario, mes) — sumando canales y LN
+    df_cc = (df_cc.groupby(
+        ["centro_costo", "cuenta_analitica", "escenario", "month", "tipo_costo"],
+        as_index=False, dropna=False,
+    )["valor"].sum())
+
+    venta_acum = _venta_periodo(df_venta, year, meses)
+
+    # Debug expander: validar contra el P&L
+    with st.expander("🔬 Debug: validar contra el P&L", expanded=False):
+        st.markdown(
+            f"**Sub-áreas incluidas:** `{sub_sel}` ({len(sub_sel)} de "
+            f"{len(sub_disponibles)} disponibles)"
+        )
+        st.markdown(f"**Filas en el detalle (post-agg):** {len(df_cc):,}")
+        st.markdown("**Totales por escenario × mes (en miles CLP):**")
+        debug_pivot = (df_cc.groupby(["escenario", "month"])["valor"]
+                          .sum().abs().reset_index()
+                          .pivot(index="escenario", columns="month", values="valor")
+                          .fillna(0).astype(int))
+        st.dataframe(debug_pivot, use_container_width=True)
+        st.caption("Compará estos totales con tu P&L de Drive para validar.")
 
     # Pivot: por CC, cuenta_analitica, escenario, mes
     rows_html = []
@@ -2211,10 +2269,33 @@ def render():
         years = sorted(df_costo["year"].dropna().unique().astype(int).tolist())
         year_sel = st.selectbox("Año", years, index=len(years) - 1 if years else 0)
     with col2:
-        modo = st.selectbox("Período", ["Q1", "Q2", "Q3", "Q4", "YTD", "Mes específico"])
+        # CAMBIO: Mes primero, después Q (más común para Andrés)
+        modo = st.selectbox("Período",
+                             ["Mes específico", "YTD", "Q1", "Q2", "Q3", "Q4"])
     meses_disp = sorted(df_costo[df_costo["year"] == year_sel]["month"]
                           .dropna().unique().astype(int).tolist())
-    if modo == "Q1":
+
+    # YTD = hasta MES ACTUAL − 1 (mes en curso típicamente está incompleto)
+    from datetime import datetime as _dt_now
+    _hoy = _dt_now.now()
+    if year_sel == _hoy.year:
+        ytd_hasta = max(1, _hoy.month - 1)  # mes anterior al actual
+    else:
+        ytd_hasta = 12  # años pasados: año completo
+
+    if modo == "Mes específico":
+        with col3:
+            mes_unico = st.selectbox(
+                "Mes", meses_disp,
+                index=len(meses_disp) - 1 if meses_disp else 0,
+                format_func=lambda m: MESES_ES.get(m, str(m)).title(),
+            )
+        meses_sel = [mes_unico]
+        periodo_label = MESES_ES.get(mes_unico, str(mes_unico))[:3].title()
+    elif modo == "YTD":
+        meses_sel = [m for m in meses_disp if m <= ytd_hasta]
+        periodo_label = f"YTD (Ene–{MESES_SHORT.get(ytd_hasta, str(ytd_hasta))})"
+    elif modo == "Q1":
         meses_sel, periodo_label = [1, 2, 3], "Q1"
     elif modo == "Q2":
         meses_sel, periodo_label = [4, 5, 6], "Q2"
@@ -2222,21 +2303,15 @@ def render():
         meses_sel, periodo_label = [7, 8, 9], "Q3"
     elif modo == "Q4":
         meses_sel, periodo_label = [10, 11, 12], "Q4"
-    elif modo == "YTD":
-        meses_sel = sorted(meses_disp)
-        periodo_label = "YTD"
-    else:
-        with col3:
-            mes_unico = st.selectbox("Mes", meses_disp,
-                                       format_func=lambda m: MESES_ES.get(m, str(m)))
-        meses_sel = [mes_unico]
-        periodo_label = MESES_ES.get(mes_unico, str(mes_unico))[:3].title()
     meses_sel = [m for m in meses_sel if m in meses_disp]
 
     with col3:
         if modo != "Mes específico":
             st.caption(f"📅 **{periodo_label} {year_sel}** · Meses: "
                         f"{', '.join(MESES_SHORT.get(m, str(m)) for m in meses_sel)}")
+            if modo == "YTD" and year_sel == _hoy.year:
+                st.caption(f"💡 YTD excluye el mes actual ({MESES_ES.get(_hoy.month).title()}) "
+                            f"porque suele estar incompleto.")
 
     st.divider()
 
