@@ -1,9 +1,10 @@
 name: "Sync Forecast (Prophet completo: total + canal + SKU jerarquico)"
 
 on:
-  schedule:
-    # Diario 06:00 UTC = 02:00 Chile (despues del backup, antes del email)
-    - cron: '0 6 * * *'
+  # Schedule desactivado 2026-05-18 porque disparaba notificaciones "No jobs were run".
+  # Reactivar quitando el comentario del cron cuando el pipeline esté validado.
+  # schedule:
+  #   - cron: '0 6 * * *'  # Diario 06:00 UTC = 02:00 Chile
   workflow_dispatch:
     inputs:
       max_modelos:
