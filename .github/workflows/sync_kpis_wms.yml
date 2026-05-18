@@ -4,14 +4,13 @@ on:
   schedule:
     # 03:00 UTC = 00:00 Chile (UTC-3)
     # 15:00 UTC = 12:00 Chile
-    # 2 corridas/día según política definida con Andrés (2026-05-09)
     - cron: '0 3,15 * * *'
   workflow_dispatch:  # permite ejecutar manualmente
 
 jobs:
   sync_kpis_wms:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # 13+ queries Odoo pueden tardar varios minutos
+    timeout-minutes: 60  # antes 30 — extractor de volumen B2B/B2C tarda ~15min
     permissions:
       contents: write
     steps:
@@ -29,41 +28,102 @@ jobs:
           python -m pip install --upgrade pip
           pip install pandas pyarrow requests streamlit libsql-client gspread google-auth
 
+      # ─── 1. SNAPSHOT KPIs WMS (CORE) ───────────────────────────────
       - name: Pre-calcular KPIs WMS
+        id: kpis_wms
         env:
-          # Credenciales Odoo OPS (usuario operaciones)
           OPS_ODOO_USER: ${{ secrets.OPS_ODOO_USER }}
           OPS_ODOO_PASSWORD: ${{ secrets.OPS_ODOO_PASSWORD }}
-          # Fallback a usuario Andrés si OPS no responde
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
-          # Turso para datos manuales (productividad usa get_equipo_mes)
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           PYTHONIOENCODING: utf-8
         run: python precalcular_kpis_wms.py
+        continue-on-error: true
 
-      - name: Restaurar credentials.json (para Sheet Costo Operativo)
+      # ─── 2. CREDENTIALS GOOGLE (opcional) ──────────────────────────
+      - name: Restaurar credentials.json (para Sheets Drive)
+        id: restore_creds
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         run: |
           if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
             echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+            echo "creds_ok=true" >> $GITHUB_OUTPUT
+            echo "✅ credentials.json creado"
+          else
+            echo "creds_ok=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Secret GOOGLE_CREDENTIALS_JSON no existe — extractores de Sheets se saltarán"
           fi
+        continue-on-error: true
 
-      - name: Extract Costo Operativo (Sheet Drive OPERACIONES 2025-2026)
+      # ─── 3. EXTRACT COSTO OPERATIVO (Sheet Drive) ──────────────────
+      - name: Extract Costo Operativo
+        if: steps.restore_creds.outputs.creds_ok == 'true'
         env:
           PYTHONIOENCODING: utf-8
         run: python extract_ops_costo_operativo.py
         continue-on-error: true
 
+      # ─── 4. EXTRACT VOLUMEN INVENTARIO (B2B/B2C nuevo) ─────────────
+      - name: Extract Volumen Inventario (pickings 12m hist)
+        env:
+          OPS_ODOO_USER: ${{ secrets.OPS_ODOO_USER }}
+          OPS_ODOO_PASSWORD: ${{ secrets.OPS_ODOO_PASSWORD }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_volumen_inventario.py --meses 12
+        continue-on-error: true
+
+      # ─── 5. LIMPIAR CREDENTIALS ────────────────────────────────────
       - name: Limpiar credentials
         if: always()
         run: rm -f credentials.json
 
+      # ─── 6. DIAGNÓSTICO ────────────────────────────────────────────
+      - name: Diagnóstico (qué se generó)
+        if: always()
+        run: |
+          echo "=== Archivos generados ==="
+          for f in \
+            "data/kpis_wms/snapshot.json" \
+            "data/operaciones/costo_operativo.parquet" \
+            "data/operaciones/volumen_inventario_hist.parquet" \
+            "data/operaciones/volumen_inventario_hist_resumen.json"; do
+            if [ -f "$f" ]; then
+              size=$(stat -c%s "$f" 2>/dev/null || echo "?")
+              mod=$(stat -c%y "$f" 2>/dev/null || echo "?")
+              echo "✅ $f — ${size} bytes — ${mod}"
+            else
+              echo "❌ $f — NO existe"
+            fi
+          done
+          echo ""
+          echo "=== Status de los steps ==="
+          echo "kpis_wms: ${{ steps.kpis_wms.outcome }}"
+          echo "restore_creds: ${{ steps.restore_creds.outcome }} (creds_ok=${{ steps.restore_creds.outputs.creds_ok }})"
+
+      # ─── 7. COMMIT SI HUBO CAMBIOS ─────────────────────────────────
       - name: Commit snapshot si cambió
+        if: always()
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions KPIs WMS Sync"
-          git add data/kpis_wms/ data/operaciones/
-          git diff --staged --quiet || git commit -m "KPIs WMS + costo op snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          # Pull latest para evitar conflictos con otros workflows
+          git pull --rebase origin main || true
+          git add data/kpis_wms/ data/operaciones/ || true
+          if git diff --staged --quiet; then
+            echo "ℹ️ No hay cambios para commitear"
+          else
+            git commit -m "KPIs WMS + costo op + volumen B2B/B2C $(date -u +'%Y-%m-%d %H:%M UTC')"
+            # Retry push (otros workflows pueden estar pusheando al mismo tiempo)
+            for i in 1 2 3; do
+              if git push; then
+                echo "✅ Push exitoso (intento $i)"
+                break
+              fi
+              echo "⚠️ Push falló (intento $i), reintentando..."
+              git pull --rebase origin main || true
+              sleep 5
+            done
+          fi
