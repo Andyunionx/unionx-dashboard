@@ -448,6 +448,106 @@ def render():
                         for e in errs_snap:
                             st.code(e)
 
+            # ─────────────────────────────────────────────────────────────
+            # 📊 TOTAL PEDIDOS (B2B vs B2C) — mes / semana / día
+            # ─────────────────────────────────────────────────────────────
+            st.markdown("---")
+            st.markdown("### 📊 Total Pedidos por período (B2B vs B2C)")
+
+            with st.expander("ℹ️ Regla de clasificación B2B/B2C", expanded=False):
+                st.markdown("""
+**No hay flag B2B/B2C directo en las ventas históricas.** Aplicamos esta regla:
+
+- **B2B** si: el canal contiene `"B2B"` (ej: *UnionX B2B*) **O** el `tipo_negocio`
+  está en *Distribución / Corporativo*.
+- **B2C** = todo lo demás (Marketplace, Páginas propias, Fidelización, Marketing).
+
+**Rationale:**
+- *Distribución* → venta mayorista a distribuidores
+- *Corporativo* → ventas a empresas (regalos, ofertas corporativas)
+- *Marketplace* (ML, Falabella, Walmart, Paris) → retail consumer final
+- *Páginas propias* (web) → mayoría consumer final
+                """)
+
+            from views._ops_pedidos_helper import (
+                cargar_ventas_para_pedidos, pedidos_por_periodo,
+            )
+            import plotly.graph_objects as go
+
+            df_v = cargar_ventas_para_pedidos()
+            if df_v.empty:
+                st.info("Sin datos de ventas históricas. Correr `python actualizar_raw_historico.py`.")
+            else:
+                sub_tabs_ped = st.tabs([
+                    "🗓️ Mes (últimos 12)",
+                    "📅 Semana (últimas 12)",
+                    "📆 Día (últimos 30)",
+                ])
+
+                def _render_pedidos(df_pivot, titulo_periodo):
+                    if df_pivot.empty:
+                        st.info("Sin datos.")
+                        return
+                    # KPIs del último período
+                    ult = df_pivot.iloc[-1]
+                    k1, k2, k3, k4 = st.columns(4)
+                    k1.metric(f"Total ({titulo_periodo} actual)",
+                               f"{int(ult['Total']):,}".replace(",", "."))
+                    k2.metric("B2C", f"{int(ult['B2C']):,}".replace(",", "."))
+                    k3.metric("B2B", f"{int(ult['B2B']):,}".replace(",", "."))
+                    k4.metric("% B2B", f"{ult['% B2B']:.1f}%")
+
+                    # Gráfico barras apiladas
+                    fig = go.Figure()
+                    fig.add_trace(go.Bar(
+                        x=df_pivot.index, y=df_pivot["B2C"],
+                        name="B2C", marker_color="#3B82F6",
+                        hovertemplate="<b>%{x}</b><br>B2C: %{y:,.0f}<extra></extra>",
+                    ))
+                    fig.add_trace(go.Bar(
+                        x=df_pivot.index, y=df_pivot["B2B"],
+                        name="B2B", marker_color="#F59E0B",
+                        hovertemplate="<b>%{x}</b><br>B2B: %{y:,.0f}<extra></extra>",
+                    ))
+                    fig.update_layout(
+                        barmode="stack", height=320,
+                        margin=dict(t=20, b=40, l=60, r=20),
+                        yaxis=dict(title="Pedidos únicos", tickformat=",.0f"),
+                        xaxis=dict(title=titulo_periodo),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        legend=dict(orientation="h", y=1.08, x=0),
+                        hovermode="x unified",
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+                    # Tabla
+                    df_display = df_pivot.copy()
+                    for c in ["B2B", "B2C", "Total"]:
+                        df_display[c] = df_display[c].astype(int)
+                    st.dataframe(
+                        df_display.style.format({
+                            "B2B": "{:,.0f}",
+                            "B2C": "{:,.0f}",
+                            "Total": "{:,.0f}",
+                            "% B2B": "{:.1f}%",
+                        }),
+                        use_container_width=True,
+                    )
+
+                with sub_tabs_ped[0]:
+                    _render_pedidos(
+                        pedidos_por_periodo(df_v, "mes", 12), "Mes"
+                    )
+                with sub_tabs_ped[1]:
+                    _render_pedidos(
+                        pedidos_por_periodo(df_v, "semana", 12), "Semana"
+                    )
+                with sub_tabs_ped[2]:
+                    _render_pedidos(
+                        pedidos_por_periodo(df_v, "dia", 30), "Día"
+                    )
+
         # ============================================================
         # TAB 2 — OTIF
         except Exception as _e_tab:
