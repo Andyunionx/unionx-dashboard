@@ -65,21 +65,36 @@ DRIVER_POR_CC = {
 
 def _driver_cc(cc: str, cuenta_analitica: str = "",
                 tipo_costo: str = "") -> str:
-    """Determina el driver de proyección para un CC × cuenta."""
+    """Determina el driver de proyección para un CC × cuenta.
+
+    Regla actualizada (segun feedback Andres 18/may):
+      1. Respetar tipo_costo del parquet:
+         - FIJO -> 'fijo' (no escala)
+         - VARIABLE -> escalar segun driver del CC
+      2. EXCEPCION: cuentas con HORAS EXTRA u HONORARIOS se fuerzan a
+         variable aunque vengan FIJO (lo dijo Andres explicitamente).
+      3. Para variables, driver segun CC en DRIVER_POR_CC.
+         Default 'venta' si no esta listado.
+    """
     cta_u = str(cuenta_analitica or "").upper().strip()
-    # Cuentas analíticas que fuerzan a variable
-    for kw in CUENTAS_VARIABLES_FORZADAS:
-        if kw in cta_u:
-            return "venta"  # horas extras y honorarios escalan con venta
+    tcost_u = str(tipo_costo or "").upper().strip()
     cc_u = (str(cc or "").upper().strip()
             .replace("Ó", "O").replace("Á", "A").replace("É", "E")
             .replace("Í", "I").replace("Ú", "U"))
-    if cc_u in DRIVER_POR_CC:
-        return DRIVER_POR_CC[cc_u]
-    # Default según tipo_costo del Sheet
-    if str(tipo_costo or "").upper().strip() == "FIJO":
+
+    # 1. EXCEPCION: HE / HON siempre variables (driver = venta)
+    for kw in CUENTAS_VARIABLES_FORZADAS:
+        if kw in cta_u or kw in cc_u:
+            return "venta"
+
+    # 2. Respetar tipo_costo del parquet: FIJO = no escala
+    if tcost_u == "FIJO":
         return "fijo"
-    return "venta"  # default conservador para variables
+
+    # 3. VARIABLE: buscar driver del CC (default = venta)
+    if cc_u in DRIVER_POR_CC and DRIVER_POR_CC[cc_u] != "fijo":
+        return DRIVER_POR_CC[cc_u]
+    return "venta"  # default conservador para variables sin mapping
 
 
 # ============================================================
