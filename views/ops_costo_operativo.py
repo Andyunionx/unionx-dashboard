@@ -1445,6 +1445,13 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         unsafe_allow_html=True,
     )
 
+    # ════════════════════════════════════════════════════════════════
+    # 🔮 FORECAST ESTACIONAL 2026 (mayo → diciembre)
+    # ════════════════════════════════════════════════════════════════
+    _render_forecast_estacional(year)
+
+    st.divider()
+
     # ─── DATA PREP ────────────────────────────────────────────────
     df_hist = (df_costo[(df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]
                  .groupby(["year", "month", "tipo_costo"])["valor"]
@@ -2332,3 +2339,195 @@ def render():
         _tab_yoy(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab5:
         _tab_proyeccion(df_costo, df_venta, year_sel, periodo_label, meses_sel)
+
+
+# ============================================================
+# FORECAST ESTACIONAL 2026 (sección dentro del tab Proyección)
+# ============================================================
+def _render_forecast_estacional(year: int):
+    """Muestra proyección de costo operativo mes a mes hasta diciembre,
+    usando el FCST de venta del P&L corporativo + ratios históricos."""
+    from datetime import datetime as _dt
+    import plotly.graph_objects as go
+    from views._ops_forecast_costo_helper import (
+        proyectar_costo_operativo,
+        calcular_ratios_historicos,
+        cargar_fcst_venta_mensual,
+    )
+
+    st.markdown(
+        "## 🔮 Forecast estacional de Costo Operativo 2026"
+    )
+    st.caption(
+        "Proyección mes a mes hasta diciembre, usando el FCST de venta "
+        "del P&L corporativo + ratios históricos de pedidos/unidades por venta. "
+        "Costos fijos se mantienen constantes; variables escalan con el volumen "
+        "proyectado (incluye HORAS EXTRAS y HONORARIOS por indicación de Andrés)."
+    )
+
+    hoy = _dt.now()
+    mes_desde = hoy.month if year == hoy.year else 1
+    mes_hasta = 12
+
+    proy = proyectar_costo_operativo(year=year, mes_desde=mes_desde,
+                                          mes_hasta=mes_hasta)
+    if proy.empty:
+        st.warning(
+            "⏳ No se pudo generar la proyección. Verifica que existan:\n"
+            "  - `data/finanzas/fcst_eerr.parquet` (FCST venta P&L)\n"
+            "  - `data/operaciones/volumen_inventario_hist.parquet`\n"
+            "  - `data/finanzas/control_gestion.parquet`"
+        )
+        return
+
+    # Banner de metodología
+    ratios = calcular_ratios_historicos(meses_atras=3)
+    with st.expander("ℹ️ Cómo se calcula", expanded=False):
+        st.markdown(f"""
+**Modelo:**
+1. FCST de venta mensual viene del archivo de Planificación Financiera
+   (línea "Ingreso de Explotación" del `fcst_eerr.parquet`).
+2. Ratios históricos derivados de los últimos 3 meses cerrados
+   ({', '.join(ratios.get('meses_usados', []))}):
+   - **{ratios.get('ratio_pedidos_por_mm_venta', 0):.1f} pedidos por MM de venta**
+   - **{ratios.get('ratio_unidades_por_mm_venta', 0):.1f} unidades por MM de venta**
+3. Para cada Centro de Costo:
+   - **FIJO** (ARRIENDOS, DEPRECIACIÓN, SUSCRIPCIONES) → constante
+   - **VARIABLE** con driver:
+     - `pedidos` (REMUNERACIONES, MOVILIZACIÓN, MANTENCIÓN, BENEFICIOS)
+     - `unidades` (INSUMOS)
+     - `venta` (HONORARIOS, SEGUROS, GASTOS OFICINA, **HORAS EXTRAS**)
+   - Factor de escalado = volumen_proyectado_mes / volumen_promedio_histórico
+
+**Interpretación:**
+- Meses peak (Junio Día del Padre, Octubre Cyber, Diciembre Navidad) tienen
+  más venta → diluyen el costo fijo → **% S/Venta baja**.
+- Meses lentos (Mayo, Agosto) tienen menos venta → costo fijo pesa más →
+  **% S/Venta sube**.
+        """)
+
+    # ─── KPIs consolidados ─────────────────────────────────────────
+    venta_total = proy["venta_fcst_clp"].sum()
+    costo_fijo_total = proy["costo_op_fijo"].sum() * 1000  # miles → CLP
+    costo_var_total = proy["costo_op_variable"].sum() * 1000
+    costo_total = (proy["costo_op_total"].sum()) * 1000
+    pct_avg = (costo_total / venta_total * 100) if venta_total else 0
+
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric(f"Venta FCST {mes_desde:02d}–12",
+               f"${venta_total/1_000_000_000:.2f} BB")
+    k2.metric("Costo OP fijo (acum)",
+               f"${costo_fijo_total/1_000_000_000:.2f} BB")
+    k3.metric("Costo OP variable (acum)",
+               f"${costo_var_total/1_000_000_000:.2f} BB")
+    k4.metric("Costo OP TOTAL (acum)",
+               f"${costo_total/1_000_000_000:.2f} BB")
+    k5.metric("% Costo OP s/Venta",
+               f"{pct_avg:.1f}%")
+
+    # ─── Tabla mes a mes ────────────────────────────────────────────
+    st.markdown("### 📊 Detalle mensual proyectado")
+    df_show = proy.copy()
+    MESES = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+             7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
+    df_show["Mes"] = df_show["mes"].map(lambda m: f"{MESES.get(m, m)} {year}")
+    df_show["Venta FCST (MM$)"] = df_show["venta_fcst_mm"].round(0)
+    df_show["Pedidos proy"] = df_show["pedidos_proy"].round(0).astype(int)
+    df_show["Unidades proy"] = df_show["unidades_proy"].round(0).astype(int)
+    df_show["C.OP Fijo (MM$)"] = (df_show["costo_op_fijo"] / 1000).round(1)
+    df_show["C.OP Variable (MM$)"] = (df_show["costo_op_variable"] / 1000).round(1)
+    df_show["C.OP TOTAL (MM$)"] = (df_show["costo_op_total"] / 1000).round(1)
+    df_show["% s/Venta"] = df_show["pct_sobre_venta"].round(2)
+
+    # Badge de mes peak
+    def _peak_emoji(m):
+        if m == 6: return "🌷 Día Padre"
+        if m == 9: return "📦 Pre-Cyber"
+        if m == 10: return "⚡ Cyber"
+        if m == 11: return "🛍️ Black Friday"
+        if m == 12: return "🎄 Navidad"
+        return ""
+    df_show["Evento"] = df_show["mes"].apply(_peak_emoji)
+
+    cols_show = ["Mes", "Venta FCST (MM$)", "Pedidos proy", "Unidades proy",
+                  "C.OP Fijo (MM$)", "C.OP Variable (MM$)", "C.OP TOTAL (MM$)",
+                  "% s/Venta", "Evento"]
+
+    try:
+        styled = df_show[cols_show].style.format({
+            "Venta FCST (MM$)": "{:,.0f}",
+            "Pedidos proy": "{:,.0f}",
+            "Unidades proy": "{:,.0f}",
+            "C.OP Fijo (MM$)": "{:,.1f}",
+            "C.OP Variable (MM$)": "{:,.1f}",
+            "C.OP TOTAL (MM$)": "{:,.1f}",
+            "% s/Venta": "{:.2f}%",
+        }).background_gradient(
+            cmap="RdYlGn_r", subset=["% s/Venta"],
+            vmin=df_show["% s/Venta"].min(),
+            vmax=df_show["% s/Venta"].max(),
+        )
+    except (ImportError, ModuleNotFoundError):
+        styled = df_show[cols_show].style.format({
+            "Venta FCST (MM$)": "{:,.0f}",
+            "Pedidos proy": "{:,.0f}",
+            "Unidades proy": "{:,.0f}",
+            "C.OP Fijo (MM$)": "{:,.1f}",
+            "C.OP Variable (MM$)": "{:,.1f}",
+            "C.OP TOTAL (MM$)": "{:,.1f}",
+            "% s/Venta": "{:.2f}%",
+        })
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+
+    # ─── Gráfico combinado: venta + costo + % s/venta ──────────────
+    st.markdown("### 📈 Evolución venta vs costo operativo proyectado")
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=df_show["Mes"], y=df_show["Venta FCST (MM$)"],
+        name="Venta FCST (MM$)", marker_color="#3B82F6",
+        yaxis="y1",
+        hovertemplate="<b>%{x}</b><br>Venta: $%{y:,.0f} MM<extra></extra>",
+    ))
+    fig.add_trace(go.Bar(
+        x=df_show["Mes"], y=df_show["C.OP TOTAL (MM$)"],
+        name="Costo OP TOTAL (MM$)", marker_color="#F59E0B",
+        yaxis="y1",
+        hovertemplate="<b>%{x}</b><br>Costo OP: $%{y:,.1f} MM<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter(
+        x=df_show["Mes"], y=df_show["% s/Venta"],
+        name="% Costo OP / Venta",
+        mode="lines+markers", line=dict(color="#DC2626", width=3),
+        marker=dict(size=10),
+        yaxis="y2",
+        hovertemplate="<b>%{x}</b><br>%{y:.2f}%<extra></extra>",
+    ))
+    fig.update_layout(
+        height=420,
+        yaxis=dict(title="MM$", tickformat=",.0f"),
+        yaxis2=dict(title="% s/Venta", overlaying="y", side="right",
+                     tickformat=".1f", showgrid=False),
+        barmode="group",
+        legend=dict(orientation="h", y=1.12, x=0),
+        margin=dict(t=40, b=40, l=60, r=60),
+        hovermode="x unified",
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # ─── Insight: meses más eficientes ─────────────────────────────
+    mejor_idx = df_show["% s/Venta"].idxmin()
+    peor_idx = df_show["% s/Venta"].idxmax()
+    c1, c2 = st.columns(2)
+    with c1:
+        st.success(
+            f"🏆 **Mes más eficiente:** {df_show.loc[mejor_idx, 'Mes']}\n\n"
+            f"Costo OP {df_show.loc[mejor_idx, '% s/Venta']:.2f}% sobre venta. "
+            f"La alta venta diluye el costo fijo."
+        )
+    with c2:
+        st.warning(
+            f"⚠️ **Mes más caro:** {df_show.loc[peor_idx, 'Mes']}\n\n"
+            f"Costo OP {df_show.loc[peor_idx, '% s/Venta']:.2f}% sobre venta. "
+            f"Venta baja → costo fijo pesa más."
+        )
