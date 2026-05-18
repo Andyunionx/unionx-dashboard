@@ -30,6 +30,12 @@ import streamlit as st
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 VENTAS_PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
+VOLUMEN_HIST_PARQUET = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
+VOLUMEN_HIST_RESUMEN = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist_resumen.json"
+
+# Cuántos días recientes consultamos en vivo a Odoo (los anteriores vienen
+# del parquet histórico — se actualiza por cron diario/semanal)
+DIAS_VIVO_ODOO = 7
 
 
 # ============================================================
@@ -95,18 +101,46 @@ def clasificar_segmento_picking(picking_type_name, partner_name) -> str:
 
 
 # ============================================================
-# FUENTE 1: ODOO INVENTARIO (PRINCIPAL)
+# FUENTE 1A: PARQUET HISTÓRICO (rápido, se actualiza por cron)
 # ============================================================
-@st.cache_data(ttl=43200, show_spinner="📦 Consultando Odoo inventario...")
-def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
-    """Carga pickings DONE de los últimos N meses desde Odoo inventario.
+@st.cache_data(ttl=3600, show_spinner=False)
+def cargar_volumen_historico_parquet() -> tuple[pd.DataFrame, dict]:
+    """Carga el snapshot histórico de pickings (generado por
+    extract_volumen_inventario.py). Cache 1h en memoria.
 
-    Retorna DataFrame con cols:
-      [picking_id, fecha_done, picking_type_name, partner_name, segmento,
-       n_unidades, n_lineas]
+    Retorna (df, resumen) donde resumen tiene fecha_hasta, etc.
+    """
+    import json as _json
+    if not VOLUMEN_HIST_PARQUET.exists():
+        return pd.DataFrame(), {}
+    df = pd.read_parquet(VOLUMEN_HIST_PARQUET)
+    df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
+    # Clasificación se aplica acá (el parquet no la trae para mantenerlo "raw")
+    df["segmento"] = df.apply(
+        lambda r: clasificar_segmento_picking(
+            r["picking_type_name"], r["partner_name"]),
+        axis=1,
+    )
+    resumen = {}
+    if VOLUMEN_HIST_RESUMEN.exists():
+        try:
+            resumen = _json.load(open(VOLUMEN_HIST_RESUMEN, encoding="utf-8"))
+        except Exception:
+            pass
+    return df, resumen
 
-    Usa stock.picking (cabecera) + stock.move (líneas).
-    Cache 12h para no martillar Odoo.
+
+# ============================================================
+# FUENTE 1B: ODOO ÚLTIMOS N DÍAS (rápido, en vivo)
+# ============================================================
+@st.cache_data(ttl=1800, show_spinner="📦 Consultando Odoo (últimos días)...")
+def cargar_volumen_ultimos_dias_odoo(dias: int = 7,
+                                       desde_iso: str = None) -> pd.DataFrame:
+    """Consulta Odoo pickings DONE de los últimos N días (ventana chica
+    para mantener bajo el tiempo de respuesta). Cache 30 min.
+
+    Si `desde_iso` se pasa explícito (ej: día siguiente al fin del parquet
+    histórico), se usa en lugar de hoy-dias.
     """
     from views._ops_odoo_helper import get_ops_odoo_client
 
@@ -115,12 +149,12 @@ def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
         return pd.DataFrame()
 
     try:
-        # Rango de fechas
-        desde = (datetime.now().replace(day=1)
-                  - timedelta(days=meses_atras * 31)).strftime("%Y-%m-%d")
+        if desde_iso:
+            desde = desde_iso
+        else:
+            desde = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
         hasta = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
-        # Pickings DONE en rango — outgoing (al cliente) + internal (a otra bodega)
         pickings = odoo.search_read(
             "stock.picking",
             [("state", "=", "done"),
@@ -129,7 +163,7 @@ def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
              ("picking_type_code", "in", ["outgoing", "internal"])],
             ["id", "name", "date_done", "picking_type_id", "partner_id",
              "picking_type_code"],
-            limit=200000,
+            limit=50000,
         )
         if not pickings:
             return pd.DataFrame()
@@ -141,32 +175,25 @@ def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
             lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
         df_p["partner_name"] = df_p["partner_id"].apply(
             lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
-
-        # Clasificación B2B/B2C
         df_p["segmento"] = df_p.apply(
             lambda r: clasificar_segmento_picking(
                 r["picking_type_name"], r["partner_name"]),
             axis=1,
         )
 
-        # Moves agregados por picking (líneas + unidades)
-        # Estrategia: read_group para evitar traer 2M de moves individuales
+        # Moves agregados (chunked)
         pids = df_p["picking_id"].tolist()
-
-        # Chunked read_group si hay muchos pickings
         chunk_size = 1000
         moves_agg = []
         for i in range(0, len(pids), chunk_size):
             chunk = pids[i:i + chunk_size]
             try:
-                # read_group: agrupa por picking_id y devuelve count + sum
                 rg = odoo._execute_with_retry(
                     "read_group",
                     "stock.move",
                     [("picking_id", "in", chunk), ("state", "=", "done")],
-                    {"fields": ["picking_id", "quantity_done:sum"],
-                     "groupby": ["picking_id"],
-                     "lazy": False},
+                    {"fields": ["picking_id", "product_uom_qty:sum"],
+                     "groupby": ["picking_id"], "lazy": False},
                 )
                 for r in rg:
                     pid_raw = r.get("picking_id")
@@ -174,16 +201,14 @@ def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
                     moves_agg.append({
                         "picking_id": pid_val,
                         "n_lineas": r.get("__count", r.get("picking_id_count", 0)),
-                        "n_unidades": r.get("quantity_done", 0) or 0,
+                        "n_unidades": r.get("product_uom_qty", 0) or 0,
                     })
             except Exception:
-                # Fallback: count manual (más lento)
                 continue
 
         df_m = pd.DataFrame(moves_agg) if moves_agg else pd.DataFrame(
             columns=["picking_id", "n_lineas", "n_unidades"])
 
-        # Merge
         df = df_p.merge(df_m, on="picking_id", how="left")
         df["n_lineas"] = df["n_lineas"].fillna(0).astype(int)
         df["n_unidades"] = df["n_unidades"].fillna(0)
@@ -192,8 +217,72 @@ def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
                    "partner_name", "segmento", "n_unidades", "n_lineas"]]
 
     except Exception as e:
-        st.warning(f"⚠️ Error consultando Odoo: {type(e).__name__}: {str(e)[:120]}")
+        st.warning(f"⚠️ Error consultando Odoo en vivo: {type(e).__name__}: "
+                   f"{str(e)[:120]}")
         return pd.DataFrame()
+
+
+# ============================================================
+# FUENTE 1: HÍBRIDA (parquet histórico + Odoo últimos días)
+# ============================================================
+def cargar_volumen_hibrido() -> tuple[pd.DataFrame, dict]:
+    """Combina parquet histórico (rápido) + Odoo últimos días (en vivo).
+
+    Retorna (df, info) donde info contiene:
+      - fuente: 'hibrido' | 'solo_parquet' | 'solo_odoo'
+      - corte_hist: fecha_hasta del parquet
+      - filas_hist: # pickings del parquet
+      - filas_vivo: # pickings consultados en vivo
+      - generado_hist: timestamp del parquet
+    """
+    df_hist, resumen_hist = cargar_volumen_historico_parquet()
+    info = {
+        "fuente": "ninguna",
+        "corte_hist": resumen_hist.get("rango_hasta"),
+        "filas_hist": int(len(df_hist)),
+        "filas_vivo": 0,
+        "generado_hist": resumen_hist.get("generado_en"),
+    }
+
+    # Determinar desde cuándo consultar en vivo
+    if not df_hist.empty and resumen_hist.get("rango_hasta"):
+        # Desde el día siguiente al corte del parquet
+        try:
+            corte = datetime.strptime(
+                resumen_hist["rango_hasta"], "%Y-%m-%d",
+            ).date()
+            desde_vivo = corte.strftime("%Y-%m-%d")
+        except Exception:
+            desde_vivo = None
+    else:
+        desde_vivo = None
+
+    df_vivo = cargar_volumen_ultimos_dias_odoo(
+        dias=DIAS_VIVO_ODOO, desde_iso=desde_vivo,
+    )
+    info["filas_vivo"] = int(len(df_vivo))
+
+    # Combinar
+    if not df_hist.empty and not df_vivo.empty:
+        df_out = pd.concat([df_hist, df_vivo], ignore_index=True)
+        df_out = df_out.drop_duplicates(subset=["picking_id"], keep="last")
+        info["fuente"] = "hibrido"
+    elif not df_hist.empty:
+        df_out = df_hist
+        info["fuente"] = "solo_parquet"
+    elif not df_vivo.empty:
+        df_out = df_vivo
+        info["fuente"] = "solo_odoo"
+    else:
+        df_out = pd.DataFrame()
+    return df_out, info
+
+
+# Compat: alias retro para evitar romper imports si alguien lo usa
+def cargar_volumen_inventario_odoo(meses_atras: int = 12) -> pd.DataFrame:
+    """[deprecado] Antes consultaba 12 meses en vivo. Ahora usa híbrido."""
+    df, _info = cargar_volumen_hibrido()
+    return df
 
 
 # ============================================================

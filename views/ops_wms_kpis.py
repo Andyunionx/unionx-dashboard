@@ -484,27 +484,52 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                 """)
 
             from views._ops_pedidos_helper import (
-                cargar_volumen_unificado, pedidos_por_periodo,
+                cargar_volumen_hibrido, cargar_volumen_unificado,
+                pedidos_por_periodo,
                 kpis_volumen_por_periodo, detalle_canales_por_segmento,
             )
             import plotly.graph_objects as go
             from datetime import datetime as _dt_pb
 
-            df_v, _fuente = cargar_volumen_unificado(meses_atras=12)
+            # Estrategia híbrida: parquet histórico + Odoo últimos 7 días
+            df_v, _info = cargar_volumen_hibrido()
+            _fuente = _info.get("fuente", "ninguna")
 
-            # Banner de fuente
-            if _fuente == "odoo_inventario":
-                st.success(
-                    "📦 **Fuente: Odoo inventario** (`stock.picking` + `stock.move`) — "
-                    "datos reales del módulo de despacho, no de ventas. "
-                    "Cache 12h, refresh manual con el botón 'Forzar refresh' arriba."
-                )
-            elif _fuente == "parquet_ventas":
-                st.warning(
-                    "⚠️ **Fuente: parquet ventas históricas** (fallback). "
-                    "Odoo inventario no respondió. Los tiempos pueden diferir de "
-                    "los movimientos de inventario reales."
-                )
+            # Si la híbrida no dio nada, caer al loader unificado (fallback parquet ventas)
+            if df_v.empty:
+                df_v, _fuente_fb = cargar_volumen_unificado(meses_atras=12)
+                if _fuente_fb == "parquet_ventas":
+                    st.warning(
+                        "⚠️ **Fuente: parquet ventas históricas** (fallback). "
+                        "El snapshot de inventario no existe y Odoo en vivo no respondió. "
+                        "Correr `python extract_volumen_inventario.py` para generar el snapshot."
+                    )
+            else:
+                # Banner híbrido
+                corte_hist = _info.get("corte_hist", "?")
+                gen_hist = (_info.get("generado_hist") or "")[:10]
+                n_hist = _info.get("filas_hist", 0)
+                n_vivo = _info.get("filas_vivo", 0)
+                if _fuente == "hibrido":
+                    st.success(
+                        f"📦 **Fuente: Odoo inventario (híbrido)** · "
+                        f"Histórico hasta **{corte_hist}** ({n_hist:,} pickings) "
+                        f"+ últimos {n_vivo:,} pickings en vivo desde Odoo. "
+                        f"Snapshot generado: {gen_hist}. "
+                        f"Refresca el snapshot con `python extract_volumen_inventario.py`."
+                    )
+                elif _fuente == "solo_parquet":
+                    st.info(
+                        f"📦 **Fuente: snapshot Odoo (sin actualización en vivo)** · "
+                        f"{n_hist:,} pickings hasta {corte_hist}. "
+                        f"Odoo en vivo no respondió — datos hasta {corte_hist} solamente."
+                    )
+                elif _fuente == "solo_odoo":
+                    st.warning(
+                        f"⚠️ **Fuente: solo Odoo en vivo** ({n_vivo:,} pickings recientes). "
+                        f"El snapshot histórico no existe. Correr "
+                        f"`python extract_volumen_inventario.py`."
+                    )
 
             if df_v.empty:
                 st.info("Sin datos. Verifica conexión Odoo o corre "
