@@ -190,15 +190,21 @@ def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataF
 
     df = df[df["month"].isin(meses_cerrados)].copy()
     df["valor_pos"] = df["valor"].abs()
+    n_meses_real = len(meses_cerrados)  # divisor real
 
-    # Sumar canales/LN por (CC, cta, tipo_costo, mes) y promediar entre meses
+    # Sumar canales/LN por (CC, cta, tipo_costo, mes)
     agg = (df.groupby(
         ["centro_costo", "cuenta_analitica", "tipo_costo", "month"],
         as_index=False, dropna=False)["valor_pos"].sum())
+    # FIX: promediar dividiendo siempre por N meses (no por meses en que
+    # aparece la cuenta). Si MEGACENTRO ARRIENDOS aparece 1 vez en 3
+    # meses con $11MM, el promedio mensual real es $11/3 = $3.7MM, no $11MM.
     prom = (agg.groupby(
         ["centro_costo", "cuenta_analitica", "tipo_costo"],
-        as_index=False, dropna=False)["valor_pos"].mean()
-        .rename(columns={"valor_pos": "costo_mensual_prom"}))
+        as_index=False, dropna=False)["valor_pos"].sum()
+        .rename(columns={"valor_pos": "_suma_periodo"}))
+    prom["costo_mensual_prom"] = prom["_suma_periodo"] / n_meses_real
+    prom = prom.drop(columns=["_suma_periodo"])
     prom = prom[prom["costo_mensual_prom"] > 0].copy()
     return prom
 
