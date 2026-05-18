@@ -10,16 +10,31 @@ DIFERENCIA TIEMPOS:
   - Inventario (Odoo): momento real del picking/despacho (date_done)
   Para KPIs operativos de productividad, lo correcto es Odoo.
 
-REGLA B2B / B2C aplicada a pickings de Odoo:
-  B2B si:
-    1. picking_type tiene 'Fulfillment' en nombre
-       (ej: "FUL/MERCADO LIBRE/Salida") → traslado a bodega fulfillment
-    2. partner_id.name contiene uno de los retailers conocidos:
-       Falabella, Walmart, Paris, Ripley, Dimarsa, El Volcán, Cencosud,
-       UnionX B2B
-    3. partner_id es de tipo company (no person)
-       → criterio amplio que captura mayoristas / corporativos
-  B2C = todo lo demás (consumidor final de marketplace o web)
+REGLA CORREGIDA tras feedback de Andrés (18/may):
+
+  "Pedidos" = solo picking_type_code='outgoing' (despachos al cliente).
+  Los 'internal' (olas internas entre bodegas) NO son pedidos, son
+  movimientos operativos.
+
+  Para CADA outgoing, B2B/B2C se decide POR PARTNER (no por picking_type):
+    B2B si partner_name contiene retailers conocidos:
+      - Falabella Retail / Tienda
+      - Walmart Retail / Tienda
+      - Paris (Cencosud) Retail / Tienda
+      - Ripley Retail / Tienda
+      - Dimarsa
+      - El Volcán
+      - UnionX B2B
+      - SP Digital, Hites, La Polar (otros retailers chilenos)
+    B2C = todo lo demás (persona natural, marketplace consumer, web).
+
+  IMPORTANTE: outgoing desde "Bodega Fulfillment Mercado Libre" al
+  cliente final = B2C (es el despacho al consumidor del marketplace,
+  no a ML como empresa). Antes los marcaba B2B incorrectamente.
+
+  Las "olas internas" a fulfillment (picking_type_code='internal' con
+  destino bodega Fulfillment ML/Falabella/etc.) se cuentan como
+  MOVIMIENTOS OPERATIVOS B2B aparte, no como pedidos.
 """
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -55,14 +70,28 @@ CANALES_B2B_EXPLICITOS = {
 }
 B2B_TIPOS_NEGOCIO = {"distribución", "distribucion", "corporativo"}
 
-# Para fuente ODOO (campos: picking_type_name, partner_name)
-KEYWORDS_PICKING_TYPE_B2B = [
-    "FULFILLMENT", "FULL", "B2B", "RETAIL", "TIENDA",
-]
+# Para fuente ODOO — solo se usa partner_name para clasificar outgoing.
+# Las olas internas (picking_type_code='internal' con destino bodega
+# Fulfillment XXX) se cuentan como B2B aparte (ver bodegas_internas_b2b).
 KEYWORDS_PARTNER_B2B = [
-    "FALABELLA", "WALMART", "PARIS", "CENCOSUD", "RIPLEY",
+    # Retailers chilenos (envío B2B directo)
+    "FALABELLA RETAIL", "FALABELLA TIENDA",
+    "WALMART RETAIL", "WALMART TIENDA",
+    "CENCOSUD", "PARIS RETAIL", "PARIS TIENDA",
+    "RIPLEY RETAIL", "RIPLEY TIENDA",
     "DIMARSA", "EL VOLCAN", "EL VOLCÁN",
-    "UNIONX B2B", "MERCADO LIBRE", "MELI",
+    "UNIONX B2B", "UNION X B2B",
+    "HITES", "LA POLAR", "SP DIGITAL", "ABC DIN",
+    "SODIMAC CORP",
+]
+
+# Bodegas de destino que indican "ola interna B2B" (picking_type='internal')
+BODEGAS_DESTINO_FULFILLMENT_B2B = [
+    "FULFILLMENT MERCADO LIBRE",
+    "FULFILLMENT FALABELLA",
+    "FULFILLMENT PARIS",
+    "FULFILLMENT RIPLEY",
+    "FULFILLMENT WALMART",
 ]
 
 
@@ -86,14 +115,30 @@ def clasificar_segmento(canal, tipo_negocio, bodega=None) -> str:
     return "B2C"
 
 
-def clasificar_segmento_picking(picking_type_name, partner_name) -> str:
-    """Clasificación B2B/B2C para fuente ODOO."""
+def clasificar_segmento_picking(picking_type_name, partner_name,
+                                  picking_type_code=None) -> str:
+    """Clasificación B2B/B2C para fuente ODOO.
+
+    Regla CORREGIDA (18/may):
+      - Solo aplica a OUTGOING (despachos al cliente).
+      - B2B = partner es retailer (Falabella Retail, Walmart, etc.).
+      - B2C = todos los demás outgoing (consumer final).
+      - INTERNAL → segmento 'INTERNAL_B2B' (movimientos operativos, no
+        son pedidos del cliente; se cuentan aparte como volumen B2B).
+    """
+    code = str(picking_type_code or "").lower().strip()
     pt_u = str(picking_type_name or "").upper().strip()
     pn_u = str(partner_name or "").upper().strip()
 
-    for kw in KEYWORDS_PICKING_TYPE_B2B:
-        if kw in pt_u:
-            return "B2B"
+    # Internal = movimiento operativo, no es pedido
+    if code == "internal":
+        # Si el destino es fulfillment de retailer → es ola B2B operativa
+        for kw in BODEGAS_DESTINO_FULFILLMENT_B2B:
+            if kw in pt_u:
+                return "INTERNAL_B2B"
+        return "INTERNAL_OTRO"
+
+    # Outgoing: clasificar por partner
     for kw in KEYWORDS_PARTNER_B2B:
         if kw in pn_u:
             return "B2B"
@@ -108,6 +153,10 @@ def cargar_volumen_historico_parquet() -> tuple[pd.DataFrame, dict]:
     """Carga el snapshot histórico de pickings (generado por
     extract_volumen_inventario.py). Cache 1h en memoria.
 
+    Devuelve `df` con TODOS los pickings (outgoing + internal) más:
+      - segmento: B2B | B2C | INTERNAL_B2B | INTERNAL_OTRO
+      - es_pedido: True si es outgoing (= pedido del cliente)
+
     Retorna (df, resumen) donde resumen tiene fecha_hasta, etc.
     """
     import json as _json
@@ -115,12 +164,16 @@ def cargar_volumen_historico_parquet() -> tuple[pd.DataFrame, dict]:
         return pd.DataFrame(), {}
     df = pd.read_parquet(VOLUMEN_HIST_PARQUET)
     df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
+    if "picking_type_code" not in df.columns:
+        df["picking_type_code"] = ""
     # Clasificación se aplica acá (el parquet no la trae para mantenerlo "raw")
     df["segmento"] = df.apply(
         lambda r: clasificar_segmento_picking(
-            r["picking_type_name"], r["partner_name"]),
+            r["picking_type_name"], r["partner_name"],
+            picking_type_code=r.get("picking_type_code", "")),
         axis=1,
     )
+    df["es_pedido"] = df["picking_type_code"].astype(str).str.lower() == "outgoing"
     resumen = {}
     if VOLUMEN_HIST_RESUMEN.exists():
         try:
@@ -177,9 +230,11 @@ def cargar_volumen_ultimos_dias_odoo(dias: int = 7,
             lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
         df_p["segmento"] = df_p.apply(
             lambda r: clasificar_segmento_picking(
-                r["picking_type_name"], r["partner_name"]),
+                r["picking_type_name"], r["partner_name"],
+                picking_type_code=r.get("picking_type_code", "")),
             axis=1,
         )
+        df_p["es_pedido"] = df_p["picking_type_code"].astype(str).str.lower() == "outgoing"
 
         # Moves agregados (chunked)
         pids = df_p["picking_id"].tolist()
@@ -214,7 +269,8 @@ def cargar_volumen_ultimos_dias_odoo(dias: int = 7,
         df["n_unidades"] = df["n_unidades"].fillna(0)
 
         return df[["picking_id", "fecha_done", "picking_type_name",
-                   "partner_name", "segmento", "n_unidades", "n_lineas"]]
+                   "partner_name", "picking_type_code", "segmento",
+                   "es_pedido", "n_unidades", "n_lineas"]]
 
     except Exception as e:
         st.warning(f"⚠️ Error consultando Odoo en vivo: {type(e).__name__}: "
@@ -351,6 +407,12 @@ def pedidos_por_periodo(df: pd.DataFrame, granularidad: str = "mes",
     d = df.copy()
     if es_odoo:
         d["periodo"] = _periodo_col(d["fecha_done"], granularidad)
+        # CRÍTICO: solo outgoing cuenta como "pedido". Los internal son
+        # movimientos operativos (se ven en otra métrica/tab).
+        if "es_pedido" in d.columns:
+            d = d[d["es_pedido"]].copy()
+        elif "picking_type_code" in d.columns:
+            d = d[d["picking_type_code"].astype(str).str.lower() == "outgoing"].copy()
     else:
         d["periodo"] = _periodo_col(d["fecha_venta"], granularidad)
 
@@ -434,6 +496,8 @@ def detalle_canales_por_segmento(df: pd.DataFrame, year: int = None,
         return pd.DataFrame()
 
     if es_odoo:
+        # Para auditoría mostramos TODOS los pickings (outgoing + internal)
+        # para que se vea cómo se clasifican incluso los internal.
         agg = d.groupby(
             ["segmento", "picking_type_name", "partner_name"], dropna=False,
         )["picking_id"].nunique().reset_index(name="n_pedidos")
