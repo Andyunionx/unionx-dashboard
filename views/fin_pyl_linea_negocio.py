@@ -85,18 +85,88 @@ def _label_dim(d: str) -> str:
 
 
 # ============================================================
+# FUENTE OFICIAL: P&L Drive (control_gestion.parquet)
+# FIX 2026-05 (Andres): los totales corporativos consolidados (Venta,
+# MC, Costo OP, GAV, EBIT) deben venir del P&L Drive, NO del Sheet KAM
+# que tiene gap de ~12% por canales sin asignar. El KAM se usa SOLO
+# para desgloses por canal/KAM/LN, no para el agregado empresa.
+# ============================================================
+def _consolidado_pyl_drive(year: int, meses: list[int],
+                              escenario: str = "FCST") -> dict:
+    """Devuelve totales corporativos del P&L Drive (oficial) para el periodo.
+
+    Returns dict con: venta, costo_venta, contribucion, mc_pct,
+    gasto_operativo, gasto_gav, gasto_total, ebit, ebit_pct,
+    n_filas.
+
+    NOTA: usa la misma fuente que la vista Costo Operativo de Ops
+    (consistente con el fix anterior).
+    """
+    from views._fin_distribucion import (
+        CONTROL_GESTION_PARQUET, AREAS_OPERATIVAS_EXCLUIR,
+    )
+
+    if not CONTROL_GESTION_PARQUET.exists() or not meses:
+        return {}
+
+    df = pd.read_parquet(CONTROL_GESTION_PARQUET)
+    f = df[
+        (df["year"] == year)
+        & (df["month"].isin(meses))
+        & (df["escenario"] == escenario)
+    ].copy()
+    if f.empty:
+        return {}
+
+    # Normalizar area para distinguir GAV vs operativo
+    def _norm(a):
+        if not a:
+            return ""
+        return (str(a).upper().strip()
+                .replace("Ó", "O").replace("Á", "A").replace("É", "E")
+                .replace("Í", "I").replace("Ú", "U"))
+
+    f["area_norm"] = f["area"].apply(_norm)
+
+    # KPI=VENTA, CONTRIB, COSTO van con signo natural; GASTO en negativo
+    venta = float(f[f["kpi"] == "VENTA"]["valor"].sum()) * 1000
+    costo_venta = float(f[f["kpi"] == "COSTO"]["valor"].sum()) * 1000  # negativo
+    contrib = float(f[f["kpi"] == "CONTRIB"]["valor"].sum()) * 1000
+    # GASTO: sumar con signo, luego abs del NETO
+    gasto_op = abs(float(f[(f["kpi"] == "GASTO")
+                              & (f["area"] == "OPERACIONES")]["valor"].sum())) * 1000
+    gasto_gav = abs(float(f[(f["kpi"] == "GASTO")
+                               & (~f["area_norm"].isin(AREAS_OPERATIVAS_EXCLUIR))
+                               & (f["area_norm"] != "")]["valor"].sum())) * 1000
+    gasto_total = gasto_op + gasto_gav
+
+    ebit = contrib - gasto_total
+    return {
+        "venta": venta,
+        "costo_venta": abs(costo_venta),
+        "contribucion": contrib,
+        "mc_pct": (contrib / venta * 100) if venta else 0,
+        "gasto_operativo": gasto_op,
+        "gasto_gav": gasto_gav,
+        "gasto_total": gasto_total,
+        "ebit": ebit,
+        "ebit_pct": (ebit / venta * 100) if venta else 0,
+        "n_filas": len(f),
+    }
+
+
+# ============================================================
 # HERO GLOBAL EMPRESA (sin filtros, KPIs + tendencia)
 # ============================================================
 def _hero_global_empresa(year: int):
     """Bloque al tope de la vista: KPIs consolidados YTD del año actual
     + mini-grafico tendencia mensual EBIT (real + proyectado a Dic).
     Independiente de los filtros — siempre muestra el agregado empresa.
+
+    FUENTE OFICIAL: P&L Drive (control_gestion.parquet) escenario FCST.
+    NO usa Sheet KAM porque tiene gap de ~12% por canales sin asignar.
     """
     import plotly.graph_objects as go
-    from views._ops_forecast_costo_helper import (
-        cargar_fcst_venta_mensual,
-        cargar_costo_op_real_mensual,
-    )
 
     hoy = datetime.now()
     # YTD = hasta mes-1 si es año actual (el mes corriente suele estar incompleto)
@@ -107,20 +177,18 @@ def _hero_global_empresa(year: int):
         ytd_hasta = 12
         meses_ytd = list(range(1, 13))
 
-    # Consolidado YTD sin filtros (toda la empresa)
-    res = contribucion_total(year=year, meses=meses_ytd)
-    if not res:
-        st.warning(f"⏳ Sin datos consolidados para {year}.")
+    # Consolidado YTD desde el P&L Drive (fuente oficial corporativa)
+    res = _consolidado_pyl_drive(year=year, meses=meses_ytd, escenario="FCST")
+    if not res or not res.get("venta"):
+        st.warning(f"⏳ Sin datos consolidados para {year} en el P&L Drive.")
         return
 
-    df_costos_ytd = cargar_costos_operativos(year, meses_ytd, escenario="FCST")
-    df_gav_ytd = cargar_gav_corporativo(year, meses_ytd, escenario="FCST")
-    costo_op_ytd = float(df_costos_ytd["monto"].sum()) if not df_costos_ytd.empty else 0
-    gav_ytd = float(df_gav_ytd["monto"].sum()) if not df_gav_ytd.empty else 0
     venta_ytd = res["venta"]
     contrib_ytd = res["contribucion"]
-    ebit_ytd = contrib_ytd - costo_op_ytd - gav_ytd
-    ebit_pct_ytd = (ebit_ytd / venta_ytd * 100) if venta_ytd else 0
+    costo_op_ytd = res["gasto_operativo"]
+    gav_ytd = res["gasto_gav"]
+    ebit_ytd = res["ebit"]
+    ebit_pct_ytd = res["ebit_pct"]
 
     # ─── Card hero ────────────────────────────────────────────────
     st.markdown(
@@ -130,24 +198,28 @@ def _hero_global_empresa(year: int):
         f'text-transform:uppercase;">🏢 Vista consolidada UnionX · YTD {year}</div>'
         f'<div style="font-size:0.85rem;opacity:0.85;margin-top:4px;">'
         f'Ene → {MESES_SHORT.get(ytd_hasta, str(ytd_hasta))} {year} · '
-        f'todos los canales · todos los KAMs · todas las LNs · '
-        f'fuente: KAM oficial + P&L Drive (FCST)</div>'
+        f'fuente: <strong>P&L Drive (FCST oficial)</strong> · '
+        f'todos los canales, KAMs y LNs</div>'
         f'</div>',
         unsafe_allow_html=True,
     )
 
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("💰 Venta REAL", f"${_fmt_clp(venta_ytd / 1_000_000)} MM")
+    k1.metric("💰 Venta", f"${_fmt_clp(venta_ytd / 1_000_000)} MM",
+                help="kpi=VENTA del P&L Drive (FCST). Suma todos los canales.")
     k2.metric("📈 Margen Contrib.",
                 f"${_fmt_clp(contrib_ytd / 1_000_000)} MM",
-                delta=_fmt_pct(res.get("mc_pct", 0)))
+                delta=_fmt_pct(res.get("mc_pct", 0)),
+                help="kpi=CONTRIB del P&L Drive = Venta − Costo Venta directo. "
+                     "(El MC del Sheet KAM puede ser ~12% menor por canales sin asignar.)")
     k3.metric("⚙️ Costo Operativo",
-                f"${_fmt_clp(costo_op_ytd / 1_000_000)} MM")
+                f"${_fmt_clp(costo_op_ytd / 1_000_000)} MM",
+                help="kpi=GASTO + area=OPERACIONES del P&L Drive.")
     k4.metric("🏢 GAV Puro",
                 f"${_fmt_clp(gav_ytd / 1_000_000)} MM",
-                help="Áreas del P&L Drive EXCLUYENDO OPERACIONES, LOGISTICA, "
-                     "POSTVENTA (esas ya están en Costo Operativo)")
-    k5.metric("🎯 EBIT estimado",
+                help="kpi=GASTO del P&L Drive EXCLUYENDO area=OPERACIONES "
+                     "(esa ya está en Costo Operativo).")
+    k5.metric("🎯 EBIT",
                 f"${_fmt_clp(ebit_ytd / 1_000_000)} MM",
                 delta=_fmt_pct(ebit_pct_ytd))
 
@@ -207,65 +279,73 @@ def _hero_global_empresa(year: int):
 
 def _calcular_tendencia_ebit_anual(year: int) -> pd.DataFrame:
     """Devuelve DataFrame con EBIT mes a mes mezclando:
-      - Real: meses con FCST cerrado en el P&L (mes < mes actual del año en curso)
+      - Real: meses con FCST cerrado en el P&L Drive (mes < mes actual)
       - Proyectado: meses futuros usando FCST de venta + ratios historicos
+
+    FUENTE OFICIAL: P&L Drive (control_gestion.parquet) con escenario FCST.
+    Misma fuente que el hero — consistente con el agregado consolidado.
 
     Cols: [mes, mes_label, tipo, venta_mm, contrib_mm, costo_op_mm, gav_mm,
             ebit_mm]
     """
-    from views._ops_forecast_costo_helper import (
-        cargar_fcst_venta_mensual,
-        cargar_costo_op_real_mensual,
-    )
+    from views._ops_forecast_costo_helper import cargar_fcst_venta_mensual
 
     hoy = datetime.now()
     mes_actual = hoy.month if year == hoy.year else 13
 
-    # Costo OP real mes a mes (del P&L Drive con escenario FCST)
-    df_costo_real = cargar_costo_op_real_mensual(year=year)
-    # En MILES de CLP (parquet original). Convertir a CLP enteros (× 1000).
-    if not df_costo_real.empty:
-        df_costo_real["costo_op_clp"] = df_costo_real["costo_op_total"] * 1000
+    # YTD real para calcular MC% promedio (sirve de fallback para meses
+    # futuros sin venta FCST)
+    meses_ytd = list(range(1, max(1, mes_actual)))
+    res_ytd = _consolidado_pyl_drive(year=year, meses=meses_ytd,
+                                         escenario="FCST")
+    mc_pct_ytd = (res_ytd.get("mc_pct", 30) / 100) if res_ytd else 0.30
 
-    # Venta FCST mes a mes (del fcst_eerr.parquet)
+    # Venta FCST mes a mes (del fcst_eerr.parquet — venta corporativa)
+    # Sirve para proyectar meses sin cierre en el P&L Drive
     venta_fcst = cargar_fcst_venta_mensual(year=year)
 
     rows = []
     for m in range(1, 13):
         es_real = m < mes_actual
-        # Ventas/MC del mes: usar contribucion_total filtrada por ese mes
-        res_m = contribucion_total(year=year, meses=[m])
-        venta_m = res_m.get("venta", 0) if res_m else 0
-        contrib_m = res_m.get("contribucion", 0) if res_m else 0
-        # Para meses proyectados: si no hay venta KAM aún, usar FCST de venta
-        # y estimar MC con ratio MC% del YTD real
-        if not es_real or venta_m == 0:
-            venta_fcst_m = float(venta_fcst.get(m, 0))
-            if venta_fcst_m > 0:
-                venta_m = venta_fcst_m
-                # MC% proyectado: usar ratio YTD real
-                meses_ytd = list(range(1, max(1, hoy.month)))
-                res_ytd = contribucion_total(year=year, meses=meses_ytd)
-                mc_pct_ytd = res_ytd.get("mc_pct", 0) / 100 if res_ytd else 0.30
-                contrib_m = venta_m * mc_pct_ytd
+        # Mes "real" si el P&L Drive tiene FCST cerrado Y el mes ya pasó
+        res_m = _consolidado_pyl_drive(year=year, meses=[m],
+                                            escenario="FCST")
 
-        # Costo OP del mes
-        if not df_costo_real.empty and m in df_costo_real["mes"].values:
-            costo_op_m = float(df_costo_real[df_costo_real["mes"] == m]
-                                ["costo_op_clp"].iloc[0])
+        if es_real and res_m and res_m.get("venta", 0) > 0:
+            tipo = "Real"
+            venta_m = res_m["venta"]
+            contrib_m = res_m["contribucion"]
+            costo_op_m = res_m["gasto_operativo"]
+            gav_m = res_m["gasto_gav"]
         else:
-            costo_op_m = 0  # mes sin FCST cargado
+            # Proyectado: usar FCST de venta + MC% YTD + Costo OP/GAV del
+            # promedio mensual YTD
+            tipo = "Proyectado"
+            venta_fcst_m = float(venta_fcst.get(m, 0))
+            if venta_fcst_m == 0 and res_m:
+                # Si el Drive tiene FCST cargado para este mes futuro, usarlo
+                venta_fcst_m = res_m.get("venta", 0)
+            venta_m = venta_fcst_m
+            contrib_m = venta_m * mc_pct_ytd
 
-        # GAV del mes (proporcional a venta — proxy hasta que tengamos GAV mensual)
-        df_gav_m = cargar_gav_corporativo(year, [m], escenario="FCST")
-        gav_m = float(df_gav_m["monto"].sum()) if not df_gav_m.empty else 0
+            # Costo OP y GAV: si el Drive tiene FCST de gasto cargado, usarlo;
+            # sino, usar el promedio YTD
+            if res_m and res_m.get("gasto_total", 0) > 0:
+                costo_op_m = res_m["gasto_operativo"]
+                gav_m = res_m["gasto_gav"]
+            elif res_ytd and len(meses_ytd) > 0:
+                costo_op_m = res_ytd["gasto_operativo"] / len(meses_ytd)
+                gav_m = res_ytd["gasto_gav"] / len(meses_ytd)
+            else:
+                costo_op_m = 0
+                gav_m = 0
 
         ebit_m = contrib_m - costo_op_m - gav_m
 
         rows.append({
             "mes": m,
             "mes_label": MESES_SHORT.get(m, str(m)),
-            "tipo": "Real" if es_real else "Proyectado",
+            "tipo": tipo,
             "venta_mm": venta_m / 1_000_000,
             "contrib_mm": contrib_m / 1_000_000,
             "costo_op_mm": costo_op_m / 1_000_000,
@@ -421,6 +501,21 @@ def render():
     _year_hero = _year_actual if _year_actual in dims["anios"] else dims["anios"][-1]
     with st.spinner("📊 Cargando vista consolidada empresa..."):
         _hero_global_empresa(_year_hero)
+
+    # Banner aclaratorio de las dos fuentes
+    st.markdown(
+        '<div style="background:#FFFBEB;border-left:4px solid #F59E0B;'
+        'padding:10px 14px;border-radius:6px;margin:8px 0 14px;'
+        'font-size:0.85rem;color:#78350F;">'
+        '<strong>🔬 Dos fuentes de datos:</strong> los <strong>totales empresa</strong> '
+        '(hero arriba y tab Proyección) vienen del <strong>P&L Drive Control de '
+        'Gestión (oficial)</strong>. Los <strong>desgloses por canal/KAM/LN</strong> '
+        '(tabla P&L abajo) vienen del <strong>Sheet KAM</strong> que puede tener '
+        '~12% menos venta (canales sin asignar a KAM). Si los números totales '
+        'parecen no calzar, es por eso. El EBIT del hero es el oficial.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.divider()
 

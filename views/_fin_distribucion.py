@@ -46,7 +46,12 @@ DRIVER_DEFAULT_POR_CC = {
     "REMUNERACIONES":                "pedidos",
     "BENEFICIOS PERSONAL":           "pedidos",
     "HONORARIOS":                    "venta",
-    "ARRIENDOS":                     "unidades",   # mejor proxy de m³ ocupado
+    # FIX 2026-05 (Andres): cambiado de 'unidades' a 'venta'. El driver
+    # 'unidades' asignaba 27% del arriendo a Mercado Libre (porque mueve
+    # 27% de unidades), lo cual sobreestima — ML mueve unidades chicas
+    # rotativas, no ocupa 27% del espacio fisico real. 'venta' es mas
+    # conservador hasta que tengamos data real de m³ x dias.
+    "ARRIENDOS":                     "venta",
     "INSUMOS":                       "unidades",
     "SEGUROS":                       "venta",
     "MOVILIZACION TRANSPORTE Y COLACION": "pedidos",
@@ -102,35 +107,67 @@ def driver_default(centro_costo: str) -> str:
 # ============================================================
 # CARGA DE INPUTS
 # ============================================================
-@st.cache_data(ttl=600, show_spinner=False)
+def _mtime_pyl_drive() -> float:
+    """Mtime del P&L Drive (para invalidar cache cuando el cron actualiza)."""
+    try:
+        return CONTROL_GESTION_PARQUET.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        return 0.0
+
+
 def cargar_costos_operativos(year: int, meses: list[int] | None = None,
                               escenario: str = "FCST",
                               incluir_cuenta_analitica: bool = False) -> pd.DataFrame:
-    """Devuelve costos agregados en valores POSITIVOS y **CLP enteros**
-    (parquet viene en miles → se multiplica × 1000 para alinear con KAM).
+    """Devuelve costos operativos del P&L Drive (Control de Gestion)
+    filtrados a area=OPERACIONES, en valores POSITIVOS y CLP enteros.
 
-    Si `incluir_cuenta_analitica=True`, agrupa también por cuenta_analitica
-    (desglose más fino: REMUNERACIONES > ADMINISTRATIVO, GERENCIA, etc.).
+    FIX 2026-05 (Andres): antes leia data/operaciones/costo_operativo.parquet
+    que tenia clasificacion rota (mezclaba GRUPO ETER, FIN/ADMIN, UNIONX
+    bajo Costo Op + duplicaba con el GAV). Ahora lee la misma fuente que
+    la vista de Operaciones (control_gestion.parquet con area=OPERACIONES),
+    consistente con el fix de ops_costo_operativo.py.
+
+    Si `incluir_cuenta_analitica=True`, agrupa tambien por cuenta_analitica.
     """
-    if not COSTO_OP_PARQUET.exists():
+    return _cargar_costos_operativos_cached(
+        year, tuple(meses) if meses else None, escenario,
+        incluir_cuenta_analitica, _mtime_pyl_drive(),
+    )
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cargar_costos_operativos_cached(year: int,
+                                        meses: tuple | None,
+                                        escenario: str,
+                                        incluir_cuenta_analitica: bool,
+                                        _mtime_key: float) -> pd.DataFrame:
+    """Cacheado: invalidado cuando control_gestion.parquet cambia."""
+    if not CONTROL_GESTION_PARQUET.exists():
         return pd.DataFrame()
-    df = pd.read_parquet(COSTO_OP_PARQUET)
+    df = pd.read_parquet(CONTROL_GESTION_PARQUET)
     df = df[(df["year"] == year) &
             (df["escenario"] == escenario) &
-            (df["kpi"] == "GASTO")].copy()
+            (df["kpi"] == "GASTO") &
+            (df["area"] == "OPERACIONES")].copy()
     if meses:
-        df = df[df["month"].isin(meses)]
+        df = df[df["month"].isin(list(meses))]
     if df.empty:
         return pd.DataFrame()
 
-    # Convertir a positivo Y a CLP enteros (parquet viene en miles)
-    df["valor_pos"] = df["valor"].abs() * 1000
-
+    # FIX (Andres): sumar con SIGNO por (sub_area, CC, tipo_costo, [cta])
+    # y tomar abs del NETO. Los positivos en el parquet son recuperos
+    # que restan al neto — usar .abs() fila por fila inflaba el total.
     group_cols = ["sub_area", "centro_costo", "tipo_costo"]
     if incluir_cuenta_analitica and "cuenta_analitica" in df.columns:
         group_cols.append("cuenta_analitica")
 
-    agg = df.groupby(group_cols, as_index=False).agg(monto=("valor_pos", "sum"))
+    # Suma con signo en miles CLP del parquet
+    agg = df.groupby(group_cols, as_index=False, dropna=False).agg(
+        _suma_periodo=("valor", "sum"),
+    )
+    # abs del neto + convertir miles -> CLP enteros (× 1000)
+    agg["monto"] = agg["_suma_periodo"].abs() * 1000
+    agg = agg.drop(columns=["_suma_periodo"])
     agg = agg[agg["monto"] > 0].copy()
     agg = agg.sort_values("monto", ascending=False).reset_index(drop=True)
     return agg
