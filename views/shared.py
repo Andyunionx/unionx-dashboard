@@ -86,19 +86,18 @@ def _read_historico_parquet():
     return df
 
 
-@st.cache_resource(ttl=21600, show_spinner="Cargando datos (primera vez ~60s)…")
+@st.cache_resource(ttl=1800, show_spinner="Cargando datos (primera vez ~60s)…")
 def get_local_db_path():
-    """SQLite local combinando histórico (parquet) + live (Turso). TTL 6h.
+    """SQLite local combinando histórico (parquet) + live (Turso). TTL 30min.
 
     Si Turso es lento desde Streamlit Cloud, el build inicial puede tomar
-    1-2 min. TTL alto evita reconstruir varias veces al día.
+    1-2 min. TTL 30min: mismo cron del parquet mes_actual.
     """
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
     import time as _t
     build_started = _t.time()
-    BUILD_MAX_SECONDS = 360  # corta el loop de chunks si demora >6 min total
 
     print(f"[Local DB] Build {datetime.now()}", flush=True)
 
@@ -172,58 +171,36 @@ def get_local_db_path():
         df_hist[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
         print(f"[Local DB] Histórico insertado OK", flush=True)
 
-    # Mes actual desde parquet pre-generado por GH Actions cada hora.
-    # Esto reemplaza los chunks live a Turso (que sufren ReadTimeout por latencia EU↔US).
-    # Si el parquet no existe (primera vez después de mergear este código), fallback a Turso.
+    # Mes actual: SIEMPRE desde Turso para reflejar últimos cambios (NCs retro, facturas
+    # manuales, inserts del Task Scheduler de 5min). Una sola query ~4-5s para ~11K filas.
+    # Parquet pre-generado por GH Actions queda como fallback si Turso falla.
     turso_rows_loaded = 0
     chunks_turso = 0
     turso_error = None
-    if MES_ACTUAL_PARQUET.exists():
-        try:
-            df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
-            print(f"[Local DB] Mes actual parquet: {len(df_mes):,} filas", flush=True)
-            df_mes[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
-            turso_rows_loaded = len(df_mes)
+    try:
+        result = turso_query(
+            f"SELECT {cols_csv} FROM ventas WHERE fecha_venta >= '{CUTOFF_HISTORICO}'"
+        )
+        rows = result['rows']
+        if rows:
+            flat = [tuple(c.get('value') if isinstance(c, dict) else c for c in r) for r in rows]
+            conn.executemany(insert_sql, flat)
+            conn.commit()
+            turso_rows_loaded = len(rows)
             chunks_turso = 1
-            print(f"[Local DB] Mes actual insertado OK", flush=True)
-        except Exception as e:
-            turso_error = f"mes_actual_parquet: {type(e).__name__}: {str(e)[:120]}"
-            print(f"[Local DB][WARN] {turso_error}", flush=True)
-    else:
-        # Fallback legacy: chunks live a Turso
-        print(f"[Local DB] {MES_ACTUAL_PARQUET.name} no existe — fallback chunks Turso", flush=True)
-        chunk_size = 5000
-        last_rowid = 0
-        try:
-            while True:
-                if _t.time() - build_started > BUILD_MAX_SECONDS:
-                    turso_error = f"timeout build > {BUILD_MAX_SECONDS}s"
-                    print(f"[Local DB][ABORT] {turso_error} tras {chunks_turso} chunks", flush=True)
-                    break
-                result = turso_query(
-                    f"SELECT rowid, {cols_csv} FROM ventas "
-                    f"WHERE fecha_venta >= '{CUTOFF_HISTORICO}' AND rowid > {last_rowid} "
-                    f"ORDER BY rowid LIMIT {chunk_size}"
-                )
-                rows = result['rows']
-                if not rows:
-                    break
-                flat = []
-                for r in rows:
-                    vals = [c.get('value') if isinstance(c, dict) else c for c in r]
-                    last_rowid = int(vals[0])
-                    flat.append(tuple(vals[1:]))
-                conn.executemany(insert_sql, flat)
-                conn.commit()
-                chunks_turso += 1
-                turso_rows_loaded += len(rows)
-                print(f"[Local DB] Turso chunk {chunks_turso}: +{len(rows):,} filas (total {turso_rows_loaded:,})", flush=True)
-                if len(rows) < chunk_size:
-                    break
-            print(f"[Local DB] Turso live OK: {chunks_turso} chunks, {turso_rows_loaded:,} filas", flush=True)
-        except Exception as e:
-            turso_error = f"{type(e).__name__}: {str(e)[:120]}"
-            print(f"[Local DB][WARN] Turso fallo después de {chunks_turso} chunks: {turso_error}", flush=True)
+            print(f"[Local DB] Mes actual Turso: {len(rows):,} filas", flush=True)
+    except Exception as e:
+        turso_error = f"{type(e).__name__}: {str(e)[:120]}"
+        print(f"[Local DB][WARN] Turso fallo ({turso_error}), intentando parquet fallback...", flush=True)
+        if MES_ACTUAL_PARQUET.exists():
+            try:
+                df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
+                df_mes[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=500, method='multi')
+                turso_rows_loaded = len(df_mes)
+                chunks_turso = 1
+                print(f"[Local DB] Fallback parquet: {len(df_mes):,} filas (hasta {df_mes['fecha_venta'].max()})", flush=True)
+            except Exception as e2:
+                print(f"[Local DB][WARN] Fallback parquet también falló: {type(e2).__name__}", flush=True)
 
     # dim_productos + metadata (con fallback)
     cols_p = ['sku', 'producto', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
@@ -335,7 +312,7 @@ def _filtros_to_key(f: dict | None) -> str:
     return json.dumps(f, sort_keys=True, default=str)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _cached_kpis_inner(desde, hasta, key_filtros):
     import json
     f = json.loads(key_filtros) if key_filtros else {}
@@ -346,17 +323,17 @@ def cached_kpis(desde, hasta, filtros: dict | None = None):
     return _cached_kpis_inner(desde, hasta, _filtros_to_key(filtros))
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def cached_mensual():
     return get_service().get_tendencia_mensual_yoy()
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def cached_diaria(anio, mes):
     return get_service().get_tendencia_diaria_yoy(anio, mes)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _cached_semanal_inner(anio, mes, key_filtros):
     import json
     f = json.loads(key_filtros) if key_filtros else {}
@@ -367,7 +344,7 @@ def cached_semanal(anio, mes, filtros: dict | None = None):
     return _cached_semanal_inner(anio, mes, _filtros_to_key(filtros))
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _cached_canales_inner(desde, hasta, key_filtros):
     import json
     f = json.loads(key_filtros) if key_filtros else {}
@@ -378,7 +355,7 @@ def cached_canales(desde, hasta, filtros: dict | None = None):
     return _cached_canales_inner(desde, hasta, _filtros_to_key(filtros))
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _cached_top_skus_inner(desde, hasta, key_filtros, limit):
     import json
     f = json.loads(key_filtros) if key_filtros else {}
