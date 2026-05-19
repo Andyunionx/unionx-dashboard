@@ -1,0 +1,102 @@
+name: "Sync KAM Drive (Analisis de Resultados)"
+
+# Extractor del Sheet KAM "Analisis de Resultados" del Drive de UnionX.
+# Es la fuente oficial de venta + MC desglosada por canal/KAM/LN.
+#
+# En produccion (Streamlit Cloud), la app lee el Sheet en VIVO via
+# gcp_service_account (cache TTL 30 min). Este cron mantiene el
+# parquet local como FALLBACK por si:
+#   - Las credentials caen
+#   - El Sheet se mueve o cambia permisos
+#   - La API de Google rate-limitea
+#
+# Sheet ID: 1O7bRbY3v7Wc8atMu2I4PJ-pgA_Sy0-g57-iz0CSu4m4
+# Output: data/finanzas/contribucion_kam.parquet
+
+on:
+  schedule:
+    # 10:00 UTC = 07:00 Chile (verano) / 06:00 (invierno)
+    # 1h despues del sync_pyl_drive (que corre 09:00 UTC)
+    - cron: '0 10 * * *'
+  workflow_dispatch:  # trigger manual desde GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  sync_kam_drive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow gspread google-auth
+
+      - name: Restaurar credentials.json desde secret
+        id: restore_creds
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+            echo "OK credentials.json creado"
+          else
+            echo "ERROR: secret GOOGLE_CREDENTIALS_JSON no existe"
+            exit 1
+          fi
+
+      - name: Extract KAM Contribucion (Sheet Drive)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_kam_contribucion.py
+
+      - name: Limpiar credentials
+        if: always()
+        run: rm -f credentials.json
+
+      - name: Diagnostico (que se genero)
+        if: always()
+        run: |
+          echo "=== Archivo generado ==="
+          f="data/finanzas/contribucion_kam.parquet"
+          if [ -f "$f" ]; then
+            size=$(stat -c%s "$f" 2>/dev/null || echo "?")
+            mod=$(stat -c%y "$f" 2>/dev/null || echo "?")
+            echo "OK $f -- ${size} bytes -- ${mod}"
+          else
+            echo "FALTA $f"
+          fi
+
+      - name: Commit snapshot si cambio
+        if: always()
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions KAM Drive Sync"
+          # Pull latest para evitar conflictos con otros workflows
+          git pull --rebase origin main || true
+          git add data/finanzas/contribucion_kam.parquet || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios para commitear"
+          else
+            git commit -m "KAM Drive snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+            # Retry push (otros workflows pueden estar pusheando)
+            for i in 1 2 3; do
+              if git push; then
+                echo "Push OK (intento $i)"
+                break
+              fi
+              echo "Push fallo (intento $i), reintentando..."
+              git pull --rebase origin main || true
+              sleep 5
+            done
+          fi
