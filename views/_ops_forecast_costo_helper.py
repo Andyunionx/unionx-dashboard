@@ -204,21 +204,17 @@ def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataF
         meses_cerrados = meses_disp[:meses_atras]
 
     df = df[df["month"].isin(meses_cerrados)].copy()
-    df["valor_pos"] = df["valor"].abs()
-    n_meses_real = len(meses_cerrados)  # divisor real
+    n_meses_real = len(meses_cerrados)
 
-    # Sumar canales/LN por (CC, cta, tipo_costo, mes)
-    agg = (df.groupby(
-        ["centro_costo", "cuenta_analitica", "tipo_costo", "month"],
-        as_index=False, dropna=False)["valor_pos"].sum())
-    # FIX: promediar dividiendo siempre por N meses (no por meses en que
-    # aparece la cuenta). Si MEGACENTRO ARRIENDOS aparece 1 vez en 3
-    # meses con $11MM, el promedio mensual real es $11/3 = $3.7MM, no $11MM.
-    prom = (agg.groupby(
+    # FIX: sumar valor (con signo) por (CC, cta, tipo_costo) — los
+    # positivos (recuperos) restan al neto. NO usar .abs() fila por fila
+    # (eso inflaba el total cuando hay correcciones).
+    prom = (df.groupby(
         ["centro_costo", "cuenta_analitica", "tipo_costo"],
-        as_index=False, dropna=False)["valor_pos"].sum()
-        .rename(columns={"valor_pos": "_suma_periodo"}))
-    prom["costo_mensual_prom"] = prom["_suma_periodo"] / n_meses_real
+        as_index=False, dropna=False)["valor"].sum()
+        .rename(columns={"valor": "_suma_periodo"}))
+    # Ahora sí, abs del neto + dividir por N meses
+    prom["costo_mensual_prom"] = prom["_suma_periodo"].abs() / n_meses_real
     prom = prom.drop(columns=["_suma_periodo"])
     prom = prom[prom["costo_mensual_prom"] > 0].copy()
     return prom
@@ -232,7 +228,11 @@ def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
     """Devuelve costo OP REAL por mes (sumando todos los CCs).
 
     Returns DataFrame con cols [mes, costo_op_fijo, costo_op_variable,
-    costo_op_total] en miles de CLP. Solo meses con datos FCST > 0.
+    costo_op_total] en miles de CLP (valores POSITIVOS).
+
+    IMPORTANTE: el parquet tiene gastos NEGATIVOS y algunos valores
+    POSITIVOS (correcciones/recuperos que restan al gasto). NO usar
+    .abs() fila por fila — sumar primero y tomar abs del TOTAL.
     """
     if not PYL_PARQUET.exists():
         return pd.DataFrame()
@@ -245,11 +245,13 @@ def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
     ].copy()
     if df.empty:
         return pd.DataFrame()
-    df["valor_pos"] = df["valor"].abs()
+    # Sumar valor (con signo), luego tomar abs en el TOTAL.
+    # Los positivos (recuperos) restan al neto.
     agg = (df.groupby(["month", "tipo_costo"], as_index=False, dropna=False)
-             ["valor_pos"].sum())
+             ["valor"].sum())
+    agg["valor"] = agg["valor"].abs()  # ahora sí, sobre la suma neta
     pivot = agg.pivot(index="month", columns="tipo_costo",
-                       values="valor_pos").fillna(0).reset_index()
+                       values="valor").fillna(0).reset_index()
     if "FIJO" not in pivot.columns:
         pivot["FIJO"] = 0
     if "VARIABLE" not in pivot.columns:
@@ -258,7 +260,6 @@ def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
     pivot["costo_op_variable"] = pivot["VARIABLE"]
     pivot["costo_op_total"] = pivot["FIJO"] + pivot["VARIABLE"]
     pivot["mes"] = pivot["month"]
-    # Solo meses con datos (costo total > 0)
     pivot = pivot[pivot["costo_op_total"] > 0].copy()
     return pivot[["mes", "costo_op_fijo", "costo_op_variable",
                    "costo_op_total"]]
