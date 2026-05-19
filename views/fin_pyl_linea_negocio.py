@@ -85,6 +85,205 @@ def _label_dim(d: str) -> str:
 
 
 # ============================================================
+# HERO GLOBAL EMPRESA (sin filtros, KPIs + tendencia)
+# ============================================================
+def _hero_global_empresa(year: int):
+    """Bloque al tope de la vista: KPIs consolidados YTD del año actual
+    + mini-grafico tendencia mensual EBIT (real + proyectado a Dic).
+    Independiente de los filtros — siempre muestra el agregado empresa.
+    """
+    import plotly.graph_objects as go
+    from views._ops_forecast_costo_helper import (
+        cargar_fcst_venta_mensual,
+        cargar_costo_op_real_mensual,
+    )
+
+    hoy = datetime.now()
+    # YTD = hasta mes-1 si es año actual (el mes corriente suele estar incompleto)
+    if year == hoy.year:
+        ytd_hasta = max(1, hoy.month - 1)
+        meses_ytd = list(range(1, ytd_hasta + 1))
+    else:
+        ytd_hasta = 12
+        meses_ytd = list(range(1, 13))
+
+    # Consolidado YTD sin filtros (toda la empresa)
+    res = contribucion_total(year=year, meses=meses_ytd)
+    if not res:
+        st.warning(f"⏳ Sin datos consolidados para {year}.")
+        return
+
+    df_costos_ytd = cargar_costos_operativos(year, meses_ytd, escenario="FCST")
+    df_gav_ytd = cargar_gav_corporativo(year, meses_ytd, escenario="FCST")
+    costo_op_ytd = float(df_costos_ytd["monto"].sum()) if not df_costos_ytd.empty else 0
+    gav_ytd = float(df_gav_ytd["monto"].sum()) if not df_gav_ytd.empty else 0
+    venta_ytd = res["venta"]
+    contrib_ytd = res["contribucion"]
+    ebit_ytd = contrib_ytd - costo_op_ytd - gav_ytd
+    ebit_pct_ytd = (ebit_ytd / venta_ytd * 100) if venta_ytd else 0
+
+    # ─── Card hero ────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="background:linear-gradient(135deg,#064E3B 0%,#022C22 100%);'
+        f'padding:18px 24px;border-radius:12px;color:white;margin-bottom:16px;">'
+        f'<div style="font-size:0.75rem;letter-spacing:1.5px;opacity:0.7;'
+        f'text-transform:uppercase;">🏢 Vista consolidada UnionX · YTD {year}</div>'
+        f'<div style="font-size:0.85rem;opacity:0.85;margin-top:4px;">'
+        f'Ene → {MESES_SHORT.get(ytd_hasta, str(ytd_hasta))} {year} · '
+        f'todos los canales · todos los KAMs · todas las LNs · '
+        f'fuente: KAM oficial + P&L Drive (FCST)</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    k1, k2, k3, k4, k5 = st.columns(5)
+    k1.metric("💰 Venta REAL", f"${_fmt_clp(venta_ytd / 1_000_000)} MM")
+    k2.metric("📈 Margen Contrib.",
+                f"${_fmt_clp(contrib_ytd / 1_000_000)} MM",
+                delta=_fmt_pct(res.get("mc_pct", 0)))
+    k3.metric("⚙️ Costo Operativo",
+                f"${_fmt_clp(costo_op_ytd / 1_000_000)} MM")
+    k4.metric("🏢 GAV Puro",
+                f"${_fmt_clp(gav_ytd / 1_000_000)} MM",
+                help="Áreas del P&L Drive EXCLUYENDO OPERACIONES, LOGISTICA, "
+                     "POSTVENTA (esas ya están en Costo Operativo)")
+    k5.metric("🎯 EBIT estimado",
+                f"${_fmt_clp(ebit_ytd / 1_000_000)} MM",
+                delta=_fmt_pct(ebit_pct_ytd))
+
+    # ─── Mini tendencia mensual EBIT: Real + Proyectado ───────────
+    try:
+        df_trend = _calcular_tendencia_ebit_anual(year)
+        if not df_trend.empty:
+            fig = go.Figure()
+            df_real = df_trend[df_trend["tipo"] == "Real"]
+            df_proy = df_trend[df_trend["tipo"] == "Proyectado"]
+            # Línea real (sólida)
+            fig.add_trace(go.Scatter(
+                x=df_real["mes_label"], y=df_real["ebit_mm"],
+                mode="lines+markers",
+                name="Real (FCST cerrado)",
+                line=dict(color="#16A34A", width=3),
+                marker=dict(size=8),
+                hovertemplate="<b>%{x}</b><br>EBIT: $%{y:.1f} MM<extra></extra>",
+            ))
+            # Línea proyectada (punteada). Si hay ambos, unir con la última real.
+            if not df_proy.empty:
+                # Concatenar la última real al inicio del proyectado para enlazar
+                if not df_real.empty:
+                    ultima_real = df_real.iloc[-1:].copy()
+                    df_proy_link = pd.concat([ultima_real, df_proy],
+                                              ignore_index=True)
+                else:
+                    df_proy_link = df_proy
+                fig.add_trace(go.Scatter(
+                    x=df_proy_link["mes_label"], y=df_proy_link["ebit_mm"],
+                    mode="lines+markers",
+                    name="Proyectado (FCST)",
+                    line=dict(color="#F59E0B", width=2, dash="dot"),
+                    marker=dict(size=7, symbol="diamond"),
+                    hovertemplate="<b>%{x}</b><br>EBIT proy: $%{y:.1f} MM<extra></extra>",
+                ))
+            fig.add_hline(y=0, line_color="#0F172A", line_width=1.5,
+                            line_dash="solid")
+            fig.update_layout(
+                height=240,
+                margin=dict(l=10, r=10, t=30, b=10),
+                title=dict(
+                    text=f"Tendencia EBIT mensual {year} · Real + Proyectado",
+                    font=dict(size=13, color="#1E293B"),
+                ),
+                xaxis_title="", yaxis_title="MM CLP",
+                plot_bgcolor="white",
+                xaxis=dict(gridcolor="#F1F5F9"),
+                yaxis=dict(gridcolor="#F1F5F9"),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                              xanchor="right", x=1, font=dict(size=10)),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.caption(f"_(Tendencia mensual no disponible: {e})_")
+
+
+def _calcular_tendencia_ebit_anual(year: int) -> pd.DataFrame:
+    """Devuelve DataFrame con EBIT mes a mes mezclando:
+      - Real: meses con FCST cerrado en el P&L (mes < mes actual del año en curso)
+      - Proyectado: meses futuros usando FCST de venta + ratios historicos
+
+    Cols: [mes, mes_label, tipo, venta_mm, contrib_mm, costo_op_mm, gav_mm,
+            ebit_mm]
+    """
+    from views._ops_forecast_costo_helper import (
+        cargar_fcst_venta_mensual,
+        cargar_costo_op_real_mensual,
+    )
+
+    hoy = datetime.now()
+    mes_actual = hoy.month if year == hoy.year else 13
+
+    # Costo OP real mes a mes (del P&L Drive con escenario FCST)
+    df_costo_real = cargar_costo_op_real_mensual(year=year)
+    # En MILES de CLP (parquet original). Convertir a CLP enteros (× 1000).
+    if not df_costo_real.empty:
+        df_costo_real["costo_op_clp"] = df_costo_real["costo_op_total"] * 1000
+
+    # Venta FCST mes a mes (del fcst_eerr.parquet)
+    venta_fcst = cargar_fcst_venta_mensual(year=year)
+
+    rows = []
+    for m in range(1, 13):
+        es_real = m < mes_actual
+        # Ventas/MC del mes: usar contribucion_total filtrada por ese mes
+        res_m = contribucion_total(year=year, meses=[m])
+        venta_m = res_m.get("venta", 0) if res_m else 0
+        contrib_m = res_m.get("contribucion", 0) if res_m else 0
+        # Para meses proyectados: si no hay venta KAM aún, usar FCST de venta
+        # y estimar MC con ratio MC% del YTD real
+        if not es_real or venta_m == 0:
+            venta_fcst_m = float(venta_fcst.get(m, 0))
+            if venta_fcst_m > 0:
+                venta_m = venta_fcst_m
+                # MC% proyectado: usar ratio YTD real
+                meses_ytd = list(range(1, max(1, hoy.month)))
+                res_ytd = contribucion_total(year=year, meses=meses_ytd)
+                mc_pct_ytd = res_ytd.get("mc_pct", 0) / 100 if res_ytd else 0.30
+                contrib_m = venta_m * mc_pct_ytd
+
+        # Costo OP del mes
+        if not df_costo_real.empty and m in df_costo_real["mes"].values:
+            costo_op_m = float(df_costo_real[df_costo_real["mes"] == m]
+                                ["costo_op_clp"].iloc[0])
+        else:
+            costo_op_m = 0  # mes sin FCST cargado
+
+        # GAV del mes (proporcional a venta — proxy hasta que tengamos GAV mensual)
+        df_gav_m = cargar_gav_corporativo(year, [m], escenario="FCST")
+        gav_m = float(df_gav_m["monto"].sum()) if not df_gav_m.empty else 0
+
+        ebit_m = contrib_m - costo_op_m - gav_m
+
+        rows.append({
+            "mes": m,
+            "mes_label": MESES_SHORT.get(m, str(m)),
+            "tipo": "Real" if es_real else "Proyectado",
+            "venta_mm": venta_m / 1_000_000,
+            "contrib_mm": contrib_m / 1_000_000,
+            "costo_op_mm": costo_op_m / 1_000_000,
+            "gav_mm": gav_m / 1_000_000,
+            "ebit_mm": ebit_m / 1_000_000,
+        })
+    df = pd.DataFrame(rows)
+    # Filtrar meses sin nada de info (venta=0 Y costo_op=0)
+    df = df[(df["venta_mm"] > 0) | (df["costo_op_mm"] > 0)].copy()
+    return df
+
+
+# Necesario para el hero (constante de meses cortos)
+MESES_SHORT = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+                7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
+
+
+# ============================================================
 # RENDER
 # ============================================================
 def render():
@@ -216,12 +415,21 @@ def render():
             f"de la app Finanzas."
         )
 
+    # ─── HERO GLOBAL EMPRESA (KPIs + tendencia, antes de filtros) ─────
+    # Año para el hero: el año actual (o el último disponible si no hay)
+    _year_actual = datetime.now().year
+    _year_hero = _year_actual if _year_actual in dims["anios"] else dims["anios"][-1]
+    with st.spinner("📊 Cargando vista consolidada empresa..."):
+        _hero_global_empresa(_year_hero)
+
+    st.divider()
+
     # ─── FILTROS (compactos, agrupados visualmente) ─────────────────────
     st.markdown(
         '<div style="background:#F8FAFC;padding:14px 18px;border-radius:10px;'
         'border:1px solid #E2E8F0;margin-bottom:14px;">'
         '<div style="font-weight:600;color:#475569;font-size:0.85rem;'
-        'margin-bottom:10px;">🎛️ FILTROS</div>',
+        'margin-bottom:10px;">🎛️ FILTROS · profundizá por dimensión</div>',
         unsafe_allow_html=True,
     )
 
@@ -496,13 +704,18 @@ def render():
     st.divider()
 
     # ─── Tabs ───────────────────────────────────────────────────────────
-    tab_pyl, tab_drivers, tab_detalle, tab_help, tab_roadmap = st.tabs([
+    tab_pyl, tab_proy, tab_drivers, tab_detalle, tab_help, tab_roadmap = st.tabs([
         "💰 P&L (7 líneas)",
+        "🔮 Proyección FCST",
         "🎚️ Drivers",
         "📋 Detalle",
         "ℹ️ Cómo se calcula",
         "🚀 Roadmap",
     ])
+
+    # ─── TAB PROYECCIÓN FCST ────────────────────────────────────────────
+    with tab_proy:
+        _render_tab_proyeccion_fcst(year)
 
     # ─── TAB DRIVERS ────────────────────────────────────────────────────
     with tab_drivers:
@@ -604,6 +817,20 @@ def render():
         else:
             html = _render_pyl_html(df_pyl_table)
             st.markdown(html, unsafe_allow_html=True)
+
+            # ─── Drill-down auto cuando hay filtros activos ────────
+            _render_drilldown_filtrado(
+                costo_op_drilldown=costo_op_drilldown,
+                gav_drilldown=gav_drilldown,
+                desglose=desglose,
+                canales_sel=canales_sel, kams_sel=kams_sel, lns_sel=lns_sel,
+                costo_op_asignado=costo_op_asignado,
+                gav_asignado=gav_asignado,
+                contrib_total=contrib_total,
+            )
+
+            # ─── Transparencia del GAV (áreas incluidas/excluidas) ─
+            _render_transparencia_gav(df_gav, year, meses_sel)
 
             # Expander con cálculo del Costo OP y GAV (cómo se distribuye)
             with st.expander("🔬 ¿Cómo se calculan Costo OP y GAV?",
@@ -1330,3 +1557,343 @@ def _render_alarma_calce(
             f'</div>',
             unsafe_allow_html=True,
         )
+
+
+# ============================================================
+# TAB PROYECCIÓN FCST (Ene-Dic mix Real + Proyectado)
+# ============================================================
+def _render_tab_proyeccion_fcst(year: int):
+    """Tabla mensual Ene→Dic mezclando real (meses con FCST cerrado en
+    P&L) + proyectado (resto del año basado en FCST de venta del Sheet
+    Drive + ratios YTD).
+    """
+    import plotly.graph_objects as go
+
+    st.markdown(f"### 🔮 Proyección anual {year} · Real + FCST")
+    st.caption(
+        "Vista del año completo. Meses **cerrados** muestran el dato real "
+        "(escenario FCST del Sheet P&L Drive). Meses **futuros** se proyectan "
+        "usando: (1) FCST de venta del P&L corporativo, (2) MC% promedio YTD, "
+        "(3) Costo OP del FCST si está cargado o promedio últimos 3 meses, "
+        "(4) GAV proporcional a venta. Cuando un mes se cierra en el Sheet "
+        "Drive, pasa automáticamente de Proyectado a Real."
+    )
+
+    df_trend = _calcular_tendencia_ebit_anual(year)
+    if df_trend.empty:
+        st.warning("⏳ Sin datos suficientes para proyectar el año.")
+        return
+
+    # ─── Tabla mensual ─────────────────────────────────────────────
+    df_show = df_trend.copy()
+    df_show["Mes"] = df_show["mes_label"]
+    df_show["Tipo"] = df_show["tipo"].apply(
+        lambda t: "🟢 Real" if t == "Real" else "🟡 Proy"
+    )
+    df_show["Venta (MM)"] = df_show["venta_mm"].round(1)
+    df_show["MC (MM)"] = df_show["contrib_mm"].round(1)
+    df_show["MC %"] = df_show.apply(
+        lambda r: round(r["contrib_mm"] / r["venta_mm"] * 100, 1)
+                   if r["venta_mm"] else 0, axis=1)
+    df_show["Costo OP (MM)"] = df_show["costo_op_mm"].round(1)
+    df_show["GAV (MM)"] = df_show["gav_mm"].round(1)
+    df_show["EBIT (MM)"] = df_show["ebit_mm"].round(1)
+    df_show["EBIT %"] = df_show.apply(
+        lambda r: round(r["ebit_mm"] / r["venta_mm"] * 100, 1)
+                   if r["venta_mm"] else 0, axis=1)
+    df_show = df_show[["Mes", "Tipo",
+                        "Venta (MM)", "MC (MM)", "MC %",
+                        "Costo OP (MM)", "GAV (MM)",
+                        "EBIT (MM)", "EBIT %"]]
+
+    # Fila total anual
+    total_row = pd.DataFrame([{
+        "Mes": "⬛ AÑO",
+        "Tipo": "Real + Proy",
+        "Venta (MM)": round(df_trend["venta_mm"].sum(), 1),
+        "MC (MM)": round(df_trend["contrib_mm"].sum(), 1),
+        "MC %": round(df_trend["contrib_mm"].sum()
+                       / df_trend["venta_mm"].sum() * 100, 1)
+                  if df_trend["venta_mm"].sum() else 0,
+        "Costo OP (MM)": round(df_trend["costo_op_mm"].sum(), 1),
+        "GAV (MM)": round(df_trend["gav_mm"].sum(), 1),
+        "EBIT (MM)": round(df_trend["ebit_mm"].sum(), 1),
+        "EBIT %": round(df_trend["ebit_mm"].sum()
+                         / df_trend["venta_mm"].sum() * 100, 1)
+                    if df_trend["venta_mm"].sum() else 0,
+    }])
+    df_show_full = pd.concat([df_show, total_row], ignore_index=True)
+
+    st.dataframe(
+        df_show_full,
+        use_container_width=True, hide_index=True, height=520,
+        column_config={
+            "Venta (MM)": st.column_config.NumberColumn(format="$ %.1f"),
+            "MC (MM)": st.column_config.NumberColumn(format="$ %.1f"),
+            "MC %": st.column_config.NumberColumn(format="%.1f%%"),
+            "Costo OP (MM)": st.column_config.NumberColumn(format="$ %.1f"),
+            "GAV (MM)": st.column_config.NumberColumn(format="$ %.1f"),
+            "EBIT (MM)": st.column_config.NumberColumn(format="$ %.1f"),
+            "EBIT %": st.column_config.NumberColumn(format="%.1f%%"),
+        },
+    )
+
+    st.markdown("---")
+
+    # ─── Resumen Real vs Proyectado ────────────────────────────────
+    real = df_trend[df_trend["tipo"] == "Real"]
+    proy = df_trend[df_trend["tipo"] == "Proyectado"]
+
+    col_r, col_p, col_t = st.columns(3)
+    with col_r:
+        st.markdown("#### 🟢 Real (YTD cerrado)")
+        st.metric("Meses", f"{len(real)}")
+        st.metric("Venta YTD", f"${_fmt_clp(real['venta_mm'].sum())} MM")
+        st.metric("EBIT YTD", f"${_fmt_clp(real['ebit_mm'].sum())} MM",
+                    delta=_fmt_pct(real["ebit_mm"].sum()
+                                    / real["venta_mm"].sum() * 100
+                                    if real["venta_mm"].sum() else 0))
+    with col_p:
+        st.markdown("#### 🟡 Proyectado (FCST futuro)")
+        st.metric("Meses", f"{len(proy)}")
+        st.metric("Venta FCST", f"${_fmt_clp(proy['venta_mm'].sum())} MM")
+        st.metric("EBIT FCST", f"${_fmt_clp(proy['ebit_mm'].sum())} MM",
+                    delta=_fmt_pct(proy["ebit_mm"].sum()
+                                    / proy["venta_mm"].sum() * 100
+                                    if proy["venta_mm"].sum() else 0))
+    with col_t:
+        st.markdown("#### ⬛ TOTAL año proyectado")
+        st.metric("Venta año", f"${_fmt_clp(df_trend['venta_mm'].sum())} MM")
+        st.metric("MC año", f"${_fmt_clp(df_trend['contrib_mm'].sum())} MM")
+        st.metric("EBIT año", f"${_fmt_clp(df_trend['ebit_mm'].sum())} MM",
+                    delta=_fmt_pct(df_trend["ebit_mm"].sum()
+                                    / df_trend["venta_mm"].sum() * 100
+                                    if df_trend["venta_mm"].sum() else 0))
+
+    # ─── Gráfico de barras apiladas Venta vs Costos ────────────────
+    st.markdown("---")
+    st.markdown("### 📊 Composición mensual: Venta · Costos · EBIT")
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name="MC", x=df_trend["mes_label"], y=df_trend["contrib_mm"],
+        marker_color="#16A34A",
+        text=[f"${v:.1f}" for v in df_trend["contrib_mm"]],
+        textposition="inside", insidetextfont=dict(color="white", size=10),
+    ))
+    fig.add_trace(go.Bar(
+        name="− Costo OP", x=df_trend["mes_label"],
+        y=-df_trend["costo_op_mm"],
+        marker_color="#DC2626",
+        text=[f"$({v:.1f})" for v in df_trend["costo_op_mm"]],
+        textposition="inside", insidetextfont=dict(color="white", size=10),
+    ))
+    fig.add_trace(go.Bar(
+        name="− GAV", x=df_trend["mes_label"],
+        y=-df_trend["gav_mm"],
+        marker_color="#F59E0B",
+        text=[f"$({v:.1f})" for v in df_trend["gav_mm"]],
+        textposition="inside", insidetextfont=dict(color="white", size=10),
+    ))
+    fig.add_trace(go.Scatter(
+        name="EBIT", x=df_trend["mes_label"], y=df_trend["ebit_mm"],
+        mode="lines+markers+text",
+        line=dict(color="#1E40AF", width=3),
+        marker=dict(size=10, color="#1E40AF",
+                      symbol=["circle" if t == "Real" else "diamond"
+                                for t in df_trend["tipo"]]),
+        text=[f"${v:.1f}" for v in df_trend["ebit_mm"]],
+        textposition="top center", textfont=dict(size=10, color="#1E40AF"),
+    ))
+    fig.update_layout(
+        height=440, barmode="relative",
+        margin=dict(l=20, r=20, t=30, b=20),
+        plot_bgcolor="white",
+        xaxis=dict(gridcolor="#F1F5F9"),
+        yaxis=dict(gridcolor="#F1F5F9", title="MM CLP"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02,
+                      xanchor="right", x=1),
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.caption(
+        "💡 Líneas con diamante en EBIT = mes proyectado. Círculo = mes real. "
+        "MC y Costo OP/GAV se superponen apiladas para visualizar cuánto del "
+        "MC consume cada bloque de costo."
+    )
+
+
+# ============================================================
+# TRANSPARENCIA GAV (banner + áreas incluidas/excluidas)
+# ============================================================
+def _render_transparencia_gav(df_gav: pd.DataFrame, year: int,
+                                 meses: list[int]):
+    """Banner + expander con las áreas que entran y se excluyen del GAV.
+    Hace visible que el GAV viene del Sheet P&L Drive y qué se descarta
+    para no duplicar con el Costo Operativo.
+    """
+    from views._fin_distribucion import (
+        AREAS_OPERATIVAS_EXCLUIR,
+        CONTROL_GESTION_PARQUET,
+    )
+
+    # Banner permanente
+    excluidas_str = " · ".join(sorted(AREAS_OPERATIVAS_EXCLUIR))
+    st.markdown(
+        f'<div class="pyl-banner">'
+        f'🏢 <strong>GAV puro</strong> = áreas del <strong>P&L Drive '
+        f'(Control de Gestión)</strong> EXCLUYENDO {{{excluidas_str}}}, '
+        f'porque esas áreas ya se computaron en Costo Operativo y se '
+        f'duplicarían. Distribución por driver (default = % venta).'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("🔍 Ver detalle: áreas que entran y se excluyen del GAV",
+                       expanded=False):
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("#### ✅ Áreas que SÍ entran al GAV")
+            if df_gav.empty:
+                st.info("Sin áreas con monto > 0 en el período.")
+            else:
+                df_in = df_gav.copy()
+                df_in["Monto (MM)"] = (df_in["monto"] / 1_000_000).round(1)
+                df_in = df_in[["area", "Monto (MM)"]].rename(
+                    columns={"area": "Área"})
+                st.dataframe(df_in, use_container_width=True,
+                              hide_index=True, height=240)
+                tot = df_gav["monto"].sum() / 1_000_000
+                st.markdown(f"**Total GAV puro:** `${tot:,.1f} MM`")
+
+        with c2:
+            st.markdown("#### 🚫 Áreas excluidas (ya en Costo OP)")
+            # Cargar las áreas operativas con sus montos para mostrar
+            # cuánto se "esconde" para no duplicar
+            try:
+                if CONTROL_GESTION_PARQUET.exists():
+                    df_ops = pd.read_parquet(CONTROL_GESTION_PARQUET)
+                    df_ops = df_ops[
+                        (df_ops["year"] == year)
+                        & (df_ops["month"].isin(meses))
+                        & (df_ops["escenario"] == "FCST")
+                        & (df_ops["kpi"] == "GASTO")
+                    ].copy()
+
+                    def _norm(a):
+                        if not a:
+                            return ""
+                        return (str(a).upper().strip()
+                                .replace("Ó", "O").replace("Á", "A")
+                                .replace("É", "E").replace("Í", "I")
+                                .replace("Ú", "U"))
+
+                    df_ops["area_norm"] = df_ops["area"].apply(_norm)
+                    df_ops = df_ops[
+                        df_ops["area_norm"].isin(AREAS_OPERATIVAS_EXCLUIR)
+                    ].copy()
+                    df_ops["valor_pos"] = df_ops["valor"].abs() * 1000
+                    df_ops_agg = (df_ops.groupby("area", as_index=False)
+                                    .agg(monto=("valor_pos", "sum")))
+                    df_ops_agg["Monto (MM)"] = (df_ops_agg["monto"] / 1_000_000).round(1)
+                    df_ops_agg = df_ops_agg[["area", "Monto (MM)"]].rename(
+                        columns={"area": "Área (excluida)"})
+                    st.dataframe(df_ops_agg, use_container_width=True,
+                                  hide_index=True, height=240)
+                    tot_ops = df_ops_agg["Monto (MM)"].sum()
+                    st.markdown(
+                        f"**Suma excluida (ya está en Costo OP):** "
+                        f"`${tot_ops:,.1f} MM`"
+                    )
+            except Exception as e:
+                st.caption(f"_(No se pudo leer áreas excluidas: {e})_")
+
+        st.markdown("---")
+        st.warning(
+            "⚠️ **Limitación conocida del GAV:** algunos servicios "
+            "corporativos (legales puntuales, asesorías estratégicas, "
+            "seguros corporativos no asignados a área) pueden no estar "
+            "cargados en el Sheet Drive todavía. El EBIT podría estar "
+            "**sobreestimado** por ese gap. En el roadmap: completar el "
+            "Sheet Drive con esas cuentas o agregar uploader manual."
+        )
+
+
+# ============================================================
+# DRILL-DOWN AL FILTRAR (Costo OP y GAV por canal/LN/KAM filtrado)
+# ============================================================
+def _render_drilldown_filtrado(
+    costo_op_drilldown: list, gav_drilldown: list,
+    desglose: str, canales_sel: list, kams_sel: list, lns_sel: list,
+    costo_op_asignado: float, gav_asignado: float, contrib_total: float,
+):
+    """Expander que se abre AUTO cuando hay filtros activos mostrando
+    cómo se asignaron Costo OP y GAV a las dimensiones filtradas para
+    llegar al EBIT visible.
+    """
+    hay_filtros = bool(canales_sel or kams_sel or lns_sel)
+
+    filtros_txt_parts = []
+    if canales_sel:
+        filtros_txt_parts.append(f"📺 {len(canales_sel)} canal(es)")
+    if kams_sel:
+        filtros_txt_parts.append(f"👤 {len(kams_sel)} KAM(s)")
+    if lns_sel:
+        filtros_txt_parts.append(f"🏷️ {len(lns_sel)} LN(s)")
+    filtros_txt = " + ".join(filtros_txt_parts) or "sin filtros"
+
+    titulo = (f"💡 ¿Cómo se calculó el Costo OP y GAV con tus filtros "
+              f"({filtros_txt})?")
+
+    with st.expander(titulo, expanded=hay_filtros):
+        if not hay_filtros:
+            st.info(
+                "ℹ️ Sin filtros activos: el Costo OP y GAV completos del "
+                "período se distribuyen a TODOS los canales/LN/KAM. "
+                "Aplicá un filtro arriba para ver el detalle de la "
+                "asignación específica."
+            )
+            return
+
+        st.markdown(
+            f"**Resultado:** el filtro recibe `${costo_op_asignado / 1_000_000:.1f} MM` "
+            f"de Costo OP + `${gav_asignado / 1_000_000:.1f} MM` de GAV. "
+            f"Restando ambos al MC (`${contrib_total / 1_000_000:.1f} MM`) "
+            f"da el EBIT mostrado arriba."
+        )
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(f"#### ⚙️ Costo OP asignado")
+            if costo_op_drilldown:
+                df_op = pd.DataFrame(costo_op_drilldown)
+                df_op["Monto (MM)"] = (df_op["Monto"] / 1_000_000).round(2)
+                df_op = df_op[[
+                    "Sub-área", "Centro de Costo", "Driver",
+                    _label_dim(desglose), "Monto (MM)"
+                ]].sort_values("Monto (MM)", ascending=False)
+                st.dataframe(df_op, use_container_width=True,
+                              hide_index=True, height=320)
+                st.caption(
+                    f"💡 Cada CC se distribuye al {_label_dim(desglose).lower()} "
+                    f"según el driver (pedidos/unidades/venta/equitativo). "
+                    f"Sumá la columna Monto y obtenés el total restado."
+                )
+            else:
+                st.info("Sin Costo OP asignado al filtro actual.")
+
+        with c2:
+            st.markdown(f"#### 🏢 GAV asignado")
+            if gav_drilldown:
+                df_g = pd.DataFrame(gav_drilldown)
+                df_g["Monto (MM)"] = (df_g["Monto"] / 1_000_000).round(2)
+                df_g = df_g[[
+                    "Área GAV", "Driver", _label_dim(desglose), "Monto (MM)"
+                ]].sort_values("Monto (MM)", ascending=False)
+                st.dataframe(df_g, use_container_width=True,
+                              hide_index=True, height=320)
+                st.caption(
+                    f"💡 GAV puro del P&L Drive. Áreas operativas (OPS, LOG, "
+                    f"PV) NO entran porque ya están en Costo OP."
+                )
+            else:
+                st.info("Sin GAV asignado al filtro actual.")
