@@ -43,7 +43,15 @@ MESES_ES = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO",
             10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"}
 MESES_SHORT = {k: v[:3].title() for k, v in MESES_ES.items()}
 
-# Sub-áreas que se consideran "operativas" (filtro al cargar del P&L)
+# Filtro principal: AREA EMPRESA (columna G del Sheet P&L Drive).
+# El P&L distingue áreas empresa (COMERCIAL, OPERACIONES, FINANZAS Y ADMIN,
+# etc.) y dentro de cada una hay sub-áreas. Para "Costo Operativo" tomamos
+# todo lo que esté bajo area = OPERACIONES, sin importar la sub_area.
+AREA_PNL_OPS = "OPERACIONES"
+
+# Las sub-áreas que aparecen DENTRO de area=OPERACIONES (para el desglose
+# visual). Vienen del Sheet: LOGISTICA, OPERACIONES, POSTVENTA, GRUPO ETER,
+# UNIONX. Si el Sheet agrega más, simplemente se descubren al iterar.
 SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER",
                   "UNIONX", "UNION X"]
 SUB_AREA_LABEL = {
@@ -144,8 +152,10 @@ def _cargar() -> tuple[pd.DataFrame, dict]:
     # 1. Intentar el parquet nuevo (P&L Control de Gestión)
     if PARQUET.exists():
         df_full = pd.read_parquet(PARQUET)
-        # Filtrar a sub-áreas operativas
-        df = df_full[df_full["sub_area"].isin(SUB_AREAS_PNL)].copy()
+        # CRÍTICO: filtrar por AREA EMPRESA = OPERACIONES (columna G
+        # del Sheet). Antes filtraba por sub_area, lo cual inflaba ~15%
+        # porque incluía filas con area=FINANZAS pero sub_area=LOGISTICA.
+        df = df_full[df_full["area"] == AREA_PNL_OPS].copy()
         # Agregar (sumar) por (year, month, escenario, kpi, sub_area, area,
         # tipo_costo, centro_costo, cuenta_analitica). El control_gestion
         # tiene desglose por canal/LN — se suman porque la vista de
@@ -621,8 +631,8 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         return
 
     # ─── Cargar DIRECTAMENTE del control_gestion.parquet (P&L Drive)
-    # para evitar problemas con el agg de _cargar() y poder controlar
-    # qué sub-areas incluir según preferencia del usuario.
+    # para evitar problemas con el agg de _cargar() y tener pleno control
+    # del filtro.
     from pathlib import Path as _Path
     PYL_PATH = _Path(__file__).parent.parent / "data" / "finanzas" / "control_gestion.parquet"
     if not PYL_PATH.exists():
@@ -631,37 +641,34 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     else:
         df_pyl = pd.read_parquet(PYL_PATH)
 
-    # Selector de sub-áreas a incluir (default: operativas)
-    sub_disponibles = sorted([s for s in df_pyl["sub_area"].dropna().unique()
-                                if s and s.strip()])
-    sub_default = [s for s in sub_disponibles
-                    if s in {"LOGISTICA", "OPERACIONES", "POSTVENTA",
-                              "GRUPO ETER", "UNIONX", "UNION X"}]
-    cs1, cs2 = st.columns([4, 1])
-    with cs1:
-        sub_sel = st.multiselect(
-            "📦 Sub-áreas a incluir (default: operativas)",
-            sub_disponibles,
-            default=sub_default,
-            help="Por defecto sólo se muestran las sub-áreas operativas. "
-                  "Si querés ver costos de COMERCIAL, FINANZAS, MARKETING, etc. "
-                  "agrégalos al filtro.",
-            key="detcc_sub_areas",
-        )
-    with cs2:
-        if st.button("✅ Todas", key="detcc_all_subs"):
-            st.session_state["detcc_sub_areas"] = sub_disponibles
-            st.rerun()
-
-    # Filtrar al período + sub-áreas elegidas + GASTO
-    df_cc = df_pyl[
+    # CRÍTICO: filtrar por AREA EMPRESA = OPERACIONES (columna G del Sheet)
+    # Esto es lo que define "costo operativo" en el P&L corporativo.
+    df_cc_all = df_pyl[
         (df_pyl["year"] == year)
         & (df_pyl["month"].isin(meses))
         & (df_pyl["kpi"] == "GASTO")
-        & (df_pyl["sub_area"].isin(sub_sel))
+        & (df_pyl["area"] == AREA_PNL_OPS)
     ].copy()
+    if df_cc_all.empty:
+        st.info(f"Sin datos para {periodo_label} {year} en area={AREA_PNL_OPS}")
+        return
+
+    # Selector OPCIONAL de sub-áreas para refinar (default: todas las que
+    # existen bajo area=OPERACIONES)
+    sub_disponibles = sorted([s for s in df_cc_all["sub_area"].dropna().unique()
+                                if s and str(s).strip()])
+    sub_sel = st.multiselect(
+        f"📦 Sub-áreas dentro de area=**{AREA_PNL_OPS}** (default: todas)",
+        sub_disponibles,
+        default=sub_disponibles,
+        help=(f"Filtrando por AREA EMPRESA = **{AREA_PNL_OPS}** (columna G "
+              f"del Sheet P&L). Estas son las sub-áreas que aparecen dentro. "
+              f"Puedes desmarcar alguna para refinar."),
+        key="detcc_sub_areas",
+    )
+    df_cc = df_cc_all[df_cc_all["sub_area"].isin(sub_sel)].copy()
     if df_cc.empty:
-        st.info("Sin datos en el período / sub-áreas seleccionadas")
+        st.info("Sin datos en las sub-áreas seleccionadas")
         return
 
     # AGG por (CC, cuenta_analitica, escenario, mes) — sumando canales y LN
@@ -672,20 +679,50 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 
     venta_acum = _venta_periodo(df_venta, year, meses)
 
+    # Detectar meses sin PPTO o sin FCST y avisar
+    meses_sin_ppto = []
+    meses_sin_fcst = []
+    for m in meses:
+        ppto_m = abs(df_cc[(df_cc["escenario"] == "PPTO")
+                             & (df_cc["month"] == m)]["valor"].sum())
+        fcst_m = abs(df_cc[(df_cc["escenario"] == "FCST")
+                             & (df_cc["month"] == m)]["valor"].sum())
+        if ppto_m < 1:  # sin PPTO cargado
+            meses_sin_ppto.append(m)
+        if fcst_m < 1:
+            meses_sin_fcst.append(m)
+
+    if meses_sin_ppto:
+        nombres = ", ".join(MESES_SHORT.get(m, str(m)) for m in meses_sin_ppto)
+        st.warning(
+            f"⚠️ **PPTO no cargado en el Sheet** para: {nombres}. "
+            f"Esas columnas aparecerán vacías. Pedile al responsable del "
+            f"Sheet P&L que cargue el presupuesto de esos meses."
+        )
+
     # Debug expander: validar contra el P&L
-    with st.expander("🔬 Debug: validar contra el P&L", expanded=False):
+    with st.expander("🔬 Debug: validar contra el P&L Drive", expanded=False):
         st.markdown(
-            f"**Sub-áreas incluidas:** `{sub_sel}` ({len(sub_sel)} de "
-            f"{len(sub_disponibles)} disponibles)"
+            f"**🔗 Sheet fuente:** "
+            f"[P&L 2025-2026 Control de Gestión]"
+            f"(https://docs.google.com/spreadsheets/d/1NfIL-k00pUbF5ogsVnadP2wMAVc7oUKkOA7UMLOT-j0/)"
+        )
+        st.markdown(
+            f"**Filtro aplicado:** AREA EMPRESA = `{AREA_PNL_OPS}` (columna G) · "
+            f"sub-áreas: `{sub_sel}` ({len(sub_sel)} de {len(sub_disponibles)})"
         )
         st.markdown(f"**Filas en el detalle (post-agg):** {len(df_cc):,}")
-        st.markdown("**Totales por escenario × mes (en miles CLP):**")
+        st.markdown("**Totales por escenario × mes (en MM CLP):**")
         debug_pivot = (df_cc.groupby(["escenario", "month"])["valor"]
                           .sum().abs().reset_index()
                           .pivot(index="escenario", columns="month", values="valor")
-                          .fillna(0).astype(int))
+                          .fillna(0))
+        debug_pivot = (debug_pivot / 1000).round(1)
         st.dataframe(debug_pivot, use_container_width=True)
-        st.caption("Compará estos totales con tu P&L de Drive para validar.")
+        st.caption(
+            "Compará estos totales con la suma del Sheet filtrado por "
+            f"AREA EMPRESA = {AREA_PNL_OPS} y kpi=GASTO."
+        )
 
     # Pivot: por CC, cuenta_analitica, escenario, mes
     rows_html = []

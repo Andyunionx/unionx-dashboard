@@ -30,10 +30,11 @@ PYL_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "control_gestion.parquet"
 
 
 # ============================================================
-# Sub-áreas operativas (deben coincidir con SUB_AREAS_PNL)
+# Filtro: AREA EMPRESA = OPERACIONES (columna G del Sheet P&L Drive).
+# Antes filtrabamos por sub_area, lo cual inflaba ~15% el costo OP.
+# La verdad operativa está en area=OPERACIONES.
 # ============================================================
-SUB_AREAS_OPS = {"LOGISTICA", "OPERACIONES", "POSTVENTA",
-                  "GRUPO ETER", "UNIONX", "UNION X"}
+AREA_PNL_OPS = "OPERACIONES"
 
 # Cuentas analíticas que aunque caen bajo REMUNERACIONES deben tratarse
 # como VARIABLES (escalan con volumen), según indicación de Andrés.
@@ -191,7 +192,7 @@ def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataF
         (df["year"] == year)
         & (df["escenario"] == "FCST")
         & (df["kpi"] == "GASTO")
-        & (df["sub_area"].isin(SUB_AREAS_OPS))
+        & (df["area"] == AREA_PNL_OPS)
     ].copy()
     if df.empty:
         return pd.DataFrame()
@@ -241,7 +242,7 @@ def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
         (df["year"] == year)
         & (df["escenario"] == "FCST")
         & (df["kpi"] == "GASTO")
-        & (df["sub_area"].isin(SUB_AREAS_OPS))
+        & (df["area"] == AREA_PNL_OPS)
     ].copy()
     if df.empty:
         return pd.DataFrame()
