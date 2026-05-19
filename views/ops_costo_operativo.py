@@ -1446,12 +1446,31 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     )
 
     # ════════════════════════════════════════════════════════════════
-    # 🔮 FORECAST ESTACIONAL 2026 (mayo → diciembre)
+    # TOGGLE: Real (histórico del período) vs Proyectado (forecast estacional)
     # ════════════════════════════════════════════════════════════════
-    _render_forecast_estacional(year)
-
+    modo_view = st.radio(
+        "🎯 **Vista:**",
+        ["📊 Real (histórico del período)",
+         "🔮 Proyectado (forecast estacional mayo→dic)"],
+        horizontal=True,
+        index=0,
+        key="proyeccion_modo",
+        help=(
+            "**Real:** KPIs calculados con la data real del período seleccionado "
+            "(filtros arriba). Útil para entender qué pasó.\n\n"
+            "**Proyectado:** KPIs estimados mes a mes hasta diciembre, usando el "
+            "FCST de venta del P&L + ratios históricos. Útil para entender la "
+            "estacionalidad."
+        ),
+    )
     st.divider()
 
+    if modo_view.startswith("🔮"):
+        # ───── MODO PROYECTADO ─────
+        _render_forecast_estacional(year)
+        return  # no mostrar el contenido "real" abajo
+
+    # ───── MODO REAL (default) — contenido original ─────
     # ─── DATA PREP ────────────────────────────────────────────────
     df_hist = (df_costo[(df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]
                  .groupby(["year", "month", "tipo_costo"])["valor"]
