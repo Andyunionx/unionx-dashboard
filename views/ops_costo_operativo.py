@@ -2710,3 +2710,170 @@ def _render_forecast_estacional(year: int):
             f"- Δ % s/Venta: **{abs(delta_pct):.2f} pp** menos\n\n"
             f"_El peak diluye los fijos sobre más venta._".replace(",", ".")
         )
+
+    # ════════════════════════════════════════════════════════════════
+    # 🎯 RESULTADO PROYECTADO FINAL — KPIs anuales del año 2026
+    # ════════════════════════════════════════════════════════════════
+    st.divider()
+    st.markdown(f"## 🎯 Resultado proyectado final {year}")
+    st.caption(
+        f"Cierre anual estimado combinando **Real {n_real} meses** + "
+        f"**Proyectado {n_proy} meses**. Esto es lo que termina el año si "
+        f"se cumple el FCST de venta del P&L y los costos siguen el modelo."
+    )
+
+    # Bloque hero: 4 cards grandes con los KPIs clave
+    hero_html = f"""
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+                 margin:14px 0 18px 0;">
+      <div style="background:linear-gradient(135deg,#1E40AF 0%,#3B82F6 100%);
+                   border-radius:12px;padding:18px 20px;color:white;
+                   box-shadow:0 4px 12px rgba(30,64,175,0.25);">
+        <div style="font-size:0.75rem;text-transform:uppercase;
+                     letter-spacing:0.08em;opacity:0.85;font-weight:600;">
+          Venta cierre {year}
+        </div>
+        <div style="font-size:2rem;font-weight:700;line-height:1.1;margin-top:8px;">
+          ${venta_total/1_000_000_000:.2f} <span style="font-size:1rem;opacity:0.8;">BB</span>
+        </div>
+        <div style="font-size:0.75rem;opacity:0.85;margin-top:6px;">
+          {int(pedidos_total):,} pedidos · {int(unidades_total):,} unidades
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#9A3412 0%,#F59E0B 100%);
+                   border-radius:12px;padding:18px 20px;color:white;
+                   box-shadow:0 4px 12px rgba(154,52,18,0.25);">
+        <div style="font-size:0.75rem;text-transform:uppercase;
+                     letter-spacing:0.08em;opacity:0.85;font-weight:600;">
+          Costo OP cierre {year}
+        </div>
+        <div style="font-size:2rem;font-weight:700;line-height:1.1;margin-top:8px;">
+          ${costo_total/1_000_000_000:.2f} <span style="font-size:1rem;opacity:0.8;">BB</span>
+        </div>
+        <div style="font-size:0.75rem;opacity:0.85;margin-top:6px;">
+          Fijo ${costo_fijo_total/1_000_000_000:.2f} BB · Variable ${costo_var_total/1_000_000_000:.2f} BB
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#166534 0%,#22C55E 100%);
+                   border-radius:12px;padding:18px 20px;color:white;
+                   box-shadow:0 4px 12px rgba(22,101,52,0.25);">
+        <div style="font-size:0.75rem;text-transform:uppercase;
+                     letter-spacing:0.08em;opacity:0.85;font-weight:600;">
+          % Costo / Venta cierre
+        </div>
+        <div style="font-size:2rem;font-weight:700;line-height:1.1;margin-top:8px;">
+          {pct_avg:.2f}<span style="font-size:1rem;opacity:0.8;">%</span>
+        </div>
+        <div style="font-size:0.75rem;opacity:0.85;margin-top:6px;">
+          Benchmark óptimo: 5-10% · {'🟢 OK' if pct_avg <= 10 else '🟡 ATENTO' if pct_avg <= 13 else '🔴 ALTO'}
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#581C87 0%,#9333EA 100%);
+                   border-radius:12px;padding:18px 20px;color:white;
+                   box-shadow:0 4px 12px rgba(88,28,135,0.25);">
+        <div style="font-size:0.75rem;text-transform:uppercase;
+                     letter-spacing:0.08em;opacity:0.85;font-weight:600;">
+          Costo / Pedido cierre
+        </div>
+        <div style="font-size:2rem;font-weight:700;line-height:1.1;margin-top:8px;">
+          ${cpp_avg:,.0f}
+        </div>
+        <div style="font-size:0.75rem;opacity:0.85;margin-top:6px;">
+          AOV ${aov_avg:,.0f} · Costo/Unidad ${cpu_avg:,.0f}
+        </div>
+      </div>
+    </div>
+    """.replace(",", ".")
+    st.markdown(hero_html, unsafe_allow_html=True)
+
+    # Tabla resumen con breakdown Real/Proyectado/Total
+    st.markdown("##### 📊 Breakdown anual")
+    resumen_data = {
+        "Métrica": [
+            "Meses",
+            "Venta total",
+            "Pedidos",
+            "Unidades",
+            "AOV promedio",
+            "Costo OP TOTAL",
+            "  – Fijo",
+            "  – Variable",
+            "% Costo / Venta",
+            "Costo / Pedido",
+            "Costo / Unidad",
+        ],
+        "✅ Real (cerrado)": [
+            f"{n_real}",
+            f"${venta_real/1_000_000_000:.2f} BB",
+            f"{int(df_real['pedidos'].sum()):,}".replace(",", "."),
+            f"{int(df_real['unidades'].sum()):,}".replace(",", "."),
+            (f"${df_real['venta_fcst_clp'].sum()/df_real['pedidos'].sum():,.0f}"
+             .replace(",", ".") if df_real['pedidos'].sum() > 0 else "—"),
+            f"${costo_real/1_000_000_000:.2f} BB",
+            f"${df_real['costo_op_fijo'].sum()/1_000_000:.1f} MM",
+            f"${df_real['costo_op_variable'].sum()/1_000_000:.1f} MM",
+            (f"{costo_real/venta_real*100:.2f}%" if venta_real > 0 else "—"),
+            (f"${costo_real/df_real['pedidos'].sum():,.0f}"
+             .replace(",", ".") if df_real['pedidos'].sum() > 0 else "—"),
+            (f"${costo_real/df_real['unidades'].sum():,.0f}"
+             .replace(",", ".") if df_real['unidades'].sum() > 0 else "—"),
+        ],
+        "🔮 Proyectado": [
+            f"{n_proy}",
+            f"${venta_proy_only/1_000_000_000:.2f} BB",
+            f"{int(df_proy['pedidos'].sum()):,}".replace(",", "."),
+            f"{int(df_proy['unidades'].sum()):,}".replace(",", "."),
+            (f"${df_proy['venta_fcst_clp'].sum()/df_proy['pedidos'].sum():,.0f}"
+             .replace(",", ".") if df_proy['pedidos'].sum() > 0 else "—"),
+            f"${costo_proy_only/1_000_000_000:.2f} BB",
+            f"${df_proy['costo_op_fijo'].sum()/1_000_000:.1f} MM",
+            f"${df_proy['costo_op_variable'].sum()/1_000_000:.1f} MM",
+            (f"{costo_proy_only/venta_proy_only*100:.2f}%" if venta_proy_only > 0 else "—"),
+            (f"${costo_proy_only/df_proy['pedidos'].sum():,.0f}"
+             .replace(",", ".") if df_proy['pedidos'].sum() > 0 else "—"),
+            (f"${costo_proy_only/df_proy['unidades'].sum():,.0f}"
+             .replace(",", ".") if df_proy['unidades'].sum() > 0 else "—"),
+        ],
+        f"📅 ANUAL {year}": [
+            f"{n_real + n_proy}",
+            f"${venta_total/1_000_000_000:.2f} BB",
+            f"{int(pedidos_total):,}".replace(",", "."),
+            f"{int(unidades_total):,}".replace(",", "."),
+            f"${aov_avg:,.0f}".replace(",", "."),
+            f"${costo_total/1_000_000_000:.2f} BB",
+            f"${costo_fijo_total/1_000_000:.1f} MM",
+            f"${costo_var_total/1_000_000:.1f} MM",
+            f"{pct_avg:.2f}%",
+            f"${cpp_avg:,.0f}".replace(",", "."),
+            f"${cpu_avg:,.0f}".replace(",", "."),
+        ],
+    }
+    df_resumen = pd.DataFrame(resumen_data)
+    st.dataframe(df_resumen, use_container_width=True, hide_index=True,
+                  height=420)
+
+    # Insight final
+    pct_real = (costo_real / venta_real * 100) if venta_real > 0 else 0
+    pct_proy = (costo_proy_only / venta_proy_only * 100) if venta_proy_only > 0 else 0
+    delta_pp = pct_proy - pct_real
+    if delta_pp < -1:
+        msg_insight = (
+            f"🟢 **El año termina MEJOR de lo que va Q1.** "
+            f"% Costo/Venta proyectado **{pct_proy:.2f}%** vs Real Q1 "
+            f"**{pct_real:.2f}%** ({abs(delta_pp):.1f} pp menos). "
+            f"Los peaks (Cyber, Navidad) diluyen el costo fijo."
+        )
+        st.success(msg_insight)
+    elif delta_pp > 1:
+        msg_insight = (
+            f"🟡 **El año termina PEOR de lo que va Q1.** "
+            f"% Costo/Venta proyectado **{pct_proy:.2f}%** vs Real Q1 "
+            f"**{pct_real:.2f}%** (+{delta_pp:.1f} pp). Revisar drivers."
+        )
+        st.warning(msg_insight)
+    else:
+        msg_insight = (
+            f"⚪ El año termina similar a Q1: "
+            f"Proy {pct_proy:.2f}% vs Real {pct_real:.2f}%."
+        )
+        st.info(msg_insight)
