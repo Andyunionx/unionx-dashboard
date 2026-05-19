@@ -164,6 +164,69 @@ def cargar_desde_md_dump(md_path: Path) -> pd.DataFrame:
     return df
 
 
+def _enriquecer_clp_desde_precosteos(df: pd.DataFrame) -> pd.DataFrame:
+    """Para filas con costo_ingreso_clp vacío, busca en los Pre-costeo Excel
+    (agente-comex/data/output/26TPXXXX/Pre-costeo_x_CBM_*.xlsx) el costo
+    internado unitario CLP por SKU y lo aplica."""
+    import openpyxl
+    precosteos_dir = PROJECT_ROOT / 'agente-comex' / 'data' / 'output'
+    if not precosteos_dir.exists():
+        return df
+
+    df['costo_ingreso_clp_num'] = pd.to_numeric(df['costo_ingreso_clp'], errors='coerce').fillna(0)
+    skus_sin_clp = df[df['costo_ingreso_clp_num'] == 0][['sku', 'pi_codigo']].drop_duplicates()
+    if skus_sin_clp.empty:
+        df.drop(columns='costo_ingreso_clp_num', inplace=True)
+        return df
+
+    # Mapear: para cada precosteo Excel, leer SKU -> CLP unit
+    enriched = 0
+    for sub in precosteos_dir.iterdir():
+        if not sub.is_dir():
+            continue
+        for xlsx in sub.glob('Pre-costeo_x_CBM_*.xlsx'):
+            try:
+                wb = openpyxl.load_workbook(str(xlsx), data_only=True, read_only=True)
+                if 'Productos' not in wb.sheetnames:
+                    continue
+                ws = wb['Productos']
+                hdrs = list(next(ws.iter_rows(min_row=1, max_row=1, values_only=True)))
+                if 'SKU' not in hdrs or 'Costo Internado Unit (CLP)' not in hdrs:
+                    continue
+                i_sku = hdrs.index('SKU')
+                i_clp = hdrs.index('Costo Internado Unit (CLP)')
+                # Embarque desde filename: Pre-costeo_x_CBM_26TP0320.xlsx -> TP0320
+                m = re.search(r'(\d{2}TP[A-Z]*\d+)', xlsx.stem)
+                if not m:
+                    continue
+                pi_full = m.group(1).upper()
+                pi_codigo = pi_full[2:] if pi_full.startswith(('24', '25', '26')) else pi_full
+
+                mapping = {}
+                for row in ws.iter_rows(min_row=2, values_only=True):
+                    sku = row[i_sku]
+                    clp = row[i_clp]
+                    if sku and clp:
+                        mapping[str(sku).strip()] = float(clp)
+                wb.close()
+
+                # Aplicar: costo_ingreso_clp = total CLP por línea = qty * unit_clp_precosteo
+                mask = (df['pi_codigo'] == pi_codigo) & (df['costo_ingreso_clp_num'] == 0) & (df['sku'].astype(str).isin(mapping.keys()))
+                for idx in df[mask].index:
+                    sku = str(df.at[idx, 'sku'])
+                    qty = pd.to_numeric(df.at[idx, 'cantidad'], errors='coerce') or 0
+                    total_clp = int(round(qty * mapping[sku]))
+                    df.at[idx, 'costo_ingreso_clp'] = str(total_clp)
+                    enriched += 1
+            except Exception as e:
+                print(f"   [WARN] precosteo {xlsx.name}: {type(e).__name__}", flush=True)
+
+    df.drop(columns='costo_ingreso_clp_num', inplace=True)
+    if enriched:
+        print(f"   [enriquecimiento] {enriched} filas con costo_ingreso_clp vacío rellenadas desde precosteos COMEX", flush=True)
+    return df
+
+
 def normalizar_transito(df: pd.DataFrame) -> pd.DataFrame:
     """Limpia + tipos correctos para la pestaña TRANSITO."""
     if df.empty:
@@ -276,6 +339,12 @@ def main():
 
     print(f"\n[2] Normalizando...", flush=True)
     df = normalizar_transito(df_raw)
+
+    # Enriquecer costo_ingreso_clp vacío desde precosteos COMEX generados por
+    # _REACTIVAR_NUEVO_PC/costear_embarque.py (cubre el lag entre que se hace el
+    # precosteo y que Martin cargue al sheet).
+    df = _enriquecer_clp_desde_precosteos(df)
+
     print(f"   Filas validas en TRANSITO: {len(df):,}", flush=True)
     print(f"   PIs unicos: {df['pi'].nunique()}", flush=True)
     print(f"   SKUs unicos: {df['sku'].nunique()}", flush=True)

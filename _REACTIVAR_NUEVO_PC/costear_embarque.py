@@ -161,7 +161,9 @@ def _to_float(value) -> float:
 def _norm(s) -> str:
     if s is None:
         return ""
-    return str(s).strip().lower()
+    import unicodedata
+    txt = str(s).strip().lower()
+    return ''.join(c for c in unicodedata.normalize('NFD', txt) if unicodedata.category(c) != 'Mn')
 
 def _detect_embarque_y_puerto_from_filename(path: Path) -> tuple[str, str]:
     """Extrae numero embarque y puerto del nombre del archivo (ej: 26TP0228PI NB 40HQ.xlsx)."""
@@ -205,18 +207,21 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
         # Asumir fila 1 si no encontramos
         header_row_idx = 1
 
-    # Mapear columnas
+    # Mapear columnas (acepta variantes con saltos de línea y unidades, ej. "Price\n(USD)")
     header_row = next(ws.iter_rows(min_row=header_row_idx, max_row=header_row_idx, values_only=True))
     for j, cell in enumerate(header_row):
-        n = _norm(cell)
-        if n in ("model",):                            headers["model"] = j
-        elif n in ("descripton", "description"):       headers["descripcion"] = j
-        elif n in ("qty(pcs)", "qty", "q'ty"):         headers["qty"] = j
-        elif n in ("price",):                          headers["price"] = j
-        elif n in ("amount",):                         headers["amount"] = j
-        elif n in ("gift box", "giftbox"):             headers["gift_box"] = j
-        elif n in ("sku",):                            headers["sku"] = j
-        elif n in ("no", "no.", "n°"):                 headers["no"] = j
+        n = _norm(cell).replace("\n", " ").strip()
+        # Quitar paréntesis con unidades: "price (usd)" -> "price"
+        n_base = re.sub(r"\s*\([^)]*\)\s*", "", n).strip()
+        if n_base in ("model",):                              headers["model"] = j
+        elif n_base in ("descripton", "description"):         headers["descripcion"] = j
+        elif n_base in ("qty(pcs)", "qty", "q'ty", "qty pcs"): headers["qty"] = j
+        elif n_base.startswith("qty"):                        headers["qty"] = j
+        elif n_base in ("price",) or n_base.startswith("price"):  headers["price"] = j
+        elif n_base in ("amount",) or n_base.startswith("amount"): headers["amount"] = j
+        elif n_base in ("gift box", "giftbox"):               headers["gift_box"] = j
+        elif n_base in ("sku",):                              headers["sku"] = j
+        elif n_base in ("no", "no.", "n°"):                   headers["no"] = j
 
     print(f"  Header en fila {header_row_idx}. Columnas detectadas: {list(headers.keys())}")
 
@@ -651,7 +656,6 @@ def generar_precosteo_xlsx(emb: Embarque, out_dir: Path) -> Path:
         ])
     for j in range(1, len(cols) + 1):
         ws2.column_dimensions[get_column_letter(j)].width = 18
-    ws2[1] = ws2[1]  # touch
     for cell in ws2[1]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill("solid", fgColor="1A5276")
@@ -804,6 +808,42 @@ def actualizar_maestra(emb: Embarque, maestra_path: Path):
 # ---------------------------------------------------------------------------
 # GENERAR EMAIL HTML
 # ---------------------------------------------------------------------------
+
+def _html_items_sin_sku(emb: 'Embarque') -> str:
+    """Bloque HTML listando ítems del PI sin SKU asignado (samples / nuevos productos).
+    Esos NO se cargan a la PO automática y requieren ingreso manual en Odoo."""
+    sin_sku = []
+    for p in emb.productos:
+        sku = str(p.sku or '').strip()
+        if not sku or sku.lower() in ('none', 'nan') or sku.lower().startswith(('samples', 'ice bag', 'cooler samples')):
+            sin_sku.append(p)
+    if not sin_sku:
+        return ''
+    filas = []
+    for p in sin_sku:
+        desc = (p.descripcion or p.model or '').replace('\n', ' ')[:120]
+        filas.append(
+            f'<tr><td style="padding:8px;border:1px solid #ddd">{p.sku or p.model or "—"}</td>'
+            f'<td style="padding:8px;border:1px solid #ddd">{desc}</td>'
+            f'<td style="padding:8px;border:1px solid #ddd;text-align:right">{p.qty:,.0f}</td>'
+            f'<td style="padding:8px;border:1px solid #ddd;text-align:right">${p.price:,.2f}</td>'
+            f'<td style="padding:8px;border:1px solid #ddd;text-align:right">${p.costo_internado_unit:,.0f}</td></tr>'
+        )
+    return f'''
+<h3 style="color:#c0392b;margin-top:30px">⚠ 4. Ítems sin SKU — REQUIEREN INGRESO MANUAL</h3>
+<p>El PI trae <b>{len(sin_sku)}</b> producto(s) sin SKU asignado (samples / nuevos). <b>NO se incluyeron en la PO automática a Odoo</b>. Es necesario crear el producto en Odoo y cargarlo manualmente para que ingresen al stock.</p>
+<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:12px">
+<thead><tr style="background:#c0392b;color:white">
+<th style="padding:8px;border:1px solid #ddd">SKU / Tipo</th>
+<th style="padding:8px;border:1px solid #ddd">Descripción</th>
+<th style="padding:8px;border:1px solid #ddd">Qty</th>
+<th style="padding:8px;border:1px solid #ddd">USD/u</th>
+<th style="padding:8px;border:1px solid #ddd">CLP/u internado</th>
+</tr></thead>
+<tbody>
+{"".join(filas)}
+</tbody></table>'''
+
 
 def generar_email_html(emb: Embarque, out_dir: Path) -> Path:
     benchmark = BENCHMARKS.get(emb.puerto, {}).get("benchmark", 16.0)
@@ -962,6 +1002,7 @@ def generar_email_html(emb: Embarque, out_dir: Path) -> Path:
 <tr style="background:#f8f9fa"><td style="padding:10px;border:1px solid #ddd"><b>Internado Total</b></td><td style="padding:10px;border:1px solid #ddd" colspan="3">${emb.total_internado_clp:,.0f} CLP</td></tr>
 </tbody></table>
 
+{_html_items_sin_sku(emb)}
 </div>
 <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:800px;margin:0 auto">Favor revisar precosteo y documentos para ingresar.</div>
 <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:800px;margin:0 auto"><br></div>
