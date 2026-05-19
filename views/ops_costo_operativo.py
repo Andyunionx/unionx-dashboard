@@ -142,10 +142,45 @@ def _objetivo_por_aov(aov_clp: float) -> dict:
 # ============================================================
 # DATA
 # ============================================================
-@st.cache_data(ttl=300)
+# ============================================================
+# CACHE INVALIDATION POR MTIME
+# El cron GitHub Actions sobrescribe control_gestion.parquet 1x/dia.
+# Usamos mtime como cache key para que TODOS los tabs (P&L, Detalle CC,
+# Informe, Comparativo, Proyeccion) se refresquen automaticamente al
+# detectar que el archivo cambio, sin esperar al TTL.
+# ============================================================
+def _mtime_parquet() -> float:
+    """Mtime del control_gestion.parquet (0.0 si no existe)."""
+    try:
+        return PARQUET.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        try:
+            return PARQUET_LEGACY.stat().st_mtime
+        except (FileNotFoundError, OSError):
+            return 0.0
+
+
+def _mtime_resumen() -> float:
+    """Mtime del JSON de resumen."""
+    try:
+        return RESUMEN.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        return 0.0
+
+
 def _cargar() -> tuple[pd.DataFrame, dict]:
     """Carga datos de costos del P&L Control de Gestión filtrado a sub-áreas
-    operativas. Si el parquet nuevo no existe, cae al legacy."""
+    operativas. Si el parquet nuevo no existe, cae al legacy.
+
+    Wrapper publico: delega a la version cacheada pasando el mtime para
+    invalidar cache cuando el cron actualiza el archivo.
+    """
+    return _cargar_cached(_mtime_parquet(), _mtime_resumen())
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def _cargar_cached(_mtime_pq: float, _mtime_rs: float) -> tuple[pd.DataFrame, dict]:
+    """Cached: invalidado cuando control_gestion.parquet o su resumen cambian."""
     df = pd.DataFrame()
     res = {}
 
@@ -195,8 +230,20 @@ def _cargar() -> tuple[pd.DataFrame, dict]:
     return df, res
 
 
-@st.cache_data(ttl=600)
+def _mtime_ventas() -> float:
+    try:
+        return VENTAS_HIST.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        return 0.0
+
+
 def _cargar_ventas_mensual() -> pd.DataFrame:
+    """Wrapper publico que invalida cache cuando el parquet de ventas cambia."""
+    return _cargar_ventas_mensual_cached(_mtime_ventas())
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cargar_ventas_mensual_cached(_mtime_key: float) -> pd.DataFrame:
     if not VENTAS_HIST.exists():
         return pd.DataFrame()
     try:
@@ -2321,10 +2368,24 @@ def render():
         return
 
     fuente = res.get("fuente_real", "P&L Control de Gestión Drive")
-    st.caption(
-        f"🕒 Costos: {res.get('generado_en','')[:19]} · "
-        f"Fuente: {fuente} · Venta: módulo Ventas (parquet)"
-    )
+    # Mostrar mtime real del parquet (mas confiable que generado_en del JSON)
+    from datetime import datetime as _dt_mt
+    _mt = _mtime_parquet()
+    _snap_str = (_dt_mt.fromtimestamp(_mt).strftime("%d/%m %H:%M")
+                  if _mt > 0 else "—")
+    _cap_col1, _cap_col2 = st.columns([4, 1])
+    with _cap_col1:
+        st.caption(
+            f"🕒 Snapshot P&L Drive: **{_snap_str}** · "
+            f"Fuente: {fuente} · Venta: módulo Ventas (parquet) · "
+            f"Auto-update diaria 06:00 Chile (cron sync_pyl_drive)"
+        )
+    with _cap_col2:
+        if st.button("🔄 Refrescar", key="costo_op_refresh",
+                       help="Limpia el cache y vuelve a leer los parquets "
+                            "(útil si el cron acaba de correr)"):
+            st.cache_data.clear()
+            st.rerun()
     st.divider()
 
     col1, col2, col3 = st.columns([1, 1, 2])
