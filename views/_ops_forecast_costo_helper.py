@@ -27,6 +27,38 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FCST_EERR = PROJECT_ROOT / "data" / "finanzas" / "fcst_eerr.parquet"
 VOLUMEN_HIST = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
 PYL_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "control_gestion.parquet"
+PYL_MENSUAL = PROJECT_ROOT / "data" / "finanzas" / "pyl_mensual.parquet"
+
+
+# ============================================================
+# CACHE INVALIDATION POR MTIME
+# El cron GitHub Actions sobrescribe estos parquets 1x/dia.
+# Pasamos el mtime como argumento a las funciones cacheadas para
+# que Streamlit invalide cache automaticamente cuando el archivo
+# cambia (sin esperar al TTL).
+# ============================================================
+def _mtime(p: Path) -> float:
+    """Mtime del archivo (0.0 si no existe). Sirve como cache key."""
+    try:
+        return p.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        return 0.0
+
+
+def _mtime_pyl() -> float:
+    return _mtime(PYL_PARQUET)
+
+
+def _mtime_fcst() -> float:
+    return _mtime(FCST_EERR)
+
+
+def _mtime_volumen() -> float:
+    return _mtime(VOLUMEN_HIST)
+
+
+def _mtime_pyl_mensual() -> float:
+    return _mtime(PYL_MENSUAL)
 
 
 # ============================================================
@@ -101,13 +133,9 @@ def _driver_cc(cc: str, cuenta_analitica: str = "",
 # ============================================================
 # CARGA DE INPUTS
 # ============================================================
-@st.cache_data(ttl=3600, show_spinner=False)
-def cargar_fcst_venta_mensual(year: int = 2026) -> pd.Series:
-    """Devuelve Series indexed por mes (1-12) con la venta FCST del año.
-
-    Suma 'Ingreso de Explotación' + 'Otros Ingresos' (consistente con
-    el revenue total del P&L corporativo).
-    """
+@st.cache_data(ttl=600, show_spinner=False)
+def _cargar_fcst_venta_mensual_cached(year: int, _mtime_key: float) -> pd.Series:
+    """Cached: invalidado automaticamente cuando fcst_eerr.parquet cambia."""
     if not FCST_EERR.exists():
         return pd.Series(dtype=float)
     df = pd.read_parquet(FCST_EERR)
@@ -119,19 +147,20 @@ def cargar_fcst_venta_mensual(year: int = 2026) -> pd.Series:
     return df_v.groupby("month")["valor_fcst"].sum()
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def calcular_ratios_historicos(meses_atras: int = 3) -> dict:
-    """Devuelve dict con ratios operativos vs venta histórica.
+def cargar_fcst_venta_mensual(year: int = 2026) -> pd.Series:
+    """Devuelve Series indexed por mes (1-12) con la venta FCST del año.
 
-    Returns:
-      {
-        "ratio_pedidos_por_mm_venta": float,
-        "ratio_unidades_por_mm_venta": float,
-        "ratio_lineas_por_mm_venta": float,
-        "meses_usados": [...],
-        "n_meses": int,
-      }
+    Suma 'Ingreso de Explotación' + 'Otros Ingresos' (consistente con
+    el revenue total del P&L corporativo).
     """
+    return _cargar_fcst_venta_mensual_cached(year, _mtime_fcst())
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _calcular_ratios_historicos_cached(meses_atras: int,
+                                          _mtime_vol: float,
+                                          _mtime_f: float) -> dict:
+    """Cached: invalidado cuando cambia volumen_inventario o fcst_eerr."""
     if not VOLUMEN_HIST.exists() or not FCST_EERR.exists():
         return {}
 
@@ -177,14 +206,27 @@ def calcular_ratios_historicos(meses_atras: int = 3) -> dict:
     }
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataFrame:
-    """Promedio mensual de costo por (CC, cuenta_analitica, tipo_costo)
-    para los últimos N meses con FCST cerrado.
+def calcular_ratios_historicos(meses_atras: int = 3) -> dict:
+    """Devuelve dict con ratios operativos vs venta histórica.
 
-    Filtra a sub-áreas operativas. Devuelve cols:
-      [centro_costo, cuenta_analitica, tipo_costo, costo_mensual_prom]
+    Returns:
+      {
+        "ratio_pedidos_por_mm_venta": float,
+        "ratio_unidades_por_mm_venta": float,
+        "ratio_lineas_por_mm_venta": float,
+        "meses_usados": [...],
+        "n_meses": int,
+      }
     """
+    return _calcular_ratios_historicos_cached(
+        meses_atras, _mtime_volumen(), _mtime_fcst()
+    )
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cargar_costo_op_promedio_cached(meses_atras: int, year: int,
+                                        _mtime_key: float) -> pd.DataFrame:
+    """Cached: invalidado cuando control_gestion.parquet cambia."""
     if not PYL_PARQUET.exists():
         return pd.DataFrame()
     df = pd.read_parquet(PYL_PARQUET)
@@ -221,20 +263,23 @@ def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataF
     return prom
 
 
+def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataFrame:
+    """Promedio mensual de costo por (CC, cuenta_analitica, tipo_costo)
+    para los últimos N meses con FCST cerrado.
+
+    Filtra a sub-áreas operativas. Devuelve cols:
+      [centro_costo, cuenta_analitica, tipo_costo, costo_mensual_prom]
+    """
+    return _cargar_costo_op_promedio_cached(meses_atras, year, _mtime_pyl())
+
+
 # ============================================================
 # PROYECCIÓN
 # ============================================================
-@st.cache_data(ttl=3600, show_spinner=False)
-def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
-    """Devuelve costo OP REAL por mes (sumando todos los CCs).
-
-    Returns DataFrame con cols [mes, costo_op_fijo, costo_op_variable,
-    costo_op_total] en miles de CLP (valores POSITIVOS).
-
-    IMPORTANTE: el parquet tiene gastos NEGATIVOS y algunos valores
-    POSITIVOS (correcciones/recuperos que restan al gasto). NO usar
-    .abs() fila por fila — sumar primero y tomar abs del TOTAL.
-    """
+@st.cache_data(ttl=600, show_spinner=False)
+def _cargar_costo_op_real_mensual_cached(year: int,
+                                            _mtime_key: float) -> pd.DataFrame:
+    """Cached: invalidado cuando control_gestion.parquet cambia."""
     if not PYL_PARQUET.exists():
         return pd.DataFrame()
     df = pd.read_parquet(PYL_PARQUET)
@@ -266,14 +311,23 @@ def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
                    "costo_op_total"]]
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def cargar_volumen_real_mensual(year: int = 2026) -> pd.DataFrame:
-    """Devuelve pedidos y unidades REALES por mes desde el parquet
-    de volumen inventario (snapshot Odoo).
+def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
+    """Devuelve costo OP REAL por mes (sumando todos los CCs).
 
-    Returns DataFrame con cols [mes, pedidos_real, unidades_real].
-    Solo cuenta outgoing (pedidos del cliente, no transferencias).
+    Returns DataFrame con cols [mes, costo_op_fijo, costo_op_variable,
+    costo_op_total] en miles de CLP (valores POSITIVOS).
+
+    IMPORTANTE: el parquet tiene gastos NEGATIVOS y algunos valores
+    POSITIVOS (correcciones/recuperos que restan al gasto). NO usar
+    .abs() fila por fila — sumar primero y tomar abs del TOTAL.
     """
+    return _cargar_costo_op_real_mensual_cached(year, _mtime_pyl())
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _cargar_volumen_real_mensual_cached(year: int,
+                                          _mtime_key: float) -> pd.DataFrame:
+    """Cached: invalidado cuando volumen_inventario_hist.parquet cambia."""
     p = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
     if not p.exists():
         return pd.DataFrame()
@@ -291,14 +345,21 @@ def cargar_volumen_real_mensual(year: int = 2026) -> pd.DataFrame:
     return agg
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def aov_estacional_por_mes(year_ref: int = 2025) -> dict:
-    """Devuelve {mes: aov_estacional} usando data histórica del año anterior.
+def cargar_volumen_real_mensual(year: int = 2026) -> pd.DataFrame:
+    """Devuelve pedidos y unidades REALES por mes desde el parquet
+    de volumen inventario (snapshot Odoo).
 
-    AOV_mes = venta_mes / pedidos_mes (ambos del mismo mes del año pasado).
-    Si un mes no tiene data (ej: ene-mar 2025 fuera del snapshot 12m), cae
-    al AOV promedio anual del año_ref + cálculo desde fcst si está.
+    Returns DataFrame con cols [mes, pedidos_real, unidades_real].
+    Solo cuenta outgoing (pedidos del cliente, no transferencias).
     """
+    return _cargar_volumen_real_mensual_cached(year, _mtime_volumen())
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _aov_estacional_por_mes_cached(year_ref: int,
+                                      _mtime_vol: float,
+                                      _mtime_pylm: float) -> dict:
+    """Cached: invalidado cuando volumen o pyl_mensual cambian."""
     # Pedidos por mes (del snapshot Odoo)
     df_vol = cargar_volumen_real_mensual(year=year_ref)
     if df_vol.empty:
@@ -307,7 +368,6 @@ def aov_estacional_por_mes(year_ref: int = 2025) -> dict:
     # Venta por mes del año ref (desde pyl_mensual real, no fcst)
     # IMPORTANTE: pyl_mensual.parquet tiene valores en MILES de CLP,
     # multiplicar × 1000 para tener CLP enteros y calcular AOV real.
-    PYL_MENSUAL = PROJECT_ROOT / "data" / "finanzas" / "pyl_mensual.parquet"
     if not PYL_MENSUAL.exists():
         return {}
     df_pyl = pd.read_parquet(PYL_MENSUAL)
@@ -330,6 +390,18 @@ def aov_estacional_por_mes(year_ref: int = 2025) -> dict:
         if p > 0 and v > 0:
             aov[m] = v / p
     return aov
+
+
+def aov_estacional_por_mes(year_ref: int = 2025) -> dict:
+    """Devuelve {mes: aov_estacional} usando data histórica del año anterior.
+
+    AOV_mes = venta_mes / pedidos_mes (ambos del mismo mes del año pasado).
+    Si un mes no tiene data (ej: ene-mar 2025 fuera del snapshot 12m), cae
+    al AOV promedio anual del año_ref + cálculo desde fcst si está.
+    """
+    return _aov_estacional_por_mes_cached(
+        year_ref, _mtime_volumen(), _mtime_pyl_mensual()
+    )
 
 
 def proyectar_costo_operativo(year: int = 2026,
