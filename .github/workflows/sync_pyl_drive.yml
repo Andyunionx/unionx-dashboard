@@ -1,0 +1,101 @@
+name: "Sync P&L Drive (Control de Gestion 2025-2026)"
+
+# Extractor del Sheet de Drive con el P&L 2025-2026 (PPTO / FCST / REAL).
+# Corre 1 vez al dia para tener datos frescos al inicio del dia laboral en Chile.
+#
+# Sheet: https://docs.google.com/spreadsheets/d/1NfIL-k00pUbF5ogsVnadP2wMAVc7oUKkOA7UMLOT-j0/
+# Output: data/finanzas/control_gestion.parquet
+#         data/finanzas/control_gestion_resumen.json
+
+on:
+  schedule:
+    # 09:00 UTC = 06:00 Chile (UTC-3 horario verano) / 05:00 (UTC-4 invierno)
+    # Asi cuando Andres abre el dashboard temprano ya esta el snapshot fresco
+    - cron: '0 9 * * *'
+  workflow_dispatch:  # permite correr a demanda desde GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  sync_pyl_drive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow gspread google-auth
+
+      - name: Restaurar credentials.json desde secret
+        id: restore_creds
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+            echo "creds_ok=true" >> $GITHUB_OUTPUT
+            echo "OK credentials.json creado"
+          else
+            echo "creds_ok=false" >> $GITHUB_OUTPUT
+            echo "ERROR: secret GOOGLE_CREDENTIALS_JSON no existe"
+            exit 1
+          fi
+
+      - name: Extract Control de Gestion (Sheet Drive P&L 2025-2026)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python extract_finanzas_control_gestion.py
+
+      - name: Limpiar credentials
+        if: always()
+        run: rm -f credentials.json
+
+      - name: Diagnostico (que se genero)
+        if: always()
+        run: |
+          echo "=== Archivos generados ==="
+          for f in \
+            "data/finanzas/control_gestion.parquet" \
+            "data/finanzas/control_gestion_resumen.json"; do
+            if [ -f "$f" ]; then
+              size=$(stat -c%s "$f" 2>/dev/null || echo "?")
+              mod=$(stat -c%y "$f" 2>/dev/null || echo "?")
+              echo "OK $f -- ${size} bytes -- ${mod}"
+            else
+              echo "FALTA $f"
+            fi
+          done
+
+      - name: Commit snapshot si cambio
+        if: always()
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions P&L Drive Sync"
+          # Pull latest para evitar conflictos con otros workflows
+          git pull --rebase origin main || true
+          git add data/finanzas/control_gestion.parquet data/finanzas/control_gestion_resumen.json || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios para commitear"
+          else
+            git commit -m "P&L Drive snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+            # Retry push (otros workflows pueden estar pusheando al mismo tiempo)
+            for i in 1 2 3; do
+              if git push; then
+                echo "Push OK (intento $i)"
+                break
+              fi
+              echo "Push fallo (intento $i), reintentando..."
+              git pull --rebase origin main || true
+              sleep 5
+            done
+          fi
