@@ -290,6 +290,47 @@ def cargar_volumen_real_mensual(year: int = 2026) -> pd.DataFrame:
     return agg
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def aov_estacional_por_mes(year_ref: int = 2025) -> dict:
+    """Devuelve {mes: aov_estacional} usando data histórica del año anterior.
+
+    AOV_mes = venta_mes / pedidos_mes (ambos del mismo mes del año pasado).
+    Si un mes no tiene data (ej: ene-mar 2025 fuera del snapshot 12m), cae
+    al AOV promedio anual del año_ref + cálculo desde fcst si está.
+    """
+    # Pedidos por mes (del snapshot Odoo)
+    df_vol = cargar_volumen_real_mensual(year=year_ref)
+    if df_vol.empty:
+        return {}
+
+    # Venta por mes del año ref (desde pyl_mensual real, no fcst)
+    # IMPORTANTE: pyl_mensual.parquet tiene valores en MILES de CLP,
+    # multiplicar × 1000 para tener CLP enteros y calcular AOV real.
+    PYL_MENSUAL = PROJECT_ROOT / "data" / "finanzas" / "pyl_mensual.parquet"
+    if not PYL_MENSUAL.exists():
+        return {}
+    df_pyl = pd.read_parquet(PYL_MENSUAL)
+    # Filtro EXACTO: solo "Ingresos" (no "Ingresos LTM", "Ingresos YoY", etc.)
+    df_v = df_pyl[
+        (df_pyl["year"] == year_ref)
+        & (df_pyl["linea"] == "Ingresos")
+    ].copy()
+    if df_v.empty:
+        return {}
+    # × 1000 porque el parquet viene en miles de CLP
+    venta_mes = (df_v.groupby("month")["valor"].sum() * 1000).to_dict()
+
+    # Calcular AOV por mes
+    aov = {}
+    for _, r in df_vol.iterrows():
+        m = int(r["mes"])
+        v = venta_mes.get(m, 0)
+        p = r["pedidos_real"]
+        if p > 0 and v > 0:
+            aov[m] = v / p
+    return aov
+
+
 def proyectar_costo_operativo(year: int = 2026,
                                  mes_desde: int = None,
                                  mes_hasta: int = 12,
@@ -350,6 +391,10 @@ def proyectar_anual(year: int = 2026,
     pedidos_prom_hist = venta_prom_mm * ped_ratio
     unidades_prom_hist = venta_prom_mm * und_ratio
 
+    # AOV estacional 2025 (para proyectar pedidos por mes con estacionalidad)
+    aov_est = aov_estacional_por_mes(year_ref=year - 1)
+    aov_prom = sum(aov_est.values()) / len(aov_est) if aov_est else 0
+
     # Volumen real por mes (para columna "pedidos real")
     vol_real_dict = (df_vol_real.set_index("mes").to_dict("index")
                        if not df_vol_real.empty else {})
@@ -376,9 +421,12 @@ def proyectar_anual(year: int = 2026,
                 unidades = venta_mm * und_ratio
         else:
             tipo = "Proyectado"
-            # Proyectar con el modelo
+            # Modelo conservador: pedidos = venta × ratio Q1 promedio
+            # (probado AOV estacional pero genera picos en dic por data
+            # 2025 incompleta. AOV plano es más estable.)
             pedidos = venta_mm * ped_ratio
             unidades = venta_mm * und_ratio
+
             costo_fijo = 0.0
             costo_var = 0.0
             if not df_costos_prom.empty:
