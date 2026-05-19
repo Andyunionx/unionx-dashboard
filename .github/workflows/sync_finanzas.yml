@@ -1,5 +1,11 @@
 name: "Sync Finanzas (Planificación Financiera 2026)"
 
+# Extractor de la planilla local Planificacion Financiera 2026.xlsx
+# (flujo de caja, deuda, KT, etc).
+#
+# El Sheet de Drive con el P&L Control de Gestion se sincroniza en un workflow
+# dedicado: .github/workflows/sync_pyl_drive.yml (1x al dia).
+
 on:
   push:
     paths:
@@ -30,35 +36,30 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow openpyxl gspread google-auth
+          pip install pandas pyarrow openpyxl
 
       - name: Extract Planificación Financiera → parquets
         env:
           PYTHONIOENCODING: utf-8
         run: python extract_finanzas_planificacion.py
 
-      - name: Restaurar credentials.json desde secret (para Sheet de CG)
-        env:
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-        run: |
-          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
-            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
-          fi
-
-      - name: Extract Control de Gestión (Sheet Drive P&L 2025-2026)
-        env:
-          PYTHONIOENCODING: utf-8
-        run: python extract_finanzas_control_gestion.py
-        continue-on-error: true
-
-      - name: Limpiar credentials
-        if: always()
-        run: rm -f credentials.json
-
       - name: Commit parquets si cambiaron
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions Finanzas"
-          git add data/finanzas/
-          git diff --staged --quiet || git commit -m "Finanzas snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          git pull --rebase origin main || true
+          git add data/finanzas/ || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios para commitear"
+          else
+            git commit -m "Finanzas snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+            for i in 1 2 3; do
+              if git push; then
+                echo "Push OK (intento $i)"
+                break
+              fi
+              echo "Push fallo (intento $i), reintentando..."
+              git pull --rebase origin main || true
+              sleep 5
+            done
+          fi
