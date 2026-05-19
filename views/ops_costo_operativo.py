@@ -2369,27 +2369,27 @@ def _render_forecast_estacional(year: int):
     from datetime import datetime as _dt
     import plotly.graph_objects as go
     from views._ops_forecast_costo_helper import (
-        proyectar_costo_operativo,
+        proyectar_anual,
         calcular_ratios_historicos,
         cargar_fcst_venta_mensual,
     )
 
     st.markdown(
-        "## 🔮 Forecast estacional de Costo Operativo 2026"
+        "## 🔮 Forecast anual 2026 — Real + Proyectado"
     )
     st.caption(
-        "Proyección mes a mes hasta diciembre, usando el FCST de venta "
-        "del P&L corporativo + ratios históricos de pedidos/unidades por venta. "
-        "Costos fijos se mantienen constantes; variables escalan con el volumen "
-        "proyectado (incluye HORAS EXTRAS y HONORARIOS por indicación de Andrés)."
+        "Vista del año completo. Los meses **cerrados** muestran el dato REAL "
+        "del P&L (escenario FCST). Los meses **en curso y futuros** se "
+        "PROYECTAN usando el FCST de venta + ratios históricos. "
+        "A medida que se cierran meses en el P&L Drive, pasan automáticamente "
+        "de Proyectado a Real."
     )
 
     hoy = _dt.now()
-    mes_desde = hoy.month if year == hoy.year else 1
+    mes_desde = 1  # siempre desde enero
     mes_hasta = 12
 
-    proy = proyectar_costo_operativo(year=year, mes_desde=mes_desde,
-                                          mes_hasta=mes_hasta)
+    proy = proyectar_anual(year=year)
     if proy.empty:
         st.warning(
             "⏳ No se pudo generar la proyección. Verifica que existan:\n"
@@ -2431,14 +2431,14 @@ def _render_forecast_estacional(year: int):
     # Costo/Unidad = costo_op_total / unidades
     proy = proy.copy()
     proy["aov"] = proy.apply(
-        lambda r: (r["venta_fcst_clp"] / r["pedidos_proy"])
-        if r["pedidos_proy"] > 0 else 0, axis=1)
+        lambda r: (r["venta_fcst_clp"] / r["pedidos"])
+        if r["pedidos"] > 0 else 0, axis=1)
     proy["costo_por_pedido"] = proy.apply(
-        lambda r: (r["costo_op_total"] * 1000 / r["pedidos_proy"])
-        if r["pedidos_proy"] > 0 else 0, axis=1)
+        lambda r: (r["costo_op_total"] * 1000 / r["pedidos"])
+        if r["pedidos"] > 0 else 0, axis=1)
     proy["costo_por_unidad"] = proy.apply(
-        lambda r: (r["costo_op_total"] * 1000 / r["unidades_proy"])
-        if r["unidades_proy"] > 0 else 0, axis=1)
+        lambda r: (r["costo_op_total"] * 1000 / r["unidades"])
+        if r["unidades"] > 0 else 0, axis=1)
     # Banda objetivo de costo/pedido según AOV (usa la función ya existente)
     bands = proy["aov"].apply(_objetivo_por_aov)
     proy["objetivo_cpp_min"] = [b["cpp_min"] for b in bands]
@@ -2456,10 +2456,10 @@ def _render_forecast_estacional(year: int):
         return "🔴 Caro"
     proy["estado_cpp"] = proy.apply(_estado_cpp, axis=1)
 
-    # ─── KPIs consolidados (acumulado del período) ─────────────────
+    # ─── KPIs consolidados (AÑO COMPLETO) ──────────────────────────
     venta_total = proy["venta_fcst_clp"].sum()
-    pedidos_total = proy["pedidos_proy"].sum()
-    unidades_total = proy["unidades_proy"].sum()
+    pedidos_total = proy["pedidos"].sum()
+    unidades_total = proy["unidades"].sum()
     costo_fijo_total = proy["costo_op_fijo"].sum() * 1000  # miles → CLP
     costo_var_total = proy["costo_op_variable"].sum() * 1000
     costo_total = proy["costo_op_total"].sum() * 1000
@@ -2468,31 +2468,57 @@ def _render_forecast_estacional(year: int):
     cpp_avg = (costo_total / pedidos_total) if pedidos_total else 0
     cpu_avg = (costo_total / unidades_total) if unidades_total else 0
 
-    # Fila 1: volumen total
-    st.markdown(f"#### 📊 Consolidado proyectado **{mes_desde:02d}/{year} → 12/{year}**")
+    # Split Real vs Proyectado
+    df_real = proy[proy["tipo"] == "Real"]
+    df_proy = proy[proy["tipo"] == "Proyectado"]
+    n_real = len(df_real)
+    n_proy = len(df_proy)
+    venta_real = df_real["venta_fcst_clp"].sum()
+    venta_proy_only = df_proy["venta_fcst_clp"].sum()
+    costo_real = df_real["costo_op_total"].sum() * 1000
+    costo_proy_only = df_proy["costo_op_total"].sum() * 1000
+
+    # Banner indicando el corte Real/Proyectado
+    if n_real > 0 and n_proy > 0:
+        ultimo_real = int(df_real["mes"].max())
+        primero_proy = int(df_proy["mes"].min())
+        MESES_NOM = {1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
+                      7:"Jul",8:"Ago",9:"Sep",10:"Oct",11:"Nov",12:"Dic"}
+        st.markdown(
+            f'<div style="background:#F0F9FF;border-left:4px solid #0EA5E9;'
+            f'padding:10px 16px;border-radius:6px;margin:8px 0;font-size:0.9rem;">'
+            f'📅 <strong>Real:</strong> Ene → {MESES_NOM[ultimo_real]} ({n_real} meses) · '
+            f'<strong>Proyectado:</strong> {MESES_NOM[primero_proy]} → Dic ({n_proy} meses) · '
+            f'A medida que se cierran meses en el P&L Drive, pasan a Real automáticamente.'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(f"#### 📊 Consolidado año **{year}** (Real + Proyectado)")
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Venta FCST acum",
-               f"${venta_total/1_000_000_000:.2f} BB")
-    k2.metric("Pedidos proyectados", f"{pedidos_total:,.0f}".replace(",", "."))
-    k3.metric("Unidades proyectadas",
+    k1.metric("Venta FCST anual",
+               f"${venta_total/1_000_000_000:.2f} BB",
+               delta=(f"Real ${venta_real/1_000_000_000:.2f} BB + "
+                      f"Proy ${venta_proy_only/1_000_000_000:.2f} BB"),
+               delta_color="off")
+    k2.metric("Pedidos anuales", f"{pedidos_total:,.0f}".replace(",", "."))
+    k3.metric("Unidades anuales",
                f"{unidades_total:,.0f}".replace(",", "."))
-    k4.metric("AOV promedio (venta/pedido)",
+    k4.metric("AOV promedio",
                f"${aov_avg:,.0f}".replace(",", "."))
 
     # Fila 2: costo agregado
     k5, k6, k7, k8 = st.columns(4)
-    k5.metric("Costo OP TOTAL acum",
+    k5.metric("Costo OP TOTAL anual",
                f"${costo_total/1_000_000_000:.2f} BB",
                delta=f"{pct_avg:.1f}% s/Venta", delta_color="off")
-    k6.metric("Costo OP Fijo",
-               f"${costo_fijo_total/1_000_000_000:.2f} BB",
-               delta=f"{costo_fijo_total/costo_total*100:.0f}% del total" if costo_total else "—",
-               delta_color="off")
-    k7.metric("Costo OP Variable",
-               f"${costo_var_total/1_000_000_000:.2f} BB",
-               delta=f"{costo_var_total/costo_total*100:.0f}% del total" if costo_total else "—",
-               delta_color="off")
-    k8.metric("Costo / Pedido prom",
+    k6.metric("Costo OP Real (ya cerrado)",
+               f"${costo_real/1_000_000_000:.2f} BB",
+               delta=f"{n_real} meses cerrados", delta_color="off")
+    k7.metric("Costo OP Proyectado",
+               f"${costo_proy_only/1_000_000_000:.2f} BB",
+               delta=f"{n_proy} meses futuros", delta_color="off")
+    k8.metric("Costo / Pedido prom anual",
                f"${cpp_avg:,.0f}".replace(",", "."))
 
     # ─── Comparativo con histórico ─────────────────────────────────
@@ -2525,14 +2551,17 @@ def _render_forecast_estacional(year: int):
         )
 
     # ─── Tabla mes a mes (TODOS los KPIs derivados) ────────────────
-    st.markdown("### 📊 Detalle mensual proyectado")
+    st.markdown("### 📊 Detalle mensual año completo")
     df_show = proy.copy()
     MESES = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
              7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
     df_show["Mes"] = df_show["mes"].map(lambda m: f"{MESES.get(m, m)} {year}")
+    df_show["Tipo"] = df_show["tipo"].apply(
+        lambda t: "✅ Real" if t == "Real" else "🔮 Proyectado"
+    )
     df_show["Venta FCST (MM$)"] = df_show["venta_fcst_mm"].round(0)
-    df_show["Pedidos"] = df_show["pedidos_proy"].round(0).astype(int)
-    df_show["Unidades"] = df_show["unidades_proy"].round(0).astype(int)
+    df_show["Pedidos"] = df_show["pedidos"].round(0).astype(int)
+    df_show["Unidades"] = df_show["unidades"].round(0).astype(int)
     df_show["AOV ($)"] = df_show["aov"].round(0).astype(int)
     df_show["C.OP Fijo (MM$)"] = (df_show["costo_op_fijo"] / 1000).round(1)
     df_show["C.OP Variable (MM$)"] = (df_show["costo_op_variable"] / 1000).round(1)
@@ -2555,7 +2584,8 @@ def _render_forecast_estacional(year: int):
         return ""
     df_show["Evento"] = df_show["mes"].apply(_peak_emoji)
 
-    cols_show = ["Mes", "Evento", "Venta FCST (MM$)", "Pedidos", "Unidades", "AOV ($)",
+    cols_show = ["Mes", "Tipo", "Evento", "Venta FCST (MM$)", "Pedidos",
+                  "Unidades", "AOV ($)",
                   "C.OP Fijo (MM$)", "C.OP Variable (MM$)", "C.OP TOTAL (MM$)",
                   "% s/Venta", "Costo/Pedido ($)", "Banda Obj. CPP ($)",
                   "Estado CPP", "Costo/Unidad ($)"]

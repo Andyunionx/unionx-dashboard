@@ -204,21 +204,17 @@ def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataF
         meses_cerrados = meses_disp[:meses_atras]
 
     df = df[df["month"].isin(meses_cerrados)].copy()
-    df["valor_pos"] = df["valor"].abs()
-    n_meses_real = len(meses_cerrados)  # divisor real
+    n_meses_real = len(meses_cerrados)
 
-    # Sumar canales/LN por (CC, cta, tipo_costo, mes)
-    agg = (df.groupby(
-        ["centro_costo", "cuenta_analitica", "tipo_costo", "month"],
-        as_index=False, dropna=False)["valor_pos"].sum())
-    # FIX: promediar dividiendo siempre por N meses (no por meses en que
-    # aparece la cuenta). Si MEGACENTRO ARRIENDOS aparece 1 vez en 3
-    # meses con $11MM, el promedio mensual real es $11/3 = $3.7MM, no $11MM.
-    prom = (agg.groupby(
+    # FIX: sumar valor (con signo) por (CC, cta, tipo_costo) — los
+    # positivos (recuperos) restan al neto. NO usar .abs() fila por fila
+    # (eso inflaba el total cuando hay correcciones).
+    prom = (df.groupby(
         ["centro_costo", "cuenta_analitica", "tipo_costo"],
-        as_index=False, dropna=False)["valor_pos"].sum()
-        .rename(columns={"valor_pos": "_suma_periodo"}))
-    prom["costo_mensual_prom"] = prom["_suma_periodo"] / n_meses_real
+        as_index=False, dropna=False)["valor"].sum()
+        .rename(columns={"valor": "_suma_periodo"}))
+    # Ahora sí, abs del neto + dividir por N meses
+    prom["costo_mensual_prom"] = prom["_suma_periodo"].abs() / n_meses_real
     prom = prom.drop(columns=["_suma_periodo"])
     prom = prom[prom["costo_mensual_prom"] > 0].copy()
     return prom
@@ -227,95 +223,202 @@ def cargar_costo_op_promedio(meses_atras: int = 3, year: int = 2026) -> pd.DataF
 # ============================================================
 # PROYECCIÓN
 # ============================================================
+@st.cache_data(ttl=3600, show_spinner=False)
+def cargar_costo_op_real_mensual(year: int = 2026) -> pd.DataFrame:
+    """Devuelve costo OP REAL por mes (sumando todos los CCs).
+
+    Returns DataFrame con cols [mes, costo_op_fijo, costo_op_variable,
+    costo_op_total] en miles de CLP (valores POSITIVOS).
+
+    IMPORTANTE: el parquet tiene gastos NEGATIVOS y algunos valores
+    POSITIVOS (correcciones/recuperos que restan al gasto). NO usar
+    .abs() fila por fila — sumar primero y tomar abs del TOTAL.
+    """
+    if not PYL_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(PYL_PARQUET)
+    df = df[
+        (df["year"] == year)
+        & (df["escenario"] == "FCST")
+        & (df["kpi"] == "GASTO")
+        & (df["sub_area"].isin(SUB_AREAS_OPS))
+    ].copy()
+    if df.empty:
+        return pd.DataFrame()
+    # Sumar valor (con signo), luego tomar abs en el TOTAL.
+    # Los positivos (recuperos) restan al neto.
+    agg = (df.groupby(["month", "tipo_costo"], as_index=False, dropna=False)
+             ["valor"].sum())
+    agg["valor"] = agg["valor"].abs()  # ahora sí, sobre la suma neta
+    pivot = agg.pivot(index="month", columns="tipo_costo",
+                       values="valor").fillna(0).reset_index()
+    if "FIJO" not in pivot.columns:
+        pivot["FIJO"] = 0
+    if "VARIABLE" not in pivot.columns:
+        pivot["VARIABLE"] = 0
+    pivot["costo_op_fijo"] = pivot["FIJO"]
+    pivot["costo_op_variable"] = pivot["VARIABLE"]
+    pivot["costo_op_total"] = pivot["FIJO"] + pivot["VARIABLE"]
+    pivot["mes"] = pivot["month"]
+    pivot = pivot[pivot["costo_op_total"] > 0].copy()
+    return pivot[["mes", "costo_op_fijo", "costo_op_variable",
+                   "costo_op_total"]]
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cargar_volumen_real_mensual(year: int = 2026) -> pd.DataFrame:
+    """Devuelve pedidos y unidades REALES por mes desde el parquet
+    de volumen inventario (snapshot Odoo).
+
+    Returns DataFrame con cols [mes, pedidos_real, unidades_real].
+    Solo cuenta outgoing (pedidos del cliente, no transferencias).
+    """
+    p = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
+    if not p.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(p)
+    df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
+    df = df[df["picking_type_code"] == "outgoing"].copy()
+    df = df[df["fecha_done"].dt.year == year].copy()
+    if df.empty:
+        return pd.DataFrame()
+    df["mes"] = df["fecha_done"].dt.month
+    agg = df.groupby("mes", as_index=False).agg(
+        pedidos_real=("picking_id", "nunique"),
+        unidades_real=("n_unidades", "sum"),
+    )
+    return agg
+
+
 def proyectar_costo_operativo(year: int = 2026,
                                  mes_desde: int = None,
                                  mes_hasta: int = 12,
                                  driver_override: dict = None) -> pd.DataFrame:
-    """Proyecta el costo operativo mes a mes hasta diciembre.
-
-    Args:
-      mes_desde: si None, se toma mes_actual (proyecta meses futuros)
-      mes_hasta: default 12 (diciembre)
-      driver_override: dict {cc: driver} para sobrescribir defaults
-
-    Returns DataFrame con cols:
-      [mes, venta_fcst, pedidos_proy, unidades_proy,
-       costo_op_fijo, costo_op_variable, costo_op_total,
-       pct_sobre_venta]
-
-    Todos los montos en MISMA UNIDAD = miles de CLP (M$).
-    venta_fcst es la venta del mes en miles de CLP.
-    """
+    """Proyecta el costo operativo mes a mes (compatibilidad legacy).
+    Para vista anual con mix real+proyectado, usar proyectar_anual()."""
     if mes_desde is None:
         from datetime import datetime
         mes_desde = datetime.now().month
+    df = proyectar_anual(year=year, driver_override=driver_override)
+    if df.empty:
+        return df
+    return df[(df["mes"] >= mes_desde) & (df["mes"] <= mes_hasta)].copy()
 
-    # Cargar inputs
-    fcst_venta = cargar_fcst_venta_mensual(year)  # en CLP enteros
+
+def proyectar_anual(year: int = 2026,
+                     driver_override: dict = None) -> pd.DataFrame:
+    """Devuelve TODOS los meses del año (1-12) mezclando:
+      - REAL: meses donde el P&L tiene FCST cerrado con datos
+      - PROYECTADO: meses futuros sin FCST aún cargado
+
+    Returns DataFrame con cols:
+      [mes, tipo (Real/Proyectado), venta_fcst_clp, venta_fcst_mm,
+       pedidos, unidades, costo_op_fijo, costo_op_variable,
+       costo_op_total, pct_sobre_venta]
+
+    Auto-update: cuando un mes pase de "no tiene FCST" a "tiene FCST
+    cargado" en el Sheet del P&L, ese mes pasa de Proyectado a Real
+    automáticamente (se actualiza al refrescar el cache).
+    """
+    fcst_venta = cargar_fcst_venta_mensual(year)
     ratios = calcular_ratios_historicos(meses_atras=3)
-    df_costos = cargar_costo_op_promedio(meses_atras=3, year=year)  # en miles CLP
+    df_costos_prom = cargar_costo_op_promedio(meses_atras=3, year=year)
+    df_costos_real = cargar_costo_op_real_mensual(year=year)
+    df_vol_real = cargar_volumen_real_mensual(year=year)
 
-    if fcst_venta.empty or not ratios or df_costos.empty:
+    if fcst_venta.empty or not ratios:
         return pd.DataFrame()
+
+    # Meses con FCST cerrado en P&L Y mes calendario ya cerrado
+    # (mes < mes_actual). El mes actual y futuros son "Proyectado"
+    # aunque el FCST esté cargado, porque no es data real cerrada.
+    from datetime import datetime
+    hoy = datetime.now()
+    mes_actual = hoy.month if year == hoy.year else 13  # años pasados: todo real
+    meses_con_fcst = set(df_costos_real["mes"].tolist()) if not df_costos_real.empty else set()
+    meses_real = {m for m in meses_con_fcst if m < mes_actual}
 
     ped_ratio = ratios["ratio_pedidos_por_mm_venta"]
     und_ratio = ratios["ratio_unidades_por_mm_venta"]
-    meses_usados = ratios.get("meses_usados", [])  # strings tipo "2026-02"
+    meses_usados = ratios.get("meses_usados", [])
     n_meses = max(ratios.get("n_meses", 1), 1)
     overrides = driver_override or {}
 
-    # PROMEDIOS HISTÓRICOS (base para calcular factor de escalado)
-    # meses_usados son strings "2026-02" → extraer número
     meses_num = [int(m_str[5:7]) for m_str in meses_usados]
     venta_prom_hist = sum(fcst_venta.get(mn, 0) for mn in meses_num) / n_meses
-    # En MM para los ratios
     venta_prom_mm = venta_prom_hist / 1_000_000
     pedidos_prom_hist = venta_prom_mm * ped_ratio
     unidades_prom_hist = venta_prom_mm * und_ratio
 
+    # Volumen real por mes (para columna "pedidos real")
+    vol_real_dict = (df_vol_real.set_index("mes").to_dict("index")
+                       if not df_vol_real.empty else {})
+
     rows = []
-    for m in range(mes_desde, mes_hasta + 1):
-        venta_clp = float(fcst_venta.get(m, 0))  # CLP enteros
-        venta_miles = venta_clp / 1_000  # M$ (miles)
-        venta_mm = venta_clp / 1_000_000  # MM$
-        pedidos = venta_mm * ped_ratio
-        unidades = venta_mm * und_ratio
+    for m in range(1, 13):
+        venta_clp = float(fcst_venta.get(m, 0))
+        venta_mm = venta_clp / 1_000_000
+        es_real = m in meses_real
 
-        costo_fijo = 0.0
-        costo_var = 0.0
-        for _, c in df_costos.iterrows():
-            base = float(c["costo_mensual_prom"])  # en miles CLP
-            cc = c["centro_costo"]
-            cta = c["cuenta_analitica"]
-            tcost = c["tipo_costo"]
-            driver = overrides.get(cc, _driver_cc(cc, cta, tcost))
-
-            if driver == "fijo":
-                costo_fijo += base
-            elif driver == "pedidos":
-                factor = (pedidos / pedidos_prom_hist) if pedidos_prom_hist > 0 else 1.0
-                costo_var += base * factor
-            elif driver == "unidades":
-                factor = (unidades / unidades_prom_hist) if unidades_prom_hist > 0 else 1.0
-                costo_var += base * factor
-            elif driver == "venta":
-                factor = (venta_clp / venta_prom_hist) if venta_prom_hist > 0 else 1.0
-                costo_var += base * factor
+        if es_real:
+            tipo = "Real"
+            # Costo: tomar el real del P&L
+            r = df_costos_real[df_costos_real["mes"] == m].iloc[0]
+            costo_fijo = float(r["costo_op_fijo"])
+            costo_var = float(r["costo_op_variable"])
+            # Pedidos/unidades: tomar reales del inventario si los hay,
+            # sino estimar con ratio
+            if m in vol_real_dict:
+                pedidos = float(vol_real_dict[m]["pedidos_real"])
+                unidades = float(vol_real_dict[m]["unidades_real"])
             else:
-                costo_fijo += base  # fallback
+                pedidos = venta_mm * ped_ratio
+                unidades = venta_mm * und_ratio
+        else:
+            tipo = "Proyectado"
+            # Proyectar con el modelo
+            pedidos = venta_mm * ped_ratio
+            unidades = venta_mm * und_ratio
+            costo_fijo = 0.0
+            costo_var = 0.0
+            if not df_costos_prom.empty:
+                for _, c in df_costos_prom.iterrows():
+                    base = float(c["costo_mensual_prom"])
+                    cc = c["centro_costo"]
+                    cta = c["cuenta_analitica"]
+                    tcost = c["tipo_costo"]
+                    driver = overrides.get(cc, _driver_cc(cc, cta, tcost))
 
-        total = costo_fijo + costo_var  # en miles CLP
-        pct = (total * 1000 / venta_clp * 100) if venta_clp else 0  # ambos en CLP
+                    if driver == "fijo":
+                        costo_fijo += base
+                    elif driver == "pedidos":
+                        factor = (pedidos / pedidos_prom_hist) if pedidos_prom_hist > 0 else 1.0
+                        costo_var += base * factor
+                    elif driver == "unidades":
+                        factor = (unidades / unidades_prom_hist) if unidades_prom_hist > 0 else 1.0
+                        costo_var += base * factor
+                    elif driver == "venta":
+                        factor = (venta_clp / venta_prom_hist) if venta_prom_hist > 0 else 1.0
+                        costo_var += base * factor
+                    else:
+                        costo_fijo += base
+
+        total = costo_fijo + costo_var
+        pct = (total * 1000 / venta_clp * 100) if venta_clp else 0
         rows.append({
             "mes": m,
-            "venta_fcst_clp": venta_clp,        # CLP enteros (para mostrar en MM)
-            "venta_fcst_mm": venta_mm,          # MM
+            "tipo": tipo,
+            "venta_fcst_clp": venta_clp,
+            "venta_fcst_mm": venta_mm,
+            "pedidos": pedidos,
+            "unidades": unidades,
+            # mantengo nombres "proy" para compat con el resto del código
             "pedidos_proy": pedidos,
             "unidades_proy": unidades,
-            "costo_op_fijo": costo_fijo,        # miles CLP
-            "costo_op_variable": costo_var,     # miles CLP
-            "costo_op_total": total,            # miles CLP
-            "pct_sobre_venta": pct,             # %
+            "costo_op_fijo": costo_fijo,
+            "costo_op_variable": costo_var,
+            "costo_op_total": total,
+            "pct_sobre_venta": pct,
         })
 
     return pd.DataFrame(rows)
