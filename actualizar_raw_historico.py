@@ -143,18 +143,22 @@ def insertar_en_maestra(df_raw, db_path):
 
     conn = get_connection(db_path)
 
-    # IDEMPOTENTE: borrar filas previas del mismo período antes de insertar
+    # IDEMPOTENTE: borrar filas previas del mismo período antes de insertar.
+    # EXCEPCIÓN: NO borrar filas con fuente='manual_externa' (facturas cargadas
+    # por contabilidad sin SO en Odoo, ej. Sodimac FAC 097825). Estas se inyectan
+    # con `inyectar_factura_manual.py` y deben sobrevivir cada re-extract.
     fmin_in = df['fecha_venta'].min()
     fmax_in = df['fecha_venta'].max()
     if fmin_in and fmax_in:
         cur_del = conn.cursor()
         cur_del.execute(
-            "DELETE FROM ventas WHERE fecha_venta BETWEEN ? AND ?",
+            "DELETE FROM ventas WHERE fecha_venta BETWEEN ? AND ? "
+            "AND (fuente IS NULL OR fuente != 'manual_externa')",
             (fmin_in, fmax_in)
         )
         n_del = cur_del.rowcount or 0
         if n_del > 0:
-            print(f"      [DEDUP] Borradas {n_del:,} filas previas del período")
+            print(f"      [DEDUP] Borradas {n_del:,} filas previas del período (excluye manual_externa)")
         conn.commit()
 
     # Columnas de la tabla ventas (manual multi-row INSERT, compatible con libsql)
