@@ -14,7 +14,8 @@ partners:
   rut: "66666666-6 (BOL) / 77398220-1 (FAC)"
 
 excel:
-  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/MELI/MELI 1 05_2026 (PRUEBA VCR2).xlsx"
+  # Relativo a la carpeta "Trabajado clientes" (compartida con el bot)
+  drive_path: "MELI/MELI 1 05_2026 (PRUEBA VCR2).xlsx"
   output_suffix: "_ACTUALIZADO"
   hojas_preservar: []      # ⚠️ verificar con Víctor
 

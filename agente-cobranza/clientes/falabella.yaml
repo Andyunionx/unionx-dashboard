@@ -10,7 +10,8 @@ partners:
   rut: "66666666-6"
 
 excel:
-  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/FALABELLA/Falabella desde abril 2026 B.xlsx"
+  # Relativo a la carpeta "Trabajado clientes" (compartida con el bot)
+  drive_path: "FALABELLA/Falabella desde abril 2026 B.xlsx"
   output_suffix: "_ACTUALIZADO"
   hojas_preservar: []      # ⚠️ verificar con Víctor: el MD no lista preservadas
 

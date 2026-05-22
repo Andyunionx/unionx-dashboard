@@ -31,19 +31,19 @@ para facturas — típico de marketplaces), anotá todos.
 
 ### 2. Conseguir la ruta del Excel en Drive
 
-Entrar a Drive → navegar hasta el archivo Excel del cliente. La ruta
-desde "Mi unidad/" la armás juntando los nombres de carpeta:
+> ℹ️ El bot ya tiene acceso a la carpeta **"Trabajado clientes"** (compartida
+> por Andrés). Los paths en el YAML son **relativos a esa carpeta**, no
+> desde "Mi unidad/".
+
+Ejemplo de estructura:
 
 ```
-Mi unidad/
-  POST_CONTABILIDAD 2024/
-    2026/
-      Trabajado clientes/
-        WALMART/
-          Walmart 2026.xlsx        ← tu archivo
+Trabajado clientes/        ← bot ya tiene acceso acá
+  WALMART/
+    Walmart 2026.xlsx      ← tu archivo
 ```
 
-Path final: `POST_CONTABILIDAD 2024/2026/Trabajado clientes/WALMART/Walmart 2026.xlsx`
+Path final para el YAML: `WALMART/Walmart 2026.xlsx`
 
 ### 3. Identificar qué hojas no se pueden tocar
 
@@ -85,7 +85,7 @@ partners:
   rut: "12345678-9"
 
 excel:
-  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/WALMART/Walmart 2026.xlsx"
+  drive_path: "WALMART/Walmart 2026.xlsx"   # relativo a "Trabajado clientes"
   output_suffix: "_ACTUALIZADO"
   hojas_preservar:
     - "PAGOS"

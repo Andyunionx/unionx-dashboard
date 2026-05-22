@@ -27,6 +27,15 @@ SCOPES = [
 
 EXCEL_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+# ID del folder "Trabajado clientes" compartido con el service account.
+# El bot SOLO tiene acceso a este folder y sus subcarpetas — no a sus padres.
+# Por eso las búsquedas empiezan acá, no desde "root" (Mi unidad).
+# Si Andrés muda la carpeta o crea otra, cambiar este ID.
+TRABAJADO_CLIENTES_FOLDER_ID = os.environ.get(
+    "TRABAJADO_CLIENTES_FOLDER_ID",
+    "19EsjfScn5YhJjNVMvT8Qkt3xZBGpGG16",
+)
+
 
 def _credentials() -> service_account.Credentials:
     """Obtiene credentials del service account.
@@ -60,17 +69,22 @@ def _drive_service():
     )
 
 
-def buscar_archivo_por_path(drive_path: str) -> Optional[dict]:
-    """Busca un archivo en Drive por path desde "Mi unidad/".
-    drive_path: 'POST_CONTABILIDAD 2024/2026/Trabajado clientes/PARIS/PARIS 2026.xlsx'
+def buscar_archivo_por_path(drive_path: str,
+                              folder_inicial_id: Optional[str] = None
+                              ) -> Optional[dict]:
+    """Busca un archivo en Drive por path **relativo al folder compartido**.
+
+    drive_path: 'PARIS/PARIS 2026.xlsx' (relativo a "Trabajado clientes")
 
     Recorre la jerarquía carpeta por carpeta. Devuelve dict con id, name, mimeType
     o None si no existe.
+
+    El `folder_inicial_id` default es `TRABAJADO_CLIENTES_FOLDER_ID` — la carpeta
+    raíz que el bot tiene compartida.
     """
     svc = _drive_service()
     partes = [p for p in drive_path.split("/") if p]
-    # Empezamos desde "My Drive" (root)
-    parent_id = "root"
+    parent_id = folder_inicial_id or TRABAJADO_CLIENTES_FOLDER_ID
 
     for i, parte in enumerate(partes):
         es_ultima = (i == len(partes) - 1)
@@ -102,13 +116,18 @@ def buscar_archivo_por_path(drive_path: str) -> Optional[dict]:
     return None
 
 
-def buscar_carpeta_por_path(drive_path: str) -> Optional[str]:
-    """Busca una carpeta y devuelve su file_id. None si no existe.
-    Útil para colocar archivos nuevos en una carpeta específica.
+def buscar_carpeta_por_path(drive_path: str,
+                              folder_inicial_id: Optional[str] = None
+                              ) -> Optional[str]:
+    """Busca una carpeta relativa a `Trabajado clientes` y devuelve su file_id.
+
+    drive_path: ej 'PARIS' (relativo).  Vacío → devuelve folder raíz compartido.
     """
+    if not drive_path:
+        return folder_inicial_id or TRABAJADO_CLIENTES_FOLDER_ID
     svc = _drive_service()
     partes = [p for p in drive_path.split("/") if p]
-    parent_id = "root"
+    parent_id = folder_inicial_id or TRABAJADO_CLIENTES_FOLDER_ID
     for parte in partes:
         q = (f"'{parent_id}' in parents and name='{parte}' "
               "and mimeType='application/vnd.google-apps.folder' "

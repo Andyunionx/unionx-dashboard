@@ -30,8 +30,9 @@ partners:
 
 # ─── Excel destino en Drive ──────────────────────────────────────────────────
 excel:
-  drive_path: ""                  # ⚠️ ruta en Drive desde "Mi unidad/"
-                                  #    ej: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/WALMART/Walmart 2026.xlsx"
+  drive_path: ""                  # ⚠️ ruta RELATIVA a la carpeta "Trabajado clientes"
+                                  #    (que el bot ya tiene compartida)
+                                  #    ej: "WALMART/Walmart 2026.xlsx"
   output_suffix: "_ACTUALIZADO"   # sufijo del archivo de salida (no tocar)
   hojas_preservar: []             # ⚠️ nombres EXACTOS de hojas que NO se sobrescriben
                                   #    típicamente las que tienen tablas dinámicas, fórmulas, data manual

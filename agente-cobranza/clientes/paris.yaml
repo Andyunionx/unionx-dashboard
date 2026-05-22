@@ -11,7 +11,8 @@ partners:
   rut: "66666666-6"
 
 excel:
-  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/PARIS/PARIS 2026.xlsx"
+  # Relativo a la carpeta "Trabajado clientes" (compartida con el bot)
+  drive_path: "PARIS/PARIS 2026.xlsx"
   output_suffix: "_ACTUALIZADO"
   hojas_preservar:
     - "PAGOS"
