@@ -10,6 +10,10 @@ on:
         description: 'YYYY-MM (default: mes actual)'
         required: false
         default: ''
+      source:
+        description: 'Fuente: odoo (default, bypass Turso) o turso (legacy)'
+        required: false
+        default: 'odoo'
 
 permissions:
   contents: write
@@ -31,19 +35,21 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow libsql-client
+          pip install pandas pyarrow libsql-client openpyxl
 
-      - name: Descargar mes actual desde Turso
+      - name: Descargar mes actual (Odoo por default — bypass Turso)
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           PYTHONIOENCODING: utf-8
         run: |
+          SOURCE="${{ github.event.inputs.source || 'odoo' }}"
+          MES_ARG=""
           if [ -n "${{ github.event.inputs.mes }}" ]; then
-            python extract_mes_actual_a_parquet.py --mes "${{ github.event.inputs.mes }}"
-          else
-            python extract_mes_actual_a_parquet.py
+            MES_ARG="--mes ${{ github.event.inputs.mes }}"
           fi
+          python extract_mes_actual_a_parquet.py --source $SOURCE $MES_ARG
 
       - name: Commit si cambió
         run: |

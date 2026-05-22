@@ -181,6 +181,34 @@ def insertar_en_maestra(df_raw, db_path):
             conn.execute(sql, flat)
         conn.commit()
 
+    # Overlay de costo: aplicar tabla costo_override sobre filas con costo_total=0
+    # (SKUs sin purchase_price en Odoo al momento de venta — costo congelado a 0).
+    try:
+        ov = conn.execute("SELECT sku, costo_unitario FROM costo_override").fetchall()
+        if ov:
+            n_overlay = 0
+            for r in ov:
+                sku_ov = r[0] if isinstance(r, (list, tuple)) else r['sku']
+                costo_ov = r[1] if isinstance(r, (list, tuple)) else r['costo_unitario']
+                if not sku_ov or not costo_ov:
+                    continue
+                conn.execute("""
+                    UPDATE ventas
+                    SET costo_unitario = ?,
+                        costo_total = ? * cantidad,
+                        margen_front = venta_neta - (? * cantidad),
+                        margen_final = venta_neta - (? * cantidad)
+                    WHERE fecha_venta BETWEEN ? AND ? AND tipo_movimiento='Venta' AND sku=?
+                    AND (costo_total IS NULL OR costo_total=0)
+                    AND (fuente IS NULL OR fuente <> 'manual_externa')
+                """, [costo_ov, costo_ov, costo_ov, costo_ov, fmin_in, fmax_in, sku_ov])
+                n_overlay += 1
+            conn.commit()
+            if n_overlay > 0:
+                print(f"      [OVERLAY] Aplicado costo_override a {n_overlay} SKUs (costo congelado=0 en Odoo)")
+    except Exception as e:
+        print(f"      [WARN] Overlay costo_override falló: {str(e)[:100]}")
+
     # Dimensiones nuevas (INSERT OR IGNORE para evitar duplicados)
     cursor = conn.cursor()
 
