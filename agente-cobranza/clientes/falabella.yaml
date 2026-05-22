@@ -1,0 +1,26 @@
+# Cliente: Falabella Fcom
+# Migrado de rebuild_falabella.py (Martín) — 2026-05-22
+nombre: "Cliente Falabella Fcom"
+slug: falabella
+
+partners:
+  todos:    [14]
+  boletas:  [14]
+  facturas: [14]
+  rut: "66666666-6"
+
+excel:
+  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/FALABELLA/Falabella desde abril 2026 B.xlsx"
+  output_suffix: "_ACTUALIZADO"
+  hojas_preservar: []      # ⚠️ verificar con Víctor: el MD no lista preservadas
+
+# Falabella sí usa XLOOKUP en BOL contra hoja yuju
+# Nota del MD: "col G = Marketplace Reference; BOL tiene XLOOKUP en col J"
+xlookup_setup:
+  - hoja: "BOL PENDIENTE DE PAGO"
+    columna: J
+    formula: '=XLOOKUP(I{fila},yuju!D:D,yuju!G:G,0,0)'
+
+ventanas_dias:
+  pagadas: -300
+  yuju:    -200

@@ -1,0 +1,27 @@
+# Cliente: Paris
+# Migrado de rebuild_paris.py (Martín) — 2026-05-22
+# Doc: docs/FLUJO_COBRANZA_BOLETA.md
+nombre: "Cliente Paris"
+slug: paris
+
+partners:
+  todos:    [18]
+  boletas:  [18]
+  facturas: [18]
+  rut: "66666666-6"
+
+excel:
+  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/PARIS/PARIS 2026.xlsx"
+  output_suffix: "_ACTUALIZADO"
+  hojas_preservar:
+    - "PAGOS"
+    - "DINAMICAS"
+    - "POR PAGAR"
+    - "PAGO CENCO"
+    - "Hoja2"
+
+xlookup_setup: []   # Paris no usa XLOOKUP customizado
+
+ventanas_dias:
+  pagadas: -300
+  yuju:    -200
