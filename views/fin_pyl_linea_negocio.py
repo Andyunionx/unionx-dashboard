@@ -44,10 +44,15 @@ from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
     cargar_costos_operativos,
     cargar_gav_corporativo,
+    cargar_gav_con_mapping,
+    cargar_mc_absoluto_por_tipo_negocio,
+    cargar_venta_por_categoria_tn,
     cargar_ventas_canal_ln,
+    distribuir_gav_multi_modo,
     distribuir_monto_a_dimension,
     driver_default,
     driver_default_gav,
+    resumen_cobertura_mapping,
 )
 
 
@@ -875,12 +880,6 @@ def render():
                 )
 
         st.markdown("---")
-        st.markdown(
-            "**Driver de GAV:** `% venta` (no editable — gastos administrativos "
-            "del corporativo se asocian al revenue)."
-        )
-
-        st.markdown("---")
         st.markdown("**Mapping default por tipo de costo:**")
         df_defaults = pd.DataFrame([
             {"Centro de Costo": k, "Driver default": v}
@@ -888,6 +887,10 @@ def render():
             if "Ó" not in k and "Á" not in k and "Í" not in k
         ])
         st.dataframe(df_defaults, use_container_width=True, hide_index=True)
+
+        # ─── GAV — Asignación directa multi-modo (Roadmap 2026-05) ───────
+        st.markdown("---")
+        _render_seccion_gav_directo(year, meses_sel)
 
     # NOTA: la distribución (costo_op_por_dim, gav_por_dim, drilldowns)
     # ya se calculó arriba antes del resumen consolidado, para que los
@@ -1820,6 +1823,155 @@ def _render_tab_proyeccion_fcst(year: int):
 # ============================================================
 # TRANSPARENCIA GAV (banner + áreas incluidas/excluidas)
 # ============================================================
+def _render_seccion_gav_directo(year: int, meses: list[int]):
+    """Sección read-only en el tab Drivers que muestra el mapping de
+    distribución directa del GAV configurado en el Sheet P&L Drive.
+
+    Roadmap: docs/ROADMAP_GAV_DIRECTO_2026-05.md.
+    Fuente de verdad = Sheet (no editable acá). Esta vista solo audita.
+    """
+    st.markdown("### 🏢 GAV — Asignación directa por canal/categoría")
+    st.caption(
+        "Marco teórico: Horngren/Datar/Rajan, *Cost Accounting* 15ed, cap 14 · "
+        "IMA Statement 4B. Doc completo: "
+        "[`ROADMAP_GAV_DIRECTO_2026-05.md`](https://github.com/Andyunionx/unionx-dashboard/blob/main/docs/ROADMAP_GAV_DIRECTO_2026-05.md)"
+    )
+
+    gav_map = cargar_gav_con_mapping(year, tuple(meses) if meses else None)
+    if gav_map.empty:
+        st.info("Sin datos de GAV para el período seleccionado.")
+        return
+
+    cob = resumen_cobertura_mapping(gav_map)
+
+    # ─── KPIs de cobertura ────────────────────────────────────────
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric("GAV total del período", f"${cob['total_mm']:,.1f} MM")
+    with c2:
+        st.metric("Con método definido en Sheet",
+                  f"${cob['con_metodo_mm']:,.1f} MM",
+                  f"{cob['pct_cobertura']:.0f}% cobertura")
+    with c3:
+        st.metric("Cargos en el GAV", f"{len(gav_map)}")
+
+    # ─── Banner según cobertura ───────────────────────────────────
+    if cob["pct_cobertura"] == 0:
+        st.warning(
+            "⚠️ **El Sheet aún no tiene la columna `METODO ASIGNACION` con valores.** "
+            "Mientras tanto, todo el GAV se distribuye con el fallback heurístico "
+            "(`venta` uniforme entre los 6 `tipo_negocio`). "
+            "Para activar la distribución directa: agregar al Sheet P&L Drive las cols "
+            "`METODO ASIGNACION`, `DESTINO TIPO NEGOCIO`, `DESTINO CATEGORIA`, "
+            "`PCT ASIGNACION`, `DESCRIPCION CARGO` (ver roadmap)."
+        )
+    elif cob["pct_cobertura"] < 80:
+        st.info(
+            f"📋 Cobertura parcial ({cob['pct_cobertura']:.0f}%). "
+            f"${cob['total_mm'] - cob['con_metodo_mm']:.1f} MM aún en fallback. "
+            "Completar los cargos restantes en el Sheet para mejorar la precisión."
+        )
+    else:
+        st.success(
+            f"✅ Cobertura {cob['pct_cobertura']:.0f}% — la mayoría del GAV "
+            "tiene método de asignación definido."
+        )
+
+    # ─── Tabla read-only ─────────────────────────────────────────
+    st.markdown("#### 📋 Mapping actual (read-only — fuente de verdad: Sheet Drive)")
+
+    icono_metodo = {
+        "directo_canal":     "🎯",
+        "directo_categoria": "🏷️",
+        "mc_absoluto":       "📊",
+        "equitativo":        "⚖️",
+        "venta":             "💰",
+        "":                  "❔",
+    }
+
+    tabla = gav_map.copy()
+    tabla["Monto (M$)"] = (tabla["monto"] / 1000).round(0).astype(int)
+    tabla["Método"] = tabla["metodo_asignacion"].fillna("").map(
+        lambda m: f"{icono_metodo.get(m, '❔')} {m or '(sin método)'}"
+    )
+    tabla["Destino"] = tabla.apply(
+        lambda r: (r["destino_tipo_negocio"] or r["destino_categoria"] or "—"),
+        axis=1,
+    )
+    tabla = tabla[[
+        "area", "sub_area", "centro_costo", "descripcion_cargo",
+        "Monto (M$)", "Método", "Destino", "pct_asignacion",
+    ]].rename(columns={
+        "area":              "Área",
+        "sub_area":          "Sub-área",
+        "centro_costo":      "Centro Costo",
+        "descripcion_cargo": "Descripción",
+        "pct_asignacion":    "% por destino",
+    })
+
+    st.dataframe(
+        tabla.sort_values("Monto (M$)", ascending=False),
+        use_container_width=True, hide_index=True,
+        column_config={
+            "Descripción": st.column_config.TextColumn(width="medium"),
+            "Monto (M$)":  st.column_config.NumberColumn(format="%d"),
+        },
+    )
+
+    # ─── Tabla resumen por método ────────────────────────────────
+    st.markdown("#### 📊 Resumen por método de asignación")
+    res = pd.DataFrame([
+        {"Método": f"{icono_metodo.get(k, '❔')} {k or '(sin método)'}",
+         "Monto (MM$)": v}
+        for k, v in cob["por_metodo"].items()
+    ]).sort_values("Monto (MM$)", ascending=False)
+    st.dataframe(res, use_container_width=True, hide_index=True,
+                 column_config={"Monto (MM$)": st.column_config.NumberColumn(format="%.1f")})
+
+    # ─── Tabla resumen por tipo_negocio resultante ────────────────
+    st.markdown("#### 🎯 Resultado: GAV asignado por tipo_negocio")
+    mc = cargar_mc_absoluto_por_tipo_negocio(year, tuple(meses) if meses else None)
+    vct = cargar_venta_por_categoria_tn(year, tuple(meses) if meses else None)
+    dist = distribuir_gav_multi_modo(gav_map, mc, vct)
+    if not dist.empty:
+        res_tn = (dist.groupby("tipo_negocio")["monto_asignado"].sum() / 1e6).round(1)
+        res_tn = res_tn.sort_values(ascending=False)
+        st.dataframe(
+            res_tn.reset_index().rename(columns={
+                "tipo_negocio": "Tipo Negocio",
+                "monto_asignado": "GAV asignado (MM$)",
+            }),
+            use_container_width=True, hide_index=True,
+            column_config={"GAV asignado (MM$)": st.column_config.NumberColumn(format="%.1f")},
+        )
+
+        # Notas/warnings de fallbacks
+        notas = dist[dist["nota"] != ""]["nota"].value_counts()
+        if len(notas):
+            with st.expander(f"⚠️ {len(notas)} tipo(s) de fallback aplicados"):
+                for nota, count in notas.items():
+                    st.write(f"- **{count} filas:** {nota}")
+
+    # ─── Glosario de métodos ──────────────────────────────────────
+    with st.expander("ℹ️ Glosario de métodos de asignación"):
+        st.markdown("""
+| Método | Cuándo usarlo | Base teórica |
+|---|---|---|
+| 🎯 `directo_canal` | KAM o cargo que atiende `tipo_negocio` específicos | Direct Tracing (Horngren cap 14) |
+| 🏷️ `directo_categoria` | Cargo asociado a una categoría de producto (Planner, Comprador, Marketing producto). Se asigna 100% a la categoría → cascade a los tipo_negocio que venden esa categoría | Direct Tracing por LN |
+| 📊 `mc_absoluto` | Gastos transversales sin causalidad directa (gerencias generales, fin/admin). Distribuye por MC absoluto del canal (no venta — evita penalizar canales de bajo margen) | Benefits-Received (IMA Statement 4B) |
+| ⚖️ `equitativo` | Holding corporativo puro (CEO, Chairman, Grupo Eter, Legales). Reparto igual entre los `tipo_negocio` | Fairness allocation |
+| 💰 `venta` (legacy) | Fallback. Reparto uniforme entre `tipo_negocio`. Se aplica cuando el cargo no tiene método definido en el Sheet | — |
+
+**Cols esperadas en el Sheet P&L Drive** (todas opcionales — backward compatible):
+- `METODO ASIGNACION`: uno de los 5 valores arriba
+- `DESTINO TIPO NEGOCIO`: solo si método=`directo_canal`. Ej: `Marketplace;Fidelización`
+- `DESTINO CATEGORIA`: solo si método=`directo_categoria`. Ej: `Pets`
+- `PCT ASIGNACION`: split opcional. Ej: `{"Marketplace": 70, "Fidelización": 30}`
+- `DESCRIPCION CARGO`: texto libre para que cualquiera entienda qué es el cargo
+""")
+
+
 def _render_transparencia_gav(df_gav: pd.DataFrame, year: int,
                                  meses: list[int]):
     """Banner + expander con las áreas que entran y se excluyen del GAV.

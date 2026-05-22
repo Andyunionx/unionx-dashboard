@@ -136,6 +136,14 @@ def main():
         "CUENTA ANALITICA": "cuenta_analitica",
         "TOTAL": "valor_raw",
         "TIPO": "tipo_raw",
+        # ─── Cols nuevas para distribución directa del GAV (roadmap 2026-05) ───
+        # Todas opcionales. Si no existen en el Sheet, las filas quedan vacías
+        # y la lógica de distribución cae al fallback heurístico de "venta".
+        "METODO ASIGNACION":      "metodo_asignacion",
+        "DESTINO TIPO NEGOCIO":   "destino_tipo_negocio",
+        "DESTINO CATEGORIA":      "destino_categoria",
+        "PCT ASIGNACION":         "pct_asignacion",
+        "DESCRIPCION CARGO":      "descripcion_cargo",
     }
     # Mapear con tolerancia a variantes (encoding mangled, espacios, etc.)
     rename_actual = {}
@@ -176,6 +184,23 @@ def main():
             df[c] = df[c].astype(str).str.strip().str.upper()
             df[c] = df[c].str.replace(r"\s+", " ", regex=True)
 
+    # ─── Cols del roadmap GAV directo (mantener case original para destino) ──
+    # `metodo_asignacion` se normaliza a lowercase (es un enum).
+    # `destino_tipo_negocio` y `destino_categoria` se mantienen tal cual
+    # (deben coincidir con los valores del Sheet KAM / Odoo).
+    # `pct_asignacion` se mantiene como string JSON crudo.
+    # `descripcion_cargo` se mantiene tal cual (texto libre).
+    if "metodo_asignacion" in df.columns:
+        df["metodo_asignacion"] = (
+            df["metodo_asignacion"].astype(str).str.strip().str.lower()
+        )
+        df.loc[df["metodo_asignacion"].isin(["nan", "none", ""]), "metodo_asignacion"] = ""
+    for c in ["destino_tipo_negocio", "destino_categoria",
+              "pct_asignacion", "descripcion_cargo"]:
+        if c in df.columns:
+            df[c] = df[c].astype(str).str.strip()
+            df.loc[df[c].isin(["nan", "None", ""]), c] = ""
+
     # Filtrar válidas: tienen año, mes y escenario
     valid = df["year"].notna() & df["month"].notna() & (df["escenario"] != "")
     df = df[valid].copy()
@@ -187,11 +212,59 @@ def main():
         errors="coerce",
     )
 
+    # ─── Validaciones soft de las cols nuevas del roadmap GAV directo ──────
+    # No crashea — solo loguea warnings para que Andrés sepa qué falta llenar.
+    metodos_validos = {"directo_canal", "directo_categoria", "mc_absoluto",
+                        "equitativo", "venta", ""}
+    warnings_gav = []
+    if "metodo_asignacion" in df.columns:
+        invalidos = df[~df["metodo_asignacion"].isin(metodos_validos)]
+        if len(invalidos) > 0:
+            ejemplos = invalidos["metodo_asignacion"].value_counts().head(5).to_dict()
+            warnings_gav.append(
+                f"  ⚠️  {len(invalidos)} filas con metodo_asignacion no reconocido: {ejemplos}"
+            )
+
+        # Validar que directo_canal tenga destino_tipo_negocio
+        if "destino_tipo_negocio" in df.columns:
+            mask = (df["metodo_asignacion"] == "directo_canal") & \
+                   (df["destino_tipo_negocio"] == "")
+            if mask.any():
+                warnings_gav.append(
+                    f"  ⚠️  {mask.sum()} filas con metodo=directo_canal pero sin destino_tipo_negocio"
+                )
+
+        # Validar que directo_categoria tenga destino_categoria
+        if "destino_categoria" in df.columns:
+            mask = (df["metodo_asignacion"] == "directo_categoria") & \
+                   (df["destino_categoria"] == "")
+            if mask.any():
+                warnings_gav.append(
+                    f"  ⚠️  {mask.sum()} filas con metodo=directo_categoria pero sin destino_categoria"
+                )
+
+        # Cobertura: % filas del GAV con método definido
+        gasto_mask = df["kpi"] == "GASTO"
+        if gasto_mask.any():
+            con_metodo = (df.loc[gasto_mask, "metodo_asignacion"] != "").sum()
+            total = gasto_mask.sum()
+            pct = con_metodo / total * 100 if total else 0
+            print(f"\n[GAV directo] Cobertura método: {con_metodo:,}/{total:,} filas ({pct:.0f}%)",
+                  flush=True)
+
+    if warnings_gav:
+        print(f"\n[GAV directo] Warnings:", flush=True)
+        for w in warnings_gav:
+            print(w, flush=True)
+
     # ─── Guardar parquet ────────────────────────────────────────────────
     cols_out = ["fecha", "year", "month", "mes_text",
                 "linea_negocio", "canal", "tipo_costo",
                 "area", "sub_area", "centro_costo", "cuenta_analitica",
-                "escenario", "kpi", "valor", "tipo_raw"]
+                "escenario", "kpi", "valor", "tipo_raw",
+                # Cols nuevas del roadmap GAV directo
+                "metodo_asignacion", "destino_tipo_negocio", "destino_categoria",
+                "pct_asignacion", "descripcion_cargo"]
     df_out = df[[c for c in cols_out if c in df.columns]].copy()
     df_out.to_parquet(OUT_PARQUET, index=False)
     print(f"\n[3] Parquet guardado: {OUT_PARQUET.relative_to(PROJECT_ROOT)}", flush=True)

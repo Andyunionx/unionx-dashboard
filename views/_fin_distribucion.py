@@ -512,3 +512,357 @@ def armar_pyl_por_canal(
         rows.append(row)
 
     return pd.DataFrame(rows)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# GAV DIRECTO POR CANAL/CATEGORÍA — Roadmap 2026-05
+# Doc: docs/ROADMAP_GAV_DIRECTO_2026-05.md
+# Marco teórico: Horngren, Datar & Rajan (2015), Cost Accounting 15ed, cap 14.
+# ════════════════════════════════════════════════════════════════════════════
+
+import json as _json
+
+KAM_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "contribucion_kam.parquet"
+
+# Lista oficial de tipo_negocio (cost objects para distribución del GAV).
+# Si Andrés modifica esta lista en el Sheet KAM, este código sigue funcionando
+# porque consulta el universo desde los parquets — esta lista es solo fallback
+# para el modo "equitativo" cuando no hay data de ventas.
+TIPOS_NEGOCIO_OFICIALES = [
+    "Marketplace", "Fidelización", "Páginas Propias",
+    "Tiendas Propias", "Corporativo", "Distribución",
+]
+
+METODOS_VALIDOS = {
+    "directo_canal", "directo_categoria", "mc_absoluto",
+    "equitativo", "venta", "",  # "" = fallback heurístico
+}
+
+
+def _norm_tn(s: str) -> str:
+    """Normaliza tipo_negocio para matching robusto (case/acentos)."""
+    if not s or pd.isna(s):
+        return ""
+    return (str(s).strip().lower()
+            .replace("á", "a").replace("é", "e").replace("í", "i")
+            .replace("ó", "o").replace("ú", "u").replace("ñ", "n"))
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_mc_absoluto_por_tipo_negocio(year: int,
+                                          meses: tuple | None = None
+                                          ) -> dict:
+    """Devuelve {tipo_negocio: mc_absoluto_CLP} leído del Sheet KAM.
+
+    Se usa como driver `mc_absoluto` para distribuir gastos transversales
+    (cat 2 del marco teórico). Razón: el IMA Statement 4B recomienda
+    "benefits-received" sobre "ability to bear", y el MC absoluto es el
+    proxy más razonable de capacidad de absorber overhead.
+
+    MC <= 0 se excluye del reparto (se asigna 0 peso, evita distorsionar).
+    """
+    if not KAM_PARQUET.exists():
+        return {}
+    df = pd.read_parquet(KAM_PARQUET)
+    df = df[df["year"] == year].copy()
+    if meses:
+        df = df[df["month"].isin(list(meses))]
+    if df.empty or "resultado_contrib" not in df.columns:
+        return {}
+
+    agg = df.groupby("tipo_negocio")["resultado_contrib"].sum()
+    # Solo positivos (MC negativo excluido del reparto)
+    agg = agg[agg > 0]
+    return agg.to_dict()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_venta_por_categoria_tn(year: int,
+                                    meses: tuple | None = None) -> pd.DataFrame:
+    """Devuelve por (categoria_macro, tipo_negocio): venta_neta.
+
+    Se usa como pesos en la cascada del modo `directo_categoria`:
+    un cargo asignado a Pets se distribuye a los tipo_negocio según
+    cuánto vendió Pets en cada uno.
+    """
+    if not VENTAS_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(VENTAS_PARQUET)
+    df["fecha_venta"] = pd.to_datetime(df["fecha_venta"], errors="coerce")
+    f = df[df["fecha_venta"].dt.year == year].copy()
+    if meses:
+        f = f[f["fecha_venta"].dt.month.isin(list(meses))]
+    if f.empty:
+        return pd.DataFrame()
+
+    f["tipo_negocio"] = f["tipo_negocio"].fillna("(sin clasif)").replace("", "(sin clasif)")
+    f["categoria_macro"] = f["categoria_macro"].fillna("(sin cat)").replace("", "(sin cat)")
+    # Limpiar valores ruidosos típicos
+    f.loc[f["categoria_macro"].isin(["0", "(sin cat)"]), "categoria_macro"] = "(sin cat)"
+
+    agg = f.groupby(["categoria_macro", "tipo_negocio"], as_index=False).agg(
+        venta_neta=("venta_neta", "sum"),
+    )
+    agg = agg[agg["venta_neta"] > 0].copy()
+    return agg
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_gav_con_mapping(year: int, meses: tuple | None = None,
+                             escenario: str = "FCST") -> pd.DataFrame:
+    """Versión extendida de `cargar_gav_corporativo` que incluye el mapping
+    de distribución directa además del monto.
+
+    Cols out: [area, sub_area, centro_costo, monto,
+               metodo_asignacion, destino_tipo_negocio, destino_categoria,
+               pct_asignacion, descripcion_cargo]
+
+    Si el Sheet aún no tiene las cols nuevas → quedan vacías y la lógica
+    de distribución cae al fallback heurístico (`venta`).
+    """
+    if not CONTROL_GESTION_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(CONTROL_GESTION_PARQUET)
+    df = df[(df["year"] == year) &
+            (df["escenario"] == escenario) &
+            (df["kpi"] == "GASTO")].copy()
+    if meses:
+        df = df[df["month"].isin(list(meses))]
+    if df.empty:
+        return pd.DataFrame()
+
+    # Excluir áreas operativas (ya en Costo OP)
+    def _norm(a):
+        if not a:
+            return ""
+        return (str(a).upper().strip()
+                .replace("Ó", "O").replace("Á", "A").replace("É", "E")
+                .replace("Í", "I").replace("Ú", "U"))
+
+    df["area_norm"] = df["area"].apply(_norm)
+    df = df[~df["area_norm"].isin(AREAS_OPERATIVAS_EXCLUIR)].copy()
+    if df.empty:
+        return pd.DataFrame()
+
+    df["valor_pos"] = df["valor"].abs() * 1000
+
+    # Agregar cols nuevas si no existen (backward compat)
+    for col in ["metodo_asignacion", "destino_tipo_negocio", "destino_categoria",
+                "pct_asignacion", "descripcion_cargo"]:
+        if col not in df.columns:
+            df[col] = ""
+
+    # Agrupar por la mínima granularidad útil. El mapping vive a nivel
+    # (area, sub_area, centro_costo, cuenta_analitica). Mantenemos cuenta
+    # analítica si está, para que Andrés pueda etiquetar cargos específicos.
+    group_cols = ["area", "sub_area", "centro_costo"]
+    if "cuenta_analitica" in df.columns:
+        group_cols.append("cuenta_analitica")
+    # El mapping debe ser único por grupo. Si Andrés cargó varios métodos
+    # para el mismo CC (ej: en distintos meses), tomamos el primero no vacío.
+    def _first_non_empty(s):
+        for v in s:
+            if v and str(v).strip():
+                return v
+        return ""
+
+    agg = df.groupby(group_cols, as_index=False, dropna=False).agg(
+        monto=("valor_pos", "sum"),
+        metodo_asignacion=("metodo_asignacion", _first_non_empty),
+        destino_tipo_negocio=("destino_tipo_negocio", _first_non_empty),
+        destino_categoria=("destino_categoria", _first_non_empty),
+        pct_asignacion=("pct_asignacion", _first_non_empty),
+        descripcion_cargo=("descripcion_cargo", _first_non_empty),
+    )
+    agg = agg[agg["monto"] > 0].copy()
+    agg = agg.sort_values("monto", ascending=False).reset_index(drop=True)
+    return agg
+
+
+def _split_pct(json_or_csv: str, destinos_default: list[str]) -> dict:
+    """Parsea split de porcentajes con varios formatos tolerantes:
+
+    - JSON dict:  '{"Marketplace": 80, "Fidelización": 20}'
+    - JSON list:  '[80, 20]' (se aplica a destinos_default en orden)
+    - CSV simple: 'Marketplace;Fidelización' (split uniforme 50/50)
+    - Vacío:      split uniforme entre destinos_default
+
+    Devuelve {destino: peso_0a1}. Si los porcentajes no suman 100, normaliza.
+    Si los destinos no están en destinos_default, los acepta igual (Andrés
+    sabe mejor que el código qué tipo_negocio existe).
+    """
+    raw = (json_or_csv or "").strip()
+    pesos: dict = {}
+
+    if not raw:
+        # Sin spec: uniforme sobre destinos_default
+        if not destinos_default:
+            return {}
+        peso = 1.0 / len(destinos_default)
+        return {d: peso for d in destinos_default}
+
+    # Intentar JSON
+    if raw.startswith("{") or raw.startswith("["):
+        try:
+            parsed = _json.loads(raw)
+            if isinstance(parsed, dict):
+                pesos = {str(k).strip(): float(v) for k, v in parsed.items()}
+            elif isinstance(parsed, list):
+                if len(parsed) == len(destinos_default):
+                    pesos = {destinos_default[i]: float(parsed[i])
+                             for i in range(len(parsed))}
+        except (ValueError, TypeError):
+            pass
+
+    # Si no fue JSON o falló, intentar parse simple (split por ; o ,)
+    if not pesos:
+        # Si destinos_default tiene 1 solo elemento → 100% a ese
+        if len(destinos_default) == 1:
+            return {destinos_default[0]: 1.0}
+        # Uniforme entre destinos_default
+        if destinos_default:
+            peso = 1.0 / len(destinos_default)
+            return {d: peso for d in destinos_default}
+        return {}
+
+    # Normalizar a suma=1
+    total = sum(pesos.values())
+    if total <= 0:
+        return {}
+    return {k: v / total for k, v in pesos.items()}
+
+
+def _parse_destinos_csv(s: str) -> list[str]:
+    """'Marketplace;Fidelización' → ['Marketplace', 'Fidelización']"""
+    if not s:
+        return []
+    return [x.strip() for x in str(s).replace(",", ";").split(";") if x.strip()]
+
+
+def distribuir_gav_multi_modo(
+    df_gav_mapping: pd.DataFrame,
+    mc_por_tn: dict,
+    df_venta_cat_tn: pd.DataFrame,
+    tipos_negocio_universo: list[str] | None = None,
+) -> pd.DataFrame:
+    """Distribuye cada fila del GAV a tipo_negocio según su `metodo_asignacion`.
+
+    Inputs:
+        df_gav_mapping: output de `cargar_gav_con_mapping()`.
+        mc_por_tn: output de `cargar_mc_absoluto_por_tipo_negocio()`.
+        df_venta_cat_tn: output de `cargar_venta_por_categoria_tn()`.
+        tipos_negocio_universo: lista oficial de tipo_negocio. Si None, se
+            infiere de las claves de mc_por_tn (o TIPOS_NEGOCIO_OFICIALES
+            como último recurso).
+
+    Output (formato largo):
+        [area, sub_area, centro_costo, descripcion_cargo, metodo,
+         tipo_negocio, monto_asignado, nota]
+    """
+    if df_gav_mapping.empty:
+        return pd.DataFrame()
+
+    # Universo de tipo_negocio = unión de los que aparecen en MC>0, en ventas
+    # por categoría y en la lista oficial. Garantiza que ningún canal queda
+    # afuera del reparto equitativo solo porque tenga MC negativo o ventas 0.
+    if tipos_negocio_universo is None:
+        universo = set(TIPOS_NEGOCIO_OFICIALES)
+        if mc_por_tn:
+            universo.update(mc_por_tn.keys())
+        if not df_venta_cat_tn.empty and "tipo_negocio" in df_venta_cat_tn.columns:
+            universo.update(df_venta_cat_tn["tipo_negocio"].dropna().unique())
+        # Excluir placeholders
+        universo = {tn for tn in universo if tn and tn != "(sin clasif)"}
+        tipos_negocio_universo = sorted(universo)
+
+    rows = []
+    for _, r in df_gav_mapping.iterrows():
+        metodo_raw = (r.get("metodo_asignacion") or "").strip().lower() or "venta"
+        monto = float(r["monto"])
+        destinos_csv = r.get("destino_tipo_negocio", "") or ""
+        destino_cat = (r.get("destino_categoria") or "").strip()
+        pct_raw = r.get("pct_asignacion", "") or ""
+        base = {
+            "area":               r.get("area", ""),
+            "sub_area":           r.get("sub_area", ""),
+            "centro_costo":       r.get("centro_costo", ""),
+            "descripcion_cargo":  r.get("descripcion_cargo", ""),
+        }
+
+        # Resolver pesos por tipo_negocio + nota (si hubo fallback)
+        pesos_tn: dict = {}
+        metodo_efectivo = metodo_raw
+        nota = ""
+
+        if metodo_raw == "directo_canal":
+            destinos = _parse_destinos_csv(destinos_csv)
+            if destinos:
+                pesos_tn = _split_pct(pct_raw, destinos)
+            else:
+                metodo_efectivo = "venta"
+                nota = "directo_canal sin destino — fallback a venta uniforme"
+
+        elif metodo_raw == "directo_categoria":
+            if not destino_cat or df_venta_cat_tn.empty:
+                metodo_efectivo = "venta"
+                nota = "directo_categoria sin destino — fallback a venta uniforme"
+            else:
+                ventas_cat = df_venta_cat_tn[
+                    df_venta_cat_tn["categoria_macro"].str.lower() == destino_cat.lower()
+                ]
+                total = ventas_cat["venta_neta"].sum() if not ventas_cat.empty else 0
+                if total <= 0:
+                    metodo_efectivo = "equitativo"
+                    nota = f"categoría '{destino_cat}' sin ventas — fallback equitativo"
+                else:
+                    pesos_tn = {vr["tipo_negocio"]: vr["venta_neta"] / total
+                                for _, vr in ventas_cat.iterrows()}
+
+        elif metodo_raw == "mc_absoluto":
+            total_mc = sum(mc_por_tn.values()) if mc_por_tn else 0
+            if total_mc <= 0:
+                metodo_efectivo = "equitativo"
+                nota = "MC absoluto no disponible — fallback equitativo"
+            else:
+                pesos_tn = {tn: mc / total_mc for tn, mc in mc_por_tn.items()}
+
+        # Si llegamos acá con pesos vacíos y método sigue siendo "equitativo"
+        # o "venta" → reparto uniforme entre el universo
+        if not pesos_tn and metodo_efectivo in ("equitativo", "venta"):
+            n = len(tipos_negocio_universo)
+            if n > 0:
+                peso = 1.0 / n
+                pesos_tn = {tn: peso for tn in tipos_negocio_universo}
+                if metodo_raw == "venta" and not nota:
+                    nota = "sin método — fallback uniforme entre tipo_negocio"
+
+        # Emitir filas
+        for tn, peso in pesos_tn.items():
+            rows.append({**base,
+                          "metodo":          metodo_efectivo,
+                          "tipo_negocio":    tn,
+                          "monto_asignado":  monto * peso,
+                          "nota":            nota})
+
+    return pd.DataFrame(rows)
+
+
+def resumen_cobertura_mapping(df_gav_mapping: pd.DataFrame) -> dict:
+    """Devuelve stats de cuánto del GAV tiene método definido vs fallback."""
+    if df_gav_mapping.empty:
+        return {"total_mm": 0, "con_metodo_mm": 0, "pct_cobertura": 0,
+                "por_metodo": {}}
+
+    total = df_gav_mapping["monto"].sum()
+    con_metodo_mask = df_gav_mapping["metodo_asignacion"].astype(str).str.strip() != ""
+    con_metodo = df_gav_mapping.loc[con_metodo_mask, "monto"].sum()
+    por_metodo = (df_gav_mapping.groupby(
+        df_gav_mapping["metodo_asignacion"].replace("", "(sin método)")
+    )["monto"].sum() / 1e6).round(1).to_dict()
+
+    return {
+        "total_mm": round(total / 1e6, 1),
+        "con_metodo_mm": round(con_metodo / 1e6, 1),
+        "pct_cobertura": round(con_metodo / total * 100, 0) if total > 0 else 0,
+        "por_metodo": por_metodo,
+    }
