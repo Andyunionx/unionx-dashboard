@@ -1,0 +1,77 @@
+name: Agente Cobranza Diario
+
+# Reemplaza los Task Scheduler de Martín. Corre 1×/día a las 07:00 Chile.
+# Procesa los YAML en agente-cobranza/clientes/ (excepto _template).
+#
+# Para agregar un cliente nuevo: ver docs/COMO_AGREGAR_CLIENTE.md.
+
+on:
+  schedule:
+    # 10:00 UTC = 07:00 Chile en horario de verano (UTC-3).
+    # En invierno (UTC-4) sería 06:00 Chile, igual sigue siendo fuera de horario laboral
+    # → el resultado está listo cuando el equipo arranca el día.
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      cliente:
+        description: "Slug de un cliente específico (vacío = todos)"
+        required: false
+        type: string
+      dry_run:
+        description: "Dry-run (sin tocar Drive)"
+        required: false
+        type: boolean
+        default: false
+
+# Concurrencia: si ya está corriendo, no lanzar otra (evita pisar Excels)
+concurrency:
+  group: agente-cobranza
+  cancel-in-progress: false
+
+jobs:
+  cobranza:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r agente-cobranza/requirements.txt
+          # OdooClient vive en finanzas-unionx/backend, instalamos sus deps mínimas
+          pip install requests "urllib3<3"
+
+      - name: Run agente
+        env:
+          ODOO_URL: "https://unionxb2b.odoo.com"
+          ODOO_DB: "bmya-innovatek-sh-prd-6981800"
+          ODOO_USER: "andres@grupoeter.cl"
+          ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          set -euo pipefail
+          ARGS=""
+          if [ -n "${{ inputs.cliente }}" ]; then
+            ARGS="--config agente-cobranza/clientes/${{ inputs.cliente }}.yaml"
+          else
+            ARGS="--todos"
+          fi
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          python agente-cobranza/actualizar_cliente.py $ARGS
+
+      - name: Upload tmp dir as artifact (debug)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agente-cobranza-tmp-${{ github.run_id }}
+          path: agente-cobranza/tmp/
+          retention-days: 5

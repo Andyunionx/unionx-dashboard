@@ -1,0 +1,21 @@
+# Cliente: MELI 2
+# Migrado de rebuild_meli_final.py 2 (Martín) — 2026-05-22
+nombre: "MELI 2"
+slug: meli_2
+
+partners:
+  todos:    [16, 1586, 90747, 19583]
+  boletas:  [16]
+  facturas: [1586, 90747]
+  rut: "66666666-6 (BOL) / 77398220-1 (FAC)"
+
+excel:
+  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/MELI/MELI 2 2026.xlsx"
+  output_suffix: "_ACTUALIZADO"
+  hojas_preservar: []
+
+xlookup_setup: []
+
+ventanas_dias:
+  pagadas: -300
+  yuju:    -200

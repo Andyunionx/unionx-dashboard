@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Template para agregar un cliente nuevo al agente de cobranza
+#
+# CÓMO USAR:
+#   1. Copiar este archivo a `clientes/<slug>.yaml` (ej: walmart.yaml)
+#   2. Completar todos los campos marcados con ⚠️
+#   3. Abrir PR a la rama feat/agente-cobranza
+#   4. Andrés revisa y mergea
+#   5. El cron del día siguiente ya procesa el cliente
+#
+# DÓNDE CONSEGUIR LOS DATOS:
+#   - partner_id: en Odoo > Contactos > buscar cliente > URL tiene el ID
+#   - drive_path: ruta dentro de Drive desde "Mi unidad/"
+#   - hojas_preservar: nombres exactos de hojas que el script NO debe tocar
+#                      (las hojas con fórmulas / tablas dinámicas / data manual)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Identificación ──────────────────────────────────────────────────────────
+nombre: "Nombre del Cliente"      # ⚠️ como aparece en Odoo (visible en logs/reportes)
+slug: cliente_slug                # ⚠️ id corto sin espacios, lowercase (ej: walmart)
+
+# ─── Partners de Odoo ────────────────────────────────────────────────────────
+# Un mismo cliente puede tener varios partner_id en Odoo si separa boletas/facturas.
+# Si es un solo partner para todo, poné el mismo id en los 3 campos.
+partners:
+  todos:    []                    # ⚠️ usados en hojas "PAGADAS" y "yuju" (sale.order)
+  boletas:  []                    # ⚠️ usados en "BOL PENDIENTE", "REVERTIDOS", "NC"
+  facturas: []                    # ⚠️ usados en "FACTURAS PENDIENTES DE PAGO"
+  rut: ""                         # informativo, no se usa para filtrar
+
+# ─── Excel destino en Drive ──────────────────────────────────────────────────
+excel:
+  drive_path: ""                  # ⚠️ ruta en Drive desde "Mi unidad/"
+                                  #    ej: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/WALMART/Walmart 2026.xlsx"
+  output_suffix: "_ACTUALIZADO"   # sufijo del archivo de salida (no tocar)
+  hojas_preservar: []             # ⚠️ nombres EXACTOS de hojas que NO se sobrescriben
+                                  #    típicamente las que tienen tablas dinámicas, fórmulas, data manual
+                                  #    ej: ["PAGOS", "DINAMICAS", "POR PAGAR"]
+
+# ─── (Opcional) Fórmulas XLOOKUP que el script setea después del update ─────
+# Solo si el cliente necesita cruces especiales entre hojas BOL y yuju.
+# Si dudás, dejá la lista vacía.
+xlookup_setup: []
+# Ejemplo (Falabella):
+# xlookup_setup:
+#   - hoja: "BOL PENDIENTE DE PAGO"
+#     columna: J
+#     formula: '=XLOOKUP(I{fila},yuju!D:D,yuju!G:G,0,0)'
+#
+# Ejemplo (Shopify):
+# xlookup_setup:
+#   - hoja: "BOL PENDIENTE DE PAGO"
+#     columna: J
+#     formula: '=XLOOKUP(F{fila},detalle!N:N,detalle!U:U,0,0)'
+
+# ─── (Opcional) Override de ventanas de tiempo ───────────────────────────────
+# Cada hoja del set estándar tiene un default. Solo override si el cliente
+# necesita una ventana distinta. Formato: "-300d" = 300 días atrás desde hoy.
+ventanas_dias:
+  pagadas: -300                   # default -300 (últimos 300 días)
+  yuju:    -200                   # default -200 (últimos 200 días)

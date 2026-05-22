@@ -1,0 +1,28 @@
+# Cliente: Shopify / Mercado Pago
+# Migrado de rebuild_shopify.py (Martín) — 2026-05-22
+nombre: "Cliente Shopify"
+slug: shopify
+
+partners:
+  todos:    [21]
+  boletas:  [21]
+  facturas: [21]
+  rut: "66666666-6"
+
+excel:
+  drive_path: "POST_CONTABILIDAD 2024/2026/Trabajado clientes/MERCADO PAGO/MERCADO PAGO 2026.xlsx"
+  output_suffix: "_ACTUALIZADO"
+  hojas_preservar:
+    - "pedidos"
+    - "TRABAJADO"
+    - "detalle"
+
+# Shopify cruza BOL con hoja "detalle" (no yuju)
+xlookup_setup:
+  - hoja: "BOL PENDIENTE DE PAGO"
+    columna: J
+    formula: '=XLOOKUP(F{fila},detalle!N:N,detalle!U:U,0,0)'
+
+ventanas_dias:
+  pagadas: -300
+  yuju:    -200
