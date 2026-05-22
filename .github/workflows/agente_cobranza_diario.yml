@@ -18,7 +18,12 @@ on:
         required: false
         type: string
       dry_run:
-        description: "Dry-run (sin tocar Drive)"
+        description: "Dry-run (no descarga ni sube a Drive — usa workbook vacío)"
+        required: false
+        type: boolean
+        default: false
+      no_upload:
+        description: "Descarga Drive original + procesa, pero NO sube. El Excel queda como artifact descargable. Útil para validación humana."
         required: false
         type: boolean
         default: false
@@ -68,12 +73,15 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             ARGS="$ARGS --dry-run"
           fi
+          if [ "${{ inputs.no_upload }}" = "true" ]; then
+            ARGS="$ARGS --no-upload"
+          fi
           python agente-cobranza/actualizar_cliente.py $ARGS
 
-      - name: Upload tmp dir as artifact (debug)
-        if: failure()
+      - name: Upload Excels as artifact (validación / debug)
+        if: always() && (inputs.no_upload == true || failure())
         uses: actions/upload-artifact@v4
         with:
           name: agente-cobranza-tmp-${{ github.run_id }}
           path: agente-cobranza/tmp/
-          retention-days: 5
+          retention-days: 14

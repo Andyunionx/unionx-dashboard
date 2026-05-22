@@ -46,6 +46,7 @@ from lib.odoo_helpers import (  # noqa: E402
     descargar_bol_pendiente, descargar_revertidos, descargar_nc,
     descargar_facturas_pendientes, descargar_pagadas, descargar_yuju,
     filas_para_hoja_documentos, filas_para_hoja_nc, filas_para_hoja_yuju,
+    obtener_rut_por_partner, obtener_doc_name_por_id,
 )
 from lib.excel_updater import actualizar_excel  # noqa: E402
 
@@ -71,7 +72,9 @@ def cargar_config(path: Path) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 # PROCESO DE UN CLIENTE
 # ─────────────────────────────────────────────────────────────────────────────
-def procesar_cliente(config_path: Path, dry_run: bool = False) -> dict:
+def procesar_cliente(config_path: Path, dry_run: bool = False,
+                       output_suffix_override: str | None = None,
+                       no_upload: bool = False) -> dict:
     """Procesa un cliente. Retorna dict con stats para el log."""
     cfg = cargar_config(config_path)
     nombre = cfg["nombre"]
@@ -144,19 +147,42 @@ def procesar_cliente(config_path: Path, dry_run: bool = False) -> dict:
     sos = descargar_yuju(odoo, p_todos, dias_yuju)
     print(f"  yuju (últimos {dias_yuju}d):        {len(sos):>6,}", flush=True)
 
+    # ─── 2.5. LOOKUPS EXTRA (RUT + names de facturas referenciadas) ──────
+    # Para producir el formato byte-compatible con Martin necesitamos:
+    #   - RUT del partner (no viene en account.move)
+    #   - Name de cada move_id referenciado en sale_order.invoice_ids (hoja yuju)
+    print(f"\n[2.5/4] Resolviendo RUTs de partners + names de facturas referenciadas...",
+          flush=True)
+    todos_partner_ids = set()
+    for docs in (docs_bol, docs_rev, docs_nc, docs_fac, docs_pag):
+        for d in docs:
+            if d.get("partner_id"):
+                todos_partner_ids.add(d["partner_id"][0])
+    rut_por_partner = obtener_rut_por_partner(odoo, list(todos_partner_ids))
+    print(f"  RUTs resueltos: {len(rut_por_partner)}", flush=True)
+
+    move_ids_referenciados = set()
+    for so in sos:
+        for mid in (so.get("invoice_ids") or []):
+            move_ids_referenciados.add(mid)
+    move_name_por_id = obtener_doc_name_por_id(odoo, list(move_ids_referenciados))
+    print(f"  Move names resueltos: {len(move_name_por_id)}", flush=True)
+
     # ─── 3. CONSTRUIR HOJAS PARA EXCEL ────────────────────────────────────
     hojas_data = {
-        "BOL PENDIENTE DE PAGO":      filas_para_hoja_documentos(docs_bol),
-        "REVERTIDOS":                  filas_para_hoja_documentos(docs_rev),
-        "NC":                          filas_para_hoja_nc(docs_nc),
-        "FACTURAS PENDIENTES DE PAGO": filas_para_hoja_documentos(docs_fac),
-        "PAGADAS":                     filas_para_hoja_documentos(docs_pag),
-        "yuju":                        filas_para_hoja_yuju(sos),
+        "BOL PENDIENTE DE PAGO":      filas_para_hoja_documentos(docs_bol, rut_por_partner),
+        "REVERTIDOS":                  filas_para_hoja_documentos(docs_rev, rut_por_partner),
+        "NC":                          filas_para_hoja_nc(docs_nc, rut_por_partner),
+        "FACTURAS PENDIENTES DE PAGO": filas_para_hoja_documentos(docs_fac, rut_por_partner),
+        "PAGADAS":                     filas_para_hoja_documentos(docs_pag, rut_por_partner),
+        "yuju":                        filas_para_hoja_yuju(sos, move_name_por_id),
     }
 
     # ─── 4. BAJAR / ACTUALIZAR / SUBIR EXCEL ──────────────────────────────
     drive_path = cfg["excel"]["drive_path"]
-    output_suffix = cfg["excel"].get("output_suffix") or "_ACTUALIZADO"
+    output_suffix = (output_suffix_override
+                      or cfg["excel"].get("output_suffix")
+                      or "_ACTUALIZADO")
     hojas_preservar = cfg["excel"].get("hojas_preservar") or []
     xlookup_setup = cfg.get("xlookup_setup") or []
 
@@ -203,8 +229,12 @@ def procesar_cliente(config_path: Path, dry_run: bool = False) -> dict:
     )
     print(f"  Excel actualizado: {local_actualizado}", flush=True)
 
-    # Subir a Drive (si no es dry-run)
-    if not dry_run:
+    # Subir a Drive (si no es dry-run y no es --no-upload)
+    if dry_run or no_upload:
+        if no_upload:
+            print(f"  --no-upload: el Excel queda solo local en {local_actualizado}",
+                  flush=True)
+    else:
         from lib.drive_helpers import (
             actualizar_archivo, buscar_carpeta_por_path, subir_archivo,
         )
@@ -213,13 +243,30 @@ def procesar_cliente(config_path: Path, dry_run: bool = False) -> dict:
             print(f"  Drive: actualizado existing file_id {file_id_actualizado}",
                   flush=True)
         else:
-            # Crear nuevo en la misma carpeta del original
+            # Crear nuevo en la misma carpeta del original.
+            # NOTA: las service accounts NO pueden crear archivos nuevos en
+            # "Mi unidad" — falla con storageQuotaExceeded. Soluciones:
+            #   - Andrés crea manualmente el archivo destino vacío y lo
+            #     comparte con el bot (después del 1er run, el bot ya hace
+            #     update y todo OK)
+            #   - O mover los archivos a un Shared Drive (Team Drive)
             carpeta_path = "/".join(drive_path.split("/")[:-1])
             carpeta_id = buscar_carpeta_por_path(carpeta_path)
             if not carpeta_id:
                 raise RuntimeError(f"No se encontró carpeta destino: {carpeta_path}")
-            new_id = subir_archivo(local_actualizado, carpeta_id, nombre_actualizado)
-            print(f"  Drive: creado nuevo file_id={new_id}", flush=True)
+            try:
+                new_id = subir_archivo(local_actualizado, carpeta_id, nombre_actualizado)
+                print(f"  Drive: creado nuevo file_id={new_id}", flush=True)
+            except Exception as e:
+                if "storageQuotaExceeded" in str(e):
+                    raise RuntimeError(
+                        f"\n\nNO SE PUEDE CREAR archivo nuevo en Drive con service account.\n"
+                        f"Solucion: pedir a Andres que cree manualmente el archivo destino:\n"
+                        f"  {drive_path.rsplit('/', 1)[0]}/{nombre_actualizado}\n"
+                        f"  (puede ser un Excel vacio) y compartirlo con el bot.\n"
+                        f"Despues del primer run, las actualizaciones siguientes funcionan OK.\n"
+                    ) from e
+                raise
 
     return {
         "cliente": nombre,
@@ -250,7 +297,13 @@ def main():
     g.add_argument("--todos", action="store_true",
                     help="Procesar todos los YAML en clientes/ (excepto _template)")
     ap.add_argument("--dry-run", action="store_true",
-                     help="No toca Drive, solo descarga de Odoo y genera Excel local")
+                     help="No toca Drive (ni descarga ni sube). Genera Excel desde un workbook vacío.")
+    ap.add_argument("--no-upload", action="store_true",
+                     help="Descarga el original real de Drive y procesa, pero NO sube el resultado. "
+                          "El Excel queda solo local. Útil para validar paridad sin tocar producción.")
+    ap.add_argument("--output-suffix", default=None,
+                     help="Override del sufijo del archivo de salida (default: _ACTUALIZADO del YAML). "
+                          "Útil para tests: --output-suffix _AGENTE_TEST evita pisar el archivo de Martín.")
     args = ap.parse_args()
 
     if args.todos:
@@ -270,7 +323,9 @@ def main():
 
     for cfg_path in configs:
         try:
-            res = procesar_cliente(cfg_path, dry_run=args.dry_run)
+            res = procesar_cliente(cfg_path, dry_run=args.dry_run,
+                                     output_suffix_override=args.output_suffix,
+                                     no_upload=args.no_upload)
             resultados.append(res)
         except Exception as e:
             print(f"\n[ERROR] {cfg_path.name}: {e}", flush=True)

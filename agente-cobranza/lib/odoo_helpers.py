@@ -154,6 +154,38 @@ def descargar_yuju(odoo: OdooClient, partner_ids: list[int],
     )
 
 
+def obtener_rut_por_partner(odoo: OdooClient,
+                              partner_ids: list[int]) -> dict[int, str]:
+    """Lookup RUT (campo vat) por partner_id en res.partner.
+    Devuelve {partner_id: rut_str}. RUT vacío → "" (no None).
+    """
+    if not partner_ids:
+        return {}
+    partners = odoo.search_read(
+        "res.partner",
+        [("id", "in", list(set(partner_ids)))],
+        ["id", "vat"],
+        limit=len(partner_ids),
+    )
+    return {p["id"]: (p.get("vat") or "") for p in partners}
+
+
+def obtener_doc_name_por_id(odoo: OdooClient,
+                              move_ids: list[int]) -> dict[int, str]:
+    """Lookup name por id en account.move (para resolver invoice_ids de yuju).
+    Devuelve {move_id: name_str}.
+    """
+    if not move_ids:
+        return {}
+    docs = odoo.search_read(
+        "account.move",
+        [("id", "in", list(set(move_ids)))],
+        ["id", "name"],
+        limit=len(move_ids),
+    )
+    return {d["id"]: (d.get("name") or "") for d in docs}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # TRANSFORMACIÓN A FORMATO EXCEL
 # ─────────────────────────────────────────────────────────────────────────────
@@ -182,105 +214,118 @@ def _flatten_many2one(v: Any) -> Any:
     return v if v is not False else ""
 
 
-def filas_para_hoja_documentos(docs: list[dict]) -> list[list]:
-    """Convierte docs de account.move a filas para Excel.
-    Devuelve lista de filas (cada fila es una lista). Primera fila = headers.
+# Mapa de codigos de fulfillment de Odoo a labels humanos que usa Martin
+FULFILLMENT_LABELS = {
+    "fbm": "Seller",
+    "fbf": "Flex",
+    "fbc": "Full",
+    "mix": "Mix",
+}
 
-    Columnas (orden basado en exportador "estado de cuenta vcr1" según MD):
-      A: doc_number       (l10n_latam_document_number como entero)
-      B: partner          (nombre cliente)
-      C: date             (fecha contable)
-      D: invoice_date_due (vencimiento)
-      E: ref              (referencia)
-      F: payment_reference
-      G: amount_residual  (saldo pendiente)
-      H: amount_total
-      I: invoice_origin   (SO de origen)
-      J: payment_state
-      K: doc_type         (33/39)
-      L: journal
-      M: name             (BEL XXXXX completo)
-      N: id               (id Odoo para debug)
+
+def filas_para_hoja_documentos(docs: list[dict],
+                                  rut_por_partner: dict[int, str]) -> list[list]:
+    """Formato byte-compatible con el output de Martín (rebuild_*.py).
+
+    Columnas (9):
+      A: RUT Nº                  (lookup res.partner.vat)
+      B: Empresa                 (partner display name)
+      C: Fecha                   (account.move.date)
+      D: Fecha de vencimiento    (account.move.invoice_date_due)
+      E: Número de Documento     (l10n_latam_document_number como entero)
+      F: Referencia de pago      (account.move.payment_reference, típico "BEL 466217")
+      G: Referencia              (account.move.ref)
+      H: Importe adeudado        (account.move.amount_residual)
+      I: Pedido de venta         (account.move.invoice_origin)
     """
     headers = [
-        "doc_number", "partner", "date", "invoice_date_due", "ref",
-        "payment_reference", "amount_residual", "amount_total",
-        "invoice_origin", "payment_state", "doc_type", "journal",
-        "name", "id_odoo",
+        "RUT Nº", "Empresa", "Fecha", "Fecha de vencimiento",
+        "Número de Documento", "Referencia de pago", "Referencia",
+        "Importe adeudado", "Pedido de venta",
     ]
     rows = [headers]
     for d in docs:
+        partner_id = d["partner_id"][0] if d.get("partner_id") else None
         rows.append([
-            doc_num(d.get("l10n_latam_document_number")),
+            rut_por_partner.get(partner_id, "") if partner_id else "",
             _flatten_many2one(d.get("partner_id")),
             d.get("date") or "",
             d.get("invoice_date_due") or "",
-            d.get("ref") or "",
+            doc_num(d.get("l10n_latam_document_number")),
             d.get("payment_reference") or "",
+            d.get("ref") or "",
             float(d.get("amount_residual") or 0),
-            float(d.get("amount_total") or 0),
             d.get("invoice_origin") or "",
-            d.get("payment_state") or "",
-            _flatten_many2one(d.get("l10n_latam_document_type_id")),
-            _flatten_many2one(d.get("journal_id")),
-            d.get("name") or "",
-            d.get("id"),
         ])
     return rows
 
 
-def filas_para_hoja_nc(docs: list[dict]) -> list[list]:
-    """Similar a documentos pero agrega col `reversed_entry` (referencia al doc revertido)."""
+def filas_para_hoja_nc(docs: list[dict],
+                         rut_por_partner: dict[int, str]) -> list[list]:
+    """Formato byte-compatible con NC de Martín.
+
+    Columnas (10): Las 9 estándar + J: BEL Original (del reversed_entry_id).
+    """
     headers = [
-        "doc_number", "partner", "date", "invoice_date_due", "ref",
-        "payment_reference", "amount_residual", "amount_total",
-        "invoice_origin", "payment_state", "doc_type", "journal",
-        "reversed_entry", "name", "id_odoo",
+        "RUT Nº", "Empresa", "Fecha", "Fecha de vencimiento",
+        "Número de Documento", "Referencia de pago", "Referencia",
+        "Importe adeudado", "Pedido de venta", "BEL Original",
     ]
     rows = [headers]
     for d in docs:
+        partner_id = d["partner_id"][0] if d.get("partner_id") else None
+        # BEL Original = name del documento revertido
+        bel_original = _flatten_many2one(d.get("reversed_entry_id"))
         rows.append([
-            doc_num(d.get("l10n_latam_document_number")),
+            rut_por_partner.get(partner_id, "") if partner_id else "",
             _flatten_many2one(d.get("partner_id")),
             d.get("date") or "",
             d.get("invoice_date_due") or "",
-            d.get("ref") or "",
+            doc_num(d.get("l10n_latam_document_number")),
             d.get("payment_reference") or "",
+            d.get("ref") or "",
             float(d.get("amount_residual") or 0),
-            float(d.get("amount_total") or 0),
             d.get("invoice_origin") or "",
-            d.get("payment_state") or "",
-            _flatten_many2one(d.get("l10n_latam_document_type_id")),
-            _flatten_many2one(d.get("journal_id")),
-            _flatten_many2one(d.get("reversed_entry_id")),
-            d.get("name") or "",
-            d.get("id"),
+            bel_original,
         ])
     return rows
 
 
-def filas_para_hoja_yuju(sos: list[dict]) -> list[list]:
-    """Convierte sale.orders a filas para hoja yuju.
-    Columnas estándar usadas en los Excel de clientes (en el MD aparece que
-    Falabella usa col G = Marketplace Reference y col D para el XLOOKUP).
+def filas_para_hoja_yuju(sos: list[dict],
+                           move_name_por_id: dict[int, str]) -> list[list]:
+    """Formato byte-compatible con hoja yuju de Martín.
+
+    Columnas (7):
+      A: Cliente                   (partner display name)
+      B: Fecha creación            (create_date con hora, "YYYY-MM-DD HH:MM:SS")
+      C: Referencia de pedido      (sale.order.name, ej "S148816")
+      D: Facturas                  (lookup de invoice_ids[0].name, ej "BEL 503133")
+      E: Yuju Pack Id              (sale.order.yuju_pack_id)
+      F: Marketplace Reference     (sale.order.channel_order_reference)
+      G: Fulfillment               (sale.order.fulfillment → label humano)
     """
     headers = [
-        "name", "partner", "create_date", "yuju_pack_id",
-        "channel_order_reference", "fulfillment", "amount_total", "state",
-        "invoice_ids", "id_odoo",
+        "Cliente", "Fecha creación", "Referencia de pedido", "Facturas",
+        "Yuju Pack Id", "Marketplace Reference", "Fulfillment",
     ]
     rows = [headers]
     for so in sos:
+        # invoice_ids es una lista. Si tiene >1, concatenar separado por coma.
+        inv_ids = so.get("invoice_ids") or []
+        facturas_names = [move_name_por_id.get(i, "") for i in inv_ids if i]
+        facturas_names = [n for n in facturas_names if n]
+        facturas_str = ", ".join(facturas_names)
+
+        fulfillment_code = so.get("fulfillment") or ""
+        fulfillment_label = FULFILLMENT_LABELS.get(fulfillment_code, fulfillment_code)
+
         rows.append([
-            so.get("name") or "",
             _flatten_many2one(so.get("partner_id")),
-            (so.get("create_date") or "")[:10],
+            so.get("create_date") or "",
+            so.get("name") or "",
+            facturas_str,
             so.get("yuju_pack_id") or "",
             so.get("channel_order_reference") or "",
-            so.get("fulfillment") or "",
-            float(so.get("amount_total") or 0),
-            so.get("state") or "",
-            ",".join(str(i) for i in (so.get("invoice_ids") or [])),
-            so.get("id"),
+            fulfillment_label,
         ])
     return rows
