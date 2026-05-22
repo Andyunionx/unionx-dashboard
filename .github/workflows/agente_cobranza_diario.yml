@@ -52,8 +52,10 @@ jobs:
         env:
           ODOO_URL: "https://unionxb2b.odoo.com"
           ODOO_DB: "bmya-innovatek-sh-prd-6981800"
-          ODOO_USER: "andres@grupoeter.cl"
-          ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          # Víctor es el dueño funcional del proceso de cobranza.
+          # Si Víctor se va o cambia, solo se actualiza VICTOR_ODOO_PASSWORD.
+          ODOO_USER: "victor@grupoeter.cl"
+          ODOO_PASSWORD: ${{ secrets.VICTOR_ODOO_PASSWORD }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         run: |
           set -euo pipefail

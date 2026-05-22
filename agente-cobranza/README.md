@@ -68,7 +68,11 @@ python actualizar_cliente.py --todos
 
 Cron: `.github/workflows/agente_cobranza_diario.yml` — 07:00 Chile (10:00 UTC).
 
-Lee `ANDRES_ODOO_PASSWORD` y `GOOGLE_CREDENTIALS_JSON` desde Secrets del repo.
+Usa el usuario de Víctor (`victor@grupoeter.cl`), dueño funcional del proceso.
+Lee desde GitHub Secrets:
+
+- `VICTOR_ODOO_PASSWORD` — clave de Víctor en Odoo
+- `GOOGLE_CREDENTIALS_JSON` — bot de Drive (compartido con otros workflows de Finanzas)
 
 ## Cómo agregar un cliente nuevo
 
@@ -82,10 +86,11 @@ completar campos, abrir PR.
 1. Cada Excel de cliente en Drive debe estar **compartido con el service account**:
    `union-x-revenue-bot@union-x-revenue.iam.gserviceaccount.com` con rol `Editor`.
 
-2. `ANDRES_ODOO_PASSWORD` debe estar en Secrets del repo
-   (Settings → Secrets and variables → Actions).
+2. `VICTOR_ODOO_PASSWORD` debe estar en Secrets del repo
+   (Settings → Secrets and variables → Actions). Esta es la única secret nueva
+   que hay que crear — las demás ya existen.
 
-3. `GOOGLE_CREDENTIALS_JSON` debe estar en Secrets (el mismo que usan los
+3. `GOOGLE_CREDENTIALS_JSON` ya existe en Secrets (el mismo que usan los
    syncs de Finanzas).
 
 ## Limitación conocida: recálculo de fórmulas

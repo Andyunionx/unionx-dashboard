@@ -32,8 +32,10 @@
 
 | Servicio | Cómo se accede | Secret name |
 |---|---|---|
-| Odoo | XML-RPC con user/pass | `ANDRES_ODOO_PASSWORD` (existente) |
+| Odoo | XML-RPC con user/pass de Víctor | `VICTOR_ODOO_PASSWORD` (a crear) |
 | Google Drive | Service account | `GOOGLE_CREDENTIALS_JSON` (existente) |
+
+Usuario Odoo: `victor@grupoeter.cl` (dueño funcional del proceso de cobranza).
 
 Service account email (debe estar compartido con cada Excel cliente):
 `union-x-revenue-bot@union-x-revenue.iam.gserviceaccount.com`

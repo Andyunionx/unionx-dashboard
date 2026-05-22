@@ -84,19 +84,28 @@ def procesar_cliente(config_path: Path, dry_run: bool = False) -> dict:
     print(f"{'='*78}", flush=True)
 
     # ─── 1. CONECTAR ODOO ─────────────────────────────────────────────────
+    # El agente usa el usuario de Víctor (dueño funcional del proceso).
+    # En producción (GitHub Actions) los valores vienen del workflow.
+    # Localmente se aceptan fallbacks para que cualquiera con creds pueda testear.
     odoo_url = os.environ.get("ODOO_URL", "https://unionxb2b.odoo.com")
     odoo_db = os.environ.get("ODOO_DB", "bmya-innovatek-sh-prd-6981800")
-    odoo_user = (os.environ.get("ODOO_USER") or
-                  os.environ.get("OPS_ODOO_USER") or
-                  os.environ.get("ANDRES_ODOO_USER") or
-                  "andres@grupoeter.cl")
-    odoo_pwd = (os.environ.get("ODOO_PASSWORD") or
-                 os.environ.get("OPS_ODOO_PASSWORD") or
-                 os.environ.get("ANDRES_ODOO_PASSWORD"))
+    odoo_user = (
+        os.environ.get("ODOO_USER")            # Workflow lo setea
+        or os.environ.get("VICTOR_ODOO_USER")  # Local con Víctor
+        or os.environ.get("ANDRES_ODOO_USER")  # Local con Andrés
+        or os.environ.get("OPS_ODOO_USER")
+        or "victor@grupoeter.cl"               # default: dueño funcional
+    )
+    odoo_pwd = (
+        os.environ.get("ODOO_PASSWORD")
+        or os.environ.get("VICTOR_ODOO_PASSWORD")
+        or os.environ.get("ANDRES_ODOO_PASSWORD")
+        or os.environ.get("OPS_ODOO_PASSWORD")
+    )
     if not odoo_pwd:
         raise EnvironmentError(
-            "Falta password de Odoo. Setear ODOO_PASSWORD, OPS_ODOO_PASSWORD "
-            "o ANDRES_ODOO_PASSWORD."
+            "Falta password de Odoo. En producción se setea VICTOR_ODOO_PASSWORD "
+            "como GitHub Secret. Localmente: export ODOO_PASSWORD=... antes de correr."
         )
 
     print(f"\n[1/4] Conectando a Odoo {odoo_url} como {odoo_user}...", flush=True)
