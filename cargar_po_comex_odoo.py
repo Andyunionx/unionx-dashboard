@@ -71,20 +71,54 @@ def leer_precosteo(path: Path):
     headers = [c for c in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
     idx = {h: i for i, h in enumerate(headers)}
 
+    # Patrones de gastos (red de seguridad para precosteos viejos generados antes
+    # del fix del parser PI — ver costear_embarque.py:244). Match con word boundary
+    # para evitar falsos positivos tipo 'ff' matcheando dentro de 'SIMCAFFRCO'.
+    GASTOS_PATTERNS = [
+        r'\bdelivery\b', r'\bmonitor\b', r'\bloading\b', r'\bff\b', r'\bform f\b',
+        r'\blocal charge\b', r'\bvehicle\b', r'\bvechile\b',
+        r'\bcleaning\b', r'\bcleaing\b', r'\bcustoms\b', r'\btransport\b',
+        r'\bstorage\b', r'\bsamples\b', r'\bice bag\b', r'\bcooler samples\b',
+    ]
+    import re as _re
+    gastos_re = _re.compile('|'.join(GASTOS_PATTERNS), _re.IGNORECASE)
+
     productos = []
+    descartados = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         if not row or row[idx.get('SKU', 1)] in (None, '', 'None'):
             continue
         sku_raw = str(row[idx['SKU']]).strip()
-        if not sku_raw or sku_raw.lower().startswith(('samples', 'ice bag', 'cooler samples')):
+        model_raw = str(row[idx.get('Model', 0)] or '').strip()
+        qty = float(row[idx['Qty']] or 0)
+        if not sku_raw:
+            continue
+
+        # Solo aplicar filtro de gasto si el SKU es claramente sospechoso
+        # (vacío, o nombre largo con palabras de gasto). Si el SKU tiene formato
+        # de código real (corto, mayúsculas + guiones + dígitos), NO descartar.
+        es_sku_sospechoso = (
+            len(sku_raw) > 18 or ' ' in sku_raw or
+            sku_raw.lower() in ('none', 'nan')
+        )
+        # Aplicar match solo a model+descripcion (no a SKU codificado).
+        # Excepción: si SKU es texto largo/con espacios, también lo evaluamos.
+        texto_eval = model_raw
+        if es_sku_sospechoso:
+            texto_eval = f"{model_raw} {sku_raw}"
+        es_gasto = bool(gastos_re.search(texto_eval)) and qty <= 1
+        if es_gasto:
+            descartados.append(f"{model_raw or sku_raw}")
             continue
         productos.append({
             'sku': sku_raw,
             'model': row[idx.get('Model', 0)],
             'descripcion': row[idx.get('Descripcion', 2)],
-            'qty': float(row[idx['Qty']] or 0),
+            'qty': qty,
             'price_unit_clp': float(row[idx['Costo Internado Unit (CLP)']] or 0),
         })
+    if descartados:
+        print(f"  [filtro gastos] descartados {len(descartados)} líneas: {descartados[:5]}")
     return embarque, eta, productos
 
 
@@ -198,16 +232,21 @@ def main():
     productos_odoo = buscar_productos(uid, models, skus)
     print(f"   Encontrados: {len(productos_odoo)} / {len(skus)}")
 
-    # Verificar idempotencia: ¿ya existe una PO con este partner_ref?
+    # Verificar idempotencia: ¿ya existe una PO ACTIVA con este partner_ref?
+    # Las canceladas (state=cancel) se ignoran para permitir recrear tras ajustes.
     existing = models.execute_kw(ODOO_DB, uid, ODOO_PWD, 'purchase.order', 'search_read',
         [[('partner_ref', '=', embarque)]],
         {'fields': ['id', 'name', 'state', 'amount_total']})
-    if existing:
-        print(f"\n[!] Ya existe PO con partner_ref='{embarque}':")
-        for po in existing:
+    activas = [po for po in existing if po['state'] != 'cancel']
+    if activas:
+        print(f"\n[!] Ya existe PO ACTIVA con partner_ref='{embarque}':")
+        for po in activas:
             print(f"   id={po['id']} name={po['name']} state={po['state']} total=${po['amount_total']:,.0f}")
-        print(f"   Aborto. Si quieres recrear, borrá/cancelá esa PO primero.")
+        print(f"   Aborto. Si quieres recrear, cancelá esa PO primero.")
         return 2
+    if existing:
+        print(f"\n[i] {len(existing)} PO(s) canceladas previas para {embarque}: "
+              f"{', '.join(po['name'] for po in existing)}. Procedo a crear una nueva.")
 
     po_id, po_name, no_enc = crear_po(uid, models, embarque, eta_final, productos, productos_odoo, args.confirm)
 
@@ -215,6 +254,16 @@ def main():
         print(f"\n[!] SKUs NO encontrados en Odoo ({len(no_enc)}):")
         for sku in no_enc:
             print(f"   {sku}")
+        # Mandar mail consolidado automático a Felipe + equipo
+        try:
+            from notificar_skus_faltantes import detectar_faltantes, enviar_mail
+            emb_corto = embarque.replace('26TP', '')
+            faltantes = detectar_faltantes([emb_corto])
+            if faltantes:
+                msg_id = enviar_mail(faltantes)
+                print(f"   [mail] aviso a Felipe + equipo enviado | id={msg_id}")
+        except Exception as e:
+            print(f"   [WARN] mail SKUs faltantes falló: {type(e).__name__}: {e}")
 
     print(f"\n[OK] PO {po_name} (id={po_id}) creada en Odoo.")
     print(f"     URL: {ODOO_URL}/web#id={po_id}&model=purchase.order&view_type=form")

@@ -58,9 +58,14 @@ BENCHMARKS = {
 }
 
 CONCEPTOS_INLAND_CHINA_KNOWN = {
-    "form_f":         ["form f", "ff", "f f"],
-    "local_charge":   ["local charge", "storage", "local-charge"],
-    "long_vehicle":   ["long vehicle", "cleaning custom", "customs cleaning", "transport"],
+    "form_f":         ["form f", "ff", "f f", "form-f", "f.f"],
+    "local_charge":   ["local charge", "storage", "local-charge",
+                        "monitor", "loading fee", "monitor loading",
+                        "syntrans", "loading"],
+    "long_vehicle":   ["long vehicle", "long vechile",  # typo común en PIs Steven
+                        "cleaning custom", "customs cleaning", "cleaing custom",
+                        "transport", "vehicle", "vechile",
+                        "customs", "cleaing customs"],
     "comision_steven":["steven", "comision", "3%"],
 }
 
@@ -235,14 +240,20 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
 
         descripcion_raw = row[headers.get("descripcion", -1)] if "descripcion" in headers else ""
         descripcion = _norm(descripcion_raw)
+        model_raw = row[headers["model"]] if "model" in headers else ""
+        model = str(model_raw).strip() if model_raw else ""
+        model_norm = _norm(model)
+        # Texto unificado para detectar conceptos (Steven a veces pone el concepto en
+        # 'Model' y deja 'Description' vacío — ver bug doc del 0429/0430).
+        texto_busqueda = f"{descripcion} {model_norm}".strip()
         amount = _to_float(row[headers["amount"]]) if "amount" in headers else 0.0
         if amount == 0 and "price" in headers:
             amount = _to_float(row[headers["price"]])
 
-        # 1) Detectar conceptos Inland China
+        # 1) Detectar conceptos Inland China (busca en descripcion + model)
         concepto_inland = None
         for key, patterns in CONCEPTOS_INLAND_CHINA_KNOWN.items():
-            if any(p in descripcion for p in patterns):
+            if any(p in texto_busqueda for p in patterns):
                 concepto_inland = key
                 break
 
@@ -255,17 +266,31 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
                 inland.long_vehicle += amount
             elif concepto_inland == "comision_steven":
                 inland.comision_steven += amount  # valor del PI; lo recalculamos despues
-            inland.detectados[descripcion[:40]] = amount
+            etiqueta = (descripcion or model_norm)[:40]
+            inland.detectados[etiqueta] = amount
             continue
 
-        # 2) Detectar delivery cost
-        if "delivery" in descripcion:
+        # 2) Detectar delivery cost (también busca en model)
+        if "delivery" in texto_busqueda:
             productos_raw.append({"_tipo": "delivery", "amount": amount, "row": row_idx})
             continue
 
         # 3) Producto valido
-        model = str(row[headers["model"]]).strip() if "model" in headers and row[headers["model"]] else ""
         qty = _to_float(row[headers["qty"]]) if "qty" in headers else 0.0
+
+        # Salvaguarda: una fila con qty=1, sin SKU, sin descripcion y con un
+        # 'model' que NO contiene dígitos es casi seguro un gasto no reconocido
+        # (ej. "FF", "Monitor loading fee", "Delivery cost"), NO un producto.
+        # Los códigos reales siempre contienen al menos un dígito (TP150-N, AT-12).
+        # Se acumula como local_charge para que se prorratee correctamente y
+        # ADEMÁS queda registrado en no_reconocidos para visibilidad.
+        sku_raw_check = str(row[headers.get("sku", -1)] or "").strip() if "sku" in headers else ""
+        model_tiene_digito = bool(re.search(r'\d', model)) if model else False
+        if qty == 1 and not sku_raw_check and not descripcion and not model_tiene_digito and amount > 0:
+            inland.local_charge += amount
+            inland.no_reconocidos.append({"row": row_idx, "descripcion": model, "amount": amount})
+            print(f"  [salvaguarda] '{model}' (USD {amount}) tratado como local_charge — agregar a CONCEPTOS_INLAND_CHINA_KNOWN si recurrente")
+            continue
 
         if model and qty > 0:
             producto = {
@@ -285,10 +310,14 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
             if amount > 0 and descripcion and "total" not in descripcion:
                 inland.no_reconocidos.append({"row": row_idx, "descripcion": str(descripcion_raw).strip(), "amount": amount})
 
-    # Prorratear delivery
+    # Prorratear delivery: cada "delivery cost" en el PI aplica a TODOS los
+    # productos consecutivos anteriores (puede ser un grupo con distintos
+    # Models). Antes el código cerraba el grupo al cambiar de Model y dejaba
+    # huérfanos los productos previos, concentrando todo el delivery en el
+    # último producto → causaba variaciones de +700% (ver SIMBOWSIE-4 en
+    # 26TP0430).
     productos: list[Producto] = []
     grupo: list[dict] = []
-    model_actual = None
 
     for item in productos_raw:
         if item["_tipo"] == "delivery":
@@ -302,17 +331,11 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
                 grupo.clear()
             continue
 
-        # Producto
-        if model_actual and item["model"] != model_actual and grupo:
-            # Cerrar grupo anterior sin delivery (caso raro)
-            for p in grupo:
-                p.setdefault("delivery_total", 0.0)
-                p.setdefault("delivery_unitario", 0.0)
-            grupo.clear()
-        model_actual = item["model"]
+        # Producto: acumular hasta que llegue un delivery cost (sin importar
+        # si cambia el Model).
         grupo.append(item)
 
-    # Si quedo un grupo abierto sin delivery, igual lo agregamos
+    # Si quedó un grupo abierto sin delivery al final, los productos van con 0.
     for p in grupo:
         p.setdefault("delivery_total", 0.0)
         p.setdefault("delivery_unitario", 0.0)
@@ -575,7 +598,10 @@ def comparar_con_maestra(emb: Embarque, maestra_path: Optional[Path]):
         return
 
     if eta_col:
-        df = df.sort_values(eta_col, ascending=False)
+        # ETA en la Maestra a veces es datetime y a veces texto (mezcla legacy).
+        # Coerce a datetime para evitar TypeError al comparar; NaT al final.
+        df['_eta_sort'] = pd.to_datetime(df[eta_col], errors='coerce')
+        df = df.sort_values('_eta_sort', ascending=False, na_position='last').drop(columns='_eta_sort')
 
     for p in emb.productos:
         if not p.sku:

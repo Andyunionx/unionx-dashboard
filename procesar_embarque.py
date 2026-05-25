@@ -32,7 +32,7 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding='utf-8')
 PROJECT_ROOT = Path(__file__).parent
 
-DESTINATARIOS_MAIL = 'felipe@unionx.cl, sebastian@unionx.cl, gerardo@unionx.cl, operaciones@unionx.cl'
+DESTINATARIOS_MAIL = 'felipe@unionx.cl, sguzman@grupoeter.cl, gerardo@unionx.cl, operaciones@unionx.cl'
 
 
 def _detectar_pi_pl_puerto(emb: str) -> tuple[Path, Path, str]:
@@ -161,6 +161,8 @@ def main():
     parser.add_argument('--skip-po', action='store_true', help='No crear PO en Odoo')
     parser.add_argument('--confirm-po', action='store_true', help='Confirmar PO (state=purchase). Default: draft')
     parser.add_argument('--puerto', help='Override puerto detectado (SZ/NB/XI/AIR)')
+    parser.add_argument('--skip-enriquecer', action='store_true',
+                        help='No refrescar data/comex/transito.parquet con el nuevo precosteo')
     args = parser.parse_args()
 
     emb = args.embarque.zfill(4)
@@ -197,6 +199,14 @@ def main():
         rc_po = _crear_po_odoo(emb, out_dir, args.confirm_po)
         if rc_po != 0:
             print(f"[WARN] PO Odoo falló (rc={rc_po})")
+
+    if not args.skip_enriquecer:
+        try:
+            print(f"\n[4] Refrescando data/comex/transito.parquet con costos CLP...")
+            from enriquecer_transito_con_precosteo import enriquecer
+            enriquecer(dry_run=False)
+        except Exception as e:
+            print(f"[WARN] enriquecimiento parquet falló: {type(e).__name__}: {e}")
 
     print(f"\n{'='*70}\n  26TP{emb} PROCESADO\n{'='*70}")
     print(f"  Outputs en: {out_dir}")
