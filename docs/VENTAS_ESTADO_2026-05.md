@@ -1,4 +1,4 @@
-# 🛒 App Ventas UnionX — Estado al 19-may-2026
+# 🛒 App Ventas UnionX — Estado al 25-may-2026
 
 > **Para retomar en otra sesión de Claude.** Este documento es self-contained:
 > alguien que lo lea entiende dónde estamos parados sin contexto previo.
@@ -7,14 +7,24 @@
 
 ## 🎯 Sumario ejecutivo
 
-La app **Ventas** (`dashboard_ventas.py` → URL `https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/`) es el dashboard principal de la operación comercial. Lee de Turso (libSQL cloud), se sincroniza con Odoo 3 veces al día y expone:
+La app **Ventas** (`dashboard_ventas.py` → URL `https://unionx-dashboard-7ppjm2cem2zkfxwzkv3pzc.streamlit.app/`) es el dashboard principal de la operación comercial. Hoy lee de Turso (libSQL cloud) con **fallback a parquet local** (Turso plan free agotado hasta 1-jun). Se sincroniza con Odoo cada 4h vía Task Scheduler local + bypass directo Odoo → parquet. Expone:
 
 1. **KPIs YoY** (ventas, unidades, margen, top SKUs, canales, etc.)
 2. **Vistas COMEX, Ops, Forecast** compartidas con apps Operaciones y Planificación
-3. **Descarga RAW Excel** (41 columnas) usado por finanzas/contabilidad
+3. **Descarga RAW Excel** (40 columnas, formato histórico)
 4. **Login multi-usuario** con bcrypt (Andrés, Felipe, Nicolas, Gabriela, Martín)
 
-El último cuadre mensual (mayo 2026) cierra en **$384,44 MM bruta / $323,06 MM neta / 56,0% margen** después de los fixes de auditoría aplicados hoy.
+**Cuadre mayo 2026 al 25-may:** $432,28 MM bruta / $363,26 MM neta / 14.722 filas (incluye Sodimac manual_externa $17,29 MM).
+
+### 🗺️ Plan estratégico de arquitectura (acordado 25-may)
+
+| Fase | Cuándo | Qué |
+|---|---|---|
+| ✅ Fase 1: Fallbacks | **25-may (hoy)** | 2 queries Turso críticas con fallback parquet. Tercero entra y todo funciona. |
+| 🕐 Fase 2: Reset Turso | **1-jun** (automático) | Cuota se reinicia. Funcionalidades vuelven sin tocar nada. |
+| 🎯 Fase 3: Migración a DuckDB | **post-Cyber ≥7-jun** | Migrar progresivamente con POC validada (branch `feature/duckdb-poc`). Side-by-side a cada paso. |
+
+POC DuckDB ya validada: **5/5 casos idénticos** vs SQLite/Turso actual, **14x más rápido**. Ver branch `feature/duckdb-poc` y script `_compare_a_vs_b.py`.
 
 ---
 
@@ -68,6 +78,41 @@ Probable: alcanzaron los **1 mil millones de row reads/mes** del plan Starter (c
 3. **Migrar a otro proveedor** (Supabase / Neon / Cloudflare D1).
 
 **Impacto en los fixes aplicados hoy:** Ninguno. Los UPDATEs de fix #3 (categorías) y fix #4 (costo_override) están persistidos en Turso. Cuando se desbloquee el reset, los datos están correctos.
+
+### Sesión 5 — Maratón de fixes (25-may-2026)
+
+#### Cambios funcionales
+| # | Tema | Resultado |
+|---|---|---|
+| 1 | RAW Excel: quitar columna `Venta Neta` | Vuelve al formato 40 columnas histórico. Quien la necesite: `Venta bruta / 1.19` |
+| 2 | Linkear Maestra Canales al Drive | `Maestra B2B.xlsx` (1QqIaF__kAMnE6bmrp6PfYC9p2HES9I8Y, owner Nicolas) sincronizada cada 4h. Pestañas: `Empresa` (148) + `CanalxKam` (124). Drive prioridad + local fallback (case-insensitive) |
+| 3 | S231708 Cencosud cancelado en Odoo | Eliminado el pedido duplicado de $23,1 MM vía wizard `sale.order.cancel`. Parquet limpio. |
+| 4 | Task Scheduler local cada 4h | `UnionX - Sync Mes Actual (bypass Turso)` registrada vía `schtasks.exe`. Corridas: 07:00, 11:00, 15:00, 19:00, 23:00. Wrapper [sync_mes_actual_local.ps1](../sync_mes_actual_local.ps1) hace extract Odoo → parquet → commit → push. |
+
+#### Bugs encontrados y resueltos
+| # | Bug | Causa raíz | Fix |
+|---|---|---|---|
+| A | Cron GH Actions `sync_mes_actual.yml` fallaba silencioso desde 21-may | `pip install pandas pyarrow libsql-client openpyxl` faltaba deps del backend para `--source odoo` | `pip install -r requirements.txt` + timeout 30 min |
+| B | Sodimac perdido en bypass Odoo | Factura inyectada manual vive solo en Turso, extract Odoo no la trae | Catálogo `data/manual_externa_facturas.csv` + auto-inject post-extract |
+| C | App mostraba $421 MM en vez de $432 MM | Fechas guardadas como `'2026-05-25 00:00:00'` (timestamp). Query `BETWEEN '2026-05-01' AND '2026-05-25'` excluía día 25 (string compare) | `_normalize_fecha_venta()` convierte a `'YYYY-MM-DD'` antes de cargar al SQLite local |
+| D | "Forzar recarga DB" no limpiaba KPIs | `force_refresh_db_local()` solo limpiaba 3 caches | Ahora limpia las 9: `_cached_kpis_inner`, `cached_mensual`, `cached_diaria`, `_cached_semanal_inner`, `_cached_canales_inner`, `_cached_top_skus_inner` + las 3 originales |
+| E | Streamlit Cloud conservaba SQLite local viejo | `@st.cache_resource` quedaba pegado | Bump del archivo temp `unionx_dashboard_local.db` → `v2` → `v3` para forzar rebuild |
+| F | `cached_ventas_canal_30d` rompía con `KeyError: 'response'` | Query Turso sin try/except. Tira excepción cuando cuota agotada | Try/except + fallback que reconstruye desde parquet hist + mes_actual |
+| G | `alertas_helper._query` rompía con `KeyError: 'response'` | Mismo patrón que F | Try/except + retorna `None`; los 3 callers ya manejan `None` correctamente |
+
+#### Validación de causa raíz (commit `29e2c7f`)
+Bug C era el más sutil. Probado localmente:
+```
+SIN fix (timestamp en SQLite): SUM bruta mayo = $421,008,906
+CON fix (YYYY-MM-DD):          SUM bruta mayo = $432,277,673
+```
+Diferencia: $11,27 MM = 465 filas del 25-may que quedaban fuera del `BETWEEN`.
+
+#### POC arquitectura B (branch `feature/duckdb-poc`)
+Validación side-by-side con `_compare_a_vs_b.py`:
+- **5/5 casos idénticos** (16 métricas × 5 escenarios = 80 comparaciones, todas match)
+- DuckDB sobre parquet **14x más rápido** que Turso/SQLite (~0,5s vs ~7s)
+- Bug encontrado en proceso: parquets hist y mes tienen orden de columnas distinto. Fix: `UNION ALL BY NAME`
 
 ---
 
@@ -248,8 +293,11 @@ Función `_resolver_canal()`:
 5. Normalización via `CANAL_CANONICO` (ej. "sp digital" → "SP Digital")
 
 ### Exclusiones de canal
-- **El Volcán**: SIEMPRE excluir (ventas consignación, carga manual)
+- **El Volcán**: SIEMPRE excluir ventas (consignación, carga manual). NCs sí entran (ej. mayo: N/C 039654 "CIERRE MES ABRIL 2026" -$2,28 MM).
 - **Sawa abril 2026**: excluir (cargada manual). Mayo+ sí auto-sync.
+
+### Inyección manual de facturas externas (Sodimac, etc.)
+Catálogo en [data/manual_externa_facturas.csv](../data/manual_externa_facturas.csv). Cada vez que el bypass corre (`extract_mes_actual_a_parquet.py --source odoo`) lee este CSV y agrega las filas al parquet automáticamente. Hoy contiene FAC 097825 Sodimac. Cuando llegue reporte de consignación El Volcán mayo, agregarlo acá.
 
 ---
 
@@ -297,24 +345,28 @@ Backups: `data/planillas/Matriz productos.backup_20260519_*.xlsx` (×2)
 | 4 | 4 SKUs sin costo en Odoo + 1 no existente | 🟢 BAJO — requiere acción manual en Odoo | Lista en `data/auditoria/fix4_costos_resultado.xlsx` |
 | 5 | No existe columna "Línea de Negocio" explícita | 🟢 BAJO — lo más cercano es `Tipo Negocio` | Decidir si crear |
 
-### Snapshot mayo 2026 POST-fix
+### Snapshot mayo 2026 — al 25-may (después de Sesión 5)
 | Métrica | Valor |
 |---|---|
-| Filas totales | 11,509 (10,726 ventas + 783 NCs) |
-| Bruta | $384.442.535 |
-| Neta | $323.061.071 |
-| Costo Total | $142.163.289 |
-| Margen Directo | $180.999.202 |
-| Margen % | **56,0%** |
+| Filas totales | **14.722** (13.825 ventas + 897 NCs) |
+| Bruta | **$432.277.673** (incluye Sodimac $17,29 MM manual_externa) |
+| Neta | **$363.258.720** |
+| Costo Total | ~$153.86 MM |
+| Margen Directo | ~$209 MM |
+| Margen % | **~57,5%** |
+| Datos hasta | **2026-05-25** ✅ |
+| Filas sin canal | **0** ✅ |
 
-Top 5 canales:
-| Canal | Bruta | Neta | Margen | MG% |
-|---|---|---|---|---|
-| Mercado Libre | $113,4 MM | $95,3 MM | $58,1 MM | 61,0% |
-| Falabella | $56,9 MM | $47,8 MM | $29,4 MM | 61,5% |
-| Paris tienda | $46,2 MM | $38,8 MM | $18,5 MM | 47,6% |
-| UnionX B2B | $27,1 MM | $22,8 MM | $16,3 MM | 71,5% |
-| Simplit web | $18,5 MM | $15,5 MM | $9,0 MM | 57,8% |
+Top canales mayo (post-cancelación S231708):
+| Canal | Bruta | Notas |
+|---|---|---|
+| Mercado Libre | $148,9 MM | — |
+| Falabella | $75,3 MM | — |
+| UnionX B2B | $28,8 MM | incluye Sodimac FAC 097825 |
+| Paris tienda | $23,1 MM | sin S231708 duplicado cancelado |
+| Simplit web | $22,9 MM | — |
+| Dimarsa | $17,1 MM | — |
+| Kitchen Center | $17,0 MM | — |
 
 ---
 
@@ -398,22 +450,32 @@ Configurados en:
 
 ---
 
-## 🚧 Próximos pasos sugeridos
+## 🚧 Próximos pasos
 
-### Crítico (cuando se aborde Mg final completo)
-1. **Cargar comisiones por canal** en una tabla `comisiones_canal (canal, comision_pct, vigente_desde, vigente_hasta)`
-2. Modificar `_construir_dataset_raw()` para aplicar comisión durante extract
-3. Idem logística y marketing (puede venir de Drive/Sheet)
+### 🎯 Plan estratégico (acordado 25-may)
+**P1: Fallbacks** ✅ HECHO (commit `d13720d`/`659c6c2`)
+- `cached_ventas_canal_30d` y `_query` de alertas_helper con try/except + fallback parquet
+- App robusta para terceros aunque Turso esté bloqueado
 
-### Mantenimiento (cuando haya tiempo)
-4. Revisar 16 clientes B2B con canal vacío → agregar a `Maestra canales`
-5. Fix BEL anuladas: detectar y poner `costo_total=0` para no perder $101K
-6. Cargar costo manual en Odoo para los 4 SKUs sin `standard_price`
-7. Decidir si crear columna formal `linea_negocio` o quedarse con `tipo_negocio`
+**P2: Reset Turso** — 1-jun (automático, sin tocar nada)
+
+**P3: Migración a DuckDB** — post-Cyber ≥7-jun
+- Branch lista: `feature/duckdb-poc`
+- Validación side-by-side con [_compare_a_vs_b.py](../_compare_a_vs_b.py)
+- Migrar vistas una a una: KPIs YoY → Resúmenes canal → Tendencias → Top SKUs
+- Una vez todo OK, eliminar capa Turso/SQLite del código
+- Para writes (audit log, alertas): Cloudflare D1 gratis o JSON commiteado al repo
+
+### Pendientes funcionales (cuando haya tiempo)
+1. **Cargar comisiones por canal** para que `Mg final` sí reste comisiones marketplace
+2. Cargar reporte mensual El Volcán a `manual_externa_facturas.csv` (cuando llegue)
+3. Cargar costo manual en Odoo para los 4 SKUs sin `standard_price`
+4. Fix BEL anuladas: detectar y poner `costo_total=0` para no perder $101K
+5. Decidir si crear columna formal `linea_negocio` o quedarse con `tipo_negocio`
 
 ### Mejoras UX
-8. Vista nueva: comparativo P&L Drive vs ventas Turso (cuadrar diferencias)
-9. Alerta proactiva cuando un SKU nuevo aparezca sin estar en Matriz Productos
+6. Vista nueva: comparativo P&L Drive vs ventas Turso (cuadrar diferencias)
+7. Alerta proactiva cuando un SKU nuevo aparezca sin estar en Matriz Productos
 
 ---
 
@@ -422,14 +484,17 @@ Configurados en:
 1. Lee este archivo de cabo a rabo (5 min)
 2. Verifica estado actual de la app:
    ```powershell
-   $env:PYTHONIOENCODING="utf-8"
-   python -c "from db_client import get_connection; c=get_connection(None); print(c.execute(\"SELECT COUNT(*) FROM ventas WHERE fecha_venta BETWEEN '2026-05-01' AND '2026-05-31'\").fetchall()[0])"
+   python -c "import pandas as pd; df=pd.read_parquet('data/historico/ventas_mes_actual.parquet'); print(f'{len(df):,} filas, max fecha {df[chr(39)+chr(102)+chr(101)+chr(99)+chr(104)+chr(97)+chr(95)+chr(118)+chr(101)+chr(110)+chr(116)+chr(97)+chr(39)].max()}, bruta ${df[chr(39)+chr(118)+chr(101)+chr(110)+chr(116)+chr(97)+chr(95)+chr(98)+chr(114)+chr(117)+chr(116)+chr(97)+chr(39)].sum():,.0f}')"
    ```
-3. Si vas a tocar el RAW o auditar: empieza por `data/auditoria/audit_raw_findings_2026-05.xlsx`
-4. Si vas a agregar usuario: sigue sección "Onboarding nuevo usuario"
-5. Si la sync diaria falla: revisa logs en `data/db/sincronizacion_diaria.log` o GitHub Actions
+3. Verifica que Task Scheduler local esté activo:
+   ```powershell
+   schtasks /Query /TN "UnionX - Sync Mes Actual (bypass Turso)" /FO LIST
+   ```
+4. Si vas a tocar el RAW o auditar: empieza por `data/auditoria/audit_raw_findings_2026-05.xlsx`
+5. Si vas a migrar a DuckDB (post 7-jun): `git checkout feature/duckdb-poc` + corré `_compare_a_vs_b.py` antes de cada merge
+6. Si la sync diaria falla: revisa logs en `data/db/sync_mes_actual_local.log`
 
 ---
 
-**Última actualización:** 2026-05-19 14:35 CL
-**Autor:** Andrés + Claude Code (sesión auditoría RAW)
+**Última actualización:** 2026-05-25 ~17:00 CL
+**Autores:** Andrés + Claude Code (sesiones 1-5)
