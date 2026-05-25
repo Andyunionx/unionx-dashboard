@@ -44,6 +44,7 @@ from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
     cargar_costos_operativos,
     cargar_gav_corporativo,
+    cargar_gav_detalle_persona,
     cargar_ventas_canal_ln,
     distribuir_monto_a_dimension,
     driver_default,
@@ -1035,6 +1036,79 @@ def render():
             st.markdown(
                 f"**Total GAV puro:** `${_fmt_clp(gav_total / 1_000_000)} MM`"
             )
+
+        # ─── Sección 2.5: GAV detalle por cargo y persona ────────────────
+        # Usa la nueva col CUENTA ANALITICA1 del Sheet Drive (mayo 2026)
+        # para mostrar quién ocupa cada cargo. Habilita la discriminación
+        # nominal del GAV (paso previo al GAV directo por canal).
+        st.markdown("---")
+        st.markdown("### 👥 2.5) GAV — Detalle por cargo y persona")
+        st.caption(
+            "Desglose del GAV con cuenta analítica (cargo) y la persona específica "
+            "(col `CUENTA ANALITICA1` del Sheet Drive). Habilita atribución nominal: "
+            "cada sueldo se puede mapear directo a un canal/categoría cuando esté llenado."
+        )
+        df_gav_det = cargar_gav_detalle_persona(year, meses_sel, escenario="FCST")
+        if df_gav_det.empty:
+            st.info("Sin detalle disponible.")
+        else:
+            total_det = df_gav_det["monto"].sum()
+            con_persona = df_gav_det[df_gav_det["cuenta_analitica_persona"] != ""]
+            total_con_persona = con_persona["monto"].sum()
+            pct_cobertura = (
+                (total_con_persona / total_det * 100) if total_det > 0 else 0
+            )
+
+            kc1, kc2, kc3 = st.columns(3)
+            kc1.metric("Filas con detalle", f"{len(df_gav_det):,}")
+            kc2.metric("Filas con persona asignada",
+                        f"{len(con_persona):,}",
+                        f"{pct_cobertura:.1f}% del monto")
+            kc3.metric("Monto nominal mapeado",
+                        f"${_fmt_clp(total_con_persona / 1_000_000)} MM",
+                        f"de ${_fmt_clp(total_det / 1_000_000)} MM total")
+
+            if pct_cobertura < 10:
+                st.warning(
+                    f"⚠️ Cobertura nominal todavía baja ({pct_cobertura:.1f}%). "
+                    f"Para activar la atribución directa del GAV, completar la "
+                    f"columna `CUENTA ANALITICA1` en el Sheet P&L Drive con el "
+                    f"nombre del responsable de cada cargo (sueldos en HONORARIOS, "
+                    f"REMUNERACIONES, etc.)."
+                )
+
+            df_det_show = df_gav_det.copy()
+            df_det_show["monto_MM"] = (df_det_show["monto"] / 1_000_000).round(2)
+            df_det_show["Persona"] = df_det_show["cuenta_analitica_persona"].replace(
+                "", "—"
+            )
+            df_det_show = df_det_show[
+                ["area", "sub_area", "centro_costo", "cuenta_analitica",
+                 "Persona", "monto_MM"]
+            ].rename(columns={
+                "area": "Área",
+                "sub_area": "Sub-área",
+                "centro_costo": "Centro de Costo",
+                "cuenta_analitica": "Cuenta Analítica (cargo)",
+                "monto_MM": "Monto (MM$)",
+            })
+            st.dataframe(df_det_show, use_container_width=True, hide_index=True,
+                          height=420)
+
+            with st.expander("ℹ️ Cómo se usa este desglose"):
+                st.markdown("""
+**Hoy (estado actual):**
+- La col `CUENTA ANALITICA1` del Sheet permite especificar **quién ocupa cada cargo**
+  (ej: `GERENCIA → BROWNE URZUA ANDRES`).
+- Cuando se llena, queda almacenada en el parquet y se ve acá.
+
+**Próximo paso — atribución directa del GAV:**
+- En el roadmap del GAV directo (`docs/ROADMAP_GAV_DIRECTO_2026-05.md`), cuando
+  un cargo tiene persona asignada, se podrá mapear esa persona a un canal/categoría
+  específico vía el campo `DESTINO TIPO NEGOCIO` del Sheet.
+- Eso reemplaza la distribución heurística por venta/equitativo con
+  atribución nominal exacta (cat 1 del marco teórico Horngren/IMA).
+""")
 
         # ─── Sección 3: Drilldown — Costo OP asignado a cada dimensión ─
         st.markdown("---")

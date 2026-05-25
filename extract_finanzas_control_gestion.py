@@ -134,6 +134,10 @@ def main():
         "AREA EMPRESA": "area",
         "SUB-AREA": "sub_area",
         "CUENTA ANALITICA": "cuenta_analitica",
+        # Segunda cuenta analítica = persona/empleado específico del cargo.
+        # Agregada al Sheet en mayo 2026, permite atribuir GAV nominalmente
+        # (ej: GERENCIA → "BROWNE URZUA ANDRES"). Hoy poblada al 1%.
+        "CUENTA ANALITICA1": "cuenta_analitica_persona",
         "TOTAL": "valor_raw",
         "TIPO": "tipo_raw",
     }
@@ -176,6 +180,14 @@ def main():
             df[c] = df[c].astype(str).str.strip().str.upper()
             df[c] = df[c].str.replace(r"\s+", " ", regex=True)
 
+    # cuenta_analitica_persona: limpiar pero NO uppercase (son nombres propios)
+    if "cuenta_analitica_persona" in df.columns:
+        df["cuenta_analitica_persona"] = (
+            df["cuenta_analitica_persona"].astype(str).str.strip()
+        )
+        df.loc[df["cuenta_analitica_persona"].isin(["nan", "None", ""]),
+                "cuenta_analitica_persona"] = ""
+
     # Filtrar válidas: tienen año, mes y escenario
     valid = df["year"].notna() & df["month"].notna() & (df["escenario"] != "")
     df = df[valid].copy()
@@ -187,10 +199,20 @@ def main():
         errors="coerce",
     )
 
+    # ─── Cobertura de cuenta_analitica_persona (info útil para debug) ───
+    if "cuenta_analitica_persona" in df.columns:
+        gasto_mask = df["kpi"] == "GASTO"
+        con_persona = (df.loc[gasto_mask, "cuenta_analitica_persona"] != "").sum()
+        total_gasto = gasto_mask.sum()
+        pct = con_persona / total_gasto * 100 if total_gasto else 0
+        print(f"\n[CA1 persona] Cobertura GAV/GASTO: "
+              f"{con_persona:,}/{total_gasto:,} filas ({pct:.1f}%)", flush=True)
+
     # ─── Guardar parquet ────────────────────────────────────────────────
     cols_out = ["fecha", "year", "month", "mes_text",
                 "linea_negocio", "canal", "tipo_costo",
-                "area", "sub_area", "centro_costo", "cuenta_analitica",
+                "area", "sub_area", "centro_costo",
+                "cuenta_analitica", "cuenta_analitica_persona",
                 "escenario", "kpi", "valor", "tipo_raw"]
     df_out = df[[c for c in cols_out if c in df.columns]].copy()
     df_out.to_parquet(OUT_PARQUET, index=False)
