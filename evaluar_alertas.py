@@ -282,6 +282,158 @@ def regla_proyeccion_prophet():
 
 
 # ============================================================
+# REGLA 5b: Cuello de botella WMS — capacidad vs demanda proyectada
+# ============================================================
+def regla_capacidad_wms_sobrecarga():
+    """
+    Cruza el forecast diario de capacidad (data/capacidad/volumen_operacional_diario.parquet)
+    con el PPTO mensual de Ingresos (data/finanzas/ppto_2026.parquet) para detectar
+    semanas/meses donde la operación se va a saturar.
+
+    Reglas:
+      - Si en los próximos 30 días hay >=5 días con pct_carga_equipo > 100% → warning
+      - Si en los próximos 30 días hay >=3 días con pct_carga_equipo > 150% → critical
+      - Si el PPTO mensual de un mes próximo (≤60d) implica pedidos B2C que exceden
+        la capacidad mensual proyectada en > 30% → critical de planificación
+
+    Pedidos B2C según PPTO se estiman con el Método C (mix 76.6% × ticket $25.791
+    calibrado con 2026 YTD). Cuando exista metric oficial reemplazar el cálculo.
+    """
+    import pandas as _pd
+    proyecto = Path(__file__).parent
+    cap_path = proyecto / 'data' / 'capacidad' / 'volumen_operacional_diario.parquet'
+    ppto_path = proyecto / 'data' / 'finanzas' / 'ppto_2026.parquet'
+
+    if not cap_path.exists():
+        return None
+
+    try:
+        cap = _pd.read_parquet(cap_path)
+    except Exception:
+        return None
+    if cap.empty or 'fecha' not in cap.columns or 'pct_carga_equipo' not in cap.columns:
+        return None
+
+    cap['fecha'] = _pd.to_datetime(cap['fecha'])
+    hoy = _pd.Timestamp(datetime.now().date())
+    horizonte = cap[(cap['fecha'] >= hoy) & (cap['fecha'] <= hoy + _pd.Timedelta(days=30))]
+
+    n_alertas = 0
+
+    # Regla A — días con sobrecarga en 30d
+    dias_sobrecarga = horizonte[horizonte['pct_carga_equipo'] > 100]
+    dias_criticos = horizonte[horizonte['pct_carga_equipo'] > 150]
+
+    if len(dias_criticos) >= 3:
+        peor = dias_criticos.nlargest(1, 'pct_carga_equipo').iloc[0]
+        crear_alerta(
+            tipo='wms_sobrecarga_critica',
+            severity='critical',
+            titulo=f"{len(dias_criticos)} días con carga WMS >150% en próximos 30d",
+            mensaje=(
+                f"Peor día: {peor['fecha'].date()} con {peor['pct_carga_equipo']:.0f}% de carga "
+                f"({int(peor.get('pedidos_a_procesar', 0)):,} pedidos vs capacidad). "
+                f"Se necesita refuerzo de turnos, horas extra o contratación temporal YA."
+            ),
+            contexto={
+                'n_dias_sobre_150': int(len(dias_criticos)),
+                'peor_dia': str(peor['fecha'].date()),
+                'peor_pct': float(peor['pct_carga_equipo']),
+                'peor_pedidos': int(peor.get('pedidos_a_procesar', 0)),
+                'horizonte_dias': 30,
+            },
+            fecha_objetivo=str(peor['fecha'].date()),
+            target_apps=['operaciones'],
+        )
+        print(f"  🔴 wms_sobrecarga_critica: {len(dias_criticos)} días >150% (peor {peor['pct_carga_equipo']:.0f}%)")
+        n_alertas += 1
+    elif len(dias_sobrecarga) >= 5:
+        peor = dias_sobrecarga.nlargest(1, 'pct_carga_equipo').iloc[0]
+        crear_alerta(
+            tipo='wms_sobrecarga',
+            severity='warning',
+            titulo=f"{len(dias_sobrecarga)} días con carga WMS >100% en próximos 30d",
+            mensaje=(
+                f"Peor día: {peor['fecha'].date()} con {peor['pct_carga_equipo']:.0f}%. "
+                f"Planificar refuerzo de equipo o redistribuir picos."
+            ),
+            contexto={
+                'n_dias_sobre_100': int(len(dias_sobrecarga)),
+                'peor_dia': str(peor['fecha'].date()),
+                'peor_pct': float(peor['pct_carga_equipo']),
+                'horizonte_dias': 30,
+            },
+            fecha_objetivo=str(peor['fecha'].date()),
+            target_apps=['operaciones'],
+        )
+        print(f"  🟡 wms_sobrecarga: {len(dias_sobrecarga)} días >100% (peor {peor['pct_carga_equipo']:.0f}%)")
+        n_alertas += 1
+
+    # Regla B — PPTO mensual implica pedidos B2C > capacidad mensual proyectada
+    if ppto_path.exists():
+        try:
+            ppto = _pd.read_parquet(ppto_path)
+            ppto['linea'] = ppto['linea'].astype(str)
+            ing = ppto[(ppto['year'] == hoy.year) &
+                       (ppto['linea'].str.startswith('Ingreso'))]
+            ppto_mes = ing.groupby('month')['valor_ppto'].sum()
+        except Exception:
+            ppto_mes = None
+
+        # Parámetros calibración Método C (2026 YTD)
+        MIX_B2C = 0.766
+        TICKET_B2C = 25791
+
+        if ppto_mes is not None:
+            for mes_num in [(hoy + _pd.Timedelta(days=30)).month,
+                             (hoy + _pd.Timedelta(days=60)).month]:
+                if mes_num not in ppto_mes.index:
+                    continue
+                revenue_ppto = float(ppto_mes[mes_num])
+                pedidos_b2c_ppto = revenue_ppto * MIX_B2C / TICKET_B2C
+
+                # Capacidad mensual proyectada en ese mes (sumar pedidos_proyectados del mes)
+                mes_mask = (cap['fecha'].dt.month == mes_num) & (cap['fecha'].dt.year == hoy.year)
+                cap_mes = float(cap.loc[mes_mask, 'pedidos_proyectados'].sum())
+                if cap_mes <= 0:
+                    continue
+                # Capacidad B2C implícita (mismo mix)
+                cap_b2c_mes = cap_mes * MIX_B2C
+                gap_pct = (pedidos_b2c_ppto - cap_b2c_mes) / cap_b2c_mes * 100
+
+                if gap_pct > 30:
+                    sev = 'critical' if gap_pct > 100 else 'warning'
+                    nombre_mes = {1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+                                  5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+                                  9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'}[mes_num]
+                    crear_alerta(
+                        tipo='wms_gap_ppto_capacidad',
+                        severity=sev,
+                        titulo=f"{nombre_mes}: PPTO implica +{gap_pct:.0f}% sobre capacidad WMS",
+                        mensaje=(
+                            f"PPTO {nombre_mes} = ${revenue_ppto/1e6:.0f}MM → "
+                            f"~{pedidos_b2c_ppto:,.0f} pedidos B2C esperados, "
+                            f"vs capacidad WMS proyectada {cap_b2c_mes:,.0f}. "
+                            f"Decisión: ¿pre-contratar, ampliar turnos, o ajustar PPTO?"
+                        ),
+                        contexto={
+                            'mes': mes_num,
+                            'revenue_ppto': revenue_ppto,
+                            'pedidos_b2c_ppto': float(pedidos_b2c_ppto),
+                            'capacidad_b2c_mes': cap_b2c_mes,
+                            'gap_pct': gap_pct,
+                            'metodo': 'Método C (mix 76.6% × ticket $25.791)',
+                        },
+                        fecha_objetivo=f"{hoy.year}-{mes_num:02d}-01",
+                        target_apps=['operaciones'],
+                    )
+                    print(f"  🔴 wms_gap_ppto: mes {mes_num}, +{gap_pct:.0f}% sobre capacidad")
+                    n_alertas += 1
+
+    return n_alertas if n_alertas else None
+
+
+# ============================================================
 # REGLA 6: Gap de pedidos (Yuju/Multivende cortados)
 # ============================================================
 def regla_gap_pedidos():
@@ -521,6 +673,7 @@ def main():
     regla_mes_bajo_proyeccion()
     regla_margen_bajo()
     regla_proyeccion_prophet()
+    regla_capacidad_wms_sobrecarga()
     regla_gap_pedidos()
 
     print("\nReglas de Data Quality (sesgo forecast):")
