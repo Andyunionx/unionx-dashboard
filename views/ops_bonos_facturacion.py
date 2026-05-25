@@ -229,7 +229,7 @@ def _nc_b2c_mes(nc: pd.DataFrame, ventas_mes: pd.DataFrame) -> int:
     return int(nc_mes.get('es_nc', pd.Series([], dtype=bool)).sum()) if 'es_nc' in nc_mes.columns else len(nc_mes)
 
 
-def _factor_ratio(valor_pct: float, ratio_min: float = RATIO_MIN,
+def _factor_ratio(valor_pct, ratio_min: float = RATIO_MIN,
                    ratio_max: float = RATIO_MAX) -> float:
     """Convierte un KPI % a factor 0-1 con piso ratio_min y techo ratio_max.
 
@@ -237,14 +237,39 @@ def _factor_ratio(valor_pct: float, ratio_min: float = RATIO_MIN,
       valor < 90 → 0.0
       valor = 95 → 0.5
       valor >= 100 → 1.0
+
+    Robusto a None, NaN y strings.
     """
-    if valor_pct is None:
+    if valor_pct is None or pd.isna(valor_pct):
         return 0.0
-    if valor_pct < ratio_min:
+    try:
+        v = float(valor_pct)
+    except (TypeError, ValueError):
         return 0.0
-    if valor_pct >= ratio_max:
+    if v < ratio_min:
+        return 0.0
+    if v >= ratio_max:
         return 1.0
-    return (valor_pct - ratio_min) / (ratio_max - ratio_min)
+    return (v - ratio_min) / (ratio_max - ratio_min)
+
+
+def _safe_float(v, default: float = 0.0) -> float:
+    """Convierte a float; devuelve default si None/NaN/inválido."""
+    if v is None or pd.isna(v):
+        return default
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int(v, default: int = 0) -> int:
+    if v is None or pd.isna(v):
+        return default
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default
 
 
 def _calcular_bono_oficial(base: float,
@@ -314,93 +339,144 @@ def _calcular_bono_oficial(base: float,
 # ============================================================
 def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
                           mix_b2c, ticket_b2c, df_cfg):
-    """Tab Resumen — los 3 KPIs oficiales + bono devengado."""
-    st.markdown("### 📅 Mes en curso")
+    """Tab Resumen — KPIs del mes seleccionable + evolución."""
+    # ----------- SELECTOR DE MES -----------
+    c_sel1, c_sel2, _ = st.columns([1, 1, 2])
+    with c_sel1:
+        anio_sel = st.selectbox("Año", [hoy.year - 1, hoy.year], index=1,
+                                  key="resumen_anio")
+    with c_sel2:
+        mes_sel = st.selectbox("Mes", list(range(1, 13)),
+                                index=hoy.month - 1, key="resumen_mes")
 
     cfg_dict = (df_cfg.set_index('mes').to_dict('index')
                 if df_cfg is not None and not df_cfg.empty else {})
-    mes_key = f"{hoy.year}-{hoy.month:02d}"
+    mes_key = f"{anio_sel}-{mes_sel:02d}"
     cfg_mes = cfg_dict.get(mes_key, {})
 
-    n_personas = cfg_mes.get('n_personas') or 0
-    bono_persona = cfg_mes.get('bono_persona_clp') or 0
-    base_pozo = cfg_mes.get('base_clp') or 0
-    otif_input = cfg_mes.get('otif_pct')
-    espiritu_input = cfg_mes.get('espiritu_mll_pct')
+    n_personas = _safe_int(cfg_mes.get('n_personas'), 0)
+    bono_persona = _safe_float(cfg_mes.get('bono_persona_clp'), 0)
+    base_pozo = _safe_float(cfg_mes.get('base_clp'), 0)
+    otif_input = _safe_float(cfg_mes.get('otif_pct'), None)
+    espiritu_input = _safe_float(cfg_mes.get('espiritu_mll_pct'), None)
 
     if n_personas == 0 or bono_persona == 0:
         st.warning(
-            f"⚠️ Aún no cargas la configuración del pozo para **{mes_key}**. "
-            f"Anda a la pestaña **💵 Carga Bonos** para ingresar N personas + "
-            f"bono por persona + OTIF (mes anterior) + Espíritu MLL."
+            f"⚠️ Sin configuración para **{mes_key}**. "
+            f"Anda a **💵 Carga Bonos** para ingresarla."
         )
-        return
+    else:
+        pedidos_mes = _pedidos_b2c_mes(ventas, anio_sel, mes_sel)
+        meta_mes = (meta_manual if meta_manual is not None
+                    else _meta_b2c_mes(ppto, anio_sel, mes_sel, mix_b2c, ticket_b2c))
 
-    pedidos_mes = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
-    meta_mes = (meta_manual if meta_manual is not None
-                else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
+        otif_use = otif_input if otif_input is not None else 0
+        esp_use = espiritu_input if espiritu_input is not None else 0
+        if otif_input is None:
+            st.info("ℹ️ OTIF no cargado para este mes — cuenta como 0%.")
+        if espiritu_input is None:
+            st.info("ℹ️ Espíritu MLL no cargado para este mes — cuenta como 0%.")
 
-    if otif_input is None:
-        st.warning("⚠️ Falta cargar OTIF del mes anterior. Va a contar como 0%.")
-        otif_input = 0
-    if espiritu_input is None:
-        espiritu_input = 0  # sin evaluar = 0 (no asume nada)
+        r = _calcular_bono_oficial(
+            base=base_pozo, otif_pct=otif_use,
+            pedidos_b2c=pedidos_mes, n_personas=n_personas,
+            meta_total=meta_mes, espiritu_mll_pct=esp_use,
+        )
 
-    r = _calcular_bono_oficial(
-        base=base_pozo, otif_pct=otif_input,
-        pedidos_b2c=pedidos_mes, n_personas=n_personas,
-        meta_total=meta_mes, espiritu_mll_pct=espiritu_input,
-    )
+        st.markdown(f"### 📅 KPIs del mes {mes_key}")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric(f"OTIF (medido M-1)", f"{otif_use:.1f}%",
+                  f"Objetivo >{OTIF_OBJETIVO}%",
+                  delta_color="off" if otif_use >= OTIF_OBJETIVO else "inverse")
+        c2.metric("Productividad", f"{r['prod_pct']:.1f}%",
+                  f"{r['pedidos_por_persona']:,.0f}/pers vs meta {r['meta_por_persona']:,.0f}")
+        c3.metric("Espíritu MLL", f"{esp_use:.0f}%",
+                  "Nota 0-100% jefe")
+        c4.metric("💰 Bono devengado", f"${r['bono_devengado']:,.0f}",
+                  f"De pozo ${base_pozo:,.0f}")
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("OTIF mes anterior", f"{otif_input:.1f}%",
-              f"Objetivo >{OTIF_OBJETIVO}%",
-              delta_color="off" if otif_input >= OTIF_OBJETIVO else "inverse")
-    c2.metric("Productividad", f"{r['prod_pct']:.1f}%",
-              f"{r['pedidos_por_persona']:,.0f}/persona vs {r['meta_por_persona']:,.0f}")
-    c3.metric("Espíritu MLL", f"{espiritu_input:.0f}%",
-              "Nota 0-100% del jefe")
-    c4.metric("💰 Bono devengado mes", f"${r['bono_devengado']:,.0f}",
-              f"De pozo ${base_pozo:,.0f}")
+        st.divider()
+        st.markdown("### 🧮 Desglose")
+        df_kpi = pd.DataFrame([
+            {
+                "KPI": "OTIF (mes cerrado M-1)",
+                "Peso": f"{PESO_OTIF*100:.0f}%",
+                "Objetivo": f">{OTIF_OBJETIVO}%",
+                "Real": f"{otif_use:.1f}%",
+                "Ratio paga": f"{r['f_otif']*100:.0f}%",
+                "Aporta al bono": f"${r['aporta_otif']:,.0f}",
+            },
+            {
+                "KPI": "Productividad Pedidos",
+                "Peso": f"{PESO_PROD*100:.0f}%",
+                "Objetivo": f">{PROD_OBJETIVO}%",
+                "Real": f"{r['prod_pct']:.1f}%",
+                "Ratio paga": f"{r['f_prod']*100:.0f}%",
+                "Aporta al bono": f"${r['aporta_prod']:,.0f}",
+            },
+            {
+                "KPI": "Espíritu MLL",
+                "Peso": f"{PESO_ESPIRITU*100:.0f}%",
+                "Objetivo": "SÍ",
+                "Real": f"{esp_use:.0f}%",
+                "Ratio paga": f"{r['f_esp']*100:.0f}%",
+                "Aporta al bono": f"${r['aporta_esp']:,.0f}",
+            },
+            {
+                "KPI": "**TOTAL**",
+                "Peso": "**100%**",
+                "Objetivo": "",
+                "Real": "",
+                "Ratio paga": f"**{r['factor_total']*100:.0f}%**",
+                "Aporta al bono": f"**${r['bono_devengado']:,.0f}**",
+            },
+        ])
+        st.dataframe(df_kpi, use_container_width=True, hide_index=True)
 
+    # ----------- EVOLUCIÓN MENSUAL: Meta vs Real, Prod% y OTIF% -----------
     st.divider()
+    st.markdown("### 📈 Evolución mensual — Productividad y OTIF")
+    st.caption(f"Año {anio_sel} · meta de productividad medida vs PPTO B2C")
 
-    st.markdown("### 🧮 Desglose del bono")
-    df_kpi = pd.DataFrame([
-        {
-            "KPI": "OTIF (mes cerrado M-1)",
-            "Peso": f"{PESO_OTIF*100:.0f}%",
-            "Objetivo": f">{OTIF_OBJETIVO}%",
-            "Real": f"{otif_input:.1f}%",
-            "Ratio paga": f"{r['f_otif']*100:.0f}%",
-            "Aporta al bono": f"${r['aporta_otif']:,.0f}",
-        },
-        {
-            "KPI": "Productividad Pedidos",
-            "Peso": f"{PESO_PROD*100:.0f}%",
-            "Objetivo": f">{PROD_OBJETIVO}%",
-            "Real": f"{r['prod_pct']:.1f}%",
-            "Ratio paga": f"{r['f_prod']*100:.0f}%",
-            "Aporta al bono": f"${r['aporta_prod']:,.0f}",
-        },
-        {
-            "KPI": "Espíritu MLL",
-            "Peso": f"{PESO_ESPIRITU*100:.0f}%",
-            "Objetivo": "SÍ",
-            "Real": f"{espiritu_input:.0f}%",
-            "Ratio paga": f"{r['f_esp']*100:.0f}%",
-            "Aporta al bono": f"${r['aporta_esp']:,.0f}",
-        },
-        {
-            "KPI": "**TOTAL**",
-            "Peso": "**100%**",
-            "Objetivo": "",
-            "Real": "",
-            "Ratio paga": f"**{r['factor_total']*100:.0f}%**",
-            "Aporta al bono": f"**${r['bono_devengado']:,.0f}**",
-        },
-    ])
-    st.dataframe(df_kpi, use_container_width=True, hide_index=True)
+    evo_rows = []
+    for mm in range(1, 13):
+        ped = _pedidos_b2c_mes(ventas, anio_sel, mm)
+        meta = (meta_manual if meta_manual is not None
+                else _meta_b2c_mes(ppto, anio_sel, mm, mix_b2c, ticket_b2c))
+        prod_pct = (ped / meta * 100) if meta > 0 else 0
+        cfg_m = cfg_dict.get(f"{anio_sel}-{mm:02d}", {})
+        otif_m = _safe_float(cfg_m.get('otif_pct'), None)
+        evo_rows.append({
+            'Mes': f"{anio_sel}-{mm:02d}",
+            'mes_num': mm,
+            'Pedidos B2C': ped,
+            'Meta B2C': int(meta),
+            'Productividad %': round(prod_pct, 1),
+            'OTIF % (M-1)': round(otif_m, 1) if otif_m is not None else None,
+        })
+    df_evo = pd.DataFrame(evo_rows)
+    # Mostrar solo hasta mes actual si es año en curso
+    if anio_sel == hoy.year:
+        df_evo = df_evo[df_evo['mes_num'] <= hoy.month]
+
+    # Tabla compacta
+    show_evo = df_evo.drop(columns=['mes_num']).copy()
+    show_evo['Pedidos B2C'] = show_evo['Pedidos B2C'].apply(lambda x: f"{x:,}")
+    show_evo['Meta B2C'] = show_evo['Meta B2C'].apply(lambda x: f"{x:,}")
+    show_evo['Productividad %'] = show_evo['Productividad %'].apply(
+        lambda x: f"{x:.1f}%" + (" 🟢" if x >= PROD_OBJETIVO else " 🔴"))
+    show_evo['OTIF % (M-1)'] = show_evo['OTIF % (M-1)'].apply(
+        lambda x: (f"{x:.1f}%" + (" 🟢" if x >= OTIF_OBJETIVO else " 🔴")) if x is not None else "—")
+    st.dataframe(show_evo, use_container_width=True, hide_index=True)
+
+    # Gráfico líneas
+    chart_df = df_evo[['Mes', 'Productividad %', 'OTIF % (M-1)']].set_index('Mes')
+    st.line_chart(chart_df, height=320)
+    st.caption(
+        f"🎯 Líneas objetivo: Productividad ≥ {PROD_OBJETIVO}% · OTIF ≥ {OTIF_OBJETIVO}%. "
+        f"Bajo el objetivo, el componente respectivo del bono empieza a perder valor "
+        f"(ratio pagable 90-100%)."
+    )
 
 
 def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
@@ -417,12 +493,11 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     mes_key = f"{hoy.year}-{hoy.month:02d}"
     cfg_mes = cfg_dict.get(mes_key, {})
 
-    n_personas = cfg_mes.get('n_personas') or 0
-    bono_persona = cfg_mes.get('bono_persona_clp') or 0
-    base_pozo = cfg_mes.get('base_clp') or 0
-    otif_input = cfg_mes.get('otif_pct') or 0
-    espiritu_input = cfg_mes.get('espiritu_mll_pct')
-    espiritu_val = espiritu_input if espiritu_input is not None else 0
+    n_personas = _safe_int(cfg_mes.get('n_personas'), 0)
+    bono_persona = _safe_float(cfg_mes.get('bono_persona_clp'), 0)
+    base_pozo = _safe_float(cfg_mes.get('base_clp'), 0)
+    otif_input = _safe_float(cfg_mes.get('otif_pct'), 0)
+    espiritu_val = _safe_float(cfg_mes.get('espiritu_mll_pct'), 0)
 
     if n_personas == 0 or bono_persona == 0:
         st.warning(
@@ -489,11 +564,11 @@ def _render_tab_historico(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     for m in range(1, hoy.month + 1):
         mes_key = f"{hoy.year}-{m:02d}"
         cfg_m = cfg_dict.get(mes_key, {})
-        n = cfg_m.get('n_personas') or 0
-        bp = cfg_m.get('bono_persona_clp') or 0
-        base_m = cfg_m.get('base_clp') or 0
-        otif_m = cfg_m.get('otif_pct')
-        esp_m = cfg_m.get('espiritu_mll_pct')
+        n = _safe_int(cfg_m.get('n_personas'), 0)
+        bp = _safe_float(cfg_m.get('bono_persona_clp'), 0)
+        base_m = _safe_float(cfg_m.get('base_clp'), 0)
+        otif_m = _safe_float(cfg_m.get('otif_pct'), None)
+        esp_m = _safe_float(cfg_m.get('espiritu_mll_pct'), None)
 
         ped_m = _pedidos_b2c_mes(ventas, hoy.year, m)
         meta_m = (meta_manual if meta_manual is not None
@@ -547,11 +622,16 @@ def _render_tab_config(hoy):
     """Tab Config — carga manual mensual con OTIF y Espíritu MLL."""
     st.markdown("### 💵 Cargar bono mensual")
     st.caption(
-        "Define el **pozo grupal** + **OTIF del mes anterior** + **Espíritu MLL** del mes. "
-        "OTIF se mide contra mes cerrado: en mayo se evalúa OTIF de abril."
+        "Define **OTIF del mes anterior** + **Espíritu MLL** del mes. "
+        "El pozo está fijo en **3 personas × $60.000 = $180.000/mes** "
+        "(según política UnionX). OTIF se mide contra mes cerrado: en mayo se evalúa abril."
     )
 
     df_cfg = _load_bonos_config()
+
+    # Defaults fijos (política UnionX)
+    N_PERSONAS_DEFAULT = 3
+    BONO_PERSONA_DEFAULT = 60_000
 
     with st.form("form_bono_cfg"):
         c1, c2 = st.columns([1, 1])
@@ -564,32 +644,50 @@ def _render_tab_config(hoy):
         mes_anterior = f"{anio}-{mes_n-1:02d}" if mes_n > 1 else f"{anio-1}-12"
         st.caption(f"Bono del mes: **{mes_key}** · OTIF se evalúa contra mes cerrado: **{mes_anterior}**")
 
-        # Pre-cargar si existe
+        # Pre-cargar si existe — robusto a NaN
         existing = df_cfg[df_cfg['mes'] == mes_key]
-        prev_n = (int(existing['n_personas'].iloc[0])
-                  if not existing.empty and existing['n_personas'].iloc[0] else 3)
-        prev_bono_p = (float(existing['bono_persona_clp'].iloc[0])
-                       if not existing.empty and existing['bono_persona_clp'].iloc[0] else 60_000)
-        prev_otif = (float(existing['otif_pct'].iloc[0])
-                     if not existing.empty and existing['otif_pct'].iloc[0] is not None else 98.0)
-        prev_esp = (float(existing['espiritu_mll_pct'].iloc[0])
-                    if not existing.empty and existing['espiritu_mll_pct'].iloc[0] is not None else 100.0)
-        prev_pagado = (float(existing['bono_pagado_real_clp'].iloc[0])
-                       if not existing.empty and existing['bono_pagado_real_clp'].iloc[0] else 0)
-        prev_obs = existing['observacion'].iloc[0] if not existing.empty else ''
+        if not existing.empty:
+            row = existing.iloc[0]
+            prev_n = _safe_int(row.get('n_personas'), N_PERSONAS_DEFAULT)
+            prev_bono_p = _safe_float(row.get('bono_persona_clp'), BONO_PERSONA_DEFAULT)
+            prev_otif = _safe_float(row.get('otif_pct'), 98.0)
+            prev_esp = _safe_float(row.get('espiritu_mll_pct'), 100.0)
+            prev_pagado = _safe_float(row.get('bono_pagado_real_clp'), 0)
+            prev_obs = row.get('observacion') or ''
+        else:
+            prev_n = N_PERSONAS_DEFAULT
+            prev_bono_p = BONO_PERSONA_DEFAULT
+            prev_otif = 98.0
+            prev_esp = 100.0
+            prev_pagado = 0
+            prev_obs = ''
 
-        st.markdown("**🎯 Pozo target del mes**")
+        # Pozo fijo según política UnionX (3 × $60k = $180k)
+        st.markdown("**🎯 Pozo target — fijo por política**")
         c3, c4, c5 = st.columns(3)
         with c3:
-            n_personas = st.number_input("Personas en facturación", 1, 50, prev_n, 1)
+            st.metric("Personas en facturación", str(N_PERSONAS_DEFAULT))
         with c4:
-            bono_persona = st.number_input("Bono/persona target (CLP)",
-                                            0, 2_000_000, int(prev_bono_p), 10_000,
-                                            help="Cuánto recibe cada persona si TODO se cumple 100%.")
+            st.metric("Bono/persona target", f"${BONO_PERSONA_DEFAULT:,}")
         with c5:
-            pozo_calc = n_personas * bono_persona
-            st.metric("💰 Pozo total target", f"${pozo_calc:,.0f}",
-                       f"{n_personas} × ${bono_persona:,.0f}")
+            pozo_calc = N_PERSONAS_DEFAULT * BONO_PERSONA_DEFAULT
+            st.metric("💰 Pozo total target", f"${pozo_calc:,.0f}")
+
+        # Permitir override en expander (raro pero por flexibilidad)
+        with st.expander("⚙️ ¿Cambiar pozo este mes? (excepcional)"):
+            n_personas = st.number_input(
+                "Personas (default 3)", 1, 50, prev_n, 1,
+                help="Solo cambiar si en este mes la dotación fue distinta."
+            )
+            bono_persona = st.number_input(
+                "Bono/persona CLP (default $60.000)", 0, 2_000_000,
+                int(prev_bono_p), 10_000,
+            )
+            if (n_personas, bono_persona) != (N_PERSONAS_DEFAULT, BONO_PERSONA_DEFAULT):
+                st.warning(
+                    f"⚠️ Override activo: {n_personas} × ${bono_persona:,.0f} "
+                    f"= ${n_personas * bono_persona:,.0f} (no default)"
+                )
 
         st.divider()
         st.markdown(f"**📊 KPIs del mes**")
