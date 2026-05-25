@@ -1,13 +1,20 @@
 {
-  "generado_en": "2026-05-19T11:40:16.304013",
-  "total_filas": 242,
-  "total_pis": 8,
-  "total_skus": 200,
-  "total_unidades": 39094.034,
-  "total_usd": 346672.0567,
-  "eta_proxima": "2026-05-13",
-  "eta_lejana": "2026-06-30",
-  "transporte_breakdown": {
-    "BARCO": 242
-  }
+  "generado_en": "2026-05-22T10:15:09.646444",
+  "fuente": "odoo",
+  "filtros": {
+    "partner_id": 1664,
+    "partner_ref_like": "26TP%",
+    "state_in": [
+      "draft",
+      "sent",
+      "purchase"
+    ]
+  },
+  "total_filas": 130,
+  "total_pis": 6,
+  "total_skus": 119,
+  "total_unidades": 28489.0,
+  "total_clp_internado": 251765215.51999998,
+  "eta_proxima": "2026-05-20T16:48:16",
+  "eta_lejana": "2026-07-15T12:00:00"
 }

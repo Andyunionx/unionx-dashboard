@@ -1,0 +1,52 @@
+{
+  "generado_en": "2026-05-22T10:15:16.199733",
+  "totales": {
+    "pis_odoo": 6,
+    "pis_sheet": 7,
+    "pis_en_ambos": 6,
+    "pis_solo_sheet": 1,
+    "pis_solo_odoo": 0,
+    "skus_qty_difieren": 4
+  },
+  "alertas_sheet_pero_no_odoo": [
+    {
+      "pi": "26TP0422",
+      "skus": 45,
+      "unidades": 7334.0,
+      "eta": "2026-06-19",
+      "categoria": "SIN_PO_ODOO",
+      "razon": "No existe PO en Odoo. Probable: pendiente flete Vicente / sin precosteo / requiere acción."
+    }
+  ],
+  "info_odoo_pero_no_sheet": [],
+  "warn_qty_difieren": [
+    {
+      "pi": "26TP0330",
+      "sku": "LVTECMCC-BK",
+      "qty_odoo": 1002.0,
+      "qty_sheet": 1.002,
+      "diff": 1000.998
+    },
+    {
+      "pi": "26TP0430",
+      "sku": "1597086499840",
+      "qty_odoo": 1010.0,
+      "qty_sheet": 1.01,
+      "diff": 1008.99
+    },
+    {
+      "pi": "26TP0430",
+      "sku": "68658866289861",
+      "qty_odoo": 1010.0,
+      "qty_sheet": 1.01,
+      "diff": 1008.99
+    },
+    {
+      "pi": "26TP0430",
+      "sku": "68658868763602",
+      "qty_odoo": 1012.0,
+      "qty_sheet": 1.012,
+      "diff": 1010.988
+    }
+  ]
+}

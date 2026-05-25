@@ -1,8 +1,9 @@
 """
 Vista COMEX — Embarques activos + cruce con stock + forecast.
 
-Lee data/comex/transito.parquet (extraído del sheet "Importaciones UnionX Integrada"
-via extract_comex_transito.py).
+Lee data/comex/transito.parquet (extract_comex_desde_odoo.py — purchase.order
+Topwill activas con receipt_status != 'full'). El Sheet de Martín se usa como
+contraste para alertas (transito_alertas.json).
 """
 import json
 from datetime import datetime, timedelta
@@ -15,12 +16,23 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).parent.parent
 COMEX_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'transito.parquet'
 COMEX_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'transito_resumen.json'
+COMEX_ALERTAS = PROJECT_ROOT / 'data' / 'comex' / 'transito_alertas.json'
 VALIDACION_ODOO = PROJECT_ROOT / 'data' / 'comex' / 'validacion_odoo.parquet'
 VALIDACION_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'validacion_odoo_resumen.json'
 DIMENSIONES_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_skus.parquet'
 DIMENSIONES_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_resumen.json'
 STOCK_LIVE = PROJECT_ROOT / 'data' / 'stock' / 'skus.parquet'
 FC_SKUS_ANCHORED = PROJECT_ROOT / 'data' / 'forecast' / 'forecast_skus_anchored.parquet'
+
+
+@st.cache_data(ttl=900)
+def _cargar_alertas_comex() -> dict:
+    if not COMEX_ALERTAS.exists():
+        return {}
+    try:
+        return json.loads(COMEX_ALERTAS.read_text(encoding='utf-8'))
+    except Exception:
+        return {}
 
 
 @st.cache_data(ttl=900)
@@ -31,6 +43,12 @@ def _cargar_transito():
     for col in ['fecha_embarque', 'fecha_eta_chile', 'fecha_eta_bodega']:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors='coerce')
+    # costo_ingreso_clp puede venir como string (Sheet legacy) o numérico (enriquecedor).
+    # Normalizar a float para que la vista pueda comparar y agregar sin pelar tipos.
+    if 'costo_ingreso_clp' in df.columns:
+        df['costo_ingreso_clp'] = pd.to_numeric(df['costo_ingreso_clp'], errors='coerce')
+    else:
+        df['costo_ingreso_clp'] = pd.NA
     return df
 
 
@@ -95,14 +113,34 @@ def _tab_resumen(df: pd.DataFrame, val_resumen: dict):
     cols[2].metric("Unidades totales", f"{df['cantidad'].sum():,.0f}")
     cols[3].metric("USD total estimado", f"${df['costo_total_usd'].sum()/1e3:,.0f}K")
 
+    # KPIs de costeo: cuántas filas tienen costo_ingreso_clp poblado vs pendientes
+    n_filas = len(df)
+    n_costeados = int(df['costo_ingreso_clp'].notna().sum()) if 'costo_ingreso_clp' in df.columns else 0
+    n_pendientes = n_filas - n_costeados
+    pct = (n_costeados / n_filas * 100) if n_filas else 0
+    clp_total = float(df['costo_ingreso_clp'].sum()) if n_costeados else 0
+    pis_pendientes_costo = (
+        df[df['costo_ingreso_clp'].isna()]['pi'].nunique() if 'costo_ingreso_clp' in df.columns else 0
+    )
+
+    cols_c = st.columns(4)
+    cols_c[0].metric("SKUs precosteados", f"{n_costeados:,}/{n_filas:,}", f"{pct:.0f}%")
+    cols_c[1].metric("CLP internado", f"${clp_total/1e6:,.1f}MM",
+                     "calculado sobre lo precosteado")
+    cols_c[2].metric("SKUs pendientes precosteo", f"{n_pendientes:,}",
+                     f"{pis_pendientes_costo} PIs" if pis_pendientes_costo else "OK")
     proximas = df_eta[(df_eta['dias_para_llegar'] >= 0) & (df_eta['dias_para_llegar'] <= 60)]
+    cols_c[3].metric("PIs llegando ≤30d",
+                      proximas[proximas['dias_para_llegar'] <= 30]['pi'].nunique())
+
     cols2 = st.columns(3)
-    cols2[0].metric("PIs llegando ≤30d", proximas[proximas['dias_para_llegar'] <= 30]['pi'].nunique())
-    cols2[1].metric("PIs llegando 31-60d", proximas[(proximas['dias_para_llegar'] > 30) &
+    cols2[0].metric("PIs llegando 31-60d", proximas[(proximas['dias_para_llegar'] > 30) &
                                                        (proximas['dias_para_llegar'] <= 60)]['pi'].nunique())
     atrasadas = df_eta[df_eta['dias_para_llegar'] < 0]
-    cols2[2].metric("PIs con ETA vencida", atrasadas['pi'].nunique(),
+    cols2[1].metric("PIs con ETA vencida", atrasadas['pi'].nunique(),
                      "Revisar status" if len(atrasadas) > 0 else "OK")
+    sin_eta = df[df['fecha_eta_bodega'].isna()]['pi'].nunique() if 'fecha_eta_bodega' in df.columns else 0
+    cols2[2].metric("PIs sin ETA cargada", sin_eta)
 
     # Validación Odoo: PIs probablemente ingresadas pero drive desactualizado
     if val_resumen:
@@ -144,7 +182,25 @@ def _tab_por_pi(df: pd.DataFrame, val_resumen: dict | None = None):
         unidades=('cantidad', 'sum'),
         usd=('costo_total_usd', 'sum'),
         skus=('sku', 'nunique'),
+        filas=('sku', 'size'),
+        filas_costeadas=('costo_ingreso_clp', lambda s: int(s.notna().sum())),
+        clp_costeado=('costo_ingreso_clp', 'sum'),
     ).sort_values('fecha_eta_bodega')
+
+    # Estado costeo por PI: completo / parcial / pendiente — comparado fila vs fila
+    def _estado_costeo(row):
+        fc = int(row['filas_costeadas'])
+        ft = int(row['filas'])
+        if fc == 0:
+            return '⚠️ Pendiente'
+        if fc < ft:
+            return f'🟡 Parcial ({fc}/{ft})'
+        return '✅ Completo'
+
+    pi_agg['Costeo'] = pi_agg.apply(_estado_costeo, axis=1)
+    pi_agg['CLP internado'] = pi_agg['clp_costeado'].apply(
+        lambda v: f'${v/1e6:,.1f}MM' if v and v > 0 else '—'
+    )
 
     # Merge con validacion Odoo
     val_map = {p['pi']: p for p in (val_resumen.get('por_pi', []) if val_resumen else [])}
@@ -173,7 +229,7 @@ def _tab_por_pi(df: pd.DataFrame, val_resumen: dict | None = None):
     pi_agg['Unid'] = pi_agg['unidades'].apply(lambda v: f'{v:,.0f}')
 
     cols_show = ['pi', 'transporte', 'fecha_embarque', 'fecha_eta_chile', 'fecha_eta_bodega',
-                  'skus', 'Unid', 'USD', 'Status', 'Odoo', '% recibido']
+                  'skus', 'Unid', 'USD', 'CLP internado', 'Costeo', 'Status', 'Odoo', '% recibido']
     rename = {'pi': 'PI', 'transporte': 'Transporte', 'fecha_embarque': 'Embarque',
                'fecha_eta_chile': 'ETA Chile', 'fecha_eta_bodega': 'ETA Bodega',
                'skus': 'SKUs'}
@@ -224,15 +280,19 @@ def _tab_detalle_skus(df: pd.DataFrame):
         df_show = df_show[mask]
 
     cols_show = ['pi', 'sku', 'producto', 'cantidad', 'costo_unitario_usd', 'costo_total_usd',
-                  'transporte', 'fecha_embarque', 'fecha_eta_bodega', 'nro_pedido']
+                  'costo_ingreso_clp', 'transporte', 'fecha_embarque', 'fecha_eta_bodega', 'nro_pedido']
     rename = {'pi': 'PI', 'sku': 'SKU', 'producto': 'Producto', 'cantidad': 'Cantidad',
                'costo_unitario_usd': 'USD/unid', 'costo_total_usd': 'USD total',
+               'costo_ingreso_clp': 'CLP internado',
                'transporte': 'Transp.', 'fecha_embarque': 'Embarque', 'fecha_eta_bodega': 'ETA Bod',
                'nro_pedido': 'NPedido'}
     df_disp = df_show[cols_show].rename(columns=rename).sort_values(['ETA Bod', 'PI'])
     df_disp['Cantidad'] = df_disp['Cantidad'].apply(lambda v: f'{v:,.0f}' if pd.notna(v) else '-')
     df_disp['USD/unid'] = df_disp['USD/unid'].apply(lambda v: f'${v:,.2f}' if pd.notna(v) else '-')
     df_disp['USD total'] = df_disp['USD total'].apply(lambda v: f'${v:,.0f}' if pd.notna(v) else '-')
+    df_disp['CLP internado'] = df_disp['CLP internado'].apply(
+        lambda v: f'${v:,.0f}' if pd.notna(v) and v > 0 else 'Pendiente'
+    )
     st.caption(f"{len(df_disp):,} filas")
     st.dataframe(df_disp, use_container_width=True, hide_index=True, height=600)
 
@@ -485,6 +545,70 @@ def _tab_volumen_pallets(df_dim: pd.DataFrame, resumen_dim: dict):
             st.code('\n'.join(sin_match[:50]) + ('\n…' if len(sin_match) > 50 else ''))
 
 
+def _tab_alertas(alertas: dict):
+    """Reconciliación Sheet (Drive Martín) vs Odoo (purchase.order Topwill)."""
+    if not alertas:
+        st.info(
+            "Sin archivo `data/comex/transito_alertas.json`. Correr "
+            "`python comparar_transito_sheet_vs_odoo.py` para generarlo."
+        )
+        return
+
+    totales = alertas.get('totales', {})
+    st.caption(f"🕒 Generado: {alertas.get('generado_en','')[:19]} · "
+                f"Odoo (fuente principal) vs Sheet Martín (contraste)")
+
+    cols = st.columns(5)
+    cols[0].metric("PIs Odoo", totales.get('pis_odoo', 0))
+    cols[1].metric("PIs Sheet", totales.get('pis_sheet', 0))
+    cols[2].metric("Coinciden", totales.get('pis_en_ambos', 0))
+    cols[3].metric("Solo Sheet", totales.get('pis_solo_sheet', 0),
+                    "⚠️" if totales.get('pis_solo_sheet') else None,
+                    delta_color="inverse")
+    cols[4].metric("Solo Odoo", totales.get('pis_solo_odoo', 0))
+
+    st.markdown("---")
+
+    sheet_only = alertas.get('alertas_sheet_pero_no_odoo', [])
+    if sheet_only:
+        st.markdown("##### 📋 PIs en Sheet pero no en tránsito-Odoo activo")
+        df_so = pd.DataFrame(sheet_only)
+        if 'eta' in df_so.columns:
+            df_so['eta'] = pd.to_datetime(df_so['eta'], errors='coerce')
+
+        sin_po = df_so[df_so.get('categoria') == 'SIN_PO_ODOO']
+        recibidos = df_so[df_so.get('categoria') == 'YA_RECIBIDO']
+        otros = df_so[~df_so.get('categoria').isin(['SIN_PO_ODOO', 'YA_RECIBIDO'])]
+
+        if not sin_po.empty:
+            st.error(f"🔴 **{len(sin_po)} PI(s) SIN PO en Odoo** — acción requerida")
+            st.dataframe(sin_po[['pi', 'skus', 'unidades', 'eta', 'razon']],
+                          hide_index=True, use_container_width=True)
+        if not recibidos.empty:
+            st.warning(f"🟡 **{len(recibidos)} PI(s) ya recibido(s) en Odoo** — sugerir a Martín mover a 'EN BODEGA'")
+            st.dataframe(recibidos[['pi', 'skus', 'unidades', 'eta', 'razon']],
+                          hide_index=True, use_container_width=True)
+        if not otros.empty:
+            st.info(f"ℹ️ **{len(otros)} PI(s) en otro estado**")
+            st.dataframe(otros[['pi', 'skus', 'unidades', 'eta', 'razon']],
+                          hide_index=True, use_container_width=True)
+    else:
+        st.success("✅ Todos los PIs del Sheet están en el extract Odoo activo.")
+
+    odoo_only = alertas.get('info_odoo_pero_no_sheet', [])
+    if odoo_only:
+        st.markdown("##### ℹ️ PIs en Odoo pero no en Sheet")
+        st.caption("Embarques que el agente creó en Odoo pero el Sheet de Martín aún no refleja.")
+        st.dataframe(pd.DataFrame(odoo_only), hide_index=True, use_container_width=True)
+
+    warn = alertas.get('warn_qty_difieren', [])
+    if warn:
+        st.markdown("##### ⚖️ Cantidades por SKU difieren entre fuentes")
+        st.caption("Mismo PI+SKU con qty distinta en Odoo vs Sheet. Probable error de parsing decimal o carga manual.")
+        df_w = pd.DataFrame(warn)
+        st.dataframe(df_w, hide_index=True, use_container_width=True)
+
+
 def render():
     with st.sidebar:
         st.markdown("### 🚢 **COMEX**")
@@ -502,20 +626,37 @@ def render():
     if COMEX_RESUMEN.exists():
         try:
             r = json.load(open(COMEX_RESUMEN, encoding='utf-8'))
-            st.caption(f"🕒 Generado: {r.get('generado_en','')[:19]} · "
-                        f"Fuente: sheet 'Importaciones UnionX Integrada' (Martin)")
+            fuente = r.get('fuente', 'odoo')
+            fuente_label = ("purchase.order Topwill (Odoo) — receipt_status != 'full'"
+                             if fuente == 'odoo' else
+                             "sheet 'Importaciones UnionX Integrada' (Martín)")
+            st.caption(f"🕒 Generado: {r.get('generado_en','')[:19]} · Fuente: {fuente_label}")
         except Exception:
             pass
 
     if df.empty:
-        st.warning("⏳ Sin datos. Correr `python extract_comex_transito.py`")
+        st.warning("⏳ Sin datos. Correr `python extract_comex_desde_odoo.py`")
         return
 
-    # La triangulación demanda · stock · tránsito vive en la app Planificación (futura).
-    # Helpers _tab_triangulacion, _cargar_stock_live, _cargar_forecast_skus quedan en
-    # este archivo para reutilización.
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs", "📐 Volumen / Pallets"
+    # Banner de alertas Sheet vs Odoo (sale antes de los tabs para visibilidad)
+    alertas = _cargar_alertas_comex()
+    if alertas and alertas.get('alertas_sheet_pero_no_odoo'):
+        sin_po = [a for a in alertas['alertas_sheet_pero_no_odoo']
+                   if a.get('categoria') == 'SIN_PO_ODOO']
+        recibidos = [a for a in alertas['alertas_sheet_pero_no_odoo']
+                      if a.get('categoria') == 'YA_RECIBIDO']
+        if sin_po:
+            pis = ', '.join(a['pi'] for a in sin_po)
+            st.error(f"⚠️ **{len(sin_po)} PI(s) en Drive Sheet sin PO en Odoo** ({pis}) — "
+                      "requieren acción (flete Vicente / precosteo / carga manual). Detalle en tab '🚨 Alertas'.")
+        if recibidos:
+            pis = ', '.join(a['pi'] for a in recibidos)
+            st.warning(f"📦 **{len(recibidos)} PI(s) ya recibidos según Odoo** ({pis}) pero Martín "
+                       "los mantiene en tránsito en su Sheet. Sugerir mover a 'EN BODEGA'.")
+
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs",
+        "📐 Volumen / Pallets", "🚨 Alertas Sheet vs Odoo"
     ])
     with tab1:
         _tab_resumen(df, val_resumen)
@@ -525,3 +666,5 @@ def render():
         _tab_detalle_skus(df)
     with tab4:
         _tab_volumen_pallets(df_dim, resumen_dim)
+    with tab5:
+        _tab_alertas(alertas)

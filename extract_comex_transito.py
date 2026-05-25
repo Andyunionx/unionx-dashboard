@@ -363,14 +363,19 @@ def main():
         print(f"   {pi} | embarque={fe} -> ETA CL={eta_cl} -> bodega={eta_bo} | "
               f"{row['unidades']:>7,.0f} unid | ${row['usd']/1e3:>7,.1f}K | {row['skus']} SKUs", flush=True)
 
-    # Guardar
-    out_p = OUT_DIR / 'transito.parquet'
+    # Marcar fuente para distinguirlo del extract Odoo
+    df['fuente'] = 'sheet'
+
+    # Guardar como secundario. Fuente principal de transito.parquet es ahora
+    # extract_comex_desde_odoo.py (purchase.order Topwill).
+    out_p = OUT_DIR / 'transito_sheet.parquet'
     df.to_parquet(out_p, compression='zstd', compression_level=9, index=False)
     print(f"\n[4] {out_p}: {len(df):,} filas", flush=True)
 
     # Resumen JSON
     resumen = {
         'generado_en': datetime.now().isoformat(),
+        'fuente': 'sheet',
         'total_filas': len(df),
         'total_pis': int(df['pi'].nunique()),
         'total_skus': int(df['sku'].nunique()),
@@ -380,10 +385,10 @@ def main():
         'eta_lejana': str(df['fecha_eta_bodega'].max()) if df['fecha_eta_bodega'].notna().any() else None,
         'transporte_breakdown': df.groupby('transporte', dropna=False).size().to_dict() if 'transporte' in df.columns else {},
     }
-    with open(OUT_DIR / 'transito_resumen.json', 'w', encoding='utf-8') as f:
+    with open(OUT_DIR / 'transito_sheet_resumen.json', 'w', encoding='utf-8') as f:
         json.dump(resumen, f, indent=2, default=str)
 
-    print(f"\n[OK] COMEX transito extraido")
+    print(f"\n[OK] COMEX transito Sheet extraido (secundario; principal=Odoo)")
 
 
 if __name__ == '__main__':
