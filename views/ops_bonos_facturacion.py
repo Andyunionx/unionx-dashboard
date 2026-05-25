@@ -354,13 +354,30 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     mes_key = f"{anio_sel}-{mes_sel:02d}"
     cfg_mes = cfg_dict.get(mes_key, {})
 
+    # Defaults política UnionX (3 × $60k) si faltan campos en el row
+    N_DEFAULT, BONO_P_DEFAULT = 3, 60_000
+
     n_personas = _safe_int(cfg_mes.get('n_personas'), 0)
     bono_persona = _safe_float(cfg_mes.get('bono_persona_clp'), 0)
     base_pozo = _safe_float(cfg_mes.get('base_clp'), 0)
     otif_input = _safe_float(cfg_mes.get('otif_pct'), None)
     espiritu_input = _safe_float(cfg_mes.get('espiritu_mll_pct'), None)
 
-    if n_personas == 0 or bono_persona == 0:
+    # Hay registro pero le faltan campos → usar defaults
+    tiene_algo_cargado = bool(cfg_mes) and (
+        n_personas > 0 or bono_persona > 0 or base_pozo > 0 or
+        otif_input is not None or espiritu_input is not None
+    )
+
+    if tiene_algo_cargado:
+        if n_personas == 0:
+            n_personas = N_DEFAULT
+        if bono_persona == 0:
+            bono_persona = BONO_P_DEFAULT
+        if base_pozo == 0:
+            base_pozo = n_personas * bono_persona
+
+    if not tiene_algo_cargado:
         st.warning(
             f"⚠️ Sin configuración para **{mes_key}**. "
             f"Anda a **💵 Carga Bonos** para ingresarla."
@@ -385,15 +402,38 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
 
         st.markdown(f"### 📅 KPIs del mes {mes_key}")
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric(f"OTIF (medido M-1)", f"{otif_use:.1f}%",
+
+        # OTIF — mostrar origen
+        otif_label = f"OTIF (M-1)" + (" 📝" if otif_input is not None else " ⚠️")
+        otif_help = ("Cargado manual en 💵 Carga Bonos."
+                     if otif_input is not None else
+                     "FALTA cargar — ve a 💵 Carga Bonos.")
+        c1.metric(otif_label, f"{otif_use:.1f}%",
                   f"Objetivo >{OTIF_OBJETIVO}%",
-                  delta_color="off" if otif_use >= OTIF_OBJETIVO else "inverse")
+                  delta_color="off" if otif_use >= OTIF_OBJETIVO else "inverse",
+                  help=otif_help)
         c2.metric("Productividad", f"{r['prod_pct']:.1f}%",
-                  f"{r['pedidos_por_persona']:,.0f}/pers vs meta {r['meta_por_persona']:,.0f}")
-        c3.metric("Espíritu MLL", f"{esp_use:.0f}%",
-                  "Nota 0-100% jefe")
+                  f"{r['pedidos_por_persona']:,.0f}/pers vs meta {r['meta_por_persona']:,.0f}",
+                  help="Calculado auto desde ventas_historico (pedidos B2C reales / N personas).")
+        esp_label = "Espíritu MLL" + (" 📝" if espiritu_input is not None else " ⚠️")
+        c3.metric(esp_label, f"{esp_use:.0f}%",
+                  "Nota 0-100% jefe",
+                  help="Cargado manual." if espiritu_input is not None else "FALTA cargar.")
         c4.metric("💰 Bono devengado", f"${r['bono_devengado']:,.0f}",
                   f"De pozo ${base_pozo:,.0f}")
+
+        # Aviso si falta algún input clave
+        faltantes = []
+        if otif_input is None:
+            faltantes.append("OTIF")
+        if espiritu_input is None:
+            faltantes.append("Espíritu MLL")
+        if faltantes:
+            st.warning(
+                f"⚠️ Falta cargar **{' + '.join(faltantes)}** para **{mes_key}**. "
+                f"Mientras tanto el bono calcula con ese KPI en 0%. "
+                f"Ve a 💵 Carga Bonos."
+            )
 
         st.divider()
         st.markdown("### 🧮 Desglose")
@@ -435,8 +475,11 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
 
     # ----------- EVOLUCIÓN MENSUAL: Meta vs Real, Prod% y OTIF% -----------
     st.divider()
-    st.markdown("### 📈 Evolución mensual — Productividad y OTIF")
-    st.caption(f"Año {anio_sel} · meta de productividad medida vs PPTO B2C")
+    st.markdown(f"### 📈 Evolución mensual — Productividad y OTIF ({anio_sel})")
+    st.caption(
+        f"12 meses del año (real + futuro proyectado por PPTO). "
+        f"Objetivos: Productividad ≥ {PROD_OBJETIVO}% · OTIF ≥ {OTIF_OBJETIVO}%."
+    )
 
     evo_rows = []
     for mm in range(1, 13):
@@ -446,36 +489,53 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         prod_pct = (ped / meta * 100) if meta > 0 else 0
         cfg_m = cfg_dict.get(f"{anio_sel}-{mm:02d}", {})
         otif_m = _safe_float(cfg_m.get('otif_pct'), None)
+        es_futuro = (anio_sel > hoy.year) or (anio_sel == hoy.year and mm > hoy.month)
+        es_mes_actual = (anio_sel == hoy.year and mm == hoy.month)
         evo_rows.append({
             'Mes': f"{anio_sel}-{mm:02d}",
             'mes_num': mm,
+            'Estado': '🔮 Futuro' if es_futuro else ('⏳ En curso' if es_mes_actual else '✅ Cerrado'),
             'Pedidos B2C': ped,
             'Meta B2C': int(meta),
             'Productividad %': round(prod_pct, 1),
             'OTIF % (M-1)': round(otif_m, 1) if otif_m is not None else None,
+            '_es_futuro': es_futuro,
+            '_es_actual': es_mes_actual,
         })
     df_evo = pd.DataFrame(evo_rows)
-    # Mostrar solo hasta mes actual si es año en curso
-    if anio_sel == hoy.year:
-        df_evo = df_evo[df_evo['mes_num'] <= hoy.month]
 
-    # Tabla compacta
-    show_evo = df_evo.drop(columns=['mes_num']).copy()
-    show_evo['Pedidos B2C'] = show_evo['Pedidos B2C'].apply(lambda x: f"{x:,}")
+    # Tabla compacta con semáforo (sin penalizar meses futuros o en curso parciales)
+    def _fmt_prod(row):
+        v = row['Productividad %']
+        if row['_es_futuro']:
+            return f"meta {row['Meta B2C']:,} pedidos"
+        if row['_es_actual']:
+            return f"{v:.1f}% (parcial)"
+        return f"{v:.1f}%" + (" 🟢" if v >= PROD_OBJETIVO else " 🔴")
+
+    def _fmt_otif(row):
+        v = row['OTIF % (M-1)']
+        if v is None:
+            return "— sin cargar" if not row['_es_futuro'] else "—"
+        return f"{v:.1f}%" + (" 🟢" if v >= OTIF_OBJETIVO else " 🔴")
+
+    show_evo = df_evo.copy()
+    show_evo['Productividad %'] = show_evo.apply(_fmt_prod, axis=1)
+    show_evo['OTIF % (M-1)'] = show_evo.apply(_fmt_otif, axis=1)
+    show_evo['Pedidos B2C'] = show_evo.apply(
+        lambda r: "—" if r['_es_futuro'] else f"{r['Pedidos B2C']:,}", axis=1)
     show_evo['Meta B2C'] = show_evo['Meta B2C'].apply(lambda x: f"{x:,}")
-    show_evo['Productividad %'] = show_evo['Productividad %'].apply(
-        lambda x: f"{x:.1f}%" + (" 🟢" if x >= PROD_OBJETIVO else " 🔴"))
-    show_evo['OTIF % (M-1)'] = show_evo['OTIF % (M-1)'].apply(
-        lambda x: (f"{x:.1f}%" + (" 🟢" if x >= OTIF_OBJETIVO else " 🔴")) if x is not None else "—")
+    show_evo = show_evo.drop(columns=['mes_num', '_es_futuro', '_es_actual'])
     st.dataframe(show_evo, use_container_width=True, hide_index=True)
 
-    # Gráfico líneas
-    chart_df = df_evo[['Mes', 'Productividad %', 'OTIF % (M-1)']].set_index('Mes')
+    # Gráfico líneas — solo Productividad real + OTIF cargada (futuro queda en NaN para no engañar)
+    chart_data = df_evo.copy()
+    chart_data.loc[chart_data['_es_futuro'], 'Productividad %'] = None
+    chart_df = chart_data.set_index('Mes')[['Productividad %', 'OTIF % (M-1)']]
     st.line_chart(chart_df, height=320)
     st.caption(
-        f"🎯 Líneas objetivo: Productividad ≥ {PROD_OBJETIVO}% · OTIF ≥ {OTIF_OBJETIVO}%. "
-        f"Bajo el objetivo, el componente respectivo del bono empieza a perder valor "
-        f"(ratio pagable 90-100%)."
+        f"📊 Productividad real (cerrada o en curso) y OTIF cargada manualmente. "
+        f"Los meses futuros muestran la meta en la tabla pero no se grafican como real."
     )
 
 
@@ -493,18 +553,33 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     mes_key = f"{hoy.year}-{hoy.month:02d}"
     cfg_mes = cfg_dict.get(mes_key, {})
 
+    N_DEFAULT, BONO_P_DEFAULT = 3, 60_000
+
     n_personas = _safe_int(cfg_mes.get('n_personas'), 0)
     bono_persona = _safe_float(cfg_mes.get('bono_persona_clp'), 0)
     base_pozo = _safe_float(cfg_mes.get('base_clp'), 0)
     otif_input = _safe_float(cfg_mes.get('otif_pct'), 0)
     espiritu_val = _safe_float(cfg_mes.get('espiritu_mll_pct'), 0)
 
-    if n_personas == 0 or bono_persona == 0:
+    tiene_algo = bool(cfg_mes) and (
+        n_personas > 0 or bono_persona > 0 or base_pozo > 0 or
+        otif_input > 0 or espiritu_val > 0
+    )
+
+    if not tiene_algo:
         st.warning(
             f"⚠️ Aún no cargas la configuración para **{mes_key}**. "
             f"Anda a **💵 Carga Bonos**."
         )
         return
+
+    # Fallback a defaults si faltan campos
+    if n_personas == 0:
+        n_personas = N_DEFAULT
+    if bono_persona == 0:
+        bono_persona = BONO_P_DEFAULT
+    if base_pozo == 0:
+        base_pozo = n_personas * bono_persona
 
     pedidos_mes = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
     meta_mes = (meta_manual if meta_manual is not None
@@ -733,10 +808,27 @@ def _render_tab_config(hoy):
                 st.rerun()
 
     st.divider()
-    st.markdown("**📋 Config cargada:**")
+    st.markdown("**📋 Config cargada en Turso:**")
     if df_cfg.empty:
-        st.info("Aún no hay config persistida.")
+        st.info("Aún no hay config persistida en Turso.")
     else:
+        # Diagnóstico: campos faltantes por mes
+        faltantes_check = []
+        for _, row in df_cfg.iterrows():
+            falta = []
+            if pd.isna(row.get('n_personas')) or row.get('n_personas') in (None, 0):
+                falta.append('n_personas')
+            if pd.isna(row.get('otif_pct')) or row.get('otif_pct') is None:
+                falta.append('otif')
+            if pd.isna(row.get('espiritu_mll_pct')) or row.get('espiritu_mll_pct') is None:
+                falta.append('espíritu')
+            if falta:
+                faltantes_check.append(f"{row['mes']}: falta {', '.join(falta)}")
+        if faltantes_check:
+            with st.expander(f"⚠️ {len(faltantes_check)} mes(es) con campos incompletos"):
+                for f in faltantes_check:
+                    st.write(f"- {f}")
+                st.caption("Re-guarda esos meses con todos los campos para que el cálculo sea preciso.")
         show = df_cfg.copy()
         show['n_personas'] = show['n_personas'].apply(lambda x: f"{int(x)}" if pd.notna(x) else "—")
         show['bono_persona_clp'] = show['bono_persona_clp'].apply(
