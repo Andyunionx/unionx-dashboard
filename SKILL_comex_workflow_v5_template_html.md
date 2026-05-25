@@ -101,83 +101,60 @@ Esperando confirmación antes de continuar...
 
 ## FÓRMULAS DE CÁLCULO (CORREGIDAS)
 
-### 1. Delivery Cost (PRORRATEADO por grupo de Model)
+### 1. Delivery Cost (PRORRATEADO por CBM)
 
-**CRÍTICO:** El delivery cost en el PI aparece DESPUÉS de un grupo de productos con el mismo Model. Debe prorratearse entre todos los productos de ese grupo por cantidad.
+**CRÍTICO:** El delivery cost en el PI aparece DESPUÉS de un grupo de productos consecutivos (puede tener distintos Models). Debe prorratearse entre todos los productos de ese grupo **por CBM** (no por qty).
+
+**Por qué CBM y no qty (corregido 2026-05-25):** el delivery cost es transporte físico desde el proveedor original a la bodega de Steven en China. El camión cobra por el espacio que ocupan las cajas, no por las unidades. Prorratear por qty penaliza desproporcionadamente a productos baratos y pequeños (ej. bowls de cerámica de $2 USD con CBM/u = 0.006 m³, vs sets grandes de loza de $14 USD con CBM/u = 0.05 m³). Esto produjo variaciones falsas de +110% en SKUs como SIMBOWTAZ-4 / SIMBOWAMA-4 / SIMBOWSIE-4 en el embarque 26TP0430.
+
+**Importante:** como el CBM solo se conoce después de leer el PL, el prorrateo del delivery se calcula en una **segunda pasada**, después de haber leído el Packing List y asignado `cbm_total` a cada producto.
 
 ```python
-def procesar_pi_con_delivery_prorrateado(df):
+def prorratear_delivery_por_cbm(productos_grupo, delivery_amount):
     """
-    El delivery cost aplica al GRUPO de productos anteriores con el mismo Model.
-    Se prorrata por cantidad (Qty) entre todas las variantes.
-    
-    Ejemplo en PI:
-        Fila 37: TPB02 - Botella Negra    - Qty: 154
-        Fila 38: TPB02 - Botella Pink     - Qty: 100
-        Fila 39: TPB02 - Botella Blanca   - Qty: 150
-        Fila 40: delivery cost            - $43
-        
-    El $43 se prorrata entre las 3 filas:
-        Total Qty grupo = 154 + 100 + 150 = 404
-        Delivery unitario = $43 / 404 = $0.1064
-        
-        Botella Negra:  $0.1064 × 154 = $16.39
-        Botella Pink:   $0.1064 × 100 = $10.64
-        Botella Blanca: $0.1064 × 150 = $15.97
-        Total: $43.00 ✓
+    Prorratea delivery_amount entre los productos del grupo por CBM.
+    Fallback a qty si el CBM total del grupo es 0 (no se cargó PL).
+
+    Ejemplo en PI con un grupo previo al "delivery cost":
+        TP-S24 SIMJULZAMA-24  Qty 250  CBM 9.007
+        TP-MS5 SIMBOWTAZ-4    Qty 102  CBM 0.413
+        TP-BS5 SIMBOWAMA-4    Qty 102  CBM 0.610
+        TP-S30 SIMJULZSIE-30  Qty 600  CBM 30.350
+        TP-BS4 SIMBOWSIE-4    Qty 102  CBM 0.610
+        delivery cost                  $1480
+
+    CBM total grupo = 40.99
+    Reparto por CBM:
+        SIMJULZAMA-24:  1480 × (9.007 / 40.99) =  $325
+        SIMBOWTAZ-4:    1480 × (0.413 / 40.99) =   $15
+        SIMBOWAMA-4:    1480 × (0.610 / 40.99) =   $22
+        SIMJULZSIE-30:  1480 × (30.350 / 40.99) = $1096
+        SIMBOWSIE-4:    1480 × (0.610 / 40.99) =   $22
+        Total: $1480 ✓
     """
-    
-    productos = []
-    grupo_actual = []
-    model_actual = None
-    
-    for i, row in df.iterrows():
-        model = str(row.get('Model', '')).strip()
-        desc = str(row.get('DESCRIPTON', '')).strip().lower()
-        qty = pd.to_numeric(row.get('QTY(PCS)', 0), errors='coerce') or 0
-        
-        # Detectar si es delivery cost
-        if 'delivery' in desc:
-            delivery_amount = row.get('AMOUNT', row.get('Price', 0))
-            
-            # Asignar delivery al grupo anterior
-            if grupo_actual:
-                total_qty_grupo = sum(p['qty'] for p in grupo_actual)
-                for p in grupo_actual:
-                    # Prorratear por cantidad
-                    p['delivery'] = delivery_amount * (p['qty'] / total_qty_grupo)
-                    p['delivery_unitario'] = delivery_amount / total_qty_grupo
-                
-                productos.extend(grupo_actual)
-                grupo_actual = []
-            continue
-        
-        # Si es un producto válido
-        if model and model != 'nan' and qty > 0:
-            # Si cambió el modelo, cerrar grupo anterior
-            if model_actual and model != model_actual and grupo_actual:
-                productos.extend(grupo_actual)
-                grupo_actual = []
-            
-            model_actual = model
-            grupo_actual.append({
-                'model': model,
-                'qty': qty,
-                'price': row.get('Price', 0),
-                'gift_box': row.get('Gift box', 0),
-                'sku': row.get('SKU', ''),
-                'delivery': 0,  # Se llenará cuando aparezca delivery cost
-                'delivery_unitario': 0
-            })
-    
-    # Agregar último grupo si quedó algo
-    if grupo_actual:
-        productos.extend(grupo_actual)
-    
-    return pd.DataFrame(productos)
+    total_cbm = sum(p.cbm_total for p in productos_grupo)
+    if total_cbm > 0:
+        for p in productos_grupo:
+            share = p.cbm_total / total_cbm
+            p.delivery_total = delivery_amount * share
+            p.delivery_unitario = (p.delivery_total / p.qty) if p.qty else 0
+        return
+    # Fallback: si no hay CBM (PL no cargado), prorratear por qty
+    total_qty = sum(p.qty for p in productos_grupo)
+    if total_qty > 0:
+        delivery_unit = delivery_amount / total_qty
+        for p in productos_grupo:
+            p.delivery_unitario = delivery_unit
+            p.delivery_total = delivery_unit * p.qty
 ```
 
-**⚠️ ERROR COMÚN:** Asignar el delivery cost completo a cada producto individual en lugar de prorratearlo entre el grupo.
+**Flujo de cálculo:**
+1. **leer_pi(path)**: identifica los grupos de delivery (productos consecutivos + amount del delivery cost) y los guarda como pendientes. Inicializa `delivery_total = 0` provisional.
+2. **leer_pl(path, productos)**: asigna `cbm_total` a cada producto desde el Packing List.
+3. **prorratear_delivery_por_cbm(productos, grupos_delivery)**: aplica el reparto por CBM (segunda pasada).
+4. **calcular_costeo(emb)**: usa `delivery_total` ya prorrateado.
+
+**⚠️ ERROR COMÚN:** Asignar el delivery cost completo a cada producto individual en lugar de prorratearlo entre el grupo. Otro error histórico (corregido): prorratear por qty en lugar de CBM.
 
 ### 2. Gift Box (con 3% adicional)
 
@@ -627,7 +604,7 @@ INLAND CHILE
 | A.1 | Comisión Steven 3% sobre (P×Q + delivery + local charge + long vehicle) | ✅ |
 | A.2 | Gift box = valor PI × 1.03 (agregar 3%) | ✅ |
 | A.3 | Comparar productos vs ÚLTIMO costo internado (no promedio) | ✅ |
-| A.4 | **Delivery cost PRORRATEADO por grupo de Model** (no asignado individualmente) | ✅ |
+| A.4 | **Delivery cost PRORRATEADO por CBM del grupo** (no asignado individualmente, no por qty) | ✅ |
 | B | Actualizar pestañas: Maestra, 1. Apertura CC, 4. Matriz SKU, 5. Resumen Variaciones | ✅ |
 | C | Alertar si hay conceptos no reconocidos en PI/PL | ✅ |
 

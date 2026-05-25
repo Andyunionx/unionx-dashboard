@@ -88,6 +88,10 @@ class Producto:
     delivery_unitario: float = 0.0
     cbm_total: float = 0.0
     pct_cbm: float = 0.0
+    # Grupo de delivery cost (segunda pasada: prorrateo por CBM post leer_pl).
+    # 0 = sin delivery asociado.
+    delivery_grupo_id: int = 0
+    delivery_grupo_amount_usd: float = 0.0
     # Costos calculados
     pxq: float = 0.0
     exw_producto: float = 0.0
@@ -310,24 +314,28 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
             if amount > 0 and descripcion and "total" not in descripcion:
                 inland.no_reconocidos.append({"row": row_idx, "descripcion": str(descripcion_raw).strip(), "amount": amount})
 
-    # Prorratear delivery: cada "delivery cost" en el PI aplica a TODOS los
-    # productos consecutivos anteriores (puede ser un grupo con distintos
-    # Models). Antes el código cerraba el grupo al cambiar de Model y dejaba
-    # huérfanos los productos previos, concentrando todo el delivery en el
-    # último producto → causaba variaciones de +700% (ver SIMBOWSIE-4 en
-    # 26TP0430).
+    # Marcar grupos de delivery: cada "delivery cost" en el PI aplica a TODOS
+    # los productos consecutivos anteriores (puede tener distintos Models).
+    # Solo asignamos delivery_grupo_id + amount aquí. El PRORRATEO REAL se
+    # hace después de leer_pl() en prorratear_delivery_por_cbm() — porque el
+    # delivery es transporte físico y debe repartirse por CBM, no por qty
+    # (ver SIMBOWTAZ/SIMBOWAMA/SIMBOWSIE en 26TP0430: corrección 2026-05-25).
     productos: list[Producto] = []
     grupo: list[dict] = []
+    grupo_id_counter = 0
 
     for item in productos_raw:
         if item["_tipo"] == "delivery":
             if grupo:
+                grupo_id_counter += 1
+                # Fallback provisional por qty (se sobrescribe en
+                # prorratear_delivery_por_cbm cuando ya hay CBM)
                 total_qty = sum(p["qty"] for p in grupo)
-                if total_qty > 0:
-                    delivery_unit = item["amount"] / total_qty
-                    for p in grupo:
-                        p["delivery_unitario"] = delivery_unit
-                        p["delivery_total"] = delivery_unit * p["qty"]
+                for p in grupo:
+                    p["delivery_grupo_id"] = grupo_id_counter
+                    p["delivery_grupo_amount_usd"] = float(item["amount"])
+                    p["delivery_unitario"] = (item["amount"] / total_qty) if total_qty > 0 else 0
+                    p["delivery_total"] = p["delivery_unitario"] * p["qty"]
                 grupo.clear()
             continue
 
@@ -339,6 +347,8 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
     for p in grupo:
         p.setdefault("delivery_total", 0.0)
         p.setdefault("delivery_unitario", 0.0)
+        p.setdefault("delivery_grupo_id", 0)
+        p.setdefault("delivery_grupo_amount_usd", 0.0)
 
     # Recolectar todos los productos (los cerrados ya tienen delivery, los abiertos quedaron en grupo)
     for item in productos_raw:
@@ -353,6 +363,8 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
                 gift_box_real=item["gift_box_pi"] * 1.03,
                 delivery_total=item.get("delivery_total", 0.0),
                 delivery_unitario=item.get("delivery_unitario", 0.0),
+                delivery_grupo_id=item.get("delivery_grupo_id", 0),
+                delivery_grupo_amount_usd=item.get("delivery_grupo_amount_usd", 0.0),
             ))
 
     print(f"  {len(productos)} productos extraidos.")
@@ -442,6 +454,45 @@ def leer_pl(path: Path, productos: list[Producto]) -> float:
 
     print(f"  Total CBM: {total_cbm:.4f}")
     return total_cbm
+
+
+def prorratear_delivery_por_cbm(productos: list[Producto]) -> None:
+    """Segunda pasada del delivery cost: prorratea por CBM dentro de cada
+    grupo (delivery_grupo_id).
+
+    Razón: el delivery cost es transporte físico (camión proveedor original
+    → bodega Steven). Lo justo es repartir por volumen, no por unidades.
+    Antes el código prorrateaba por qty y productos baratos chicos (ej.
+    SIMBOWTAZ-4) absorbían delivery proporcionalmente enorme (+110% sobre
+    FOB). Corrección documentada en SKILL_comex_workflow_v5_template_html.md
+    sección 1.
+
+    Fallback a prorrateo por qty si el CBM total del grupo es 0 (PL no
+    cargado o todos los productos sin CBM).
+    """
+    # Agrupar por delivery_grupo_id (ignorar 0 = sin delivery asociado)
+    grupos: dict[int, list[Producto]] = {}
+    for p in productos:
+        if p.delivery_grupo_id > 0:
+            grupos.setdefault(p.delivery_grupo_id, []).append(p)
+
+    ajustes = 0
+    for gid, prods in grupos.items():
+        amount = prods[0].delivery_grupo_amount_usd
+        total_cbm = sum(p.cbm_total for p in prods)
+        if total_cbm > 0:
+            for p in prods:
+                share = p.cbm_total / total_cbm
+                p.delivery_total = amount * share
+                p.delivery_unitario = (p.delivery_total / p.qty) if p.qty else 0
+                ajustes += 1
+        else:
+            # Sin CBM → dejar el prorrateo por qty (fallback) que ya hizo leer_pi
+            print(f"  [delivery grupo {gid}] sin CBM; mantengo prorrateo por qty (fallback)")
+
+    if ajustes:
+        print(f"\n[DELIVERY] Prorrateado por CBM en {len(grupos)} grupo(s), {ajustes} producto(s) ajustados.")
+
 
 # ---------------------------------------------------------------------------
 # LECTURA TARIFAS
@@ -1074,6 +1125,8 @@ def main():
         sys.exit(1)
 
     total_cbm = leer_pl(pl_path, productos)
+    # Segunda pasada: re-prorratear delivery cost por CBM (no por qty).
+    prorratear_delivery_por_cbm(productos)
     tarifas = leer_tarifas(tarifas_path, puerto)
 
     emb = Embarque(
