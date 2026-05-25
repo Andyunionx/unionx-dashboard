@@ -468,40 +468,69 @@ def cached_stock():
     return StockAdvancedService(odoo).extract_full(progress_callback=None)
 
 
-@st.cache_data(ttl=900, show_spinner="Consultando ventas por canal desde Turso…")
+@st.cache_data(ttl=900, show_spinner="Consultando ventas por canal últimos 30 días…")
 def cached_ventas_canal_30d():
-    """Ventas últimos 30 días por SKU+canal desde Turso."""
+    """Ventas últimos 30 días por SKU+canal.
+    Estrategia: Turso primero (más fresco), fallback parquet local si Turso falla."""
+    desde = (datetime.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
+
+    # Intento 1: Turso (más fresco)
     url = os.environ.get('LIBSQL_URL', '').rstrip('/')
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
-    if not url:
+    if url:
+        sql = f"""
+            SELECT sku, canal, tipo_negocio,
+                   ROUND(SUM(cantidad), 0) as cantidad,
+                   ROUND(SUM(venta_bruta), 0) as venta
+            FROM ventas
+            WHERE fecha_venta >= '{desde}' AND tipo_movimiento = 'Venta'
+            GROUP BY sku, canal, tipo_negocio
+        """
+        try:
+            body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
+            r = requests.post(
+                f"{url}/v2/pipeline", json=body,
+                headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
+                timeout=300,
+            )
+            r.raise_for_status()
+            rows = r.json()['results'][0]['response']['result']['rows']
+            if rows:
+                return pd.DataFrame([{
+                    'SKU': row[0]['value'],
+                    'Canal': row[1]['value'],
+                    'Tipo Negocio': row[2]['value'],
+                    'Cantidad': float(row[3]['value']) if row[3]['value'] else 0,
+                    'Venta': float(row[4]['value']) if row[4]['value'] else 0,
+                } for row in rows])
+        except (KeyError, requests.exceptions.RequestException) as e:
+            print(f"[cached_ventas_canal_30d] Turso falló ({type(e).__name__}), fallback parquet", flush=True)
+
+    # Fallback: parquet hist + mes_actual
+    try:
+        df_hist = _read_historico_parquet()
+        df_mes = pd.read_parquet(MES_ACTUAL_PARQUET) if MES_ACTUAL_PARQUET.exists() else pd.DataFrame()
+        cols_keep = ['sku', 'canal', 'tipo_negocio', 'cantidad', 'venta_bruta', 'fecha_venta', 'tipo_movimiento']
+        parts = [d[cols_keep] for d in (df_hist, df_mes) if not d.empty]
+        if not parts:
+            return pd.DataFrame()
+        df = pd.concat(parts, ignore_index=True)
+        df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+        mask = (df['fecha_venta'] >= desde) & (df['tipo_movimiento'] == 'Venta')
+        df = df[mask]
+        if df.empty:
+            return pd.DataFrame()
+        g = df.groupby(['sku', 'canal', 'tipo_negocio'], dropna=False).agg(
+            cantidad=('cantidad', 'sum'), venta=('venta_bruta', 'sum')
+        ).reset_index()
+        g['cantidad'] = g['cantidad'].round(0)
+        g['venta'] = g['venta'].round(0)
+        return g.rename(columns={'sku': 'SKU', 'canal': 'Canal',
+                                  'tipo_negocio': 'Tipo Negocio',
+                                  'cantidad': 'Cantidad', 'venta': 'Venta'})
+    except Exception as e:
+        print(f"[cached_ventas_canal_30d] Fallback parquet también falló: {e}", flush=True)
         return pd.DataFrame()
-    desde = (datetime.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
-    sql = f"""
-        SELECT sku, canal, tipo_negocio,
-               ROUND(SUM(cantidad), 0) as cantidad,
-               ROUND(SUM(venta_bruta), 0) as venta
-        FROM ventas
-        WHERE fecha_venta >= '{desde}' AND tipo_movimiento = 'Venta'
-        GROUP BY sku, canal, tipo_negocio
-    """
-    body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
-    r = requests.post(
-        f"{url}/v2/pipeline",
-        json=body,
-        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
-        timeout=300,
-    )
-    r.raise_for_status()
-    rows = r.json()['results'][0]['response']['result']['rows']
-    if not rows:
-        return pd.DataFrame()
-    return pd.DataFrame([{
-        'SKU': row[0]['value'],
-        'Canal': row[1]['value'],
-        'Tipo Negocio': row[2]['value'],
-        'Cantidad': float(row[3]['value']) if row[3]['value'] else 0,
-        'Venta': float(row[4]['value']) if row[4]['value'] else 0,
-    } for row in rows])
 
 
 # ============================================================

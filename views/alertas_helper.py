@@ -45,6 +45,8 @@ def _get_url_token():
 
 
 def _query(sql: str, args: list = None, timeout: int = 60):
+    """Ejecuta query Turso. Si Turso falla (cuota, network, etc) devuelve None
+    en lugar de tirar excepción. Callers deben manejar None como "no data"."""
     url, token = _get_url_token()
     if not url:
         return None
@@ -64,13 +66,23 @@ def _query(sql: str, args: list = None, timeout: int = 60):
                 request_args.append({"type": "text", "value": str(v)})
 
     body = {"requests": [{"type": "execute", "stmt": {"sql": sql, "args": request_args}}, {"type": "close"}]}
-    r = requests.post(
-        f"{url}/v2/pipeline", json=body,
-        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
-        timeout=timeout,
-    )
-    r.raise_for_status()
-    return r.json()['results'][0]['response']['result']
+    try:
+        r = requests.post(
+            f"{url}/v2/pipeline", json=body,
+            headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'},
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        result = r.json().get('results', [{}])[0]
+        # Si Turso devuelve {type: error, error: {...}}, no hay 'response'
+        if result.get('type') == 'error' or 'response' not in result:
+            err_msg = result.get('error', {}).get('message', 'unknown')[:80]
+            print(f"[alertas_helper._query] Turso bloqueado/error: {err_msg}", flush=True)
+            return None
+        return result['response']['result']
+    except (requests.exceptions.RequestException, KeyError, ValueError) as e:
+        print(f"[alertas_helper._query] {type(e).__name__}: {str(e)[:80]}", flush=True)
+        return None
 
 
 def crear_tabla_alertas():
