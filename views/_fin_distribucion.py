@@ -279,6 +279,64 @@ def cargar_gav(year: int, meses: list[int] | None = None) -> float:
     return float(df["monto"].sum())
 
 
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_gav_detalle_persona(year: int, meses: list[int] | None = None,
+                                  escenario: str = "FCST") -> pd.DataFrame:
+    """Detalle del GAV con cuenta analítica y persona (cuando esté llenada).
+
+    A diferencia de `cargar_gav_corporativo()` (agrega por área), esta función
+    devuelve el desglose más fino posible:
+      [area, sub_area, centro_costo, cuenta_analitica, persona, monto]
+
+    La columna `persona` viene de "CUENTA ANALITICA1" del Sheet Drive (campo
+    nuevo de mayo 2026). Cuando está llenada permite distribuir el GAV
+    nominalmente (ej: sueldo de GERENCIA → "BROWNE URZUA ANDRES" → Canal X).
+
+    Excluye áreas operativas (OPERACIONES, LOGISTICA, POSTVENTA) que ya
+    están en costo_operativo.
+    """
+    if not CONTROL_GESTION_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(CONTROL_GESTION_PARQUET)
+    df = df[(df["year"] == year) &
+            (df["escenario"] == escenario) &
+            (df["kpi"] == "GASTO")].copy()
+    if meses:
+        df = df[df["month"].isin(meses)]
+    if df.empty:
+        return pd.DataFrame()
+
+    def _norm(a):
+        if not a:
+            return ""
+        return (str(a).upper().strip()
+                .replace("Ó", "O").replace("Á", "A").replace("É", "E")
+                .replace("Í", "I").replace("Ú", "U"))
+
+    df["area_norm"] = df["area"].apply(_norm)
+    df = df[~df["area_norm"].isin(AREAS_OPERATIVAS_EXCLUIR)].copy()
+    if df.empty:
+        return pd.DataFrame()
+
+    df["monto_pos"] = df["valor"].abs() * 1000
+
+    # Garantizar que la col persona existe (puede no estar en parquets viejos)
+    if "cuenta_analitica_persona" not in df.columns:
+        df["cuenta_analitica_persona"] = ""
+
+    df["cuenta_analitica"] = df["cuenta_analitica"].fillna("").astype(str)
+    df["cuenta_analitica_persona"] = df["cuenta_analitica_persona"].fillna("").astype(str)
+
+    group_cols = ["area", "sub_area", "centro_costo",
+                   "cuenta_analitica", "cuenta_analitica_persona"]
+    agg = df.groupby(group_cols, as_index=False, dropna=False).agg(
+        monto=("monto_pos", "sum"),
+    )
+    agg = agg[agg["monto"] > 0].copy()
+    agg = agg.sort_values(["monto"], ascending=False).reset_index(drop=True)
+    return agg
+
+
 def distribuir_monto_a_dimension(
     monto: float,
     df_ventas: pd.DataFrame,
