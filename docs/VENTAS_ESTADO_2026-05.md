@@ -108,6 +108,25 @@ CON fix (YYYY-MM-DD):          SUM bruta mayo = $432,277,673
 ```
 Diferencia: $11,27 MM = 465 filas del 25-may que quedaban fuera del `BETWEEN`.
 
+#### Stock LIVE + 7 workflows con bug sistémico (commit `4e4bc58` + `b8c3298`)
+**Hallazgo:** El cron `sync_stock.yml` que actualiza Stock LIVE cada 3h **nunca funcionó** — carpeta `data/stock/` siempre vacía en repo. Causa: mismo patrón que `sync_mes_actual.yml` (instalaba `pip install pandas pyarrow requests` pero los scripts importan del backend `finanzas-unionx/backend/app/`).
+
+Auditoría de los 13 workflows revelan **6 con riesgo + 1 a verificar**:
+| Workflow | Era 🔴 → ahora ✅ |
+|---|---|
+| `sync_cmr.yml` | Ventas CMR semanal |
+| `sync_comex.yml` | 3 scripts: validación Odoo, dimensiones SKU, capacidad forecast |
+| `sync_contabilidad.yml` | Cobranza Odoo + libro compras |
+| `sync_forecast.yml` | Stock histórico + Prophet (Prophet sigue instalándose aparte) |
+| `sync_kpis_wms.yml` | precalcular_kpis_wms.py + volumen inventario |
+| `sync_otif_drive.yml` | OTIF Drive |
+| `sync_stock.yml` | Stock LIVE (Odoo → parquet) |
+| `sync_kam_drive.yml` | KAM Drive (preventivo) |
+
+**Fix sweeping:** todos pasaron a `pip install -r requirements.txt`. Solo `sync_forecast.yml` mantiene un `pip install prophet` extra (no está en requirements.txt por peso).
+
+**Consecuencia esperada:** próximas 24h muchos parquets que estaban congelados van a volver a actualizarse automáticamente (stock, KPIs WMS, contabilidad, etc.). Algunos datos visuales en otras apps van a "saltar" al ponerse al día.
+
 #### POC arquitectura B (branch `feature/duckdb-poc`)
 Validación side-by-side con `_compare_a_vs_b.py`:
 - **5/5 casos idénticos** (16 métricas × 5 escenarios = 80 comparaciones, todas match)
