@@ -26,7 +26,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow requests streamlit libsql-client gspread google-auth
+          pip install -r requirements.txt
 
       # ─── 1. SNAPSHOT KPIs WMS (CORE) ───────────────────────────────
       - name: Pre-calcular KPIs WMS
