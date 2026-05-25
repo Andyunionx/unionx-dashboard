@@ -194,5 +194,26 @@ pages = {
     ],
 }
 
+# ============================================================
+# BANNER GLOBAL: Turso bypass activo (parquets fallback)
+# Se setea desde views/planning/_data_helpers.py:_marcar_bypass()
+# ============================================================
+def _banner_turso_bypass():
+    if not st.session_state.get('_planif_turso_bypass'):
+        return
+    files = st.session_state.get('_planif_bypass_files', [])
+    oldest = st.session_state.get('_planif_bypass_oldest')
+    oldest_str = oldest.strftime('%Y-%m-%d %H:%M') if oldest else '?'
+    st.warning(
+        f"⚠️ **Modo local activo** — Turso bloqueó las lecturas (probable cuota/billing). "
+        f"La app está usando snapshots locales. **Snapshot más antiguo:** `{oldest_str}`. "
+        f"Para refrescar cuando Turso vuelva: `python extract_planif_snapshots.py`."
+    )
+    with st.expander(f"Detalle ({len(files)} tablas en bypass)", expanded=False):
+        for f in files:
+            st.markdown(f"- {f}")
+
+
+_banner_turso_bypass()
 pg = st.navigation(pages)
 pg.run()
