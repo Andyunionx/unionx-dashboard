@@ -1,4 +1,4 @@
-"""Descarga RAW de ventas (Excel 41 columnas)."""
+"""Descarga RAW de ventas (Excel 40 columnas)."""
 import io
 from datetime import datetime
 
@@ -10,7 +10,7 @@ from views.shared import get_service
 
 def render():
     st.title("⬇️ Descargar RAW de Ventas")
-    st.caption("Excel con las 40 columnas RAW + columna 'Venta Neta' (sin IVA)")
+    st.caption("Excel con las 40 columnas RAW (formato histórico)")
 
     col_d1, col_d2 = st.columns([2, 1])
     with col_d1:

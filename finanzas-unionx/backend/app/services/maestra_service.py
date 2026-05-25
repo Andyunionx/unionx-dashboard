@@ -903,7 +903,8 @@ class MaestraService:
         }
 
     def descargar_raw(self, fecha_desde, fecha_hasta):
-        """Genera DataFrame con las 40 columnas RAW para descarga Excel."""
+        """Genera DataFrame con las 40 columnas RAW para descarga Excel.
+        Nota: venta_neta queda fuera del export (se calcula = venta_bruta / 1.19)."""
         import pandas as pd
         DB_TO_RAW = {
             'tipo_movimiento': 'Tipo Movimiento', 'bodega': 'Bodega', 'documento': 'Documento',
@@ -918,7 +919,7 @@ class MaestraService:
             'anio_venta': 'Año venta', 'mes_venta': 'Mes venta', 'semana_venta': 'Semana venta',
             'dia_semana': 'Día semana', 'hora_venta_num': 'Hora venta',
             'cantidad': 'Cantidad',
-            'venta_bruta': 'Venta bruta', 'venta_neta': 'Venta Neta',
+            'venta_bruta': 'Venta bruta',
             'costo_unitario': 'Costo Unitario', 'costo_total': 'Costo Total',
             'margen_front': 'Margen Front', 'comision_pct': 'Comision %',
             'comision': 'Comisión', 'logistica': 'Logística',
