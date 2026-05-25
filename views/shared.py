@@ -249,6 +249,7 @@ def get_local_db_path():
         'max_fecha': max_fecha,
         'build_duration_s': round(_t.time() - build_started, 1),
         'built_at': datetime.now().isoformat(timespec='seconds'),
+        'local_path': str(tmp_path),
     }
     conn.close()
     return str(tmp_path)

@@ -123,12 +123,29 @@ with st.sidebar:
             err = stats.get('turso_error')
             max_f = stats.get('max_fecha', '?')
             if err or turso_n == 0:
+                # Diagnóstico extra: contar FAC 097825 (Sodimac) en la DB local
+                try:
+                    import sqlite3 as _sq
+                    local_path = stats.get('local_path', '')
+                    if local_path and Path(local_path).exists():
+                        _c = _sq.connect(local_path)
+                        _has_sodimac = _c.execute("SELECT COUNT(*) FROM ventas WHERE documento='FAC 097825'").fetchone()[0]
+                        _total_filas = _c.execute("SELECT COUNT(*) FROM ventas WHERE fecha_venta BETWEEN '2026-05-01' AND '2026-05-31'").fetchone()[0]
+                        _bruta_mayo = _c.execute("SELECT ROUND(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta BETWEEN '2026-05-01' AND '2026-05-31'").fetchone()[0] or 0
+                        _c.close()
+                        _diag = f"<br>📋 Sodimac: {_has_sodimac} | Mayo: {_total_filas:,} filas, ${_bruta_mayo:,.0f}"
+                    else:
+                        _diag = "<br>(no local_path)"
+                except Exception as _e:
+                    _diag = f"<br>diag err: {type(_e).__name__}"
+
                 st.markdown(
                     "<div style='background:#FEE2E215;border-left:3px solid #DC2626;"
                     "padding:6px 10px;border-radius:4px;font-size:0.8rem;'>"
                     f"⚠️ <b>Turso no cargó</b><br>"
                     f"Hist: {stats.get('filas_historico',0):,} · Turso: {turso_n:,}<br>"
                     f"Max fecha: {max_f}<br>"
+                    f"Built: {stats.get('built_at','?')[-8:]}{_diag}<br>"
                     f"<span style='color:#991B1B'>{(err or '—')[:80]}</span>"
                     "</div>", unsafe_allow_html=True,
                 )
