@@ -118,7 +118,7 @@ def _load_bonos_config() -> pd.DataFrame:
             bono_persona_clp REAL,
             base_clp REAL,
             otif_pct REAL,
-            espiritu_mll INTEGER,
+            espiritu_mll_pct REAL,
             bono_pagado_real_clp REAL,
             observacion TEXT,
             actualizado_en TEXT
@@ -127,19 +127,19 @@ def _load_bonos_config() -> pd.DataFrame:
         for col, tipo in [('n_personas', 'INTEGER'),
                           ('bono_persona_clp', 'REAL'),
                           ('otif_pct', 'REAL'),
-                          ('espiritu_mll', 'INTEGER')]:
+                          ('espiritu_mll_pct', 'REAL')]:
             try:
                 _query(f"ALTER TABLE bonos_facturacion_config ADD COLUMN {col} {tipo}")
             except Exception:
                 pass
 
         res = _query("""SELECT mes, n_personas, bono_persona_clp, base_clp,
-                               otif_pct, espiritu_mll,
+                               otif_pct, espiritu_mll_pct,
                                bono_pagado_real_clp, observacion
                         FROM bonos_facturacion_config ORDER BY mes""")
         if not res or not res.get('rows'):
             return pd.DataFrame(columns=['mes', 'n_personas', 'bono_persona_clp',
-                                          'base_clp', 'otif_pct', 'espiritu_mll',
+                                          'base_clp', 'otif_pct', 'espiritu_mll_pct',
                                           'bono_pagado_real_clp', 'observacion'])
         rows = []
         for r in res['rows']:
@@ -152,19 +152,19 @@ def _load_bonos_config() -> pd.DataFrame:
                 'bono_persona_clp': float(_v(2)) if _v(2) else None,
                 'base_clp': float(_v(3) or 0),
                 'otif_pct': float(_v(4)) if _v(4) is not None else None,
-                'espiritu_mll': int(_v(5)) if _v(5) is not None else None,
+                'espiritu_mll_pct': float(_v(5)) if _v(5) is not None else None,
                 'bono_pagado_real_clp': float(_v(6)) if _v(6) else None,
                 'observacion': _v(7) or '',
             })
         return pd.DataFrame(rows)
     except Exception:
         return pd.DataFrame(columns=['mes', 'n_personas', 'bono_persona_clp',
-                                      'base_clp', 'otif_pct', 'espiritu_mll',
+                                      'base_clp', 'otif_pct', 'espiritu_mll_pct',
                                       'bono_pagado_real_clp', 'observacion'])
 
 
 def _save_bono_config(mes: str, n_personas: int, bono_persona_clp: float,
-                       otif_pct: float = None, espiritu_mll: bool = None,
+                       otif_pct: float = None, espiritu_mll_pct: float = None,
                        bono_pagado_real_clp: float = None,
                        observacion: str = '') -> bool:
     base_clp = n_personas * bono_persona_clp
@@ -172,7 +172,7 @@ def _save_bono_config(mes: str, n_personas: int, bono_persona_clp: float,
         from views.alertas_helper import _query
         _query("""INSERT INTO bonos_facturacion_config
                     (mes, n_personas, bono_persona_clp, base_clp,
-                     otif_pct, espiritu_mll,
+                     otif_pct, espiritu_mll_pct,
                      bono_pagado_real_clp, observacion, actualizado_en)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                   ON CONFLICT(mes) DO UPDATE SET
@@ -180,13 +180,13 @@ def _save_bono_config(mes: str, n_personas: int, bono_persona_clp: float,
                     bono_persona_clp=excluded.bono_persona_clp,
                     base_clp=excluded.base_clp,
                     otif_pct=excluded.otif_pct,
-                    espiritu_mll=excluded.espiritu_mll,
+                    espiritu_mll_pct=excluded.espiritu_mll_pct,
                     bono_pagado_real_clp=excluded.bono_pagado_real_clp,
                     observacion=excluded.observacion,
                     actualizado_en=excluded.actualizado_en""",
                [mes, int(n_personas), float(bono_persona_clp), float(base_clp),
                 float(otif_pct) if otif_pct is not None else None,
-                int(bool(espiritu_mll)) if espiritu_mll is not None else None,
+                float(espiritu_mll_pct) if espiritu_mll_pct is not None else None,
                 float(bono_pagado_real_clp) if bono_pagado_real_clp else None,
                 observacion, datetime.now().isoformat()])
         return True
@@ -251,35 +251,35 @@ def _calcular_bono_oficial(base: float,
                              otif_pct: float,
                              pedidos_b2c: int, n_personas: int,
                              meta_total: float,
-                             espiritu_mll: bool) -> dict:
+                             espiritu_mll_pct: float) -> dict:
     """Calcula el bono según el modelo oficial UnionX.
 
     Args:
       base: pozo total target (N × bono_persona).
       otif_pct: OTIF del mes anterior (M-1), en porcentaje 0-100.
+        Ratio pagable 90-100% (<90 paga 0, lineal entre 90 y 100, cap 100).
       pedidos_b2c: pedidos B2C facturados en el mes actual.
-      n_personas: cuántas personas en facturación (para productividad/persona).
+      n_personas: cuántas personas en facturación.
       meta_total: meta de pedidos B2C del mes (PPTO).
-      espiritu_mll: True/False.
-
-    Returns dict con factores y bono devengado.
+        Productividad % = pedidos_b2c / meta. Ratio pagable 90-100%.
+      espiritu_mll_pct: nota 0-100% asignada por el jefe.
+        Ratio 0-100% (cualquier valor entre 0 y 100 paga proporcional).
     """
-    # ---- OTIF (40%) ----
+    # ---- OTIF (40%) — ratio 90-100% ----
     f_otif = _factor_ratio(otif_pct, RATIO_MIN, RATIO_MAX)
-    # ⚠️ Nota: el rango pagable es 90-100. Si OTIF supera el OBJETIVO 98
-    # pero está debajo de 100 igual paga lineal entre 0 y 1.
 
-    # ---- Productividad (50%) ----
-    # Productividad = (pedidos_b2c / N personas) / (meta / N) = pedidos_b2c / meta
-    # Por eso N se cancela; lo dejamos explícito para mostrar pedidos/persona en UI.
+    # ---- Productividad (50%) — ratio 90-100% ----
     if meta_total > 0:
         prod_pct = (pedidos_b2c / meta_total) * 100
     else:
         prod_pct = 0.0
     f_prod = _factor_ratio(prod_pct, RATIO_MIN, RATIO_MAX)
 
-    # ---- Espíritu MLL (10%) ----
-    f_esp = 1.0 if espiritu_mll else 0.0
+    # ---- Espíritu MLL (10%) — ratio 0-100% (escala completa, no binario) ----
+    if espiritu_mll_pct is None:
+        f_esp = 0.0
+    else:
+        f_esp = max(0.0, min(1.0, espiritu_mll_pct / 100.0))
 
     # ---- Bono final ----
     factor_total = (f_otif * PESO_OTIF +
@@ -301,7 +301,7 @@ def _calcular_bono_oficial(base: float,
         'meta_por_persona': meta_por_persona,
         'f_prod': f_prod,
         'aporta_prod': base * f_prod * PESO_PROD,
-        'espiritu_mll': bool(espiritu_mll),
+        'espiritu_mll_pct': espiritu_mll_pct,
         'f_esp': f_esp,
         'aporta_esp': base * f_esp * PESO_ESPIRITU,
         'factor_total': factor_total,
@@ -326,9 +326,8 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     bono_persona = cfg_mes.get('bono_persona_clp') or 0
     base_pozo = cfg_mes.get('base_clp') or 0
     otif_input = cfg_mes.get('otif_pct')
-    espiritu_input = cfg_mes.get('espiritu_mll')
+    espiritu_input = cfg_mes.get('espiritu_mll_pct')
 
-    # Si no hay config aún para este mes, no calculo
     if n_personas == 0 or bono_persona == 0:
         st.warning(
             f"⚠️ Aún no cargas la configuración del pozo para **{mes_key}**. "
@@ -337,41 +336,35 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         )
         return
 
-    # Pedidos y meta
     pedidos_mes = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
     meta_mes = (meta_manual if meta_manual is not None
                 else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
 
-    # OTIF: si no está cargado, asumo 0 → factor 0
     if otif_input is None:
         st.warning("⚠️ Falta cargar OTIF del mes anterior. Va a contar como 0%.")
         otif_input = 0
-    # Espíritu MLL: si no está, asumo SÍ por defecto (no penalizar mientras no se evalúe)
     if espiritu_input is None:
-        espiritu_input = 1  # default optimista
-    espiritu_bool = bool(espiritu_input)
+        espiritu_input = 0  # sin evaluar = 0 (no asume nada)
 
     r = _calcular_bono_oficial(
         base=base_pozo, otif_pct=otif_input,
         pedidos_b2c=pedidos_mes, n_personas=n_personas,
-        meta_total=meta_mes, espiritu_mll=espiritu_bool,
+        meta_total=meta_mes, espiritu_mll_pct=espiritu_input,
     )
 
-    # Top metrics
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("OTIF mes anterior", f"{otif_input:.1f}%",
               f"Objetivo >{OTIF_OBJETIVO}%",
               delta_color="off" if otif_input >= OTIF_OBJETIVO else "inverse")
     c2.metric("Productividad", f"{r['prod_pct']:.1f}%",
               f"{r['pedidos_por_persona']:,.0f}/persona vs {r['meta_por_persona']:,.0f}")
-    c3.metric("Espíritu MLL", "✅ SÍ" if espiritu_bool else "❌ NO",
-              "Evaluación manual del jefe")
+    c3.metric("Espíritu MLL", f"{espiritu_input:.0f}%",
+              "Nota 0-100% del jefe")
     c4.metric("💰 Bono devengado mes", f"${r['bono_devengado']:,.0f}",
               f"De pozo ${base_pozo:,.0f}")
 
     st.divider()
 
-    # Desglose tabla
     st.markdown("### 🧮 Desglose del bono")
     df_kpi = pd.DataFrame([
         {
@@ -379,7 +372,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             "Peso": f"{PESO_OTIF*100:.0f}%",
             "Objetivo": f">{OTIF_OBJETIVO}%",
             "Real": f"{otif_input:.1f}%",
-            "Ratio paga (90-100%)": f"{r['f_otif']*100:.0f}%",
+            "Ratio paga": f"{r['f_otif']*100:.0f}%",
             "Aporta al bono": f"${r['aporta_otif']:,.0f}",
         },
         {
@@ -387,15 +380,15 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             "Peso": f"{PESO_PROD*100:.0f}%",
             "Objetivo": f">{PROD_OBJETIVO}%",
             "Real": f"{r['prod_pct']:.1f}%",
-            "Ratio paga (90-100%)": f"{r['f_prod']*100:.0f}%",
+            "Ratio paga": f"{r['f_prod']*100:.0f}%",
             "Aporta al bono": f"${r['aporta_prod']:,.0f}",
         },
         {
             "KPI": "Espíritu MLL",
             "Peso": f"{PESO_ESPIRITU*100:.0f}%",
             "Objetivo": "SÍ",
-            "Real": "SÍ" if espiritu_bool else "NO",
-            "Ratio paga (90-100%)": f"{r['f_esp']*100:.0f}%",
+            "Real": f"{espiritu_input:.0f}%",
+            "Ratio paga": f"{r['f_esp']*100:.0f}%",
             "Aporta al bono": f"${r['aporta_esp']:,.0f}",
         },
         {
@@ -403,16 +396,11 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             "Peso": "**100%**",
             "Objetivo": "",
             "Real": "",
-            "Ratio paga (90-100%)": f"**{r['factor_total']*100:.0f}%**",
+            "Ratio paga": f"**{r['factor_total']*100:.0f}%**",
             "Aporta al bono": f"**${r['bono_devengado']:,.0f}**",
         },
     ])
     st.dataframe(df_kpi, use_container_width=True, hide_index=True)
-
-    st.caption(
-        "📐 **Ratio pagable 90-100%:** bajo 90% del rango paga 0; entre 90-100% paga "
-        "lineal entre 0 y el peso del KPI; sobre 100% paga el peso completo (cap)."
-    )
 
 
 def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
@@ -433,8 +421,8 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     bono_persona = cfg_mes.get('bono_persona_clp') or 0
     base_pozo = cfg_mes.get('base_clp') or 0
     otif_input = cfg_mes.get('otif_pct') or 0
-    espiritu_input = cfg_mes.get('espiritu_mll')
-    espiritu_bool = bool(espiritu_input) if espiritu_input is not None else True
+    espiritu_input = cfg_mes.get('espiritu_mll_pct')
+    espiritu_val = espiritu_input if espiritu_input is not None else 0
 
     if n_personas == 0 or bono_persona == 0:
         st.warning(
@@ -447,7 +435,7 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     meta_mes = (meta_manual if meta_manual is not None
                 else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
     r = _calcular_bono_oficial(base_pozo, otif_input, pedidos_mes,
-                                 n_personas, meta_mes, espiritu_bool)
+                                 n_personas, meta_mes, espiritu_val)
 
     pozo_por_persona_si_parejo = r['bono_devengado'] / n_personas if n_personas else 0
 
@@ -466,7 +454,7 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     st.markdown(f"""
 - **OTIF (M-1):** {otif_input:.1f}% → factor `{r['f_otif']:.2f}` × 40% = aporta ${r['aporta_otif']:,.0f}
 - **Productividad:** {r['prod_pct']:.1f}% ({pedidos_mes:,} pedidos B2C / meta {meta_mes:,.0f}) → factor `{r['f_prod']:.2f}` × 50% = aporta ${r['aporta_prod']:,.0f}
-- **Espíritu MLL:** {'SÍ ✅' if espiritu_bool else 'NO ❌'} → factor `{r['f_esp']:.2f}` × 10% = aporta ${r['aporta_esp']:,.0f}
+- **Espíritu MLL:** {espiritu_val:.0f}% → factor `{r['f_esp']:.2f}` × 10% = aporta ${r['aporta_esp']:,.0f}
 - **Factor combinado: {r['factor_total']*100:.1f}%**
 - **Pozo devengado = ${base_pozo:,.0f} × {r['factor_total']*100:.1f}% = ${r['bono_devengado']:,.0f}**
 """)
@@ -505,14 +493,13 @@ def _render_tab_historico(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         bp = cfg_m.get('bono_persona_clp') or 0
         base_m = cfg_m.get('base_clp') or 0
         otif_m = cfg_m.get('otif_pct')
-        esp_m = cfg_m.get('espiritu_mll')
+        esp_m = cfg_m.get('espiritu_mll_pct')
 
         ped_m = _pedidos_b2c_mes(ventas, hoy.year, m)
         meta_m = (meta_manual if meta_manual is not None
                   else _meta_b2c_mes(ppto, hoy.year, m, mix_b2c, ticket_b2c))
 
         if base_m == 0:
-            # Sin config → muestro pedidos/meta pero no bono
             rows.append({
                 "Mes": mes_key, "N": "—", "Pozo target": "—",
                 "OTIF M-1": "—", "Pedidos B2C": f"{ped_m:,}",
@@ -524,8 +511,8 @@ def _render_tab_historico(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             continue
 
         otif_use = otif_m if otif_m is not None else 0
-        esp_bool = bool(esp_m) if esp_m is not None else True
-        r = _calcular_bono_oficial(base_m, otif_use, ped_m, n, meta_m, esp_bool)
+        esp_use = esp_m if esp_m is not None else 0
+        r = _calcular_bono_oficial(base_m, otif_use, ped_m, n, meta_m, esp_use)
         pagado = cfg_m.get('bono_pagado_real_clp')
         rows.append({
             "Mes": mes_key,
@@ -534,7 +521,7 @@ def _render_tab_historico(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             "OTIF M-1": f"{otif_use:.1f}%",
             "Pedidos B2C": f"{ped_m:,}",
             "Prod %": f"{r['prod_pct']:.0f}%",
-            "Espíritu": "✅" if esp_bool else "❌",
+            "Espíritu": f"{esp_use:.0f}%",
             "Factor": f"{r['factor_total']*100:.0f}%",
             "Bono devengado": f"${r['bono_devengado']:,.0f}",
             "Pagado real": f"${pagado:,.0f}" if pagado else "—",
@@ -582,11 +569,11 @@ def _render_tab_config(hoy):
         prev_n = (int(existing['n_personas'].iloc[0])
                   if not existing.empty and existing['n_personas'].iloc[0] else 3)
         prev_bono_p = (float(existing['bono_persona_clp'].iloc[0])
-                       if not existing.empty and existing['bono_persona_clp'].iloc[0] else 150_000)
+                       if not existing.empty and existing['bono_persona_clp'].iloc[0] else 60_000)
         prev_otif = (float(existing['otif_pct'].iloc[0])
                      if not existing.empty and existing['otif_pct'].iloc[0] is not None else 98.0)
-        prev_esp = (bool(existing['espiritu_mll'].iloc[0])
-                    if not existing.empty and existing['espiritu_mll'].iloc[0] is not None else True)
+        prev_esp = (float(existing['espiritu_mll_pct'].iloc[0])
+                    if not existing.empty and existing['espiritu_mll_pct'].iloc[0] is not None else 100.0)
         prev_pagado = (float(existing['bono_pagado_real_clp'].iloc[0])
                        if not existing.empty and existing['bono_pagado_real_clp'].iloc[0] else 0)
         prev_obs = existing['observacion'].iloc[0] if not existing.empty else ''
@@ -597,7 +584,7 @@ def _render_tab_config(hoy):
             n_personas = st.number_input("Personas en facturación", 1, 50, prev_n, 1)
         with c4:
             bono_persona = st.number_input("Bono/persona target (CLP)",
-                                            0, 2_000_000, int(prev_bono_p), 25_000,
+                                            0, 2_000_000, int(prev_bono_p), 10_000,
                                             help="Cuánto recibe cada persona si TODO se cumple 100%.")
         with c5:
             pozo_calc = n_personas * bono_persona
@@ -611,13 +598,13 @@ def _render_tab_config(hoy):
             otif_in = st.number_input(
                 f"OTIF (%) — medido en {mes_anterior}",
                 0.0, 100.0, prev_otif, 0.1,
-                help=f"OTIF del mes cerrado anterior. Objetivo >{OTIF_OBJETIVO}%. Paga 90-100% del rango."
+                help=f"OTIF del mes cerrado anterior. Objetivo >{OTIF_OBJETIVO}%. Ratio pagable 90-100%."
             )
         with c7:
-            esp_in = st.checkbox(
-                "Espíritu MLL — ¿cumplido?",
-                value=prev_esp,
-                help="Evaluación cualitativa del jefe. SÍ = paga 100% del 10%. NO = 0%."
+            esp_in = st.slider(
+                "Espíritu MLL (%)",
+                0, 100, int(prev_esp), 5,
+                help="Nota del jefe entre 0% y 100%. Define qué % del 10% se paga."
             )
 
         st.divider()
@@ -634,7 +621,7 @@ def _render_tab_config(hoy):
         if submitted:
             ok = _save_bono_config(
                 mes_key, n_personas, bono_persona,
-                otif_pct=otif_in, espiritu_mll=esp_in,
+                otif_pct=otif_in, espiritu_mll_pct=float(esp_in),
                 bono_pagado_real_clp=pagado_in if pagado_in > 0 else None,
                 observacion=obs_in,
             )
@@ -642,7 +629,7 @@ def _render_tab_config(hoy):
                 st.success(
                     f"✅ Guardado **{mes_key}**: {n_personas} pers × ${bono_persona:,.0f} "
                     f"= pozo ${pozo_calc:,.0f} · OTIF {otif_in:.1f}% · "
-                    f"Espíritu {'SÍ' if esp_in else 'NO'}"
+                    f"Espíritu {esp_in}%"
                 )
                 st.cache_data.clear()
                 st.rerun()
@@ -658,14 +645,14 @@ def _render_tab_config(hoy):
             lambda x: f"${x:,.0f}" if pd.notna(x) else "—")
         show['base_clp'] = show['base_clp'].apply(lambda x: f"${x:,.0f}")
         show['otif_pct'] = show['otif_pct'].apply(lambda x: f"{x:.1f}%" if pd.notna(x) else "—")
-        show['espiritu_mll'] = show['espiritu_mll'].apply(
-            lambda x: "✅ SÍ" if x == 1 else ("❌ NO" if x == 0 else "—"))
+        show['espiritu_mll_pct'] = show['espiritu_mll_pct'].apply(
+            lambda x: f"{x:.0f}%" if pd.notna(x) else "—")
         show['bono_pagado_real_clp'] = show['bono_pagado_real_clp'].apply(
             lambda x: f"${x:,.0f}" if pd.notna(x) and x else "—")
         show = show.rename(columns={
             'mes': 'Mes', 'n_personas': 'N',
             'bono_persona_clp': 'Bono/persona', 'base_clp': 'Pozo target',
-            'otif_pct': 'OTIF M-1', 'espiritu_mll': 'Espíritu',
+            'otif_pct': 'OTIF M-1', 'espiritu_mll_pct': 'Espíritu',
             'bono_pagado_real_clp': 'Pagado real', 'observacion': 'Obs.',
         })
         st.dataframe(show, use_container_width=True, hide_index=True)
@@ -687,8 +674,8 @@ def _render_tab_roadmap():
 - ✅ **Fórmula oficial:** OTIF 40% + Productividad 50% + Espíritu MLL 10%
 - ✅ **OTIF:** medido contra mes cerrado (M-1). En mayo se evalúa abril.
 - ✅ **Productividad:** pedidos B2C / N personas, contra meta PPTO. Objetivo >90%.
-- ✅ **Espíritu MLL:** SÍ/NO evaluado por jefe. SÍ paga 100% del 10%, NO paga 0%.
-- ✅ **Ratio pagable:** 90-100% (bajo 90 no paga, sobre 100 cap a 100).
+- ✅ **Espíritu MLL:** nota 0-100% del jefe (ratio 0-100% del componente 10%).
+- ✅ **Ratio pagable OTIF/Prod:** 90-100% (bajo 90 no paga, sobre 100 cap a 100).
 """)
 
     st.markdown("#### 📅 Fases")
