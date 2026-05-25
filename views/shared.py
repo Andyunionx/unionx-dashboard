@@ -166,10 +166,19 @@ def get_local_db_path():
     placeholders = ','.join(['?'] * len(cols_v))
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
+    def _normalize_fecha_venta(df: pd.DataFrame) -> pd.DataFrame:
+        """Convierte fecha_venta a string YYYY-MM-DD (sin timestamp) para que
+        queries con BETWEEN '2026-05-01' AND '2026-05-25' incluyan el día 25."""
+        if 'fecha_venta' in df.columns:
+            df = df.copy()
+            df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+        return df
+
     # Parquet histórico (cacheado por separado para no re-leerlo si invalida la DB local)
     df_hist = _read_historico_parquet()
     if not df_hist.empty:
         print(f"[Local DB] Insertando {len(df_hist):,} filas histórico parquet...", flush=True)
+        df_hist = _normalize_fecha_venta(df_hist)
         df_hist[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=5000, method='multi')
         print(f"[Local DB] Histórico insertado OK", flush=True)
 
@@ -197,6 +206,7 @@ def get_local_db_path():
         if MES_ACTUAL_PARQUET.exists():
             try:
                 df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
+                df_mes = _normalize_fecha_venta(df_mes)
                 df_mes[cols_v].to_sql('ventas', conn, if_exists='append', index=False, chunksize=500, method='multi')
                 turso_rows_loaded = len(df_mes)
                 chunks_turso = 1
