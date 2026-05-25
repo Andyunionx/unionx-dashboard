@@ -118,7 +118,9 @@ def get_local_db_path():
                 _t.sleep(1 + i * 2)  # 1s, 3s, 5s
         raise last
 
-    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local.db'
+    # v2: incluye fix manual_externa (Sodimac) en el parquet. Nombre nuevo fuerza
+    # rebuild completo en Streamlit Cloud aunque el cache_resource anterior siga colgado.
+    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v2.db'
     if tmp_path.exists():
         tmp_path.unlink()
 
@@ -261,10 +263,20 @@ def get_db_build_stats() -> dict:
 
 
 def force_refresh_db_local():
-    """Limpia el cache_resource para forzar reconstrucción en el próximo acceso."""
+    """Limpia TODOS los caches para forzar reconstrucción completa."""
     get_local_db_path.clear()
     cached_health.clear()
     cached_filtros.clear()
+    # Limpiar también las caches de KPIs/tendencias/canales (TTL 60s pero forzar ya)
+    try:
+        _cached_kpis_inner.clear()
+        cached_mensual.clear()
+        cached_diaria.clear()
+        _cached_semanal_inner.clear()
+        _cached_canales_inner.clear()
+        _cached_top_skus_inner.clear()
+    except Exception:
+        pass  # Si alguna cache no existe aún, no romper
 
 
 def get_service():
