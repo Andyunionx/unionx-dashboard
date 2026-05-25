@@ -118,9 +118,9 @@ def get_local_db_path():
                 _t.sleep(1 + i * 2)  # 1s, 3s, 5s
         raise last
 
-    # v2: incluye fix manual_externa (Sodimac) en el parquet. Nombre nuevo fuerza
-    # rebuild completo en Streamlit Cloud aunque el cache_resource anterior siga colgado.
-    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v2.db'
+    # v3: fix fechas con timestamp que excluian ultimo dia del BETWEEN.
+    # Nombre nuevo fuerza rebuild completo en Streamlit Cloud aunque cache_resource este pegado.
+    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v3.db'
     if tmp_path.exists():
         tmp_path.unlink()
 
