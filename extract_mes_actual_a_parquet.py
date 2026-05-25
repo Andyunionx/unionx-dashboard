@@ -176,6 +176,24 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
             df.loc[mask, 'margen_front'] = df.loc[mask, 'venta_neta'] - df.loc[mask, 'costo_total']
             df.loc[mask, 'margen_final'] = df.loc[mask, 'margen_front']
 
+    # Inyectar facturas manual_externa (Sodimac y similares cargadas a Turso manualmente).
+    # Estas NO están en Odoo, entonces el extract las pierde. Se conservan en CSV local.
+    manual_csv = PROJECT_ROOT / 'data' / 'manual_externa_facturas.csv'
+    if manual_csv.exists():
+        manual = pd.read_csv(manual_csv)
+        # Filtrar al rango pedido
+        manual['fecha_venta'] = pd.to_datetime(manual['fecha_venta']).dt.strftime('%Y-%m-%d')
+        manual = manual[(manual['fecha_venta'] >= desde) & (manual['fecha_venta'] < hasta)]
+        if not manual.empty:
+            print(f"   [manual_externa] Inyectando {len(manual)} filas (Sodimac etc)...")
+            # Quitar columnas extras del CSV que no estén en COLS_DB
+            manual = manual[[c for c in COLS_DB if c in manual.columns]]
+            # Agregar columnas faltantes vacías
+            for c in COLS_DB:
+                if c not in manual.columns:
+                    manual[c] = ''
+            df = pd.concat([df, manual[COLS_DB]], ignore_index=True)
+
     return df
 
 
