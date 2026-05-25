@@ -398,9 +398,12 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     meta_mes = (meta_manual if meta_manual is not None
                 else _meta_b2c_mes(ppto, anio_sel, mes_sel, mix_b2c, ticket_b2c))
 
-    # OTIF AUTO desde Drive (mes cerrado M-1)
-    mes_m1 = f"{anio_sel}-{mes_sel-1:02d}" if mes_sel > 1 else f"{anio_sel-1}-12"
-    otif_auto = _otif_empresa_mes(mes_m1)
+    # OTIF AUTO desde Drive — solo si M-1 ya está CERRADO
+    m1_year = anio_sel if mes_sel > 1 else anio_sel - 1
+    m1_month = mes_sel - 1 if mes_sel > 1 else 12
+    m1_cerrado = (m1_year < hoy.year) or (m1_year == hoy.year and m1_month < hoy.month)
+    mes_m1 = f"{m1_year}-{m1_month:02d}"
+    otif_auto = _otif_empresa_mes(mes_m1) if m1_cerrado else None
 
     # Prioridad: manual override > auto Drive > 0
     if otif_manual is not None:
@@ -411,7 +414,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         otif_fuente = "auto"
     else:
         otif_use = 0
-        otif_fuente = "faltante"
+        otif_fuente = "m1_no_cerrado" if not m1_cerrado else "faltante"
 
     esp_use = espiritu_input if espiritu_input is not None else 0
 
@@ -425,11 +428,15 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     st.markdown(f"### 📅 KPIs del mes {mes_key}")
     c1, c2, c3, c4 = st.columns(4)
 
-    fuente_emoji = {"auto": "🤖", "manual": "📝", "faltante": "⚠️"}[otif_fuente]
+    fuente_emoji = {
+        "auto": "🤖", "manual": "📝",
+        "faltante": "⚠️", "m1_no_cerrado": "⏳",
+    }[otif_fuente]
     fuente_label = {
         "auto": f"Auto desde OTIF Drive · {mes_m1}",
         "manual": f"Manual override · {mes_m1}",
-        "faltante": "FALTA — sin datos en Drive ni cargado manual",
+        "faltante": f"FALTA — sin datos en Drive ni cargado manual ({mes_m1})",
+        "m1_no_cerrado": f"M-1 ({mes_m1}) aún no cerrado — no aplica OTIF todavía",
     }[otif_fuente]
     c1.metric(f"OTIF (M-1) {fuente_emoji}", f"{otif_use:.1f}%",
               f"Objetivo >{OTIF_OBJETIVO}%",
@@ -453,6 +460,11 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         st.info(
             f"📝 OTIF override manual cargado ({otif_use:.1f}%). "
             f"Para volver al auto Drive, borra el valor en 💵 Carga Bonos."
+        )
+    elif otif_fuente == "m1_no_cerrado":
+        st.info(
+            f"⏳ El bono de **{mes_key}** se evalúa con OTIF de **{mes_m1}**, "
+            f"que aún no es mes cerrado. Cuando termine, aparecerá auto desde Drive."
         )
 
     faltantes = []
@@ -589,12 +601,19 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         prod_pct = (ped / meta * 100) if meta > 0 else 0
         cfg_m = cfg_dict.get(f"{anio_sel}-{mm:02d}", {})
         otif_manual_m = _safe_float(cfg_m.get('otif_pct'), None)
-        # Auto desde Drive (mes cerrado M-1)
-        mes_m1_iso = f"{anio_sel}-{mm-1:02d}" if mm > 1 else f"{anio_sel-1}-12"
-        otif_auto_m = _otif_empresa_mes(mes_m1_iso)
-        otif_m = otif_manual_m if otif_manual_m is not None else otif_auto_m
         es_futuro = (anio_sel > hoy.year) or (anio_sel == hoy.year and mm > hoy.month)
         es_mes_actual = (anio_sel == hoy.year and mm == hoy.month)
+
+        # OTIF M-1: solo calcular si M-1 ya está CERRADO (antes del mes actual).
+        # Si M-1 = mes en curso o futuro, no tiene sentido mostrar OTIF.
+        m1_year = anio_sel if mm > 1 else anio_sel - 1
+        m1_month = mm - 1 if mm > 1 else 12
+        m1_cerrado = (m1_year < hoy.year) or (m1_year == hoy.year and m1_month < hoy.month)
+        if m1_cerrado:
+            otif_auto_m = _otif_empresa_mes(f"{m1_year}-{m1_month:02d}")
+            otif_m = otif_manual_m if otif_manual_m is not None else otif_auto_m
+        else:
+            otif_m = None  # M-1 aún no cerrado → no mostramos OTIF
         evo_rows.append({
             'Mes': f"{anio_sel}-{mm:02d}",
             'mes_num': mm,
