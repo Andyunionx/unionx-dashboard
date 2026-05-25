@@ -95,6 +95,25 @@ def _load_nc() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=600)
+def _otif_empresa_mes(mes_iso: str):
+    """Devuelve OTIF Empresa % desde el Sheet Drive (fuente oficial UnionX).
+
+    mes_iso: 'YYYY-MM'. Devuelve float 0-100 o None si no hay datos.
+
+    Usamos OTIF EMPRESA (no Courier) porque es lo que controla Facturación
+    (entrega a tiempo al courier). OTIF Courier es responsabilidad del courier.
+    """
+    try:
+        from views._ops_otif_drive import kpi_otif_resumen
+        r = kpi_otif_resumen(mes=mes_iso)
+        if r.get('error') or r.get('otif_empresa_pct') is None:
+            return None
+        return float(r['otif_empresa_pct']) * 100  # viene 0-1
+    except Exception:
+        return None
+
+
+@st.cache_data(ttl=600)
 def _load_ppto() -> pd.DataFrame:
     p = PROJECT_ROOT / 'data' / 'finanzas' / 'ppto_2026.parquet'
     if not p.exists():
@@ -364,7 +383,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     n_personas = _safe_int(cfg_mes.get('n_personas'), 0)
     bono_persona = _safe_float(cfg_mes.get('bono_persona_clp'), 0)
     base_pozo = _safe_float(cfg_mes.get('base_clp'), 0)
-    otif_input = _safe_float(cfg_mes.get('otif_pct'), None)
+    otif_manual = _safe_float(cfg_mes.get('otif_pct'), None)
     espiritu_input = _safe_float(cfg_mes.get('espiritu_mll_pct'), None)
 
     # Aplicar defaults SIEMPRE (3 × $60k = $180k) — esa es la política
@@ -379,7 +398,21 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     meta_mes = (meta_manual if meta_manual is not None
                 else _meta_b2c_mes(ppto, anio_sel, mes_sel, mix_b2c, ticket_b2c))
 
-    otif_use = otif_input if otif_input is not None else 0
+    # OTIF AUTO desde Drive (mes cerrado M-1)
+    mes_m1 = f"{anio_sel}-{mes_sel-1:02d}" if mes_sel > 1 else f"{anio_sel-1}-12"
+    otif_auto = _otif_empresa_mes(mes_m1)
+
+    # Prioridad: manual override > auto Drive > 0
+    if otif_manual is not None:
+        otif_use = otif_manual
+        otif_fuente = "manual"
+    elif otif_auto is not None:
+        otif_use = otif_auto
+        otif_fuente = "auto"
+    else:
+        otif_use = 0
+        otif_fuente = "faltante"
+
     esp_use = espiritu_input if espiritu_input is not None else 0
 
     r = _calcular_bono_oficial(
@@ -392,12 +425,16 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     st.markdown(f"### 📅 KPIs del mes {mes_key}")
     c1, c2, c3, c4 = st.columns(4)
 
-    otif_label = "OTIF (M-1)" + (" 📝" if otif_input is not None else " ⚠️ FALTA")
-    c1.metric(otif_label, f"{otif_use:.1f}%",
+    fuente_emoji = {"auto": "🤖", "manual": "📝", "faltante": "⚠️"}[otif_fuente]
+    fuente_label = {
+        "auto": f"Auto desde OTIF Drive · {mes_m1}",
+        "manual": f"Manual override · {mes_m1}",
+        "faltante": "FALTA — sin datos en Drive ni cargado manual",
+    }[otif_fuente]
+    c1.metric(f"OTIF (M-1) {fuente_emoji}", f"{otif_use:.1f}%",
               f"Objetivo >{OTIF_OBJETIVO}%",
               delta_color="off" if otif_use >= OTIF_OBJETIVO else "inverse",
-              help="Cargado manual en 💵 Carga Bonos." if otif_input is not None
-                   else "FALTA cargar — ve a 💵 Carga Bonos.")
+              help=fuente_label)
     c2.metric("Productividad", f"{r['prod_pct']:.1f}%",
               f"Objetivo >{PROD_OBJETIVO}%",
               delta_color="off" if r['prod_pct'] >= PROD_OBJETIVO else "inverse")
@@ -406,15 +443,27 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     c4.metric("💰 Bono devengado", f"${r['bono_devengado']:,.0f}",
               f"De pozo ${base_pozo:,.0f}")
 
-    if otif_input is None or espiritu_input is None:
-        faltantes = []
-        if otif_input is None:
-            faltantes.append("OTIF")
-        if espiritu_input is None:
-            faltantes.append("Espíritu MLL")
+    if otif_fuente == "auto":
+        st.success(
+            f"✅ OTIF de {mes_m1} traído automático desde Drive (OTIF Empresa = "
+            f"% pedidos B2C entregados al courier a tiempo). Si quieres override, "
+            f"ve a 💵 Carga Bonos y guarda un valor manual."
+        )
+    elif otif_fuente == "manual":
+        st.info(
+            f"📝 OTIF override manual cargado ({otif_use:.1f}%). "
+            f"Para volver al auto Drive, borra el valor en 💵 Carga Bonos."
+        )
+
+    faltantes = []
+    if otif_fuente == "faltante":
+        faltantes.append("OTIF")
+    if espiritu_input is None:
+        faltantes.append("Espíritu MLL")
+    if faltantes:
         st.warning(
-            f"⚠️ Falta cargar **{' + '.join(faltantes)}** para {mes_key}. "
-            f"Ese KPI cuenta como 0% mientras tanto. → 💵 Carga Bonos."
+            f"⚠️ Falta **{' + '.join(faltantes)}** para {mes_key}. "
+            f"Cuenta como 0% mientras tanto."
         )
 
     st.divider()
@@ -484,34 +533,45 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
     st.dataframe(df_kpi, use_container_width=True, hide_index=True)
 
     # ----------- BLOQUE 4: DIAGNÓSTICO -----------
-    with st.expander("🔍 ¿Qué hay cargado en Turso para este mes?"):
-        if not cfg_mes:
-            st.error(f"❌ NO hay ningún registro para **{mes_key}** en Turso.")
-        else:
-            diag = pd.DataFrame([{
-                'Campo': 'n_personas', 'Valor': cfg_mes.get('n_personas'),
-                'Usado en cálculo': n_personas,
-            }, {
-                'Campo': 'bono_persona_clp', 'Valor': cfg_mes.get('bono_persona_clp'),
-                'Usado en cálculo': f"${bono_persona:,.0f}",
-            }, {
-                'Campo': 'base_clp', 'Valor': cfg_mes.get('base_clp'),
-                'Usado en cálculo': f"${base_pozo:,.0f}",
-            }, {
-                'Campo': 'otif_pct', 'Valor': cfg_mes.get('otif_pct'),
-                'Usado en cálculo': f"{otif_use:.1f}%",
-            }, {
-                'Campo': 'espiritu_mll_pct', 'Valor': cfg_mes.get('espiritu_mll_pct'),
-                'Usado en cálculo': f"{esp_use:.0f}%",
-            }, {
-                'Campo': 'bono_pagado_real_clp', 'Valor': cfg_mes.get('bono_pagado_real_clp'),
-                'Usado en cálculo': '—',
-            }])
-            st.dataframe(diag, use_container_width=True, hide_index=True)
-            st.caption(
-                "Si ves NaN/None en 'Valor' pero esperabas tener cargado el campo, "
-                "re-guarda el mes en 💵 Carga Bonos. Luego presiona 🔄 Refrescar arriba."
-            )
+    with st.expander("🔍 Diagnóstico — fuentes de datos del bono"):
+        diag = pd.DataFrame([{
+            'Campo': 'n_personas', 'Fuente': 'Turso config',
+            'Valor crudo': cfg_mes.get('n_personas') if cfg_mes else None,
+            'Usado': n_personas,
+        }, {
+            'Campo': 'bono_persona_clp', 'Fuente': 'Turso config',
+            'Valor crudo': cfg_mes.get('bono_persona_clp') if cfg_mes else None,
+            'Usado': f"${bono_persona:,.0f}",
+        }, {
+            'Campo': 'OTIF M-1 manual', 'Fuente': 'Turso config',
+            'Valor crudo': cfg_mes.get('otif_pct') if cfg_mes else None,
+            'Usado': f"{otif_manual:.1f}%" if otif_manual is not None else "—",
+        }, {
+            'Campo': f'OTIF M-1 auto ({mes_m1})', 'Fuente': 'Drive OTIF Empresa',
+            'Valor crudo': f"{otif_auto:.1f}%" if otif_auto is not None else None,
+            'Usado': f"{otif_auto:.1f}%" if otif_auto is not None else "—",
+        }, {
+            'Campo': '→ OTIF final (cálculo)', 'Fuente': f'Fuente: {otif_fuente.upper()}',
+            'Valor crudo': '',
+            'Usado': f"{otif_use:.1f}%",
+        }, {
+            'Campo': 'espiritu_mll_pct', 'Fuente': 'Turso config',
+            'Valor crudo': cfg_mes.get('espiritu_mll_pct') if cfg_mes else None,
+            'Usado': f"{esp_use:.0f}%",
+        }, {
+            'Campo': 'pedidos_b2c_mes', 'Fuente': 'ventas_historico.parquet',
+            'Valor crudo': pedidos_mes,
+            'Usado': f"{pedidos_mes:,}",
+        }, {
+            'Campo': 'meta_b2c_mes', 'Fuente': f'PPTO 2026 × mix {mix_b2c*100:.1f}% / ticket ${ticket_b2c:,.0f}',
+            'Valor crudo': int(meta_mes),
+            'Usado': f"{int(meta_mes):,}",
+        }])
+        st.dataframe(diag, use_container_width=True, hide_index=True)
+        st.caption(
+            "OTIF prioriza: manual override (si hay) → auto Drive → 0. "
+            "Para forzar el auto, deja en blanco el manual en 💵 Carga Bonos."
+        )
 
     # ----------- EVOLUCIÓN MENSUAL: Meta vs Real, Prod% y OTIF% -----------
     st.divider()
@@ -528,7 +588,11 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
                 else _meta_b2c_mes(ppto, anio_sel, mm, mix_b2c, ticket_b2c))
         prod_pct = (ped / meta * 100) if meta > 0 else 0
         cfg_m = cfg_dict.get(f"{anio_sel}-{mm:02d}", {})
-        otif_m = _safe_float(cfg_m.get('otif_pct'), None)
+        otif_manual_m = _safe_float(cfg_m.get('otif_pct'), None)
+        # Auto desde Drive (mes cerrado M-1)
+        mes_m1_iso = f"{anio_sel}-{mm-1:02d}" if mm > 1 else f"{anio_sel-1}-12"
+        otif_auto_m = _otif_empresa_mes(mes_m1_iso)
+        otif_m = otif_manual_m if otif_manual_m is not None else otif_auto_m
         es_futuro = (anio_sel > hoy.year) or (anio_sel == hoy.year and mm > hoy.month)
         es_mes_actual = (anio_sel == hoy.year and mm == hoy.month)
         evo_rows.append({
@@ -603,7 +667,17 @@ def _render_tab_config(hoy):
             mes_n = st.selectbox("Mes", list(range(1, 13)), index=hoy.month - 1)
         mes_key = f"{anio}-{mes_n:02d}"
         mes_anterior = f"{anio}-{mes_n-1:02d}" if mes_n > 1 else f"{anio-1}-12"
+
+        # OTIF auto del mes anterior desde Drive
+        otif_auto_form = _otif_empresa_mes(mes_anterior)
+
         st.caption(f"Bono del mes: **{mes_key}** · OTIF se evalúa contra mes cerrado: **{mes_anterior}**")
+        if otif_auto_form is not None:
+            st.success(
+                f"🤖 OTIF de {mes_anterior} ya disponible automático desde Drive: "
+                f"**{otif_auto_form:.1f}%**. Déjalo en blanco abajo para usar el auto, "
+                f"o pon un valor manual para override."
+            )
 
         # Pre-cargar si existe — robusto a NaN
         existing = df_cfg[df_cfg['mes'] == mes_key]
@@ -611,14 +685,16 @@ def _render_tab_config(hoy):
             row = existing.iloc[0]
             prev_n = _safe_int(row.get('n_personas'), N_PERSONAS_DEFAULT)
             prev_bono_p = _safe_float(row.get('bono_persona_clp'), BONO_PERSONA_DEFAULT)
-            prev_otif = _safe_float(row.get('otif_pct'), 98.0)
+            # Si hay manual cargado, usarlo. Si no, sugerir el auto si existe.
+            prev_otif = _safe_float(row.get('otif_pct'),
+                                     otif_auto_form if otif_auto_form is not None else 0.0)
             prev_esp = _safe_float(row.get('espiritu_mll_pct'), 100.0)
             prev_pagado = _safe_float(row.get('bono_pagado_real_clp'), 0)
             prev_obs = row.get('observacion') or ''
         else:
             prev_n = N_PERSONAS_DEFAULT
             prev_bono_p = BONO_PERSONA_DEFAULT
-            prev_otif = 98.0
+            prev_otif = otif_auto_form if otif_auto_form is not None else 0.0
             prev_esp = 100.0
             prev_pagado = 0
             prev_obs = ''
