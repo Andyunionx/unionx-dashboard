@@ -6,11 +6,14 @@ name: Agente Cobranza Diario
 # Para agregar un cliente nuevo: ver docs/COMO_AGREGAR_CLIENTE.md.
 
 on:
-  schedule:
-    # 10:00 UTC = 07:00 Chile en horario de verano (UTC-3).
-    # En invierno (UTC-4) sería 06:00 Chile, igual sigue siendo fuera de horario laboral
-    # → el resultado está listo cuando el equipo arranca el día.
-    - cron: "0 10 * * *"
+  # 🛑 CRON DESACTIVADO 2026-05-25
+  # El cron piso info en Drive del cliente Paris (mes mayo en estado pagado).
+  # Pendiente diagnostico + fix antes de reactivar.
+  # Re-activacion: descomentar el bloque "schedule:" abajo.
+  #
+  # schedule:
+  #   # 10:00 UTC = 07:00 Chile en horario de verano (UTC-3).
+  #   - cron: "0 10 * * *"
   workflow_dispatch:
     inputs:
       cliente:
