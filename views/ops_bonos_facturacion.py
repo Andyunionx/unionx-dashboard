@@ -1,18 +1,36 @@
 """
 Vista Bonos — Facturación.
 
-Objetivo: tracking del bono mensual del área de facturación, calculado en
-función del total de pedidos B2C facturados, con componentes de calidad
-(notas de crédito) y SLA (velocidad facturación).
+Modelo OFICIAL UnionX (cargado por Andrés 2026-05-25):
+
+  Bono = Base × (OTIF × 40% + Productividad × 50% + Espíritu MLL × 10%)
+
+  Donde:
+    - OTIF (40%)            → objetivo >98%, ratio pagable 90-100%
+                              ⚠️ se mide contra MES CERRADO (M-1).
+                              En mayo se evalúa OTIF de abril.
+    - Productividad (50%)   → objetivo >90%, ratio pagable 90-100%
+                              medida como pedidos_b2c_mes / N_personas
+                              (proxy total dividido entre el equipo).
+    - Espíritu MLL (10%)    → SÍ / NO (0% o 100%, manual del jefe).
+
+  Ratio pagable 90-100%:
+    - factor < 90% del rango → 0
+    - factor entre 90% y 100% → lineal 0 → 1
+    - factor >= 100% → 1.0 (cap)
+
+  Scope: solo pedidos B2C.
+  Tipo de bono: pozo grupal (N personas × bono persona).
+  Distribución: manual por el jefe.
 
 Datos:
-  - data/historico/ventas_historico.parquet (cerrados hasta mes anterior)
+  - data/historico/ventas_historico.parquet (cerrados)
   - data/historico/ventas_mes_actual.parquet (mes en curso, parcial)
-  - data/contabilidad/cobranza/notas_credito.parquet (NC para calidad)
-  - data/contabilidad/cobranza/pedidos_venta.parquet (proxy facturador via vendedor)
-  - data/finanzas/ppto_2026.parquet (cumplimiento PPTO)
+  - data/contabilidad/cobranza/notas_credito.parquet (NC — info paralela)
+  - data/finanzas/ppto_2026.parquet (meta opcional desde PPTO)
+  - Turso bonos_facturacion_config (N, bono persona, OTIF M-1, Espíritu, pagado)
 
-Roadmap completo: docs/BONOS_FACTURACION_ROADMAP.md
+Roadmap: docs/BONOS_FACTURACION_ROADMAP.md
 """
 from datetime import datetime, date
 from pathlib import Path
@@ -26,9 +44,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # ---- B2C clasificación ----
 B2C_TIPOS = ('Marketplace', 'Páginas Propias', 'Tiendas Propias', 'Fidelización')
 
-# ---- Parámetros Método C (calibración 2026 YTD) — usados si NO hay meta config ----
+# ---- Parámetros Método C (calibración 2026 YTD) — usados para meta PPTO ----
 MIX_B2C_DEFAULT = 0.766
 TICKET_B2C_DEFAULT = 25791
+
+# ---- Pesos OFICIALES del bono (UnionX 2026-05) ----
+PESO_OTIF = 0.40
+PESO_PROD = 0.50
+PESO_ESPIRITU = 0.10
+
+# ---- Objetivos y rangos ratio ----
+OTIF_OBJETIVO = 98.0   # >98%
+PROD_OBJETIVO = 90.0   # >90%
+RATIO_MIN = 90.0       # bajo esto paga 0
+RATIO_MAX = 100.0      # sobre esto paga 1.0 (cap)
 
 
 # ============================================================
@@ -75,28 +104,12 @@ def _load_ppto() -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=600)
-def _load_pedidos_venta() -> pd.DataFrame:
-    """Pedidos de Odoo con campo vendedor — proxy del facturador hasta H2.
-    Cubre solo canales con asignación de vendedor (Melollevo + Website).
-    Marketplaces (ML, Falabella, Walmart) NO tienen vendedor asignado."""
-    p = PROJECT_ROOT / 'data' / 'contabilidad' / 'cobranza' / 'pedidos_venta.parquet'
-    if not p.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(p)
-    if 'fecha_pedido' in df.columns:
-        df['fecha_pedido'] = pd.to_datetime(df['fecha_pedido'], errors='coerce')
-    return df
-
-
 @st.cache_data(ttl=3600)
 def _load_bonos_config() -> pd.DataFrame:
     """Lee config persistida del bono por mes desde Turso.
-    Tabla: bonos_facturacion_config (mes, n_personas, bono_persona_clp,
-    base_clp, bono_pagado_real_clp, observacion).
 
-    base_clp = n_personas × bono_persona_clp (pozo grupal).
-    bono_pagado_real_clp = lo que efectivamente se pagó al cierre (manual)."""
+    Tabla: bonos_facturacion_config — modelo OFICIAL (OTIF/Prod/Espíritu).
+    """
     try:
         from views.alertas_helper import _query
         _query("""CREATE TABLE IF NOT EXISTS bonos_facturacion_config (
@@ -104,23 +117,30 @@ def _load_bonos_config() -> pd.DataFrame:
             n_personas INTEGER,
             bono_persona_clp REAL,
             base_clp REAL,
+            otif_pct REAL,
+            espiritu_mll_pct REAL,
             bono_pagado_real_clp REAL,
             observacion TEXT,
             actualizado_en TEXT
         )""")
-        # Migración suave: agregar columnas si no existen (idempotente)
-        for col, tipo in [('n_personas', 'INTEGER'), ('bono_persona_clp', 'REAL')]:
+        # Migración suave para tablas viejas (idempotente)
+        for col, tipo in [('n_personas', 'INTEGER'),
+                          ('bono_persona_clp', 'REAL'),
+                          ('otif_pct', 'REAL'),
+                          ('espiritu_mll_pct', 'REAL')]:
             try:
                 _query(f"ALTER TABLE bonos_facturacion_config ADD COLUMN {col} {tipo}")
             except Exception:
-                pass  # ya existe
+                pass
 
         res = _query("""SELECT mes, n_personas, bono_persona_clp, base_clp,
+                               otif_pct, espiritu_mll_pct,
                                bono_pagado_real_clp, observacion
                         FROM bonos_facturacion_config ORDER BY mes""")
         if not res or not res.get('rows'):
             return pd.DataFrame(columns=['mes', 'n_personas', 'bono_persona_clp',
-                                          'base_clp', 'bono_pagado_real_clp', 'observacion'])
+                                          'base_clp', 'otif_pct', 'espiritu_mll_pct',
+                                          'bono_pagado_real_clp', 'observacion'])
         rows = []
         for r in res['rows']:
             def _v(i):
@@ -131,16 +151,20 @@ def _load_bonos_config() -> pd.DataFrame:
                 'n_personas': int(_v(1)) if _v(1) else None,
                 'bono_persona_clp': float(_v(2)) if _v(2) else None,
                 'base_clp': float(_v(3) or 0),
-                'bono_pagado_real_clp': float(_v(4)) if _v(4) else None,
-                'observacion': _v(5) or '',
+                'otif_pct': float(_v(4)) if _v(4) is not None else None,
+                'espiritu_mll_pct': float(_v(5)) if _v(5) is not None else None,
+                'bono_pagado_real_clp': float(_v(6)) if _v(6) else None,
+                'observacion': _v(7) or '',
             })
         return pd.DataFrame(rows)
     except Exception:
         return pd.DataFrame(columns=['mes', 'n_personas', 'bono_persona_clp',
-                                      'base_clp', 'bono_pagado_real_clp', 'observacion'])
+                                      'base_clp', 'otif_pct', 'espiritu_mll_pct',
+                                      'bono_pagado_real_clp', 'observacion'])
 
 
 def _save_bono_config(mes: str, n_personas: int, bono_persona_clp: float,
+                       otif_pct: float = None, espiritu_mll_pct: float = None,
                        bono_pagado_real_clp: float = None,
                        observacion: str = '') -> bool:
     base_clp = n_personas * bono_persona_clp
@@ -148,16 +172,21 @@ def _save_bono_config(mes: str, n_personas: int, bono_persona_clp: float,
         from views.alertas_helper import _query
         _query("""INSERT INTO bonos_facturacion_config
                     (mes, n_personas, bono_persona_clp, base_clp,
+                     otif_pct, espiritu_mll_pct,
                      bono_pagado_real_clp, observacion, actualizado_en)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                   ON CONFLICT(mes) DO UPDATE SET
                     n_personas=excluded.n_personas,
                     bono_persona_clp=excluded.bono_persona_clp,
                     base_clp=excluded.base_clp,
+                    otif_pct=excluded.otif_pct,
+                    espiritu_mll_pct=excluded.espiritu_mll_pct,
                     bono_pagado_real_clp=excluded.bono_pagado_real_clp,
                     observacion=excluded.observacion,
                     actualizado_en=excluded.actualizado_en""",
                [mes, int(n_personas), float(bono_persona_clp), float(base_clp),
+                float(otif_pct) if otif_pct is not None else None,
+                float(espiritu_mll_pct) if espiritu_mll_pct is not None else None,
                 float(bono_pagado_real_clp) if bono_pagado_real_clp else None,
                 observacion, datetime.now().isoformat()])
         return True
@@ -167,7 +196,7 @@ def _save_bono_config(mes: str, n_personas: int, bono_persona_clp: float,
 
 
 # ============================================================
-# CÁLCULO MÉTRICAS Y BONO
+# CÁLCULO MÉTRICAS Y BONO (MODELO OFICIAL UnionX)
 # ============================================================
 def _pedidos_b2c_mes(ventas: pd.DataFrame, year: int, month: int) -> int:
     sub = ventas[(ventas['anio_venta'] == year) &
@@ -189,140 +218,198 @@ def _meta_b2c_mes(ppto: pd.DataFrame, year: int, month: int,
 
 
 def _nc_b2c_mes(nc: pd.DataFrame, ventas_mes: pd.DataFrame) -> int:
-    """NC ligadas a pedidos B2C del mes (matching por origen_so → pedido)."""
+    """NC del mes — info paralela, NO entra al cálculo del bono oficial."""
     if nc.empty or ventas_mes.empty:
         return 0
-    pedidos_b2c = set(ventas_mes.loc[ventas_mes['segmento'] == 'B2C', 'pedido'].dropna().astype(str))
-    if 'origen_so' not in nc.columns:
+    try:
+        nc_mes = nc[nc['fecha_emision'].dt.to_period('M') ==
+                    pd.Period(ventas_mes['fecha_venta'].max(), freq='M')]
+    except Exception:
         return 0
-    # match flexible: la NC suele referenciar FAC nnn, no SO. Como proxy
-    # contamos las NC del mes (es_nc=True) — área operativa real.
-    nc_mes = nc[nc['fecha_emision'].dt.to_period('M') ==
-                pd.Period(ventas_mes['fecha_venta'].max(), freq='M')]
     return int(nc_mes.get('es_nc', pd.Series([], dtype=bool)).sum()) if 'es_nc' in nc_mes.columns else len(nc_mes)
 
 
-def _calcular_bono(pedidos_facturados: int, meta: float, nc_count: int,
-                   sla_pct: float, base: float,
-                   pesos: dict, umbral_nc_pct: float) -> dict:
-    """Devuelve dict con factores y bono devengado."""
-    # Factor volumen
-    if meta <= 0:
-        f_vol = 0.0
+def _factor_ratio(valor_pct: float, ratio_min: float = RATIO_MIN,
+                   ratio_max: float = RATIO_MAX) -> float:
+    """Convierte un KPI % a factor 0-1 con piso ratio_min y techo ratio_max.
+
+    Ej: con piso 90 y techo 100:
+      valor < 90 → 0.0
+      valor = 95 → 0.5
+      valor >= 100 → 1.0
+    """
+    if valor_pct is None:
+        return 0.0
+    if valor_pct < ratio_min:
+        return 0.0
+    if valor_pct >= ratio_max:
+        return 1.0
+    return (valor_pct - ratio_min) / (ratio_max - ratio_min)
+
+
+def _calcular_bono_oficial(base: float,
+                             otif_pct: float,
+                             pedidos_b2c: int, n_personas: int,
+                             meta_total: float,
+                             espiritu_mll_pct: float) -> dict:
+    """Calcula el bono según el modelo oficial UnionX.
+
+    Args:
+      base: pozo total target (N × bono_persona).
+      otif_pct: OTIF del mes anterior (M-1), en porcentaje 0-100.
+        Ratio pagable 90-100% (<90 paga 0, lineal entre 90 y 100, cap 100).
+      pedidos_b2c: pedidos B2C facturados en el mes actual.
+      n_personas: cuántas personas en facturación.
+      meta_total: meta de pedidos B2C del mes (PPTO).
+        Productividad % = pedidos_b2c / meta. Ratio pagable 90-100%.
+      espiritu_mll_pct: nota 0-100% asignada por el jefe.
+        Ratio 0-100% (cualquier valor entre 0 y 100 paga proporcional).
+    """
+    # ---- OTIF (40%) — ratio 90-100% ----
+    f_otif = _factor_ratio(otif_pct, RATIO_MIN, RATIO_MAX)
+
+    # ---- Productividad (50%) — ratio 90-100% ----
+    if meta_total > 0:
+        prod_pct = (pedidos_b2c / meta_total) * 100
     else:
-        ratio = pedidos_facturados / meta
-        if ratio < 0.80:
-            f_vol = 0.0
-        elif ratio <= 1.20:
-            # Mapear linealmente 0.80 → 0.0  y  1.20 → 1.20
-            # piezas: 0.80-1.00 → 0→1, 1.00-1.20 → 1→1.2
-            f_vol = round((ratio - 0.80) / 0.20 if ratio <= 1.0
-                           else 1.0 + (ratio - 1.0), 4)
-            f_vol = min(f_vol, 1.20)
-        else:
-            f_vol = 1.20
+        prod_pct = 0.0
+    f_prod = _factor_ratio(prod_pct, RATIO_MIN, RATIO_MAX)
 
-    # Factor calidad
-    nc_pct = (nc_count / pedidos_facturados * 100) if pedidos_facturados > 0 else 0.0
-    if umbral_nc_pct <= 0:
-        f_cal = 1.0
+    # ---- Espíritu MLL (10%) — ratio 0-100% (escala completa, no binario) ----
+    if espiritu_mll_pct is None:
+        f_esp = 0.0
     else:
-        f_cal = max(0.0, 1.0 - (nc_pct / umbral_nc_pct - 1.0))
-        f_cal = min(f_cal, 1.0)
-        if nc_pct <= umbral_nc_pct:
-            f_cal = 1.0
+        f_esp = max(0.0, min(1.0, espiritu_mll_pct / 100.0))
 
-    # Factor SLA — directo
-    f_sla = max(0.0, min(1.0, sla_pct / 100.0)) if sla_pct is not None else 0.0
+    # ---- Bono final ----
+    factor_total = (f_otif * PESO_OTIF +
+                    f_prod * PESO_PROD +
+                    f_esp * PESO_ESPIRITU)
+    bono = base * factor_total
 
-    bono = base * (
-        f_vol * pesos['volumen'] +
-        f_cal * pesos['calidad'] +
-        f_sla * pesos['sla']
-    )
+    pedidos_por_persona = pedidos_b2c / n_personas if n_personas > 0 else 0
+    meta_por_persona = meta_total / n_personas if n_personas > 0 else 0
 
     return {
-        'pedidos_facturados': pedidos_facturados,
-        'meta': meta,
-        'avance_pct': (pedidos_facturados / meta * 100) if meta > 0 else 0,
-        'nc_count': nc_count,
-        'nc_pct': nc_pct,
-        'sla_pct': sla_pct,
-        'f_volumen': f_vol,
-        'f_calidad': f_cal,
-        'f_sla': f_sla,
-        'base': base,
+        'otif_pct': otif_pct,
+        'f_otif': f_otif,
+        'aporta_otif': base * f_otif * PESO_OTIF,
+        'pedidos_b2c': pedidos_b2c,
+        'meta_total': meta_total,
+        'prod_pct': prod_pct,
+        'pedidos_por_persona': pedidos_por_persona,
+        'meta_por_persona': meta_por_persona,
+        'f_prod': f_prod,
+        'aporta_prod': base * f_prod * PESO_PROD,
+        'espiritu_mll_pct': espiritu_mll_pct,
+        'f_esp': f_esp,
+        'aporta_esp': base * f_esp * PESO_ESPIRITU,
+        'factor_total': factor_total,
         'bono_devengado': round(bono, -2),
     }
 
 
 # ============================================================
-# RENDER
+# RENDER TABS
 # ============================================================
-def _render_tab_resumen(ventas, nc, ppto, hoy, base, pesos, umbral_nc, modo_meta,
-                         meta_manual, mix_b2c, ticket_b2c):
-    """Tab 1 — KPIs mes en curso + desglose factores."""
+def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
+                          mix_b2c, ticket_b2c, df_cfg):
+    """Tab Resumen — los 3 KPIs oficiales + bono devengado."""
     st.markdown("### 📅 Mes en curso")
-    mes_actual_pedidos = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
-    meta_mes_actual = (meta_manual if meta_manual is not None
-                       else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
-    sub_mes = ventas[(ventas['anio_venta'] == hoy.year) & (ventas['mes_venta'] == hoy.month)]
-    nc_mes = _nc_b2c_mes(nc, sub_mes)
 
-    dia_mes_hoy = min(hoy.day, 31)
-    if hoy.month == 12:
-        proximo_mes = date(hoy.year + 1, 1, 1)
-    else:
-        proximo_mes = date(hoy.year, hoy.month + 1, 1)
-    dias_mes = (proximo_mes - date(hoy.year, hoy.month, 1)).days
-    proyeccion_mes = (mes_actual_pedidos / dia_mes_hoy * dias_mes) if dia_mes_hoy > 0 else 0
+    cfg_dict = (df_cfg.set_index('mes').to_dict('index')
+                if df_cfg is not None and not df_cfg.empty else {})
+    mes_key = f"{hoy.year}-{hoy.month:02d}"
+    cfg_mes = cfg_dict.get(mes_key, {})
 
-    sla_pct = 95.0  # placeholder hasta H1
-    res = _calcular_bono(mes_actual_pedidos, meta_mes_actual, nc_mes,
-                          sla_pct, base, pesos, umbral_nc)
+    n_personas = cfg_mes.get('n_personas') or 0
+    bono_persona = cfg_mes.get('bono_persona_clp') or 0
+    base_pozo = cfg_mes.get('base_clp') or 0
+    otif_input = cfg_mes.get('otif_pct')
+    espiritu_input = cfg_mes.get('espiritu_mll_pct')
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Pedidos B2C facturados (parcial)", f"{mes_actual_pedidos:,}",
-              f"Proy. fin de mes: {proyeccion_mes:,.0f}")
-    c2.metric("Meta del mes", f"{meta_mes_actual:,.0f}",
-              f"{res['avance_pct']:.1f}% avance")
-    c3.metric("Tasa NC", f"{res['nc_pct']:.2f}%",
-              f"Umbral {umbral_nc:.1f}%", delta_color="inverse")
-    c4.metric("💰 Bono devengado mes", f"${res['bono_devengado']:,.0f}",
-              f"Base ${base:,.0f}")
+    if n_personas == 0 or bono_persona == 0:
+        st.warning(
+            f"⚠️ Aún no cargas la configuración del pozo para **{mes_key}**. "
+            f"Anda a la pestaña **💵 Carga Bonos** para ingresar N personas + "
+            f"bono por persona + OTIF (mes anterior) + Espíritu MLL."
+        )
+        return
 
-    st.divider()
-    st.markdown("### 🧮 Desglose del bono")
-    df_fact = pd.DataFrame([
-        {"Factor": "Volumen", "Peso": f"{pesos['volumen']*100:.0f}%",
-         "Valor": f"{res['f_volumen']:.2f}",
-         "Aporta al bono": f"${base * res['f_volumen'] * pesos['volumen']:,.0f}"},
-        {"Factor": "Calidad (NC)", "Peso": f"{pesos['calidad']*100:.0f}%",
-         "Valor": f"{res['f_calidad']:.2f}",
-         "Aporta al bono": f"${base * res['f_calidad'] * pesos['calidad']:,.0f}"},
-        {"Factor": "SLA", "Peso": f"{pesos['sla']*100:.0f}%",
-         "Valor": f"{res['f_sla']:.2f}",
-         "Aporta al bono": f"${base * res['f_sla'] * pesos['sla']:,.0f}"},
-    ])
-    st.dataframe(df_fact, use_container_width=True, hide_index=True)
-    st.caption(
-        "ℹ️ SLA usa placeholder 95% — pendiente integrar timestamp emisión factura vs "
-        "creación SO en Odoo (H1)."
+    pedidos_mes = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
+    meta_mes = (meta_manual if meta_manual is not None
+                else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
+
+    if otif_input is None:
+        st.warning("⚠️ Falta cargar OTIF del mes anterior. Va a contar como 0%.")
+        otif_input = 0
+    if espiritu_input is None:
+        espiritu_input = 0  # sin evaluar = 0 (no asume nada)
+
+    r = _calcular_bono_oficial(
+        base=base_pozo, otif_pct=otif_input,
+        pedidos_b2c=pedidos_mes, n_personas=n_personas,
+        meta_total=meta_mes, espiritu_mll_pct=espiritu_input,
     )
 
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("OTIF mes anterior", f"{otif_input:.1f}%",
+              f"Objetivo >{OTIF_OBJETIVO}%",
+              delta_color="off" if otif_input >= OTIF_OBJETIVO else "inverse")
+    c2.metric("Productividad", f"{r['prod_pct']:.1f}%",
+              f"{r['pedidos_por_persona']:,.0f}/persona vs {r['meta_por_persona']:,.0f}")
+    c3.metric("Espíritu MLL", f"{espiritu_input:.0f}%",
+              "Nota 0-100% del jefe")
+    c4.metric("💰 Bono devengado mes", f"${r['bono_devengado']:,.0f}",
+              f"De pozo ${base_pozo:,.0f}")
 
-def _render_tab_pozo(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
-                       modo_meta, meta_manual, mix_b2c, ticket_b2c, df_cfg):
-    """Tab Distribución del Pozo Grupal.
+    st.divider()
 
-    Como el bono es grupal y el jefe lo distribuye manualmente, este tab
-    muestra cuánto da el pozo del mes y un cálculo orientativo "por persona
-    si se repartiera parejo". El jefe asigna libremente el monto efectivo."""
+    st.markdown("### 🧮 Desglose del bono")
+    df_kpi = pd.DataFrame([
+        {
+            "KPI": "OTIF (mes cerrado M-1)",
+            "Peso": f"{PESO_OTIF*100:.0f}%",
+            "Objetivo": f">{OTIF_OBJETIVO}%",
+            "Real": f"{otif_input:.1f}%",
+            "Ratio paga": f"{r['f_otif']*100:.0f}%",
+            "Aporta al bono": f"${r['aporta_otif']:,.0f}",
+        },
+        {
+            "KPI": "Productividad Pedidos",
+            "Peso": f"{PESO_PROD*100:.0f}%",
+            "Objetivo": f">{PROD_OBJETIVO}%",
+            "Real": f"{r['prod_pct']:.1f}%",
+            "Ratio paga": f"{r['f_prod']*100:.0f}%",
+            "Aporta al bono": f"${r['aporta_prod']:,.0f}",
+        },
+        {
+            "KPI": "Espíritu MLL",
+            "Peso": f"{PESO_ESPIRITU*100:.0f}%",
+            "Objetivo": "SÍ",
+            "Real": f"{espiritu_input:.0f}%",
+            "Ratio paga": f"{r['f_esp']*100:.0f}%",
+            "Aporta al bono": f"${r['aporta_esp']:,.0f}",
+        },
+        {
+            "KPI": "**TOTAL**",
+            "Peso": "**100%**",
+            "Objetivo": "",
+            "Real": "",
+            "Ratio paga": f"**{r['factor_total']*100:.0f}%**",
+            "Aporta al bono": f"**${r['bono_devengado']:,.0f}**",
+        },
+    ])
+    st.dataframe(df_kpi, use_container_width=True, hide_index=True)
+
+
+def _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
+                       mix_b2c, ticket_b2c, df_cfg):
+    """Tab Pozo grupal — vista del pozo target vs devengado, info para el jefe."""
     st.markdown("### 👥 Distribución del pozo grupal")
     st.caption(
         "El bono es **un pozo grupal** que el jefe de área distribuye **manualmente** "
-        "entre las personas del equipo de facturación. Acá ves cuánto da el pozo "
-        "según los factores del mes; la repartición la decide el jefe."
+        "entre el equipo de facturación. Acá ves cuánto da el pozo según los KPIs cumplidos."
     )
 
     cfg_dict = (df_cfg.set_index('mes').to_dict('index')
@@ -332,53 +419,52 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
 
     n_personas = cfg_mes.get('n_personas') or 0
     bono_persona = cfg_mes.get('bono_persona_clp') or 0
-    base_pozo = cfg_mes.get('base_clp') or (n_personas * bono_persona) or base
-
-    # Calcular pozo devengado del mes
-    pedidos_mes = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
-    meta_mes = (meta_manual if meta_manual is not None
-                else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
-    sub_mes = ventas[(ventas['anio_venta'] == hoy.year) & (ventas['mes_venta'] == hoy.month)]
-    nc_mes = _nc_b2c_mes(nc, sub_mes)
-    r = _calcular_bono(pedidos_mes, meta_mes, nc_mes, 95.0,
-                        base_pozo, pesos, umbral_nc)
+    base_pozo = cfg_mes.get('base_clp') or 0
+    otif_input = cfg_mes.get('otif_pct') or 0
+    espiritu_input = cfg_mes.get('espiritu_mll_pct')
+    espiritu_val = espiritu_input if espiritu_input is not None else 0
 
     if n_personas == 0 or bono_persona == 0:
         st.warning(
-            "⚠️ Aún no cargas la configuración del pozo para "
-            f"**{mes_key}**. Anda a la pestaña **💵 Carga Bonos** y "
-            "carga N personas + bono por persona."
+            f"⚠️ Aún no cargas la configuración para **{mes_key}**. "
+            f"Anda a **💵 Carga Bonos**."
         )
         return
+
+    pedidos_mes = _pedidos_b2c_mes(ventas, hoy.year, hoy.month)
+    meta_mes = (meta_manual if meta_manual is not None
+                else _meta_b2c_mes(ppto, hoy.year, hoy.month, mix_b2c, ticket_b2c))
+    r = _calcular_bono_oficial(base_pozo, otif_input, pedidos_mes,
+                                 n_personas, meta_mes, espiritu_val)
 
     pozo_por_persona_si_parejo = r['bono_devengado'] / n_personas if n_personas else 0
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Personas en el equipo", f"{n_personas}")
-    c2.metric("Bono por persona (target)", f"${bono_persona:,.0f}",
-              "Si se cumple todo al 100%")
-    c3.metric("💰 Pozo del mes (target)", f"${base_pozo:,.0f}",
-              f"N × bono = {n_personas} × ${bono_persona:,.0f}")
-    c4.metric("💵 Pozo devengado (mes)", f"${r['bono_devengado']:,.0f}",
-              f"~${pozo_por_persona_si_parejo:,.0f}/persona si se reparte parejo",
+    c1.metric("Personas en equipo", f"{n_personas}")
+    c2.metric("Bono/persona target", f"${bono_persona:,.0f}",
+              "Si cumple 100%")
+    c3.metric("💰 Pozo target", f"${base_pozo:,.0f}",
+              f"{n_personas} × ${bono_persona:,.0f}")
+    c4.metric("💵 Pozo devengado", f"${r['bono_devengado']:,.0f}",
+              f"~${pozo_por_persona_si_parejo:,.0f}/persona si parejo",
               delta_color="off")
 
     st.divider()
-
     st.markdown("**Cómo se llegó al pozo devengado**")
     st.markdown(f"""
-- Pedidos B2C facturados (parcial): **{pedidos_mes:,}** de meta {meta_mes:,.0f} → avance **{r['avance_pct']:.0f}%**
-- Tasa NC: **{r['nc_pct']:.2f}%** (umbral {umbral_nc:.1f}%)
-- Factor combinado: `{r['f_volumen']:.2f}` × {pesos['volumen']*100:.0f}% (vol) + `{r['f_calidad']:.2f}` × {pesos['calidad']*100:.0f}% (cal) + `{r['f_sla']:.2f}` × {pesos['sla']*100:.0f}% (sla)
-- **Pozo devengado = ${base_pozo:,.0f} × factor combinado = ${r['bono_devengado']:,.0f}**
+- **OTIF (M-1):** {otif_input:.1f}% → factor `{r['f_otif']:.2f}` × 40% = aporta ${r['aporta_otif']:,.0f}
+- **Productividad:** {r['prod_pct']:.1f}% ({pedidos_mes:,} pedidos B2C / meta {meta_mes:,.0f}) → factor `{r['f_prod']:.2f}` × 50% = aporta ${r['aporta_prod']:,.0f}
+- **Espíritu MLL:** {espiritu_val:.0f}% → factor `{r['f_esp']:.2f}` × 10% = aporta ${r['aporta_esp']:,.0f}
+- **Factor combinado: {r['factor_total']*100:.1f}%**
+- **Pozo devengado = ${base_pozo:,.0f} × {r['factor_total']*100:.1f}% = ${r['bono_devengado']:,.0f}**
 """)
 
     st.divider()
     st.markdown("### 📝 Distribución efectiva (manual)")
     st.info(
-        f"El jefe de facturación reparte los **${r['bono_devengado']:,.0f}** "
-        f"como considere entre las {n_personas} personas. Cuando esté cerrado, "
-        f"registra el total pagado en **💵 Carga Bonos → Bono pagado real**."
+        f"El jefe reparte los **${r['bono_devengado']:,.0f}** entre las "
+        f"{n_personas} personas con criterio propio. Registra el total pagado en "
+        f"**💵 Carga Bonos → Bono pagado real**."
     )
 
     pagado_mes = cfg_mes.get('bono_pagado_real_clp')
@@ -391,45 +477,62 @@ def _render_tab_pozo(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
                    delta_color="off")
 
 
-def _render_tab_historico(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
-                            modo_meta, meta_manual, mix_b2c, ticket_b2c,
-                            df_cfg):
-    """Tab 3 — Histórico mes a mes + bono pagado real (si está cargado)."""
+def _render_tab_historico(ventas, nc, ppto, hoy, modo_meta, meta_manual,
+                            mix_b2c, ticket_b2c, df_cfg):
+    """Tab Histórico — mes a mes con devengado vs pagado real."""
     st.markdown("### 📈 Histórico — bono devengado mes a mes")
-    sla_pct = 95.0
+
     cfg_dict = (df_cfg.set_index('mes').to_dict('index')
                 if df_cfg is not None and not df_cfg.empty else {})
 
     rows = []
     for m in range(1, hoy.month + 1):
         mes_key = f"{hoy.year}-{m:02d}"
+        cfg_m = cfg_dict.get(mes_key, {})
+        n = cfg_m.get('n_personas') or 0
+        bp = cfg_m.get('bono_persona_clp') or 0
+        base_m = cfg_m.get('base_clp') or 0
+        otif_m = cfg_m.get('otif_pct')
+        esp_m = cfg_m.get('espiritu_mll_pct')
+
         ped_m = _pedidos_b2c_mes(ventas, hoy.year, m)
         meta_m = (meta_manual if meta_manual is not None
                   else _meta_b2c_mes(ppto, hoy.year, m, mix_b2c, ticket_b2c))
-        sub_m = ventas[(ventas['anio_venta'] == hoy.year) & (ventas['mes_venta'] == m)]
-        nc_m = _nc_b2c_mes(nc, sub_m)
-        # Base puede venir del config persistido
-        base_m = cfg_dict.get(mes_key, {}).get('base_clp') or base
-        r = _calcular_bono(ped_m, meta_m, nc_m, sla_pct, base_m, pesos, umbral_nc)
-        pagado_real = cfg_dict.get(mes_key, {}).get('bono_pagado_real_clp')
+
+        if base_m == 0:
+            rows.append({
+                "Mes": mes_key, "N": "—", "Pozo target": "—",
+                "OTIF M-1": "—", "Pedidos B2C": f"{ped_m:,}",
+                "Prod %": f"{(ped_m/meta_m*100) if meta_m else 0:.0f}%",
+                "Espíritu": "—", "Factor": "—",
+                "Bono devengado": "—", "Pagado real": "—",
+                "_bono": 0, "_pagado": 0,
+            })
+            continue
+
+        otif_use = otif_m if otif_m is not None else 0
+        esp_use = esp_m if esp_m is not None else 0
+        r = _calcular_bono_oficial(base_m, otif_use, ped_m, n, meta_m, esp_use)
+        pagado = cfg_m.get('bono_pagado_real_clp')
         rows.append({
             "Mes": mes_key,
-            "Pedidos B2C": ped_m,
-            "Meta": int(meta_m),
-            "Avance %": f"{r['avance_pct']:.0f}%",
-            "NC %": f"{r['nc_pct']:.2f}%",
-            "Factor Vol": f"{r['f_volumen']:.2f}",
-            "Factor Cal": f"{r['f_calidad']:.2f}",
-            "Base CLP": f"${base_m:,.0f}",
+            "N": str(n),
+            "Pozo target": f"${base_m:,.0f}",
+            "OTIF M-1": f"{otif_use:.1f}%",
+            "Pedidos B2C": f"{ped_m:,}",
+            "Prod %": f"{r['prod_pct']:.0f}%",
+            "Espíritu": f"{esp_use:.0f}%",
+            "Factor": f"{r['factor_total']*100:.0f}%",
             "Bono devengado": f"${r['bono_devengado']:,.0f}",
-            "Bono pagado real": f"${pagado_real:,.0f}" if pagado_real else "—",
-            "_bono_num": r['bono_devengado'],
-            "_pagado_num": pagado_real or 0,
+            "Pagado real": f"${pagado:,.0f}" if pagado else "—",
+            "_bono": r['bono_devengado'],
+            "_pagado": pagado or 0,
         })
+
     df_hist = pd.DataFrame(rows)
-    total_devengado = df_hist['_bono_num'].sum()
-    total_pagado = df_hist['_pagado_num'].sum()
-    st.dataframe(df_hist.drop(columns=['_bono_num', '_pagado_num']),
+    total_devengado = df_hist['_bono'].sum()
+    total_pagado = df_hist['_pagado'].sum()
+    st.dataframe(df_hist.drop(columns=['_bono', '_pagado']),
                  use_container_width=True, hide_index=True)
 
     c1, c2, c3 = st.columns(3)
@@ -437,16 +540,15 @@ def _render_tab_historico(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
     c2.metric("💵 Pagado real YTD", f"${total_pagado:,.0f}" if total_pagado > 0 else "—")
     if total_pagado > 0:
         diff = total_pagado - total_devengado
-        c3.metric("Δ Pagado − Devengado", f"${diff:,.0f}")
+        c3.metric("Δ Pagado − Devengado", f"${diff:+,.0f}")
 
 
 def _render_tab_config(hoy):
-    """Tab Config — Carga manual del pozo por mes (N personas × bono persona)."""
+    """Tab Config — carga manual mensual con OTIF y Espíritu MLL."""
     st.markdown("### 💵 Cargar bono mensual")
     st.caption(
-        "Define el **pozo grupal** del mes: cuántas personas hay en facturación "
-        "y cuánto bono target por persona. El pozo total = N × bono persona. "
-        "Al cierre del mes registras lo que efectivamente se pagó."
+        "Define el **pozo grupal** + **OTIF del mes anterior** + **Espíritu MLL** del mes. "
+        "OTIF se mide contra mes cerrado: en mayo se evalúa OTIF de abril."
     )
 
     df_cfg = _load_bonos_config()
@@ -459,213 +561,198 @@ def _render_tab_config(hoy):
         with c2:
             mes_n = st.selectbox("Mes", list(range(1, 13)), index=hoy.month - 1)
         mes_key = f"{anio}-{mes_n:02d}"
-        st.caption(f"Clave mes: **{mes_key}**")
+        mes_anterior = f"{anio}-{mes_n-1:02d}" if mes_n > 1 else f"{anio-1}-12"
+        st.caption(f"Bono del mes: **{mes_key}** · OTIF se evalúa contra mes cerrado: **{mes_anterior}**")
 
         # Pre-cargar si existe
         existing = df_cfg[df_cfg['mes'] == mes_key]
         prev_n = (int(existing['n_personas'].iloc[0])
-                  if not existing.empty and existing['n_personas'].iloc[0] else 4)
+                  if not existing.empty and existing['n_personas'].iloc[0] else 3)
         prev_bono_p = (float(existing['bono_persona_clp'].iloc[0])
-                       if not existing.empty and existing['bono_persona_clp'].iloc[0] else 150_000)
+                       if not existing.empty and existing['bono_persona_clp'].iloc[0] else 60_000)
+        prev_otif = (float(existing['otif_pct'].iloc[0])
+                     if not existing.empty and existing['otif_pct'].iloc[0] is not None else 98.0)
+        prev_esp = (float(existing['espiritu_mll_pct'].iloc[0])
+                    if not existing.empty and existing['espiritu_mll_pct'].iloc[0] is not None else 100.0)
         prev_pagado = (float(existing['bono_pagado_real_clp'].iloc[0])
                        if not existing.empty and existing['bono_pagado_real_clp'].iloc[0] else 0)
         prev_obs = existing['observacion'].iloc[0] if not existing.empty else ''
 
         st.markdown("**🎯 Pozo target del mes**")
-        c3, c4, c5 = st.columns([1, 1, 1])
+        c3, c4, c5 = st.columns(3)
         with c3:
-            n_personas = st.number_input("Personas en facturación", 1, 50, prev_n, 1,
-                                          help="Cuántas personas conforman el equipo de facturación este mes.")
+            n_personas = st.number_input("Personas en facturación", 1, 50, prev_n, 1)
         with c4:
-            bono_persona = st.number_input("Bono por persona target (CLP)",
-                                            0, 2_000_000, int(prev_bono_p), 25_000,
-                                            help="Cuánto recibe cada persona si el equipo cumple 100% (volumen, calidad, SLA).")
+            bono_persona = st.number_input("Bono/persona target (CLP)",
+                                            0, 2_000_000, int(prev_bono_p), 10_000,
+                                            help="Cuánto recibe cada persona si TODO se cumple 100%.")
         with c5:
             pozo_calc = n_personas * bono_persona
             st.metric("💰 Pozo total target", f"${pozo_calc:,.0f}",
                        f"{n_personas} × ${bono_persona:,.0f}")
 
         st.divider()
+        st.markdown(f"**📊 KPIs del mes**")
+        c6, c7 = st.columns(2)
+        with c6:
+            otif_in = st.number_input(
+                f"OTIF (%) — medido en {mes_anterior}",
+                0.0, 100.0, prev_otif, 0.1,
+                help=f"OTIF del mes cerrado anterior. Objetivo >{OTIF_OBJETIVO}%. Ratio pagable 90-100%."
+            )
+        with c7:
+            esp_in = st.slider(
+                "Espíritu MLL (%)",
+                0, 100, int(prev_esp), 5,
+                help="Nota del jefe entre 0% y 100%. Define qué % del 10% se paga."
+            )
+
+        st.divider()
         st.markdown("**💵 Cierre del mes (opcional)**")
         pagado_in = st.number_input(
             "Bono total pagado real (CLP)",
             0, 50_000_000, int(prev_pagado), 25_000,
-            help="Suma de lo que se pagó efectivamente al equipo. Llenar al cierre del mes."
+            help="Suma de lo que se pagó efectivamente al equipo. Llenar al cierre."
         )
         obs_in = st.text_input("Observación", prev_obs,
-                                placeholder="Ej: Bonus extra por sobrecumplimiento, mes con feriado, etc.")
+                                placeholder="Ej: Bonus extra por sobrecumplimiento")
 
         submitted = st.form_submit_button("💾 Guardar / Actualizar", type="primary")
         if submitted:
-            ok = _save_bono_config(mes_key, n_personas, bono_persona,
-                                    pagado_in if pagado_in > 0 else None, obs_in)
+            ok = _save_bono_config(
+                mes_key, n_personas, bono_persona,
+                otif_pct=otif_in, espiritu_mll_pct=float(esp_in),
+                bono_pagado_real_clp=pagado_in if pagado_in > 0 else None,
+                observacion=obs_in,
+            )
             if ok:
                 st.success(
-                    f"✅ Guardado **{mes_key}**: {n_personas} personas × "
-                    f"${bono_persona:,.0f} = pozo ${pozo_calc:,.0f}"
-                    + (f" · pagado real ${pagado_in:,.0f}" if pagado_in else "")
+                    f"✅ Guardado **{mes_key}**: {n_personas} pers × ${bono_persona:,.0f} "
+                    f"= pozo ${pozo_calc:,.0f} · OTIF {otif_in:.1f}% · "
+                    f"Espíritu {esp_in}%"
                 )
                 st.cache_data.clear()
                 st.rerun()
 
     st.divider()
-    st.markdown("**📋 Config cargada actualmente:**")
+    st.markdown("**📋 Config cargada:**")
     if df_cfg.empty:
-        st.info("Aún no hay config persistida. Carga la primera arriba.")
+        st.info("Aún no hay config persistida.")
     else:
         show = df_cfg.copy()
         show['n_personas'] = show['n_personas'].apply(lambda x: f"{int(x)}" if pd.notna(x) else "—")
         show['bono_persona_clp'] = show['bono_persona_clp'].apply(
             lambda x: f"${x:,.0f}" if pd.notna(x) else "—")
         show['base_clp'] = show['base_clp'].apply(lambda x: f"${x:,.0f}")
+        show['otif_pct'] = show['otif_pct'].apply(lambda x: f"{x:.1f}%" if pd.notna(x) else "—")
+        show['espiritu_mll_pct'] = show['espiritu_mll_pct'].apply(
+            lambda x: f"{x:.0f}%" if pd.notna(x) else "—")
         show['bono_pagado_real_clp'] = show['bono_pagado_real_clp'].apply(
             lambda x: f"${x:,.0f}" if pd.notna(x) and x else "—")
         show = show.rename(columns={
-            'mes': 'Mes', 'n_personas': 'N personas',
+            'mes': 'Mes', 'n_personas': 'N',
             'bono_persona_clp': 'Bono/persona', 'base_clp': 'Pozo target',
-            'bono_pagado_real_clp': 'Pagado real', 'observacion': 'Observación',
+            'otif_pct': 'OTIF M-1', 'espiritu_mll_pct': 'Espíritu',
+            'bono_pagado_real_clp': 'Pagado real', 'observacion': 'Obs.',
         })
         st.dataframe(show, use_container_width=True, hide_index=True)
 
 
 def _render_tab_roadmap():
-    """Tab Roadmap H0/H1/H2/H3 — versión bono grupal manual."""
+    """Tab Roadmap H0/H1/H2/H3 con modelo oficial OTIF/Prod/Espíritu."""
     st.markdown("### 🛣️ Roadmap del módulo Bonos Facturación")
     st.caption(
-        "Versión completa en `docs/BONOS_FACTURACION_ROADMAP.md`. "
-        "Diseño actual: **scope solo B2C, pozo grupal, distribución manual por jefe.**"
+        "Versión completa: `docs/BONOS_FACTURACION_ROADMAP.md` · "
+        "**Modelo oficial UnionX: OTIF 40% / Productividad 50% / Espíritu MLL 10%**"
     )
 
-    st.markdown("#### 🎯 Decisiones tomadas (cerradas)")
+    st.markdown("#### 🎯 Decisiones tomadas")
     st.success("""
-- ✅ **Scope:** solo pedidos B2C (Marketplace, Páginas Propias, Tiendas Propias, Fidelización)
+- ✅ **Scope:** solo pedidos B2C
 - ✅ **Tipo de bono:** pozo grupal — N personas × bono por persona
-- ✅ **Distribución:** manual — el jefe de facturación reparte el pozo entre el equipo
-- ✅ **Umbral NC:** 1% (sobre esto cae factor calidad)
-- ✅ **Cómo se carga el pozo:** manualmente desde la pestaña 💵 Carga Bonos
+- ✅ **Distribución:** manual por el jefe
+- ✅ **Fórmula oficial:** OTIF 40% + Productividad 50% + Espíritu MLL 10%
+- ✅ **OTIF:** medido contra mes cerrado (M-1). En mayo se evalúa abril.
+- ✅ **Productividad:** pedidos B2C / N personas, contra meta PPTO. Objetivo >90%.
+- ✅ **Espíritu MLL:** nota 0-100% del jefe (ratio 0-100% del componente 10%).
+- ✅ **Ratio pagable OTIF/Prod:** 90-100% (bajo 90 no paga, sobre 100 cap a 100).
 """)
 
     st.markdown("#### 📅 Fases")
     fases = [
         {
             "Fase": "🟢 H0 — HOY",
-            "Pieza": "Pozo grupal mes (N × bono), pedidos B2C facturados, meta PPTO, tasa NC, bono devengado, histórico YTD, alarmas cuello botella WMS",
-            "Dónde se ve": "Tabs Resumen / Pozo grupal / Histórico + Alertas Negocio",
-            "Meta": "100% PPTO · NC ≤ 1%",
+            "Pieza": "Pozo grupal, productividad real (pedidos B2C/N), OTIF manual, Espíritu MLL manual, bono devengado mensual, histórico YTD, alarmas cuello botella WMS",
+            "Dónde se ve": "Tabs Resumen / Pozo / Histórico + Alertas Negocio",
+            "Meta": "OTIF >98% · Productividad >90%",
             "Estado": "✅ Operativo",
         },
         {
             "Fase": "🟡 H1 — 2-4 semanas",
-            "Pieza": "SLA real (delta emisión factura − creación pedido en Odoo), alarma 'mes va bajo bono' al día 20",
-            "Dónde se ve": "Tab Resumen (SLA real) + Alertas Negocio",
-            "Meta": "SLA ≥ 95%",
-            "Estado": "🟡 Config ya disponible · SLA pendiente extract Odoo",
+            "Pieza": "**OTIF automatizado** desde fuente real (¿WMS? ¿Odoo entregados a tiempo?), alarma 'mes va bajo bono' al día 20, plantilla bulk de carga histórica",
+            "Dónde se ve": "Tab Resumen (OTIF auto) + Alertas + Tab Carga (botón bulk)",
+            "Meta": "Cero carga manual de OTIF",
+            "Estado": "🟡 Pendiente definir fuente OTIF",
         },
         {
             "Fase": "🟠 H2 — 1-3 meses",
-            "Pieza": "Matching NC ↔ pedido B2C (por origen_so), tipificación NC por causa raíz (solo las por error facturación entran al cálculo), aprobación formal mes + export PDF planilla",
-            "Dónde se ve": "Tab Histórico (NC depurada) + Tab Cierre Mensual (nuevo)",
-            "Meta": "NC precisa por origen · Cero discusión post-cierre",
+            "Pieza": "Espíritu MLL formalizado (rúbrica con sub-KPIs sumables), aprobación mensual + export PDF planilla, bloqueo edición tras cierre",
+            "Dónde se ve": "Tab Carga (rúbrica), Tab Cierre Mensual (nuevo)",
+            "Meta": "Cero discusión post-cierre",
             "Estado": "⏳ Pendiente",
         },
         {
             "Fase": "🔵 H3 — 3-6 meses",
-            "Pieza": "Pozo ponderado por mix canal (marketplaces más simples vs B2C custom), Forecast Prophet a nivel pedidos, dashboard externo del equipo (sin login)",
-            "Dónde se ve": "Tab Resumen + pantalla operativa nueva",
-            "Meta": "Equidad · awareness diario equipo",
+            "Pieza": "Forecast pedidos B2C (Prophet directo, no Método C), dashboard externo equipo, vinculación con NPS/Helpdesk para Espíritu MLL data-driven",
+            "Dónde se ve": "Tab Resumen + pantalla operativa",
+            "Meta": "Bonos predictivos · awareness equipo",
             "Estado": "⏳ Pendiente",
         },
     ]
     st.dataframe(pd.DataFrame(fases), use_container_width=True, hide_index=True)
 
     st.divider()
-    st.markdown("#### 🔄 Flujo mensual (cómo se usa)")
-    st.markdown("""
-1. **Inicio de mes** → vas a **💵 Carga Bonos** y cargas N personas + bono por persona.
-2. **Durante el mes** → revisas **📊 Resumen** y **👥 Pozo grupal** para ver cómo va.
-   - Te enteras temprano si el avance va bajo (volumen) o si subió la tasa NC.
-3. **Cierre de mes** → ves el **pozo devengado** según factores cumplidos.
-4. **El jefe de facturación reparte** el pozo entre las personas (criterio propio).
-5. **Vas a 💵 Carga Bonos** y registras el **bono pagado real** total.
-6. **📈 Histórico** queda con el track de devengado vs pagado y YTD acumulado.
+    st.markdown("#### 🔄 Flujo mensual")
+    st.markdown(f"""
+1. **Inicio de mes** → tab **💵 Carga Bonos**: N personas + bono/persona + OTIF mes anterior + Espíritu MLL.
+2. **Durante el mes** → **📊 Resumen** y **👥 Pozo grupal** para ver avance.
+   - Sabes temprano si productividad va bajo {PROD_OBJETIVO}% y vas a perder ese 50%.
+3. **Cierre de mes** → pozo devengado según los 3 KPIs cumplidos.
+4. **Jefe reparte** el pozo manualmente entre el equipo.
+5. **Registrar pagado real** en **💵 Carga Bonos** para reconciliar.
+6. **📈 Histórico** queda con track YTD devengado vs pagado.
+""")
+
+    st.markdown("#### ❓ Pregunta abierta")
+    st.warning("""
+**¿De dónde sacamos el OTIF automatizado en H1?**
+
+Opciones:
+- WMS Odoo (despachos cumplidos en fecha)
+- Couriers (tracking entregado dentro del SLA prometido)
+- Sistema interno tipo "PostExpress" si lo hay
+
+Mientras tanto, OTIF se carga manual cada mes en la tab 💵 Carga Bonos.
 """)
 
 
 def render():
     st.title("💰 Bonos — Facturación")
     st.caption(
-        "Bono mensual del área de facturación · scope **solo B2C** · "
-        "factores volumen + calidad (NC) + SLA. Roadmap completo en `docs/BONOS_FACTURACION_ROADMAP.md`."
+        "Modelo oficial UnionX: **OTIF 40% + Productividad 50% + Espíritu MLL 10%** · "
+        "Scope solo B2C · Pozo grupal · Distribución manual por jefe."
     )
 
     hoy = date.today()
 
-    # ----------- SIDEBAR — Config bono -----------
+    # ----------- SIDEBAR (solo meta) -----------
     with st.sidebar:
-        st.markdown("### ⚙️ Configuración Bono")
+        st.markdown("### ⚙️ Meta de productividad")
         st.caption(
-            "💡 El **pozo** (cuánta plata hay en juego) se carga en la pestaña "
-            "**💵 Carga Bonos**. Acá ajustas cómo se calcula qué porción del "
-            "pozo se gana."
+            "La meta de pedidos B2C contra la que se mide productividad. "
+            "Por default sale del PPTO 2026 (Método C calibrado YTD)."
         )
-        base = st.number_input(
-            "Pozo fallback (CLP)",
-            min_value=0, max_value=50_000_000, value=600_000, step=50_000,
-            help="Solo se usa si no cargas N personas × bono persona en tab Config.",
-        )
-
-        st.markdown("---")
-        st.markdown("**🎚️ Pesos de cada factor**")
-        with st.expander("ℹ️ ¿Qué son los pesos?"):
-            st.markdown("""
-Definen **cuánto influye cada factor en el bono**.
-
-Ejemplo con pozo = $1.000.000 y pesos 60/25/15:
-- Si el equipo cumple TODO al 100% → cobra $1.000.000 completo.
-- Si cumplen volumen 100% pero NC se dispara → pierden el 25% de calidad → cobran $750.000.
-- Si volumen va al 50% (bajo umbral 80%) → pierden el 60% de volumen → cobran $400.000.
-
-**Recomendación:** 60% volumen / 25% calidad / 15% SLA. Lo más importante es facturar todo el pedido (volumen), pero sin emitir mal (calidad).
-""")
-
-        preset = st.selectbox(
-            "Preset rápido",
-            ["Recomendado (60/25/15)",
-             "Solo volumen (100/0/0)",
-             "Volumen + calidad (70/30/0)",
-             "Equilibrado (40/30/30)",
-             "Personalizado"],
-            index=0,
-        )
-        presets = {
-            "Recomendado (60/25/15)": (60, 25, 15),
-            "Solo volumen (100/0/0)": (100, 0, 0),
-            "Volumen + calidad (70/30/0)": (70, 30, 0),
-            "Equilibrado (40/30/30)": (40, 30, 30),
-        }
-        if preset != "Personalizado":
-            peso_vol, peso_cal, peso_sla = presets[preset]
-            st.caption(f"Volumen **{peso_vol}%** · Calidad **{peso_cal}%** · SLA **{peso_sla}%**")
-        else:
-            peso_vol = st.slider("Peso Volumen — cumplir meta de pedidos", 0, 100, 60, 5)
-            peso_cal = st.slider("Peso Calidad — no emitir NC", 0, 100, 25, 5)
-            peso_sla = st.slider("Peso SLA — facturar rápido", 0, 100, 15, 5)
-            if (peso_vol + peso_cal + peso_sla) != 100:
-                st.warning("⚠️ Pesos no suman 100%, se normalizan.")
-        total = peso_vol + peso_cal + peso_sla or 1
-        pesos = {'volumen': peso_vol / total, 'calidad': peso_cal / total,
-                 'sla': peso_sla / total}
-
-        st.markdown("---")
-        st.markdown("**🎯 Umbrales**")
-        umbral_nc = st.number_input(
-            "Tasa NC máxima sin penalizar (%)", 0.1, 10.0, 1.0, 0.1,
-            help="Sobre este % la calidad empieza a descontar. Al doble del umbral cae a 0."
-        )
-
-        st.markdown("---")
-        st.markdown("**📐 Meta pedidos B2C del mes**")
-        modo_meta = st.radio("Origen", ["PPTO (Método C)", "Manual"])
+        modo_meta = st.radio("Origen meta", ["PPTO (Método C)", "Manual"])
         if modo_meta == "Manual":
             meta_manual = st.number_input("Meta pedidos B2C", 0, 100_000, 14_000, 500)
             mix_b2c, ticket_b2c = MIX_B2C_DEFAULT, TICKET_B2C_DEFAULT
@@ -673,6 +760,17 @@ Ejemplo con pozo = $1.000.000 y pesos 60/25/15:
             meta_manual = None
             mix_b2c = st.number_input("Mix B2C asumido (%)", 50.0, 95.0, 76.6, 0.5) / 100
             ticket_b2c = st.number_input("Ticket B2C (CLP)", 10_000, 60_000, 25_791, 500)
+
+        st.divider()
+        st.markdown("### 📐 Pesos del bono")
+        st.markdown(f"""
+- **OTIF:** {PESO_OTIF*100:.0f}% (objetivo >{OTIF_OBJETIVO}%)
+- **Productividad:** {PESO_PROD*100:.0f}% (objetivo >{PROD_OBJETIVO}%)
+- **Espíritu MLL:** {PESO_ESPIRITU*100:.0f}% (SÍ/NO)
+
+Ratio pagable: {RATIO_MIN:.0f}-{RATIO_MAX:.0f}%
+        """)
+        st.caption("⚙️ Pesos hardcoded según política UnionX. Cambiarlos requiere edición en código.")
 
     # ----------- CARGA DATOS -----------
     ventas = _load_ventas_year(hoy.year)
@@ -691,14 +789,14 @@ Ejemplo con pozo = $1.000.000 y pesos 60/25/15:
     ])
 
     with tab_res:
-        _render_tab_resumen(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
-                             modo_meta, meta_manual, mix_b2c, ticket_b2c)
+        _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
+                             mix_b2c, ticket_b2c, df_cfg)
     with tab_pozo:
-        _render_tab_pozo(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
-                          modo_meta, meta_manual, mix_b2c, ticket_b2c, df_cfg)
+        _render_tab_pozo(ventas, nc, ppto, hoy, modo_meta, meta_manual,
+                          mix_b2c, ticket_b2c, df_cfg)
     with tab_hist:
-        _render_tab_historico(ventas, nc, ppto, hoy, base, pesos, umbral_nc,
-                               modo_meta, meta_manual, mix_b2c, ticket_b2c, df_cfg)
+        _render_tab_historico(ventas, nc, ppto, hoy, modo_meta, meta_manual,
+                                mix_b2c, ticket_b2c, df_cfg)
     with tab_cfg:
         _render_tab_config(hoy)
     with tab_road:
