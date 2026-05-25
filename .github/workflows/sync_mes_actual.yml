@@ -44,21 +44,39 @@ jobs:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           PYTHONIOENCODING: utf-8
         run: |
+          set -o pipefail
           SOURCE="${{ github.event.inputs.source || 'odoo' }}"
           MES_ARG=""
           if [ -n "${{ github.event.inputs.mes }}" ]; then
             MES_ARG="--mes ${{ github.event.inputs.mes }}"
           fi
-          python extract_mes_actual_a_parquet.py --source $SOURCE $MES_ARG
+          mkdir -p data/logs
+          echo "[debug] source=$SOURCE mes_arg='$MES_ARG'" | tee data/logs/sync_mes_actual_last.log
+          echo "[debug] secrets: LIBSQL_URL=${LIBSQL_URL:+set} ANDRES_ODOO_PASSWORD=${ANDRES_ODOO_PASSWORD:+set}" | tee -a data/logs/sync_mes_actual_last.log
+          echo "[debug] python version: $(python --version)" | tee -a data/logs/sync_mes_actual_last.log
+          python extract_mes_actual_a_parquet.py --source $SOURCE $MES_ARG 2>&1 | tee -a data/logs/sync_mes_actual_last.log
 
-      - name: Commit si cambió
+      - name: Upload log siempre (debug)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-mes-actual-log-${{ github.run_id }}
+          path: data/logs/sync_mes_actual_last.log
+          retention-days: 14
+
+      - name: Commit (parquet + log, siempre)
+        if: always()
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions Sync Mes"
-          git add data/historico/ventas_mes_actual.parquet
+          # Commit del log SIEMPRE (incluso si el step anterior falló).
+          # Así el log queda en el repo y podemos diagnosticar sin auth.
+          git add data/logs/sync_mes_actual_last.log || true
+          git add data/historico/ventas_mes_actual.parquet || true
           if git diff --staged --quiet; then
             echo "Sin cambios, nada que commitear"
           else
-            git commit -m "Sync mes actual: $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git push
+            git commit -m "Sync mes actual: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "Commit falló"
+            git pull --rebase origin main || true
+            git push || echo "Push falló"
           fi
