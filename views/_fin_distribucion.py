@@ -337,6 +337,169 @@ def cargar_gav_detalle_persona(year: int, meses: list[int] | None = None,
     return agg
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# DISTRIBUCIÓN DIRECTA DE REMUNERACIONES KAM
+#
+# Regla única (acordada con Andrés 25-may-2026):
+#   Si una fila del GAV tiene `cuenta_analitica = KAM*` (KAM, KAM1, KAM2, ...)
+#   Y `cuenta_analitica_persona` contiene el nombre de un KAM del Sheet KAM,
+#   entonces el sueldo se distribuye entre sus tipo_negocio proporcional a
+#   la venta de su cartera. Todo lo demás del GAV mantiene los drivers
+#   heurísticos por área.
+#
+# NO hay que tocar el Sheet — la detección es automática.
+# ════════════════════════════════════════════════════════════════════════════
+
+KAM_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "contribucion_kam.parquet"
+
+
+def _norm_persona(s: str) -> str:
+    """Normaliza para matching: uppercase + saca acentos."""
+    if not s:
+        return ""
+    s = str(s).upper().strip()
+    return (s.replace("Á", "A").replace("É", "E").replace("Í", "I")
+              .replace("Ó", "O").replace("Ú", "U").replace("Ñ", "N"))
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _kams_validos_del_sheet() -> list[str]:
+    """Lista de nombres de KAMs presentes en el Sheet KAM. Excluye 'TODOS'
+    (placeholder usado para gastos compartidos)."""
+    if not KAM_PARQUET.exists():
+        return []
+    df = pd.read_parquet(KAM_PARQUET)
+    if "kam" not in df.columns:
+        return []
+    nombres = sorted({_norm_persona(k) for k in df["kam"].dropna().unique()
+                       if k and _norm_persona(k) != "TODOS"})
+    return [n for n in nombres if n]
+
+
+def detectar_kam(cuenta_analitica: str, persona: str,
+                  kams_validos: list[str] | None = None) -> str | None:
+    """Si el cargo es KAM* y la persona matchea con un KAM del Sheet, devuelve
+    el nombre del KAM. Sino devuelve None.
+
+    Match: el nombre KAM aparece como palabra dentro del nombre completo
+    de la persona (case y acento insensitivos).
+    """
+    if not cuenta_analitica or not persona:
+        return None
+    ca = str(cuenta_analitica).upper().strip()
+    if not ca.startswith("KAM"):
+        return None
+    if kams_validos is None:
+        kams_validos = _kams_validos_del_sheet()
+    if not kams_validos:
+        return None
+    p_norm = _norm_persona(persona)
+    # Match por palabra: " KAM_NAME " (con espacios alrededor para no matchear
+    # prefijos), o al inicio/final del string.
+    palabras = set(p_norm.split())
+    for kam in kams_validos:
+        if kam in palabras:
+            return kam
+    return None
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_pesos_kam_por_tipo_negocio(year: int,
+                                         meses: tuple | None = None) -> dict:
+    """Devuelve {kam: {tipo_negocio: peso_0_a_1}} basado en Venta REAL KAM
+    YTD del KAM, según el Sheet KAM.
+
+    Si un KAM trabaja Marketplace + Fidelización, y vende $70 MM en Mkt y
+    $30 MM en Fid → pesos = {Marketplace: 0.7, Fidelización: 0.3}.
+    """
+    if not KAM_PARQUET.exists():
+        return {}
+    df = pd.read_parquet(KAM_PARQUET)
+    if "kam" not in df.columns or "tipo_negocio" not in df.columns:
+        return {}
+    df = df[df["year"] == year].copy()
+    if meses:
+        df = df[df["month"].isin(list(meses))]
+    if df.empty:
+        return {}
+
+    # Preferir 'Venta REAL KAM'; sino caer a 'Venta KAM'
+    venta_col = None
+    for c in ["Venta REAL KAM", "Venta KAM", "venta_real_kam", "venta_kam"]:
+        if c in df.columns:
+            venta_col = c
+            break
+    if venta_col is None:
+        return {}
+
+    df[venta_col] = pd.to_numeric(df[venta_col], errors="coerce").fillna(0)
+    df["kam_norm"] = df["kam"].apply(_norm_persona)
+    agg = df.groupby(["kam_norm", "tipo_negocio"])[venta_col].sum().reset_index()
+    agg = agg[agg[venta_col] > 0].copy()
+    if agg.empty:
+        return {}
+
+    pesos: dict[str, dict[str, float]] = {}
+    for kam in agg["kam_norm"].unique():
+        if not kam or kam == "TODOS":
+            continue
+        sub = agg[agg["kam_norm"] == kam]
+        total = sub[venta_col].sum()
+        if total <= 0:
+            continue
+        pesos[kam] = {row["tipo_negocio"]: row[venta_col] / total
+                       for _, row in sub.iterrows()}
+    return pesos
+
+
+def distribuir_monto_kam(
+    monto: float,
+    kam_norm: str,
+    pesos_kam_por_tn: dict,
+    df_ventas: pd.DataFrame,
+    dimension: str = "canal",
+) -> dict:
+    """Distribuye un monto (sueldo) según los tipo_negocio que trabaja un KAM,
+    adaptando al `dimension` pedido en la vista.
+
+    - dimension=tipo_negocio: aplica los pesos directos del KAM.
+    - dimension=kam: asigna el 100% al KAM mismo (clave = nombre del kam).
+    - dimension=canal: cada peso de tipo_negocio se sub-distribuye a los
+      canales (clientes) que vendieron en ese tipo_negocio, prop. a
+      venta_neta del canal en ese tipo_negocio.
+
+    Retorna: {valor_dimension: monto_asignado}.
+    """
+    pesos_tn = pesos_kam_por_tn.get(kam_norm, {})
+    if not pesos_tn or monto <= 0:
+        return {}
+
+    if dimension == "tipo_negocio":
+        return {tn: monto * w for tn, w in pesos_tn.items()}
+
+    if dimension == "kam":
+        return {kam_norm: monto}
+
+    if dimension == "canal":
+        if df_ventas.empty or "tipo_negocio" not in df_ventas.columns:
+            return {}
+        out: dict[str, float] = {}
+        for tn, w_tn in pesos_tn.items():
+            sub = df_ventas[df_ventas["tipo_negocio"] == tn]
+            total_tn = sub["venta_neta"].sum() if "venta_neta" in sub.columns else 0
+            if total_tn <= 0:
+                continue
+            for _, row in sub.iterrows():
+                canal = row.get("canal")
+                if not canal:
+                    continue
+                peso_canal_en_tn = row["venta_neta"] / total_tn
+                out[canal] = out.get(canal, 0) + monto * w_tn * peso_canal_en_tn
+        return out
+
+    return {}
+
+
 def distribuir_monto_a_dimension(
     monto: float,
     df_ventas: pd.DataFrame,

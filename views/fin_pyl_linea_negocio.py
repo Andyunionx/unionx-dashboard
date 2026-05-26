@@ -42,11 +42,15 @@ from views._ops_contrib_helper import (
 )
 from views._fin_distribucion import (
     DRIVER_DEFAULT_POR_CC,
+    _kams_validos_del_sheet,
     cargar_costos_operativos,
     cargar_gav_corporativo,
     cargar_gav_detalle_persona,
+    cargar_pesos_kam_por_tipo_negocio,
     cargar_ventas_canal_ln,
+    detectar_kam,
     distribuir_monto_a_dimension,
+    distribuir_monto_kam,
     driver_default,
     driver_default_gav,
 )
@@ -725,22 +729,63 @@ def render():
                     "Monto": v,
                 })
 
+    # ─── DISTRIBUCIÓN DEL GAV ─────────────────────────────────────────────
+    # Regla nueva (25-may-2026): para filas con cargo KAM* y persona que
+    # matchea un KAM del Sheet, distribuir prop. a venta de cartera del KAM.
+    # Para todo el resto, mantener el driver heurístico por área.
+    #
+    # Para implementarlo iteramos el DETALLE por persona (no el agregado por
+    # área) — eso nos permite separar fila por fila qué método aplicar.
     gav_por_dim = {}
     gav_drilldown = []
-    if not df_gav.empty and not df_ventas_drivers.empty:
-        for _, g in df_gav.iterrows():
+    monto_kam_directo = 0.0
+    monto_gav_heuristico = 0.0
+    kams_no_matched: list[str] = []  # warning si un cargo KAM* no matchea ningún KAM
+
+    df_gav_det = cargar_gav_detalle_persona(year, meses_sel, escenario="FCST")
+    pesos_kam_tn = cargar_pesos_kam_por_tipo_negocio(
+        year, tuple(meses_sel) if meses_sel else None
+    )
+    kams_validos = _kams_validos_del_sheet()
+
+    if not df_gav_det.empty and not df_ventas_drivers.empty:
+        for _, g in df_gav_det.iterrows():
+            ca = g.get("cuenta_analitica", "")
+            persona = g.get("cuenta_analitica_persona", "")
+            monto = float(g["monto"])
             area = g["area"]
-            driver = driver_default_gav(area)
-            asignacion = distribuir_monto_a_dimension(
-                g["monto"], df_ventas_drivers, driver, dimension=desglose,
-            )
+            kam_match = detectar_kam(ca, persona, kams_validos)
+
+            if kam_match and kam_match in pesos_kam_tn:
+                # Modo DIRECTO: distribuir prop. a venta de cartera del KAM
+                asignacion = distribuir_monto_kam(
+                    monto, kam_match, pesos_kam_tn, df_ventas_drivers,
+                    dimension=desglose,
+                )
+                driver_label = f"directo KAM ({kam_match.title()})"
+                monto_kam_directo += monto
+            else:
+                # Modo HEURÍSTICO: driver por área (lo de siempre)
+                driver = driver_default_gav(area)
+                asignacion = distribuir_monto_a_dimension(
+                    monto, df_ventas_drivers, driver, dimension=desglose,
+                )
+                driver_label = driver
+                monto_gav_heuristico += monto
+                if str(ca).upper().startswith("KAM") and not kam_match:
+                    kams_no_matched.append(
+                        f"{ca} / {persona} (no matchea ningún KAM del Sheet)"
+                    )
+
             for k, v in asignacion.items():
                 if k not in valores_visibles:
                     continue
                 gav_por_dim[k] = gav_por_dim.get(k, 0) + v
                 gav_drilldown.append({
                     "Área GAV": area,
-                    "Driver": driver,
+                    "Cargo": ca or "—",
+                    "Persona": persona or "—",
+                    "Driver": driver_label,
                     _label_dim(desglose): k,
                     "Monto": v,
                 })
@@ -1036,6 +1081,39 @@ def render():
             st.markdown(
                 f"**Total GAV puro:** `${_fmt_clp(gav_total / 1_000_000)} MM`"
             )
+
+            # ─── KPIs de cómo se distribuyó el GAV ──────────────────────
+            total_gav_dist = monto_kam_directo + monto_gav_heuristico
+            if total_gav_dist > 0:
+                pct_kam = monto_kam_directo / total_gav_dist * 100
+                col_a, col_b, col_c = st.columns(3)
+                col_a.metric(
+                    "🎯 Sueldos KAM (regla directa)",
+                    f"${_fmt_clp(monto_kam_directo / 1_000_000)} MM",
+                    f"{pct_kam:.1f}% del GAV",
+                )
+                col_b.metric(
+                    "📊 Resto del GAV (heurístico por área)",
+                    f"${_fmt_clp(monto_gav_heuristico / 1_000_000)} MM",
+                    f"{100 - pct_kam:.1f}% del GAV",
+                )
+                col_c.metric(
+                    "Total GAV asignado",
+                    f"${_fmt_clp(total_gav_dist / 1_000_000)} MM",
+                )
+
+            if kams_no_matched:
+                with st.expander(
+                    f"⚠️ {len(set(kams_no_matched))} cargo(s) KAM* sin matchear "
+                    f"con un KAM del Sheet — siguen en heurístico"
+                ):
+                    for caso in sorted(set(kams_no_matched)):
+                        st.caption(f"• {caso}")
+                    st.caption(
+                        "Para activar la regla directa para estos cargos: completar "
+                        "`CUENTA ANALITICA1` con el nombre del KAM correspondiente "
+                        "tal como figura en el Sheet KAM (ej: 'IGNACIA', 'TRINIDAD')."
+                    )
 
         # ─── Sección 2.5: GAV detalle por cargo y persona ────────────────
         # Usa la nueva col CUENTA ANALITICA1 del Sheet Drive (mayo 2026)
