@@ -500,6 +500,13 @@ Configurados en:
 3. Cargar costo manual en Odoo para los 4 SKUs sin `standard_price`
 4. Fix BEL anuladas: detectar y poner `costo_total=0` para no perder $101K
 5. Decidir si crear columna formal `linea_negocio` o quedarse con `tipo_negocio`
+6. **NCs sin canal — heredar de documento contable** (propuesta Andrés 26-may):
+   - 11 NCs en mayo con canal "NC sin orden" (–$352K) — sin SO asociado
+   - Fix propuesto en [ventas_service.py:1146-1170](../finanzas-unionx/backend/app/services/ventas_service.py#L1146):
+     - Si `factura_orig.invoice_origin` → buscar SO con ese nombre → heredar canal
+     - Si `factura_orig.partner_id` en Maestra Canales → usar ese canal
+     - Si journal_id (Boleta/Factura) tiene canal asociado → heredar
+     - Fallback: clasificar como "Ajustes contables" (NO "NC sin orden")
 
 ### Mejoras UX
 6. Vista nueva: comparativo P&L Drive vs ventas Turso (cuadrar diferencias)
