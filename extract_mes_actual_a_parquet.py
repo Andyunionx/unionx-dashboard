@@ -176,13 +176,22 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
             df.loc[mask, 'margen_front'] = df.loc[mask, 'venta_neta'] - df.loc[mask, 'costo_total']
             df.loc[mask, 'margen_final'] = df.loc[mask, 'margen_front']
 
+    # NORMALIZAR fecha_venta y fecha_documento del extract Odoo a string YYYY-MM-DD
+    # antes de cualquier concat. Odoo a veces devuelve timestamp completo,
+    # otras solo fecha; mezclas causan ArrowTypeError al guardar parquet.
+    for fcol in ('fecha_venta', 'fecha_documento'):
+        if fcol in df.columns:
+            df[fcol] = pd.to_datetime(df[fcol], errors='coerce').dt.strftime('%Y-%m-%d')
+
     # Inyectar facturas manual_externa (Sodimac y similares cargadas a Turso manualmente).
     # Estas NO están en Odoo, entonces el extract las pierde. Se conservan en CSV local.
     manual_csv = PROJECT_ROOT / 'data' / 'manual_externa_facturas.csv'
     if manual_csv.exists():
         manual = pd.read_csv(manual_csv)
-        # Filtrar al rango pedido
+        # Filtrar al rango pedido (fechas como string YYYY-MM-DD, mismo dtype que df)
         manual['fecha_venta'] = pd.to_datetime(manual['fecha_venta']).dt.strftime('%Y-%m-%d')
+        if 'fecha_documento' in manual.columns:
+            manual['fecha_documento'] = pd.to_datetime(manual['fecha_documento'], errors='coerce').dt.strftime('%Y-%m-%d')
         manual = manual[(manual['fecha_venta'] >= desde) & (manual['fecha_venta'] < hasta)]
         if not manual.empty:
             print(f"   [manual_externa] Inyectando {len(manual)} filas (Sodimac etc)...")
