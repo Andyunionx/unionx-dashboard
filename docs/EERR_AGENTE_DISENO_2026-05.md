@@ -177,4 +177,97 @@ Y yo:
 
 ---
 
-_Documento generado: 25-may-2026 · Stand-by hasta llegada EERR mayo._
+# 🏦 Extensión: Balance mensual (mismo agente, modo Balance)
+
+Análisis post-25-may: el flujo Balance comparte ~80% con el EERR. Se hace
+UN SOLO agente con 2 modos en lugar de 2 agentes separados.
+
+## Patrón mail Balance
+
+Mismo sender (`victor@unionx.cl`), subject típico `balance al DD de MES AÑO`.
+Último ejemplo: 21-may-2026 "balance al 30 de abril 2026".
+
+## Archivo Balance Víctor — estructura
+
+`NN BALANCE MES AÑO.xlsx` con 5 hojas:
+- **`Balance Clasificado`** ← la importante (64f x 22c, vista ejecutiva)
+- `PRESTAMOS COMERCIALES`
+- `Balance acumulado`
+- `BALANCE DEL MES`
+- `HOJA TRABAJO`
+
+## Mapeo 1:1 — NO requiere Maestra externa
+
+A diferencia del EERR, el Balance es **copy-paste fila a fila**:
+
+| Cuenta | Fila Víctor (`Balance Clasificado`) | Fila Planificación (`Ref Balances`) |
+|---|---|---|
+| Caja y equivalente | 6 | 6 |
+| Existencias | 7 | 7 |
+| CxC comerciales | 8 | 8 |
+| Anticipo proveedor | 9 | 9 |
+| Otras CxC | 10 | 10 |
+| Impuestos por recuperar | 11 | 11 |
+| Interés diferido | 12 | 12 |
+| Impuesto diferido | 13 | 13 |
+| Anticipo sueldos | 14 | 14 |
+| Otros | 15 | 15 |
+| Propiedades (oficina) | 19 | 19 |
+| Equipos (vehículos) | 20 | 20 |
+| Depreciación Acumulada | 21 | 21 |
+| CxP comerciales | 28 | 28 |
+| Sueldos x pagar | 29 | 29 |
+| Anticipo clientes / Provisiones | 30 | 30 |
+| Deuda financiera | 31 | 31 |
+| Préstamos socios | 32 | 32 |
+| Deuda Revolving | 33 | 33 |
+| Impuestos por pagar | 34 | 34 |
+| Capital emitido | 38 | 38 |
+| Utilidad acumulada | 39 | 39 |
+| Utilidad del ejercicio | 40 | 40 |
+| Dividendos pagados | 41 | 41 |
+
+Filas Total (16, 22, 24, 35, 42, 44) = fórmulas, NO escribir.
+
+## Reporte Balance (skill v1.3 Escenario 2)
+
+Genera Reporte de Situación Financiera con:
+- Estructura del Balance (Activos / Pasivos / Patrimonio)
+- Ratios de Liquidez y Solvencia (Razón Corriente, Prueba Ácida,
+  Endeudamiento, Deuda/Patrimonio, Cobertura)
+- Capital de Trabajo (Schedule)
+- Recomendaciones
+
+## Arquitectura unificada (revisada 25-may)
+
+```
+agente-finanzas-mensual/                   🆕 reemplaza agente-eerr-mensual
+├── main.py                                # detector + router (EERR vs Balance)
+├── config/
+│   ├── config.yaml
+│   ├── maestra_eerr_overrides.yaml        # solo modo EERR
+│   └── balance_mapping.yaml               # 1:1 fijo (modo Balance)
+├── src/
+│   ├── detector_mail.py                   # común
+│   ├── parser_eerr.py                     # modo EERR
+│   ├── parser_balance.py                  # modo Balance
+│   ├── mapeador_eerr.py                   # modo EERR (con Maestra Excel)
+│   ├── mapeador_balance.py                # modo Balance (mapping interno fijo)
+│   ├── preview.py                         # común
+│   ├── insertador_planilla.py             # común (sabe escribir ambas hojas)
+│   ├── analizador.py                      # común — bifurca según modo
+│   ├── render_reporte.py                  # común — bifurca según modo (v1.3)
+│   └── notificador.py                     # común
+└── logs/
+```
+
+## Mes envío estimado del Balance
+
+Por el patrón histórico, Víctor manda **el balance del mes anterior alrededor del
+día 17-21 del mes siguiente** (abril 30 → mail del 21-may). Es ~5 días después
+del EERR. Eso permite procesar EERR primero (semana 2) y Balance después
+(semana 3) en cada ciclo mensual.
+
+---
+
+_Última actualización: 25-may-2026 — extensión modo Balance._
