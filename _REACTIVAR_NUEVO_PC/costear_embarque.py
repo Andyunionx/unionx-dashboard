@@ -69,6 +69,34 @@ CONCEPTOS_INLAND_CHINA_KNOWN = {
     "comision_steven":["steven", "comision", "3%"],
 }
 
+
+def _matches_concepto_inland(texto_busqueda: str) -> tuple[str | None, str | None]:
+    """Devuelve (key, pattern_que_matcheó) o (None, None).
+
+    Match con word boundaries para evitar falsos positivos como 'ff' matcheando
+    dentro de 'duffel', 'shutoff', 'power off', 'waterproofperformance', etc.
+    El bug se manifestó en el PI 26TP0320 donde 3 muestras (26320-3 HB2 hair
+    dryer con 'shutoff', 26320-7 WaterproofDuffel, 26320-14 SOG-45L con
+    'power off') fueron mal clasificadas como Form F.
+
+    Para patterns con espacios ya internos (ej "local charge"), el regex con
+    \\b sigue funcionando correctamente.
+    """
+    for key, patterns in CONCEPTOS_INLAND_CHINA_KNOWN.items():
+        for p in patterns:
+            # \b en re.search: borde de palabra. 'ff' NO matchea 'duffel'.
+            # Para "3%" el % no es \w, así que el \b al final no aplica bien;
+            # caemos a substring solo para patterns que no son alfanuméricos.
+            if re.search(r'\W', p):
+                # Pattern con caracteres no-palabra (%, espacio + dígito, etc):
+                # substring directo es seguro porque el pattern ya es específico
+                if p in texto_busqueda:
+                    return key, p
+            else:
+                if re.search(rf'\b{re.escape(p)}\b', texto_busqueda):
+                    return key, p
+    return None, None
+
 PCT_AGENTE_ADUANA = 0.0016  # 0.16% sobre CIF en USD (segun skill)
 
 # ---------------------------------------------------------------------------
@@ -254,12 +282,10 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
         if amount == 0 and "price" in headers:
             amount = _to_float(row[headers["price"]])
 
-        # 1) Detectar conceptos Inland China (busca en descripcion + model)
-        concepto_inland = None
-        for key, patterns in CONCEPTOS_INLAND_CHINA_KNOWN.items():
-            if any(p in texto_busqueda for p in patterns):
-                concepto_inland = key
-                break
+        # 1) Detectar conceptos Inland China (busca en descripcion + model,
+        # con word boundaries para evitar falsos positivos de patterns cortos
+        # como 'ff' matcheando dentro de 'duffel', 'shutoff', 'power off').
+        concepto_inland, _pat_match = _matches_concepto_inland(texto_busqueda)
 
         if concepto_inland:
             if concepto_inland == "form_f":
