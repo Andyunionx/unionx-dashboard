@@ -1146,10 +1146,12 @@ class VentasService(BaseOdooService):
                     if factura_orig:  # Crear línea NC incluso sin orden asociada
                         # Si no tenemos la orden, usar datos de la factura original
                         if not orden_orig:
-                            # Crear un objeto "orden" ficticio basado en la factura
+                            # Crear un objeto "orden" ficticio basado en la factura.
+                            # channel vacío para que el fallback FAC/BEL/Ajustes (más abajo)
+                            # pueda decidir el canal correcto.
                             orden_orig = {
                                 'name': f"Factura {factura_orig.get('name', '')}",
-                                'channel': 'NC sin orden',
+                                'channel': '',
                                 'state': 'sale',
                                 'warehouse_id': [None, 'Bodega Central'],
                             }
@@ -1159,7 +1161,23 @@ class VentasService(BaseOdooService):
                         fecha_dt = pd.to_datetime(fecha_nc) if fecha_nc else pd.NaT
                         hora_nc = fecha_dt.strftime('%H:%M:%S') if pd.notna(fecha_dt) else ''
 
-                        # Resolver canal de la NC (cliente del pedido o de la propia NC -> Maestra Canales)
+                        # ════════════════════════════════════════════════════════════
+                        # RESOLUCIÓN DE CANAL PARA NCs (skill embebida 26-may-2026)
+                        # ════════════════════════════════════════════════════════════
+                        # Orden de intentos (de más específico a más genérico):
+                        #
+                        # 1. Partner del SO original → Maestra Canales (caso normal)
+                        # 2. Partner de la NC misma → Maestra Canales
+                        # 3. Partner de la factura original → Maestra Canales
+                        # 4. Heurística por tipo de documento contable:
+                        #    - FAC*  → "UnionX B2B"  (facturas = B2B típico)
+                        #    - BEL*  → "UnionX web"  (boletas = B2C web)
+                        # 5. Fallback final → "Ajustes contables" (NO "NC sin orden")
+                        #
+                        # Esto resuelve el caso de NCs huérfanas (sin partner mapeado).
+                        # Antes esas filas quedaban con canal="NC sin orden" sin TN/KAM
+                        # → distorsionaba reportes por canal.
+                        # ════════════════════════════════════════════════════════════
                         partner_nc = ''
                         if orden_orig and orden_orig.get('partner_id'):
                             partner_nc = orden_orig['partner_id'][1] if isinstance(orden_orig['partner_id'], (list, tuple)) else ''
@@ -1172,13 +1190,27 @@ class VentasService(BaseOdooService):
                             (orden_orig.get('channel') if orden_orig else '') or '',
                             (orden_orig.get('channel_order_reference') if orden_orig else '') or ''
                         )
-                        if not canal_nc:
-                            canal_nc = 'NC sin orden'
+
+                        # Fallback por tipo de documento contable (FAC vs BEL).
+                        # También cubrir el string legacy "NC sin orden" por si quedó
+                        # cacheado en alguna ruta.
+                        if not canal_nc or canal_nc == 'NC sin orden':
+                            doc_name = (factura_orig.get('name', '') if factura_orig else '').upper()
+                            if doc_name.startswith('FAC'):
+                                canal_nc = 'UnionX B2B'
+                            elif doc_name.startswith('BEL'):
+                                canal_nc = 'UnionX web'
+                            else:
+                                canal_nc = 'Ajustes contables'
 
                         # Tipo Negocio + KAM para NC
                         tn_info_nc = canal_a_tn.get(canal_nc, {})
                         tipo_negocio_nc = tn_info_nc.get('tipo_negocio', '')
                         kam_nc = tn_info_nc.get('kam', '')
+
+                        # Si el canal es fallback "Ajustes contables", asignar TN explícito
+                        if canal_nc == 'Ajustes contables' and not tipo_negocio_nc:
+                            tipo_negocio_nc = 'Ajustes contables'
 
                         # FIX MARGEN NC: aplicar costo proporcional de la factura original.
                         # Mg de devolución = -venta_neta + costo_proporcional
