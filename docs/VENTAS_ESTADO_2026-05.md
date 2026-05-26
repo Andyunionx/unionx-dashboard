@@ -108,6 +108,15 @@ CON fix (YYYY-MM-DD):          SUM bruta mayo = $432,277,673
 ```
 Diferencia: $11,27 MM = 465 filas del 25-may que quedaban fuera del `BETWEEN`.
 
+#### Patrón recurrente: "Oh no Error running app" tras push de parquet (26-may)
+**Síntoma:** Después de pushear un parquet con muchos cambios (filas nuevas, cambio de schema), Streamlit Cloud carga el código nuevo pero el cache_resource de `get_local_db_path` queda pegado a la BD vieja en estado inconsistente → app tira "Oh no Error running app".
+
+**Workaround actual:** Reboot manual desde share.streamlit.io → Manage app → Reboot. ~1 min y vuelve.
+
+**Fix permanente:** post-Cyber Monday, migrar a DuckDB sobre parquet (Fase 3 del plan). DuckDB lee parquet directo sin SQLite intermedio → cache_resource no se pega.
+
+**Veces que pasó:** mínimo 3 (24-may, 25-may, 26-may). Cada vez resuelto con reboot.
+
 #### Stock LIVE + 7 workflows con bug sistémico (commit `4e4bc58` + `b8c3298`)
 **Hallazgo:** El cron `sync_stock.yml` que actualiza Stock LIVE cada 3h **nunca funcionó** — carpeta `data/stock/` siempre vacía en repo. Causa: mismo patrón que `sync_mes_actual.yml` (instalaba `pip install pandas pyarrow requests` pero los scripts importan del backend `finanzas-unionx/backend/app/`).
 
