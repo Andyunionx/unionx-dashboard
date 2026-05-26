@@ -11,6 +11,9 @@ Drivers soportados:
   - "pedidos"  → reparto proporcional a # pedidos del canal
   - "unidades" → reparto proporcional a # unidades despachadas
   - "venta"    → reparto proporcional a venta neta del canal
+  - "mc_absoluto" → reparto proporcional al MC absoluto del tipo_negocio
+                    (Benefits-Received, IMA Statement 4B — para gastos
+                    transversales/gerenciales sin causalidad directa)
   - "equitativo" → reparto igual entre canales activos
   - "manual"   → permite override % por canal
 
@@ -67,16 +70,23 @@ DRIVER_DEFAULT_POR_CC = {
 # ============================================================
 # DRIVERS POR ÁREA DEL GAV "PURO" (control_gestion sin operaciones)
 # ============================================================
+# Cambio 26-may-2026 (Andres): áreas comerciales/transversales pasan de
+# "venta" a "mc_absoluto" siguiendo Benefits-Received del IMA Statement 4B.
+# Razón: "venta" penaliza canales de alto volumen-bajo margen (ML con
+# descuentos altos absorbe overhead que no causa). MC absoluto refleja
+# la capacidad real del canal para sostener overhead corporativo.
+# Sueldos KAM con persona en Sheet KAM siguen su regla directa-cartera
+# (ver detectar_kam + distribuir_monto_kam).
 DRIVER_DEFAULT_POR_AREA_GAV = {
-    "COMERCIAL":                  "venta",       # KAMs/comercial escalan con revenue
-    "MARKETING":                  "venta",       # inversión proporcional al canal
-    "FINANZAS Y ADMINISTRACION":  "venta",       # backoffice escala con volumen $$
-    "FINANZAS Y ADMINISTRACIÓN":  "venta",
+    "COMERCIAL":                  "mc_absoluto", # Sebastián/Nicolás/Nicole no-KAM
+    "MARKETING":                  "mc_absoluto", # brand corporativo (futuro: directo_marca)
+    "FINANZAS Y ADMINISTRACION":  "mc_absoluto", # backoffice — escala con MC, no $$
+    "FINANZAS Y ADMINISTRACIÓN":  "mc_absoluto",
     "GRUPO ETER":                 "equitativo",  # holding apoya a todos por igual
     "LEGALES Y NOTARIALES":       "equitativo",  # servicios corporativos
-    "UNIONX":                     "venta",
-    "UNION X":                    "venta",
-    "TIENDA":                     "venta",
+    "UNIONX":                     "mc_absoluto", # entidad corporativa UNIONX
+    "UNION X":                    "mc_absoluto",
+    "TIENDA":                     "mc_absoluto",
 }
 
 # Áreas del control_gestion que SON operativas (ya están en costo_operativo,
@@ -500,6 +510,92 @@ def distribuir_monto_kam(
     return {}
 
 
+# ════════════════════════════════════════════════════════════════════════════
+# DISTRIBUCIÓN POR MC ABSOLUTO (Benefits-Received — IMA Statement 4B)
+#
+# Para gastos transversales/gerenciales sin causalidad directa con un canal.
+# Se reparte proporcional al MC absoluto del tipo_negocio. Razón teórica:
+# el canal con mayor MC absoluto tiene mayor capacidad de absorber overhead
+# corporativo. Evita penalizar canales de alto volumen-bajo margen (caso
+# clásico: Mercado Libre con descuentos altos).
+#
+# MC ≤ 0 se excluye del reparto (canales en pérdida no absorben overhead).
+# ════════════════════════════════════════════════════════════════════════════
+
+@st.cache_data(ttl=600, show_spinner=False)
+def cargar_pesos_mc_absoluto_por_tn(year: int,
+                                       meses: tuple | None = None) -> dict:
+    """Devuelve {tipo_negocio: peso_0_a_1} basado en MC absoluto YTD del
+    Sheet KAM. Solo incluye tipo_negocio con MC > 0.
+
+    Si Marketplace tiene MC=$362 MM y Fidelización MC=$65 MM (otros canales),
+    Marketplace recibe ~85% del peso y Fidelización ~15%.
+    """
+    if not KAM_PARQUET.exists():
+        return {}
+    df = pd.read_parquet(KAM_PARQUET)
+    if "tipo_negocio" not in df.columns or "resultado_contrib" not in df.columns:
+        return {}
+    df = df[df["year"] == year].copy()
+    if meses:
+        df = df[df["month"].isin(list(meses))]
+    if df.empty:
+        return {}
+
+    df["resultado_contrib"] = pd.to_numeric(df["resultado_contrib"], errors="coerce").fillna(0)
+    mc_por_tn = df.groupby("tipo_negocio")["resultado_contrib"].sum()
+    mc_por_tn = mc_por_tn[mc_por_tn > 0]  # excluir MC negativos
+    total_mc = mc_por_tn.sum()
+    if total_mc <= 0:
+        return {}
+    return (mc_por_tn / total_mc).to_dict()
+
+
+def distribuir_monto_mc_absoluto(
+    monto: float,
+    pesos_mc_por_tn: dict,
+    df_ventas: pd.DataFrame,
+    dimension: str = "canal",
+) -> dict:
+    """Distribuye un monto según MC absoluto por tipo_negocio.
+
+    - dimension=tipo_negocio: aplica los pesos MC directos.
+    - dimension=kam: agrega por KAM (necesita mapping tn→kam, fallback a tn).
+    - dimension=canal: cada peso_tn se sub-distribuye a canales (clientes)
+      del tipo_negocio prop. a venta del canal en el tn (cascade similar a KAM).
+
+    Retorna: {valor_dimension: monto_asignado}.
+    """
+    if not pesos_mc_por_tn or monto <= 0:
+        return {}
+
+    if dimension == "tipo_negocio":
+        return {tn: monto * w for tn, w in pesos_mc_por_tn.items()}
+
+    if dimension == "kam":
+        # Sin mapping tn→kam acá, devolvemos los tn (la vista normaliza)
+        return {tn: monto * w for tn, w in pesos_mc_por_tn.items()}
+
+    if dimension == "canal":
+        if df_ventas.empty or "tipo_negocio" not in df_ventas.columns:
+            return {}
+        out: dict[str, float] = {}
+        for tn, w_tn in pesos_mc_por_tn.items():
+            sub = df_ventas[df_ventas["tipo_negocio"] == tn]
+            total_tn = sub["venta_neta"].sum() if "venta_neta" in sub.columns else 0
+            if total_tn <= 0:
+                continue
+            for _, row in sub.iterrows():
+                canal = row.get("canal")
+                if not canal:
+                    continue
+                peso_canal_en_tn = row["venta_neta"] / total_tn
+                out[canal] = out.get(canal, 0) + monto * w_tn * peso_canal_en_tn
+        return out
+
+    return {}
+
+
 def distribuir_monto_a_dimension(
     monto: float,
     df_ventas: pd.DataFrame,
@@ -523,6 +619,22 @@ def distribuir_monto_a_dimension(
     elif driver == "venta":
         col = "venta_neta"
     elif driver == "equitativo":
+        valores = df_ventas[dimension].unique()
+        n = len(valores)
+        return {v: monto / n for v in valores} if n > 0 else {}
+    elif driver == "mc_absoluto":
+        # Carga lazy de pesos MC (cacheada, costo casi 0). Si no hay data
+        # del Sheet KAM, fallback a "equitativo" para evitar concentrar
+        # todo en un solo canal.
+        # NOTA: para mejor performance, usar `distribuir_monto_mc_absoluto`
+        # directamente desde la vista con los pesos cargados una vez.
+        from datetime import datetime
+        pesos = cargar_pesos_mc_absoluto_por_tn(
+            datetime.now().year, None
+        )
+        if pesos:
+            return distribuir_monto_mc_absoluto(monto, pesos, df_ventas, dimension)
+        # Fallback equitativo
         valores = df_ventas[dimension].unique()
         n = len(valores)
         return {v: monto / n for v in valores} if n > 0 else {}

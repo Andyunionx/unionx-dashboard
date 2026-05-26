@@ -47,6 +47,8 @@ from views._fin_distribucion import (
     cargar_gav_corporativo,
     cargar_gav_detalle_persona,
     cargar_pesos_kam_por_tipo_negocio,
+    cargar_pesos_mc_absoluto_por_tn,
+    distribuir_monto_mc_absoluto,
     cargar_ventas_canal_ln,
     detectar_kam,
     distribuir_monto_a_dimension,
@@ -746,6 +748,12 @@ def render():
     pesos_kam_tn = cargar_pesos_kam_por_tipo_negocio(
         year, tuple(meses_sel) if meses_sel else None
     )
+    # MC absoluto por tipo_negocio — para gastos transversales/gerenciales
+    # (IMA Statement 4B Benefits-Received). Reemplaza el % venta legacy
+    # para áreas COMERCIAL/MARKETING/FIN-ADMIN/UNIONX/TIENDA.
+    pesos_mc_tn = cargar_pesos_mc_absoluto_por_tn(
+        year, tuple(meses_sel) if meses_sel else None
+    )
     kams_validos = _kams_validos_del_sheet()
 
     if not df_gav_det.empty and not df_ventas_drivers.empty:
@@ -767,9 +775,16 @@ def render():
             else:
                 # Modo HEURÍSTICO: driver por área (lo de siempre)
                 driver = driver_default_gav(area)
-                asignacion = distribuir_monto_a_dimension(
-                    monto, df_ventas_drivers, driver, dimension=desglose,
-                )
+                if driver == "mc_absoluto" and pesos_mc_tn:
+                    asignacion = distribuir_monto_mc_absoluto(
+                        monto, pesos_mc_tn, df_ventas_drivers,
+                        dimension=desglose,
+                    )
+                else:
+                    # Fallback: drivers tradicionales (equitativo / venta legacy)
+                    asignacion = distribuir_monto_a_dimension(
+                        monto, df_ventas_drivers, driver, dimension=desglose,
+                    )
                 driver_label = driver
                 monto_gav_heuristico += monto
                 if str(ca).upper().startswith("KAM") and not kam_match:
