@@ -54,7 +54,7 @@ jobs:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           PYTHONIOENCODING: utf-8
-        run: python precalcular_kpis_wms.py
+        run: python precalcular_kpis_wms.py --quick
         continue-on-error: true
 
       # ─── 3. EXTRACT COSTO OPERATIVO (Sheet Drive) ──────────────────
