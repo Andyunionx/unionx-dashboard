@@ -1,10 +1,13 @@
-name: Sync Planificación (ventas + stock + tránsito → Turso)
+name: Sync Planificación (Turso + parquets fallback)
 
 on:
   schedule:
     # 06:00 AM Chile = 09:00 UTC (UTC-3)
     - cron: '0 9 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -23,12 +26,40 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow libsql-client requests
+          pip install -r requirements.txt
 
-      - name: Ejecutar sync_planificacion
+      - name: Ejecutar sync_planificacion (escribe a Turso)
+        # Best-effort: si Turso bloquea reads/writes igual seguimos al fallback.
+        continue-on-error: true
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           PYTHONIOENCODING: utf-8
         run: python sync_planificacion.py
+
+      - name: Generar snapshots parquet fallback (Odoo directo — bypass Turso)
+        # stock_live desde Odoo + ventas_diarias desde parquets. forecast_manual
+        # NO se genera acá (el XLSX FCST de 255MB no está en el repo); se refresca
+        # manualmente con `generar_snapshots_offline.py --tabla forecast`.
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          python generar_snapshots_offline.py --tabla ventas
+          python generar_snapshots_offline.py --tabla stock
+
+      - name: Commit parquets fallback al repo (los lee Streamlit Cloud)
+        if: always()
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Sync Planif"
+          git add data/planificacion/snapshots/planif_stock_live.parquet || true
+          git add data/planificacion/snapshots/planif_ventas_diarias_sku.parquet || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios en snapshots"
+          else
+            git commit -m "Sync planif snapshots: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "Commit falló"
+            git pull --rebase origin main || true
+            git push || echo "Push falló"
+          fi
