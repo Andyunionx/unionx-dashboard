@@ -162,19 +162,18 @@ def main():
         snapshot["otif_drive"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
     _save_partial(snapshot)
 
-    # === OTIF para distintas ventanas (para Tab OTIF) ===
+    # === Ventanas adicionales (solo 30d — reducido para velocidad CI) ===
     snapshot["otif_ventanas"] = {}
-    for dias in [7, 14, 30, 60, 90]:
+    for dias in [30]:
         snapshot["otif_ventanas"][f"b2c_{dias}d"] = _safe_run(f"OTIF B2C {dias}d", kpi_otif, dias=dias, canal_b2b=False)
         snapshot["otif_ventanas"][f"b2b_{dias}d"] = _safe_run(f"OTIF B2B {dias}d", kpi_otif, dias=dias, canal_b2b=True)
 
-    # === Pick / Tiempo recepción para distintas ventanas ===
     snapshot["pick_ventanas"] = {}
-    for dias in [7, 14, 30, 60, 90]:
+    for dias in [30]:
         snapshot["pick_ventanas"][f"{dias}d"] = _safe_run(f"Pick Acc {dias}d", kpi_pick_accuracy, dias=dias)
 
     snapshot["recepcion_ventanas"] = {}
-    for dias in [30, 60, 90, 180, 365]:
+    for dias in [90]:
         snapshot["recepcion_ventanas"][f"{dias}d"] = _safe_run(f"Tiempo Rec {dias}d", kpi_tiempo_recepcion, dias=dias)
 
     # Recolectar errores
