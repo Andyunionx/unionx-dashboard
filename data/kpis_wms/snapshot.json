@@ -1,200 +1,625 @@
 {
-  "generado_en": "2026-05-27T17:58:08.440657",
+  "generado_en": "2026-05-27T16:19:17.507830",
   "mes_actual": "2026-05",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.006290407129128079,
+      "total_pickings": 11446,
+      "on_time": 72,
+      "on_time_pct": 0.006290407129128079,
+      "in_full": 11430,
+      "in_full_pct": 0.9986021317490826,
+      "both": 72,
+      "error": null
     },
     "otif_b2b_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.09921671018276762,
+      "total_pickings": 383,
+      "on_time": 40,
+      "on_time_pct": 0.10443864229765012,
+      "in_full": 379,
+      "in_full_pct": 0.9895561357702349,
+      "both": 38,
+      "error": null
     },
     "pick_accuracy_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.9997456441561745,
+      "ok": 15722,
+      "total": 15726,
+      "errores": 4,
+      "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 7.035685795685795,
+      "n_recepciones": 273,
+      "min": -12.351944444444445,
+      "max": 361.9194444444444,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00841",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-27 18:56",
+          "done": "2026-05-27 19:01"
+        },
+        {
+          "picking": "CA1/IN/00840",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-27 18:42",
+          "done": "2026-05-27 18:45"
+        },
+        {
+          "picking": "CA1/IN/00839",
+          "proveedor": "",
+          "horas": 0.4,
+          "scheduled": "2026-05-27 18:05",
+          "done": "2026-05-27 18:30"
+        },
+        {
+          "picking": "CA1/RET/00992",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-27 17:01",
+          "done": "2026-05-27 17:01"
+        },
+        {
+          "picking": "CA1/IN/00825",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 23.8,
+          "scheduled": "2026-05-26 13:31",
+          "done": "2026-05-27 13:18"
+        },
+        {
+          "picking": "CA1/IN/00826",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-26 15:29",
+          "done": "2026-05-26 15:32"
+        },
+        {
+          "picking": "CA1/RET/00991",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-05-26 14:22",
+          "done": "2026-05-26 14:25"
+        },
+        {
+          "picking": "CA1/IN/00819",
+          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
+          "horas": 89.0,
+          "scheduled": "2026-05-22 04:00",
+          "done": "2026-05-25 20:59"
+        },
+        {
+          "picking": "CA1/IN/00824",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 97.6,
+          "scheduled": "2026-05-21 12:00",
+          "done": "2026-05-25 13:36"
+        },
+        {
+          "picking": "CA1/IN/00823",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-22 17:15",
+          "done": "2026-05-22 17:19"
+        },
+        {
+          "picking": "CA1/IN/00822",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-22 17:04",
+          "done": "2026-05-22 17:13"
+        },
+        {
+          "picking": "CA1/IN/00821",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-05-22 16:37",
+          "done": "2026-05-22 16:55"
+        },
+        {
+          "picking": "CA1/IN/00820",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 46.9,
+          "scheduled": "2026-05-20 13:26",
+          "done": "2026-05-22 12:23"
+        },
+        {
+          "picking": "CA1/RET/00987",
+          "proveedor": "Cliente Kitchen Center",
+          "horas": 0.0,
+          "scheduled": "2026-05-20 13:56",
+          "done": "2026-05-20 13:56"
+        },
+        {
+          "picking": "CA1/RET/00986",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-05-18 14:52",
+          "done": "2026-05-18 14:52"
+        },
+        {
+          "picking": "CA1/IN/00817",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-05-18 12:46",
+          "done": "2026-05-18 13:36"
+        },
+        {
+          "picking": "CA1/IN/00816",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-14 20:08",
+          "done": "2026-05-14 20:10"
+        },
+        {
+          "picking": "CA1/IN/00815",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-14 19:56",
+          "done": "2026-05-14 20:02"
+        },
+        {
+          "picking": "CA1/IN/00814",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-05-14 19:24",
+          "done": "2026-05-14 19:38"
+        },
+        {
+          "picking": "CA1/IN/00813",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-14 18:07",
+          "done": "2026-05-14 18:08"
+        }
+      ],
+      "error": null
     },
     "ofr_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.9590590770335787,
+      "total_so": 11287,
+      "total_con_pickings": 11138,
+      "cumplidos": 10682,
+      "parciales": 24,
+      "sin_iniciar": 432,
+      "error": null
     },
     "oct_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 40.96609409268279,
+      "n_orders": 11703,
+      "min_h": 0.018333333333333333,
+      "max_h": 597.8994444444445,
+      "mediana_h": 24.74972222222222,
+      "detalle": [
+        {
+          "so": "CIERRE MES DE MARZO 2026",
+          "cliente": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 597.9,
+          "fecha_orden": "2026-04-17 14:44",
+          "fecha_despacho": "2026-05-12 12:37"
+        },
+        {
+          "so": "S218613",
+          "cliente": "Cliente Mercado Libre, Claudio Andrés Marín Cancino",
+          "horas": 547.4,
+          "fecha_orden": "2026-04-22 18:28",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "S218619",
+          "cliente": "Cliente Mercado Libre, Loreto Eliana Campos Paglia",
+          "horas": 547.2,
+          "fecha_orden": "2026-04-22 18:41",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "S211770",
+          "cliente": "Cliente Shopify, Gianfranco Caffi",
+          "horas": 545.0,
+          "fecha_orden": "2026-04-06 02:51",
+          "fecha_despacho": "2026-04-28 19:52"
+        },
+        {
+          "so": "S218455",
+          "cliente": "Cliente Falabella Fcom, hugo abarca",
+          "horas": 508.7,
+          "fecha_orden": "2026-04-22 10:47",
+          "fecha_despacho": "2026-05-13 15:31"
+        },
+        {
+          "so": "S219506",
+          "cliente": "Cliente Mercado Libre, Mariela Acuña",
+          "horas": 500.9,
+          "fecha_orden": "2026-04-24 16:59",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "S216961",
+          "cliente": "Cliente Mercado Libre, claudia alquinta",
+          "horas": 472.5,
+          "fecha_orden": "2026-04-17 20:38",
+          "fecha_despacho": "2026-05-07 13:06"
+        },
+        {
+          "so": "S224748",
+          "cliente": "Cliente Ripley, Nicols Toro",
+          "horas": 462.9,
+          "fecha_orden": "2026-05-08 05:30",
+          "fecha_despacho": "2026-05-27 12:21"
+        },
+        {
+          "so": "S217144",
+          "cliente": "Cliente Mercado Libre, Damian Huenuhueque",
+          "horas": 454.2,
+          "fecha_orden": "2026-04-18 14:57",
+          "fecha_despacho": "2026-05-07 13:06"
+        },
+        {
+          "so": "S217208",
+          "cliente": "Cliente Mercado Libre, jhonny infante",
+          "horas": 449.3,
+          "fecha_orden": "2026-04-18 19:50",
+          "fecha_despacho": "2026-05-07 13:07"
+        },
+        {
+          "so": "S219971",
+          "cliente": "Cliente Mercado Libre, Julian bermar",
+          "horas": 429.3,
+          "fecha_orden": "2026-04-26 15:44",
+          "fecha_despacho": "2026-05-14 13:05"
+        },
+        {
+          "so": "S220389",
+          "cliente": "Cliente Mercado Libre, Maria Silvia Pulgar Cortes",
+          "horas": 426.6,
+          "fecha_orden": "2026-04-27 19:16",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "S220399",
+          "cliente": "Cliente Mercado Libre, María Ignacia Poblete",
+          "horas": 426.0,
+          "fecha_orden": "2026-04-27 19:52",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "S217503",
+          "cliente": "Cliente Mercado Libre, Elizabeth Opazo",
+          "horas": 424.3,
+          "fecha_orden": "2026-04-19 20:52",
+          "fecha_despacho": "2026-05-07 13:07"
+        },
+        {
+          "so": "S220661",
+          "cliente": "Cliente Mercado Libre, Javier Saldivia",
+          "horas": 407.1,
+          "fecha_orden": "2026-04-28 14:50",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "25683513-1",
+          "cliente": "Global Reward Solutions",
+          "horas": 406.1,
+          "fecha_orden": "2026-04-10 13:59",
+          "fecha_despacho": "2026-04-27 12:05"
+        },
+        {
+          "so": "S220731",
+          "cliente": "Cliente Mercado Libre, Lia Klarmann",
+          "horas": 404.2,
+          "fecha_orden": "2026-04-28 17:42",
+          "fecha_despacho": "2026-05-15 13:54"
+        },
+        {
+          "so": "S217955",
+          "cliente": "Cliente Mercado Libre, Jorge Soto",
+          "horas": 395.9,
+          "fecha_orden": "2026-04-21 01:16",
+          "fecha_despacho": "2026-05-07 13:08"
+        },
+        {
+          "so": "S220411",
+          "cliente": "Cliente Falabella Fcom,",
+          "horas": 379.1,
+          "fecha_orden": "2026-04-27 20:24",
+          "fecha_despacho": "2026-05-13 15:31"
+        },
+        {
+          "so": "S221132",
+          "cliente": "Cliente Mercado Libre, Marcos Ezequiel Moena Rossi",
+          "horas": 377.8,
+          "fecha_orden": "2026-04-29 20:04",
+          "fecha_despacho": "2026-05-15 13:54"
+        }
+      ],
+      "error": null
     },
     "merma_odoo_90d": {
       "valor": null,
-      "error": "Odoo no disponible"
+      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od"
     },
     "ajustes_inventario": {
       "n_ajustes": 0,
-      "error": "Odoo no disponible"
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 0,
-      "error": "Odoo no disponible"
+      "lineas": 13541,
+      "mes": "2026-05",
+      "error": null
     },
     "volumen_movs_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "incoming": 202,
+      "outgoing": 29688,
+      "internal": 20110,
+      "total": 50000,
+      "error": null
     },
     "top_clientes_otif_30d": {
-      "valor": [],
-      "error": "Odoo no disponible"
-    },
-    "devoluciones_picking_error_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "devoluciones_picking_error_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": [
+        {
+          "cliente": "abc S.A.",
+          "total": 76,
+          "tarde": 76,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Global Reward Solutions",
+          "total": 85,
+          "tarde": 85,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 12,
+          "tarde": 12,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Comercializadora SP Digital SPA",
+          "total": 25,
+          "tarde": 25,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Lokal SpA",
+          "total": 8,
+          "tarde": 8,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Genial Group Spa",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SPEEDREAMS SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "COMERCIAL DITEN LIMITADA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 49,
+          "tarde": 42,
+          "on_time_pct": 0.14285714285714285
+        },
+        {
+          "cliente": "Sawa SPA",
+          "total": 62,
+          "tarde": 52,
+          "on_time_pct": 0.16129032258064516
+        },
+        {
+          "cliente": "Cliente Mercado Libre",
+          "total": 11,
+          "tarde": 6,
+          "on_time_pct": 0.45454545454545453
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 5,
+          "tarde": 1,
+          "on_time_pct": 0.8
+        },
+        {
+          "cliente": "Falabella Retail",
+          "total": 9,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        }
+      ],
+      "error": null
     }
   },
-  "errores": [
-    "otif_b2c_30d: Odoo no disponible",
-    "otif_b2b_30d: Odoo no disponible",
-    "pick_accuracy_30d: Odoo no disponible",
-    "tiempo_recepcion_90d: Odoo no disponible",
-    "ofr_30d: Odoo no disponible",
-    "oct_30d: Odoo no disponible",
-    "merma_odoo_90d: Odoo no disponible",
-    "ajustes_inventario: Odoo no disponible",
-    "lineas_mes_actual: Odoo no disponible",
-    "volumen_movs_90d: Odoo no disponible",
-    "top_clientes_otif_30d: Odoo no disponible",
-    "devoluciones_picking_error_90d: Odoo no disponible",
-    "devoluciones_picking_error_30d: Odoo no disponible"
+  "errores": [],
+  "tendencia_6m": [
+    {
+      "mes": "2025-12",
+      "otif_b2c": 0.005098324836125273,
+      "otif_b2b": 0.12727272727272726,
+      "pick_acc": 0.9929967754937525,
+      "n_pickings": 12962,
+      "n_b2c": 12357,
+      "n_b2b": 605
+    },
+    {
+      "mes": "2026-01",
+      "otif_b2c": 0.005798221878623889,
+      "otif_b2b": 0.16906474820143885,
+      "pick_acc": 0.9907438016528926,
+      "n_pickings": 8039,
+      "n_b2c": 7761,
+      "n_b2b": 278
+    },
+    {
+      "mes": "2026-02",
+      "otif_b2c": 0.006277209679052344,
+      "otif_b2b": 0.19318181818181818,
+      "pick_acc": 0.9943600541434803,
+      "n_pickings": 10141,
+      "n_b2c": 9877,
+      "n_b2b": 264
+    },
+    {
+      "mes": "2026-03",
+      "otif_b2c": 0.004325599685410932,
+      "otif_b2b": 0.203579418344519,
+      "pick_acc": 0.9992169529682376,
+      "n_pickings": 15705,
+      "n_b2c": 15258,
+      "n_b2b": 447
+    },
+    {
+      "mes": "2026-04",
+      "otif_b2c": 0.016235451108310477,
+      "otif_b2b": 0.125,
+      "pick_acc": 0.9990532412564045,
+      "n_pickings": 13905,
+      "n_b2c": 13489,
+      "n_b2b": 416
+    },
+    {
+      "mes": "2026-05",
+      "otif_b2c": 0.00508078447312265,
+      "otif_b2b": 0.09345794392523364,
+      "pick_acc": 0.9983774614647097,
+      "n_pickings": 10162,
+      "n_b2c": 9841,
+      "n_b2b": 321
+    }
   ],
-  "tendencia_6m": [],
   "forecast_3m": {
-    "forecast": [],
-    "error": "Odoo no disponible"
-  },
-  "productividad_dia_30d": {
-    "items": [],
-    "error": "Odoo no disponible"
-  },
-  "productividad_semana_12s": {
-    "items": [],
-    "error": "Odoo no disponible"
-  },
-  "productividad_mes_6m": {
-    "items": [],
-    "error": "Odoo no disponible"
-  },
-  "plan_auditoria": {
-    "plan": [],
-    "error": "Odoo no disponible"
-  },
-  "productividad_meses_12m": {
-    "items": [],
-    "error": "Odoo no disponible"
-  },
-  "productividad_semanas_mes_actual": {
-    "items": [],
-    "error": "Odoo no disponible"
-  },
-  "productividad_dias_14d": {
-    "items": [],
-    "error": "Odoo no disponible"
-  },
-  "otif_drive": {
-    "meses_disponibles": [],
-    "por_mes": [],
-    "resumen_por_mes": {},
-    "clientes_por_mes": {},
-    "couriers_por_mes": {},
-    "tarde_por_mes": {}
-  },
-  "otif_ventanas": {
-    "b2c_7d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+    "fuente": "Forecast ventas Prophet (dashboard ventas)",
+    "historico": [
+      {
+        "periodo": "2025-12",
+        "fecha_desde": "2025-12-01",
+        "n_pedidos": 12962,
+        "n_lineas_pickeadas": 19733,
+        "n_unidades_despachadas": 45185,
+        "uds_por_pedido": 3.485958956951088,
+        "lineas_por_pedido": 1.5223730905724426
+      },
+      {
+        "periodo": "2026-01",
+        "fecha_desde": "2026-01-01",
+        "n_pedidos": 8039,
+        "n_lineas_pickeadas": 11991,
+        "n_unidades_despachadas": 26315,
+        "uds_por_pedido": 3.2734170916780694,
+        "lineas_por_pedido": 1.4916034332628436
+      },
+      {
+        "periodo": "2026-02",
+        "fecha_desde": "2026-02-01",
+        "n_pedidos": 10141,
+        "n_lineas_pickeadas": 13242,
+        "n_unidades_despachadas": 26817,
+        "uds_por_pedido": 2.644413765900799,
+        "lineas_por_pedido": 1.305788383788581
+      },
+      {
+        "periodo": "2026-03",
+        "fecha_desde": "2026-03-01",
+        "n_pedidos": 15705,
+        "n_lineas_pickeadas": 20421,
+        "n_unidades_despachadas": 45523,
+        "uds_por_pedido": 2.8986310092327283,
+        "lineas_por_pedido": 1.3002865329512894
+      },
+      {
+        "periodo": "2026-04",
+        "fecha_desde": "2026-04-01",
+        "n_pedidos": 13905,
+        "n_lineas_pickeadas": 17940,
+        "n_unidades_despachadas": 40427,
+        "uds_por_pedido": 2.907371449119022,
+        "lineas_por_pedido": 1.290183387270766
+      },
+      {
+        "periodo": "2026-05",
+        "fecha_desde": "2026-05-01",
+        "n_pedidos": 10162,
+        "n_lineas_pickeadas": 13541,
+        "n_unidades_despachadas": 25617,
+        "uds_por_pedido": 2.520862035032474,
+        "lineas_por_pedido": 1.3325132847864594
+      }
+    ],
+    "ventas_hist_clp": {
+      "2025-12": 471439726.0,
+      "2026-01": 380154435.0,
+      "2026-02": 372918068.0,
+      "2026-03": 679211718.0,
+      "2026-04": 521858124.0,
+      "2026-05": 489789675.0
     },
-    "b2b_7d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+    "forecast": [
+      {
+        "mes": "2026-06",
+        "tipo_proyeccion": "forecast",
+        "venta_proj_clp": 1076021011,
+        "venta_proj_clp_low": 588547960,
+        "venta_proj_clp_high": 1569980191,
+        "vs_ly_pct": 27.18073962467493,
+        "pedidos_proj": 25291,
+        "lineas_proj": 33030,
+        "unidades_proj": 70584,
+        "horas_necesarias_estim": 1660,
+        "horas_disponibles_estandar": 930,
+        "cobertura_pct": 55.99096606707242,
+        "alerta": "🔴 Falta capacidad"
+      },
+      {
+        "mes": "2026-07",
+        "tipo_proyeccion": "forecast",
+        "venta_proj_clp": 616307117,
+        "venta_proj_clp_low": 179055936,
+        "venta_proj_clp_high": 1058357252,
+        "vs_ly_pct": -6.817279058714856,
+        "pedidos_proj": 14486,
+        "lineas_proj": 18918,
+        "unidades_proj": 40428,
+        "horas_necesarias_estim": 951,
+        "horas_disponibles_estandar": 960,
+        "cobertura_pct": 100.91125279943812,
+        "alerta": "🟡 Límite"
+      },
+      {
+        "mes": "2026-08",
+        "tipo_proyeccion": "forecast",
+        "venta_proj_clp": 616724598,
+        "venta_proj_clp_low": 173592653,
+        "venta_proj_clp_high": 1053746135,
+        "vs_ly_pct": 5.535498583269393,
+        "pedidos_proj": 14496,
+        "lineas_proj": 18931,
+        "unidades_proj": 40455,
+        "horas_necesarias_estim": 951,
+        "horas_disponibles_estandar": 885,
+        "cobertura_pct": 92.96367874379855,
+        "alerta": "🟡 Límite"
+      }
+    ],
+    "ratios_aplicados": {
+      "lineas_por_clp": 30.7,
+      "uds_por_clp": 65.6,
+      "pedidos_por_clp": 23.51,
+      "n_meses_promedio": 3,
+      "leyenda": "Por cada $1MM CLP de venta"
     },
-    "b2c_14d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2b_14d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2c_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2b_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2c_60d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2b_60d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2c_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "b2b_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    }
-  },
-  "pick_ventanas": {
-    "7d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "14d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "60d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    }
-  },
-  "recepcion_ventanas": {
-    "30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "60d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "180d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    },
-    "365d": {
-      "valor": null,
-      "error": "Odoo no disponible"
-    }
+    "productividad_actual_lineas_h": 19.9,
+    "n_personas_actual": 5,
+    "error": null
   }
 }
