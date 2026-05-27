@@ -83,6 +83,7 @@ from views.ops_sac import render as render_ops_sac
 from views.ops_logistica import render as render_ops_logistica
 from views.ops_costo_operativo import render as render_ops_costo
 from views.ops_bonos_facturacion import render as render_ops_bonos
+from views.ops_bonos_bodega import render as render_ops_bonos_bodega
 from views.ops_plan_estrategico import render as render_ops_plan
 from views.sistema_alertas import render as render_sistema_alertas
 from views.sistema_seguridad import render as render_sistema_seguridad
@@ -123,6 +124,8 @@ pages = {
     "💰 Bonos": [
         st.Page(render_ops_bonos, title="Facturación", icon="💰",
                 url_path="ops-bonos-facturacion"),
+        st.Page(render_ops_bonos_bodega, title="Bodega", icon="🏭",
+                url_path="ops-bonos-bodega"),
     ],
     "📋 Plan Estratégico": [
         st.Page(render_ops_plan, title="Roadmap H1/H2/H3", icon="📋",
