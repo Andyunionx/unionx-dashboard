@@ -562,10 +562,10 @@ def _render_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
 
         k1, k2 = st.columns(2)
         with k1:
-            otif_in = st.number_input(f"OTIF % — medido en {mes_ant}",
+            otif_in = st.number_input(f"OTIF % override — {mes_key} (0 = usar auto WMS)",
                                        0.0, 100.0, prev_otif, 0.1, key=f"otif_{key}",
                                        help=f"Objetivo >{OTIF_OBJETIVO}%. Ratio pagable 90-100%. "
-                                            f"Déjalo en 0 para que use el auto Drive.")
+                                            f"Deja en 0 para usar el auto WMS.")
         with k2:
             metric_noun = "líneas" if equipo_cfg["prod_metric"] == "lineas" else "pedidos"
             meta_in = st.number_input(
@@ -681,10 +681,7 @@ def _render_historial(equipo_cfg: dict, df_cfg: pd.DataFrame):
         else:
             prod_pct = 0.0
 
-        m1_year = anio if mes > 1 else anio - 1
-        m1_month = mes - 1 if mes > 1 else 12
-        m1_cerrado = (m1_year < hoy.year) or (m1_year == hoy.year and m1_month < hoy.month)
-        otif_auto_h = _otif_drive(f"{m1_year}-{m1_month:02d}") if m1_cerrado else None
+        otif_auto_h = _otif_wms(anio, mes)
         otif_manual_h = row.get("otif_pct")
         otif_f = float(otif_manual_h) if pd.notna(otif_manual_h) and otif_manual_h else otif_auto_h or 0.0
         error_f = row.get("error_despacho_pct")
