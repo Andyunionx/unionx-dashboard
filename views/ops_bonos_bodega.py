@@ -24,6 +24,7 @@ Ratio pagable:
 """
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
 from pathlib import Path
 
@@ -33,6 +34,7 @@ import streamlit as st
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 WMS_PARQUET = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
+SNAPSHOT_FILE = PROJECT_ROOT / "data" / "kpis_wms" / "snapshot.json"
 
 # ── Fórmulas oficiales ────────────────────────────────────────────────────────
 
@@ -165,16 +167,24 @@ def _prod_real(equipo_cfg: dict, year: int, month: int) -> float | None:
     return float(row[equipo_cfg["prod_metric"]].iloc[0])
 
 
-def _otif_wms(year: int, month: int) -> float | None:
-    """OTIF del mes desde parquet WMS (date_done ≤ scheduled_date)."""
-    df = _wms_mensual()
-    if df.empty or "otif_pct" not in df.columns:
+@st.cache_data(ttl=300, show_spinner=False)
+def _otif_drive_snapshot(year: int, month: int) -> float | None:
+    """Lee OTIF Empresa del snapshot pre-calculado (otif_drive → resumen_por_mes).
+    Usa otif_empresa_pct × 100 — la bodega no controla courier externo."""
+    if not SNAPSHOT_FILE.exists():
         return None
-    row = df[(df["year"] == year) & (df["month"] == month)]
-    if row.empty:
+    try:
+        with open(SNAPSHOT_FILE, encoding="utf-8") as f:
+            snap = json.load(f)
+        mes_key = f"{year}-{month:02d}"
+        resumen = snap.get("otif_drive", {}).get("resumen_por_mes", {})
+        row = resumen.get(mes_key)
+        if not row or row.get("error"):
+            return None
+        val = row.get("otif_empresa_pct")
+        return round(float(val) * 100, 2) if val is not None else None
+    except Exception:
         return None
-    v = row["otif_pct"].iloc[0]
-    return float(v) if v is not None and not pd.isna(v) else None
 
 
 # ── Carga/guarda config Turso ─────────────────────────────────────────────────
@@ -357,9 +367,8 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         prod_real_pp = None
         prod_pct = 0.0
 
-    # OTIF desde parquet WMS del mismo mes (date_done ≤ scheduled_date)
-    otif_auto = _otif_wms(anio_sel, mes_sel)
-    otif_fuente_label = "WMS"
+    # OTIF desde snapshot Drive (otif_empresa_pct del mes)
+    otif_auto = _otif_drive_snapshot(anio_sel, mes_sel)
 
     otif_manual_f = _safe_float(otif_manual, None) if otif_manual is not None else None
     if otif_manual_f is not None:
@@ -367,7 +376,7 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     elif otif_auto is not None:
         otif_use, otif_fuente = otif_auto, "auto"
     else:
-        otif_use, otif_fuente = 0.0, "sin_scheduled"
+        otif_use, otif_fuente = 0.0, "sin_drive"
 
     error_use = _safe_float(error_manual, 0.0) if error_manual is not None else 0.0
     esp_use = _safe_float(espiritu_manual, 0.0) if espiritu_manual is not None else 0.0
@@ -379,8 +388,8 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     col_n = 4 if equipo_cfg["error_peso"] else 4
     cols = st.columns(col_n)
 
-    fuente_emoji = {"auto": "🤖", "manual": "📝", "sin_scheduled": "⚠️"}[otif_fuente]
-    cols[0].metric(f"OTIF {fuente_emoji}", f"{otif_use:.1f}%",
+    fuente_emoji = {"auto": "🤖", "manual": "📝", "sin_drive": "⚠️"}[otif_fuente]
+    cols[0].metric(f"OTIF Empresa {fuente_emoji}", f"{otif_use:.1f}%",
                     f"Objetivo >{OTIF_OBJETIVO}%")
 
     metric_label = "Líneas/persona" if equipo_cfg["prod_metric"] == "lineas" else "Pedidos/persona"
@@ -417,14 +426,14 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
 
     # Avisos
     if otif_fuente == "auto":
-        st.success(f"✅ OTIF traído automáticamente desde WMS ({otif_auto:.1f}%) — date_done ≤ scheduled_date.")
+        st.success(f"✅ OTIF Empresa traído automáticamente desde Drive Sheet ({otif_auto:.1f}%) — mes {mes_key}.")
     elif otif_fuente == "manual":
-        st.info(f"📝 OTIF override manual ({otif_use:.1f}%). Para usar WMS automático, bórralo en Carga Bonos.")
-    elif otif_fuente == "sin_scheduled":
-        st.warning("⚠️ OTIF no disponible: el parquet WMS aún no tiene `scheduled_date`. Próxima extracción lo incluirá, o ingrésalo manualmente.")
+        st.info(f"📝 OTIF override manual ({otif_use:.1f}%). Para usar Drive automático, bórralo en Carga Bonos.")
+    elif otif_fuente == "sin_drive":
+        st.warning(f"⚠️ OTIF no disponible en snapshot para {mes_key}. El mes puede estar abierto aún o faltar en el Drive Sheet. Ingrésalo manualmente.")
 
     faltantes = []
-    if otif_fuente == "sin_scheduled":
+    if otif_fuente == "sin_drive":
         faltantes.append("OTIF")
     if espiritu_manual is None:
         faltantes.append("Espíritu MLL")
@@ -440,7 +449,7 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     mes_key = f"{anio_sel}-{mes_sel:02d}"
     filas = [
         {
-            "KPI": f"OTIF (WMS {mes_key})",
+            "KPI": f"OTIF Empresa (Drive {mes_key})",
             "Peso": f"{equipo_cfg['otif_peso']*100:.0f}%",
             "Objetivo": f">{OTIF_OBJETIVO}%",
             "Real": f"{otif_use:.1f}%",
@@ -529,10 +538,10 @@ def _render_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         mes_key = f"{anio}-{mes_n:02d}"
         st.caption(f"Bono de **{mes_key}** · OTIF calculado desde WMS del mismo mes")
 
-        otif_auto_f = _otif_wms(anio, mes_n)
+        otif_auto_f = _otif_drive_snapshot(anio, mes_n)
         if otif_auto_f is not None:
-            st.success(f"🤖 OTIF auto WMS ({mes_key}): **{otif_auto_f:.1f}%**. "
-                       f"Deja en 0 para usar el auto, o pon un valor manual para override.")
+            st.success(f"🤖 OTIF Empresa Drive ({mes_key}): **{otif_auto_f:.1f}%**. "
+                       f"Deja el override en 0 para usar automático.")
 
         prev = cfg_dict.get(mes_key, {})
         prev_n = _safe_int(prev.get("n_personas"), equipo_cfg["n_default"])
@@ -681,7 +690,7 @@ def _render_historial(equipo_cfg: dict, df_cfg: pd.DataFrame):
         else:
             prod_pct = 0.0
 
-        otif_auto_h = _otif_wms(anio, mes)
+        otif_auto_h = _otif_drive_snapshot(anio, mes)
         otif_manual_h = row.get("otif_pct")
         otif_f = float(otif_manual_h) if pd.notna(otif_manual_h) and otif_manual_h else otif_auto_h or 0.0
         error_f = row.get("error_despacho_pct")
