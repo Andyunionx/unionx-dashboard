@@ -106,7 +106,7 @@ def main():
          ("date_done", ">=", desde),
          ("date_done", "<", hasta),
          ("picking_type_code", "in", ["outgoing", "internal"])],
-        ["id", "name", "date_done", "picking_type_id", "partner_id",
+        ["id", "name", "date_done", "scheduled_date", "picking_type_id", "partner_id",
          "picking_type_code"],
         limit=500000,
     )
@@ -118,6 +118,7 @@ def main():
     df_p = pd.DataFrame(pickings)
     df_p["picking_id"] = df_p["id"]
     df_p["fecha_done"] = pd.to_datetime(df_p["date_done"], errors="coerce")
+    df_p["scheduled_date"] = pd.to_datetime(df_p.get("scheduled_date"), errors="coerce")
     df_p["picking_type_name"] = df_p["picking_type_id"].apply(
         lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
     df_p["partner_name"] = df_p["partner_id"].apply(
@@ -161,8 +162,9 @@ def main():
     df["n_lineas"] = df["n_lineas"].fillna(0).astype(int)
     df["n_unidades"] = df["n_unidades"].fillna(0)
 
-    df_out = df[["picking_id", "name", "fecha_done", "picking_type_name",
-                 "partner_name", "picking_type_code", "n_unidades", "n_lineas"]].copy()
+    df_out = df[["picking_id", "name", "fecha_done", "scheduled_date",
+                 "picking_type_name", "partner_name", "picking_type_code",
+                 "n_unidades", "n_lineas"]].copy()
     df_out.to_parquet(OUT_PARQUET, index=False)
     print(f"    {OUT_PARQUET.relative_to(PROJECT_ROOT)} "
           f"({OUT_PARQUET.stat().st_size:,} bytes)", flush=True)

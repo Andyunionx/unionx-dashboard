@@ -123,18 +123,34 @@ def _fmt_num(v) -> str:
 
 @st.cache_data(ttl=600, show_spinner=False)
 def _wms_mensual() -> pd.DataFrame:
-    """Devuelve DataFrame con lineas + pedidos outgoing por (year, month)."""
+    """Devuelve DataFrame con lineas + pedidos outgoing + OTIF por (year, month)."""
     if not WMS_PARQUET.exists():
-        return pd.DataFrame(columns=["year", "month", "lineas", "pedidos"])
+        return pd.DataFrame(columns=["year", "month", "lineas", "pedidos", "otif_pct"])
     df = pd.read_parquet(WMS_PARQUET)
     df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
     df = df[df["picking_type_code"] == "outgoing"].dropna(subset=["fecha_done"])
     df["year"] = df["fecha_done"].dt.year
     df["month"] = df["fecha_done"].dt.month
-    agg = df.groupby(["year", "month"], as_index=False).agg(
-        lineas=("n_lineas", "sum"),
-        pedidos=("picking_id", "nunique"),
-    )
+
+    # OTIF desde parquet si scheduled_date disponible
+    tiene_sched = "scheduled_date" in df.columns
+    if tiene_sched:
+        df["scheduled_date"] = pd.to_datetime(df["scheduled_date"], errors="coerce")
+        df["on_time"] = df["fecha_done"] <= df["scheduled_date"]
+
+    def _agg_mes(g):
+        row = {
+            "lineas": g["n_lineas"].sum(),
+            "pedidos": g["picking_id"].nunique(),
+        }
+        if tiene_sched:
+            validos = g.dropna(subset=["scheduled_date"])
+            row["otif_pct"] = (validos["on_time"].sum() / len(validos) * 100) if len(validos) > 0 else None
+        else:
+            row["otif_pct"] = None
+        return pd.Series(row)
+
+    agg = df.groupby(["year", "month"]).apply(_agg_mes).reset_index()
     return agg
 
 
@@ -147,6 +163,18 @@ def _prod_real(equipo_cfg: dict, year: int, month: int) -> float | None:
     if row.empty:
         return None
     return float(row[equipo_cfg["prod_metric"]].iloc[0])
+
+
+def _otif_wms(year: int, month: int) -> float | None:
+    """OTIF del mes desde parquet WMS (date_done ≤ scheduled_date)."""
+    df = _wms_mensual()
+    if df.empty or "otif_pct" not in df.columns:
+        return None
+    row = df[(df["year"] == year) & (df["month"] == month)]
+    if row.empty:
+        return None
+    v = row["otif_pct"].iloc[0]
+    return float(v) if v is not None and not pd.isna(v) else None
 
 
 # ── Carga/guarda config Turso ─────────────────────────────────────────────────
@@ -242,20 +270,6 @@ def _save_config(mes: str, equipo: str, n_personas: int, bono_persona_clp: float
         return False
 
 
-# ── OTIF automático desde Drive ───────────────────────────────────────────────
-
-@st.cache_data(ttl=600, show_spinner=False)
-def _otif_drive(mes_iso: str) -> float | None:
-    try:
-        from views._ops_otif_drive import kpi_otif_resumen
-        r = kpi_otif_resumen(mes=mes_iso)
-        if r.get("error") or r.get("otif_empresa_pct") is None:
-            return None
-        return float(r["otif_empresa_pct"]) * 100
-    except Exception:
-        return None
-
-
 # ── Cálculo bono ──────────────────────────────────────────────────────────────
 
 def _calcular_bono(equipo_cfg: dict, base: float,
@@ -343,12 +357,9 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         prod_real_pp = None
         prod_pct = 0.0
 
-    # OTIF M-1
-    m1_year = anio_sel if mes_sel > 1 else anio_sel - 1
-    m1_month = mes_sel - 1 if mes_sel > 1 else 12
-    m1_cerrado = (m1_year < hoy.year) or (m1_year == hoy.year and m1_month < hoy.month)
-    mes_m1 = f"{m1_year}-{m1_month:02d}"
-    otif_auto = _otif_drive(mes_m1) if m1_cerrado else None
+    # OTIF desde parquet WMS del mismo mes (date_done ≤ scheduled_date)
+    otif_auto = _otif_wms(anio_sel, mes_sel)
+    otif_fuente_label = "WMS"
 
     otif_manual_f = _safe_float(otif_manual, None) if otif_manual is not None else None
     if otif_manual_f is not None:
@@ -356,7 +367,7 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     elif otif_auto is not None:
         otif_use, otif_fuente = otif_auto, "auto"
     else:
-        otif_use, otif_fuente = 0.0, "faltante" if m1_cerrado else "m1_no_cerrado"
+        otif_use, otif_fuente = 0.0, "sin_scheduled"
 
     error_use = _safe_float(error_manual, 0.0) if error_manual is not None else 0.0
     esp_use = _safe_float(espiritu_manual, 0.0) if espiritu_manual is not None else 0.0
@@ -368,9 +379,8 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     col_n = 4 if equipo_cfg["error_peso"] else 4
     cols = st.columns(col_n)
 
-    fuente_emoji = {"auto": "🤖", "manual": "📝", "faltante": "⚠️",
-                     "m1_no_cerrado": "⏳"}[otif_fuente]
-    cols[0].metric(f"OTIF (M-1) {fuente_emoji}", f"{otif_use:.1f}%",
+    fuente_emoji = {"auto": "🤖", "manual": "📝", "sin_scheduled": "⚠️"}[otif_fuente]
+    cols[0].metric(f"OTIF {fuente_emoji}", f"{otif_use:.1f}%",
                     f"Objetivo >{OTIF_OBJETIVO}%")
 
     metric_label = "Líneas/persona" if equipo_cfg["prod_metric"] == "lineas" else "Pedidos/persona"
@@ -407,14 +417,14 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
 
     # Avisos
     if otif_fuente == "auto":
-        st.success(f"✅ OTIF de {mes_m1} traído automáticamente desde Drive ({otif_auto:.1f}%).")
+        st.success(f"✅ OTIF traído automáticamente desde WMS ({otif_auto:.1f}%) — date_done ≤ scheduled_date.")
     elif otif_fuente == "manual":
-        st.info(f"📝 OTIF override manual ({otif_use:.1f}%). Para usar auto, bórrate en Carga Bonos.")
-    elif otif_fuente == "m1_no_cerrado":
-        st.info(f"⏳ M-1 ({mes_m1}) aún no cerrado — OTIF aparecerá automático cuando cierre.")
+        st.info(f"📝 OTIF override manual ({otif_use:.1f}%). Para usar WMS automático, bórralo en Carga Bonos.")
+    elif otif_fuente == "sin_scheduled":
+        st.warning("⚠️ OTIF no disponible: el parquet WMS aún no tiene `scheduled_date`. Próxima extracción lo incluirá, o ingrésalo manualmente.")
 
     faltantes = []
-    if otif_fuente == "faltante":
+    if otif_fuente == "sin_scheduled":
         faltantes.append("OTIF")
     if espiritu_manual is None:
         faltantes.append("Espíritu MLL")
@@ -427,9 +437,10 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
 
     # Desglose bono
     st.markdown("### 🧮 Desglose del bono")
+    mes_key = f"{anio_sel}-{mes_sel:02d}"
     filas = [
         {
-            "KPI": f"OTIF (M-1 = {mes_m1})",
+            "KPI": f"OTIF (WMS {mes_key})",
             "Peso": f"{equipo_cfg['otif_peso']*100:.0f}%",
             "Objetivo": f">{OTIF_OBJETIVO}%",
             "Real": f"{otif_use:.1f}%",
@@ -502,7 +513,7 @@ def _render_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         f"Define los parámetros del bono para cada mes. Pozo base: "
         f"**{equipo_cfg['n_default']} personas × ${equipo_cfg['bono_default']:,} = "
         f"${equipo_cfg['n_default'] * equipo_cfg['bono_default']:,}/mes**. "
-        f"OTIF se jala automático desde Drive cuando M-1 está cerrado.".replace(",", ".")
+        f"OTIF se calcula automáticamente desde el parquet WMS (date_done ≤ scheduled_date).".replace(",", ".")
     )
 
     cfg_dict = df_e.set_index("mes").to_dict("index") if not df_e.empty else {}
@@ -516,13 +527,12 @@ def _render_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
             mes_n = st.selectbox("Mes", list(range(1, 13)),
                                   index=hoy.month - 1, key=f"carga_mes_{key}")
         mes_key = f"{anio}-{mes_n:02d}"
-        mes_ant = f"{anio}-{mes_n-1:02d}" if mes_n > 1 else f"{anio-1}-12"
-        st.caption(f"Bono de **{mes_key}** · OTIF evaluado contra **{mes_ant}**")
+        st.caption(f"Bono de **{mes_key}** · OTIF calculado desde WMS del mismo mes")
 
-        otif_auto_f = _otif_drive(mes_ant)
+        otif_auto_f = _otif_wms(anio, mes_n)
         if otif_auto_f is not None:
-            st.success(f"🤖 OTIF auto Drive ({mes_ant}): **{otif_auto_f:.1f}%**. "
-                       f"Deja vacío para usar el auto, o pon un valor manual para override.")
+            st.success(f"🤖 OTIF auto WMS ({mes_key}): **{otif_auto_f:.1f}%**. "
+                       f"Deja en 0 para usar el auto, o pon un valor manual para override.")
 
         prev = cfg_dict.get(mes_key, {})
         prev_n = _safe_int(prev.get("n_personas"), equipo_cfg["n_default"])

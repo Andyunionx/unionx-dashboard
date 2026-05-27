@@ -28,20 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ─── 1. SNAPSHOT KPIs WMS (CORE) ───────────────────────────────
-      - name: Pre-calcular KPIs WMS
-        id: kpis_wms
-        env:
-          OPS_ODOO_USER: ${{ secrets.OPS_ODOO_USER }}
-          OPS_ODOO_PASSWORD: ${{ secrets.OPS_ODOO_PASSWORD }}
-          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
-          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
-          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
-          PYTHONIOENCODING: utf-8
-        run: python precalcular_kpis_wms.py
-        continue-on-error: true
-
-      # ─── 2. CREDENTIALS GOOGLE (opcional) ──────────────────────────
+      # ─── 1. CREDENTIALS GOOGLE (primero, para que precalcular pueda leer Drive) ──
       - name: Restaurar credentials.json (para Sheets Drive)
         id: restore_creds
         env:
@@ -55,6 +42,19 @@ jobs:
             echo "creds_ok=false" >> $GITHUB_OUTPUT
             echo "⚠️ Secret GOOGLE_CREDENTIALS_JSON no existe — extractores de Sheets se saltarán"
           fi
+        continue-on-error: true
+
+      # ─── 2. SNAPSHOT KPIs WMS (CORE) ───────────────────────────────
+      - name: Pre-calcular KPIs WMS
+        id: kpis_wms
+        env:
+          OPS_ODOO_USER: ${{ secrets.OPS_ODOO_USER }}
+          OPS_ODOO_PASSWORD: ${{ secrets.OPS_ODOO_PASSWORD }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        run: python precalcular_kpis_wms.py
         continue-on-error: true
 
       # ─── 3. EXTRACT COSTO OPERATIVO (Sheet Drive) ──────────────────

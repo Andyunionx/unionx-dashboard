@@ -126,20 +126,37 @@ def main():
     # === OTIF desde Drive Sheet (precalculado para no bloquear app) ===
     print("\n--- OTIF DRIVE ---", flush=True)
     try:
+        from datetime import date as _date
         from views._ops_otif_drive import (
             kpi_otif_resumen, kpi_otif_por_mes, kpi_otif_por_cliente,
             kpi_otif_por_courier, top_pedidos_tarde, meses_disponibles,
+            cortes_otif_disponibles, dashboard_otif_corte,
         )
-        meses_dispon = meses_disponibles()
+        _hoy_ym = _date.today().strftime("%Y-%m")
+        # Filtrar meses con fechas corruptas (> mes actual) que vienen del Sheet
+        meses_dispon = [m for m in meses_disponibles() if m <= _hoy_ym]
+        cortes = cortes_otif_disponibles()
+        cortes = [c for c in cortes if c["key"] <= _hoy_ym]  # descartar cortes futuros
+        print(f"  Meses válidos: {meses_dispon[:6]}", flush=True)
+        print(f"  Cortes válidos: {len(cortes)} cortes, computando top 6...", flush=True)
+        dashboard_por_corte = {}
+        for c in cortes[:6]:
+            try:
+                dashboard_por_corte[c["key"]] = dashboard_otif_corte(c["key"])
+                print(f"    corte {c['key']} OK", flush=True)
+            except Exception as ec:
+                print(f"    corte {c['key']} ERROR: {ec}", flush=True)
         snapshot["otif_drive"] = {
             "meses_disponibles": meses_dispon,
+            "cortes_disponibles": cortes,
+            "dashboard_por_corte": dashboard_por_corte,
             "por_mes": kpi_otif_por_mes(),
             "resumen_por_mes": {m: kpi_otif_resumen(m) for m in meses_dispon[:6]},
             "clientes_por_mes": {m: kpi_otif_por_cliente(m, top_n=20) for m in meses_dispon[:6]},
             "couriers_por_mes": {m: kpi_otif_por_courier(m) for m in meses_dispon[:6]},
             "tarde_por_mes": {m: top_pedidos_tarde(m, top_n=50) for m in meses_dispon[:6]},
         }
-        print(f"  OK: {len(meses_dispon)} meses disponibles, datos para top 6", flush=True)
+        print(f"  OK: {len(meses_dispon)} meses, {len(cortes)} cortes, {len(dashboard_por_corte)} dashboards precalculados", flush=True)
     except Exception as e:
         print(f"  ERROR OTIF Drive: {type(e).__name__}: {e}", flush=True)
         snapshot["otif_drive"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
