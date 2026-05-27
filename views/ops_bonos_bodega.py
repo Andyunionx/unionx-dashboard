@@ -47,8 +47,8 @@ LOGISTICA = {
     "prod_peso": 0.50,
     "error_peso": None,
     "esp_peso": 0.10,
-    "prod_metric": "lineas",      # sum(n_lineas) outgoing / N personas
-    "meta_prod_default": 2_000,   # lineas/persona/mes (ajustable)
+    "prod_metric": "unidades",    # unidades outgoing / N personas / día operado
+    "meta_prod_default": 450,     # unidades/persona/día (fallback si no hay forecast)
 }
 
 COORDINADOR = {
@@ -60,8 +60,8 @@ COORDINADOR = {
     "prod_peso": 0.30,
     "error_peso": 0.30,
     "esp_peso": 0.10,
-    "prod_metric": "pedidos",     # count(pickings) outgoing / N personas
-    "meta_prod_default": 200,     # pedidos/persona/mes (ajustable)
+    "prod_metric": "unidades",    # unidades outgoing / N personas / día operado
+    "meta_prod_default": 450,     # unidades/persona/día (fallback si no hay forecast)
 }
 
 OTIF_OBJETIVO = 98.0
@@ -125,46 +125,64 @@ def _fmt_num(v) -> str:
 
 @st.cache_data(ttl=600, show_spinner=False)
 def _wms_mensual() -> pd.DataFrame:
-    """Devuelve DataFrame con lineas + pedidos outgoing + OTIF por (year, month)."""
+    """Devuelve DataFrame con unidades + lineas + pedidos + días operados por (year, month)."""
     if not WMS_PARQUET.exists():
-        return pd.DataFrame(columns=["year", "month", "lineas", "pedidos", "otif_pct"])
+        return pd.DataFrame(columns=["year", "month", "unidades", "lineas", "pedidos", "dias_op"])
     df = pd.read_parquet(WMS_PARQUET)
     df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
     df = df[df["picking_type_code"] == "outgoing"].dropna(subset=["fecha_done"])
     df["year"] = df["fecha_done"].dt.year
     df["month"] = df["fecha_done"].dt.month
 
-    # OTIF desde parquet si scheduled_date disponible
-    tiene_sched = "scheduled_date" in df.columns
-    if tiene_sched:
-        df["scheduled_date"] = pd.to_datetime(df["scheduled_date"], errors="coerce")
-        df["on_time"] = df["fecha_done"] <= df["scheduled_date"]
-
     def _agg_mes(g):
-        row = {
-            "lineas": g["n_lineas"].sum(),
-            "pedidos": g["picking_id"].nunique(),
-        }
-        if tiene_sched:
-            validos = g.dropna(subset=["scheduled_date"])
-            row["otif_pct"] = (validos["on_time"].sum() / len(validos) * 100) if len(validos) > 0 else None
-        else:
-            row["otif_pct"] = None
-        return pd.Series(row)
+        return pd.Series({
+            "unidades": float(g["n_unidades"].sum()),
+            "lineas": int(g["n_lineas"].sum()),
+            "pedidos": int(g["picking_id"].nunique()),
+            "dias_op": int(g["fecha_done"].dt.date.nunique()),
+        })
 
     agg = df.groupby(["year", "month"]).apply(_agg_mes).reset_index()
     return agg
 
 
-def _prod_real(equipo_cfg: dict, year: int, month: int) -> float | None:
-    """Retorna el KPI de productividad real del mes (métrica cruda, no %)."""
+@st.cache_data(ttl=600, show_spinner=False)
+def _meta_diaria_forecast(year: int, n_personas: int = 3) -> dict:
+    """Meta unidades/persona/día desde el forecast estacional de costo operativo.
+    Retorna {mes: meta_diaria}. Si falla, dict vacío (usa meta_prod_default)."""
+    import calendar as _cal
+    try:
+        from views._ops_forecast_costo_helper import proyectar_anual
+        df = proyectar_anual(year=year)
+        if df.empty:
+            return {}
+        metas = {}
+        for _, row in df.iterrows():
+            mes = int(row["mes"])
+            unidades = float(row.get("unidades", 0) or 0)
+            _, n_dias = _cal.monthrange(year, mes)
+            dias_hab = sum(1 for d in range(1, n_dias + 1)
+                           if _cal.weekday(year, mes, d) < 5)
+            if n_personas > 0 and dias_hab > 0 and unidades > 0:
+                metas[mes] = round(unidades / n_personas / dias_hab, 1)
+        return metas
+    except Exception:
+        return {}
+
+
+def _prod_real_dia(year: int, month: int, n_personas: int) -> tuple[float | None, int]:
+    """Retorna (unidades/persona/día real, días_operados) del mes desde WMS."""
     df = _wms_mensual()
     if df.empty:
-        return None
+        return None, 0
     row = df[(df["year"] == year) & (df["month"] == month)]
     if row.empty:
-        return None
-    return float(row[equipo_cfg["prod_metric"]].iloc[0])
+        return None, 0
+    unidades = float(row["unidades"].iloc[0])
+    dias_op = int(row["dias_op"].iloc[0])
+    if dias_op == 0 or n_personas == 0:
+        return None, dias_op
+    return round(unidades / n_personas / dias_op, 1), dias_op
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -353,18 +371,29 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     if base_pozo == 0:
         base_pozo = n_personas * bono_persona
 
-    meta_prod_cfg = _safe_float(cfg_row.get("meta_prod"), equipo_cfg["meta_prod_default"])
     otif_manual = cfg_row.get("otif_pct")
     error_manual = cfg_row.get("error_despacho_pct")
     espiritu_manual = cfg_row.get("espiritu_mll_pct")
 
-    # Productividad real desde WMS
-    prod_real_raw = _prod_real(equipo_cfg, anio_sel, mes_sel)
-    if prod_real_raw is not None and n_personas > 0:
-        prod_real_pp = prod_real_raw / n_personas
+    # Meta diaria desde forecast (con fallback a config manual o default)
+    metas_fcst = _meta_diaria_forecast(anio_sel, n_personas)
+    meta_fcst = metas_fcst.get(mes_sel)
+    meta_prod_cfg_manual = _safe_float(cfg_row.get("meta_prod"), 0.0)
+    if meta_prod_cfg_manual > 0:
+        meta_prod_cfg = meta_prod_cfg_manual   # override manual del jefe
+        meta_fuente = "manual"
+    elif meta_fcst:
+        meta_prod_cfg = meta_fcst             # automático desde forecast
+        meta_fuente = "forecast"
+    else:
+        meta_prod_cfg = equipo_cfg["meta_prod_default"]
+        meta_fuente = "default"
+
+    # Productividad real desde WMS (unidades/persona/día)
+    prod_real_pp, dias_op = _prod_real_dia(anio_sel, mes_sel, n_personas)
+    if prod_real_pp is not None:
         prod_pct = (prod_real_pp / meta_prod_cfg * 100) if meta_prod_cfg > 0 else 0.0
     else:
-        prod_real_pp = None
         prod_pct = 0.0
 
     # OTIF desde snapshot Drive (otif_empresa_pct del mes)
@@ -392,16 +421,16 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     cols[0].metric(f"OTIF Empresa {fuente_emoji}", f"{otif_use:.1f}%",
                     f"Objetivo >{OTIF_OBJETIVO}%")
 
-    metric_label = "Líneas/persona" if equipo_cfg["prod_metric"] == "lineas" else "Pedidos/persona"
+    meta_emoji = {"forecast": "🔮", "manual": "📝", "default": "⚙️"}[meta_fuente]
     if prod_real_pp is not None:
         cols[1].metric(
-            f"Productividad ({metric_label})",
-            f"{prod_real_pp:,.0f}".replace(",", "."),
-            f"{prod_pct:.1f}% de meta {meta_prod_cfg:,.0f}".replace(",", "."),
+            f"Prod. unid/pers/día",
+            f"{prod_real_pp:,.1f}".replace(",", "."),
+            f"{prod_pct:.1f}% de meta {meta_prod_cfg:.0f} {meta_emoji}",
             delta_color="off" if prod_pct >= PROD_OBJETIVO else "inverse",
         )
     else:
-        cols[1].metric("Productividad", "Sin datos WMS", "Carga meta manualmente")
+        cols[1].metric("Prod. unid/pers/día", "Sin datos WMS", "Parquet no disponible")
 
     if equipo_cfg["error_peso"]:
         error_label = "Error Despacho" + (" 📝" if error_manual is not None else " ⚠️ FALTA")
@@ -457,10 +486,10 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
             "Aporta": _fmt_num(r_bono["aporta_otif"]),
         },
         {
-            "KPI": f"Productividad ({metric_label})",
+            "KPI": f"Productividad (unid/pers/día)",
             "Peso": f"{equipo_cfg['prod_peso']*100:.0f}%",
-            "Objetivo": f">{PROD_OBJETIVO}%",
-            "Real": f"{prod_pct:.1f}%",
+            "Objetivo": f">{PROD_OBJETIVO}% de meta {meta_prod_cfg:.0f}",
+            "Real": f"{prod_real_pp:.1f} ({prod_pct:.1f}%)" if prod_real_pp else "—",
             "Ratio paga": f"{r_bono['f_prod']*100:.0f}%",
             "Aporta": _fmt_num(r_bono["aporta_prod"]),
         },
@@ -495,21 +524,26 @@ def _render_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     # Productividad detalle
     if prod_real_pp is not None:
         st.divider()
-        st.markdown(f"### 📦 Productividad detalle")
+        st.markdown("### 📦 Productividad detalle")
         p1, p2, p3, p4 = st.columns(4)
-        total_label = "Líneas outgoing" if equipo_cfg["prod_metric"] == "lineas" else "Pedidos outgoing"
-        p1.metric(total_label, f"{prod_real_raw:,.0f}".replace(",", "."),
+        df_wms = _wms_mensual()
+        unidades_total = 0
+        if not df_wms.empty:
+            r = df_wms[(df_wms["year"] == anio_sel) & (df_wms["month"] == mes_sel)]
+            if not r.empty:
+                unidades_total = int(r["unidades"].iloc[0])
+        p1.metric("Unidades outgoing", f"{unidades_total:,}".replace(",", "."),
                    f"WMS {mes_key}")
-        p2.metric(f"Meta {metric_label}", f"{meta_prod_cfg:,.0f}".replace(",", "."),
-                   "Configurable en Carga Bonos")
-        p3.metric(f"Real {metric_label}", f"{prod_real_pp:,.0f}".replace(",", "."))
-        falta = max(0, meta_prod_cfg - prod_real_pp)
-        p4.metric("Faltan para meta", f"{falta:,.0f}".replace(",", "."),
+        p2.metric("Días operados", str(dias_op), f"Meta: {meta_prod_cfg:.0f} u/p/día {meta_emoji}")
+        p3.metric("Real unid/pers/día", f"{prod_real_pp:.1f}")
+        falta = max(0.0, meta_prod_cfg - prod_real_pp)
+        p4.metric("Faltan para meta", f"{falta:.1f}",
                    delta_color="off" if falta == 0 else "inverse")
+        fuente_txt = {"forecast": "forecast P&L estacional", "manual": "override manual",
+                      "default": "valor por defecto"}[meta_fuente]
         st.caption(
-            f"Productividad % = {metric_label} real ({prod_real_pp:,.0f}) / "
-            f"meta ({meta_prod_cfg:,.0f}) × 100 = **{prod_pct:.1f}%**. "
-            f"Para el 50% completo del bono: necesita ≥{RATIO_MAX:.0f}% de meta.".replace(",", ".")
+            f"Productividad % = {prod_real_pp:.1f} real / meta {meta_prod_cfg:.0f} ({fuente_txt}) "
+            f"× 100 = **{prod_pct:.1f}%**. Piso 90% de meta = bono 0; 100% = bono completo."
         )
 
 
@@ -569,19 +603,24 @@ def _render_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         st.divider()
         st.markdown("**📊 KPIs del mes**")
 
+        # Meta forecast como referencia
+        metas_fcst_carga = _meta_diaria_forecast(anio, int(prev_n))
+        meta_fcst_mes = metas_fcst_carga.get(mes_n)
+        if meta_fcst_mes:
+            st.info(f"🔮 Meta forecast estacional para {mes_key}: **{meta_fcst_mes:.0f} unid/pers/día** "
+                    f"(basada en P&L FCST). Deja el override en 0 para usar automático.")
+
         k1, k2 = st.columns(2)
         with k1:
-            otif_in = st.number_input(f"OTIF % override — {mes_key} (0 = usar auto WMS)",
+            otif_in = st.number_input(f"OTIF % override — {mes_key} (0 = usar auto Drive)",
                                        0.0, 100.0, prev_otif, 0.1, key=f"otif_{key}",
                                        help=f"Objetivo >{OTIF_OBJETIVO}%. Ratio pagable 90-100%. "
-                                            f"Deja en 0 para usar el auto WMS.")
+                                            f"Deja en 0 para usar OTIF Empresa del Drive Sheet.")
         with k2:
-            metric_noun = "líneas" if equipo_cfg["prod_metric"] == "lineas" else "pedidos"
             meta_in = st.number_input(
-                f"Meta productividad ({metric_noun}/persona/mes)",
-                1.0, 50_000.0, float(prev_meta), 50.0, key=f"meta_{key}",
-                help=f"Meta de {metric_noun} por persona por mes. "
-                     f"La productividad real se calcula automáticamente desde WMS.",
+                "Meta productividad override (unid/pers/día, 0 = usar forecast)",
+                0.0, 5_000.0, float(prev_meta), 10.0, key=f"meta_{key}",
+                help="Meta en unidades/persona/día. Deja en 0 para que use el forecast P&L estacional.",
             )
 
         if equipo_cfg["error_peso"]:
@@ -664,72 +703,136 @@ def _render_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
 
 
 def _render_historial(equipo_cfg: dict, df_cfg: pd.DataFrame):
+    """Historial retroactivo: calcula bono real para todos los meses con data WMS,
+    usando OTIF Drive + productividad WMS + metas del forecast estacional."""
+    import calendar as _cal
     key = equipo_cfg["key"]
     df_e = df_cfg[df_cfg["equipo"] == key] if not df_cfg.empty else pd.DataFrame()
 
-    st.markdown("### 📈 Historial YTD")
-    if df_e.empty:
-        st.info("Sin datos históricos aún. Carga al menos un mes en 💵 Carga Bonos.")
-        return
+    st.markdown("### 📈 Historial — simulador retroactivo")
+    st.caption(
+        "Cada mes calcula el bono con datos reales de WMS + OTIF Drive. "
+        "Los meses sin config en Carga Bonos usan los valores por defecto del equipo. "
+        "El Espíritu MLL y Error Despacho sin carga manual cuentan como 0%."
+    )
 
     hoy = date.today()
-    rows = []
-    for _, row in df_e.iterrows():
-        try:
-            anio, mes = int(row["mes"][:4]), int(row["mes"][5:7])
-        except Exception:
+    df_wms = _wms_mensual()
+    if df_wms.empty:
+        st.warning("Sin datos WMS disponibles. El parquet de volumen no existe o está vacío.")
+        return
+
+    # Construir índice de config guardada
+    cfg_idx = df_e.set_index("mes").to_dict("index") if not df_e.empty else {}
+
+    # Iterar todos los meses con data WMS, más recientes primero
+    df_wms_sorted = df_wms.sort_values(["year", "month"], ascending=False)
+    rows_num = []   # para gráfico
+    rows_disp = []  # para tabla
+
+    for _, wms_row in df_wms_sorted.iterrows():
+        anio = int(wms_row["year"])
+        mes = int(wms_row["month"])
+        mes_key = f"{anio}-{mes:02d}"
+
+        # Saltar mes actual si incompleto (buffer 7 días)
+        if anio == hoy.year and mes == hoy.month:
             continue
-        n_p = _safe_int(row.get("n_personas"), equipo_cfg["n_default"])
-        bp = _safe_float(row.get("bono_persona_clp"), equipo_cfg["bono_default"])
-        base = _safe_float(row.get("base_clp"), n_p * bp)
 
-        prod_raw = _prod_real(equipo_cfg, anio, mes)
-        meta_prod = _safe_float(row.get("meta_prod"), equipo_cfg["meta_prod_default"])
-        if prod_raw and n_p and meta_prod:
-            prod_pct = (prod_raw / n_p / meta_prod) * 100
-        else:
-            prod_pct = 0.0
+        cfg = cfg_idx.get(mes_key, {})
+        n_p = _safe_int(cfg.get("n_personas"), equipo_cfg["n_default"])
+        bp = _safe_float(cfg.get("bono_persona_clp"), equipo_cfg["bono_default"])
+        base = _safe_float(cfg.get("base_clp"), 0) or n_p * bp
 
-        otif_auto_h = _otif_drive_snapshot(anio, mes)
-        otif_manual_h = row.get("otif_pct")
-        otif_f = float(otif_manual_h) if pd.notna(otif_manual_h) and otif_manual_h else otif_auto_h or 0.0
-        error_f = row.get("error_despacho_pct")
-        esp_f = _safe_float(row.get("espiritu_mll_pct"), 0.0)
+        # Productividad real: unidades/persona/día
+        unidades = float(wms_row.get("unidades", 0))
+        dias_op = int(wms_row.get("dias_op", 0))
+        prod_real_d = round(unidades / n_p / dias_op, 1) if (n_p > 0 and dias_op > 0) else None
 
-        r = _calcular_bono(equipo_cfg, base, otif_f, prod_pct,
-                            float(error_f) if pd.notna(error_f) and error_f is not None else None,
-                            esp_f)
-        pagado = _safe_float(row.get("bono_pagado_real_clp"), 0)
-        rows.append({
-            "Mes": row["mes"],
+        # Meta desde forecast estacional
+        metas_fcst = _meta_diaria_forecast(anio, n_p)
+        meta_manual = _safe_float(cfg.get("meta_prod"), 0.0)
+        meta_d = (meta_manual if meta_manual > 0
+                  else metas_fcst.get(mes, equipo_cfg["meta_prod_default"]))
+        prod_pct = (prod_real_d / meta_d * 100) if (prod_real_d and meta_d) else 0.0
+
+        # OTIF Drive
+        otif_auto = _otif_drive_snapshot(anio, mes)
+        otif_manual_v = _safe_float(cfg.get("otif_pct"), 0.0)
+        otif_f = otif_manual_v if otif_manual_v > 0 else (otif_auto or 0.0)
+
+        # Espíritu y Error
+        esp_f = _safe_float(cfg.get("espiritu_mll_pct"), 0.0)
+        error_raw = cfg.get("error_despacho_pct")
+        error_f = float(error_raw) if (error_raw is not None and pd.notna(error_raw)) else None
+
+        r = _calcular_bono(equipo_cfg, base, otif_f, prod_pct, error_f, esp_f)
+        pagado = _safe_float(cfg.get("bono_pagado_real_clp"), 0)
+
+        rows_num.append({
+            "mes_key": mes_key,
+            "pozo": base,
+            "devengado": r["bono_devengado"],
+            "pagado": pagado,
+        })
+        rows_disp.append({
+            "Mes": mes_key,
             "Pozo": f"${base:,.0f}".replace(",", "."),
-            "OTIF %": f"{otif_f:.1f}%",
+            "OTIF %": f"{otif_f:.1f}%" if otif_f else "—",
+            "Unid/p/día": f"{prod_real_d:.0f}" if prod_real_d else "—",
+            "Meta/día": f"{meta_d:.0f}",
             "Prod %": f"{prod_pct:.1f}%",
+            "Espíritu": f"{esp_f:.0f}%" if esp_f else "—",
             "Factor": f"{r['factor_total']*100:.0f}%",
             "Devengado": f"${r['bono_devengado']:,.0f}".replace(",", "."),
-            "Pagado real": f"${pagado:,.0f}".replace(",", ".") if pagado else "—",
-            "Δ": (f"${pagado - r['bono_devengado']:,.0f}".replace(",", ".")
-                    if pagado else "—"),
+            "Pagado": f"${pagado:,.0f}".replace(",", ".") if pagado else "—",
         })
 
-    if rows:
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-        total_dev = sum(
-            _safe_float(r["Devengado"].replace("$", "").replace(".", ""))
-            for r in rows if r["Devengado"] != "—"
+    if not rows_disp:
+        st.info("Sin meses completos en el parquet WMS aún.")
+        return
+
+    # ── Métricas resumen ──────────────────────────────────────────────────────
+    total_dev = sum(r["devengado"] for r in rows_num)
+    total_pag = sum(r["pagado"] for r in rows_num)
+    total_pozo = sum(r["pozo"] for r in rows_num)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Total devengado", f"${total_dev:,.0f}".replace(",", "."))
+    c2.metric("Total pagado", f"${total_pag:,.0f}".replace(",", ".") if total_pag else "Sin registros")
+    c3.metric("Total pozo acum.", f"${total_pozo:,.0f}".replace(",", "."))
+    eff = total_dev / total_pozo * 100 if total_pozo else 0
+    c4.metric("% pozo devengado", f"{eff:.1f}%")
+
+    # ── Gráfico devengado vs pozo ─────────────────────────────────────────────
+    st.divider()
+    df_chart = pd.DataFrame(rows_num).sort_values("mes_key")
+    if not df_chart.empty:
+        import altair as alt
+        df_melt = df_chart.melt(id_vars="mes_key", value_vars=["pozo", "devengado", "pagado"],
+                                 var_name="tipo", value_name="valor")
+        labels = {"pozo": "Pozo disponible", "devengado": "Devengado", "pagado": "Pagado real"}
+        colores = {"pozo": "#d0d0d0", "devengado": "#1f77b4", "pagado": "#2ca02c"}
+        df_melt["tipo_label"] = df_melt["tipo"].map(labels)
+        chart = (
+            alt.Chart(df_melt)
+            .mark_bar(opacity=0.85)
+            .encode(
+                x=alt.X("mes_key:N", title="Mes", sort=None),
+                y=alt.Y("valor:Q", title="CLP", axis=alt.Axis(format=",.0f")),
+                color=alt.Color("tipo_label:N",
+                                scale=alt.Scale(domain=list(labels.values()),
+                                                range=list(colores.values())),
+                                legend=alt.Legend(title="", orient="top")),
+                xOffset="tipo_label:N",
+                tooltip=["mes_key", "tipo_label",
+                          alt.Tooltip("valor:Q", format=",.0f", title="CLP")],
+            )
+            .properties(height=300, title=f"Bonos {equipo_cfg['label']} — devengado vs pozo")
         )
-        total_pag = sum(
-            _safe_float(r["Pagado real"].replace("$", "").replace(".", ""))
-            for r in rows if r["Pagado real"] != "—"
-        )
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total devengado YTD", f"${total_dev:,.0f}".replace(",", "."))
-        c2.metric("Total pagado YTD", f"${total_pag:,.0f}".replace(",", "."))
-        if total_pag and total_dev:
-            delta = total_pag - total_dev
-            c3.metric("Δ Pagado vs Devengado",
-                       f"${delta:,.0f}".replace(",", "."),
-                       delta_color="off" if abs(delta) < 10_000 else "inverse")
+        st.altair_chart(chart, use_container_width=True)
+
+    # ── Tabla detalle ─────────────────────────────────────────────────────────
+    st.dataframe(pd.DataFrame(rows_disp), use_container_width=True, hide_index=True)
 
 
 # ── Entry point principal ─────────────────────────────────────────────────────
