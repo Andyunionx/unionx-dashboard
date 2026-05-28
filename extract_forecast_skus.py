@@ -38,6 +38,8 @@ TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
 HEADERS = {'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json'}
 
 HIST_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+# Parquet del mes actual — refrescado cada hora por sync_mes_actual.yml (bypass Turso).
+MES_ACTUAL_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
 STOCK_HIST = PROJECT_ROOT / 'data' / 'stock_historico' / 'stock_diario.parquet'
 PRICING_HIST = PROJECT_ROOT / 'data' / 'pricing_historico' / 'pricing_diario.parquet'
 
@@ -112,7 +114,27 @@ def cargar_ventas_diarias() -> pd.DataFrame:
             categoria_hijo=('categoria_hijo', 'first'),
             tipo_negocio=('tipo_negocio', 'first'),
         )
-        print(f"   Parquet: {len(df_hist):,} (sku, canal, dia)", flush=True)
+        print(f"   Parquet histórico: {len(df_hist):,} (sku, canal, dia)", flush=True)
+
+    # Mes actual desde parquet (refrescado c/1h por sync_mes_actual.yml — bypass Turso)
+    df_mes = pd.DataFrame()
+    if MES_ACTUAL_PARQUET.exists():
+        df_m = pd.read_parquet(MES_ACTUAL_PARQUET, columns=cols)
+        df_m = df_m[df_m['tipo_movimiento'] == 'Venta'].copy()
+        df_m['fecha_venta'] = pd.to_datetime(df_m['fecha_venta'], errors='coerce')
+        df_m = df_m.dropna(subset=['fecha_venta'])
+        df_m['fecha'] = df_m['fecha_venta'].dt.date
+        df_mes = df_m.groupby(['fecha', 'sku', 'canal'], as_index=False).agg(
+            venta_bruta=('venta_bruta', 'sum'),
+            venta_neta=('venta_neta', 'sum'),
+            cantidad=('cantidad', 'sum'),
+            producto=('producto', 'first'),
+            marca=('marca', 'first'),
+            categoria_padre=('categoria_padre', 'first'),
+            categoria_hijo=('categoria_hijo', 'first'),
+            tipo_negocio=('tipo_negocio', 'first'),
+        )
+        print(f"   Parquet mes actual: {len(df_mes):,} (sku, canal, dia)", flush=True)
 
     # Turso live por chunks de 2 semanas (la query agregada full puede timeoutear)
     print("   Turso live (chunks 2w)...", flush=True)
@@ -152,9 +174,15 @@ def cargar_ventas_diarias() -> pd.DataFrame:
     } for r in rows])
     print(f"   Turso: {len(df_live):,} (sku, canal, dia)", flush=True)
 
-    df = pd.concat([df_hist, df_live], ignore_index=True) if not df_hist.empty else df_live
+    # Combinar las 3 fuentes y deduplicar por (fecha, sku, canal) priorizando la más reciente
+    partes = [df for df in (df_hist, df_mes, df_live) if not df.empty]
+    if not partes:
+        return pd.DataFrame(columns=['fecha', 'sku', 'canal', 'cantidad'])
+    df = pd.concat(partes, ignore_index=True)
     df['fecha'] = pd.to_datetime(df['fecha'])
     df['sku'] = df['sku'].astype(str)
+    df = df.sort_values('fecha').drop_duplicates(subset=['fecha', 'sku', 'canal'], keep='last')
+    print(f"   Total combinado: {len(df):,} filas, {df['fecha'].min().date()} → {df['fecha'].max().date()}", flush=True)
     return df[df['cantidad'] > 0]
 
 

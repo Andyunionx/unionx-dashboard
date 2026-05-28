@@ -1,10 +1,11 @@
 name: "Sync Forecast (Prophet completo: total + canal + SKU jerarquico)"
 
 on:
-  # Schedule desactivado 2026-05-18 porque disparaba notificaciones "No jobs were run".
-  # Reactivar quitando el comentario del cron cuando el pipeline esté validado.
-  # schedule:
-  #   - cron: '0 6 * * *'  # Diario 06:00 UTC = 02:00 Chile
+  # Reactivado 2026-05-28: el pipeline ahora lee ventas_mes_actual.parquet
+  # (bypass Turso) además del histórico, así corre aunque Turso bloquee reads.
+  # sync_mes_actual.yml refresca ese parquet cada hora.
+  schedule:
+    - cron: '0 6 * * *'  # Diario 06:00 UTC = 02:00 Chile
   workflow_dispatch:
     inputs:
       max_modelos:
@@ -82,7 +83,7 @@ jobs:
         run: python extract_forecast_anchored.py
         continue-on-error: true
 
-      - name: 6c. Forecast SKU x canal ANCHORED (Fase 2: elasticidad + basket + demanda)
+      - name: "6c. Forecast SKU x canal ANCHORED (Fase 2: elasticidad + basket + demanda)"
         env:
           PYTHONIOENCODING: utf-8
         run: python extract_forecast_skus_anchored.py
