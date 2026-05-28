@@ -182,7 +182,7 @@ def cargar_ventas_diarias() -> pd.DataFrame:
     df['fecha'] = pd.to_datetime(df['fecha'])
     df['sku'] = df['sku'].astype(str)
     df = df.sort_values('fecha').drop_duplicates(subset=['fecha', 'sku', 'canal'], keep='last')
-    print(f"   Total combinado: {len(df):,} filas, {df['fecha'].min().date()} → {df['fecha'].max().date()}", flush=True)
+    print(f"   Total combinado: {len(df):,} filas, {df['fecha'].min().date()} -> {df['fecha'].max().date()}", flush=True)
     return df[df['cantidad'] > 0]
 
 

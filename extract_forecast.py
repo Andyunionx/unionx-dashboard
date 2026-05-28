@@ -74,7 +74,7 @@ def _agregar_diaria_de_parquet(path: Path, label: str) -> pd.DataFrame:
     agg.columns = ['ds', 'y']
     agg['ds'] = pd.to_datetime(agg['ds'])
     print(f"  {label}: {len(agg)} días "
-          f"({agg['ds'].min().date() if len(agg) else '-'} → "
+          f"({agg['ds'].min().date() if len(agg) else '-'} -> "
           f"{agg['ds'].max().date() if len(agg) else '-'})", flush=True)
     return agg
 
