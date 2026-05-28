@@ -143,9 +143,30 @@ def _prod_mes(year: int, month: int, n_personas: int):
     return round(unidades / n_personas / dh, 1), dh, int(unidades)
 
 
+@st.cache_data(ttl=600, show_spinner=False)
+def _meta_forecast(year: int, mes: int, n_personas: int):
+    """Meta unidades/persona/día hábil desde forecast estacional P&L.
+    Usa proyectar_anual: venta_fcst × ratio_unidades/MM_venta (estacional)."""
+    try:
+        from views._ops_forecast_costo_helper import proyectar_anual
+        df = proyectar_anual(year=year)
+        if df.empty:
+            return None
+        row = df[df["mes"] == mes]
+        if row.empty:
+            return None
+        unidades = float(row["unidades"].iloc[0])
+        dh = _dias_habiles(year, mes)
+        if n_personas > 0 and dh > 0 and unidades > 0:
+            return round(unidades / n_personas / dh, 1)
+        return None
+    except Exception:
+        return None
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def _meta_rolling(year: int, month: int, n_personas: int):
-    """Promedio últimos 3 meses de unidades/persona/día hábil."""
+    """Fallback: promedio últimos 3 meses de unidades/persona/día hábil."""
     df = _wms_mensual()
     if df.empty:
         return None
@@ -316,16 +337,20 @@ def _tab_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
     # Productividad (misma fórmula que KPI WMS)
     prod_pp, dias_hab, uds_total = _prod_mes(anio_sel, mes_sel, n_personas)
 
-    # Meta: override > rolling 3m > default
+    # Meta: override manual > forecast P&L > rolling 3m > default
     meta_manual = _safe_float(cfg_mes.get("meta_prod"), 0.0)
     if meta_manual > 0:
         meta, meta_src = meta_manual, "manual"
     else:
-        meta_roll = _meta_rolling(anio_sel, mes_sel, n_personas)
-        if meta_roll:
-            meta, meta_src = float(meta_roll), "promedio 3m"
+        meta_fcst = _meta_forecast(anio_sel, mes_sel, n_personas)
+        if meta_fcst:
+            meta, meta_src = meta_fcst, "forecast"
         else:
-            meta, meta_src = float(equipo_cfg["meta_prod_default"]), "default"
+            meta_roll = _meta_rolling(anio_sel, mes_sel, n_personas)
+            if meta_roll:
+                meta, meta_src = float(meta_roll), "promedio 3m"
+            else:
+                meta, meta_src = float(equipo_cfg["meta_prod_default"]), "default"
 
     prod_pct = (prod_pp / meta * 100) if (prod_pp is not None and meta > 0) else 0.0
 
@@ -447,7 +472,9 @@ def _tab_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         if meta_m_man > 0:
             meta_m = meta_m_man
         else:
-            meta_m = float(_meta_rolling(anio_sel, mm, n_personas) or equipo_cfg["meta_prod_default"])
+            meta_m = float(_meta_forecast(anio_sel, mm, n_personas)
+                           or _meta_rolling(anio_sel, mm, n_personas)
+                           or equipo_cfg["meta_prod_default"])
         prod_m_pct = (pp_m / meta_m * 100) if (pp_m is not None and meta_m > 0) else None
         otif_m = (_safe_float(cfg_m.get("otif_pct"), None) or _otif_snapshot(anio_sel, mm))
         es_futuro = (anio_sel > hoy.year) or (anio_sel == hoy.year and mm > hoy.month)
@@ -503,9 +530,14 @@ def _tab_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         if otif_auto is not None:
             st.success(f"🤖 OTIF Empresa Drive ({mes_key}): **{otif_auto:.1f}%**. Deja override en 0 para usar automático.")
 
-        meta_roll = _meta_rolling(anio, mes_n, equipo_cfg["n_default"])
-        if meta_roll:
-            st.info(f"📊 Meta auto (promedio 3m anteriores): **{meta_roll:.0f} unid/pers/día**. Deja en 0 para usar automático.")
+        meta_fcst_carga = _meta_forecast(anio, mes_n, equipo_cfg["n_default"])
+        if meta_fcst_carga:
+            st.info(f"🔮 Meta forecast estacional P&L: **{meta_fcst_carga:.0f} unid/pers/día**. "
+                    f"Basada en venta FCST × ratio histórico. Deja en 0 para usar automático.")
+        else:
+            meta_roll = _meta_rolling(anio, mes_n, equipo_cfg["n_default"])
+            if meta_roll:
+                st.info(f"📊 Meta auto (promedio 3m, fallback): **{meta_roll:.0f} unid/pers/día**.")
 
         prev = cfg_dict.get(mes_key, {})
         prev_n = _safe_int(prev.get("n_personas"), equipo_cfg["n_default"])
@@ -630,7 +662,9 @@ def _tab_historial(equipo_cfg: dict, df_cfg: pd.DataFrame):
 
         meta_m = _safe_float(cfg.get("meta_prod"), 0.0)
         if not meta_m:
-            meta_m = float(_meta_rolling(anio, mes, n_p) or equipo_cfg["meta_prod_default"])
+            meta_m = float(_meta_forecast(anio, mes, n_p)
+                           or _meta_rolling(anio, mes, n_p)
+                           or equipo_cfg["meta_prod_default"])
         prod_pct = (prod_pp / meta_m * 100) if (prod_pp and meta_m) else 0.0
 
         otif_auto = _otif_snapshot(anio, mes)
