@@ -40,6 +40,7 @@ CURVA_PCT = [0.30, 0.25, 0.20, 0.12, 0.08, 0.05]
 
 META_JSON = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_2026.json'
 META_XLSX = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_20260514.xlsx'
+SIM_PARQUET = PROJECT_ROOT / 'data' / 'planificacion' / 'cyber_simulacion.parquet'
 
 VENTAS_COLS = [
     'fecha_venta', 'hora_venta_num', 'documento', 'pedido', 'tipo_movimiento',
@@ -76,9 +77,10 @@ def load_metas() -> pd.DataFrame:
 
 
 @st.cache_data(ttl=180, show_spinner="Consultando ventas Cyber en vivo…")
-def load_ventas_cyber() -> pd.DataFrame:
+def load_ventas_cyber(include_sim: bool = False) -> pd.DataFrame:
     """Ventas del rango Cyber leídas EN VIVO desde el SQLite local
-    (histórico parquet + Turso live)."""
+    (histórico parquet + Turso live). Si include_sim=True suma el parquet
+    de simulación (datos sintéticos para previsualización)."""
     db_path = get_local_db_path()
     cols = ','.join(VENTAS_COLS)
     sql = f"SELECT {cols} FROM ventas WHERE fecha_venta BETWEEN ? AND ?"
@@ -87,6 +89,12 @@ def load_ventas_cyber() -> pd.DataFrame:
         df = pd.read_sql_query(sql, conn, params=(CYBER_START_STR, CYBER_END_STR))
     finally:
         conn.close()
+
+    if include_sim and SIM_PARQUET.exists():
+        sim = pd.read_parquet(SIM_PARQUET)
+        sim = sim[[c for c in VENTAS_COLS if c in sim.columns]]
+        df = pd.concat([df, sim], ignore_index=True)
+
     if df.empty:
         return df
     df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.date
@@ -129,9 +137,12 @@ def load_stock() -> pd.DataFrame:
 # HELPERS
 # ============================================================
 def fmt_money(v) -> str:
+    """Formato en miles con separador chileno: $15.113K"""
     if pd.isna(v) or v == 0:
         return '$0'
-    return f"${v:,.0f}"
+    val = v / 1000
+    s = f"{val:,.0f}".replace(",", ".")
+    return f"${s} K"
 
 
 def fmt_pct(v) -> str:
@@ -157,16 +168,26 @@ def render():
     st.title("🛍️ Cyber 2026 — Pulso comercial")
     st.caption(f"Rango: **{CYBER_START.strftime('%d-%b-%Y')}** a **{CYBER_END.strftime('%d-%b-%Y')}** · "
                f"Meta total: **$505.9 MM / 20.486 uds** · "
-               f"Fuente: **RAW vivo** (Turso + histórico) — refresh 3 min · Stock Odoo live")
+               f"Fuente: **RAW vivo** (Turso + histórico) — refresh 3 min · Stock Odoo live · "
+               f"**Montos en miles (K)**")
 
-    col_r1, col_r2 = st.columns([1, 5])
-    with col_r1:
-        if st.button("🔄 Refrescar venta", key="cyber_refresh_venta"):
+    # Toggle modo simulación
+    with st.sidebar:
+        st.markdown("### 🛍️ Cyber 2026")
+        sim_on = st.toggle(
+            "🧪 Modo simulación",
+            value=False, key="cyber_sim_toggle",
+            help="Incluye datos sintéticos del lunes 2-jun hasta las 12:00 para previsualizar la vista. "
+                 "Los documentos llevan prefijo 'SIM-' para distinguirlos.",
+        )
+        if sim_on:
+            st.warning("🧪 Simulación ACTIVA — datos sintéticos")
+        if st.button("🔄 Refrescar venta", use_container_width=True, key="cyber_refresh_venta"):
             load_ventas_cyber.clear()
             load_ventas_4sem.clear()
             st.rerun()
 
-    ventas = add_aggregates(load_ventas_cyber())
+    ventas = add_aggregates(load_ventas_cyber(include_sim=sim_on))
     metas = load_metas()
 
     if ventas.empty:
@@ -245,9 +266,43 @@ def _tab_acumulado(ventas: pd.DataFrame):
         st.info("Sin datos.")
         return
 
+    # Filtros día / hora / canal
+    fechas_disp = sorted(ventas['fecha_venta'].dropna().unique())
+    canales_disp = sorted(ventas['canal'].dropna().unique())
+
+    f1, f2, f3 = st.columns([1.2, 1.5, 1.5])
+    sel_dias = f1.multiselect(
+        "Días", fechas_disp, default=fechas_disp,
+        format_func=lambda d: d.strftime('%a %d-%b') if hasattr(d, 'strftime') else str(d),
+        key='cyber_acum_dia',
+    )
+    hora_min, hora_max = f2.slider(
+        "Rango horario", 0, 23, (0, 23), key='cyber_acum_hora',
+    )
+    sel_canales = f3.multiselect("Canal", canales_disp, default=[], key='cyber_acum_canal')
+
+    df = ventas.copy()
+    if sel_dias:
+        df = df[df['fecha_venta'].isin(sel_dias)]
+    if 'hora_venta_num' in df.columns:
+        df = df[(df['hora_venta_num'].fillna(0) >= hora_min) & (df['hora_venta_num'].fillna(0) <= hora_max)]
+    if sel_canales:
+        df = df[df['canal'].isin(sel_canales)]
+
+    if df.empty:
+        st.info("Sin datos con esos filtros.")
+        return
+
+    # KPIs filtrados
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Bruta filtrada", fmt_money(df['venta_bruta'].sum()))
+    k2.metric("Margen $", fmt_money(df['margen_final'].sum()))
+    k3.metric("Margen %", fmt_pct(df['margen_final'].sum() / df['venta_neta'].sum() if df['venta_neta'].sum() else 0))
+    k4.metric("Uds", f"{df['cantidad'].sum():,.0f}")
+
     # Por día
     st.markdown("**Por día**")
-    g_dia = ventas.groupby('fecha_venta', as_index=False).agg(
+    g_dia = df.groupby('fecha_venta', as_index=False).agg(
         venta_bruta=('venta_bruta', 'sum'),
         venta_neta=('venta_neta', 'sum'),
         margen=('margen_final', 'sum'),
@@ -259,13 +314,15 @@ def _tab_acumulado(ventas: pd.DataFrame):
 
     fig = go.Figure()
     fig.add_bar(x=g_dia['fecha_venta'], y=g_dia['venta_bruta'], name='Venta bruta',
-                marker_color='#2563EB', yaxis='y')
+                marker_color='#2563EB',
+                hovertemplate='%{x}<br>%{y:,.0f}<extra></extra>')
     fig.add_trace(go.Scatter(x=g_dia['fecha_venta'], y=g_dia['margen'], name='Margen $',
-                             mode='lines+markers', line=dict(color='#16A34A'), yaxis='y'))
+                             mode='lines+markers', line=dict(color='#16A34A')))
     fig.add_trace(go.Scatter(x=g_dia['fecha_venta'], y=g_dia['venta_acum'], name='Acumulado',
-                             mode='lines', line=dict(color='#EA580C', dash='dash'), yaxis='y'))
-    fig.update_layout(height=350, hovermode='x unified', barmode='group',
-                      legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
+                             mode='lines', line=dict(color='#EA580C', dash='dash')))
+    fig.update_layout(height=350, hovermode='x unified',
+                      legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0),
+                      yaxis_title='CLP')
     st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(
@@ -280,33 +337,47 @@ def _tab_acumulado(ventas: pd.DataFrame):
         use_container_width=True, hide_index=True,
     )
 
-    # Por hora (si hay datos del día)
-    st.markdown("**Por hora (hoy)**")
-    today = date.today()
-    hoy = ventas[ventas['fecha_venta'] == today]
-    if hoy.empty:
-        st.caption(f"Sin ventas registradas hoy ({today.isoformat()}).")
+    # Por hora
+    st.markdown("**Por hora**")
+    if 'hora_venta_num' not in df.columns:
+        st.caption("Falta columna hora_venta_num — corre el sync de mes actual.")
     else:
-        if 'hora_venta_num' in hoy.columns:
-            g_hora = hoy.groupby('hora_venta_num', as_index=False).agg(
-                venta=('venta_bruta', 'sum'),
-                margen=('margen_final', 'sum'),
-                uds=('cantidad', 'sum'),
-            )
-            fig2 = go.Figure()
-            fig2.add_bar(x=g_hora['hora_venta_num'], y=g_hora['venta'], name='Venta',
-                         marker_color='#2563EB')
-            fig2.add_trace(go.Scatter(x=g_hora['hora_venta_num'], y=g_hora['margen'], name='Margen',
-                                      mode='lines+markers', line=dict(color='#16A34A')))
-            fig2.update_layout(height=300, xaxis_title='Hora', hovermode='x unified',
-                               legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
-            st.plotly_chart(fig2, use_container_width=True)
-        else:
-            st.caption("Falta columna hora_venta_num en parquet — corre el sync de mes actual.")
+        g_hora = df.groupby('hora_venta_num', as_index=False).agg(
+            venta=('venta_bruta', 'sum'),
+            margen=('margen_final', 'sum'),
+            uds=('cantidad', 'sum'),
+        )
+        fig2 = go.Figure()
+        fig2.add_bar(x=g_hora['hora_venta_num'], y=g_hora['venta'], name='Venta',
+                     marker_color='#2563EB')
+        fig2.add_trace(go.Scatter(x=g_hora['hora_venta_num'], y=g_hora['margen'], name='Margen',
+                                  mode='lines+markers', line=dict(color='#16A34A')))
+        fig2.update_layout(height=280, xaxis_title='Hora', hovermode='x unified',
+                           legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # Heatmap día × hora
+    st.markdown("**Heatmap día × hora**")
+    if 'hora_venta_num' in df.columns and len(sel_dias) > 1:
+        pivot = df.pivot_table(
+            index='hora_venta_num', columns='fecha_venta',
+            values='venta_bruta', aggfunc='sum', fill_value=0,
+        )
+        # Asegurar todas las horas 0-23 en el eje
+        pivot = pivot.reindex(range(24), fill_value=0)
+        fig_h = go.Figure(go.Heatmap(
+            z=pivot.values, x=[d.strftime('%a %d') if hasattr(d, 'strftime') else str(d) for d in pivot.columns],
+            y=pivot.index, colorscale='Blues',
+            hovertemplate='%{x} %{y}h<br>$%{z:,.0f}<extra></extra>',
+        ))
+        fig_h.update_layout(height=420, yaxis_title='Hora', xaxis_title='')
+        st.plotly_chart(fig_h, use_container_width=True)
+    else:
+        st.caption("Heatmap aparece cuando hay más de un día con datos filtrado.")
 
     # Por canal
-    st.markdown("**Por canal**")
-    g_can = ventas.groupby('canal', as_index=False).agg(
+    st.markdown("**Por canal (en filtro)**")
+    g_can = df.groupby('canal', as_index=False).agg(
         venta_bruta=('venta_bruta', 'sum'),
         margen=('margen_final', 'sum'),
         uds=('cantidad', 'sum'),
