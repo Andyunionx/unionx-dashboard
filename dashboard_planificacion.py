@@ -206,8 +206,9 @@ def _banner_turso_bypass():
     oldest_str = oldest.strftime('%Y-%m-%d %H:%M') if oldest else '?'
     st.warning(
         f"⚠️ **Modo local activo** — Turso bloqueó las lecturas (probable cuota/billing). "
-        f"La app está usando snapshots locales. **Snapshot más antiguo:** `{oldest_str}`. "
-        f"Para refrescar cuando Turso vuelva: `python extract_planif_snapshots.py`."
+        f"La app está usando snapshots locales que el workflow `sync_planificacion.yml` "
+        f"refresca todos los días en GitHub Actions. **Snapshot más antiguo:** `{oldest_str}`. "
+        f"Para forzar refresco manual ahora: `python generar_snapshots_offline.py`."
     )
     with st.expander(f"Detalle ({len(files)} tablas en bypass)", expanded=False):
         for f in files:
