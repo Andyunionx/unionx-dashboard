@@ -27,8 +27,8 @@ PROJECT_ROOT = Path(__file__).parent
 OUT_DIR = PROJECT_ROOT / 'data' / 'forecast'
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
-TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+URL = os.environ.get('LIBSQL_URL', '').strip().rstrip('/')
+TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '').strip()
 HEADERS = {'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json'}
 
 HIST_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'

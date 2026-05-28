@@ -19,8 +19,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
-TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+URL = os.environ.get('LIBSQL_URL', '').strip().rstrip('/')
+TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '').strip()
 
 if not URL or not TOKEN:
     print("[ERROR] LIBSQL_URL/LIBSQL_AUTH_TOKEN no seteados", flush=True)

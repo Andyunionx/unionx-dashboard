@@ -30,8 +30,8 @@ PROJECT_ROOT = Path(__file__).parent
 OUTPUT_DIR = PROJECT_ROOT / 'data' / 'pricing_historico'
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
-TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+URL = os.environ.get('LIBSQL_URL', '').strip().rstrip('/')
+TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '').strip()
 HIST_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
 
 if not URL or not TOKEN:
