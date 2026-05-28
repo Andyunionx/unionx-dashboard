@@ -378,6 +378,39 @@ def render():
     c6.metric("Stock actual (u)",  f"{stock_tot:,}")
     c7.metric(f"Tránsito ≤{horizonte}d (u)", f"{tr_tot:,}")
 
+    # ── Gráfico distribución por estado ──────────────────────────────
+    estado_counts = (
+        dff["estado"]
+        .value_counts()
+        .reindex(_ESTADO_ORDEN, fill_value=0)
+        .reset_index()
+    )
+    estado_counts.columns = ["Estado", "SKUs"]
+    estado_counts = estado_counts[estado_counts["SKUs"] > 0]
+
+    _COLORES = {
+        "CRÍTICO":     "#FF4B4B",
+        "URGENTE":     "#FF8C00",
+        "AJUSTADO":    "#FFD700",
+        "NORMAL":      "#52C41A",
+        "HOLGADO":     "#1890FF",
+        "SIN DEMANDA": "#AAAAAA",
+    }
+
+    cols_bar = st.columns(len(estado_counts))
+    total = len(dff)
+    for i, row in estado_counts.iterrows():
+        pct = row["SKUs"] / total * 100 if total > 0 else 0
+        cols_bar[i].markdown(
+            f"<div style='text-align:center;padding:8px 4px;border-radius:8px;"
+            f"background:{_COLORES.get(row['Estado'], '#ccc')};color:{'white' if row['Estado'] != 'AJUSTADO' else '#333'}'>"
+            f"<b>{row['Estado']}</b><br>"
+            f"<span style='font-size:1.5em;font-weight:bold'>{row['SKUs']}</span><br>"
+            f"<span style='font-size:0.85em'>{pct:.0f}% del total</span>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
     st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────
