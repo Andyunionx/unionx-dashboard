@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-05-28T01:53:14.408438",
+  "generado_en": "2026-05-28T09:43:07.251658",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 8324,
-  "total_monto_pendiente_clp": 530199429.0,
+  "total_documentos_pendientes": 8346,
+  "total_monto_pendiente_clp": 531233779.0,
   "monto_por_aging": {
     "+90 días": 35790217.0,
-    "1-30 días": 269986966.0,
+    "1-30 días": 271021316.0,
     "31-60 días": 94590867.0,
     "61-90 días": 31912530.0,
     "Vigente": 97918849.0
   },
   "monto_por_tipo": {
-    "BOLETA": 459079692.0,
+    "BOLETA": 460114042.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 101760750.0
+      "monto": 102123630.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 44646728.0
+      "monto": 44748688.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 32423375.0
+      "monto": 32838945.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 16172349.0
+      "monto": 16246309.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 15513070.0
+      "monto": 15593050.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 302,
-  "pedidos_venta_count": 7981
+  "pedidos_venta_count": 8003
 }
