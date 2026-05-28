@@ -893,6 +893,7 @@ class VentasService(BaseOdooService):
             fecha_venta = orden.get('date_order', '')
             fecha_dt = pd.to_datetime(fecha_venta) if fecha_venta else pd.NaT
             hora_venta = fecha_dt.strftime('%H:%M:%S') if pd.notna(fecha_dt) else ''
+            hora_venta_num = int(fecha_dt.hour) if pd.notna(fecha_dt) else 0
 
             # Línea: separar bruto (con IVA) y neto (sin IVA)
             # price_subtotal = sin IVA (neto), price_total = con IVA (bruto)
@@ -1049,7 +1050,7 @@ class VentasService(BaseOdooService):
                     'Mes venta': fecha_dt.month if pd.notna(fecha_dt) else '',
                     'Semana venta': fecha_dt.isocalendar()[1] if pd.notna(fecha_dt) else '',
                     'Día semana': fecha_dt.dayofweek if pd.notna(fecha_dt) else '',
-                    'Hora venta': hora_venta,
+                    'Hora venta': hora_venta_num,  # int hora del día (0-23)
                     'Cantidad': cantidad,
                     'Venta bruta': venta_bruta_post_nc,   # CON IVA (compatible histórico)
                     'Venta Neta': venta_neta_post_nc,     # SIN IVA
@@ -1160,6 +1161,7 @@ class VentasService(BaseOdooService):
                         fecha_nc = nc.get('invoice_date', '')
                         fecha_dt = pd.to_datetime(fecha_nc) if fecha_nc else pd.NaT
                         hora_nc = fecha_dt.strftime('%H:%M:%S') if pd.notna(fecha_dt) else ''
+                        hora_nc_num = int(fecha_dt.hour) if pd.notna(fecha_dt) else 0
 
                         # ════════════════════════════════════════════════════════════
                         # RESOLUCIÓN DE CANAL PARA NCs (skill embebida 26-may-2026)
@@ -1308,7 +1310,7 @@ class VentasService(BaseOdooService):
                                     'Mes venta': mes_nc,
                                     'Semana venta': sem_nc,
                                     'Día semana': dia_nc,
-                                    'Hora venta': hora_nc,
+                                    'Hora venta': hora_nc_num,
                                     'Cantidad': -qty_nc,  # NEGATIVO: cantidad devuelta
                                     'Venta bruta': venta_bruta_ln,
                                     'Venta Neta': venta_neta_ln,
@@ -1355,7 +1357,7 @@ class VentasService(BaseOdooService):
                                 'Mes venta': mes_nc,
                                 'Semana venta': sem_nc,
                                 'Día semana': dia_nc,
-                                'Hora venta': hora_nc,
+                                'Hora venta': hora_nc_num,
                                 'Cantidad': 1,
                                 'Venta bruta': -nc_amount_bruto_abs,
                                 'Venta Neta': -nc_amount_abs,
