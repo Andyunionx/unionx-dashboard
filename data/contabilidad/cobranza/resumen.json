@@ -1,52 +1,40 @@
 {
-  "generado_en": "2026-05-12T17:45:28.249046",
+  "generado_en": "2026-05-28T01:53:14.408438",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 9853,
-  "total_monto_pendiente_clp": 711882753.0,
+  "total_documentos_pendientes": 8324,
+  "total_monto_pendiente_clp": 530199429.0,
   "monto_por_aging": {
-    "+90 días": 45813450.0,
-    "1-30 días": 414079886.0,
-    "31-60 días": 104459243.0,
-    "61-90 días": 30119886.0,
-    "Vigente": 117410288.0
+    "+90 días": 35790217.0,
+    "1-30 días": 269986966.0,
+    "31-60 días": 94590867.0,
+    "61-90 días": 31912530.0,
+    "Vigente": 97918849.0
   },
   "monto_por_tipo": {
-    "BOLETA": 509857492.0,
-    "FACTURA": 202025261.0
+    "BOLETA": 459079692.0,
+    "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 170931157.0
+      "monto": 101760750.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 91031168.0
+      "monto": 79427823.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 65311754.0
-    },
-    {
-      "partner": "MercadoLibre Chile LTDA",
-      "monto": 46565036.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 38794434.0
+      "monto": 44646728.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 33230112.0
+      "monto": 38904571.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 24362414.0
-    },
-    {
-      "partner": "Falabella.com SPA",
-      "monto": 23797039.0
+      "partner": "Cliente Shopify",
+      "monto": 32423375.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -54,7 +42,7 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19232717.0
+      "monto": 18330644.0
     },
     {
       "partner": "SODIMAC S.A.",
@@ -62,41 +50,53 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 16585480.0
-    },
-    {
-      "partner": "AUTOBAHN S A",
-      "monto": 16460675.0
+      "monto": 17031774.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 15674155.0
+      "monto": 16172349.0
+    },
+    {
+      "partner": "AUTOBAHN S A",
+      "monto": 15827000.0
+    },
+    {
+      "partner": "Cliente Walmart",
+      "monto": 15513070.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
-      "monto": 14220675.0
+      "monto": 14895645.0
     },
     {
-      "partner": "Showtime SpA",
-      "monto": 13207203.0
+      "partner": "MercadoLibre Chile LTDA",
+      "monto": 13611765.0
     },
     {
-      "partner": "abc S.A.",
-      "monto": 10274190.0
-    },
-    {
-      "partner": "Cencosud Retail S.A",
-      "monto": 8209077.0
+      "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+      "monto": 8442326.0
     },
     {
       "partner": "Cliente Mercado Libre, Cliente Mercado Libre",
-      "monto": 6338574.0
+      "monto": 6245489.0
+    },
+    {
+      "partner": "Showtime SpA",
+      "monto": 4602400.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-      "monto": 6099573.0
+      "monto": 4223623.0
+    },
+    {
+      "partner": "Dinasty Partners, Andrés Bacigalupo",
+      "monto": 3241560.0
+    },
+    {
+      "partner": "abc S.A.",
+      "monto": 2988905.0
     }
   ],
-  "notas_credito_count": 182,
-  "pedidos_venta_count": 9500
+  "notas_credito_count": 302,
+  "pedidos_venta_count": 7981
 }
