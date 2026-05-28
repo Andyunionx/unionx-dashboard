@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-05-28T15:24:27.697525",
+  "generado_en": "2026-05-28T20:04:14.449045",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 8439,
-  "total_monto_pendiente_clp": 536405753.0,
+  "total_documentos_pendientes": 8054,
+  "total_monto_pendiente_clp": 518508671.0,
   "monto_por_aging": {
-    "+90 días": 35714257.0,
-    "1-30 días": 275154306.0,
-    "31-60 días": 94332907.0,
-    "61-90 días": 31610589.0,
-    "Vigente": 99593694.0
+    "+90 días": 33549685.0,
+    "1-30 días": 277542504.0,
+    "31-60 días": 94157967.0,
+    "61-90 días": 13807710.0,
+    "Vigente": 99450805.0
   },
   "monto_por_tipo": {
-    "BOLETA": 465286016.0,
+    "BOLETA": 447388934.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 102734599.0
+      "monto": 104015349.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 79246852.0
+      "monto": 60394611.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 46817417.0
+      "monto": 51177909.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 33891492.0
+      "monto": 33708929.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -42,15 +42,11 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 18576750.0
+      "monto": 18792998.0
     },
     {
       "partner": "SODIMAC S.A.",
       "monto": 17291199.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 16601003.0
     },
     {
       "partner": "Cliente Ripley",
@@ -62,7 +58,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 15593050.0
+      "monto": 15616020.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
@@ -71,6 +67,10 @@
     {
       "partner": "MercadoLibre Chile LTDA",
       "monto": 13611765.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 11858651.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 2988905.0
+      "monto": 3196888.0
     }
   ],
-  "notas_credito_count": 358,
-  "pedidos_venta_count": 8040
+  "notas_credito_count": 498,
+  "pedidos_venta_count": 7501
 }
