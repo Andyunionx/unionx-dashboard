@@ -17,6 +17,7 @@ Fuentes EN VIVO:
    cada 3h por GH Actions, fallback Odoo XML-RPC).
 - data/planificacion/plan_cyber_20260514.xlsx (metas)
 """
+import json
 import sqlite3
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -37,6 +38,7 @@ CYBER_END_STR = CYBER_END.strftime('%Y-%m-%d')
 CYBER_DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 CURVA_PCT = [0.30, 0.25, 0.20, 0.12, 0.08, 0.05]
 
+META_JSON = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_2026.json'
 META_XLSX = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_20260514.xlsx'
 
 VENTAS_COLS = [
@@ -53,22 +55,24 @@ VENTAS_COLS = [
 # ============================================================
 @st.cache_data(ttl=600, show_spinner=False)
 def load_metas() -> pd.DataFrame:
-    """Lee hoja 'Volumen + Venta por canal' del plan Cyber."""
-    if not META_XLSX.exists():
-        return pd.DataFrame()
-    df = pd.read_excel(META_XLSX, sheet_name='Volumen + Venta por canal')
-    df = df.rename(columns={
-        'Canal': 'canal',
-        'Modalidad': 'modalidad',
-        'Un Cyber': 'meta_uds',
-        'Vta Cyber Total': 'meta_venta',
-        'Ticket prom.': 'ticket_meta',
-    })
-    keep = ['canal', 'modalidad', 'meta_uds', 'meta_venta', 'ticket_meta']
-    df = df[[c for c in keep if c in df.columns]]
-    df = df[df['canal'].notna() & df['meta_venta'].notna()].copy()
-    df = df[~df['canal'].astype(str).str.upper().str.startswith('TOTAL')]
-    return df.reset_index(drop=True)
+    """Metas por canal del plan Cyber. Prefiere JSON committeable;
+    fallback al xlsx original si está disponible localmente."""
+    if META_JSON.exists():
+        data = json.loads(META_JSON.read_text(encoding='utf-8'))
+        return pd.DataFrame(data.get('metas_canal', []))
+    if META_XLSX.exists():
+        df = pd.read_excel(META_XLSX, sheet_name='Volumen + Venta por canal')
+        df = df.rename(columns={
+            'Canal': 'canal', 'Modalidad': 'modalidad',
+            'Un Cyber': 'meta_uds', 'Vta Cyber Total': 'meta_venta',
+            'Ticket prom.': 'ticket_meta',
+        })
+        keep = ['canal', 'modalidad', 'meta_uds', 'meta_venta', 'ticket_meta']
+        df = df[[c for c in keep if c in df.columns]]
+        df = df[df['canal'].notna() & df['meta_venta'].notna()].copy()
+        df = df[~df['canal'].astype(str).str.upper().str.startswith('TOTAL')]
+        return df.reset_index(drop=True)
+    return pd.DataFrame()
 
 
 @st.cache_data(ttl=180, show_spinner="Consultando ventas Cyber en vivo…")
@@ -498,7 +502,7 @@ def _tab_vs_meta(ventas: pd.DataFrame, metas: pd.DataFrame):
     st.subheader("Resultado vs Meta")
 
     if metas.empty:
-        st.warning(f"No se pudo leer meta de {META_XLSX.name}")
+        st.warning(f"No se pudo leer meta (esperado en {META_JSON.name} o {META_XLSX.name})")
         return
 
     # Comparativo por canal
