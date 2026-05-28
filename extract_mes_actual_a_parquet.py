@@ -201,6 +201,45 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
             for c in COLS_DB:
                 if c not in manual.columns:
                     manual[c] = ''
+
+            # Enriquecer manual_externa con Matriz Productos (lookup por SKU).
+            # Las filas que vienen del CSV tienen categoría vacía; la matriz les da contexto.
+            try:
+                matriz_path = PROJECT_ROOT / 'data' / 'planillas' / 'Matriz productos.xlsx'
+                if matriz_path.exists():
+                    matriz = pd.read_excel(matriz_path, sheet_name='Productos')
+                    matriz['SKU_norm'] = matriz['SKU'].astype(str).str.strip()
+                    mp = matriz.set_index('SKU_norm')
+                    enriched = 0
+                    for idx, row in manual.iterrows():
+                        sku = str(row.get('sku','')).strip()
+                        if not sku or sku not in mp.index:
+                            continue
+                        m = mp.loc[sku]
+                        if isinstance(m, pd.DataFrame):
+                            m = m.iloc[0]
+                        # Solo completar campos vacíos en la fila manual
+                        mapping = {
+                            'categoria_macro': 'Categoría macro',
+                            'categoria_padre': 'Categoría padre',
+                            'categoria_hijo': 'Categoría hijo',
+                            'categoria_comercial': 'Categoría comercial',
+                            'marca': 'Marca',
+                            'proveedor': 'Proveedor',
+                            'pack': 'Pack',
+                            'estado_sku': 'In/out',
+                            'tipo_marca': 'Estado marca',
+                        }
+                        for db_col, mat_col in mapping.items():
+                            if mat_col in m.index and pd.notna(m[mat_col]):
+                                if not str(row.get(db_col,'')).strip():
+                                    manual.at[idx, db_col] = str(m[mat_col])
+                        enriched += 1
+                    if enriched:
+                        print(f"   [manual_externa] Categorías heredadas de Matriz para {enriched}/{len(manual)} filas")
+            except Exception as e:
+                print(f"   [WARN] No se pudo enriquecer manual_externa con Matriz: {type(e).__name__}: {str(e)[:80]}")
+
             df = pd.concat([df, manual[COLS_DB]], ignore_index=True)
 
     return df
