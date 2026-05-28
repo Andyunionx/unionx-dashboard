@@ -1122,6 +1122,11 @@ class VentasService(BaseOdooService):
         if ncs:
             nc_data = []
 
+            # Exclusiones de canales que NO entran automáticos (consignación, ventas manuales).
+            # Las ventas de estos canales se cargan vía manual_externa_facturas.csv.
+            # Coherente con la exclusión de Ventas en _construir_dataset_raw línea ~990.
+            CANALES_EXCLUIDOS_NC = {'el volcan', 'sodimac corp', 'el volcán'}
+
             for nc in ncs:
                     nc_id = nc.get('id')
                     # Usar monto sin IVA para que matchee con price_subtotal de las líneas
@@ -1204,6 +1209,14 @@ class VentasService(BaseOdooService):
                                 canal_nc = 'UnionX web'
                             else:
                                 canal_nc = 'Ajustes contables'
+
+                        # SKIP: canales excluidos (El Volcán, Sodimac Corp) — consignación
+                        # o ventas manuales. Sus NCs (ej. cierre de mes) NO deben entrar al
+                        # parquet auto-sync, ya que las ventas tampoco están y solo aportan
+                        # ruido negativo a los reportes por canal.
+                        canal_norm_nc = (canal_nc or '').strip().lower().replace('á', 'a')
+                        if canal_norm_nc in CANALES_EXCLUIDOS_NC:
+                            continue
 
                         # Tipo Negocio + KAM para NC
                         tn_info_nc = canal_a_tn.get(canal_nc, {})
