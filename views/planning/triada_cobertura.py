@@ -507,7 +507,7 @@ def render():
 
     cols_bar = st.columns(len(estado_counts))
     total = len(dff)
-    for i, row in estado_counts.iterrows():
+    for i, (_, row) in enumerate(estado_counts.iterrows()):
         pct = row["SKUs"] / total * 100 if total > 0 else 0
         cols_bar[i].markdown(
             f"<div style='text-align:center;padding:8px 4px;border-radius:8px;"
