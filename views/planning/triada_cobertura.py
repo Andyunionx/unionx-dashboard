@@ -1,0 +1,470 @@
+"""
+views/planning/triada_cobertura.py
+────────────────────────────────────────────────────────────────────────
+Triada de Cobertura — funciona 100% con datos locales (sin Turso).
+
+Calcula cobertura en días y meses por SKU cruzando:
+  · Stock actual     → data/stock_historico/stock_diario.parquet (fecha más reciente)
+  · Tránsito COMEX   → data/comex/transito.parquet
+  · Demanda forecast → data/forecast/forecast_skus_anchored.parquet
+
+Vistas: Total · Por SKU · Por Marca · Por Categoría · Marca × Categoría
+"""
+
+from __future__ import annotations
+
+from datetime import timedelta
+
+import numpy as np
+import pandas as pd
+import streamlit as st
+
+from views.planning._data_helpers import (
+    cargar_forecast_sku,
+    cargar_stock_diario,
+    cargar_transito,
+    cargar_ventas_historicas,
+)
+
+# ── Constantes ────────────────────────────────────────────────────────
+_TODAY = pd.Timestamp.today().normalize()
+_HORIZONTES = [30, 60, 90, 180]
+
+_ESTADO_ORDEN = ["CRÍTICO", "URGENTE", "AJUSTADO", "NORMAL", "HOLGADO", "SIN DEMANDA"]
+_ESTADO_BG = {
+    "CRÍTICO":     "background-color:#FF4B4B;color:white",
+    "URGENTE":     "background-color:#FF8C00;color:white",
+    "AJUSTADO":    "background-color:#FFD700;color:#333",
+    "NORMAL":      "background-color:#52C41A;color:white",
+    "HOLGADO":     "background-color:#1890FF;color:white",
+    "SIN DEMANDA": "background-color:#E8E8E8;color:#999",
+}
+
+
+def _clasificar(dias) -> str:
+    if pd.isna(dias):
+        return "SIN DEMANDA"
+    d = float(dias)
+    if d < 30:  return "CRÍTICO"
+    if d < 60:  return "URGENTE"
+    if d < 90:  return "AJUSTADO"
+    if d < 180: return "NORMAL"
+    return "HOLGADO"
+
+
+def _style_estado(val: str) -> str:
+    return _ESTADO_BG.get(val, "")
+
+
+# ── Preparación de datos ──────────────────────────────────────────────
+@st.cache_data(ttl=3600, show_spinner=False)
+def _preparar_datos() -> pd.DataFrame:
+    """
+    Tabla maestra por SKU. Columnas principales:
+      sku, producto, marca, categoria_padre, categoria_hijo,
+      stock_actual,
+      transito_30d / 60d / 90d / 180d  (unidades con ETA ≤ fecha)
+      demanda_30d / 60d / 90d / 180d   (forecast acumulado)
+      demanda_diaria                    (promedio 90d)
+    """
+
+    # ── 1. Stock actual (última fecha disponible) ─────────────────────
+    df_sh = cargar_stock_diario()
+    ultima = df_sh["fecha"].max()
+    df_stock = (
+        df_sh[df_sh["fecha"] == ultima]
+        .groupby("sku", as_index=False)["cantidad"]
+        .sum()
+        .rename(columns={"cantidad": "stock_actual"})
+    )
+    df_stock["stock_actual"] = df_stock["stock_actual"].clip(lower=0)
+    df_stock["sku"] = df_stock["sku"].astype(str)
+
+    # ── 2. Forecast demand por horizonte ─────────────────────────────
+    df_f = cargar_forecast_sku().copy()
+    df_f["ds"] = pd.to_datetime(df_f["ds"])
+    df_f["sku"] = df_f["sku"].astype(str)
+    df_f["yhat_anchored"] = pd.to_numeric(df_f["yhat_anchored"], errors="coerce").fillna(0).clip(lower=0)
+
+    demanda_parts = []
+    for h in _HORIZONTES:
+        mask = (df_f["ds"] >= _TODAY) & (df_f["ds"] < _TODAY + timedelta(days=h))
+        part = (
+            df_f[mask]
+            .groupby("sku")["yhat_anchored"]
+            .sum()
+            .reset_index()
+            .rename(columns={"yhat_anchored": f"demanda_{h}d"})
+        )
+        demanda_parts.append(part)
+
+    df_demanda = demanda_parts[0]
+    for p in demanda_parts[1:]:
+        df_demanda = df_demanda.merge(p, on="sku", how="outer")
+
+    df_demanda["demanda_diaria"] = (df_demanda.get("demanda_90d", 0) / 90).clip(lower=0)
+
+    # ── 3. Tránsito por horizonte ─────────────────────────────────────
+    df_tr = cargar_transito().copy()
+    df_tr["sku"] = df_tr["sku"].astype(str)
+    df_tr["fecha_eta_bodega"] = pd.to_datetime(df_tr["fecha_eta_bodega"])
+    df_tr["cantidad"] = pd.to_numeric(df_tr["cantidad"], errors="coerce").fillna(0)
+
+    transito_parts = []
+    for h in _HORIZONTES:
+        mask = df_tr["fecha_eta_bodega"] <= _TODAY + timedelta(days=h)
+        part = (
+            df_tr[mask]
+            .groupby("sku")["cantidad"]
+            .sum()
+            .reset_index()
+            .rename(columns={"cantidad": f"transito_{h}d"})
+        )
+        transito_parts.append(part)
+
+    df_transito = transito_parts[0]
+    for p in transito_parts[1:]:
+        df_transito = df_transito.merge(p, on="sku", how="outer")
+
+    # ── 4. Metadata SKU ───────────────────────────────────────────────
+    df_meta = (
+        df_f[["sku", "producto", "marca", "categoria_padre"]]
+        .drop_duplicates("sku")
+        .copy()
+    )
+
+    # categoria_hijo y categoria_comercial desde ventas_historico
+    try:
+        df_v = cargar_ventas_historicas()
+        df_v["sku"] = df_v["sku"].astype(str)
+        df_v = df_v[df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan")]
+        # Tomar la fila más reciente por SKU para no mezclar categorías viejas
+        df_v = df_v.sort_values("fecha_venta", ascending=False)
+        df_meta_v = (
+            df_v[["sku", "categoria_hijo", "categoria_comercial"]]
+            .drop_duplicates("sku")
+        )
+        df_meta = df_meta.merge(df_meta_v, on="sku", how="left")
+    except Exception:
+        df_meta["categoria_hijo"] = ""
+        df_meta["categoria_comercial"] = ""
+
+    # ── 5. Unir todo ──────────────────────────────────────────────────
+    df = df_meta.copy()
+    df = df.merge(df_stock,   on="sku", how="left")
+    df = df.merge(df_demanda, on="sku", how="left")
+    df = df.merge(df_transito, on="sku", how="left")
+
+    fill_cols = (
+        ["stock_actual", "demanda_diaria"]
+        + [f"demanda_{h}d"  for h in _HORIZONTES]
+        + [f"transito_{h}d" for h in _HORIZONTES]
+    )
+    for col in fill_cols:
+        if col in df.columns:
+            df[col] = df[col].fillna(0)
+
+    # ── 6. Textos vacíos ──────────────────────────────────────────────
+    for c in ["categoria_hijo", "categoria_comercial", "marca", "categoria_padre"]:
+        if c in df.columns:
+            df[c] = df[c].fillna("Sin clasificar").replace("", "Sin clasificar")
+
+    return df.reset_index(drop=True)
+
+
+def _calcular_cobertura(df: pd.DataFrame, horizonte: int) -> pd.DataFrame:
+    """Agrega columnas cobertura_dias, cobertura_meses y estado según horizonte."""
+    col_tr = f"transito_{horizonte}d"
+    if col_tr not in df.columns:
+        col_tr = "transito_30d"
+
+    df = df.copy()
+    df["cobertura_dias"] = np.where(
+        df["demanda_diaria"] > 0,
+        (df["stock_actual"] + df[col_tr]) / df["demanda_diaria"],
+        np.nan,
+    )
+    df["cobertura_meses"] = df["cobertura_dias"] / 30
+    df["estado"] = df["cobertura_dias"].apply(_clasificar)
+    return df
+
+
+def _agrupar(df: pd.DataFrame, by: list) -> pd.DataFrame:
+    """Agrega métricas por dimensión(es) y recalcula cobertura grupal."""
+    agg_dict = {
+        "skus":              ("sku",            "nunique"),
+        "stock_actual":      ("stock_actual",   "sum"),
+        "demanda_diaria":    ("demanda_diaria", "sum"),
+    }
+    for h in _HORIZONTES:
+        if f"transito_{h}d" in df.columns:
+            agg_dict[f"transito_{h}d"] = (f"transito_{h}d", "sum")
+        if f"demanda_{h}d" in df.columns:
+            agg_dict[f"demanda_{h}d"] = (f"demanda_{h}d", "sum")
+
+    agg = df.groupby(by, as_index=False).agg(**agg_dict)
+
+    # Cobertura a 30 días por defecto (se sobreescribe en render con horizonte)
+    col_tr = "transito_30d" if "transito_30d" in agg.columns else "stock_actual"
+    agg["cobertura_dias"] = np.where(
+        agg["demanda_diaria"] > 0,
+        (agg["stock_actual"] + agg[col_tr]) / agg["demanda_diaria"],
+        np.nan,
+    )
+    agg["cobertura_meses"] = (agg["cobertura_dias"] / 30).round(1)
+    agg["estado"] = agg["cobertura_dias"].apply(
+        lambda x: _clasificar(x) if pd.notna(x) else "SIN DEMANDA"
+    )
+
+    # Conteo de SKUs por estado
+    conteo = (
+        df.groupby(by + ["estado"])["sku"]
+        .nunique()
+        .reset_index()
+        .rename(columns={"sku": "n"})
+    )
+    pivot = (
+        conteo.pivot_table(index=by, columns="estado", values="n", fill_value=0)
+        .reset_index()
+    )
+    pivot.columns.name = None
+    for e in _ESTADO_ORDEN:
+        if e not in pivot.columns:
+            pivot[e] = 0
+
+    estado_cols_exist = [e for e in _ESTADO_ORDEN if e in pivot.columns]
+    agg = agg.merge(pivot[by + estado_cols_exist], on=by, how="left")
+    for e in estado_cols_exist:
+        agg[e] = agg[e].fillna(0).astype(int)
+
+    return agg
+
+
+def _render_tabla_agg(
+    agg: pd.DataFrame,
+    dim_col: str,
+    horizonte: int,
+    extra_cols: list | None = None,
+    key_suffix: str = "",
+):
+    """Renderiza tabla de agregación con colores de estado y botón de descarga."""
+    # Recalcular cobertura con horizonte seleccionado
+    col_tr = f"transito_{horizonte}d" if f"transito_{horizonte}d" in agg.columns else "transito_30d"
+    agg = agg.copy()
+    agg["cobertura_dias"] = np.where(
+        agg["demanda_diaria"] > 0,
+        (agg["stock_actual"] + agg[col_tr]) / agg["demanda_diaria"],
+        np.nan,
+    )
+    agg["cobertura_meses"] = (agg["cobertura_dias"] / 30).round(1)
+    agg["estado"] = agg["cobertura_dias"].apply(
+        lambda x: _clasificar(x) if pd.notna(x) else "SIN DEMANDA"
+    )
+    agg = agg.sort_values("cobertura_dias", ascending=True, na_position="last")
+
+    base = [dim_col] + (extra_cols or [])
+    metric = [
+        "skus", "stock_actual", col_tr,
+        f"demanda_{horizonte}d", "cobertura_dias", "cobertura_meses", "estado",
+    ]
+    estado_cnt = [e for e in _ESTADO_ORDEN if e in agg.columns]
+    show_cols = base + [c for c in metric if c in agg.columns] + estado_cnt
+    df_show = agg[show_cols].copy()
+    df_show["cobertura_dias"] = df_show["cobertura_dias"].round(0)
+
+    col_cfg = {
+        "skus":              st.column_config.NumberColumn("SKUs",            format="%d"),
+        "stock_actual":      st.column_config.NumberColumn("Stock (u)",       format="%d"),
+        col_tr:              st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
+        f"demanda_{horizonte}d": st.column_config.NumberColumn(f"Demanda {horizonte}d", format="%.0f"),
+        "cobertura_dias":    st.column_config.NumberColumn("Cob. Días",       format="%.0f"),
+        "cobertura_meses":   st.column_config.NumberColumn("Cob. Meses",      format="%.1f"),
+        "estado":            st.column_config.TextColumn("Estado"),
+    }
+    for e in estado_cnt:
+        col_cfg[e] = st.column_config.NumberColumn(e, format="%d", width="small")
+
+    st.dataframe(
+        df_show.style.map(_style_estado, subset=["estado"]),
+        use_container_width=True,
+        height=450,
+        column_config=col_cfg,
+    )
+
+    csv = df_show.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "⬇️ Descargar CSV",
+        data=csv,
+        file_name=f"cobertura_{dim_col}_{horizonte}d_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
+        mime="text/csv",
+        key=f"dl_{dim_col}_{horizonte}_{key_suffix}",
+    )
+
+
+# ── Render principal ──────────────────────────────────────────────────
+def render():
+    st.title("📦 Cobertura por Producto")
+    st.caption(
+        "Stock actual + tránsito COMEX entrante vs demanda proyectada (Prophet). "
+        "Cobertura en días y meses por SKU, marca y categoría. "
+        "Datos 100% locales — no requiere Turso."
+    )
+
+    with st.spinner("Cargando stock, tránsito y forecast…"):
+        df_base = _preparar_datos()
+
+    # ── Filtros ───────────────────────────────────────────────────────
+    with st.sidebar:
+        st.markdown("### 🔎 Filtros Cobertura")
+
+        horizonte = st.selectbox(
+            "Horizonte de tránsito",
+            options=_HORIZONTES,
+            index=0,
+            format_func=lambda x: f"{x} días",
+            help="Tránsito que llega dentro de este plazo se suma al stock disponible.",
+        )
+
+        marcas_disp = sorted(df_base["marca"].dropna().unique())
+        sel_marcas = st.multiselect("Marca", options=marcas_disp, default=[])
+
+        cats_disp = sorted(df_base["categoria_padre"].dropna().unique())
+        sel_cats = st.multiselect("Categoría padre", options=cats_disp, default=[])
+
+        sel_estados = st.multiselect(
+            "Estado cobertura",
+            options=_ESTADO_ORDEN,
+            default=[],
+            help="Dejar vacío = mostrar todos",
+        )
+
+        st.divider()
+        solo_con_demanda = st.checkbox("Solo SKUs con demanda proyectada", value=True)
+        solo_con_stock   = st.checkbox("Solo SKUs con stock > 0", value=False)
+
+    # ── Aplicar filtros y recalcular cobertura con horizonte ──────────
+    dff = _calcular_cobertura(df_base, horizonte)
+
+    if sel_marcas:
+        dff = dff[dff["marca"].isin(sel_marcas)]
+    if sel_cats:
+        dff = dff[dff["categoria_padre"].isin(sel_cats)]
+    if sel_estados:
+        dff = dff[dff["estado"].isin(sel_estados)]
+    if solo_con_demanda:
+        dff = dff[dff["demanda_diaria"] > 0]
+    if solo_con_stock:
+        dff = dff[dff["stock_actual"] > 0]
+
+    if dff.empty:
+        st.warning("Sin SKUs con los filtros seleccionados.")
+        return
+
+    # ── KPIs ──────────────────────────────────────────────────────────
+    n_total    = len(dff)
+    n_critico  = (dff["estado"] == "CRÍTICO").sum()
+    n_urgente  = (dff["estado"] == "URGENTE").sum()
+    n_ajustado = (dff["estado"] == "AJUSTADO").sum()
+    n_ok       = dff["estado"].isin(["NORMAL", "HOLGADO"]).sum()
+    stock_tot  = int(dff["stock_actual"].sum())
+    tr_tot     = int(dff[f"transito_{horizonte}d"].sum())
+
+    c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
+    c1.metric("SKUs",              f"{n_total:,}")
+    c2.metric("🔴 CRÍTICO <30d",   f"{n_critico:,}")
+    c3.metric("🟠 URGENTE <60d",   f"{n_urgente:,}")
+    c4.metric("🟡 AJUSTADO <90d",  f"{n_ajustado:,}")
+    c5.metric("🟢 NORMAL / HOLGADO", f"{n_ok:,}")
+    c6.metric("Stock actual (u)",  f"{stock_tot:,}")
+    c7.metric(f"Tránsito ≤{horizonte}d (u)", f"{tr_tot:,}")
+
+    st.divider()
+
+    # ── Tabs ──────────────────────────────────────────────────────────
+    tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
+        "🔍 Por SKU",
+        "🏷️ Por Marca",
+        "📂 Por Categoría",
+        "📊 Marca × Categoría",
+    ])
+
+    # ── TAB 1 — Por SKU ───────────────────────────────────────────────
+    with tab_sku:
+        col_tr = f"transito_{horizonte}d"
+        cols_show = [
+            "sku", "producto", "marca",
+            "categoria_padre", "categoria_hijo",
+            "stock_actual", col_tr, "demanda_diaria",
+            f"demanda_{horizonte}d",
+            "cobertura_dias", "cobertura_meses", "estado",
+        ]
+        cols_show = [c for c in cols_show if c in dff.columns]
+
+        df_sku = dff[cols_show].copy()
+        df_sku["cobertura_dias"]   = df_sku["cobertura_dias"].round(0)
+        df_sku["cobertura_meses"]  = df_sku["cobertura_meses"].round(1)
+        df_sku["demanda_diaria"]   = df_sku["demanda_diaria"].round(1)
+        df_sku = df_sku.sort_values("cobertura_dias", ascending=True, na_position="last")
+
+        st.caption(f"**{len(df_sku):,} SKUs** — ordenados por cobertura ascendente (más críticos primero)")
+
+        st.dataframe(
+            df_sku.style.map(_style_estado, subset=["estado"]),
+            use_container_width=True,
+            height=520,
+            column_config={
+                "sku":                        st.column_config.TextColumn("SKU",           width=130),
+                "producto":                   st.column_config.TextColumn("Producto",      width=200),
+                "marca":                      st.column_config.TextColumn("Marca",         width=90),
+                "categoria_padre":            st.column_config.TextColumn("Cat. Padre",    width=110),
+                "categoria_hijo":             st.column_config.TextColumn("Cat. Hijo",     width=110),
+                "stock_actual":               st.column_config.NumberColumn("Stock (u)",   format="%d"),
+                col_tr:                       st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
+                "demanda_diaria":             st.column_config.NumberColumn("Dem. Diaria", format="%.1f"),
+                f"demanda_{horizonte}d":      st.column_config.NumberColumn(f"Demanda {horizonte}d", format="%.0f"),
+                "cobertura_dias":             st.column_config.NumberColumn("Cob. Días",   format="%.0f"),
+                "cobertura_meses":            st.column_config.NumberColumn("Cob. Meses",  format="%.1f"),
+                "estado":                     st.column_config.TextColumn("Estado",        width=110),
+            },
+        )
+
+        csv = df_sku.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "⬇️ Descargar CSV — Por SKU",
+            data=csv,
+            file_name=f"cobertura_sku_{horizonte}d_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            key="dl_sku",
+        )
+
+    # ── TAB 2 — Por Marca ─────────────────────────────────────────────
+    with tab_marca:
+        st.caption(f"Cobertura agregada por marca · horizonte tránsito: **{horizonte} días**")
+        agg_marca = _agrupar(dff, ["marca"])
+        _render_tabla_agg(agg_marca, "marca", horizonte, key_suffix="marca")
+
+    # ── TAB 3 — Por Categoría ─────────────────────────────────────────
+    with tab_cat:
+        sub_padre, sub_hijo = st.tabs(["Categoría Padre", "Categoría Padre → Hijo"])
+
+        with sub_padre:
+            st.caption(f"Cobertura agregada por categoría padre · horizonte: **{horizonte} días**")
+            agg_cp = _agrupar(dff, ["categoria_padre"])
+            _render_tabla_agg(agg_cp, "categoria_padre", horizonte, key_suffix="cp")
+
+        with sub_hijo:
+            st.caption(f"Cobertura por categoría padre → hijo · horizonte: **{horizonte} días**")
+            agg_ch = _agrupar(dff, ["categoria_padre", "categoria_hijo"])
+            _render_tabla_agg(
+                agg_ch, "categoria_padre", horizonte,
+                extra_cols=["categoria_hijo"], key_suffix="ch"
+            )
+
+    # ── TAB 4 — Marca × Categoría ─────────────────────────────────────
+    with tab_mx:
+        st.caption(f"Cobertura por marca × categoría padre · horizonte: **{horizonte} días**")
+        agg_mx = _agrupar(dff, ["marca", "categoria_padre"])
+        _render_tabla_agg(
+            agg_mx, "marca", horizonte,
+            extra_cols=["categoria_padre"], key_suffix="mx"
+        )
