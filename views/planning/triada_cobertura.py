@@ -52,6 +52,18 @@ def _clasificar(dias) -> str:
     return "HOLGADO"
 
 
+def _clasificar_meses(meses) -> str:
+    """Clasifica cobertura expresada en meses (para métrica de ventas reales 4 sem)."""
+    if pd.isna(meses):
+        return "SIN DEMANDA"
+    m = float(meses)
+    if m < 1:  return "CRÍTICO"
+    if m < 2:  return "URGENTE"
+    if m < 3:  return "AJUSTADO"
+    if m < 6:  return "NORMAL"
+    return "HOLGADO"
+
+
 def _style_estado(val: str) -> str:
     return _ESTADO_BG.get(val, "")
 
@@ -133,30 +145,43 @@ def _preparar_datos() -> pd.DataFrame:
         .copy()
     )
 
-    # categoria_hijo y categoria_comercial desde ventas_historico
+    # categoria_hijo, categoria_comercial y ventas_4sem desde ventas_historico
+    df_ventas_4sem = pd.DataFrame(columns=["sku", "ventas_4sem"])
     try:
         df_v = cargar_ventas_historicas()
         df_v["sku"] = df_v["sku"].astype(str)
         df_v = df_v[df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan")]
-        # Tomar la fila más reciente por SKU para no mezclar categorías viejas
-        df_v = df_v.sort_values("fecha_venta", ascending=False)
-        df_meta_v = (
-            df_v[["sku", "categoria_hijo", "categoria_comercial"]]
-            .drop_duplicates("sku")
-        )
+        df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"])
+        df_v["cantidad"]    = pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
+
+        # Metadata: categorías desde la venta más reciente por SKU
+        df_v_sorted = df_v.sort_values("fecha_venta", ascending=False)
+        meta_cols = [c for c in ["sku", "categoria_hijo", "categoria_comercial"] if c in df_v_sorted.columns]
+        df_meta_v = df_v_sorted[meta_cols].drop_duplicates("sku")
         df_meta = df_meta.merge(df_meta_v, on="sku", how="left")
+
+        # Ventas últimas 4 semanas — ventana rolling de 28 días desde hoy
+        corte_4sem = _TODAY - timedelta(days=28)
+        df_ventas_4sem = (
+            df_v[(df_v["fecha_venta"] >= corte_4sem) & (df_v["fecha_venta"] < _TODAY)]
+            .groupby("sku")["cantidad"]
+            .sum()
+            .reset_index()
+            .rename(columns={"cantidad": "ventas_4sem"})
+        )
     except Exception:
-        df_meta["categoria_hijo"] = ""
+        df_meta["categoria_hijo"]    = ""
         df_meta["categoria_comercial"] = ""
 
     # ── 5. Unir todo ──────────────────────────────────────────────────
     df = df_meta.copy()
-    df = df.merge(df_stock,   on="sku", how="left")
-    df = df.merge(df_demanda, on="sku", how="left")
-    df = df.merge(df_transito, on="sku", how="left")
+    df = df.merge(df_stock,       on="sku", how="left")
+    df = df.merge(df_demanda,     on="sku", how="left")
+    df = df.merge(df_transito,    on="sku", how="left")
+    df = df.merge(df_ventas_4sem, on="sku", how="left")
 
     fill_cols = (
-        ["stock_actual", "demanda_diaria"]
+        ["stock_actual", "demanda_diaria", "ventas_4sem"]
         + [f"demanda_{h}d"  for h in _HORIZONTES]
         + [f"transito_{h}d" for h in _HORIZONTES]
     )
@@ -164,7 +189,17 @@ def _preparar_datos() -> pd.DataFrame:
         if col in df.columns:
             df[col] = df[col].fillna(0)
 
-    # ── 6. Textos vacíos ──────────────────────────────────────────────
+    # ── 6. Cobertura basada en ventas reales (rolling 4 semanas) ─────
+    # Fórmula: stock_actual / ventas_4sem  → resultado en "meses de 4 semanas"
+    # La ventana se actualiza automáticamente con cada recarga (TTL 1h)
+    df["cobertura_4sem_meses"] = np.where(
+        df["ventas_4sem"] > 0,
+        df["stock_actual"] / df["ventas_4sem"],
+        np.nan,
+    )
+    df["estado_4sem"] = df["cobertura_4sem_meses"].apply(_clasificar_meses)
+
+    # ── 7. Textos vacíos ──────────────────────────────────────────────
     for c in ["categoria_hijo", "categoria_comercial", "marca", "categoria_padre"]:
         if c in df.columns:
             df[c] = df[c].fillna("Sin clasificar").replace("", "Sin clasificar")
@@ -360,7 +395,7 @@ def render():
         st.warning("Sin SKUs con los filtros seleccionados.")
         return
 
-    # ── KPIs ──────────────────────────────────────────────────────────
+    # ── KPIs Forecast (Prophet) ───────────────────────────────────────
     n_total    = len(dff)
     n_critico  = (dff["estado"] == "CRÍTICO").sum()
     n_urgente  = (dff["estado"] == "URGENTE").sum()
@@ -369,14 +404,33 @@ def render():
     stock_tot  = int(dff["stock_actual"].sum())
     tr_tot     = int(dff[f"transito_{horizonte}d"].sum())
 
+    st.caption("📊 **Cobertura basada en forecast (Prophet)**")
     c1, c2, c3, c4, c5, c6, c7 = st.columns(7)
-    c1.metric("SKUs",              f"{n_total:,}")
-    c2.metric("🔴 CRÍTICO <30d",   f"{n_critico:,}")
-    c3.metric("🟠 URGENTE <60d",   f"{n_urgente:,}")
-    c4.metric("🟡 AJUSTADO <90d",  f"{n_ajustado:,}")
-    c5.metric("🟢 NORMAL / HOLGADO", f"{n_ok:,}")
-    c6.metric("Stock actual (u)",  f"{stock_tot:,}")
-    c7.metric(f"Tránsito ≤{horizonte}d (u)", f"{tr_tot:,}")
+    c1.metric("SKUs",                    f"{n_total:,}")
+    c2.metric("🔴 CRÍTICO <30d",         f"{n_critico:,}")
+    c3.metric("🟠 URGENTE <60d",         f"{n_urgente:,}")
+    c4.metric("🟡 AJUSTADO <90d",        f"{n_ajustado:,}")
+    c5.metric("🟢 NORMAL / HOLGADO",     f"{n_ok:,}")
+    c6.metric("Stock actual (u)",        f"{stock_tot:,}")
+    c7.metric(f"Tránsito ≤{horizonte}d", f"{tr_tot:,}")
+
+    # ── KPIs Ventas Reales (últimas 4 semanas) ────────────────────────
+    n4_critico  = (dff["estado_4sem"] == "CRÍTICO").sum()
+    n4_urgente  = (dff["estado_4sem"] == "URGENTE").sum()
+    n4_ajustado = (dff["estado_4sem"] == "AJUSTADO").sum()
+    n4_ok       = dff["estado_4sem"].isin(["NORMAL", "HOLGADO"]).sum()
+    n4_sin_dem  = (dff["estado_4sem"] == "SIN DEMANDA").sum()
+    ventas_tot  = int(dff["ventas_4sem"].sum())
+
+    st.caption("🛒 **Cobertura basada en ventas reales (últimas 4 semanas — rolling)**")
+    r1, r2, r3, r4, r5, r6, r7 = st.columns(7)
+    r1.metric("Con ventas 4sem",          f"{n_total - n4_sin_dem:,}")
+    r2.metric("🔴 CRÍTICO <1m",           f"{n4_critico:,}")
+    r3.metric("🟠 URGENTE <2m",           f"{n4_urgente:,}")
+    r4.metric("🟡 AJUSTADO <3m",          f"{n4_ajustado:,}")
+    r5.metric("🟢 NORMAL / HOLGADO",      f"{n4_ok:,}")
+    r6.metric("Ventas 4sem (u)",           f"{ventas_tot:,}")
+    r7.metric("Sin venta reciente",        f"{n4_sin_dem:,}")
 
     # ── Gráfico distribución por estado ──────────────────────────────
     estado_counts = (
@@ -430,34 +484,40 @@ def render():
             "stock_actual", col_tr, "demanda_diaria",
             f"demanda_{horizonte}d",
             "cobertura_dias", "cobertura_meses", "estado",
+            "ventas_4sem", "cobertura_4sem_meses", "estado_4sem",
         ]
         cols_show = [c for c in cols_show if c in dff.columns]
 
         df_sku = dff[cols_show].copy()
-        df_sku["cobertura_dias"]   = df_sku["cobertura_dias"].round(0)
-        df_sku["cobertura_meses"]  = df_sku["cobertura_meses"].round(1)
-        df_sku["demanda_diaria"]   = df_sku["demanda_diaria"].round(1)
-        df_sku = df_sku.sort_values("cobertura_dias", ascending=True, na_position="last")
+        df_sku["cobertura_dias"]      = df_sku["cobertura_dias"].round(0)
+        df_sku["cobertura_meses"]     = df_sku["cobertura_meses"].round(1)
+        df_sku["demanda_diaria"]      = df_sku["demanda_diaria"].round(1)
+        df_sku["cobertura_4sem_meses"] = df_sku["cobertura_4sem_meses"].round(1)
+        df_sku = df_sku.sort_values("cobertura_4sem_meses", ascending=True, na_position="last")
 
-        st.caption(f"**{len(df_sku):,} SKUs** — ordenados por cobertura ascendente (más críticos primero)")
+        st.caption(f"**{len(df_sku):,} SKUs** — ordenados por cobertura real 4sem ascendente (más críticos primero)")
 
+        style_cols = [c for c in ["estado", "estado_4sem"] if c in df_sku.columns]
         st.dataframe(
-            df_sku.style.map(_style_estado, subset=["estado"]),
+            df_sku.style.map(_style_estado, subset=style_cols),
             use_container_width=True,
             height=520,
             column_config={
-                "sku":                        st.column_config.TextColumn("SKU",           width=130),
-                "producto":                   st.column_config.TextColumn("Producto",      width=200),
-                "marca":                      st.column_config.TextColumn("Marca",         width=90),
-                "categoria_padre":            st.column_config.TextColumn("Cat. Padre",    width=110),
-                "categoria_hijo":             st.column_config.TextColumn("Cat. Hijo",     width=110),
-                "stock_actual":               st.column_config.NumberColumn("Stock (u)",   format="%d"),
-                col_tr:                       st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
-                "demanda_diaria":             st.column_config.NumberColumn("Dem. Diaria", format="%.1f"),
-                f"demanda_{horizonte}d":      st.column_config.NumberColumn(f"Demanda {horizonte}d", format="%.0f"),
-                "cobertura_dias":             st.column_config.NumberColumn("Cob. Días",   format="%.0f"),
-                "cobertura_meses":            st.column_config.NumberColumn("Cob. Meses",  format="%.1f"),
-                "estado":                     st.column_config.TextColumn("Estado",        width=110),
+                "sku":                    st.column_config.TextColumn("SKU",              width=130),
+                "producto":               st.column_config.TextColumn("Producto",         width=200),
+                "marca":                  st.column_config.TextColumn("Marca",            width=90),
+                "categoria_padre":        st.column_config.TextColumn("Cat. Padre",       width=110),
+                "categoria_hijo":         st.column_config.TextColumn("Cat. Hijo",        width=110),
+                "stock_actual":           st.column_config.NumberColumn("Stock (u)",      format="%d"),
+                col_tr:                   st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
+                "demanda_diaria":         st.column_config.NumberColumn("Dem. Diaria",    format="%.1f"),
+                f"demanda_{horizonte}d":  st.column_config.NumberColumn(f"Demanda {horizonte}d", format="%.0f"),
+                "cobertura_dias":         st.column_config.NumberColumn("Cob. Días (fc)", format="%.0f"),
+                "cobertura_meses":        st.column_config.NumberColumn("Cob. Meses (fc)",format="%.1f"),
+                "estado":                 st.column_config.TextColumn("Estado (fc)",      width=110),
+                "ventas_4sem":            st.column_config.NumberColumn("Ventas 4sem (u)",format="%d"),
+                "cobertura_4sem_meses":   st.column_config.NumberColumn("Cob. Meses (real)", format="%.1f"),
+                "estado_4sem":            st.column_config.TextColumn("Estado (real)",    width=110),
             },
         )
 
