@@ -183,6 +183,10 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
         if fcol in df.columns:
             df[fcol] = pd.to_datetime(df[fcol], errors='coerce').dt.strftime('%Y-%m-%d')
 
+    # Reclasificar canales: Casa Mila SpA es la razón social de UnionX B2B (no entidad externa)
+    if 'canal' in df.columns:
+        df['canal'] = df['canal'].replace({'Casa Mila': 'UnionX B2B'})
+
     # Inyectar facturas manual_externa (Sodimac y similares cargadas a Turso manualmente).
     # Estas NO están en Odoo, entonces el extract las pierde. Se conservan en CSV local.
     manual_csv = PROJECT_ROOT / 'data' / 'manual_externa_facturas.csv'
