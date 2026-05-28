@@ -119,6 +119,24 @@ def _preparar_datos() -> pd.DataFrame:
 
     df_demanda["demanda_diaria"] = (df_demanda.get("demanda_90d", 0) / 90).clip(lower=0)
 
+    # ── 2b. Forecast promedio próximos 3 meses (mes actual + 2 siguientes) ──
+    # Fórmula: stock / ((venta_mes1 + venta_mes2 + venta_mes3) / 3)
+    meses_3 = pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")
+    df_f["_mes"] = df_f["ds"].dt.to_period("M")
+    df_f_3m = df_f[df_f["_mes"].isin(meses_3)].copy()
+    monthly_fc = (
+        df_f_3m.groupby(["sku", "_mes"])["yhat_anchored"]
+        .sum()
+        .reset_index()
+    )
+    df_prom3m = (
+        monthly_fc.groupby("sku")["yhat_anchored"]
+        .mean()
+        .reset_index()
+        .rename(columns={"yhat_anchored": "venta_prom_3m"})
+    )
+    df_prom3m["venta_prom_3m"] = df_prom3m["venta_prom_3m"].clip(lower=0)
+
     # ── 3. Tránsito por horizonte ─────────────────────────────────────
     df_tr = cargar_transito().copy()
     df_tr["sku"] = df_tr["sku"].astype(str)
@@ -182,9 +200,10 @@ def _preparar_datos() -> pd.DataFrame:
     df = df.merge(df_demanda,     on="sku", how="left")
     df = df.merge(df_transito,    on="sku", how="left")
     df = df.merge(df_ventas_4sem, on="sku", how="left")
+    df = df.merge(df_prom3m,      on="sku", how="left")
 
     fill_cols = (
-        ["stock_actual", "demanda_diaria", "ventas_4sem"]
+        ["stock_actual", "demanda_diaria", "ventas_4sem", "venta_prom_3m"]
         + [f"demanda_{h}d"  for h in _HORIZONTES]
         + [f"transito_{h}d" for h in _HORIZONTES]
     )
@@ -192,15 +211,22 @@ def _preparar_datos() -> pd.DataFrame:
         if col in df.columns:
             df[col] = df[col].fillna(0)
 
-    # ── 6. Cobertura basada en ventas reales (rolling 4 semanas) ─────
-    # Fórmula: stock_actual / ventas_4sem  → resultado en "meses de 4 semanas"
-    # La ventana se actualiza automáticamente con cada recarga (TTL 1h)
+    # ── 6a. Cobertura basada en ventas reales (rolling 4 semanas) ────
     df["cobertura_4sem_meses"] = np.where(
         df["ventas_4sem"] > 0,
         df["stock_actual"] / df["ventas_4sem"],
         np.nan,
     )
     df["estado_4sem"] = df["cobertura_4sem_meses"].apply(_clasificar_meses)
+
+    # ── 6b. Cobertura proyectada (forecast promedio 3 meses) ─────────
+    # Fórmula: stock_actual / promedio(mes_actual, mes+1, mes+2)
+    df["cobertura_fc3m_meses"] = np.where(
+        df["venta_prom_3m"] > 0,
+        df["stock_actual"] / df["venta_prom_3m"],
+        np.nan,
+    )
+    df["estado_fc3m"] = df["cobertura_fc3m_meses"].apply(_clasificar_meses)
 
     # ── 7. Textos vacíos ──────────────────────────────────────────────
     for c in ["categoria_hijo", "categoria_comercial", "marca", "categoria_padre"]:
@@ -435,6 +461,31 @@ def render():
     r6.metric("Ventas 4sem (u)",        f"{ventas_tot:,}")
     r7.metric("Sin venta reciente",     f"{n4_sin_dem:,}")
 
+    # ── KPIs Cobertura Proyectada (forecast promedio 3 meses) ────────
+    nfc_critico  = (dff["estado_fc3m"] == "CRÍTICO").sum()
+    nfc_ajustado = (dff["estado_fc3m"] == "AJUSTADO").sum()
+    nfc_normal   = (dff["estado_fc3m"] == "NORMAL").sum()
+    nfc_sobre    = (dff["estado_fc3m"] == "SOBRESTOCK").sum()
+    nfc_sin_dem  = (dff["estado_fc3m"] == "SIN DEMANDA").sum()
+
+    mes_labels = []
+    for i, p in enumerate(pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")):
+        if i == 0:
+            mes_labels.append(p.strftime("%b"))
+        else:
+            mes_labels.append(p.strftime("%b"))
+    meses_str = " + ".join(mes_labels) if mes_labels else "3 meses"
+
+    st.caption(f"🔮 **Cobertura proyectada — forecast promedio próximos 3m** ({meses_str})")
+    p1, p2, p3, p4, p5, p6, p7 = st.columns(7)
+    p1.metric("Con forecast 3m",      f"{n_total - nfc_sin_dem:,}")
+    p2.metric("🔴 CRÍTICO  <1m",      f"{nfc_critico:,}")
+    p3.metric("🟡 AJUSTADO 1–2m",     f"{nfc_ajustado:,}")
+    p4.metric("🟢 NORMAL   2–4m",     f"{nfc_normal:,}")
+    p5.metric("🟣 SOBRESTOCK >4m",    f"{nfc_sobre:,}")
+    p6.metric("Sin forecast",         f"{nfc_sin_dem:,}")
+    p7.metric("",                     "")
+
     # ── Gráfico distribución por estado (ventas reales 4sem) ─────────
     estado_counts = (
         dff["estado_4sem"]
@@ -488,6 +539,7 @@ def render():
             f"demanda_{horizonte}d",
             "cobertura_dias", "cobertura_meses", "estado",
             "ventas_4sem", "cobertura_4sem_meses", "estado_4sem",
+            "venta_prom_3m", "cobertura_fc3m_meses", "estado_fc3m",
         ]
         cols_show = [c for c in cols_show if c in dff.columns]
 
@@ -495,12 +547,16 @@ def render():
         df_sku["cobertura_dias"]      = df_sku["cobertura_dias"].round(0)
         df_sku["cobertura_meses"]     = df_sku["cobertura_meses"].round(1)
         df_sku["demanda_diaria"]      = df_sku["demanda_diaria"].round(1)
-        df_sku["cobertura_4sem_meses"] = df_sku["cobertura_4sem_meses"].round(1)
+        df_sku["cobertura_4sem_meses"]  = df_sku["cobertura_4sem_meses"].round(1)
+        if "cobertura_fc3m_meses" in df_sku.columns:
+            df_sku["cobertura_fc3m_meses"] = df_sku["cobertura_fc3m_meses"].round(1)
+        if "venta_prom_3m" in df_sku.columns:
+            df_sku["venta_prom_3m"] = df_sku["venta_prom_3m"].round(1)
         df_sku = df_sku.sort_values("cobertura_4sem_meses", ascending=True, na_position="last")
 
         st.caption(f"**{len(df_sku):,} SKUs** — ordenados por cobertura real 4sem ascendente (más críticos primero)")
 
-        style_cols = [c for c in ["estado", "estado_4sem"] if c in df_sku.columns]
+        style_cols = [c for c in ["estado", "estado_4sem", "estado_fc3m"] if c in df_sku.columns]
         st.dataframe(
             df_sku.style.map(_style_estado, subset=style_cols),
             use_container_width=True,
@@ -521,6 +577,9 @@ def render():
                 "ventas_4sem":            st.column_config.NumberColumn("Ventas 4sem (u)",format="%d"),
                 "cobertura_4sem_meses":   st.column_config.NumberColumn("Cob. Meses (real)", format="%.1f"),
                 "estado_4sem":            st.column_config.TextColumn("Estado (real)",    width=110),
+                "venta_prom_3m":          st.column_config.NumberColumn("Venta Prom 3m (u)", format="%.1f"),
+                "cobertura_fc3m_meses":   st.column_config.NumberColumn("Cob. Meses (fc3m)", format="%.1f"),
+                "estado_fc3m":            st.column_config.TextColumn("Estado (fc3m)",    width=110),
             },
         )
 
