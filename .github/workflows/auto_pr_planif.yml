@@ -1,0 +1,80 @@
+name: Auto-PR Planificación → main
+
+# Cada push a una branch de planificación/forecast crea (o actualiza) un PR
+# hacia main automáticamente. Andrés revisa y mergea con 1 click — no hay
+# auto-merge, el control de qué entra a producción queda con él.
+#
+# Trigger: push a feat/fc-planif-* (Felipe) o feat/nc-forecast-* (Nicolás).
+# Si ya existe un PR abierto desde esa branch, GitHub lo actualiza solo —
+# este workflow NO crea uno nuevo.
+
+on:
+  push:
+    branches:
+      - 'feat/fc-planif-*'
+      - 'feat/nc-forecast-*'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Crear PR a main (si no existe ya)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          # ¿Ya hay un PR abierto desde esta branch?
+          existing=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "[info] PR #$existing ya existe para $BRANCH → GitHub lo actualizó solo con este push."
+            exit 0
+          fi
+
+          # Detectar quién es responsable según la convención de branch
+          case "$BRANCH" in
+            feat/fc-planif-*) AUTOR="Felipe"; AREA="Planificación";;
+            feat/nc-forecast-*) AUTOR="Nicolás"; AREA="Forecasting";;
+            *) AUTOR="?"; AREA="?";;
+          esac
+
+          # Resumen de cambios
+          DIFF_STAT=$(git diff --stat origin/main..."$BRANCH" 2>/dev/null | tail -1 || echo "(sin diff stat)")
+          COMMITS=$(git log origin/main..."$BRANCH" --oneline 2>/dev/null | head -10 || echo "(sin commits visibles)")
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Auto-PR · $BRANCH" \
+            --body "$(cat <<EOF
+          🤖 PR automático generado por push a \`$BRANCH\`.
+
+          **Autor:** $AUTOR ($AREA)
+          **Branch:** \`$BRANCH\` → \`main\`
+          **Cambios:** $DIFF_STAT
+
+          ### Commits incluidos
+          \`\`\`
+          $COMMITS
+          \`\`\`
+
+          ---
+          ### Para Andrés (revisión)
+          - Mirar el diff arriba
+          - Si todo OK: **merge** → la app oficial \`unionx-planificacion.streamlit.app\` redeploya en ~1-2 min
+          - Si hay cambios pendientes: comentar acá o cerrar el PR
+          - Nuevos pushes a \`$BRANCH\` actualizan este mismo PR automáticamente
+
+          ### Para $AUTOR
+          - Tu instancia personal (\`unionx-planif-felipe.streamlit.app\` / similar) ya tiene los cambios
+          - Cuando este PR se mergee, también queda en producción oficial
+          EOF
+          )"
+
+          echo "[ok] PR creado para $BRANCH"
