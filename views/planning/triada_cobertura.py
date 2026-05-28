@@ -194,6 +194,13 @@ def _preparar_datos() -> pd.DataFrame:
         df_meta["categoria_hijo"]    = ""
         df_meta["categoria_comercial"] = ""
 
+    # Garantizar que categoria_hijo y categoria_comercial siempre existan,
+    # incluso si ventas_historico cargó OK pero no tenía esas columnas
+    if "categoria_hijo" not in df_meta.columns:
+        df_meta["categoria_hijo"] = "Sin clasificar"
+    if "categoria_comercial" not in df_meta.columns:
+        df_meta["categoria_comercial"] = "Sin clasificar"
+
     # ── 5. Unir todo ──────────────────────────────────────────────────
     df = df_meta.copy()
     df = df.merge(df_stock,       on="sku", how="left")
