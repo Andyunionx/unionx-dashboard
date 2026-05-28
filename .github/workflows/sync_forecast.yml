@@ -5,7 +5,7 @@ on:
   # (bypass Turso) además del histórico, así corre aunque Turso bloquee reads.
   # sync_mes_actual.yml refresca ese parquet cada hora.
   schedule:
-    - cron: '0 6 * * *'  # Diario 06:00 UTC = 02:00 Chile
+    - cron: '0 13 * * *'  # Diario 13:00 UTC = 09:00 Chile (UTC-4)
   workflow_dispatch:
     inputs:
       max_modelos:
