@@ -30,13 +30,15 @@ from views.planning._data_helpers import (
 _TODAY = pd.Timestamp.today().normalize()
 _HORIZONTES = [30, 60, 90, 180]
 
-_ESTADO_ORDEN = ["CRÍTICO", "URGENTE", "AJUSTADO", "NORMAL", "HOLGADO", "SIN DEMANDA"]
+_ESTADO_ORDEN      = ["CRÍTICO", "URGENTE", "AJUSTADO", "NORMAL", "HOLGADO", "SIN DEMANDA"]
+_ESTADO_ORDEN_4SEM = ["CRÍTICO", "AJUSTADO", "NORMAL", "SOBRESTOCK", "SIN DEMANDA"]
 _ESTADO_BG = {
     "CRÍTICO":     "background-color:#FF4B4B;color:white",
     "URGENTE":     "background-color:#FF8C00;color:white",
     "AJUSTADO":    "background-color:#FFD700;color:#333",
     "NORMAL":      "background-color:#52C41A;color:white",
     "HOLGADO":     "background-color:#1890FF;color:white",
+    "SOBRESTOCK":  "background-color:#722ED1;color:white",
     "SIN DEMANDA": "background-color:#E8E8E8;color:#999",
 }
 
@@ -53,15 +55,16 @@ def _clasificar(dias) -> str:
 
 
 def _clasificar_meses(meses) -> str:
-    """Clasifica cobertura expresada en meses (para métrica de ventas reales 4 sem)."""
+    """Clasifica cobertura en meses (ventas reales 4 sem).
+    < 1m → CRÍTICO | 1–2m → AJUSTADO | 2–4m → NORMAL | >4m → SOBRESTOCK
+    """
     if pd.isna(meses):
         return "SIN DEMANDA"
     m = float(meses)
     if m < 1:  return "CRÍTICO"
-    if m < 2:  return "URGENTE"
-    if m < 3:  return "AJUSTADO"
-    if m < 6:  return "NORMAL"
-    return "HOLGADO"
+    if m <= 2: return "AJUSTADO"
+    if m <= 4: return "NORMAL"
+    return "SOBRESTOCK"
 
 
 def _style_estado(val: str) -> str:
@@ -415,28 +418,28 @@ def render():
     c7.metric(f"Tránsito ≤{horizonte}d", f"{tr_tot:,}")
 
     # ── KPIs Ventas Reales (últimas 4 semanas) ────────────────────────
-    n4_critico  = (dff["estado_4sem"] == "CRÍTICO").sum()
-    n4_urgente  = (dff["estado_4sem"] == "URGENTE").sum()
-    n4_ajustado = (dff["estado_4sem"] == "AJUSTADO").sum()
-    n4_ok       = dff["estado_4sem"].isin(["NORMAL", "HOLGADO"]).sum()
-    n4_sin_dem  = (dff["estado_4sem"] == "SIN DEMANDA").sum()
-    ventas_tot  = int(dff["ventas_4sem"].sum())
+    n4_critico   = (dff["estado_4sem"] == "CRÍTICO").sum()
+    n4_ajustado  = (dff["estado_4sem"] == "AJUSTADO").sum()
+    n4_normal    = (dff["estado_4sem"] == "NORMAL").sum()
+    n4_sobre     = (dff["estado_4sem"] == "SOBRESTOCK").sum()
+    n4_sin_dem   = (dff["estado_4sem"] == "SIN DEMANDA").sum()
+    ventas_tot   = int(dff["ventas_4sem"].sum())
 
     st.caption("🛒 **Cobertura basada en ventas reales (últimas 4 semanas — rolling)**")
     r1, r2, r3, r4, r5, r6, r7 = st.columns(7)
-    r1.metric("Con ventas 4sem",          f"{n_total - n4_sin_dem:,}")
-    r2.metric("🔴 CRÍTICO <1m",           f"{n4_critico:,}")
-    r3.metric("🟠 URGENTE <2m",           f"{n4_urgente:,}")
-    r4.metric("🟡 AJUSTADO <3m",          f"{n4_ajustado:,}")
-    r5.metric("🟢 NORMAL / HOLGADO",      f"{n4_ok:,}")
-    r6.metric("Ventas 4sem (u)",           f"{ventas_tot:,}")
-    r7.metric("Sin venta reciente",        f"{n4_sin_dem:,}")
+    r1.metric("Con ventas 4sem",       f"{n_total - n4_sin_dem:,}")
+    r2.metric("🔴 CRÍTICO  <1m",       f"{n4_critico:,}")
+    r3.metric("🟡 AJUSTADO 1–2m",      f"{n4_ajustado:,}")
+    r4.metric("🟢 NORMAL   2–4m",      f"{n4_normal:,}")
+    r5.metric("🟣 SOBRESTOCK >4m",     f"{n4_sobre:,}")
+    r6.metric("Ventas 4sem (u)",        f"{ventas_tot:,}")
+    r7.metric("Sin venta reciente",     f"{n4_sin_dem:,}")
 
-    # ── Gráfico distribución por estado ──────────────────────────────
+    # ── Gráfico distribución por estado (ventas reales 4sem) ─────────
     estado_counts = (
-        dff["estado"]
+        dff["estado_4sem"]
         .value_counts()
-        .reindex(_ESTADO_ORDEN, fill_value=0)
+        .reindex(_ESTADO_ORDEN_4SEM, fill_value=0)
         .reset_index()
     )
     estado_counts.columns = ["Estado", "SKUs"]
