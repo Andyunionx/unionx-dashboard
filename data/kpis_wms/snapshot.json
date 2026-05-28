@@ -1,40 +1,110 @@
 {
-  "generado_en": "2026-05-28T06:57:04.616076",
+  "generado_en": "2026-05-28T18:17:30.491396",
   "mes_actual": "2026-05",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.006416813912396541,
-      "total_pickings": 10753,
+      "valor": 0.006326792591234183,
+      "total_pickings": 10906,
       "on_time": 69,
-      "on_time_pct": 0.006416813912396541,
-      "in_full": 10737,
-      "in_full_pct": 0.9985120431507486,
+      "on_time_pct": 0.006326792591234183,
+      "in_full": 10890,
+      "in_full_pct": 0.9985329176600036,
       "both": 69,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.10704225352112676,
-      "total_pickings": 355,
-      "on_time": 40,
-      "on_time_pct": 0.11267605633802817,
-      "in_full": 351,
-      "in_full_pct": 0.9887323943661972,
-      "both": 38,
+      "valor": 0.10483870967741936,
+      "total_pickings": 372,
+      "on_time": 41,
+      "on_time_pct": 0.11021505376344086,
+      "in_full": 368,
+      "in_full_pct": 0.989247311827957,
+      "both": 39,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997294555292526,
-      "ok": 14781,
-      "total": 14785,
+      "valor": 0.999734007181806,
+      "ok": 15034,
+      "total": 15038,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.094469044690447,
-      "n_recepciones": 271,
+      "valor": 6.852974495848161,
+      "n_recepciones": 281,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00855",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-28 17:49",
+          "done": "2026-05-28 17:49"
+        },
+        {
+          "picking": "CA1/IN/00854",
+          "proveedor": "Importaciones Andres Matias Muñoz Suban E.I. De Responsabilidad Li",
+          "horas": 0.3,
+          "scheduled": "2026-05-28 16:58",
+          "done": "2026-05-28 17:16"
+        },
+        {
+          "picking": "CA1/IN/00852",
+          "proveedor": "Partners Impresores SPA",
+          "horas": 0.4,
+          "scheduled": "2026-05-28 16:48",
+          "done": "2026-05-28 17:15"
+        },
+        {
+          "picking": "CA1/IN/00853",
+          "proveedor": "EDITORIAL AMANUTA LIMITADA",
+          "horas": 0.3,
+          "scheduled": "2026-05-28 16:55",
+          "done": "2026-05-28 17:15"
+        },
+        {
+          "picking": "CA1/IN/00850",
+          "proveedor": "Partners Impresores SPA",
+          "horas": 0.5,
+          "scheduled": "2026-05-28 16:41",
+          "done": "2026-05-28 17:14"
+        },
+        {
+          "picking": "CA1/IN/00851",
+          "proveedor": "PARTNERS IMPRESORES SPA",
+          "horas": 0.5,
+          "scheduled": "2026-05-28 16:44",
+          "done": "2026-05-28 17:14"
+        },
+        {
+          "picking": "CA1/IN/00849",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-28 15:24",
+          "done": "2026-05-28 15:25"
+        },
+        {
+          "picking": "CA1/IN/00848",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-28 15:18",
+          "done": "2026-05-28 15:22"
+        },
+        {
+          "picking": "CA1/IN/00847",
+          "proveedor": "",
+          "horas": 0.9,
+          "scheduled": "2026-05-28 13:26",
+          "done": "2026-05-28 14:18"
+        },
+        {
+          "picking": "CA1/IN/00846",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-28 13:56",
+          "done": "2026-05-28 13:56"
+        },
         {
           "picking": "CA1/IN/00845",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -104,95 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-05-26 14:22",
           "done": "2026-05-26 14:25"
-        },
-        {
-          "picking": "CA1/IN/00819",
-          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
-          "horas": 89.0,
-          "scheduled": "2026-05-22 04:00",
-          "done": "2026-05-25 20:59"
-        },
-        {
-          "picking": "CA1/IN/00824",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 97.6,
-          "scheduled": "2026-05-21 12:00",
-          "done": "2026-05-25 13:36"
-        },
-        {
-          "picking": "CA1/IN/00823",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-22 17:15",
-          "done": "2026-05-22 17:19"
-        },
-        {
-          "picking": "CA1/IN/00822",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-22 17:04",
-          "done": "2026-05-22 17:13"
-        },
-        {
-          "picking": "CA1/IN/00821",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-22 16:37",
-          "done": "2026-05-22 16:55"
-        },
-        {
-          "picking": "CA1/IN/00820",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 46.9,
-          "scheduled": "2026-05-20 13:26",
-          "done": "2026-05-22 12:23"
-        },
-        {
-          "picking": "CA1/RET/00987",
-          "proveedor": "Cliente Kitchen Center",
-          "horas": 0.0,
-          "scheduled": "2026-05-20 13:56",
-          "done": "2026-05-20 13:56"
-        },
-        {
-          "picking": "CA1/RET/00986",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-05-18 14:52",
-          "done": "2026-05-18 14:52"
-        },
-        {
-          "picking": "CA1/IN/00817",
-          "proveedor": "",
-          "horas": 0.8,
-          "scheduled": "2026-05-18 12:46",
-          "done": "2026-05-18 13:36"
-        },
-        {
-          "picking": "CA1/IN/00816",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-14 20:08",
-          "done": "2026-05-14 20:10"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9586016559337627,
-      "total_so": 11013,
-      "total_con_pickings": 10870,
-      "cumplidos": 10420,
+      "valor": 0.9604176123467998,
+      "total_so": 11158,
+      "total_con_pickings": 11015,
+      "cumplidos": 10579,
       "parciales": 24,
-      "sin_iniciar": 426,
+      "sin_iniciar": 412,
       "error": null
     },
     "oct_30d": {
-      "valor": 40.82790643993406,
-      "n_orders": 10987,
+      "valor": 40.50412227102506,
+      "n_orders": 11156,
       "min_h": 0.018333333333333333,
       "max_h": 597.8994444444445,
-      "mediana_h": 24.2175,
+      "mediana_h": 23.804166666666667,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 13727,
+      "lineas": 13995,
       "mes": "2026-05",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 76,
-          "tarde": 76,
+          "total": 84,
+          "tarde": 84,
           "on_time_pct": 0.0
         },
         {
@@ -373,8 +373,8 @@
         },
         {
           "cliente": "Comercializadora SP Digital SPA",
-          "total": 25,
-          "tarde": 25,
+          "total": 26,
+          "tarde": 26,
           "on_time_pct": 0.0
         },
         {
@@ -385,8 +385,8 @@
         },
         {
           "cliente": "Lokal SpA",
-          "total": 7,
-          "tarde": 7,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -403,9 +403,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 43,
-          "tarde": 37,
-          "on_time_pct": 0.13953488372093023
+          "total": 44,
+          "tarde": 38,
+          "on_time_pct": 0.13636363636363635
         },
         {
           "cliente": "Sawa SPA",
@@ -6862,42 +6862,112 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.006416813912396541,
-      "total_pickings": 10753,
+      "valor": 0.006326792591234183,
+      "total_pickings": 10906,
       "on_time": 69,
-      "on_time_pct": 0.006416813912396541,
-      "in_full": 10737,
-      "in_full_pct": 0.9985120431507486,
+      "on_time_pct": 0.006326792591234183,
+      "in_full": 10890,
+      "in_full_pct": 0.9985329176600036,
       "both": 69,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.10704225352112676,
-      "total_pickings": 355,
-      "on_time": 40,
-      "on_time_pct": 0.11267605633802817,
-      "in_full": 351,
-      "in_full_pct": 0.9887323943661972,
-      "both": 38,
+      "valor": 0.10483870967741936,
+      "total_pickings": 372,
+      "on_time": 41,
+      "on_time_pct": 0.11021505376344086,
+      "in_full": 368,
+      "in_full_pct": 0.989247311827957,
+      "both": 39,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997294555292526,
-      "ok": 14781,
-      "total": 14785,
+      "valor": 0.999734007181806,
+      "ok": 15034,
+      "total": 15038,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.094469044690447,
-      "n_recepciones": 271,
+      "valor": 6.852974495848161,
+      "n_recepciones": 281,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00855",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-28 17:49",
+          "done": "2026-05-28 17:49"
+        },
+        {
+          "picking": "CA1/IN/00854",
+          "proveedor": "Importaciones Andres Matias Muñoz Suban E.I. De Responsabilidad Li",
+          "horas": 0.3,
+          "scheduled": "2026-05-28 16:58",
+          "done": "2026-05-28 17:16"
+        },
+        {
+          "picking": "CA1/IN/00852",
+          "proveedor": "Partners Impresores SPA",
+          "horas": 0.4,
+          "scheduled": "2026-05-28 16:48",
+          "done": "2026-05-28 17:15"
+        },
+        {
+          "picking": "CA1/IN/00853",
+          "proveedor": "EDITORIAL AMANUTA LIMITADA",
+          "horas": 0.3,
+          "scheduled": "2026-05-28 16:55",
+          "done": "2026-05-28 17:15"
+        },
+        {
+          "picking": "CA1/IN/00850",
+          "proveedor": "Partners Impresores SPA",
+          "horas": 0.5,
+          "scheduled": "2026-05-28 16:41",
+          "done": "2026-05-28 17:14"
+        },
+        {
+          "picking": "CA1/IN/00851",
+          "proveedor": "PARTNERS IMPRESORES SPA",
+          "horas": 0.5,
+          "scheduled": "2026-05-28 16:44",
+          "done": "2026-05-28 17:14"
+        },
+        {
+          "picking": "CA1/IN/00849",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-28 15:24",
+          "done": "2026-05-28 15:25"
+        },
+        {
+          "picking": "CA1/IN/00848",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-28 15:18",
+          "done": "2026-05-28 15:22"
+        },
+        {
+          "picking": "CA1/IN/00847",
+          "proveedor": "",
+          "horas": 0.9,
+          "scheduled": "2026-05-28 13:26",
+          "done": "2026-05-28 14:18"
+        },
+        {
+          "picking": "CA1/IN/00846",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-28 13:56",
+          "done": "2026-05-28 13:56"
+        },
         {
           "picking": "CA1/IN/00845",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -6967,76 +7037,6 @@
           "horas": 0.0,
           "scheduled": "2026-05-26 14:22",
           "done": "2026-05-26 14:25"
-        },
-        {
-          "picking": "CA1/IN/00819",
-          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
-          "horas": 89.0,
-          "scheduled": "2026-05-22 04:00",
-          "done": "2026-05-25 20:59"
-        },
-        {
-          "picking": "CA1/IN/00824",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 97.6,
-          "scheduled": "2026-05-21 12:00",
-          "done": "2026-05-25 13:36"
-        },
-        {
-          "picking": "CA1/IN/00823",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-22 17:15",
-          "done": "2026-05-22 17:19"
-        },
-        {
-          "picking": "CA1/IN/00822",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-22 17:04",
-          "done": "2026-05-22 17:13"
-        },
-        {
-          "picking": "CA1/IN/00821",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-05-22 16:37",
-          "done": "2026-05-22 16:55"
-        },
-        {
-          "picking": "CA1/IN/00820",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 46.9,
-          "scheduled": "2026-05-20 13:26",
-          "done": "2026-05-22 12:23"
-        },
-        {
-          "picking": "CA1/RET/00987",
-          "proveedor": "Cliente Kitchen Center",
-          "horas": 0.0,
-          "scheduled": "2026-05-20 13:56",
-          "done": "2026-05-20 13:56"
-        },
-        {
-          "picking": "CA1/RET/00986",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-05-18 14:52",
-          "done": "2026-05-18 14:52"
-        },
-        {
-          "picking": "CA1/IN/00817",
-          "proveedor": "",
-          "horas": 0.8,
-          "scheduled": "2026-05-18 12:46",
-          "done": "2026-05-18 13:36"
-        },
-        {
-          "picking": "CA1/IN/00816",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-14 20:08",
-          "done": "2026-05-14 20:10"
         }
       ],
       "error": null
