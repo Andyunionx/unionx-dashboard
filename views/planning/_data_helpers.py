@@ -71,18 +71,23 @@ def _marcar_bypass(snapshot_path: Path, tabla: str):
         pass  # streamlit no inicializado (uso CLI)
 
 
-def _try_turso_or_parquet(turso_fn, tabla: str, schema_cols: list | None = None) -> pd.DataFrame:
+def _try_turso_or_parquet(turso_fn, tabla: str, schema_cols: list | None = None,
+                            silent: bool = False) -> pd.DataFrame:
     """Intenta Turso; si bloqueado, carga snapshot parquet.
 
     1. Ejecuta turso_fn() — debe devolver pd.DataFrame.
     2. Si falla con bloqueo: prueba FALLBACK_PARQUETS[tabla] → LEGACY_FALLBACKS[tabla].
     3. Si nada funciona, devuelve DataFrame vacío con schema (no rompe la UI).
+
+    silent=True: no emite st.warning si todo falla. Para loaders que tienen
+    su propio plan B (ej. cargar_planif_transito_live cae a comex/transito.parquet).
     """
     try:
         return turso_fn()
     except Exception as e:
         if not _is_turso_blocked(e):
-            st.warning(f"No pude leer {tabla}: {e}")
+            if not silent:
+                st.warning(f"No pude leer {tabla}: {e}")
             return pd.DataFrame(columns=schema_cols or [])
         for source_path in (FALLBACK_PARQUETS.get(tabla), LEGACY_FALLBACKS.get(tabla)):
             if source_path is None or not source_path.exists():
@@ -92,8 +97,10 @@ def _try_turso_or_parquet(turso_fn, tabla: str, schema_cols: list | None = None)
                 _marcar_bypass(source_path, tabla)
                 return df
             except Exception as e2:
-                st.warning(f"Fallback parquet {source_path.name} falló: {type(e2).__name__}: {e2}")
-        st.warning(f"No pude leer {tabla} (Turso bloqueado y sin snapshot local).")
+                if not silent:
+                    st.warning(f"Fallback parquet {source_path.name} falló: {type(e2).__name__}: {e2}")
+        if not silent:
+            st.warning(f"No pude leer {tabla} (Turso bloqueado y sin snapshot local).")
         return pd.DataFrame(columns=schema_cols or [])
 
 
@@ -517,6 +524,7 @@ def cargar_planif_transito_live() -> pd.DataFrame:
             "FROM planif_transito_live"
         ),
         tabla='planif_transito_live',
+        silent=True,  # tiene plan B abajo (parquet COMEX), no contaminar UI
     )
     # Plan B: si vino vacío, leer directo del parquet Odoo
     if df.empty:
