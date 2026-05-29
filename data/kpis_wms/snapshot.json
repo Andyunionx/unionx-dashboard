@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-05-29T06:57:18.976443",
+  "generado_en": "2026-05-29T18:13:59.724659",
   "mes_actual": "2026-05",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.005866468013781544,
-      "total_pickings": 10739,
-      "on_time": 63,
-      "on_time_pct": 0.005866468013781544,
-      "in_full": 10723,
-      "in_full_pct": 0.9985101033615793,
-      "both": 63,
+      "valor": 0.006061162641197539,
+      "total_pickings": 10889,
+      "on_time": 66,
+      "on_time_pct": 0.006061162641197539,
+      "in_full": 10873,
+      "in_full_pct": 0.9985306272384976,
+      "both": 66,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.10614525139664804,
-      "total_pickings": 358,
+      "valor": 0.1043956043956044,
+      "total_pickings": 364,
       "on_time": 40,
-      "on_time_pct": 0.11173184357541899,
-      "in_full": 354,
-      "in_full_pct": 0.9888268156424581,
+      "on_time_pct": 0.10989010989010989,
+      "in_full": 360,
+      "in_full_pct": 0.989010989010989,
       "both": 38,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997290890619709,
-      "ok": 14761,
-      "total": 14765,
+      "valor": 0.999733030768204,
+      "ok": 14979,
+      "total": 14983,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 6.9502547131969505,
-      "n_recepciones": 277,
+      "valor": 7.02835500394011,
+      "n_recepciones": 282,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00836",
+          "proveedor": "Celiv Spa",
+          "horas": 44.3,
+          "scheduled": "2026-05-27 21:30",
+          "done": "2026-05-29 17:47"
+        },
+        {
+          "picking": "CA1/IN/00837",
+          "proveedor": "BRAIN TOYS SPA",
+          "horas": 11.9,
+          "scheduled": "2026-05-29 04:00",
+          "done": "2026-05-29 15:55"
+        },
+        {
+          "picking": "CA1/IN/00860",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-29 14:06",
+          "done": "2026-05-29 14:09"
+        },
+        {
+          "picking": "CA1/IN/00858",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-29 13:37",
+          "done": "2026-05-29 13:38"
+        },
+        {
+          "picking": "CA1/IN/00856",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-05-29 12:47",
+          "done": "2026-05-29 13:15"
+        },
         {
           "picking": "CA1/IN/00855",
           "proveedor": "",
@@ -139,60 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-05-27 18:42",
           "done": "2026-05-27 18:45"
-        },
-        {
-          "picking": "CA1/IN/00839",
-          "proveedor": "",
-          "horas": 0.4,
-          "scheduled": "2026-05-27 18:05",
-          "done": "2026-05-27 18:30"
-        },
-        {
-          "picking": "CA1/RET/00992",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-05-27 17:01",
-          "done": "2026-05-27 17:01"
-        },
-        {
-          "picking": "CA1/IN/00825",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 23.8,
-          "scheduled": "2026-05-26 13:31",
-          "done": "2026-05-27 13:18"
-        },
-        {
-          "picking": "CA1/IN/00826",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-26 15:29",
-          "done": "2026-05-26 15:32"
-        },
-        {
-          "picking": "CA1/RET/00991",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-05-26 14:22",
-          "done": "2026-05-26 14:25"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9489880787357915,
-      "total_so": 10957,
-      "total_con_pickings": 10821,
-      "cumplidos": 10269,
+      "valor": 0.9473157415832575,
+      "total_so": 11155,
+      "total_con_pickings": 10990,
+      "cumplidos": 10411,
       "parciales": 15,
-      "sin_iniciar": 537,
+      "sin_iniciar": 564,
       "error": null
     },
     "oct_30d": {
-      "valor": 40.66002219488986,
-      "n_orders": 10976,
+      "valor": 40.34838033266441,
+      "n_orders": 11129,
       "min_h": 0.018333333333333333,
       "max_h": 597.8994444444445,
-      "mediana_h": 23.995555555555555,
+      "mediana_h": 23.75,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14023,
+      "lineas": 14245,
       "mes": "2026-05",
       "error": null
     },
@@ -402,16 +402,16 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Sawa SPA",
+          "total": 67,
+          "tarde": 58,
+          "on_time_pct": 0.13432835820895522
+        },
+        {
           "cliente": "Celmedia Fidelizacion SPA",
           "total": 44,
           "tarde": 38,
           "on_time_pct": 0.13636363636363635
-        },
-        {
-          "cliente": "Sawa SPA",
-          "total": 61,
-          "tarde": 52,
-          "on_time_pct": 0.14754098360655737
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -6862,42 +6862,77 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.005866468013781544,
-      "total_pickings": 10739,
-      "on_time": 63,
-      "on_time_pct": 0.005866468013781544,
-      "in_full": 10723,
-      "in_full_pct": 0.9985101033615793,
-      "both": 63,
+      "valor": 0.006061162641197539,
+      "total_pickings": 10889,
+      "on_time": 66,
+      "on_time_pct": 0.006061162641197539,
+      "in_full": 10873,
+      "in_full_pct": 0.9985306272384976,
+      "both": 66,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.10614525139664804,
-      "total_pickings": 358,
+      "valor": 0.1043956043956044,
+      "total_pickings": 364,
       "on_time": 40,
-      "on_time_pct": 0.11173184357541899,
-      "in_full": 354,
-      "in_full_pct": 0.9888268156424581,
+      "on_time_pct": 0.10989010989010989,
+      "in_full": 360,
+      "in_full_pct": 0.989010989010989,
       "both": 38,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997290890619709,
-      "ok": 14761,
-      "total": 14765,
+      "valor": 0.999733030768204,
+      "ok": 14979,
+      "total": 14983,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 6.9502547131969505,
-      "n_recepciones": 277,
+      "valor": 7.02835500394011,
+      "n_recepciones": 282,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00836",
+          "proveedor": "Celiv Spa",
+          "horas": 44.3,
+          "scheduled": "2026-05-27 21:30",
+          "done": "2026-05-29 17:47"
+        },
+        {
+          "picking": "CA1/IN/00837",
+          "proveedor": "BRAIN TOYS SPA",
+          "horas": 11.9,
+          "scheduled": "2026-05-29 04:00",
+          "done": "2026-05-29 15:55"
+        },
+        {
+          "picking": "CA1/IN/00860",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-05-29 14:06",
+          "done": "2026-05-29 14:09"
+        },
+        {
+          "picking": "CA1/IN/00858",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-05-29 13:37",
+          "done": "2026-05-29 13:38"
+        },
+        {
+          "picking": "CA1/IN/00856",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-05-29 12:47",
+          "done": "2026-05-29 13:15"
+        },
         {
           "picking": "CA1/IN/00855",
           "proveedor": "",
@@ -7002,41 +7037,6 @@
           "horas": 0.0,
           "scheduled": "2026-05-27 18:42",
           "done": "2026-05-27 18:45"
-        },
-        {
-          "picking": "CA1/IN/00839",
-          "proveedor": "",
-          "horas": 0.4,
-          "scheduled": "2026-05-27 18:05",
-          "done": "2026-05-27 18:30"
-        },
-        {
-          "picking": "CA1/RET/00992",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-05-27 17:01",
-          "done": "2026-05-27 17:01"
-        },
-        {
-          "picking": "CA1/IN/00825",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 23.8,
-          "scheduled": "2026-05-26 13:31",
-          "done": "2026-05-27 13:18"
-        },
-        {
-          "picking": "CA1/IN/00826",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-26 15:29",
-          "done": "2026-05-26 15:32"
-        },
-        {
-          "picking": "CA1/RET/00991",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-05-26 14:22",
-          "done": "2026-05-26 14:25"
         }
       ],
       "error": null
