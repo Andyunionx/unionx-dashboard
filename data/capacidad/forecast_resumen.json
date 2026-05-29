@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-05-29T18:00:53.220475",
+  "generado_en": "2026-05-29T20:30:43.740390",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1362,
   "capacidad_bodega_m3": 2451.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1362,
-    "posiciones_ocupadas_hoy": 1005,
-    "posiciones_libres_hoy": 357,
-    "pct_ocupacion_hoy": 73.8,
-    "m3_stock_calculado": 1180.0
+    "posiciones_ocupadas_hoy": 1002,
+    "posiciones_libres_hoy": 360,
+    "pct_ocupacion_hoy": 73.6,
+    "m3_stock_calculado": 1178.8
   },
   "pico_proyectado": {
     "fecha": "2026-05-30",
-    "posiciones_ocupadas": 1033.1,
-    "pct_ocupacion": 75.9
+    "posiciones_ocupadas": 1030.1,
+    "pct_ocupacion": 75.6
   },
   "minimo_proyectado": {
     "fecha": "2026-08-27",
-    "posiciones_ocupadas": 818.5,
-    "pct_ocupacion": 60.1
+    "posiciones_ocupadas": 815.7,
+    "pct_ocupacion": 59.9
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -106,18 +106,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 240.8,
-  "pallets_total_salientes_horizonte": 470.1,
+  "pallets_total_salientes_horizonte": 469.9,
   "m3_total_entrante_horizonte": 288.9,
-  "m3_total_saliente_horizonte": 564.1,
+  "m3_total_saliente_horizonte": 563.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 640,
     "sku_fallback": 8,
     "fallback_vol_m3": 0.00554,
     "demanda_total_unidades_horizonte": 115867.0,
-    "demanda_cumplida_unidades": 48264.0,
-    "demanda_no_cubierta_unidades_total": 67603.0,
-    "pct_demanda_cumplida": 41.7,
+    "demanda_cumplida_unidades": 48253.0,
+    "demanda_no_cubierta_unidades_total": 67614.0,
+    "pct_demanda_cumplida": 41.6,
     "sku_sin_match_stock_count": 53,
     "top_no_cubiertos": [
       {
@@ -142,7 +142,7 @@
       },
       {
         "sku": "1597086499840",
-        "unid_no_cubiertas": 5419.0,
+        "unid_no_cubiertas": 5421.0,
         "sin_match_stock": true
       },
       {
@@ -177,7 +177,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 569.0,
+        "unid_no_cubiertas": 571.0,
         "sin_match_stock": true
       },
       {
