@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-05-30T13:02:11.847780",
+  "generado_en": "2026-05-30T15:59:19.320660",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1362,
   "capacidad_bodega_m3": 2451.6,
@@ -11,19 +11,19 @@
   },
   "estado_actual": {
     "posiciones_total": 1362,
-    "posiciones_ocupadas_hoy": 1002,
-    "posiciones_libres_hoy": 360,
-    "pct_ocupacion_hoy": 73.6,
-    "m3_stock_calculado": 1178.8
+    "posiciones_ocupadas_hoy": 1001,
+    "posiciones_libres_hoy": 361,
+    "pct_ocupacion_hoy": 73.5,
+    "m3_stock_calculado": 1166.7
   },
   "pico_proyectado": {
     "fecha": "2026-05-30",
-    "posiciones_ocupadas": 1034.4,
+    "posiciones_ocupadas": 1033.4,
     "pct_ocupacion": 75.9
   },
   "minimo_proyectado": {
     "fecha": "2026-08-28",
-    "posiciones_ocupadas": 817.3,
+    "posiciones_ocupadas": 816.6,
     "pct_ocupacion": 60.0
   },
   "primer_critico": null,
@@ -106,33 +106,33 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 240.8,
-  "pallets_total_salientes_horizonte": 472.5,
+  "pallets_total_salientes_horizonte": 472.2,
   "m3_total_entrante_horizonte": 288.9,
-  "m3_total_saliente_horizonte": 567.1,
+  "m3_total_saliente_horizonte": 566.7,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 640,
+    "sku_con_vol_odoo": 639,
     "sku_fallback": 8,
-    "fallback_vol_m3": 0.00554,
+    "fallback_vol_m3": 0.00549,
     "demanda_total_unidades_horizonte": 116809.0,
-    "demanda_cumplida_unidades": 48406.0,
-    "demanda_no_cubierta_unidades_total": 68403.0,
+    "demanda_cumplida_unidades": 48369.0,
+    "demanda_no_cubierta_unidades_total": 68440.0,
     "pct_demanda_cumplida": 41.4,
     "sku_sin_match_stock_count": 53,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
-        "unid_no_cubiertas": 17968.0,
+        "unid_no_cubiertas": 17970.0,
         "sin_match_stock": true
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 10440.0,
+        "unid_no_cubiertas": 10441.0,
         "sin_match_stock": true
       },
       {
         "sku": "1597098592591",
-        "unid_no_cubiertas": 8183.0,
+        "unid_no_cubiertas": 8188.0,
         "sin_match_stock": true
       },
       {
@@ -142,7 +142,7 @@
       },
       {
         "sku": "1597086499840",
-        "unid_no_cubiertas": 5508.0,
+        "unid_no_cubiertas": 5512.0,
         "sin_match_stock": true
       },
       {
@@ -172,7 +172,7 @@
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 654.0,
+        "unid_no_cubiertas": 655.0,
         "sin_match_stock": true
       },
       {
@@ -197,7 +197,7 @@
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 338.0,
+        "unid_no_cubiertas": 339.0,
         "sin_match_stock": true
       },
       {
@@ -217,7 +217,7 @@
       },
       {
         "sku": "1660859171584",
-        "unid_no_cubiertas": 279.0,
+        "unid_no_cubiertas": 281.0,
         "sin_match_stock": true
       }
     ],
