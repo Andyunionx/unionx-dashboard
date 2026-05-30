@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-05-29T18:13:59.724659",
+  "generado_en": "2026-05-30T06:25:54.225912",
   "mes_actual": "2026-05",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.006061162641197539,
+      "valor": 0.005510147855634126,
       "total_pickings": 10889,
-      "on_time": 66,
-      "on_time_pct": 0.006061162641197539,
+      "on_time": 60,
+      "on_time_pct": 0.005510147855634126,
       "in_full": 10873,
       "in_full_pct": 0.9985306272384976,
-      "both": 66,
+      "both": 60,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1043956043956044,
-      "total_pickings": 364,
-      "on_time": 40,
-      "on_time_pct": 0.10989010989010989,
-      "in_full": 360,
-      "in_full_pct": 0.989010989010989,
-      "both": 38,
+      "valor": 0.09749303621169916,
+      "total_pickings": 359,
+      "on_time": 37,
+      "on_time_pct": 0.10306406685236769,
+      "in_full": 355,
+      "in_full_pct": 0.9888579387186629,
+      "both": 35,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999733030768204,
-      "ok": 14979,
-      "total": 14983,
+      "valor": 0.9997321009979238,
+      "ok": 14927,
+      "total": 14931,
       "errores": 4,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9473157415832575,
-      "total_so": 11155,
-      "total_con_pickings": 10990,
-      "cumplidos": 10411,
-      "parciales": 15,
-      "sin_iniciar": 564,
+      "valor": 0.9389917979909685,
+      "total_so": 11011,
+      "total_con_pickings": 10851,
+      "cumplidos": 10189,
+      "parciales": 10,
+      "sin_iniciar": 652,
       "error": null
     },
     "oct_30d": {
-      "valor": 40.34838033266441,
-      "n_orders": 11129,
+      "valor": 40.5708987104244,
+      "n_orders": 11132,
       "min_h": 0.018333333333333333,
       "max_h": 597.8994444444445,
-      "mediana_h": 23.75,
+      "mediana_h": 24.11277777777778,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14245,
+      "lineas": 14352,
       "mes": "2026-05",
       "error": null
     },
@@ -403,9 +403,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 67,
+          "total": 65,
           "tarde": 58,
-          "on_time_pct": 0.13432835820895522
+          "on_time_pct": 0.1076923076923077
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
@@ -415,9 +415,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 11,
-          "tarde": 6,
-          "on_time_pct": 0.45454545454545453
+          "total": 8,
+          "tarde": 4,
+          "on_time_pct": 0.5
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -6862,31 +6862,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.006061162641197539,
+      "valor": 0.005510147855634126,
       "total_pickings": 10889,
-      "on_time": 66,
-      "on_time_pct": 0.006061162641197539,
+      "on_time": 60,
+      "on_time_pct": 0.005510147855634126,
       "in_full": 10873,
       "in_full_pct": 0.9985306272384976,
-      "both": 66,
+      "both": 60,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1043956043956044,
-      "total_pickings": 364,
-      "on_time": 40,
-      "on_time_pct": 0.10989010989010989,
-      "in_full": 360,
-      "in_full_pct": 0.989010989010989,
-      "both": 38,
+      "valor": 0.09749303621169916,
+      "total_pickings": 359,
+      "on_time": 37,
+      "on_time_pct": 0.10306406685236769,
+      "in_full": 355,
+      "in_full_pct": 0.9888579387186629,
+      "both": 35,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999733030768204,
-      "ok": 14979,
-      "total": 14983,
+      "valor": 0.9997321009979238,
+      "ok": 14927,
+      "total": 14931,
       "errores": 4,
       "error": null
     }
