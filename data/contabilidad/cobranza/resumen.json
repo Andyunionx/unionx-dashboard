@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-05-30T01:56:46.110623",
+  "generado_en": "2026-05-30T08:15:05.908577",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 8324,
-  "total_monto_pendiente_clp": 532441118.0,
+  "total_documentos_pendientes": 8353,
+  "total_monto_pendiente_clp": 534011965.0,
   "monto_por_aging": {
     "+90 días": 33795369.0,
-    "1-30 días": 294068176.0,
+    "1-30 días": 295639023.0,
     "31-60 días": 94081346.0,
     "61-90 días": 16987879.0,
     "Vigente": 93508348.0
   },
   "monto_por_tipo": {
-    "BOLETA": 461321381.0,
+    "BOLETA": 462892228.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 107270253.0
+      "monto": 107550387.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,15 +26,15 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 52863379.0
+      "monto": 53100229.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 39602811.0
     },
     {
       "partner": "Duty Free T C S A",
       "monto": 39120547.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 38779662.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -45,12 +45,12 @@
       "monto": 18982931.0
     },
     {
-      "partner": "SODIMAC S.A.",
-      "monto": 17291199.0
+      "partner": "Cliente Ripley",
+      "monto": 17405909.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 17234929.0
+      "partner": "SODIMAC S.A.",
+      "monto": 17291199.0
     },
     {
       "partner": "Cliente Walmart",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 534,
-  "pedidos_venta_count": 7735
+  "pedidos_venta_count": 7764
 }
