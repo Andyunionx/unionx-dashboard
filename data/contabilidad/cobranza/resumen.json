@@ -1,36 +1,36 @@
 {
-  "generado_en": "2026-05-30T13:00:27.929956",
+  "generado_en": "2026-05-30T18:57:46.495185",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 8431,
-  "total_monto_pendiente_clp": 537305424.0,
+  "total_documentos_pendientes": 8514,
+  "total_monto_pendiente_clp": 541578262.0,
   "monto_por_aging": {
     "+90 días": 33795369.0,
-    "1-30 días": 298932482.0,
+    "1-30 días": 302508434.0,
     "31-60 días": 94081346.0,
     "61-90 días": 16987879.0,
-    "Vigente": 93508348.0
+    "Vigente": 94205234.0
   },
   "monto_por_tipo": {
-    "BOLETA": 466185687.0,
+    "BOLETA": 470458525.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 107765261.0
+      "monto": 107989877.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 63998697.0
+      "monto": 64620514.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 53200179.0
+      "monto": 53474009.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 39674090.0
+      "monto": 40936251.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 17405909.0
+      "monto": 17416889.0
     },
     {
       "partner": "SODIMAC S.A.",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 16283179.0
+      "monto": 16313139.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Comercializadora SP Digital SPA",
-      "monto": 14895645.0
+      "monto": 14955636.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 11980581.0
+      "monto": 12080521.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 534,
-  "pedidos_venta_count": 7842
+  "pedidos_venta_count": 7925
 }
