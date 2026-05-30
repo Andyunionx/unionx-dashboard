@@ -1,36 +1,36 @@
 {
-  "generado_en": "2026-05-30T08:15:05.908577",
+  "generado_en": "2026-05-30T13:00:27.929956",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 8353,
-  "total_monto_pendiente_clp": 534011965.0,
+  "total_documentos_pendientes": 8431,
+  "total_monto_pendiente_clp": 537305424.0,
   "monto_por_aging": {
     "+90 días": 33795369.0,
-    "1-30 días": 295639023.0,
+    "1-30 días": 298932482.0,
     "31-60 días": 94081346.0,
     "61-90 días": 16987879.0,
     "Vigente": 93508348.0
   },
   "monto_por_tipo": {
-    "BOLETA": 462892228.0,
+    "BOLETA": 466185687.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 107550387.0
+      "monto": 107765261.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 61154311.0
+      "monto": 63998697.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 53100229.0
+      "monto": 53200179.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 39602811.0
+      "monto": 39674090.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 16240199.0
+      "monto": 16283179.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 11960591.0
+      "monto": 11980581.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 534,
-  "pedidos_venta_count": 7764
+  "pedidos_venta_count": 7842
 }
