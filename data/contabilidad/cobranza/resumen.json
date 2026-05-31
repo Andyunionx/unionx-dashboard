@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-05-31T02:11:39.855030",
+  "generado_en": "2026-05-31T08:33:41.275314",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 8628,
-  "total_monto_pendiente_clp": 547404622.0,
+  "total_documentos_pendientes": 8651,
+  "total_monto_pendiente_clp": 548774508.0,
   "monto_por_aging": {
     "+90 días": 33870419.0,
-    "1-30 días": 303058750.0,
+    "1-30 días": 304428636.0,
     "31-60 días": 97128811.0,
     "61-90 días": 19141408.0,
     "Vigente": 94205234.0
   },
   "monto_por_tipo": {
-    "BOLETA": 476284885.0,
+    "BOLETA": 477654771.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 109016900.0
+      "monto": 109531026.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,11 +26,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 54466939.0
+      "monto": 55024809.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 42543562.0
+      "monto": 42753492.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 17589809.0
+      "monto": 17654799.0
     },
     {
       "partner": "SODIMAC S.A.",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 16325119.0
+      "monto": 16339099.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 12163451.0
+      "monto": 12172441.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 533,
-  "pedidos_venta_count": 8040
+  "pedidos_venta_count": 8063
 }
