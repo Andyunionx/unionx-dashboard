@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-05-31T13:13:30.339331",
+  "generado_en": "2026-05-31T16:00:18.011438",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1362,
   "capacidad_bodega_m3": 2451.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1362,
-    "posiciones_ocupadas_hoy": 996,
-    "posiciones_libres_hoy": 366,
-    "pct_ocupacion_hoy": 73.1,
-    "m3_stock_calculado": 1164.3
+    "posiciones_ocupadas_hoy": 992,
+    "posiciones_libres_hoy": 370,
+    "pct_ocupacion_hoy": 72.8,
+    "m3_stock_calculado": 1163.1
   },
   "pico_proyectado": {
     "fecha": "2026-05-31",
-    "posiciones_ocupadas": 991.5,
-    "pct_ocupacion": 72.8
+    "posiciones_ocupadas": 987.5,
+    "pct_ocupacion": 72.5
   },
   "minimo_proyectado": {
     "fecha": "2026-08-29",
-    "posiciones_ocupadas": 777.3,
-    "pct_ocupacion": 57.1
+    "posiciones_ocupadas": 773.6,
+    "pct_ocupacion": 56.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -101,17 +101,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 240.8,
-  "pallets_total_salientes_horizonte": 474.2,
+  "pallets_total_salientes_horizonte": 473.8,
   "m3_total_entrante_horizonte": 288.9,
-  "m3_total_saliente_horizonte": 569.0,
+  "m3_total_saliente_horizonte": 568.6,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 639,
     "sku_fallback": 8,
     "fallback_vol_m3": 0.00549,
     "demanda_total_unidades_horizonte": 118142.0,
-    "demanda_cumplida_unidades": 48473.0,
-    "demanda_no_cubierta_unidades_total": 69669.0,
+    "demanda_cumplida_unidades": 48449.0,
+    "demanda_no_cubierta_unidades_total": 69693.0,
     "pct_demanda_cumplida": 41.0,
     "sku_sin_match_stock_count": 53,
     "top_no_cubiertos": [
@@ -127,7 +127,7 @@
       },
       {
         "sku": "1597098592591",
-        "unid_no_cubiertas": 8271.0,
+        "unid_no_cubiertas": 8272.0,
         "sin_match_stock": true
       },
       {
@@ -172,7 +172,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 612.0,
+        "unid_no_cubiertas": 618.0,
         "sin_match_stock": true
       },
       {
@@ -212,7 +212,7 @@
       },
       {
         "sku": "1660859171584",
-        "unid_no_cubiertas": 290.0,
+        "unid_no_cubiertas": 292.0,
         "sin_match_stock": true
       }
     ],
