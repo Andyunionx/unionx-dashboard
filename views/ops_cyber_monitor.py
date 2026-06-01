@@ -130,42 +130,62 @@ def _pickings_odoo(fecha: date) -> pd.DataFrame:
 
 
 def _pickings_odoo_con_lineas(fecha: date) -> pd.DataFrame:
-    """Versión con n_unidades sumando move_ids (más lento, más preciso)."""
+    """Pickings outgoing del día + unidades via stock.move.line (2 queries livianos)."""
     odoo = get_ops_odoo_client()
     if odoo is None:
         return pd.DataFrame()
     try:
         desde = f"{fecha} 00:00:00"
         hasta = f"{fecha} 23:59:59"
-        moves = odoo.search_read(
-            "stock.move",
-            [
-                ("state", "=", "done"),
-                ("picking_type_code", "=", "outgoing"),
-                ("date", ">=", desde),
-                ("date", "<=", hasta),
-            ],
-            ["picking_id", "date", "product_qty"],
+
+        # 1. Pickings done outgoing hoy (liviano)
+        picks = odoo.search_read(
+            "stock.picking",
+            [("state", "=", "done"), ("picking_type_code", "=", "outgoing"),
+             ("date_done", ">=", desde), ("date_done", "<=", hasta)],
+            ["id", "name", "date_done"],
+            limit=2000,
+        )
+        if not picks:
+            return pd.DataFrame()
+
+        pick_map = {p["id"]: pd.to_datetime(p["date_done"]) for p in picks}
+        pick_ids = list(pick_map.keys())
+
+        # 2. Líneas de esos pickings (filtrado por IDs — mucho más liviano)
+        lines = odoo.search_read(
+            "stock.move.line",
+            [("picking_id", "in", pick_ids), ("state", "=", "done")],
+            ["picking_id", "qty_done"],
             limit=50000,
         )
-        if not moves:
-            return pd.DataFrame()
+
         rows = []
-        for m in moves:
-            dt = pd.to_datetime(m["date"])
-            pid = m["picking_id"][0] if m.get("picking_id") else None
+        for ln in lines:
+            pid = ln["picking_id"][0] if ln.get("picking_id") else None
+            if pid not in pick_map:
+                continue
+            dt = pick_map[pid]
             rows.append({
                 "picking_id": pid,
                 "fecha_done": dt,
                 "hour": dt.hour,
-                "n_unidades": float(m.get("product_qty") or 0),
+                "n_unidades": float(ln.get("qty_done") or 0),
             })
+
+        if not rows:
+            # Fallback: al menos contar pedidos sin unidades
+            rows = [{"picking_id": pid, "fecha_done": dt,
+                     "hour": dt.hour, "n_unidades": 0.0}
+                    for pid, dt in pick_map.items()]
+
         df = pd.DataFrame(rows)
-        return df.groupby(["picking_id", "hour", "fecha_done"]).agg(
-            n_unidades=("n_unidades", "sum")
+        return df.groupby(["picking_id", "hour"]).agg(
+            n_unidades=("n_unidades", "sum"),
+            fecha_done=("fecha_done", "first"),
         ).reset_index()
     except Exception as e:
-        st.warning(f"Odoo moves: {type(e).__name__}: {str(e)[:80]}")
+        st.warning(f"Odoo: {type(e).__name__}: {str(e)[:100]}")
         return pd.DataFrame()
 
 
