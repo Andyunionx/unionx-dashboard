@@ -1,0 +1,15 @@
+name: "Check Resend Status"
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          for id in b81b4a78-d7ee-4776-b273-76c7139e00ae 502914a5-4cc7-4373-87fd-14e6acd42c7c 28e2a8e5-9e19-4ea1-b63f-a192229edc4c; do
+            echo "=== $id ==="
+            curl -s -H "Authorization: Bearer $RESEND_API_KEY" "https://api.resend.com/emails/$id" | python3 -m json.tool
+          done
