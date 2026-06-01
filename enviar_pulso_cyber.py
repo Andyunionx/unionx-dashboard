@@ -164,15 +164,31 @@ def descargar_resumen(metas_canal):
         "GROUP BY h ORDER BY h"
     ))
 
-    # Total del día equivalente 2025 (para proyectar YoY)
+    # Total venta + margen del día equivalente 2025 (para proyectar YoY)
     total_ly = _rows(turso_query(
-        f"SELECT ROUND(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta='{fecha_ly}'"
+        f"SELECT ROUND(SUM(venta_bruta),0), ROUND(SUM(margen_final),0), ROUND(SUM(venta_neta),0) "
+        f"FROM ventas WHERE fecha_venta='{fecha_ly}'"
     ))
     total_ly_val = float(total_ly[0][0]) if total_ly and total_ly[0][0] else 0
+    margen_ly_val = float(total_ly[0][1]) if total_ly and total_ly[0][1] else 0
+    neta_ly_val = float(total_ly[0][2]) if total_ly and total_ly[0][2] else 0
     curva_lunes = curva_ly  # para mantener compatibilidad de nombre
 
-    print(f"      [OK] en {time.time()-t0:.1f}s (LY ref: {fecha_ly}, total LY ${total_ly_val:,.0f})", flush=True)
-    return por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly, fecha_ly, total_ly_val
+    # Cyber 2025 COMPLETO (acumulado, todos los días Cyber 2025)
+    fechas_ly_sql = ','.join(repr(f) for f in CYBER_2025_FECHAS)
+    cyber_ly_acum = _rows(turso_query(
+        f"SELECT ROUND(SUM(venta_bruta),0), ROUND(SUM(margen_final),0), ROUND(SUM(venta_neta),0) "
+        f"FROM ventas WHERE fecha_venta IN ({fechas_ly_sql})"
+    ))
+    cyber_ly_bruta = float(cyber_ly_acum[0][0]) if cyber_ly_acum and cyber_ly_acum[0][0] else 0
+    cyber_ly_margen = float(cyber_ly_acum[0][1]) if cyber_ly_acum and cyber_ly_acum[0][1] else 0
+    cyber_ly_neta = float(cyber_ly_acum[0][2]) if cyber_ly_acum and cyber_ly_acum[0][2] else 0
+
+    print(f"      [OK] en {time.time()-t0:.1f}s (LY ref: {fecha_ly}, "
+          f"bruta ${total_ly_val:,.0f}, margen ${margen_ly_val:,.0f})", flush=True)
+    return (por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly,
+            fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
+            cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta)
 
 
 def cargar_alarma_stock():
@@ -284,7 +300,9 @@ def fmt_m(v):
 
 
 def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
-                curva_ly, fecha_ly, total_ly_val, alarma_stock, metas_canal):
+                curva_ly, fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
+                cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
+                alarma_stock, metas_canal):
     ahora_clt = datetime.now(CHILE_TZ)
     fecha_hora = ahora_clt.strftime('%d-%b-%Y %H:%M CLT')
     hora_actual = ahora_clt.hour
@@ -419,23 +437,51 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
                 idx = CYBER_FECHAS.index(f)
                 proy_cyber_total += META_DIA_BRUTA[idx] * ratio_actual
         avance_cyber_proy = proy_cyber_total / META_TOTAL if META_TOTAL else 0
+        # Margen proyectado del día (asumiendo mismo margen% que llevamos)
+        margen_pct_hoy = (margen_hoy / float(dia_hoy[3]) if dia_hoy and dia_hoy[3] else 0)
+        margen_proy_dia = proy['proy_dia'] * margen_pct_hoy if margen_pct_hoy else 0
+        margen_ly_pct = (margen_ly_val / neta_ly_val) if neta_ly_val else 0
+        yoy_margen_pct = (margen_proy_dia / margen_ly_val - 1) if margen_ly_val else 0
+        color_ym = '#16A34A' if yoy_margen_pct >= 0 else '#DC2626'
+        # Cyber completo: margen acum + proyección margen restante
+        margen_total_actual = margen_total  # acumulado real Cyber 2026
+        margen_proy_cyber = margen_total_actual + (margen_proy_dia - margen_hoy)
+        ratio_actual = proy['proy_dia'] / meta_hoy if meta_hoy else 1
+        for f in CYBER_FECHAS:
+            if f > hoy_str:
+                idx = CYBER_FECHAS.index(f)
+                margen_proy_cyber += META_DIA_BRUTA[idx] * ratio_actual * MARGEN_OBJETIVO
+        yoy_cyber_bruta = (proy_cyber_total / cyber_ly_bruta - 1) if cyber_ly_bruta else 0
+        yoy_cyber_margen = (margen_proy_cyber / cyber_ly_margen - 1) if cyber_ly_margen else 0
+        color_yc_b = '#16A34A' if yoy_cyber_bruta >= 0 else '#DC2626'
+        color_yc_m = '#16A34A' if yoy_cyber_margen >= 0 else '#DC2626'
+
         bloque_proy = f"""
 <div style="background:#FEF3C7;border-left:4px solid #EA580C;padding:14px;border-radius:6px;margin:16px 0">
   <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📈 Proyección (referencia: Cyber 2025 mismo día)</div>
   <table style="width:100%;margin-top:6px;font-size:0.88rem">
     <tr><td>Hoy llevamos:</td>
-        <td align="right"><b>{fmt_m(bruta_hoy)}</b>
-        ({proy['pct_hasta_ref']*100:.0f}% del día completo en {fecha_ly})</td></tr>
+        <td align="right"><b>{fmt_m(bruta_hoy)}</b> bruta · {fmt_m(margen_hoy)} margen ({margen_pct_hoy*100:.1f}%)
+        — ({proy['pct_hasta_ref']*100:.0f}% del día en {fecha_ly})</td></tr>
     <tr><td>Día equivalente Cyber 2025:</td>
-        <td align="right">{fmt_m(proy['total_ly'])} cerró ese día</td></tr>
+        <td align="right">{fmt_m(proy['total_ly'])} bruta · {fmt_m(margen_ly_val)} margen ({margen_ly_pct*100:.1f}%)</td></tr>
     <tr><td>Proyección cierre HOY:</td>
-        <td align="right" style="color:{color_p}"><b>{fmt_m(proy['proy_dia'])}</b>
-        ({proy['avance_vs_meta']*100:.0f}% meta · gap {fmt_m(gap_dia)})</td></tr>
-    <tr><td>YoY proyectado (hoy vs LY):</td>
+        <td align="right" style="color:{color_p}"><b>{fmt_m(proy['proy_dia'])}</b> bruta · {fmt_m(margen_proy_dia)} margen
+        — ({proy['avance_vs_meta']*100:.0f}% meta · gap {fmt_m(gap_dia)})</td></tr>
+    <tr><td>YoY venta (hoy vs LY):</td>
         <td align="right" style="color:{color_yoy};font-weight:600">{yoy_pct:+.1f}%</td></tr>
-    <tr><td>Proyección Cyber completo:</td>
-        <td align="right"><b>{fmt_m(proy_cyber_total)}</b>
-        ({avance_cyber_proy*100:.1f}% meta total $505.9 M)</td></tr>
+    <tr><td>YoY margen (hoy vs LY):</td>
+        <td align="right" style="color:{color_ym};font-weight:600">{yoy_margen_pct*100:+.1f}%</td></tr>
+    <tr style="border-top:1px solid #E2E8F0"><td><b>Proyección Cyber completo:</b></td>
+        <td align="right"><b>{fmt_m(proy_cyber_total)}</b> bruta · {fmt_m(margen_proy_cyber)} margen
+        ({avance_cyber_proy*100:.1f}% meta venta $505.9 M)</td></tr>
+    <tr><td>Cyber 2025 completo:</td>
+        <td align="right">{fmt_m(cyber_ly_bruta)} bruta · {fmt_m(cyber_ly_margen)} margen ({(cyber_ly_margen/cyber_ly_neta*100 if cyber_ly_neta else 0):.1f}%)</td></tr>
+    <tr><td>YoY Cyber proyectado:</td>
+        <td align="right">
+          Venta <span style="color:{color_yc_b};font-weight:600">{yoy_cyber_bruta*100:+.1f}%</span> ·
+          Margen <span style="color:{color_yc_m};font-weight:600">{yoy_cyber_margen*100:+.1f}%</span>
+        </td></tr>
   </table>
 </div>"""
     else:
@@ -633,11 +679,15 @@ def main():
         return 1
 
     metas_canal = cargar_metas_canal()
-    por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly, fecha_ly, total_ly_val = descargar_resumen(metas_canal)
+    (por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly,
+     fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
+     cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta) = descargar_resumen(metas_canal)
     alarma_stock = cargar_alarma_stock()
     html, bruta_total, bruta_hoy, avance_pct = render_html(
         por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
-        curva_ly, fecha_ly, total_ly_val, alarma_stock, metas_canal
+        curva_ly, fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
+        cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
+        alarma_stock, metas_canal
     )
     xlsx_bytes, n_filas, hoy_str = descargar_excel_raw_hoy()
 
