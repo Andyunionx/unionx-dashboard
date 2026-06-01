@@ -628,19 +628,21 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
     if hora_clt < 6:
         return True, "early morning, skip validation"
 
-    # Query Odoo directo XML-RPC (sin dependencias de app/flask)
+    # Query Odoo directo XML-RPC (sin dependencias de app/flask).
+    # FAIL-CLOSED: si NO puedo validar, NO envío. Es mejor saltar 1 pulso
+    # que mandar datos basura.
     try:
         import xmlrpc.client
         odoo_url = os.environ.get('ODOO_URL', 'https://unionxb2b.odoo.com')
         odoo_db = os.environ.get('ODOO_DB', 'bmya-innovatek-sh-prd-6981800')
-        odoo_user = os.environ.get('ODOO_USER', 'andres@unionx.cl')
+        odoo_user = os.environ.get('ODOO_USER', 'andres@grupoeter.cl')
         odoo_pwd = os.environ.get('ANDRES_ODOO_PASSWORD', '')
         if not odoo_pwd:
-            return True, "no ANDRES_ODOO_PASSWORD, can't validate"
+            return False, "no ANDRES_ODOO_PASSWORD, no puedo validar — NO envío"
         common = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/common', allow_none=True)
         uid = common.authenticate(odoo_db, odoo_user, odoo_pwd, {})
         if not uid:
-            return True, "Odoo auth failed, can't validate"
+            return False, "Odoo auth failed, no puedo validar — NO envío"
         models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object', allow_none=True)
         hoy_chile_inicio = ahora_clt.strftime('%Y-%m-%d')
         desde_utc = f"{hoy_chile_inicio} 04:00:00"
@@ -651,7 +653,7 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
         odoo_n = len(sos)
     except Exception as e:
         print(f"[VALIDATE] No se pudo consultar Odoo: {e}", flush=True)
-        return True, f"odoo unavailable, can't validate ({type(e).__name__})"
+        return False, f"odoo unavailable ({type(e).__name__}) — NO envío"
 
     print(f"[VALIDATE] Turso hoy: ${bruta_hoy:,.0f} ({n_filas_hoy} filas) | "
           f"Odoo state=sale: ${odoo_bruta:,.0f} ({odoo_n} SOs)", flush=True)
