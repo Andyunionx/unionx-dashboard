@@ -94,17 +94,35 @@ _LOCAL_DB_TTL_S = 900  # 15 min
 def get_local_db_path():
     """SQLite local combinando histórico (parquet) + live (Turso).
 
-    Estrategia de invalidación: por mtime del archivo, no cache_resource (que en
-    Streamlit Cloud puede pegarse horas). Si el archivo existe y tiene < 15 min
-    de edad, se reusa. Si no, se reconstruye.
+    Estrategia de invalidación:
+    1. Por mtime del archivo (>15 min → rebuild)
+    2. Por contenido: si estamos en Cyber pero el SQLite no tiene venta de
+       hoy/junio, está stale → rebuild forzado.
     """
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
-    # Si existe y es fresco, reusar (caso normal, super rápido)
     if _LOCAL_DB_PATH.exists():
         age = _time.time() - _LOCAL_DB_PATH.stat().st_mtime
         if age < _LOCAL_DB_TTL_S:
+            # Validar contenido: si estamos en Cyber, verificar que tenga junio
+            hoy_str = datetime.now().strftime('%Y-%m-%d')
+            if '2026-06-01' <= hoy_str <= '2026-06-06':
+                try:
+                    _c = sqlite3.connect(str(_LOCAL_DB_PATH))
+                    venta_jun = _c.execute(
+                        "SELECT COALESCE(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta >= '2026-06-01'"
+                    ).fetchone()[0]
+                    _c.close()
+                    if venta_jun < 1_000_000:
+                        print(f"[Local DB] Cache stale (junio ${venta_jun:,.0f} < $1M), rebuild", flush=True)
+                        try:
+                            _LOCAL_DB_PATH.unlink()
+                        except Exception:
+                            pass
+                        return _build_local_db()
+                except Exception as e:
+                    print(f"[Local DB] Validate cache failed: {e}", flush=True)
             return str(_LOCAL_DB_PATH)
 
     return _build_local_db()
