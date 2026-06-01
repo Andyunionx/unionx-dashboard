@@ -24,15 +24,10 @@ def render():
     c1, c2 = st.columns([2, 3])
     with c1:
         hoy = datetime.now().date()
-        # Default smart: los primeros 3 días del mes el mes nuevo suele estar vacío
-        # (Odoo aún sin sincronizar). Mostrar mes anterior completo por default.
-        if hoy.day <= 3:
-            mes_ant = (hoy.replace(day=1) - pd.Timedelta(days=1))
-            ini_default = mes_ant.replace(day=1)
-            fin_default = mes_ant
-        else:
-            ini_default = hoy.replace(day=1)
-            fin_default = hoy
+        # Default: mes actual desde día 1 hasta hoy. Si hoy es día 1 el rango
+        # default es solo día 1 (con su data); el usuario puede cambiar.
+        ini_default = hoy.replace(day=1)
+        fin_default = hoy
         rango = st.date_input(
             "Período de análisis (TY)",
             value=(ini_default, fin_default),

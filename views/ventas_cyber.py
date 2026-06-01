@@ -31,8 +31,8 @@ from views.shared import cached_stock, get_local_db_path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
-CYBER_START = date(2026, 6, 2)
-CYBER_END = date(2026, 6, 7)
+CYBER_START = date(2026, 6, 1)
+CYBER_END = date(2026, 6, 6)
 CYBER_START_STR = CYBER_START.strftime('%Y-%m-%d')
 CYBER_END_STR = CYBER_END.strftime('%Y-%m-%d')
 CYBER_DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -171,8 +171,7 @@ def render():
                f"Fuente: **RAW vivo** (Turso + histórico) — refresh 3 min · Stock Odoo live · "
                f"**Montos en miles (K)**")
 
-    # Toggle modo simulación. Auto-activado si el Cyber aún no empezó
-    # (sirve para previsualizar la vista antes del 2-jun).
+    # Toggle modo simulación. Auto-activado si el Cyber aún no empezó.
     today = date.today()
     sim_default = today < CYBER_START
     with st.sidebar:
@@ -180,7 +179,7 @@ def render():
         sim_on = st.toggle(
             "🧪 Modo simulación",
             value=sim_default, key="cyber_sim_toggle",
-            help="Incluye datos sintéticos del lunes 2-jun hasta las 12:00 para previsualizar la vista. "
+            help="Incluye datos sintéticos del lunes hasta las 12:00 (escenario hipotético). "
                  "Los documentos llevan prefijo 'SIM-' para distinguirlos. "
                  "Auto-activado mientras el Cyber no haya empezado.",
         )
@@ -198,7 +197,7 @@ def render():
         st.info("Aún no hay ventas registradas en el rango Cyber. Activa 🧪 simulación en la sidebar para previsualizar.")
     if today < CYBER_START:
         if sim_on:
-            st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} día(s). Mostrando datos SIMULADOS hasta las 12:00 del lunes 2-jun.")
+            st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} día(s). Mostrando datos SIMULADOS del lunes hasta las 12:00.")
         else:
             st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} día(s). Activa simulación en sidebar para preview.")
 
