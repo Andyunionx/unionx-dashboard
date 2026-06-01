@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""
+Orquestador del módulo Distribución de Servicios.
+
+Criterios de detección:
+  1. Factura de proveedor (in_invoice / in_refund)
+  2. Estado borrador (draft)
+  3. Al menos una línea en cuenta 42410104 (COMISIÓN GRANDES CUENTAS)
+  4. Excluye Liquidaciones-Factura (documentos FAL)
+
+USO:
+  python agente-odoo/scripts/run_distribucion.py              # detecta + clasifica + genera Excel
+  python agente-odoo/scripts/run_distribucion.py --test       # envía solo a andres@unionx.cl
+  python agente-odoo/scripts/run_distribucion.py --send-mail  # envía a Camila + Victor
+  python agente-odoo/scripts/run_distribucion.py --leer-respuestas   # lee respuestas Gmail
+  python agente-odoo/scripts/run_distribucion.py --apply-direct      # aplica sin aprobación
+  python agente-odoo/scripts/run_distribucion.py --folio 11381602    # solo esa factura
+  python agente-odoo/scripts/run_distribucion.py --excluir-rut 96999930-7  # excluir RUT
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).parent
+AGENTE_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = AGENTE_ROOT.parent
+sys.path.insert(0, str(AGENTE_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "finanzas-unionx" / "backend"))
+
+from src.actions.distribucion.detector import detectar_facturas_pendientes
+from src.actions.distribucion.clasificador import clasificar_factura
+from src.actions.distribucion.template_excel import generar_excel_aprobacion
+from src.actions.distribucion.memoria import cargar_memoria, resumen_memoria
+from src.actions.distribucion.aplicador import aplicar_distribucion, aplicar_directo
+from src.actions.distribucion.gmail_distribucion import send_propuesta, leer_respuestas
+
+TOKEN_GMAIL  = PROJECT_ROOT / "agente-comex" / "config" / "token.json"
+DIR_DISTRIBUCION = AGENTE_ROOT / "data" / "distribucion"
+DIR_MEMORIA  = AGENTE_ROOT / "data" / "memoria_distribucion"
+
+
+def conectar_odoo():
+    from app.core.odoo_client import OdooClient
+    creds = json.load(open(PROJECT_ROOT / "odoo" / "odoo_config.json"))["produccion"]
+    pwd = os.environ.get("ANDRES_ODOO_PASSWORD")
+    if not pwd:
+        raise RuntimeError("Falta env var ANDRES_ODOO_PASSWORD")
+    client = OdooClient(url=creds["url"], db=creds["db_name"],
+                        username=creds["username"], password=pwd)
+    client.authenticate()
+    return client
+
+
+def cmd_detectar_y_clasificar(args):
+    print(f"=== DISTRIBUCIÓN SERVICIOS — {datetime.now().strftime('%Y-%m-%d %H:%M')} ===\n")
+    client = conectar_odoo()
+    print("✓ Conectado a Odoo producción\n")
+
+    print("► Detectando facturas con líneas en 42410104...")
+    facturas = detectar_facturas_pendientes(
+        odoo_client=client,
+        estados=["draft"],
+        limite=50,
+        folio_especifico=args.folio,
+    )
+
+    # Filtrar por exclusión de RUTs
+    if hasattr(args, "excluir_rut") and args.excluir_rut:
+        excluidos = {r.strip() for r in args.excluir_rut.split(",")}
+        facturas = [f for f in facturas if f.partner_rut not in excluidos]
+
+    # Excluir Liquidaciones-Factura (FAL) — no son facturas regulares
+    facturas_fal = [f for f in facturas if f.name.upper().startswith("FAL")]
+    facturas = [f for f in facturas if not f.name.upper().startswith("FAL")]
+    if facturas_fal:
+        print(f"  (Excluidas {len(facturas_fal)} liquidaciones FAL: "
+              f"{', '.join(f.name for f in facturas_fal)})")
+
+    if not facturas:
+        print("✓ No hay facturas pendientes de distribución.\n")
+        return []
+
+    print(f"  {len(facturas)} factura(s) encontradas:\n")
+    for f in facturas:
+        n = len([l for l in f.lineas if l.cuenta_actual_id == 1377])
+        print(f"  • {f.name} | {f.partner_nombre} | ${f.monto_total:,.0f} | {n} líneas en 42410104")
+    print()
+
+    # Clasificar todas
+    resultados_clasificados = []
+    for factura in facturas:
+        print(f"► Clasificando {factura.name} ({factura.partner_nombre})...")
+        memoria = cargar_memoria(factura.partner_rut)
+        resultado = clasificar_factura(factura, memoria)
+        resultados_clasificados.append(resultado)
+        for linea in resultado.lineas:
+            estado = "🟢 AUTO" if linea.auto_aplicado else "🟡 REVISAR"
+            print(f"    {estado} | '{linea.glosa[:55]}' → {linea.cuenta_codigo} ({linea.confianza:.0%})")
+        print()
+
+    # Modo apply-direct: aplica en Odoo sin aprobación
+    if hasattr(args, "apply_direct") and args.apply_direct:
+        print("► Aplicando directamente en Odoo (sin aprobación)...\n")
+        total_ok = total_err = 0
+        for resultado in resultados_clasificados:
+            fa = aplicar_directo(client, resultado, dry_run=args.dry_run)
+            if fa.confirmada:
+                total_ok += 1
+            if fa.errores:
+                total_err += 1
+        print()
+        print(f"Resumen: {total_ok} factura(s) confirmadas, {total_err} con errores")
+        if args.dry_run:
+            print("(DRY RUN — no se escribió en Odoo)")
+        return []
+
+    # Generar UN SOLO Excel con todas las facturas
+    dir_output = str(DIR_DISTRIBUCION)
+    excel_path = generar_excel_aprobacion(resultados_clasificados, directorio_output=dir_output)
+    excels_generados = [(r.factura, excel_path) for r in resultados_clasificados]
+    print(f"✓ Excel unificado: {excel_path.name}\n")
+    print("=" * 60)
+    print(f"✓ Excel generado: {excel_path.name}\n")
+
+    if args.test or args.send_mail:
+        print("► Enviando correo...")
+        resumen_facturas = [
+            {
+                "proveedor": f.partner_nombre,
+                "folio": f.folio,
+                "fecha": f.fecha or "",
+                "monto_total": f.monto_total,
+                "n_lineas": len([l for l in f.lineas if l.cuenta_actual_id == 1377]),
+            }
+            for f, _ in excels_generados
+        ]
+
+        if args.test:
+            destinatarios = ["andres@unionx.cl"]
+            cc = []
+            print("  [MODO PRUEBA] Enviando solo a andres@unionx.cl")
+        else:
+            destinatarios = ["camila@unionx.cl", "victor@unionx.cl"]
+            cc = ["andres@unionx.cl"]
+
+        resultado_mail = send_propuesta(
+            excels=[excel_path],
+            facturas_resumen=resumen_facturas,
+            token_path=TOKEN_GMAIL,
+            destinatarios=destinatarios,
+            cc=cc,
+        )
+        if resultado_mail["ok"]:
+            print(f"  ✓ Mail enviado (message_id={resultado_mail['message_id']})")
+            print(f"  TO: {', '.join(destinatarios)}" + (f" | CC: {', '.join(cc)}" if cc else ""))
+        else:
+            print(f"  ✗ Error enviando mail: {resultado_mail['error']}")
+    else:
+        print(f"  Excel listo en: agente-odoo/data/distribucion/{excel_path.name}")
+        print("  Para enviar: agregar flag --send-mail (Camila+Victor) o --test (solo Andrés)")
+
+    print()
+    return excels_generados
+
+
+def cmd_leer_respuestas(args):
+    print(f"=== LEYENDO RESPUESTAS — {datetime.now().strftime('%Y-%m-%d %H:%M')} ===\n")
+    print("► Buscando respuestas de Camila/Victor en Gmail (últimas 48h)...")
+    respuestas = leer_respuestas(token_path=TOKEN_GMAIL, desde_horas=48)
+
+    if not respuestas:
+        print("  Sin respuestas nuevas por el momento.")
+        return
+
+    print(f"  {len(respuestas)} respuesta(s) encontrada(s)\n")
+    client = conectar_odoo()
+
+    for resp in respuestas:
+        print(f"► De: {resp['sender']} | Asunto: {resp['subject']}")
+        print(f"  {len(resp['adjuntos'])} Excel(s) adjunto(s)")
+
+        for adjunto in resp["adjuntos"]:
+            if not adjunto["nombre"].endswith(".xlsx"):
+                continue
+
+            tmp_path = DIR_DISTRIBUCION / f"aprobado_{adjunto['nombre']}"
+            tmp_path.write_bytes(adjunto["contenido_bytes"])
+            print(f"  Procesando: {adjunto['nombre']}...")
+
+            resultado = aplicar_distribucion(
+                odoo_client=client,
+                ruta_excel=tmp_path,
+                aprobado_por=resp["sender"],
+                dry_run=args.dry_run,
+                directorio_memoria=str(DIR_MEMORIA),
+            )
+
+            if resultado.ok:
+                confirmadas = sum(1 for f in resultado.facturas if f.confirmada)
+                print(f"    ✓ {resultado.total_lineas} línea(s) "
+                      f"{'simuladas' if args.dry_run else 'aplicadas'} | "
+                      f"{confirmadas} factura(s) confirmadas")
+                if resultado.partner_rut:
+                    print(f"    {resumen_memoria(resultado.partner_rut, DIR_MEMORIA)}")
+            else:
+                print(f"    ✗ Errores: {resultado.errores_globales}")
+        print()
+
+
+def cmd_aplicar(args):
+    print(f"=== APLICANDO DISTRIBUCIÓN — {datetime.now().strftime('%Y-%m-%d %H:%M')} ===\n")
+    if not Path(args.aplicar).exists():
+        print(f"Error: no se encuentra el archivo '{args.aplicar}'")
+        sys.exit(1)
+
+    client = conectar_odoo()
+    dry_run = args.dry_run
+    if dry_run:
+        print("⚠️  MODO DRY RUN — no se escribirá en Odoo\n")
+
+    resultado = aplicar_distribucion(
+        odoo_client=client,
+        ruta_excel=args.aplicar,
+        aprobado_por=args.aprobado_por or "victor@unionx.cl",
+        dry_run=dry_run,
+        directorio_memoria=str(DIR_MEMORIA),
+    )
+
+    print(f"\n{'=' * 60}")
+    print(f"✓ Líneas procesadas: {resultado.total_lineas}")
+    if resultado.errores_globales:
+        print(f"⚠️  Errores: {resultado.errores_globales}")
+    if dry_run:
+        print("\n⚠️  DRY RUN completado.")
+    else:
+        print("\n✓ Cambios aplicados en Odoo.")
+
+    if resultado.partner_rut:
+        print()
+        print(resumen_memoria(resultado.partner_rut, DIR_MEMORIA))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Distribución de servicios → cuentas contables")
+    parser.add_argument("--folio", type=str, help="Procesar solo esta factura (folio)")
+    parser.add_argument("--aplicar", type=str, metavar="EXCEL",
+                        help="Ruta al Excel aprobado → aplica en Odoo")
+    parser.add_argument("--leer-respuestas", action="store_true",
+                        help="Lee respuestas de Gmail y aplica automáticamente")
+    parser.add_argument("--apply-direct", action="store_true",
+                        help="Aplica clasificación directo en Odoo sin aprobación")
+    parser.add_argument("--excluir-rut", type=str, metavar="RUT",
+                        help="RUT(s) a excluir separados por coma")
+    parser.add_argument("--send-mail", action="store_true",
+                        help="Envía el Excel a Camila/Victor por Gmail")
+    parser.add_argument("--test", action="store_true",
+                        help="Modo prueba: envía solo a andres@unionx.cl")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Modo simulación: no escribe en Odoo")
+    parser.add_argument("--aprobado-por", type=str, default="victor@unionx.cl",
+                        help="Email del analista que aprobó (para --aplicar manual)")
+    args = parser.parse_args()
+
+    if args.aplicar:
+        cmd_aplicar(args)
+    elif args.leer_respuestas:
+        cmd_leer_respuestas(args)
+    else:
+        cmd_detectar_y_clasificar(args)
+
+
+if __name__ == "__main__":
+    main()
