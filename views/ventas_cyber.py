@@ -137,18 +137,24 @@ def load_stock() -> pd.DataFrame:
 # HELPERS
 # ============================================================
 def fmt_money(v) -> str:
-    """Formato en miles con separador chileno: $15.113K"""
+    """Formato en miles con 1 decimal: $15.9 K"""
     if pd.isna(v) or v == 0:
         return '$0'
     val = v / 1000
-    s = f"{val:,.0f}".replace(",", ".")
-    return f"${s} K"
+    return f"${val:,.1f} K".replace(",", ".")
 
 
 def fmt_pct(v) -> str:
     if pd.isna(v):
         return '—'
-    return f"{v:.1%}"
+    return f"{v*100:.1f}%"
+
+
+def es_fulfillment(bodega: str) -> bool:
+    """True si la bodega es de fulfillment (marketplace entrega), False = seller/flex."""
+    if not isinstance(bodega, str):
+        return False
+    return bodega.strip().lower().startswith('bodega fulfillment')
 
 
 def add_aggregates(df: pd.DataFrame) -> pd.DataFrame:
@@ -202,7 +208,7 @@ def render():
             st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} día(s). Activa simulación en sidebar para preview.")
 
     # ============================================================
-    # HEADER KPIs
+    # HEADER KPIs vs META
     # ============================================================
     venta_bruta = ventas['venta_bruta'].sum() if not ventas.empty else 0
     venta_neta = ventas['venta_neta'].sum() if not ventas.empty else 0
@@ -212,13 +218,18 @@ def render():
     meta_total_uds = metas['meta_uds'].sum() if not metas.empty else 0
     pct_avance = (venta_bruta / meta_total_venta) if meta_total_venta else 0
     margen_pct = (margen / venta_neta) if venta_neta else 0
+    gap_meta = meta_total_venta - venta_bruta
 
+    st.markdown("### 📊 Resumen vs Meta")
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Venta bruta", fmt_money(venta_bruta), f"{pct_avance:.1%} de meta")
+    c1.metric("Venta bruta", fmt_money(venta_bruta), f"{pct_avance*100:.1f}% de meta")
     c2.metric("Margen $", fmt_money(margen), fmt_pct(margen_pct))
-    c3.metric("Unidades", f"{uds:,.0f}", f"{(uds/meta_total_uds if meta_total_uds else 0):.1%} de meta")
+    c3.metric("Unidades", f"{uds:,.0f}",
+              f"{((uds/meta_total_uds if meta_total_uds else 0)*100):.1f}% de meta")
     c4.metric("Meta venta", fmt_money(meta_total_venta))
-    c5.metric("Gap meta", fmt_money(meta_total_venta - venta_bruta))
+    c5.metric("Gap a meta", fmt_money(gap_meta),
+              delta=f"{-pct_avance*100:.1f}%" if gap_meta > 0 else "✓",
+              delta_color="inverse")
 
     st.divider()
 
@@ -361,15 +372,43 @@ def _tab_acumulado(ventas: pd.DataFrame):
                            legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
         st.plotly_chart(fig2, use_container_width=True)
 
-    # Heatmap día × hora
-    st.markdown("**Heatmap día × hora**")
+    # Tabla por día × hora: venta y margen
+    if 'hora_venta_num' in df.columns:
+        st.markdown("**📋 Venta y Margen por Hora del Día**")
+        # Pivot venta y margen
+        pv_v = df.pivot_table(
+            index='hora_venta_num', columns='fecha_venta',
+            values='venta_bruta', aggfunc='sum', fill_value=0,
+        ).reindex(range(24), fill_value=0)
+        pv_m = df.pivot_table(
+            index='hora_venta_num', columns='fecha_venta',
+            values='margen_final', aggfunc='sum', fill_value=0,
+        ).reindex(range(24), fill_value=0)
+
+        # Construir tabla wide: por cada día, columnas Venta y Margen
+        tabla = pd.DataFrame(index=range(24))
+        tabla.index.name = 'Hora'
+        for d in pv_v.columns:
+            day_label = d.strftime('%a %d-%b') if hasattr(d, 'strftime') else str(d)
+            tabla[f'{day_label} · Venta'] = pv_v[d].map(fmt_money)
+            tabla[f'{day_label} · Margen'] = pv_m[d].map(fmt_money)
+        # Fila TOTAL al final
+        total_row = {}
+        for d in pv_v.columns:
+            day_label = d.strftime('%a %d-%b') if hasattr(d, 'strftime') else str(d)
+            total_row[f'{day_label} · Venta'] = fmt_money(pv_v[d].sum())
+            total_row[f'{day_label} · Margen'] = fmt_money(pv_m[d].sum())
+        tabla.loc['TOTAL'] = total_row
+
+        st.dataframe(tabla, use_container_width=True, height=min(880, 40 + 25*25))
+
+    # Heatmap día × hora (visual)
     if 'hora_venta_num' in df.columns and len(sel_dias) > 1:
+        st.markdown("**🔥 Heatmap día × hora (visual)**")
         pivot = df.pivot_table(
             index='hora_venta_num', columns='fecha_venta',
             values='venta_bruta', aggfunc='sum', fill_value=0,
-        )
-        # Asegurar todas las horas 0-23 en el eje
-        pivot = pivot.reindex(range(24), fill_value=0)
+        ).reindex(range(24), fill_value=0)
         fig_h = go.Figure(go.Heatmap(
             z=pivot.values, x=[d.strftime('%a %d') if hasattr(d, 'strftime') else str(d) for d in pivot.columns],
             y=pivot.index, colorscale='Blues',
@@ -377,8 +416,44 @@ def _tab_acumulado(ventas: pd.DataFrame):
         ))
         fig_h.update_layout(height=420, yaxis_title='Hora', xaxis_title='')
         st.plotly_chart(fig_h, use_container_width=True)
-    else:
-        st.caption("Heatmap aparece cuando hay más de un día con datos filtrado.")
+
+    # Fulfillment vs Seller+Flex
+    st.markdown("**📦 Fulfillment vs Seller + Flex**")
+    df_f = df.copy()
+    df_f['modalidad'] = df_f['bodega'].apply(
+        lambda b: 'Fulfillment' if es_fulfillment(b) else 'Seller + Flex'
+    )
+    g_f = df_f.groupby('modalidad', as_index=False).agg(
+        venta_bruta=('venta_bruta', 'sum'),
+        venta_neta=('venta_neta', 'sum'),
+        margen=('margen_final', 'sum'),
+        uds=('cantidad', 'sum'),
+        sos=('pedido', 'nunique'),
+    )
+    g_f['share'] = g_f['venta_bruta'] / g_f['venta_bruta'].sum() if g_f['venta_bruta'].sum() else 0
+    g_f['margen_pct'] = g_f['margen'] / g_f['venta_neta'].replace(0, pd.NA)
+
+    col_a, col_b = st.columns([1.5, 1])
+    with col_a:
+        st.dataframe(
+            g_f.assign(
+                venta_bruta=g_f['venta_bruta'].map(fmt_money),
+                margen=g_f['margen'].map(fmt_money),
+                share=g_f['share'].map(fmt_pct),
+                margen_pct=g_f['margen_pct'].map(fmt_pct),
+                uds=g_f['uds'].astype(int),
+            )[['modalidad', 'sos', 'uds', 'venta_bruta', 'margen', 'margen_pct', 'share']],
+            use_container_width=True, hide_index=True,
+        )
+    with col_b:
+        if not g_f.empty:
+            fig_f = go.Figure(go.Pie(
+                labels=g_f['modalidad'], values=g_f['venta_bruta'],
+                hole=0.5,
+                marker=dict(colors=['#EA580C', '#2563EB']),
+            ))
+            fig_f.update_layout(height=220, margin=dict(t=10, b=10, l=10, r=10), showlegend=True)
+            st.plotly_chart(fig_f, use_container_width=True)
 
     # Por canal
     st.markdown("**Por canal (en filtro)**")
@@ -405,6 +480,32 @@ def _tab_acumulado(ventas: pd.DataFrame):
             ),
             use_container_width=True, hide_index=True, height=350,
         )
+
+    # Footer comparación final vs meta (con filtros aplicados)
+    st.markdown("---")
+    st.markdown("### 🎯 Cierre vs Meta (filtrado)")
+    total_bruta = df['venta_bruta'].sum()
+    total_margen = df['margen_final'].sum()
+    total_uds = df['cantidad'].sum()
+    total_neta = df['venta_neta'].sum()
+    margen_pct_total = (total_margen / total_neta) if total_neta else 0
+    # Meta proporcional al filtro (% curva de días seleccionados)
+    if sel_dias:
+        dias_idx = [(d - CYBER_START).days for d in sel_dias if hasattr(d, 'strftime')]
+        pct_curva = sum(CURVA_PCT[i] for i in dias_idx if 0 <= i < len(CURVA_PCT))
+    else:
+        pct_curva = 1.0
+    meta_filt = meta_total_venta * pct_curva
+    avance = (total_bruta / meta_filt) if meta_filt else 0
+
+    fc1, fc2, fc3, fc4 = st.columns(4)
+    fc1.metric("Venta filtrada", fmt_money(total_bruta), f"{avance*100:.1f}% de meta")
+    fc2.metric("Margen $", fmt_money(total_margen), fmt_pct(margen_pct_total))
+    fc3.metric("Meta filtrada", fmt_money(meta_filt),
+               help=f"Meta total × {pct_curva*100:.1f}% (curva diaria)")
+    fc4.metric("Gap", fmt_money(meta_filt - total_bruta),
+               delta=f"{(avance-1)*100:.1f}%" if meta_filt else "—",
+               delta_color="normal")
 
 
 # ============================================================
