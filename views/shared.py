@@ -86,12 +86,12 @@ def _read_historico_parquet():
     return df
 
 
-@st.cache_resource(ttl=1800, show_spinner="Cargando datos (primera vez ~60s)…")
+@st.cache_resource(ttl=900, show_spinner="Cargando datos (primera vez ~60s)…")
 def get_local_db_path():
-    """SQLite local combinando histórico (parquet) + live (Turso). TTL 30min.
+    """SQLite local combinando histórico (parquet) + live (Turso). TTL 15min.
 
-    Si Turso es lento desde Streamlit Cloud, el build inicial puede tomar
-    1-2 min. TTL 30min: mismo cron del parquet mes_actual.
+    Sincronizado con sync_mes_actual.yml cron (cada 15 min durante Cyber).
+    Combinado con TTL 5 min de las vistas, máx delay venta→dashboard ~20 min.
     """
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)

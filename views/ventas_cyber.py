@@ -77,7 +77,7 @@ def load_metas() -> pd.DataFrame:
     return pd.DataFrame()
 
 
-@st.cache_data(ttl=180, show_spinner="Consultando ventas Cyber en vivo…")
+@st.cache_data(ttl=300, show_spinner="Consultando ventas Cyber en vivo…")
 def load_ventas_cyber(include_sim: bool = False) -> pd.DataFrame:
     """Ventas del rango Cyber leídas EN VIVO desde el SQLite local
     (histórico parquet + Turso live). Si include_sim=True suma el parquet
@@ -102,7 +102,7 @@ def load_ventas_cyber(include_sim: bool = False) -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=300, show_spinner="Calculando promedio 4 semanas…")
+@st.cache_data(ttl=600, show_spinner="Calculando promedio 4 semanas…")
 def load_ventas_4sem() -> pd.DataFrame:
     """Últimas 4 semanas por SKU desde el SQLite local (RAW vivo).
     Solo registros tipo Venta (excluye NCs)."""
