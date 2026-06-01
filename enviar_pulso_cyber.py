@@ -590,12 +590,71 @@ def descargar_excel_raw_hoy():
     return buf.getvalue(), len(df), hoy_str
 
 
+def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list):
+    """Envío vía Gmail API usando credentials del agente-comex."""
+    import json as _json
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
+
+    creds_json = os.environ.get('GMAIL_TOKEN_JSON', '')
+    if not creds_json:
+        # Fallback: leer del file local
+        token_path = PROJECT_ROOT / 'agente-comex' / 'config' / 'token.json'
+        if token_path.exists():
+            creds_json = token_path.read_text()
+    if not creds_json:
+        print("[Gmail] No hay GMAIL_TOKEN_JSON, fallback a Resend", flush=True)
+        return None  # caller decide fallback
+
+    creds_data = _json.loads(creds_json)
+    creds = Credentials.from_authorized_user_info(creds_data, creds_data.get('scopes'))
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+
+    service = build('gmail', 'v1', credentials=creds)
+    msg = MIMEMultipart()
+    msg['to'] = ','.join(to_list)
+    msg['subject'] = asunto
+    msg.attach(MIMEText(html, 'html'))
+
+    if xlsx_bytes:
+        part = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        part.set_payload(xlsx_bytes)
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f'attachment; filename="Raw Cyber {hoy_str}.xlsx"')
+        msg.attach(part)
+
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    sent = service.users().messages().send(userId='me', body={'raw': raw}).execute()
+    return sent.get('id', '?')
+
+
 def enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pct):
     print(f"[4/5] Enviando email a {EMAIL_TO}...", flush=True)
     asunto_prefix = '[PRE-BORRADOR] ' if PREBORRADOR else ''
     flecha = '📈' if avance_pct >= 0.5 else '📉'
     asunto = (f"{asunto_prefix}🛍️ Cyber UnionX · {datetime.now(CHILE_TZ).strftime('%H:%M')} · "
               f"{fmt_m(bruta_hoy)} hoy · {fmt_m(bruta_total)} acum {flecha}")
+
+    # 1) Intentar Gmail API (sin restricciones de dominio)
+    if os.environ.get('GMAIL_TOKEN_JSON') or (PROJECT_ROOT / 'agente-comex' / 'config' / 'token.json').exists():
+        try:
+            msg_id = _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, EMAIL_TO)
+            if msg_id:
+                print(f"      [OK] enviado via Gmail (msg_id {msg_id})", flush=True)
+                return True
+        except Exception as e:
+            print(f"      [WARN] Gmail falló: {type(e).__name__}: {e}", flush=True)
+
+    # 2) Fallback Resend
+    if not RESEND_API_KEY:
+        print("[ERROR] No Gmail ni Resend disponibles", flush=True)
+        return False
     attachment = {
         'filename': f'Raw Cyber {hoy_str}.xlsx',
         'content': base64.b64encode(xlsx_bytes).decode(),
@@ -610,7 +669,7 @@ def enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pc
     if r.status_code >= 300:
         print(f"[ERROR] Resend: {r.status_code} {r.text}", flush=True)
         return False
-    print(f"      [OK] enviado ({r.json().get('id','?')})", flush=True)
+    print(f"      [OK] enviado via Resend ({r.json().get('id','?')})", flush=True)
     return True
 
 
