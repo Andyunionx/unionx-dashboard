@@ -7,8 +7,9 @@ name: "Cyber Pulso (cada 2h, Lun-Jue)"
 
 on:
   schedule:
-    # 10,12,14,16,18,20,22,00,02 UTC = 06,08,10,12,14,16,18,20,22 CLT
-    - cron: '0 10,12,14,16,18,20,22,0,2 * 6 *'
+    # 18, 20, 22, 00 CLT (tarde-noche Cyber)
+    # 18 CLT = 22 UTC, 20 CLT = 00 UTC, 22 CLT = 02 UTC, 00 CLT = 04 UTC
+    - cron: '0 22,0,2,4 * 6 *'
   workflow_dispatch:
     inputs:
       preborrador:

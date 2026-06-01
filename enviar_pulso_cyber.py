@@ -684,6 +684,17 @@ def main():
     (por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly,
      fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
      cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta) = descargar_resumen(metas_canal)
+
+    # VALIDACIÓN TEMPRANA contra Odoo
+    hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
+    dia_hoy_data = next((d for d in por_dia if d[0] == hoy_str), None)
+    bruta_hoy_early = float(dia_hoy_data[2]) if dia_hoy_data and dia_hoy_data[2] else 0
+    ok_validate, msg = validar_data_integrity(bruta_hoy_early, 0)
+    if not ok_validate:
+        print(f"[VALIDATE] ABORTAR ENVÍO: {msg}", flush=True)
+        return 0
+    print(f"[VALIDATE] {msg}", flush=True)
+
     alarma_stock = cargar_alarma_stock()
     html, bruta_total, bruta_hoy, avance_pct = render_html(
         por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
@@ -691,17 +702,18 @@ def main():
         cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
         alarma_stock, metas_canal
     )
-    xlsx_bytes, n_filas, hoy_str = descargar_excel_raw_hoy()
 
-    # VALIDATION: comparar contra Odoo antes de enviar
-    ok_validate, msg = validar_data_integrity(bruta_hoy, n_filas)
-    if not ok_validate:
-        print(f"[VALIDATE] ABORTAR ENVÍO: {msg}", flush=True)
-        print(f"[VALIDATE] Reintenta en próximo cron (15-30 min)", flush=True)
-        return 0  # exit OK pero sin enviar
-    print(f"[VALIDATE] {msg}", flush=True)
+    # Excel del día con reintento si Turso devuelve 0 pero hay venta esperada
+    xlsx_bytes, n_filas, hoy_str_x = descargar_excel_raw_hoy()
+    if n_filas == 0 and bruta_hoy > 1_000_000:
+        print(f"[Excel] 0 filas pero bruta ${bruta_hoy:,.0f} > $1M — esperando 30s y reintentando", flush=True)
+        time.sleep(30)
+        xlsx_bytes, n_filas, hoy_str_x = descargar_excel_raw_hoy()
+        if n_filas == 0:
+            print(f"[Excel] AÚN 0 filas tras reintento — ABORTAR para no mandar Excel vacío", flush=True)
+            return 0
 
-    ok = enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pct)
+    ok = enviar(html, xlsx_bytes, n_filas, hoy_str_x, bruta_total, bruta_hoy, avance_pct)
     print("[5/5] Done." if ok else "[5/5] FAIL", flush=True)
     return 0 if ok else 1
 
