@@ -154,7 +154,8 @@ def descargar_resumen(metas_canal):
 
 
 def cargar_alarma_stock():
-    """Compara stock disponible vs venta promedio 28d → SKUs con cobertura < 7 días."""
+    """SKUs con cobertura < 7 días. Usa Vta 30d Qty precalculado del parquet stock
+    (evita query pesada a Turso)."""
     print("[2/5] Calculando alarma stock...", flush=True)
     try:
         stock_path = PROJECT_ROOT / 'data' / 'stock' / 'skus.parquet'
@@ -163,25 +164,17 @@ def cargar_alarma_stock():
             return []
         stock = pd.read_parquet(stock_path)
 
-        # Venta últimas 4 semanas por SKU (28 días)
-        desde = (datetime.now(CHILE_TZ).date() - timedelta(days=28)).strftime('%Y-%m-%d')
-        v28 = _rows(turso_query(
-            f"SELECT sku, SUM(cantidad) FROM ventas "
-            f"WHERE fecha_venta >= '{desde}' AND tipo_movimiento='Venta' "
-            "GROUP BY sku HAVING SUM(cantidad) > 0"
-        ))
-        v_map = {r[0]: float(r[1] or 0) for r in v28 if r[0]}
-
         alarma = []
         for _, row in stock.iterrows():
             sku = str(row.get('SKU', '')).strip()
-            if not sku or sku not in v_map:
+            if not sku:
                 continue
             disp = float(row.get('Disponible', 0) or 0)
-            uds_28d = v_map[sku]
-            vta_diaria = uds_28d / 28
-            if vta_diaria <= 0:
+            # Vta 30d Qty viene precalculado en el parquet (sync stock cada 3h)
+            uds_30d = float(row.get('Vta 30d Qty', 0) or 0)
+            if uds_30d <= 0:
                 continue
+            vta_diaria = uds_30d / 30
             dias_cob = disp / vta_diaria if vta_diaria else 999
             if dias_cob < 7:
                 costo = float(row.get('Costo Unit', 0) or 0)
