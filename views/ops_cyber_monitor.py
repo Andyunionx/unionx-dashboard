@@ -97,13 +97,13 @@ def _ventas_dia(fecha: date) -> pd.DataFrame:
                    bodega,
                    canal
             FROM ventas
-            WHERE fecha_venta = ?
+            WHERE fecha_venta LIKE ?
               AND tipo_movimiento != 'Nota de crédito'
               AND LOWER(COALESCE(bodega, '')) NOT LIKE '%fulfillment%'
         """
         conn = sqlite3.connect(db_path)
         try:
-            df = pd.read_sql_query(sql, conn, params=(fecha.isoformat(),))
+            df = pd.read_sql_query(sql, conn, params=(f"{fecha.isoformat()}%",))
         finally:
             conn.close()
         df["hour"] = pd.to_numeric(df["hour"], errors="coerce").fillna(0).astype(int)
