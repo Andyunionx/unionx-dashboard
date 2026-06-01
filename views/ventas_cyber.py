@@ -137,11 +137,17 @@ def load_stock() -> pd.DataFrame:
 # HELPERS
 # ============================================================
 def fmt_money(v) -> str:
-    """Formato en miles con 1 decimal: $15.9 K"""
+    """Formato inteligente con 1 decimal: $526.5 M / $15.9 M / $1.5 K / $500"""
     if pd.isna(v) or v == 0:
         return '$0'
-    val = v / 1000
-    return f"${val:,.1f} K".replace(",", ".")
+    abs_v = abs(v)
+    if abs_v >= 1_000_000:
+        s = f"{v/1_000_000:.1f}"
+        return f"${s} M"
+    if abs_v >= 1_000:
+        s = f"{v/1_000:.1f}"
+        return f"${s} K"
+    return f"${v:,.0f}".replace(",", ".")
 
 
 def fmt_pct(v) -> str:
