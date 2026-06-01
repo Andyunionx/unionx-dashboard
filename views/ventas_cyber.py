@@ -335,17 +335,24 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
     g_dia['venta_acum'] = g_dia['venta_bruta'].cumsum()
     g_dia['margen_acum'] = g_dia['margen'].cumsum()
 
+    # Usar fecha como string categórico (evita que plotly muestre microsegundos
+    # cuando hay un solo día)
+    g_dia_plot = g_dia.copy()
+    g_dia_plot['fecha_label'] = g_dia_plot['fecha_venta'].apply(
+        lambda d: d.strftime('%a %d-%b') if hasattr(d, 'strftime') else str(d)
+    )
     fig = go.Figure()
-    fig.add_bar(x=g_dia['fecha_venta'], y=g_dia['venta_bruta'], name='Venta bruta',
+    fig.add_bar(x=g_dia_plot['fecha_label'], y=g_dia_plot['venta_bruta'], name='Venta bruta',
                 marker_color='#2563EB',
                 hovertemplate='%{x}<br>%{y:,.0f}<extra></extra>')
-    fig.add_trace(go.Scatter(x=g_dia['fecha_venta'], y=g_dia['margen'], name='Margen $',
+    fig.add_trace(go.Scatter(x=g_dia_plot['fecha_label'], y=g_dia_plot['margen'], name='Margen $',
                              mode='lines+markers', line=dict(color='#16A34A')))
-    fig.add_trace(go.Scatter(x=g_dia['fecha_venta'], y=g_dia['venta_acum'], name='Acumulado',
+    fig.add_trace(go.Scatter(x=g_dia_plot['fecha_label'], y=g_dia_plot['venta_acum'], name='Acumulado',
                              mode='lines', line=dict(color='#EA580C', dash='dash')))
     fig.update_layout(height=350, hovermode='x unified',
                       legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0),
-                      yaxis_title='CLP')
+                      yaxis_title='CLP',
+                      xaxis=dict(type='category'))
     st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(
