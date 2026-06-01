@@ -44,6 +44,7 @@ jobs:
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_TO: ${{ vars.CYBER_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl' }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}

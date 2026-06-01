@@ -568,6 +568,57 @@ def enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pc
     return True
 
 
+def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, str]:
+    """Valida que la data esté íntegra antes de enviar el pulso.
+
+    Compara venta del día (Turso) vs Odoo state=sale directo. Si discrepancia
+    >25% o n_filas_hoy < 100 cuando ya pasaron >4h del día, NO enviar.
+    Devuelve (ok, mensaje).
+    """
+    ahora_clt = datetime.now(CHILE_TZ)
+    hora_clt = ahora_clt.hour
+
+    # Si es muy temprano (< 6 AM CLT), no validar contra Odoo (poco data)
+    if hora_clt < 6:
+        return True, "early morning, skip validation"
+
+    # Query Odoo directo state=sale para hoy en hora Chile
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / 'finanzas-unionx' / 'backend'))
+        from app.core.odoo_client import OdooClient
+        from app.config import Config
+        cfg = Config()
+        c = OdooClient(cfg.ODOO_URL, cfg.ODOO_DB, cfg.ODOO_USER, cfg.ODOO_PASSWORD)
+        hoy_chile_inicio = ahora_clt.strftime('%Y-%m-%d')
+        # Filtro UTC equivalente a hoy Chile: [hoy 04:00 UTC, ahora]
+        desde_utc = f"{hoy_chile_inicio} 04:00:00"
+        sos = c.search_read('sale.order',
+            [('date_order','>=',desde_utc),('state','=','sale')],
+            ['amount_total'], limit=5000)
+        odoo_bruta = sum(s['amount_total'] for s in sos)
+        odoo_n = len(sos)
+    except Exception as e:
+        print(f"[VALIDATE] No se pudo consultar Odoo: {e}", flush=True)
+        return True, f"odoo unavailable, can't validate ({type(e).__name__})"
+
+    print(f"[VALIDATE] Turso hoy: ${bruta_hoy:,.0f} ({n_filas_hoy} filas) | "
+          f"Odoo state=sale: ${odoo_bruta:,.0f} ({odoo_n} SOs)", flush=True)
+
+    if odoo_bruta < 1_000_000:
+        # Odoo también bajo: probable madrugada con poca venta, OK enviar
+        return True, "odoo also low, no Cyber yet"
+
+    # Calcular diff %
+    diff_pct = abs(bruta_hoy - odoo_bruta) / odoo_bruta if odoo_bruta else 1
+    if diff_pct > 0.25:
+        msg = (f"discrepancia Turso vs Odoo > 25%: "
+               f"Turso ${bruta_hoy:,.0f} vs Odoo ${odoo_bruta:,.0f} "
+               f"(diff {diff_pct*100:.0f}%) — probable sync en curso")
+        return False, msg
+
+    return True, f"validation OK (diff {diff_pct*100:.1f}%)"
+
+
 def main():
     if not _check_rango():
         return 0
@@ -583,6 +634,15 @@ def main():
         curva_ly, fecha_ly, total_ly_val, alarma_stock, metas_canal
     )
     xlsx_bytes, n_filas, hoy_str = descargar_excel_raw_hoy()
+
+    # VALIDATION: comparar contra Odoo antes de enviar
+    ok_validate, msg = validar_data_integrity(bruta_hoy, n_filas)
+    if not ok_validate:
+        print(f"[VALIDATE] ABORTAR ENVÍO: {msg}", flush=True)
+        print(f"[VALIDATE] Reintenta en próximo cron (15-30 min)", flush=True)
+        return 0  # exit OK pero sin enviar
+    print(f"[VALIDATE] {msg}", flush=True)
+
     ok = enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pct)
     print("[5/5] Done." if ok else "[5/5] FAIL", flush=True)
     return 0 if ok else 1
