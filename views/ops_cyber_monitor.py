@@ -73,8 +73,11 @@ def _load_meta() -> dict:
 
 def _meta_dia(meta: dict, dia_idx: int) -> int:
     """Meta diaria usando SOLO unidades a cargo del equipo (sin fulfillment)."""
-    curva = meta.get("curva_diaria", CURVA_DIARIA)
-    pct = curva[dia_idx] if dia_idx < len(curva) else 0
+    curva = meta.get("curva_diaria") or CURVA_DIARIA
+    if dia_idx >= len(curva):
+        return 0
+    item = curva[dia_idx]
+    pct = item.get("pct", 0) if isinstance(item, dict) else float(item)
     return round(meta.get("meta_equipo_uds", 12_464) * pct)
 
 
