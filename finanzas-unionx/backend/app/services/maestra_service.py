@@ -504,13 +504,12 @@ class MaestraService:
 
     def get_kpis_yoy(self, params):
         """
-        KPIs del periodo TY vs mismo periodo LY (-1 año).
+        KPIs del periodo TY vs mismo periodo LY (-1 año, fecha-calendario).
         Returns: {'ty': {...}, 'ly': {...}, 'var': {...}}
         """
         ty_desde = params.get('fecha_desde')
         ty_hasta = params.get('fecha_hasta')
         if not ty_desde or not ty_hasta:
-            # Default: mes actual hasta hoy
             from datetime import datetime
             hoy = datetime.now()
             ty_desde = hoy.replace(day=1).strftime('%Y-%m-%d')

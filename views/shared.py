@@ -86,13 +86,32 @@ def _read_historico_parquet():
     return df
 
 
-@st.cache_resource(ttl=900, show_spinner="Cargando datos (primera vez ~60s)…")
-def get_local_db_path():
-    """SQLite local combinando histórico (parquet) + live (Turso). TTL 15min.
+# Path estable del SQLite local (mtime-based invalidation, no depende de cache_resource ttl).
+_LOCAL_DB_PATH = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v4.db'
+_LOCAL_DB_TTL_S = 900  # 15 min
 
-    Sincronizado con sync_mes_actual.yml cron (cada 15 min durante Cyber).
-    Combinado con TTL 5 min de las vistas, máx delay venta→dashboard ~20 min.
+
+def get_local_db_path():
+    """SQLite local combinando histórico (parquet) + live (Turso).
+
+    Estrategia de invalidación: por mtime del archivo, no cache_resource (que en
+    Streamlit Cloud puede pegarse horas). Si el archivo existe y tiene < 15 min
+    de edad, se reusa. Si no, se reconstruye.
     """
+    if not os.environ.get('LIBSQL_URL'):
+        return str(DB_PATH)
+
+    # Si existe y es fresco, reusar (caso normal, super rápido)
+    if _LOCAL_DB_PATH.exists():
+        age = _time.time() - _LOCAL_DB_PATH.stat().st_mtime
+        if age < _LOCAL_DB_TTL_S:
+            return str(_LOCAL_DB_PATH)
+
+    return _build_local_db()
+
+
+def _build_local_db():
+    """Construye el SQLite local desde histórico parquet + Turso live."""
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
@@ -118,9 +137,8 @@ def get_local_db_path():
                 _t.sleep(1 + i * 2)  # 1s, 3s, 5s
         raise last
 
-    # v3: fix fechas con timestamp que excluian ultimo dia del BETWEEN.
-    # Nombre nuevo fuerza rebuild completo en Streamlit Cloud aunque cache_resource este pegado.
-    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v3.db'
+    # Usar path estable v4 (mtime-based invalidation)
+    tmp_path = _LOCAL_DB_PATH
     if tmp_path.exists():
         tmp_path.unlink()
 
@@ -274,11 +292,15 @@ def get_db_build_stats() -> dict:
 
 
 def force_refresh_db_local():
-    """Limpia TODOS los caches para forzar reconstrucción completa."""
-    get_local_db_path.clear()
+    """Limpia TODOS los caches y borra archivo SQLite local para forzar reconstrucción."""
+    # Borrar archivo físico → próxima llamada a get_local_db_path() rebuild
+    try:
+        if _LOCAL_DB_PATH.exists():
+            _LOCAL_DB_PATH.unlink()
+    except Exception:
+        pass
     cached_health.clear()
     cached_filtros.clear()
-    # Limpiar también las caches de KPIs/tendencias/canales (TTL 60s pero forzar ya)
     try:
         _cached_kpis_inner.clear()
         cached_mensual.clear()
@@ -287,7 +309,7 @@ def force_refresh_db_local():
         _cached_canales_inner.clear()
         _cached_top_skus_inner.clear()
     except Exception:
-        pass  # Si alguna cache no existe aún, no romper
+        pass
 
 
 def get_service():
