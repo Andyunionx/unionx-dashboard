@@ -2,8 +2,10 @@ name: "Sync mes actual a parquet"
 
 on:
   schedule:
-    # Cada hora en el minuto :30 (después del sync_diario que corre en :00)
-    - cron: '30 * * * *'
+    # Cada 30 min durante el Cyber (Lun 1-jun a Jue 4-jun) para feedback rápido.
+    # Solo extrae mes actual = junio, mayo queda fijo (ya sincronizado con TZ correcta).
+    # Después del Cyber, el script puede volver a cada hora.
+    - cron: '*/30 * * * *'
   workflow_dispatch:
     inputs:
       mes:
