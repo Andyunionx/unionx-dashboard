@@ -582,19 +582,25 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
     if hora_clt < 6:
         return True, "early morning, skip validation"
 
-    # Query Odoo directo state=sale para hoy en hora Chile
+    # Query Odoo directo XML-RPC (sin dependencias de app/flask)
     try:
-        sys.path.insert(0, str(PROJECT_ROOT / 'finanzas-unionx' / 'backend'))
-        from app.core.odoo_client import OdooClient
-        from app.config import Config
-        cfg = Config()
-        c = OdooClient(cfg.ODOO_URL, cfg.ODOO_DB, cfg.ODOO_USER, cfg.ODOO_PASSWORD)
+        import xmlrpc.client
+        odoo_url = os.environ.get('ODOO_URL', 'https://unionxb2b.odoo.com')
+        odoo_db = os.environ.get('ODOO_DB', 'bmya-innovatek-sh-prd-6981800')
+        odoo_user = os.environ.get('ODOO_USER', 'andres@unionx.cl')
+        odoo_pwd = os.environ.get('ANDRES_ODOO_PASSWORD', '')
+        if not odoo_pwd:
+            return True, "no ANDRES_ODOO_PASSWORD, can't validate"
+        common = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/common', allow_none=True)
+        uid = common.authenticate(odoo_db, odoo_user, odoo_pwd, {})
+        if not uid:
+            return True, "Odoo auth failed, can't validate"
+        models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object', allow_none=True)
         hoy_chile_inicio = ahora_clt.strftime('%Y-%m-%d')
-        # Filtro UTC equivalente a hoy Chile: [hoy 04:00 UTC, ahora]
         desde_utc = f"{hoy_chile_inicio} 04:00:00"
-        sos = c.search_read('sale.order',
-            [('date_order','>=',desde_utc),('state','=','sale')],
-            ['amount_total'], limit=5000)
+        sos = models.execute_kw(odoo_db, uid, odoo_pwd, 'sale.order', 'search_read',
+            [[('date_order','>=',desde_utc),('state','=','sale')]],
+            {'fields':['amount_total'], 'limit':5000})
         odoo_bruta = sum(s['amount_total'] for s in sos)
         odoo_n = len(sos)
     except Exception as e:
