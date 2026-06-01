@@ -171,14 +171,18 @@ def render():
                f"Fuente: **RAW vivo** (Turso + histórico) — refresh 3 min · Stock Odoo live · "
                f"**Montos en miles (K)**")
 
-    # Toggle modo simulación
+    # Toggle modo simulación. Auto-activado si el Cyber aún no empezó
+    # (sirve para previsualizar la vista antes del 2-jun).
+    today = date.today()
+    sim_default = today < CYBER_START
     with st.sidebar:
         st.markdown("### 🛍️ Cyber 2026")
         sim_on = st.toggle(
             "🧪 Modo simulación",
-            value=False, key="cyber_sim_toggle",
+            value=sim_default, key="cyber_sim_toggle",
             help="Incluye datos sintéticos del lunes 2-jun hasta las 12:00 para previsualizar la vista. "
-                 "Los documentos llevan prefijo 'SIM-' para distinguirlos.",
+                 "Los documentos llevan prefijo 'SIM-' para distinguirlos. "
+                 "Auto-activado mientras el Cyber no haya empezado.",
         )
         if sim_on:
             st.warning("🧪 Simulación ACTIVA — datos sintéticos")
@@ -190,11 +194,13 @@ def render():
     ventas = add_aggregates(load_ventas_cyber(include_sim=sim_on))
     metas = load_metas()
 
-    if ventas.empty:
-        st.info("Aún no hay ventas registradas en el rango Cyber. La vista comenzará a poblarse desde el lunes 2-jun.")
-    today = date.today()
+    if ventas.empty and not sim_on:
+        st.info("Aún no hay ventas registradas en el rango Cyber. Activa 🧪 simulación en la sidebar para previsualizar.")
     if today < CYBER_START:
-        st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} días. Mostrando previsualización de metas.")
+        if sim_on:
+            st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} día(s). Mostrando datos SIMULADOS hasta las 12:00 del lunes 2-jun.")
+        else:
+            st.warning(f"⏳ Cyber empieza en {(CYBER_START - today).days} día(s). Activa simulación en sidebar para preview.")
 
     # ============================================================
     # HEADER KPIs

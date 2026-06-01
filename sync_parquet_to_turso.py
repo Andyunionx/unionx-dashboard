@@ -42,25 +42,36 @@ COLS = [
     "comision", "logistica", "marketing", "margen_final",
 ]
 
-BATCH_SIZE = 200
+BATCH_SIZE = 100
+MAX_RETRIES = 3
 
 
-def turso_pipeline(url: str, token: str, stmts: list, timeout: int = 90):
-    """Ejecuta una secuencia de statements en un solo pipeline."""
+def turso_pipeline(url: str, token: str, stmts: list, timeout: int = 180):
+    """Ejecuta una secuencia de statements con retry en caso de timeout."""
+    import time as _t
     body = {"requests": [{"type": "execute", "stmt": s} for s in stmts]}
     body["requests"].append({"type": "close"})
-    r = requests.post(
-        f"{url.rstrip('/')}/v2/pipeline",
-        json=body,
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        timeout=timeout,
-    )
-    r.raise_for_status()
-    payload = r.json()
-    for i, res in enumerate(payload.get("results", [])):
-        if res.get("type") == "error":
-            raise RuntimeError(f"Turso stmt {i}: {res.get('error', {}).get('message')}")
-    return payload
+    last_exc = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            r = requests.post(
+                f"{url.rstrip('/')}/v2/pipeline",
+                json=body,
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                timeout=timeout,
+            )
+            r.raise_for_status()
+            payload = r.json()
+            for i, res in enumerate(payload.get("results", [])):
+                if res.get("type") == "error":
+                    raise RuntimeError(f"Turso stmt {i}: {res.get('error', {}).get('message')}")
+            return payload
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            last_exc = e
+            wait = 5 * (attempt + 1)
+            print(f"    [retry {attempt+1}/{MAX_RETRIES}] {type(e).__name__}, esperando {wait}s...", flush=True)
+            _t.sleep(wait)
+    raise last_exc
 
 
 def _to_arg(v):
