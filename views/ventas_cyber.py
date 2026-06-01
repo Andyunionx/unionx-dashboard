@@ -252,7 +252,7 @@ def render():
     # TAB 1: Acumulado (día / hora / canal)
     # ============================================================
     with tabs[0]:
-        _tab_acumulado(ventas)
+        _tab_acumulado(ventas, meta_total_venta)
 
     # ============================================================
     # TAB 2: Top productos / categorías
@@ -282,7 +282,7 @@ def render():
 # ============================================================
 # TAB 1: Acumulado
 # ============================================================
-def _tab_acumulado(ventas: pd.DataFrame):
+def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
     st.subheader("Venta y margen acumulado")
 
     if ventas.empty:
