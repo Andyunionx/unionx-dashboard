@@ -1,0 +1,52 @@
+name: "Cyber Pulso (cada 2h, Lun-Jue)"
+
+# Envía un pulso del Cyber UnionX cada 2 horas vía email (Resend).
+# El script enviar_pulso_cyber.py filtra internamente: solo envía si
+# la hora CLT está en rango Lun 1-jun 06:00 a Jue 4-jun 22:00.
+# Cron en UTC, hace match con 06,08,10,12,14,16,18,20,22 CLT (UTC-4).
+
+on:
+  schedule:
+    # 10,12,14,16,18,20,22,00,02 UTC = 06,08,10,12,14,16,18,20,22 CLT
+    - cron: '0 10,12,14,16,18,20,22,0,2 * 6 *'
+  workflow_dispatch:
+    inputs:
+      preborrador:
+        description: 'Prefijar asunto con [PRE-BORRADOR]'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
+
+permissions:
+  contents: read
+
+jobs:
+  pulso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas openpyxl requests
+
+      - name: Enviar pulso Cyber
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_TO: ${{ vars.CYBER_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl' }}
+          EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
+          CYBER_PREBORRADOR: ${{ github.event.inputs.preborrador == 'true' && '1' || '0' }}
+          PYTHONIOENCODING: utf-8
+        run: python enviar_pulso_cyber.py
