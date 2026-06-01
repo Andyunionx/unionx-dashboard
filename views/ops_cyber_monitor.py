@@ -184,15 +184,18 @@ def _tab_hoy(meta: dict, fecha: date):
     ritmo = uds_total / horas_transcurridas
     proyeccion = round(ritmo * (19 - 8))
 
+    avance_acum_pct = (uds_total / meta_acum_ahora * 100) if meta_acum_ahora else 0
+    proy_pct        = (proyeccion / meta_d * 100) if meta_d else 0
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Pedidos", f"{ped_total:,}".replace(",", "."))
-    c2.metric("Unidades", f"{uds_total:,}".replace(",", "."),
-              f"{avance_pct:.1f}% de meta día")
-    c3.metric("vs Meta acumulada", f"{gap:+,}".replace(",", "."),
-              f"Meta acum. {hora_actual}h: {meta_acum_ahora:,}".replace(",", "."),
+    c2.metric("% del día", f"{avance_pct:.1f}%",
+              f"{uds_total:,} / {meta_d:,} uds".replace(",", "."))
+    c3.metric("% vs meta acumulada", f"{avance_acum_pct:.1f}%",
+              f"{gap:+,} uds · meta {hora_actual}h: {meta_acum_ahora:,}".replace(",", "."),
               delta_color="normal" if gap >= 0 else "inverse")
-    c4.metric("Proyección cierre", f"{proyeccion:,}".replace(",", "."),
-              f"Ritmo: {ritmo:.0f} uds/h")
+    c4.metric("Proyección cierre", f"{proy_pct:.1f}%",
+              f"{proyeccion:,} uds · ritmo {ritmo:.0f}/h".replace(",", "."))
 
     st.markdown("---")
 
@@ -215,10 +218,14 @@ def _tab_hoy(meta: dict, fecha: date):
 
     st.markdown("#### Detalle por hora")
     df_show = by_hora.copy()
-    df_show["hora"] = df_show["hora"].apply(lambda h: f"{h:02d}:00")
-    df_show["Gap"]  = df_show["real_acum"] - df_show["meta_acum"]
+    df_show["hora"]     = df_show["hora"].apply(lambda h: f"{h:02d}:00")
+    df_show["gap"]      = df_show["real_acum"] - df_show["meta_acum"]
+    df_show["avance_pct"] = df_show.apply(
+        lambda r: f"{r['real_acum']/r['meta_acum']*100:.1f}%" if r["meta_acum"] > 0 else "—",
+        axis=1
+    )
     df_show.columns = ["Hora", "Pedidos", "Uds reales", "Meta hora",
-                        "Meta acum", "Real acum", "Gap"]
+                        "Meta acum", "Real acum", "Gap", "% Avance"]
     st.dataframe(df_show, use_container_width=True, hide_index=True, height=340)
 
 
