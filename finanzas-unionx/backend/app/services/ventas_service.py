@@ -7,8 +7,26 @@ from typing import Dict, Callable, Optional
 from datetime import datetime
 from pathlib import Path
 
+try:
+    from zoneinfo import ZoneInfo  # Python 3.9+
+    _TZ_CHILE = ZoneInfo('America/Santiago')
+except ImportError:
+    import pytz
+    _TZ_CHILE = pytz.timezone('America/Santiago')
+
 from app.core.odoo_client import OdooClient
 from app.services.base_service import BaseOdooService
+
+
+def _utc_to_chile(dt_utc):
+    """Convierte timestamp UTC (de Odoo) a hora local Chile.
+    Maneja DST automáticamente (CLT=UTC-4 invierno, CLST=UTC-3 verano).
+    Devuelve naive datetime en hora Chile."""
+    if pd.isna(dt_utc):
+        return pd.NaT
+    if dt_utc.tzinfo is None:
+        dt_utc = dt_utc.tz_localize('UTC')
+    return dt_utc.tz_convert(_TZ_CHILE).tz_localize(None)
 
 
 class VentasService(BaseOdooService):
@@ -889,11 +907,13 @@ class VentasService(BaseOdooService):
                     continue
                 facturas_orden = [None]
 
-            # Parsear fechas
+            # Parsear fechas — Odoo guarda date_order en UTC, convertir a hora Chile
             fecha_venta = orden.get('date_order', '')
-            fecha_dt = pd.to_datetime(fecha_venta) if fecha_venta else pd.NaT
+            fecha_dt_utc = pd.to_datetime(fecha_venta) if fecha_venta else pd.NaT
+            fecha_dt = _utc_to_chile(fecha_dt_utc)
             hora_venta = fecha_dt.strftime('%H:%M:%S') if pd.notna(fecha_dt) else ''
             hora_venta_num = int(fecha_dt.hour) if pd.notna(fecha_dt) else 0
+            fecha_venta_local = fecha_dt.strftime('%Y-%m-%d') if pd.notna(fecha_dt) else ''
 
             # Línea: separar bruto (con IVA) y neto (sin IVA)
             # price_subtotal = sin IVA (neto), price_total = con IVA (bruto)
@@ -1030,7 +1050,7 @@ class VentasService(BaseOdooService):
                     'Tipo Despacho': '',
                     'SKU': sku,
                     'Canal': canal_raw,
-                    'Fecha Venta': fecha_venta.split(' ')[0] if fecha_venta else '',
+                    'Fecha Venta': fecha_venta_local,
                     'Hora Venta': hora_venta,
                     'Producto': producto.get('name', ''),
                     'Categoría macro': categoria_macro,
@@ -1162,9 +1182,10 @@ class VentasService(BaseOdooService):
                                 'warehouse_id': [None, 'Bodega Central'],
                             }
 
-                        # Parsear fechas de la NC
+                        # Parsear fechas de la NC — convertir UTC → Chile
                         fecha_nc = nc.get('invoice_date', '')
-                        fecha_dt = pd.to_datetime(fecha_nc) if fecha_nc else pd.NaT
+                        fecha_dt_utc = pd.to_datetime(fecha_nc) if fecha_nc else pd.NaT
+                        fecha_dt = _utc_to_chile(fecha_dt_utc)
                         hora_nc = fecha_dt.strftime('%H:%M:%S') if pd.notna(fecha_dt) else ''
                         hora_nc_num = int(fecha_dt.hour) if pd.notna(fecha_dt) else 0
 
@@ -1262,7 +1283,7 @@ class VentasService(BaseOdooService):
                         mes_nc = fecha_dt.month if pd.notna(fecha_dt) else ''
                         sem_nc = fecha_dt.isocalendar()[1] if pd.notna(fecha_dt) else ''
                         dia_nc = fecha_dt.dayofweek if pd.notna(fecha_dt) else ''
-                        fecha_v_nc = fecha_nc.split(' ')[0] if fecha_nc else ''
+                        fecha_v_nc = fecha_dt.strftime('%Y-%m-%d') if pd.notna(fecha_dt) else ''
 
                         lineas_nc = nc_lineas_by_move.get(nc_id, []) if nc_id else []
 
