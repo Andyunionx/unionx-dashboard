@@ -46,6 +46,7 @@ VENTAS_COLS = [
     'fecha_venta', 'hora_venta_num', 'documento', 'pedido', 'tipo_movimiento',
     'sku', 'producto', 'canal', 'marca', 'proveedor', 'kam',
     'tipo_negocio', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
+    'bodega', 'tipo_despacho',
     'cantidad', 'venta_bruta', 'venta_neta', 'costo_total',
     'margen_front', 'margen_final',
 ]
@@ -426,6 +427,8 @@ def _tab_acumulado(ventas: pd.DataFrame):
     # Fulfillment vs Seller+Flex
     st.markdown("**📦 Fulfillment vs Seller + Flex**")
     df_f = df.copy()
+    if 'bodega' not in df_f.columns:
+        df_f['bodega'] = ''
     df_f['modalidad'] = df_f['bodega'].apply(
         lambda b: 'Fulfillment' if es_fulfillment(b) else 'Seller + Flex'
     )
