@@ -264,6 +264,27 @@ def _build_local_db():
     # Stats finales
     n_ventas = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
     max_fecha = conn.execute("SELECT MAX(fecha_venta) FROM ventas").fetchone()[0]
+
+    # VALIDACIÓN: si estamos en Cyber (1-jun a 6-jun 2026), el mes actual debe
+    # tener venta. Si la query a Turso devolvió 0 (sync en curso), no servir
+    # este SQLite vacío — borrarlo para que la próxima request lo reconstruya.
+    hoy_str = datetime.now().strftime('%Y-%m-%d')
+    if '2026-06-01' <= hoy_str <= '2026-06-06':
+        venta_hoy = conn.execute(
+            "SELECT COALESCE(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta >= '2026-06-01'"
+        ).fetchone()[0]
+        if venta_hoy < 1_000_000:  # menos de $1M en junio = data parcial probable
+            print(f"[Local DB] WARN: venta junio {venta_hoy:,.0f} < $1M — Turso sync probable. "
+                  f"Borrando SQLite y reintentando.", flush=True)
+            conn.close()
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
+            # Reintentar UNA vez después de 10s (espera que termine sync Turso)
+            _t.sleep(10)
+            return _build_local_db()
+
     print(f"[Local DB] BUILD COMPLETO: {n_ventas:,} filas, max fecha {max_fecha}", flush=True)
 
     # Guardar stats para que el sidebar las muestre
