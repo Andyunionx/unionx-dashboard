@@ -38,7 +38,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas openpyxl requests
+          pip install pandas openpyxl requests pyarrow
 
       - name: Enviar pulso Cyber
         env:
