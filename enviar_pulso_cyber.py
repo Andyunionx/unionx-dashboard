@@ -49,6 +49,10 @@ RANGO_FIN = datetime(2026, 6, 4, 22, 0, tzinfo=CHILE_TZ)
 CYBER_FECHAS = ['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04', '2026-06-05', '2026-06-06']
 CYBER_LABELS = ['Lun 1-jun', 'Mar 2-jun', 'Mié 3-jun', 'Jue 4-jun', 'Vie 5-jun', 'Sáb 6-jun']
 CYBER_LABELS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+# Cyber 2025 (referencia YoY): Lun 2-jun-2025 → Sáb 7-jun-2025
+# Cada día Cyber 2026 corresponde al mismo día (orden) Cyber 2025
+CYBER_2025_FECHAS = ['2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05', '2025-06-06', '2025-06-07']
+CYBER_PAIRS = list(zip(CYBER_FECHAS, CYBER_2025_FECHAS))  # [(hoy_dia, ly_dia_equivalente), ...]
 CURVA_PCT = [0.30, 0.25, 0.20, 0.12, 0.08, 0.05]
 META_TOTAL = 505_915_976
 META_DIA_BRUTA = [META_TOTAL * p for p in CURVA_PCT]
@@ -142,15 +146,33 @@ def descargar_resumen(metas_canal):
         "GROUP BY hora_venta_num ORDER BY hora_venta_num"
     ))
 
-    # Curva intradiaria del LUNES anterior (25-may) para proyección
-    curva_lunes = _rows(turso_query(
-        "SELECT hora_venta_num, ROUND(SUM(venta_bruta),0) "
-        "FROM ventas WHERE fecha_venta='2026-05-25' "
-        "GROUP BY hora_venta_num ORDER BY hora_venta_num"
+    # Curva intradiaria del DÍA EQUIVALENTE Cyber 2025 (YoY) para proyección
+    # Mapping: hoy 2026 → mismo día (orden) Cyber 2025
+    hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
+    fecha_ly = None
+    for f26, f25 in CYBER_PAIRS:
+        if f26 == hoy_str:
+            fecha_ly = f25
+            break
+    if fecha_ly is None:
+        fecha_ly = CYBER_2025_FECHAS[0]  # fallback al primer lunes Cyber 2025
+    # Cast a int por si hora_venta_num viene como string (histórico legacy)
+    curva_ly = _rows(turso_query(
+        f"SELECT CAST(substr(hora_venta,1,2) AS INTEGER) AS h, "
+        f"ROUND(SUM(venta_bruta),0) "
+        f"FROM ventas WHERE fecha_venta='{fecha_ly}' "
+        "GROUP BY h ORDER BY h"
     ))
 
-    print(f"      [OK] en {time.time()-t0:.1f}s", flush=True)
-    return por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_lunes
+    # Total del día equivalente 2025 (para proyectar YoY)
+    total_ly = _rows(turso_query(
+        f"SELECT ROUND(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta='{fecha_ly}'"
+    ))
+    total_ly_val = float(total_ly[0][0]) if total_ly and total_ly[0][0] else 0
+    curva_lunes = curva_ly  # para mantener compatibilidad de nombre
+
+    print(f"      [OK] en {time.time()-t0:.1f}s (LY ref: {fecha_ly}, total LY ${total_ly_val:,.0f})", flush=True)
+    return por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly, fecha_ly, total_ly_val
 
 
 def cargar_alarma_stock():
@@ -197,26 +219,56 @@ def cargar_alarma_stock():
         return []
 
 
-def proyectar_cierre(bruta_hoy: float, hora_actual: int, curva_lunes_data: list, meta_hoy: float):
-    """Proyecta cierre del día usando curva del lunes anterior (25-may) como referencia."""
-    # curva_lunes_data: [(hora, bruta_hora), ...]
-    if not curva_lunes_data:
+def _parse_hora(v):
+    """Parsea hora robusto: int, '0', '00:00:00', etc. → int 0-23."""
+    if v is None:
         return None
-    total_lunes = sum(float(r[1] or 0) for r in curva_lunes_data)
-    if total_lunes <= 0:
+    if isinstance(v, (int, float)):
+        return int(v)
+    s = str(v).strip()
+    if not s:
         return None
-    # % acumulado hasta hora_actual del lunes ref
-    acum_hasta = sum(float(r[1] or 0) for r in curva_lunes_data if r[0] is not None and int(r[0]) <= hora_actual)
-    pct_hasta = acum_hasta / total_lunes
+    try:
+        return int(s)
+    except ValueError:
+        # Probar formato HH:MM:SS
+        if ':' in s:
+            try:
+                return int(s.split(':')[0])
+            except ValueError:
+                return None
+    return None
+
+
+def proyectar_cierre(bruta_hoy: float, hora_actual: int, curva_ly_data: list,
+                     meta_hoy: float, fecha_ly: str):
+    """Proyecta cierre del día usando curva del mismo día Cyber 2025 (YoY)."""
+    if not curva_ly_data:
+        return None
+    total_ly = sum(float(r[1] or 0) for r in curva_ly_data)
+    if total_ly <= 0:
+        return None
+    # % acumulado hasta hora_actual del día equivalente LY
+    acum_hasta = 0
+    for r in curva_ly_data:
+        h = _parse_hora(r[0])
+        if h is not None and h <= hora_actual:
+            acum_hasta += float(r[1] or 0)
+    pct_hasta = acum_hasta / total_ly
     if pct_hasta <= 0:
         return None
     proy_dia = bruta_hoy / pct_hasta
     avance_meta = proy_dia / meta_hoy if meta_hoy else 0
+    # Crecimiento YoY del día
+    yoy_dia = (proy_dia / total_ly - 1) if total_ly else 0
     return {
         'proy_dia': proy_dia,
         'pct_hasta_ref': pct_hasta,
         'avance_vs_meta': avance_meta,
         'ritmo_vs_meta': bruta_hoy / (meta_hoy * pct_hasta) if (meta_hoy * pct_hasta) else 0,
+        'total_ly': total_ly,
+        'fecha_ly': fecha_ly,
+        'yoy_dia': yoy_dia,
     }
 
 
@@ -232,7 +284,7 @@ def fmt_m(v):
 
 
 def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
-                curva_lunes, alarma_stock, metas_canal):
+                curva_ly, fecha_ly, total_ly_val, alarma_stock, metas_canal):
     ahora_clt = datetime.now(CHILE_TZ)
     fecha_hora = ahora_clt.strftime('%d-%b-%Y %H:%M CLT')
     hora_actual = ahora_clt.hour
@@ -352,35 +404,35 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
     else:
         bloque_alarma = '<p style="color:#16A34A;margin:16px 0">✅ Sin alarmas de stock crítico (cobertura &gt; 7 días en SKUs activos).</p>'
 
-    # Proyección
-    proy = proyectar_cierre(bruta_hoy, hora_actual, curva_lunes, meta_hoy)
+    # Proyección con referencia Cyber 2025 (mismo día YoY)
+    proy = proyectar_cierre(bruta_hoy, hora_actual, curva_ly, meta_hoy, fecha_ly)
     if proy:
         gap_dia = proy['proy_dia'] - meta_hoy
         color_p = '#16A34A' if proy['avance_vs_meta'] >= 0.9 else ('#EA580C' if proy['avance_vs_meta'] >= 0.5 else '#DC2626')
-        ritmo_pct = (proy['ritmo_vs_meta'] - 1) * 100
-        ritmo_txt = f"{ritmo_pct:+.1f}% vs lunes 25-may"
-        # Proyección Cyber completo: extrapolar ratio actual a los días restantes
-        dias_pendientes = sum(1 for f in CYBER_FECHAS if f > hoy_str)
-        # Proyección lineal de todos los días restantes asumiendo mismo ratio
-        if proy['ritmo_vs_meta'] > 0:
-            proy_cyber_total = bruta_total + proy['proy_dia'] - bruta_hoy  # cierre hoy
-            for f in CYBER_FECHAS:
-                if f > hoy_str:
-                    idx = CYBER_FECHAS.index(f)
-                    proy_cyber_total += META_DIA_BRUTA[idx] * proy['ritmo_vs_meta']
-        else:
-            proy_cyber_total = bruta_total
+        yoy_pct = proy['yoy_dia'] * 100
+        color_yoy = '#16A34A' if yoy_pct >= 0 else '#DC2626'
+        # Proyección Cyber completo: extrapolar ratio actual (proy_dia/meta_dia) a los días restantes
+        ratio_actual = proy['proy_dia'] / meta_hoy if meta_hoy else 1
+        proy_cyber_total = bruta_total + (proy['proy_dia'] - bruta_hoy)  # cierre hoy
+        for f in CYBER_FECHAS:
+            if f > hoy_str:
+                idx = CYBER_FECHAS.index(f)
+                proy_cyber_total += META_DIA_BRUTA[idx] * ratio_actual
         avance_cyber_proy = proy_cyber_total / META_TOTAL if META_TOTAL else 0
         bloque_proy = f"""
 <div style="background:#FEF3C7;border-left:4px solid #EA580C;padding:14px;border-radius:6px;margin:16px 0">
-  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📈 Proyección</div>
+  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📈 Proyección (referencia: Cyber 2025 mismo día)</div>
   <table style="width:100%;margin-top:6px;font-size:0.88rem">
     <tr><td>Hoy llevamos:</td>
-        <td align="right"><b>{fmt_m(bruta_hoy)}</b> ({proy['pct_hasta_ref']*100:.0f}% típico hasta {hora_actual}h CLT, ref lunes 25-may)</td></tr>
-    <tr><td>Proyección cierre día:</td>
+        <td align="right"><b>{fmt_m(bruta_hoy)}</b>
+        ({proy['pct_hasta_ref']*100:.0f}% del día completo en {fecha_ly})</td></tr>
+    <tr><td>Día equivalente Cyber 2025:</td>
+        <td align="right">{fmt_m(proy['total_ly'])} cerró ese día</td></tr>
+    <tr><td>Proyección cierre HOY:</td>
         <td align="right" style="color:{color_p}"><b>{fmt_m(proy['proy_dia'])}</b>
-        ({proy['avance_vs_meta']*100:.0f}% meta diaria, gap {fmt_m(gap_dia)})</td></tr>
-    <tr><td>Ritmo actual:</td><td align="right">{ritmo_txt}</td></tr>
+        ({proy['avance_vs_meta']*100:.0f}% meta · gap {fmt_m(gap_dia)})</td></tr>
+    <tr><td>YoY proyectado (hoy vs LY):</td>
+        <td align="right" style="color:{color_yoy};font-weight:600">{yoy_pct:+.1f}%</td></tr>
     <tr><td>Proyección Cyber completo:</td>
         <td align="right"><b>{fmt_m(proy_cyber_total)}</b>
         ({avance_cyber_proy*100:.1f}% meta total $505.9 M)</td></tr>
@@ -524,11 +576,11 @@ def main():
         return 1
 
     metas_canal = cargar_metas_canal()
-    por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_lunes = descargar_resumen(metas_canal)
+    por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly, fecha_ly, total_ly_val = descargar_resumen(metas_canal)
     alarma_stock = cargar_alarma_stock()
     html, bruta_total, bruta_hoy, avance_pct = render_html(
         por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
-        curva_lunes, alarma_stock, metas_canal
+        curva_ly, fecha_ly, total_ly_val, alarma_stock, metas_canal
     )
     xlsx_bytes, n_filas, hoy_str = descargar_excel_raw_hoy()
     ok = enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pct)
