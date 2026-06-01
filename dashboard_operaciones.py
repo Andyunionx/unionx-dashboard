@@ -76,6 +76,7 @@ odoo_status_indicator()
 # ============================================================
 from views.ops_comex import render as render_ops_comex
 from views.ops_cyber_planner import render as render_ops_cyber
+from views.ops_cyber_monitor import render as render_ops_cyber_monitor
 from views.ops_stock_live import render as render_ops_stock_live
 from views.ops_wms_kpis import render as render_ops_wms
 from views.ops_postventa import render as render_ops_postventa
@@ -106,6 +107,8 @@ pages = {
                 url_path="ops-wms-kpis"),
         st.Page(render_ops_costo, title="Costo Operativo Total", icon="💰",
                 url_path="ops-costo-operativo"),
+        st.Page(render_ops_cyber_monitor, title="🔴 Cyber Monitor en vivo", icon="🚀",
+                url_path="ops-cyber-monitor"),
         st.Page(render_ops_cyber, title="Planificador Cyber / Peak Season", icon="🎯",
                 url_path="ops-cyber-planner"),
     ],
