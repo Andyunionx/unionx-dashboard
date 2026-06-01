@@ -101,6 +101,7 @@ from views.fin_pyl_cc import render as render_fin_pyl_cc  # noqa
 from views.fin_pyl_linea_negocio import render as render_fin_pyl_ln  # noqa
 from views.fin_caja_deuda_kt import render as render_fin_caja_kt  # noqa
 from views.fin_forecast_cierre import render as render_fin_forecast  # noqa
+from views.fin_sii_compras import render as render_fin_sii_compras  # noqa
 
 pages = {
     "🎯 Resumen": [
@@ -125,6 +126,10 @@ pages = {
     "🎯 Forecast": [
         st.Page(render_fin_forecast, title="Cierre proyectado año", icon="🎯",
                 url_path="fin-forecast"),
+    ],
+    "📊 Contabilidad SII": [
+        st.Page(render_fin_sii_compras, title="Registro Compras SII", icon="📊",
+                url_path="fin-sii-compras"),
     ],
 }
 

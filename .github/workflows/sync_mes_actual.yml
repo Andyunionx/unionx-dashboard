@@ -1,8 +1,9 @@
 name: "Sync mes actual a parquet"
 
 on:
-  # PAUSADO temporalmente mientras se sincroniza mayo retroactivo (~20 min).
-  # Restaurar schedule cron '*/15 * * * *' cuando termine sync mayo.
+  schedule:
+    # Cada 15 min durante Cyber. Solo extrae JUNIO (mes actual).
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       mes:
