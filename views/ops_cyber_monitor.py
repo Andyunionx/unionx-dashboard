@@ -367,6 +367,7 @@ def _tab_metas(meta: dict):
 
 def render():
     hoy = date.today()
+    meta = _load_meta()
 
     st.title("🚀 Cyber 2026 — Monitor Operacional")
     meta_eq  = meta.get("meta_equipo_uds", 0)
@@ -377,8 +378,6 @@ def render():
         f"({meta_ful:,} vía fulfillment externo · {meta_tot:,} total)"
         .replace(",", ".")
     )
-
-    meta = _load_meta()
 
     # Banner estado del Cyber
     if hoy < CYBER_START:
