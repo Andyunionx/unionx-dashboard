@@ -1,52 +1,52 @@
 {
-  "generado_en": "2026-06-01T11:06:29.945998",
+  "generado_en": "2026-06-01T17:14:01.916986",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 9293,
-  "total_monto_pendiente_clp": 575953999.0,
+  "total_documentos_pendientes": 9770,
+  "total_monto_pendiente_clp": 597125407.0,
   "monto_por_aging": {
     "+90 días": 34177310.0,
-    "1-30 días": 326769603.0,
+    "1-30 días": 343043887.0,
     "31-60 días": 97919321.0,
     "61-90 días": 20452705.0,
-    "Vigente": 96635060.0
+    "Vigente": 101532184.0
   },
   "monto_por_tipo": {
-    "BOLETA": 504834262.0,
+    "BOLETA": 526005670.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 113480944.0
+      "monto": 117932544.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 74052687.0
+      "monto": 75921151.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 60424020.0
+      "monto": 65033201.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 48127078.0
+      "monto": 51114810.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 40212385.0
+      "monto": 42248078.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 20036111.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 19771915.0
     },
     {
       "partner": "FALABELLA.COM",
       "monto": 19556704.0
-    },
-    {
-      "partner": "Cliente Ripley",
-      "monto": 19068603.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 18982931.0
     },
     {
       "partner": "SODIMAC S.A.",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 16696221.0
+      "monto": 17187635.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -70,19 +70,19 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 12666181.0
+      "monto": 13462812.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
       "monto": 8442326.0
     },
     {
-      "partner": "Cliente Mercado Libre, Cliente Mercado Libre",
-      "monto": 6245489.0
+      "partner": "abc S.A.",
+      "monto": 6542013.0
     },
     {
-      "partner": "abc S.A.",
-      "monto": 4650424.0
+      "partner": "Cliente Mercado Libre, Cliente Mercado Libre",
+      "monto": 6245489.0
     },
     {
       "partner": "Showtime SpA",
@@ -93,10 +93,10 @@
       "monto": 4223623.0
     },
     {
-      "partner": "Dinasty Partners, Andrés Bacigalupo",
-      "monto": 3241560.0
+      "partner": "Global Reward Solutions",
+      "monto": 3417594.0
     }
   ],
   "notas_credito_count": 533,
-  "pedidos_venta_count": 8705
+  "pedidos_venta_count": 9181
 }
