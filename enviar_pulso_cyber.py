@@ -631,30 +631,13 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
 
 
 def descargar_excel_raw_hoy():
-    ahora_clt = datetime.now(CHILE_TZ)
+    """Genera Excel RAW del día desde el PARQUET local (no Turso)."""
     hoy_str = hoy_comercial()
-    print(f"[3/5] Descargando Excel RAW {hoy_str}...", flush=True)
-    sys.path.insert(0, str(PROJECT_ROOT))
-    from enviar_excel_diario import DB_COLS, DB_TO_RAW
-    chunk = 80000
-    all_rows = []
-    last = 0
-    while True:
-        res = turso_query(
-            f"SELECT rowid, {','.join(DB_COLS)} FROM ventas "
-            f"WHERE fecha_venta = '{hoy_str}' AND rowid > {last} "
-            f"ORDER BY rowid LIMIT {chunk}"
-        )
-        rows = res['rows']
-        if not rows:
-            break
-        for r in rows:
-            vals = [c.get('value') if isinstance(c, dict) else c for c in r]
-            last = int(vals[0])
-            all_rows.append(vals[1:])
-        if len(rows) < chunk:
-            break
-    df = pd.DataFrame(all_rows, columns=DB_COLS).rename(columns=DB_TO_RAW)
+    print(f"[3/5] Generando Excel RAW {hoy_str} desde parquet...", flush=True)
+    parquet_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
+    df_all = pd.read_parquet(parquet_path)
+    df_all['fecha_venta'] = pd.to_datetime(df_all['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df = df_all[df_all['fecha_venta'] == hoy_str].copy()
     print(f"      [OK] {len(df):,} filas hoy", flush=True)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine='openpyxl') as w:
@@ -748,29 +731,30 @@ def enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pc
 def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, str]:
     """Valida que la data esté íntegra antes de enviar el pulso.
 
-    SIEMPRE compara venta del día (Turso) vs Odoo state=sale. Si discrepancia
-    > 10%, NO enviar. FAIL-CLOSED: si no puedo validar, NO envío.
-
-    También detecta duplicados en Turso del día comercial: si hay > 0 grupos
-    duplicados con (pedido, sku, hora, venta, cantidad, doc, tipo_mov), aborta.
+    Fuente: PARQUET local (no Turso, Turso queda fuera de pulso por bug sync).
+    SIEMPRE compara parquet vs Odoo state=sale. Si discrepancia > 10%, NO enviar.
+    Detecta duplicados en parquet por grupo (pedido, sku, hora, venta, cant, doc, tipo).
+    FAIL-CLOSED: si no puedo validar, NO envío.
     """
-    # 1) Detectar duplicados en Turso para el día comercial
     hoy_dia = hoy_comercial()
-    try:
-        r = turso_query(
-            "SELECT COUNT(*) FROM (SELECT 1 FROM ventas "
-            f"WHERE fecha_venta='{hoy_dia}' "
-            "GROUP BY pedido, sku, hora_venta, venta_bruta, cantidad, documento, tipo_movimiento "
-            "HAVING COUNT(*) > 1)"
-        )
-        dups = int(r['rows'][0][0].get('value', '0'))
-        if dups > 0:
-            return False, f"Turso tiene {dups} grupos duplicados para {hoy_dia} — NO envío (correr cyber_health primero)"
-    except Exception as e:
-        print(f"[VALIDATE] Error checking duplicados: {e}", flush=True)
-        return False, f"no pude verificar duplicados ({type(e).__name__}) — NO envío"
 
-    # 2) Comparar Turso vs Odoo (sin atajo "early morning")
+    # 1) Detectar duplicados en PARQUET
+    try:
+        parquet_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
+        df = pd.read_parquet(parquet_path)
+        df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+        d_hoy = df[df['fecha_venta'] == hoy_dia]
+        if len(d_hoy):
+            dup = d_hoy.groupby(['pedido','sku','hora_venta','venta_bruta','cantidad','documento','tipo_movimiento']).size()
+            n_dup = int((dup > 1).sum())
+            if n_dup > 0:
+                return False, f"Parquet tiene {n_dup} grupos duplicados para {hoy_dia} — NO envío (re-extraer + dedupear)"
+        parquet_bruta = float(d_hoy['venta_bruta'].sum())
+        parquet_n = int(d_hoy['pedido'].nunique())
+    except Exception as e:
+        return False, f"no pude leer parquet ({type(e).__name__}: {e}) — NO envío"
+
+    # 2) Comparar parquet vs Odoo state=sale
     try:
         import xmlrpc.client
         odoo_url = os.environ.get('ODOO_URL', 'https://unionxb2b.odoo.com')
@@ -784,9 +768,7 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
         if not uid:
             return False, "Odoo auth failed, no puedo validar — NO envío"
         models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object', allow_none=True)
-        # Ventana día comercial completo (00:00 a 23:59 CLT)
         desde_utc = f"{hoy_dia} 04:00:00"  # 00:00 CLT
-        # hasta = día siguiente 04:00 UTC = 24:00 CLT
         from datetime import datetime as _dt, timedelta as _td
         d_next = (_dt.strptime(hoy_dia, '%Y-%m-%d') + _td(days=1)).strftime('%Y-%m-%d')
         hasta_utc = f"{d_next} 04:00:00"
@@ -796,25 +778,22 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
         odoo_bruta = sum(s['amount_total'] for s in sos)
         odoo_n = len(sos)
     except Exception as e:
-        print(f"[VALIDATE] No se pudo consultar Odoo: {e}", flush=True)
         return False, f"odoo unavailable ({type(e).__name__}) — NO envío"
 
-    print(f"[VALIDATE] Turso {hoy_dia}: ${bruta_hoy:,.0f} ({n_filas_hoy} filas) | "
+    print(f"[VALIDATE] Parquet {hoy_dia}: ${parquet_bruta:,.0f} ({parquet_n} SOs) | "
           f"Odoo state=sale: ${odoo_bruta:,.0f} ({odoo_n} SOs)", flush=True)
 
     if odoo_bruta < 1_000_000:
-        # Odoo también bajo: probable madrugada antes del Cyber, OK enviar
         return True, f"odoo low (${odoo_bruta:,.0f}), pre-Cyber window"
 
-    # Tolerancia 10% (antes 25% era demasiado permisivo)
-    diff_pct = abs(bruta_hoy - odoo_bruta) / odoo_bruta if odoo_bruta else 1
+    diff_pct = abs(parquet_bruta - odoo_bruta) / odoo_bruta if odoo_bruta else 1
     if diff_pct > 0.10:
-        msg = (f"discrepancia Turso vs Odoo > 10%: "
-               f"Turso ${bruta_hoy:,.0f} vs Odoo ${odoo_bruta:,.0f} "
-               f"(diff {diff_pct*100:.1f}%)")
+        msg = (f"discrepancia Parquet vs Odoo > 10%: "
+               f"Parquet ${parquet_bruta:,.0f} vs Odoo ${odoo_bruta:,.0f} "
+               f"(diff {diff_pct*100:.1f}%) — re-extraer parquet")
         return False, msg
 
-    return True, f"validation OK (Turso ${bruta_hoy:,.0f} vs Odoo ${odoo_bruta:,.0f}, diff {diff_pct*100:.2f}%)"
+    return True, f"validation OK (Parquet ${parquet_bruta:,.0f} vs Odoo ${odoo_bruta:,.0f}, diff {diff_pct*100:.2f}%)"
 
 
 def main():
