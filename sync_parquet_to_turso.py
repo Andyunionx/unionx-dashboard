@@ -118,6 +118,15 @@ def main():
             print(f"[WARN] No hay filas para mes {args.mes}", flush=True)
             return 0
 
+    # GUARD: mayo y anteriores son FOTOS (histórico parquet). Solo junio+ a Turso.
+    pre_n = len(df)
+    df = df[df["fecha_venta"] >= "2026-06-01"]
+    if len(df) < pre_n:
+        print(f"[GUARD] Filtradas {pre_n - len(df)} filas pre-junio (mayo foto)", flush=True)
+    if df.empty:
+        print(f"[WARN] No hay filas >= 2026-06-01", flush=True)
+        return 0
+
     desde = df["fecha_venta"].min()
     hasta = df["fecha_venta"].max()
     print(f"    {len(df):,} filas, rango {desde} → {hasta}", flush=True)

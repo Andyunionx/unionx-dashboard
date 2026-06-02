@@ -88,6 +88,16 @@ def main():
             print(f"[WARN] sin filas para {args.mes}", flush=True)
             return 0
 
+    # GUARD: mayo y meses anteriores son FOTOS (viven en histórico parquet),
+    # nunca tocar en Turso. Solo se sincroniza junio en adelante.
+    pre_n = len(df)
+    df = df[df["fecha_venta"] >= "2026-06-01"]
+    if len(df) < pre_n:
+        print(f"[GUARD] Filtradas {pre_n - len(df)} filas anteriores a junio (mayo es foto)", flush=True)
+    if df.empty:
+        print(f"[WARN] No hay filas >= 2026-06-01 para sincronizar a Turso", flush=True)
+        return 0
+
     desde = df["fecha_venta"].min()
     hasta = df["fecha_venta"].max()
     print(f"  {len(df):,} filas, {desde} → {hasta}, ${df['venta_bruta'].sum():,.0f}", flush=True)
