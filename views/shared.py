@@ -393,11 +393,17 @@ def _build_local_db_parquet():
     fecha_min, max_fecha = conn.execute(
         "SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
 
-    # metadata_cargas sintética (lo que health() espera para mostrar última carga)
+    # metadata_cargas sintética (lo que health() espera para mostrar última carga).
+    # fecha_carga = mtime del parquet más reciente (frescura REAL del dato),
+    # no now(), para que el header "última sincronización" sea honesto si un
+    # GitHub Action falló y el parquet quedó viejo.
+    _mtimes = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
+    fecha_carga = (datetime.fromtimestamp(max(_mtimes)).isoformat(timespec='seconds')
+                   if _mtimes else datetime.now().isoformat(timespec='seconds'))
     conn.execute(
         "INSERT INTO metadata_cargas (fecha_carga, fuente, filas_cargadas, fecha_min_datos, fecha_max_datos, tipo) "
         "VALUES (?,?,?,?,?,?)",
-        (datetime.now().isoformat(timespec='seconds'), 'parquet', n_ventas, fecha_min, max_fecha, 'parquet'),
+        (fecha_carga, 'parquet', n_ventas, fecha_min, max_fecha, 'parquet'),
     )
     conn.commit()
 
