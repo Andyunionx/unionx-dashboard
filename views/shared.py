@@ -745,13 +745,13 @@ def cached_stock():
 @st.cache_data(ttl=900, show_spinner="Consultando ventas por canal últimos 30 días…")
 def cached_ventas_canal_30d():
     """Ventas últimos 30 días por SKU+canal.
-    Estrategia: Turso primero (más fresco), fallback parquet local si Turso falla."""
+    Con PARQUET_ONLY=1 lee solo parquet (DuckDB-era); si no, Turso primero con fallback parquet."""
     desde = (datetime.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
 
-    # Intento 1: Turso (más fresco)
+    # Intento 1: Turso (más fresco) — solo si NO estamos en modo parquet/DuckDB
     url = os.environ.get('LIBSQL_URL', '').rstrip('/')
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
-    if url:
+    if url and os.environ.get('PARQUET_ONLY') != '1':
         sql = f"""
             SELECT sku, canal, tipo_negocio,
                    ROUND(SUM(cantidad), 0) as cantidad,
