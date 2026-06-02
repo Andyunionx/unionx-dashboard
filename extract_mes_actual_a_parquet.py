@@ -283,6 +283,28 @@ def main():
         print(f"   [WARN] CMR enrichment saltado: {type(e).__name__}: {str(e)[:100]}")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    # GATE 1 (mecanismo de seguridad): validar contra el último parquet bueno.
+    # Si falla, NO sobreescribir — la app sigue mostrando el último dato válido.
+    import json as _json
+    from datetime import datetime as _dt
+    from validacion_ventas import validar_ventas_df, resumen_validacion
+    df_previo = None
+    if OUT_PATH.exists():
+        try:
+            df_previo = pd.read_parquet(OUT_PATH)
+        except Exception:
+            df_previo = None
+    ok, problemas, stats = validar_ventas_df(df, df_previo)
+    print("\n" + resumen_validacion(ok, problemas, stats))
+    marker = OUT_PATH.parent / 'validacion_ventas.json'
+    marker.write_text(_json.dumps({
+        'ts': _dt.now().isoformat(timespec='seconds'), 'ok': ok, 'problemas': problemas, 'stats': stats,
+    }, default=str, ensure_ascii=False), encoding='utf-8')
+    if not ok:
+        print("\n[GATE 1] NO se publica el parquet — se conserva el último bueno.", flush=True)
+        sys.exit(0)  # salida limpia: el commit posterior no verá cambios
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")

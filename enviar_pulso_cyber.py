@@ -805,12 +805,48 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
     return True, f"validation OK (Parquet ${parquet_bruta:,.0f} vs Odoo ${odoo_bruta:,.0f}, diff {diff_pct*100:.2f}%)"
 
 
+def alertar_andres(asunto: str, detalle: str) -> bool:
+    """Alerta SOLO a Andrés (no al CEO) cuando un gate bloquea el pulso."""
+    to = [e.strip() for e in os.environ.get('ANDRES_ALERT_EMAIL', 'andres@unionx.cl').split(',') if e.strip()]
+    html = (f"<h3>⚠️ Pulso Cyber bloqueado por el mecanismo de seguridad</h3>"
+            f"<p>{datetime.now(CHILE_TZ).strftime('%Y-%m-%d %H:%M CLT')}</p>"
+            f"<pre style='background:#f6f8fa;padding:12px;border-radius:6px'>{detalle}</pre>"
+            f"<p>El pulso al CEO NO se envió. Revisa el extract/parquet.</p>")
+    full = f"[ALERTA pulso] {asunto}"
+    if RESEND_API_KEY:
+        try:
+            r = requests.post('https://api.resend.com/emails',
+                              json={'from': EMAIL_FROM, 'to': to, 'subject': full, 'html': html},
+                              headers={'Authorization': f'Bearer {RESEND_API_KEY}',
+                                       'Content-Type': 'application/json'}, timeout=30)
+            print(f"   [alerta→Andrés] Resend {r.status_code}", flush=True)
+            return r.status_code < 300
+        except Exception as e:
+            print(f"   [alerta→Andrés] falló: {e}", flush=True)
+    return False
+
+
 def main():
     if not _check_rango():
         return 0
     if not URL or not TOKEN or not RESEND_API_KEY:
         print("[ERROR] Faltan vars de entorno", flush=True)
         return 1
+
+    # GATE 2 (mecanismo de seguridad): el parquet de ventas debe estar sano antes
+    # de armar/enviar el pulso. Si no pasa, NO se envía al CEO y se te alerta a TI.
+    try:
+        from validacion_ventas import validar_ventas_df, resumen_validacion
+        _mes_p = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
+        _df_chk = pd.read_parquet(_mes_p) if _mes_p.exists() else None
+        _okv, _probs, _st = validar_ventas_df(_df_chk, None)
+        if not _okv:
+            _detalle = resumen_validacion(_okv, _probs, _st)
+            print(f"[GATE 2] BLOQUEA ENVÍO:\n{_detalle}", flush=True)
+            alertar_andres("datos no pasaron validación — pulso NO enviado", _detalle)
+            return 0
+    except Exception as e:
+        print(f"[GATE 2][WARN] validación saltada: {type(e).__name__}: {e}", flush=True)
 
     metas_canal = cargar_metas_canal()
     (por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly,
@@ -826,6 +862,7 @@ def main():
     ok_validate, msg = validar_data_integrity(bruta_hoy_early, 0)
     if not ok_validate:
         print(f"[VALIDATE] ABORTAR ENVÍO: {msg}", flush=True)
+        alertar_andres("validar_data_integrity falló — pulso NO enviado", msg)
         return 0
     print(f"[VALIDATE] {msg}", flush=True)
 
@@ -847,6 +884,8 @@ def main():
         xlsx_bytes, n_filas, hoy_str_x = descargar_excel_raw_hoy()
         if n_filas == 0:
             print(f"[Excel] AÚN 0 filas tras reintento — ABORTAR para no mandar Excel vacío", flush=True)
+            alertar_andres("Excel del día vino vacío (0 filas) — pulso NO enviado",
+                           f"bruta_hoy esperada ${bruta_hoy:,.0f} pero el RAW del día tiene 0 filas.")
             return 0
 
     ok = enviar(html, xlsx_bytes, n_filas, hoy_str_x, bruta_total, bruta_hoy, avance_pct)
