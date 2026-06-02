@@ -1,10 +1,11 @@
 name: Sync Ventas Diario
 
 on:
-  schedule:
-    # Cada hora (en punto). PC local cubre intra-hora con Task Scheduler cada 5 min.
-    # GH Actions queda como backup para horas en que el PC esté apagado.
-    - cron: '0 * * * *'
+  # CRON PAUSADO 2026-06-02: durante Cyber este workflow hace DELETE+INSERT
+  # en tabla `ventas` con extract Odoo crudo, sobrescribiendo correcciones
+  # manuales (Sodimac, fixes, dedup, freeze 1-jun). Reactivar post-Cyber.
+  # schedule:
+  #   - cron: '0 * * * *'
   workflow_dispatch:    # Permite trigger manual desde GitHub UI
     inputs:
       fecha:
