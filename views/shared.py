@@ -456,8 +456,111 @@ def force_refresh_db_local():
         pass
 
 
+# ============================================================
+# Motor DuckDB sobre parquet (Camino A) — sin rebuild de SQLite
+# ============================================================
+class _DuckRow:
+    """Fila estilo sqlite3.Row: soporta acceso por índice y por nombre + dict(row)."""
+    __slots__ = ('_cols', '_vals', '_map')
+
+    def __init__(self, cols, vals):
+        self._cols = cols
+        self._vals = vals
+        self._map = {c: v for c, v in zip(cols, vals)}
+
+    def __getitem__(self, k):
+        return self._vals[k] if isinstance(k, int) else self._map[k]
+
+    def keys(self):
+        return self._cols
+
+    def __iter__(self):
+        return iter(self._vals)
+
+    def __len__(self):
+        return len(self._vals)
+
+
+class _DuckCursor:
+    def __init__(self, rel):
+        self._cols = [d[0] for d in rel.description] if rel.description else []
+        self._rows = rel.fetchall()
+
+    def fetchone(self):
+        return _DuckRow(self._cols, self._rows[0]) if self._rows else None
+
+    def fetchall(self):
+        return [_DuckRow(self._cols, r) for r in self._rows]
+
+
+class _DuckConn:
+    """Adaptador que emula la API de sqlite3.Connection sobre DuckDB.
+    Usa un cursor por query (thread-safe sobre la conexión compartida)."""
+    def __init__(self, con):
+        self._con = con
+
+    def execute(self, sql, params=None):
+        cur = self._con.cursor()
+        rel = cur.execute(sql, params) if params else cur.execute(sql)
+        return _DuckCursor(rel)
+
+    def close(self):
+        pass  # conexión compartida/cacheada: no cerrar
+
+
+@st.cache_resource(show_spinner=False)
+def _get_duck_conn():
+    """Conexión DuckDB con ventas/dim_productos/metadata_cargas materializadas desde parquet.
+    Cacheada (cache_resource) → se crea una sola vez, sin rebuild de 8s por request.
+    fecha_venta se normaliza a VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al de SQLite."""
+    import duckdb
+    from datetime import datetime as _dt
+    con = duckdb.connect(':memory:')
+    srcs = []
+    if HISTORICO_PARQUET.exists():
+        srcs.append(f"SELECT * FROM read_parquet('{HISTORICO_PARQUET.as_posix()}')")
+    if MES_ACTUAL_PARQUET.exists():
+        srcs.append(f"SELECT * FROM read_parquet('{MES_ACTUAL_PARQUET.as_posix()}')")
+    union = " UNION ALL BY NAME ".join(srcs)
+    con.execute(f"""
+        CREATE TABLE ventas AS
+        SELECT * EXCLUDE (fecha_venta),
+               CAST(CAST(fecha_venta AS DATE) AS VARCHAR) AS fecha_venta
+        FROM ({union})
+    """)
+    dim_cols = ', '.join(f"ANY_VALUE({c}) AS {c}" for c in _COLS_DIM if c != 'sku')
+    con.execute(f"""
+        CREATE TABLE dim_productos AS
+        SELECT sku, {dim_cols} FROM ventas WHERE sku IS NOT NULL GROUP BY sku
+    """)
+    n = con.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+    fmin, fmax = con.execute("SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
+    _mtimes = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
+    fcarga = (_dt.fromtimestamp(max(_mtimes)).isoformat(timespec='seconds')
+              if _mtimes else _dt.now().isoformat(timespec='seconds'))
+    con.execute("CREATE TABLE metadata_cargas (fecha_carga VARCHAR, fuente VARCHAR, "
+                "filas_cargadas BIGINT, fecha_min_datos VARCHAR, fecha_max_datos VARCHAR, tipo VARCHAR)")
+    con.execute("INSERT INTO metadata_cargas VALUES (?,?,?,?,?,?)",
+                [fcarga, 'parquet', n, fmin, fmax, 'parquet'])
+    global _DB_BUILD_STATS
+    _DB_BUILD_STATS = {
+        'filas_total': n, 'filas_historico': n, 'filas_turso': 0, 'chunks_turso': 0,
+        'turso_error': None, 'max_fecha': fmax, 'build_duration_s': 0,
+        'built_at': fcarga, 'local_path': ':duckdb:', 'fuente': 'duckdb',
+    }
+    print(f"[DuckDB engine] tablas listas: {n:,} filas ventas, max {fmax}", flush=True)
+    return con
+
+
 def get_service():
-    """Retorna MaestraService apuntando al SQLite local."""
+    """MaestraService. Con PARQUET_ONLY=1 usa motor DuckDB sobre parquet (Camino A,
+    sin rebuild); si no, el SQLite local (Turso-first/parquet-fallback) de siempre."""
+    if os.environ.get('PARQUET_ONLY') == '1':
+        svc = MaestraService(':duckdb:')
+        _duck = _get_duck_conn()
+        svc._conn = lambda self=svc: _DuckConn(_duck)
+        return svc
+
     local_path = get_local_db_path()
     svc = MaestraService(local_path)
 

@@ -280,13 +280,16 @@ class MaestraService:
     def export_dataframe(self, params):
         where, values = self._build_where(params)
         db_cols = ', '.join(col[0] for col in self.EXPORT_COLUMNS)
-        conn = sqlite3.connect(self.db_path)
-        df = pd.read_sql_query(f"""
-            SELECT {db_cols}
-            FROM ventas WHERE {where}
-            ORDER BY fecha_venta DESC
-        """, conn, params=values)
-        conn.close()
+        sql = f"SELECT {db_cols} FROM ventas WHERE {where} ORDER BY fecha_venta DESC"
+        if self.db_path == ':duckdb:':
+            # Motor DuckDB: pasar por self._conn() (no hay archivo sqlite)
+            rows = self._conn().execute(sql, values).fetchall()
+            df = pd.DataFrame([dict(r) for r in rows],
+                              columns=[c[0] for c in self.EXPORT_COLUMNS])
+        else:
+            conn = sqlite3.connect(self.db_path)
+            df = pd.read_sql_query(sql, conn, params=values)
+            conn.close()
         # Renombrar a nombres originales del Raw
         rename_map = {col[0]: col[1] for col in self.EXPORT_COLUMNS}
         df.rename(columns=rename_map, inplace=True)
@@ -359,27 +362,31 @@ class MaestraService:
 
         max_date = max_date_row[0]
 
+        # Bounds calculados en Python (dialecto-neutral: evita date(x,'-N days') de SQLite)
+        from datetime import datetime as _dt, timedelta as _td
+        _md = _dt.strptime(max_date[:10], '%Y-%m-%d').date()
+        ini_actual = (_md - _td(days=6)).strftime('%Y-%m-%d')
+        ini_anterior = (_md - _td(days=13)).strftime('%Y-%m-%d')
+
         # Semana actual: últimos 7 días desde max_date
-        actual_row = conn.execute(f"""
+        actual_row = conn.execute("""
             SELECT
                 ROUND(SUM(venta_bruta), 0) as venta_bruta,
                 ROUND(SUM(margen_final), 0) as margen_final
             FROM ventas
-            WHERE fecha_venta >= date('{max_date}', '-6 days')
-              AND fecha_venta <= '{max_date}'
+            WHERE fecha_venta >= ? AND fecha_venta <= ?
               AND tipo_movimiento = 'Venta'
-        """).fetchone()
+        """, [ini_actual, max_date]).fetchone()
 
         # Semana anterior: los 7 días previos
-        anterior_row = conn.execute(f"""
+        anterior_row = conn.execute("""
             SELECT
                 ROUND(SUM(venta_bruta), 0) as venta_bruta,
                 ROUND(SUM(margen_final), 0) as margen_final
             FROM ventas
-            WHERE fecha_venta >= date('{max_date}', '-13 days')
-              AND fecha_venta < date('{max_date}', '-6 days')
+            WHERE fecha_venta >= ? AND fecha_venta < ?
               AND tipo_movimiento = 'Venta'
-        """).fetchone()
+        """, [ini_anterior, ini_actual]).fetchone()
 
         conn.close()
 
@@ -543,8 +550,8 @@ class MaestraService:
         """Mensual TY vs LY: 12 meses, NETO (incluye devoluciones)."""
         conn = self._conn()
         rows = conn.execute("""
-            SELECT strftime('%Y', fecha_venta) as anio,
-                   strftime('%m', fecha_venta) as mes,
+            SELECT substr(fecha_venta, 1, 4) as anio,
+                   substr(fecha_venta, 6, 2) as mes,
                    ROUND(SUM(venta_bruta), 0) as venta,
                    ROUND(SUM(margen_final), 0) as margen,
                    ROUND(SUM(CASE WHEN tipo_movimiento = 'Venta' THEN cantidad ELSE 0 END), 0) as unidades
@@ -585,8 +592,8 @@ class MaestraService:
                    ROUND(SUM(margen_final), 0) as margen,
                    ROUND(SUM(CASE WHEN tipo_movimiento = 'Venta' THEN cantidad ELSE 0 END), 0) as unidades
             FROM ventas
-            WHERE ((strftime('%Y', fecha_venta) = ? AND strftime('%m', fecha_venta) = ?)
-                OR (strftime('%Y', fecha_venta) = ? AND strftime('%m', fecha_venta) = ?))
+            WHERE ((substr(fecha_venta, 1, 4) = ? AND substr(fecha_venta, 6, 2) = ?)
+                OR (substr(fecha_venta, 1, 4) = ? AND substr(fecha_venta, 6, 2) = ?))
             GROUP BY fecha
             ORDER BY fecha
         """, [str(anio), f"{mes:02d}", str(anio-1), f"{mes:02d}"]).fetchall()
@@ -689,7 +696,7 @@ class MaestraService:
 
         conn = self._conn()
         ty = conn.execute(f"""
-            SELECT v.sku, COALESCE(p.producto, v.producto) as producto,
+            SELECT v.sku, MAX(COALESCE(p.producto, v.producto)) as producto,
                    ROUND(SUM(v.venta_bruta), 0) as venta,
                    ROUND(SUM(v.margen_final), 0) as margen,
                    ROUND(SUM(v.cantidad), 0) as unidades,
