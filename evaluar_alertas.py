@@ -12,50 +12,132 @@ Uso:
     python evaluar_alertas.py
 """
 import os
+import re
 import sys
-from datetime import datetime, timedelta
+import json
+import calendar
+from datetime import datetime, timedelta, date, timezone
 from pathlib import Path
 
-import requests
+import duckdb
+import pandas as pd
 
-# Setup path para importar helpers
-sys.path.insert(0, str(Path(__file__).parent / 'views'))
+PROJECT_ROOT = Path(__file__).parent
+_HIST = (PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet')
+_MES = (PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet')
+OUT_PARQUET = PROJECT_ROOT / 'data' / 'exports' / 'alertas.parquet'
 
-from alertas_helper import crear_alerta, crear_tabla_alertas
+# Columnas del parquet de alertas (consumido por el dashboard / Hub)
+ALERTAS_COLS = ['id', 'fecha_creada', 'fecha_objetivo', 'fecha_resuelta',
+                'tipo', 'severity', 'titulo', 'mensaje', 'contexto',
+                'target_apps', 'status', 'resuelta_por']
 
-URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
-TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+# ---- Motor de lectura: DuckDB sobre parquet (reemplaza Turso) ----
+_DUCK = None
 
-if not URL or not TOKEN:
-    print("[ERROR] LIBSQL_URL/LIBSQL_AUTH_TOKEN no seteados", flush=True)
-    sys.exit(1)
 
-HEADERS = {'Authorization': f'Bearer {TOKEN}', 'Content-Type': 'application/json'}
+def _conn():
+    """DuckDB con la tabla `ventas` materializada desde parquet (fecha_venta como
+    VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al que corría en SQLite/Turso)."""
+    global _DUCK
+    if _DUCK is None:
+        _DUCK = duckdb.connect(':memory:')
+        srcs = []
+        if _HIST.exists():
+            srcs.append(f"SELECT * FROM read_parquet('{_HIST.as_posix()}')")
+        if _MES.exists():
+            srcs.append(f"SELECT * FROM read_parquet('{_MES.as_posix()}')")
+        if not srcs:
+            raise RuntimeError("No hay parquet de ventas para evaluar alertas")
+        _DUCK.execute(
+            "CREATE TABLE ventas AS SELECT * EXCLUDE (fecha_venta), "
+            "CAST(CAST(fecha_venta AS DATE) AS VARCHAR) AS fecha_venta FROM ("
+            + " UNION ALL BY NAME ".join(srcs) + ")"
+        )
+    return _DUCK
+
+
+def _resolve_sqlite_dates(sql: str) -> str:
+    """Traduce date('now', '-N days/months') de SQLite a un literal 'YYYY-MM-DD'
+    (UTC, igual que SQLite) para que corra en DuckDB. Deja las reglas sin tocar."""
+    def repl(m):
+        inner = m.group(1) or ''
+        d = datetime.now(timezone.utc).date()
+        mm = re.search(r"'-(\d+)\s+(day|days|month|months)'", inner)
+        if mm:
+            n = int(mm.group(1))
+            if 'month' in mm.group(2):
+                month = d.month - n; year = d.year
+                while month <= 0:
+                    month += 12; year -= 1
+                day = min(d.day, calendar.monthrange(year, month)[1])
+                d = date(year, month, day)
+            else:
+                d = d - timedelta(days=n)
+        return f"'{d.strftime('%Y-%m-%d')}'"
+    return re.sub(r"date\('now'([^)]*)\)", repl, sql)
 
 
 def _q(sql: str, retries: int = 3):
-    body = {"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]}
-    last_err = None
-    for attempt in range(retries):
-        try:
-            r = requests.post(f"{URL}/v2/pipeline", json=body, headers=HEADERS, timeout=120)
-            r.raise_for_status()
-            res = r.json()['results'][0]
-            if res.get('type') == 'error':
-                raise RuntimeError(res['error']['message'])
-            return res['response']['result']['rows']
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            last_err = e
-            import time
-            time.sleep(2 ** attempt)
-    raise last_err
+    """Ejecuta SQL sobre DuckDB-parquet y devuelve filas como tuplas."""
+    sql = _resolve_sqlite_dates(sql)
+    cur = _conn().cursor()
+    return cur.execute(sql).fetchall()
 
 
 def _val(row, idx):
-    cell = row[idx]
-    if cell.get('type') == 'null':
-        return None
-    return cell.get('value')
+    return row[idx]
+
+
+# ---- Escritura: acumular alertas y volcarlas a parquet (reemplaza Turso) ----
+_ALERTAS = []
+
+
+def crear_tabla_alertas():
+    """Reinicia el buffer de alertas (antes: CREATE TABLE en Turso)."""
+    _ALERTAS.clear()
+
+
+def crear_alerta(tipo, severity, titulo, mensaje="", contexto=None,
+                 target_apps=None, fecha_objetivo=None, deduplicate=True):
+    """Acumula una alerta en memoria (se vuelca a parquet al final).
+    Dedup por (tipo, titulo) dentro de la corrida."""
+    if severity not in ('info', 'warning', 'critical'):
+        severity = 'info'
+    ctx = json.dumps(contexto, default=str) if contexto else None
+    if deduplicate:
+        for a in _ALERTAS:
+            if a['tipo'] == tipo and a['titulo'] == titulo:
+                a['mensaje'] = mensaje
+                a['contexto'] = ctx
+                a['severity'] = severity
+                return a['id']
+    aid = len(_ALERTAS) + 1
+    _ALERTAS.append({
+        'id': aid,
+        'fecha_creada': datetime.now().isoformat(timespec='seconds'),
+        'fecha_objetivo': fecha_objetivo,
+        'fecha_resuelta': None,
+        'tipo': tipo, 'severity': severity, 'titulo': titulo,
+        'mensaje': mensaje, 'contexto': ctx,
+        'target_apps': ','.join(target_apps) if target_apps else 'ventas,operaciones',
+        'status': 'open', 'resuelta_por': None,
+    })
+    return aid
+
+
+def _escribir_parquet():
+    """Vuelca las alertas acumuladas a data/exports/alertas.parquet."""
+    OUT_PARQUET.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame(_ALERTAS, columns=ALERTAS_COLS) if _ALERTAS else pd.DataFrame(columns=ALERTAS_COLS)
+    if not df.empty:
+        df['id'] = pd.to_numeric(df['id'], errors='coerce').astype('Int64')
+        for c in ('fecha_creada', 'fecha_objetivo', 'fecha_resuelta'):
+            df[c] = pd.to_datetime(df[c], errors='coerce')
+    df.to_parquet(OUT_PARQUET, index=False)
+    print(f"\n[OK] {len(df)} alertas escritas en {OUT_PARQUET}", flush=True)
+    if not df.empty:
+        print(f"     por severity: {df['severity'].value_counts().to_dict()}", flush=True)
 
 
 # ============================================================
@@ -682,6 +764,7 @@ def main():
     regla_dq_descripcion_faltante()
     regla_dq_precio_inconsistente()
 
+    _escribir_parquet()
     print("\n[OK] Evaluación completa")
 
 

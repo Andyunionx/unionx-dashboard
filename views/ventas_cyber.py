@@ -27,7 +27,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from views.shared import cached_stock, get_local_db_path
+from views.shared import cached_stock, get_local_db_path, get_service
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -82,10 +82,9 @@ def load_ventas_cyber(include_sim: bool = False) -> pd.DataFrame:
     """Ventas del rango Cyber leídas EN VIVO desde el SQLite local
     (histórico parquet + Turso live). Si include_sim=True suma el parquet
     de simulación (datos sintéticos para previsualización)."""
-    db_path = get_local_db_path()
     cols = ','.join(VENTAS_COLS)
     sql = f"SELECT {cols} FROM ventas WHERE fecha_venta BETWEEN ? AND ?"
-    conn = sqlite3.connect(db_path)
+    conn = get_service()._conn()  # motor activo (DuckDB con PARQUET_ONLY, si no SQLite)
     try:
         df = pd.read_sql_query(sql, conn, params=(CYBER_START_STR, CYBER_END_STR))
     finally:
@@ -106,7 +105,6 @@ def load_ventas_cyber(include_sim: bool = False) -> pd.DataFrame:
 def load_ventas_4sem() -> pd.DataFrame:
     """Últimas 4 semanas por SKU desde el SQLite local (RAW vivo).
     Solo registros tipo Venta (excluye NCs)."""
-    db_path = get_local_db_path()
     desde = (date.today() - timedelta(days=28)).strftime('%Y-%m-%d')
     sql = """
         SELECT sku, SUM(cantidad) AS uds_28d
@@ -115,7 +113,7 @@ def load_ventas_4sem() -> pd.DataFrame:
           AND (tipo_movimiento = 'Venta' OR tipo_movimiento IS NULL)
         GROUP BY sku
     """
-    conn = sqlite3.connect(db_path)
+    conn = get_service()._conn()  # motor activo (DuckDB con PARQUET_ONLY, si no SQLite)
     try:
         df = pd.read_sql_query(sql, conn, params=(desde,))
     finally:

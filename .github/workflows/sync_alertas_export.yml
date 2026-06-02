@@ -1,14 +1,12 @@
 name: "Sync Alertas Export"
 
-# Exporta la tabla `alertas` de Turso a data/exports/alertas.parquet
-# para que el Hub externo (Vercel + Supabase) la consuma vía GitHub Raw.
+# Evalúa las reglas de alertas (evaluar_alertas.py) leyendo los parquet de ventas
+# con DuckDB y escribe data/exports/alertas.parquet directamente. SIN Turso.
+# (Antes: evaluar_alertas escribía a Turso y extract_alertas_turso.py exportaba.)
 #
-# Schema fijo: id, fecha_creada, fecha_objetivo, fecha_resuelta, tipo,
+# Schema: id, fecha_creada, fecha_objetivo, fecha_resuelta, tipo,
 # severity (info|warning|critical), titulo, mensaje, contexto (JSON),
-# target_apps (CSV), status (open|reconocida|resuelta), resuelta_por.
-#
-# Si Turso está bloqueado por cuota, el job sale OK sin pisar el parquet
-# anterior (mejor mostrar stale que vacío).
+# target_apps (CSV), status, resuelta_por.
 
 on:
   schedule:
@@ -36,14 +34,12 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pyarrow requests
+          pip install pandas pyarrow duckdb
 
-      - name: Extract alertas desde Turso
+      - name: Evaluar alertas (DuckDB sobre parquet, sin Turso)
         env:
-          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
-          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           PYTHONIOENCODING: utf-8
-        run: python extract_alertas_turso.py
+        run: python evaluar_alertas.py
 
       - name: Diagnostico
         if: always()
