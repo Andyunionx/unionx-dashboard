@@ -28,6 +28,56 @@ HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parq
 MES_ACTUAL_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
 CUTOFF_HISTORICO = '2026-06-02'  # 1-jun foto fija en histórico parquet; Turso solo desde 2-jun
 
+# ============================================================
+# Schema/columnas compartidos por ambos builders del SQLite local
+# (camino Turso legacy y camino parquet-only de la migración)
+# ============================================================
+_SCHEMA_SQL = [
+    """CREATE TABLE ventas (
+        tipo_movimiento TEXT, bodega TEXT, documento TEXT, fecha_documento TEXT,
+        pedido TEXT, estado_pedido TEXT, tipo_despacho TEXT, sku TEXT, canal TEXT,
+        fecha_venta TEXT, hora_venta TEXT, producto TEXT,
+        categoria_macro TEXT, categoria_padre TEXT, categoria_hijo TEXT, categoria_comercial TEXT,
+        estado_sku TEXT, pack TEXT, marca TEXT, proveedor TEXT,
+        tipo_marca TEXT, tipo_compra TEXT, tipo_negocio TEXT, kam TEXT,
+        estado_canal TEXT, anio_venta INT, mes_venta INT, semana_venta INT,
+        dia_semana TEXT, hora_venta_num INT,
+        cantidad REAL, venta_bruta REAL, venta_neta REAL, costo_unitario REAL, costo_total REAL,
+        margen_front REAL, comision_pct REAL, comision REAL,
+        logistica REAL, marketing REAL, margen_final REAL
+    )""",
+    """CREATE TABLE dim_productos (
+        sku TEXT PRIMARY KEY, producto TEXT, categoria_macro TEXT, categoria_padre TEXT,
+        categoria_hijo TEXT, categoria_comercial TEXT, estado_sku TEXT, pack TEXT,
+        marca TEXT, proveedor TEXT, tipo_marca TEXT, tipo_compra TEXT
+    )""",
+    "CREATE TABLE metadata_cargas (fecha_carga TEXT, fuente TEXT, filas_cargadas INT, fecha_min_datos TEXT, fecha_max_datos TEXT, tipo TEXT)",
+    "CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta)",
+    "CREATE INDEX idx_ventas_canal ON ventas(canal)",
+    "CREATE INDEX idx_ventas_marca ON ventas(marca)",
+    "CREATE INDEX idx_ventas_sku ON ventas(sku)",
+]
+
+_COLS_V = ['tipo_movimiento', 'bodega', 'documento', 'fecha_documento', 'pedido', 'estado_pedido',
+           'tipo_despacho', 'sku', 'canal', 'fecha_venta', 'hora_venta', 'producto',
+           'categoria_macro', 'categoria_padre', 'categoria_hijo', 'categoria_comercial',
+           'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra', 'tipo_negocio',
+           'kam', 'estado_canal', 'anio_venta', 'mes_venta', 'semana_venta', 'dia_semana',
+           'hora_venta_num', 'cantidad', 'venta_bruta', 'venta_neta', 'costo_unitario', 'costo_total',
+           'margen_front', 'comision_pct', 'comision', 'logistica', 'marketing', 'margen_final']
+
+_COLS_DIM = ['sku', 'producto', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
+             'categoria_comercial', 'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra']
+
+
+def _normalize_fecha_venta_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Convierte fecha_venta a string YYYY-MM-DD (sin timestamp) para que
+    queries con BETWEEN '2026-05-01' AND '2026-05-25' incluyan el día 25."""
+    if 'fecha_venta' in df.columns:
+        df = df.copy()
+        df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    return df
+
 
 # ============================================================
 # Helpers de formato
@@ -99,15 +149,17 @@ def get_local_db_path():
     2. Por contenido: si estamos en Cyber pero el SQLite no tiene venta de
        hoy/junio, está stale → rebuild forzado.
     """
-    if not os.environ.get('LIBSQL_URL'):
+    parquet_only = os.environ.get('PARQUET_ONLY') == '1'
+    if not parquet_only and not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
     if _LOCAL_DB_PATH.exists():
         age = _time.time() - _LOCAL_DB_PATH.stat().st_mtime
         if age < _LOCAL_DB_TTL_S:
-            # Validar contenido: si estamos en Cyber, verificar que tenga junio
+            # Validar contenido: si estamos en Cyber, verificar que tenga junio.
+            # Solo aplica al camino Turso (carrera con el sync); en parquet el dato es fijo.
             hoy_str = datetime.now().strftime('%Y-%m-%d')
-            if '2026-06-01' <= hoy_str <= '2026-06-06':
+            if not parquet_only and '2026-06-01' <= hoy_str <= '2026-06-06':
                 try:
                     _c = sqlite3.connect(str(_LOCAL_DB_PATH))
                     venta_jun = _c.execute(
@@ -130,6 +182,9 @@ def get_local_db_path():
 
 def _build_local_db():
     """Construye el SQLite local desde histórico parquet + Turso live."""
+    # Camino B de la migración: si PARQUET_ONLY=1, construir 100% desde parquet (sin Turso).
+    if os.environ.get('PARQUET_ONLY') == '1':
+        return _build_local_db_parquet()
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
@@ -162,53 +217,16 @@ def _build_local_db():
 
     conn = sqlite3.connect(str(tmp_path))
 
-    schema_sql = [
-        """CREATE TABLE ventas (
-            tipo_movimiento TEXT, bodega TEXT, documento TEXT, fecha_documento TEXT,
-            pedido TEXT, estado_pedido TEXT, tipo_despacho TEXT, sku TEXT, canal TEXT,
-            fecha_venta TEXT, hora_venta TEXT, producto TEXT,
-            categoria_macro TEXT, categoria_padre TEXT, categoria_hijo TEXT, categoria_comercial TEXT,
-            estado_sku TEXT, pack TEXT, marca TEXT, proveedor TEXT,
-            tipo_marca TEXT, tipo_compra TEXT, tipo_negocio TEXT, kam TEXT,
-            estado_canal TEXT, anio_venta INT, mes_venta INT, semana_venta INT,
-            dia_semana TEXT, hora_venta_num INT,
-            cantidad REAL, venta_bruta REAL, venta_neta REAL, costo_unitario REAL, costo_total REAL,
-            margen_front REAL, comision_pct REAL, comision REAL,
-            logistica REAL, marketing REAL, margen_final REAL
-        )""",
-        """CREATE TABLE dim_productos (
-            sku TEXT PRIMARY KEY, producto TEXT, categoria_macro TEXT, categoria_padre TEXT,
-            categoria_hijo TEXT, categoria_comercial TEXT, estado_sku TEXT, pack TEXT,
-            marca TEXT, proveedor TEXT, tipo_marca TEXT, tipo_compra TEXT
-        )""",
-        "CREATE TABLE metadata_cargas (fecha_carga TEXT, fuente TEXT, filas_cargadas INT, fecha_min_datos TEXT, fecha_max_datos TEXT, tipo TEXT)",
-        "CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta)",
-        "CREATE INDEX idx_ventas_canal ON ventas(canal)",
-        "CREATE INDEX idx_ventas_marca ON ventas(marca)",
-        "CREATE INDEX idx_ventas_sku ON ventas(sku)",
-    ]
-    for sql in schema_sql:
+    for sql in _SCHEMA_SQL:
         conn.execute(sql)
     conn.commit()
 
-    cols_v = ['tipo_movimiento', 'bodega', 'documento', 'fecha_documento', 'pedido', 'estado_pedido',
-              'tipo_despacho', 'sku', 'canal', 'fecha_venta', 'hora_venta', 'producto',
-              'categoria_macro', 'categoria_padre', 'categoria_hijo', 'categoria_comercial',
-              'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra', 'tipo_negocio',
-              'kam', 'estado_canal', 'anio_venta', 'mes_venta', 'semana_venta', 'dia_semana',
-              'hora_venta_num', 'cantidad', 'venta_bruta', 'venta_neta', 'costo_unitario', 'costo_total',
-              'margen_front', 'comision_pct', 'comision', 'logistica', 'marketing', 'margen_final']
+    cols_v = _COLS_V
     cols_csv = ','.join(cols_v)
     placeholders = ','.join(['?'] * len(cols_v))
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
-    def _normalize_fecha_venta(df: pd.DataFrame) -> pd.DataFrame:
-        """Convierte fecha_venta a string YYYY-MM-DD (sin timestamp) para que
-        queries con BETWEEN '2026-05-01' AND '2026-05-25' incluyan el día 25."""
-        if 'fecha_venta' in df.columns:
-            df = df.copy()
-            df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
-        return df
+    _normalize_fecha_venta = _normalize_fecha_venta_df
 
     # Parquet histórico (cacheado por separado para no re-leerlo si invalida la DB local)
     df_hist = _read_historico_parquet()
@@ -319,6 +337,93 @@ def _build_local_db():
         'local_path': str(tmp_path),
     }
     conn.close()
+    return str(tmp_path)
+
+
+def _build_local_db_parquet():
+    """Construye el SQLite local 100% desde parquet (sin Turso) — Camino B de la migración.
+
+    Fuente única de verdad: ventas_historico.parquet + ventas_mes_actual.parquet.
+    dim_productos y metadata_cargas se DERIVAN del propio parquet (no requieren Turso/Odoo).
+    MaestraService queda intacto: solo cambia de dónde se alimenta el SQLite.
+    """
+    import time as _t
+    build_started = _t.time()
+    print(f"[Local DB][parquet] Build {datetime.now()}", flush=True)
+
+    tmp_path = _LOCAL_DB_PATH
+    if tmp_path.exists():
+        tmp_path.unlink()
+
+    conn = sqlite3.connect(str(tmp_path))
+    for sql in _SCHEMA_SQL:
+        conn.execute(sql)
+    conn.commit()
+
+    # ventas = histórico + mes actual, ambos desde parquet
+    df_hist = _read_historico_parquet()
+    n_hist = 0
+    if not df_hist.empty:
+        df_hist = _normalize_fecha_venta_df(df_hist)
+        df_hist[_COLS_V].to_sql('ventas', conn, if_exists='append', index=False,
+                                chunksize=10000)
+        n_hist = len(df_hist)
+        print(f"[Local DB][parquet] Histórico: {n_hist:,} filas", flush=True)
+
+    n_mes = 0
+    if MES_ACTUAL_PARQUET.exists():
+        df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
+        if not df_mes.empty:
+            df_mes = _normalize_fecha_venta_df(df_mes)
+            df_mes[_COLS_V].to_sql('ventas', conn, if_exists='append', index=False,
+                                   chunksize=10000)
+            n_mes = len(df_mes)
+            print(f"[Local DB][parquet] Mes actual: {n_mes:,} filas (hasta {df_mes['fecha_venta'].max()})", flush=True)
+
+    # dim_productos derivado del propio ventas (un registro por sku)
+    conn.execute(f"""
+        INSERT OR IGNORE INTO dim_productos ({','.join(_COLS_DIM)})
+        SELECT {','.join(_COLS_DIM)} FROM ventas
+        WHERE sku IS NOT NULL
+        GROUP BY sku
+    """)
+    conn.commit()
+
+    n_ventas = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+    fecha_min, max_fecha = conn.execute(
+        "SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
+
+    # metadata_cargas sintética (lo que health() espera para mostrar última carga).
+    # fecha_carga = mtime del parquet más reciente (frescura REAL del dato),
+    # no now(), para que el header "última sincronización" sea honesto si un
+    # GitHub Action falló y el parquet quedó viejo.
+    _mtimes = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
+    fecha_carga = (datetime.fromtimestamp(max(_mtimes)).isoformat(timespec='seconds')
+                   if _mtimes else datetime.now().isoformat(timespec='seconds'))
+    conn.execute(
+        "INSERT INTO metadata_cargas (fecha_carga, fuente, filas_cargadas, fecha_min_datos, fecha_max_datos, tipo) "
+        "VALUES (?,?,?,?,?,?)",
+        (fecha_carga, 'parquet', n_ventas, fecha_min, max_fecha, 'parquet'),
+    )
+    conn.commit()
+
+    global _DB_BUILD_STATS
+    _DB_BUILD_STATS = {
+        'filas_total': n_ventas,
+        'filas_historico': n_hist,
+        'filas_turso': n_mes,  # reutiliza el campo para "mes actual" (ahora parquet)
+        'chunks_turso': 0,
+        'turso_error': None,
+        'max_fecha': max_fecha,
+        'build_duration_s': round(_t.time() - build_started, 1),
+        'built_at': datetime.now().isoformat(timespec='seconds'),
+        'local_path': str(tmp_path),
+        'fuente': 'parquet',
+    }
+    conn.close()
+    print(f"[Local DB][parquet] COMPLETO: {n_ventas:,} filas "
+          f"(hist {n_hist:,} + mes {n_mes:,}), max fecha {max_fecha}, "
+          f"{_DB_BUILD_STATS['build_duration_s']}s", flush=True)
     return str(tmp_path)
 
 
