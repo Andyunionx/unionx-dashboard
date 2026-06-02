@@ -49,10 +49,12 @@ RANGO_FIN = datetime(2026, 6, 4, 22, 0, tzinfo=CHILE_TZ)
 CYBER_FECHAS = ['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04', '2026-06-05', '2026-06-06']
 CYBER_LABELS = ['Lun 1-jun', 'Mar 2-jun', 'Mié 3-jun', 'Jue 4-jun', 'Vie 5-jun', 'Sáb 6-jun']
 CYBER_LABELS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-# Cyber 2025 (referencia YoY): Lun 2-jun-2025 → Sáb 7-jun-2025
-# Cada día Cyber 2026 corresponde al mismo día (orden) Cyber 2025
+# Cyber 2025 JUNIO (referencia YoY mismo día): Lun 2-jun → Sáb 7-jun
 CYBER_2025_FECHAS = ['2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05', '2025-06-06', '2025-06-07']
-CYBER_PAIRS = list(zip(CYBER_FECHAS, CYBER_2025_FECHAS))  # [(hoy_dia, ly_dia_equivalente), ...]
+CYBER_PAIRS = list(zip(CYBER_FECHAS, CYBER_2025_FECHAS))
+# Cyber 2025 OCTUBRE (CyberMonday Chile, Lun 6-oct → Mié 8-oct, 3 días)
+CYBER_OCT2025_FECHAS = ['2025-10-06', '2025-10-07', '2025-10-08']
+CYBER_OCT_PAIRS = list(zip(CYBER_FECHAS[:3], CYBER_OCT2025_FECHAS))
 CURVA_PCT = [0.30, 0.25, 0.20, 0.12, 0.08, 0.05]
 META_TOTAL = 505_915_976
 META_DIA_BRUTA = [META_TOTAL * p for p in CURVA_PCT]
@@ -146,8 +148,7 @@ def descargar_resumen(metas_canal):
         "GROUP BY hora_venta_num ORDER BY hora_venta_num"
     ))
 
-    # Curva intradiaria del DÍA EQUIVALENTE Cyber 2025 (YoY) para proyección
-    # Mapping: hoy 2026 → mismo día (orden) Cyber 2025
+    # Cyber 2025 (LY) — leído desde parquet HISTÓRICO local (Turso ya no tiene 2025)
     hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
     fecha_ly = None
     for f26, f25 in CYBER_PAIRS:
@@ -155,40 +156,59 @@ def descargar_resumen(metas_canal):
             fecha_ly = f25
             break
     if fecha_ly is None:
-        fecha_ly = CYBER_2025_FECHAS[0]  # fallback al primer lunes Cyber 2025
-    # Cast a int por si hora_venta_num viene como string (histórico legacy)
-    curva_ly = _rows(turso_query(
-        f"SELECT CAST(substr(hora_venta,1,2) AS INTEGER) AS h, "
-        f"ROUND(SUM(venta_bruta),0) "
-        f"FROM ventas WHERE fecha_venta='{fecha_ly}' "
-        "GROUP BY h ORDER BY h"
-    ))
+        fecha_ly = CYBER_2025_FECHAS[0]
+    fecha_oct = None
+    for f26, foct in CYBER_OCT_PAIRS:
+        if f26 == hoy_str:
+            fecha_oct = foct
+            break
 
-    # Total venta + margen del día equivalente 2025 (para proyectar YoY)
-    total_ly = _rows(turso_query(
-        f"SELECT ROUND(SUM(venta_bruta),0), ROUND(SUM(margen_final),0), ROUND(SUM(venta_neta),0) "
-        f"FROM ventas WHERE fecha_venta='{fecha_ly}'"
-    ))
-    total_ly_val = float(total_ly[0][0]) if total_ly and total_ly[0][0] else 0
-    margen_ly_val = float(total_ly[0][1]) if total_ly and total_ly[0][1] else 0
-    neta_ly_val = float(total_ly[0][2]) if total_ly and total_ly[0][2] else 0
-    curva_lunes = curva_ly  # para mantener compatibilidad de nombre
+    hist_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+    curva_ly = []
+    total_ly_val = margen_ly_val = neta_ly_val = 0
+    cyber_ly_bruta = cyber_ly_margen = cyber_ly_neta = 0
+    total_oct_val = margen_oct_val = neta_oct_val = 0
+    cyber_oct_bruta = cyber_oct_margen = cyber_oct_neta = 0
+    try:
+        hist_df = pd.read_parquet(hist_path, columns=['fecha_venta','hora_venta','venta_bruta','venta_neta','margen_final'])
+        hist_df['fecha_venta'] = pd.to_datetime(hist_df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
 
-    # Cyber 2025 COMPLETO (acumulado, todos los días Cyber 2025)
-    fechas_ly_sql = ','.join(repr(f) for f in CYBER_2025_FECHAS)
-    cyber_ly_acum = _rows(turso_query(
-        f"SELECT ROUND(SUM(venta_bruta),0), ROUND(SUM(margen_final),0), ROUND(SUM(venta_neta),0) "
-        f"FROM ventas WHERE fecha_venta IN ({fechas_ly_sql})"
-    ))
-    cyber_ly_bruta = float(cyber_ly_acum[0][0]) if cyber_ly_acum and cyber_ly_acum[0][0] else 0
-    cyber_ly_margen = float(cyber_ly_acum[0][1]) if cyber_ly_acum and cyber_ly_acum[0][1] else 0
-    cyber_ly_neta = float(cyber_ly_acum[0][2]) if cyber_ly_acum and cyber_ly_acum[0][2] else 0
+        dia_ly = hist_df[hist_df['fecha_venta'] == fecha_ly].copy()
+        if not dia_ly.empty:
+            dia_ly['h'] = dia_ly['hora_venta'].astype(str).str.slice(0, 2)
+            dia_ly = dia_ly[dia_ly['h'].str.isdigit()]
+            dia_ly['h'] = dia_ly['h'].astype(int)
+            curva_ly = dia_ly.groupby('h')['venta_bruta'].sum().reset_index().values.tolist()
+            total_ly_val = float(dia_ly['venta_bruta'].sum())
+            margen_ly_val = float(dia_ly['margen_final'].sum())
+            neta_ly_val = float(dia_ly['venta_neta'].sum())
 
-    print(f"      [OK] en {time.time()-t0:.1f}s (LY ref: {fecha_ly}, "
-          f"bruta ${total_ly_val:,.0f}, margen ${margen_ly_val:,.0f})", flush=True)
+        cyber_jun = hist_df[hist_df['fecha_venta'].isin(CYBER_2025_FECHAS)]
+        if not cyber_jun.empty:
+            cyber_ly_bruta = float(cyber_jun['venta_bruta'].sum())
+            cyber_ly_margen = float(cyber_jun['margen_final'].sum())
+            cyber_ly_neta = float(cyber_jun['venta_neta'].sum())
+
+        if fecha_oct:
+            dia_oct = hist_df[hist_df['fecha_venta'] == fecha_oct]
+            total_oct_val = float(dia_oct['venta_bruta'].sum()) if not dia_oct.empty else 0
+            margen_oct_val = float(dia_oct['margen_final'].sum()) if not dia_oct.empty else 0
+            neta_oct_val = float(dia_oct['venta_neta'].sum()) if not dia_oct.empty else 0
+        cyber_oct = hist_df[hist_df['fecha_venta'].isin(CYBER_OCT2025_FECHAS)]
+        if not cyber_oct.empty:
+            cyber_oct_bruta = float(cyber_oct['venta_bruta'].sum())
+            cyber_oct_margen = float(cyber_oct['margen_final'].sum())
+            cyber_oct_neta = float(cyber_oct['venta_neta'].sum())
+    except Exception as e:
+        print(f"      [WARN] Error histórico Cyber 2025: {e}", flush=True)
+
+    print(f"      [OK] en {time.time()-t0:.1f}s (LY jun: {fecha_ly} ${total_ly_val:,.0f} | "
+          f"LY oct: {fecha_oct} ${total_oct_val:,.0f})", flush=True)
     return (por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly,
             fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
-            cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta)
+            cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
+            fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
+            cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta)
 
 
 def cargar_alarma_stock():
@@ -302,6 +322,8 @@ def fmt_m(v):
 def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
                 curva_ly, fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
                 cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
+                fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
+                cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta,
                 alarma_stock, metas_canal):
     ahora_clt = datetime.now(CHILE_TZ)
     fecha_hora = ahora_clt.strftime('%d-%b-%Y %H:%M CLT')
@@ -456,31 +478,55 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         color_yc_b = '#16A34A' if yoy_cyber_bruta >= 0 else '#DC2626'
         color_yc_m = '#16A34A' if yoy_cyber_margen >= 0 else '#DC2626'
 
+        # YoY vs Cyber OCTUBRE 2025
+        yoy_oct_pct = (proy['proy_dia'] / total_oct_val - 1) if total_oct_val else 0
+        margen_oct_pct_ref = (margen_oct_val / neta_oct_val) if neta_oct_val else 0
+        yoy_oct_margen = (margen_proy_dia / margen_oct_val - 1) if margen_oct_val else 0
+        color_yoct = '#16A34A' if yoy_oct_pct >= 0 else '#DC2626'
+        color_yoct_m = '#16A34A' if yoy_oct_margen >= 0 else '#DC2626'
+        yoy_cyber_oct_b = (proy_cyber_total / cyber_oct_bruta - 1) if cyber_oct_bruta else 0
+        yoy_cyber_oct_m = (margen_proy_cyber / cyber_oct_margen - 1) if cyber_oct_margen else 0
+        col_yco_b = '#16A34A' if yoy_cyber_oct_b >= 0 else '#DC2626'
+        col_yco_m = '#16A34A' if yoy_cyber_oct_m >= 0 else '#DC2626'
+
         bloque_proy = f"""
 <div style="background:#FEF3C7;border-left:4px solid #EA580C;padding:14px;border-radius:6px;margin:16px 0">
-  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📈 Proyección (referencia: Cyber 2025 mismo día)</div>
+  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📈 Proyección (referencia: Cyber 2025 — Jun y Oct)</div>
   <table style="width:100%;margin-top:6px;font-size:0.88rem">
     <tr><td>Hoy llevamos:</td>
         <td align="right"><b>{fmt_m(bruta_hoy)}</b> bruta · {fmt_m(margen_hoy)} margen ({margen_pct_hoy*100:.1f}%)
         — ({proy['pct_hasta_ref']*100:.0f}% del día en {fecha_ly})</td></tr>
-    <tr><td>Día equivalente Cyber 2025:</td>
-        <td align="right">{fmt_m(proy['total_ly'])} bruta · {fmt_m(margen_ly_val)} margen ({margen_ly_pct*100:.1f}%)</td></tr>
+    <tr><td>Día equiv Cyber Jun 2025 ({fecha_ly}):</td>
+        <td align="right">{fmt_m(total_ly_val)} bruta · {fmt_m(margen_ly_val)} margen ({margen_ly_pct*100:.1f}%)</td></tr>
+    <tr><td>Día equiv Cyber Oct 2025 ({fecha_oct or '—'}):</td>
+        <td align="right">{fmt_m(total_oct_val)} bruta · {fmt_m(margen_oct_val)} margen ({margen_oct_pct_ref*100:.1f}%)</td></tr>
     <tr><td>Proyección cierre HOY:</td>
         <td align="right" style="color:{color_p}"><b>{fmt_m(proy['proy_dia'])}</b> bruta · {fmt_m(margen_proy_dia)} margen
         — ({proy['avance_vs_meta']*100:.0f}% meta · gap {fmt_m(gap_dia)})</td></tr>
-    <tr><td>YoY venta (hoy vs LY):</td>
+    <tr><td>YoY venta vs Jun 2025:</td>
         <td align="right" style="color:{color_yoy};font-weight:600">{yoy_pct:+.1f}%</td></tr>
-    <tr><td>YoY margen (hoy vs LY):</td>
+    <tr><td>YoY margen vs Jun 2025:</td>
         <td align="right" style="color:{color_ym};font-weight:600">{yoy_margen_pct*100:+.1f}%</td></tr>
+    <tr><td>YoY venta vs Oct 2025:</td>
+        <td align="right" style="color:{color_yoct};font-weight:600">{yoy_oct_pct*100:+.1f}%</td></tr>
+    <tr><td>YoY margen vs Oct 2025:</td>
+        <td align="right" style="color:{color_yoct_m};font-weight:600">{yoy_oct_margen*100:+.1f}%</td></tr>
     <tr style="border-top:1px solid #E2E8F0"><td><b>Proyección Cyber completo:</b></td>
         <td align="right"><b>{fmt_m(proy_cyber_total)}</b> bruta · {fmt_m(margen_proy_cyber)} margen
         ({avance_cyber_proy*100:.1f}% meta venta $505.9 M)</td></tr>
-    <tr><td>Cyber 2025 completo:</td>
+    <tr><td>Cyber Jun 2025 completo (6 días):</td>
         <td align="right">{fmt_m(cyber_ly_bruta)} bruta · {fmt_m(cyber_ly_margen)} margen ({(cyber_ly_margen/cyber_ly_neta*100 if cyber_ly_neta else 0):.1f}%)</td></tr>
-    <tr><td>YoY Cyber proyectado:</td>
+    <tr><td>Cyber Oct 2025 completo (3 días):</td>
+        <td align="right">{fmt_m(cyber_oct_bruta)} bruta · {fmt_m(cyber_oct_margen)} margen ({(cyber_oct_margen/cyber_oct_neta*100 if cyber_oct_neta else 0):.1f}%)</td></tr>
+    <tr><td>YoY Cyber vs Jun 2025:</td>
         <td align="right">
           Venta <span style="color:{color_yc_b};font-weight:600">{yoy_cyber_bruta*100:+.1f}%</span> ·
           Margen <span style="color:{color_yc_m};font-weight:600">{yoy_cyber_margen*100:+.1f}%</span>
+        </td></tr>
+    <tr><td>YoY Cyber vs Oct 2025:</td>
+        <td align="right">
+          Venta <span style="color:{col_yco_b};font-weight:600">{yoy_cyber_oct_b*100:+.1f}%</span> ·
+          Margen <span style="color:{col_yco_m};font-weight:600">{yoy_cyber_oct_m*100:+.1f}%</span>
         </td></tr>
   </table>
 </div>"""
@@ -742,7 +788,9 @@ def main():
     metas_canal = cargar_metas_canal()
     (por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy, curva_ly,
      fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
-     cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta) = descargar_resumen(metas_canal)
+     cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
+     fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
+     cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta) = descargar_resumen(metas_canal)
 
     # VALIDACIÓN TEMPRANA contra Odoo
     hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
@@ -759,6 +807,8 @@ def main():
         por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         curva_ly, fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
         cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
+        fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
+        cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta,
         alarma_stock, metas_canal
     )
 

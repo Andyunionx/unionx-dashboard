@@ -6,10 +6,11 @@ name: "Cyber Pulso (cada 2h, Lun-Jue)"
 # Cron en UTC, hace match con 06,08,10,12,14,16,18,20,22 CLT (UTC-4).
 
 on:
-  schedule:
-    # 18, 20, 22, 00 CLT (tarde-noche Cyber)
-    # 18 CLT = 22 UTC, 20 CLT = 00 UTC, 22 CLT = 02 UTC, 00 CLT = 04 UTC
-    - cron: '0 22,0,2,4 * 6 *'
+  # CRON PAUSADO hasta validar nuevo formato Jun+Oct 2025.
+  # Reactivar quitando el comentario tras OK del usuario.
+  # schedule:
+  #   # 18, 20, 22, 00 CLT (tarde-noche Cyber)
+  #   - cron: '0 22,0,2,4 * 6 *'
   workflow_dispatch:
     inputs:
       preborrador:
