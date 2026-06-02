@@ -731,20 +731,29 @@ def enviar(html, xlsx_bytes, n_filas, hoy_str, bruta_total, bruta_hoy, avance_pc
 def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, str]:
     """Valida que la data esté íntegra antes de enviar el pulso.
 
-    Compara venta del día (Turso) vs Odoo state=sale directo. Si discrepancia
-    >25% o n_filas_hoy < 100 cuando ya pasaron >4h del día, NO enviar.
-    Devuelve (ok, mensaje).
+    SIEMPRE compara venta del día (Turso) vs Odoo state=sale. Si discrepancia
+    > 10%, NO enviar. FAIL-CLOSED: si no puedo validar, NO envío.
+
+    También detecta duplicados en Turso del día comercial: si hay > 0 grupos
+    duplicados con (pedido, sku, hora, venta, cantidad, doc, tipo_mov), aborta.
     """
-    ahora_clt = datetime.now(CHILE_TZ)
-    hora_clt = ahora_clt.hour
+    # 1) Detectar duplicados en Turso para el día comercial
+    hoy_dia = hoy_comercial()
+    try:
+        r = turso_query(
+            "SELECT COUNT(*) FROM (SELECT 1 FROM ventas "
+            f"WHERE fecha_venta='{hoy_dia}' "
+            "GROUP BY pedido, sku, hora_venta, venta_bruta, cantidad, documento, tipo_movimiento "
+            "HAVING COUNT(*) > 1)"
+        )
+        dups = int(r['rows'][0][0].get('value', '0'))
+        if dups > 0:
+            return False, f"Turso tiene {dups} grupos duplicados para {hoy_dia} — NO envío (correr cyber_health primero)"
+    except Exception as e:
+        print(f"[VALIDATE] Error checking duplicados: {e}", flush=True)
+        return False, f"no pude verificar duplicados ({type(e).__name__}) — NO envío"
 
-    # Si es muy temprano (< 6 AM CLT), no validar contra Odoo (poco data)
-    if hora_clt < 6:
-        return True, "early morning, skip validation"
-
-    # Query Odoo directo XML-RPC (sin dependencias de app/flask).
-    # FAIL-CLOSED: si NO puedo validar, NO envío. Es mejor saltar 1 pulso
-    # que mandar datos basura.
+    # 2) Comparar Turso vs Odoo (sin atajo "early morning")
     try:
         import xmlrpc.client
         odoo_url = os.environ.get('ODOO_URL', 'https://unionxb2b.odoo.com')
@@ -758,33 +767,37 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
         if not uid:
             return False, "Odoo auth failed, no puedo validar — NO envío"
         models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object', allow_none=True)
-        hoy_chile_inicio = hoy_comercial()
-        desde_utc = f"{hoy_chile_inicio} 04:00:00"
+        # Ventana día comercial completo (00:00 a 23:59 CLT)
+        desde_utc = f"{hoy_dia} 04:00:00"  # 00:00 CLT
+        # hasta = día siguiente 04:00 UTC = 24:00 CLT
+        from datetime import datetime as _dt, timedelta as _td
+        d_next = (_dt.strptime(hoy_dia, '%Y-%m-%d') + _td(days=1)).strftime('%Y-%m-%d')
+        hasta_utc = f"{d_next} 04:00:00"
         sos = models.execute_kw(odoo_db, uid, odoo_pwd, 'sale.order', 'search_read',
-            [[('date_order','>=',desde_utc),('state','=','sale')]],
-            {'fields':['amount_total'], 'limit':5000})
+            [[('date_order','>=',desde_utc),('date_order','<',hasta_utc),('state','=','sale')]],
+            {'fields':['amount_total'], 'limit':10000})
         odoo_bruta = sum(s['amount_total'] for s in sos)
         odoo_n = len(sos)
     except Exception as e:
         print(f"[VALIDATE] No se pudo consultar Odoo: {e}", flush=True)
         return False, f"odoo unavailable ({type(e).__name__}) — NO envío"
 
-    print(f"[VALIDATE] Turso hoy: ${bruta_hoy:,.0f} ({n_filas_hoy} filas) | "
+    print(f"[VALIDATE] Turso {hoy_dia}: ${bruta_hoy:,.0f} ({n_filas_hoy} filas) | "
           f"Odoo state=sale: ${odoo_bruta:,.0f} ({odoo_n} SOs)", flush=True)
 
     if odoo_bruta < 1_000_000:
-        # Odoo también bajo: probable madrugada con poca venta, OK enviar
-        return True, "odoo also low, no Cyber yet"
+        # Odoo también bajo: probable madrugada antes del Cyber, OK enviar
+        return True, f"odoo low (${odoo_bruta:,.0f}), pre-Cyber window"
 
-    # Calcular diff %
+    # Tolerancia 10% (antes 25% era demasiado permisivo)
     diff_pct = abs(bruta_hoy - odoo_bruta) / odoo_bruta if odoo_bruta else 1
-    if diff_pct > 0.25:
-        msg = (f"discrepancia Turso vs Odoo > 25%: "
+    if diff_pct > 0.10:
+        msg = (f"discrepancia Turso vs Odoo > 10%: "
                f"Turso ${bruta_hoy:,.0f} vs Odoo ${odoo_bruta:,.0f} "
-               f"(diff {diff_pct*100:.0f}%) — probable sync en curso")
+               f"(diff {diff_pct*100:.1f}%)")
         return False, msg
 
-    return True, f"validation OK (diff {diff_pct*100:.1f}%)"
+    return True, f"validation OK (Turso ${bruta_hoy:,.0f} vs Odoo ${odoo_bruta:,.0f}, diff {diff_pct*100:.2f}%)"
 
 
 def main():
