@@ -113,15 +113,24 @@ def cargar_metas_canal():
 
 
 def descargar_resumen(metas_canal):
-    """Lee desde PARQUET local (data/historico/ventas_mes_actual.parquet).
-    Turso quedó como respaldo pero la fuente primaria es parquet dedupeado.
+    """Combina histórico parquet (1-jun foto fija) + mes_actual.parquet (2-jun+).
+    Turso no se usa para evitar bug sync silencioso.
     """
-    print("[1/5] Cargando data Cyber desde parquet local...", flush=True)
+    print("[1/5] Cargando data Cyber: histórico (1-jun) + mes_actual (2-jun+)...", flush=True)
     t0 = time.time()
-    parquet_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
-    df_all = pd.read_parquet(parquet_path)
-    df_all['fecha_venta'] = pd.to_datetime(df_all['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
-    df = df_all[df_all['fecha_venta'].isin(CYBER_FECHAS)].copy()
+    hist_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+    mes_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
+    df_hist = pd.read_parquet(hist_path)
+    df_mes = pd.read_parquet(mes_path)
+    df_hist['fecha_venta'] = pd.to_datetime(df_hist['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df_mes['fecha_venta'] = pd.to_datetime(df_mes['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    # Solo Cyber: 1-jun del histórico + 2-jun+ del mes_actual
+    df_hist_cyber = df_hist[df_hist['fecha_venta'].isin(CYBER_FECHAS)]
+    df_mes_cyber = df_mes[df_mes['fecha_venta'].isin(CYBER_FECHAS)]
+    # Concat alineando columnas comunes
+    common_cols = [c for c in df_mes_cyber.columns if c in df_hist_cyber.columns]
+    df = pd.concat([df_hist_cyber[common_cols], df_mes_cyber[common_cols]], ignore_index=True).copy()
+    print(f"      hist Cyber: {len(df_hist_cyber):,} filas | mes Cyber: {len(df_mes_cyber):,} filas | total: {len(df):,}", flush=True)
 
     # Por día
     grp = df.groupby('fecha_venta').agg(
