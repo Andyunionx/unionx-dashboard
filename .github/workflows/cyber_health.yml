@@ -8,8 +8,11 @@ name: "Cyber Health Monitor"
 # Diseño: idempotente, robusto, autosuficiente. No requiere intervención manual.
 
 on:
-  schedule:
-    - cron: '*/30 * * * *'
+  # CRON PAUSADO 2026-06-02: cyber_health borra "duplicados" pero también
+  # puede borrar legítimos cuando el extract entra batch repetido.
+  # Reactivar tras revisar criterio de dedup.
+  # schedule:
+  #   - cron: '*/30 * * * *'
   workflow_dispatch:
 
 permissions:

@@ -1,9 +1,10 @@
 name: "Sync mes actual a parquet"
 
 on:
-  schedule:
-    # Cada 15 min durante Cyber. Solo extrae JUNIO (mes actual).
-    - cron: '*/15 * * * *'
+  # CRON PAUSADO 2026-06-02: ciclo destructivo Turso (sync incompleto deja
+  # data inconsistente). Reactivar tras validar mecanismo idempotente.
+  # schedule:
+  #   - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       mes:
