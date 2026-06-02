@@ -273,6 +273,15 @@ def main():
 
     df = _coerce_dtypes(df)
 
+    # Enriquecimiento CMR (Fidelización CMR) desde Google Sheet.
+    # Antes era un UPDATE directo a Turso (extract_cmr_ventas.py); ahora se aplica
+    # al parquet para que DuckDB lo vea. Se re-aplica en cada generación.
+    try:
+        from extract_cmr_ventas import enriquecer_cmr_df
+        df = enriquecer_cmr_df(df)
+    except Exception as e:
+        print(f"   [WARN] CMR enrichment saltado: {type(e).__name__}: {str(e)[:100]}")
+
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
