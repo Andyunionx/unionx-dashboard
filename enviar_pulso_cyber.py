@@ -53,7 +53,7 @@ def hoy_comercial():
         ahora = ahora - timedelta(days=1)
     return ahora.strftime('%Y-%m-%d')
 RANGO_INICIO = datetime(2026, 6, 1, 6, 0, tzinfo=CHILE_TZ)
-RANGO_FIN = datetime(2026, 6, 4, 22, 0, tzinfo=CHILE_TZ)
+RANGO_FIN = datetime(2026, 6, 6, 23, 59, tzinfo=CHILE_TZ)
 
 CYBER_FECHAS = ['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04', '2026-06-05', '2026-06-06']
 CYBER_LABELS = ['Lun 1-jun', 'Mar 2-jun', 'Mié 3-jun', 'Jue 4-jun', 'Vie 5-jun', 'Sáb 6-jun']
