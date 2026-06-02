@@ -8,8 +8,8 @@ name: "Cyber Pulso (horario, Lun-Sab Cyber)"
 
 on:
   schedule:
-    - cron: '0 12-23 * 6 1-6'
-    - cron: '0 0-3 * 6 1-6'
+    # Cada hora durante junio (Cyber). El script _check_rango() filtra a 1-6 jun.
+    - cron: '0 * 1-7 6 *'
   workflow_dispatch:
     inputs:
       preborrador:
