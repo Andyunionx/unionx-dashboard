@@ -168,7 +168,82 @@ def cargar_cmr_sheet():
     return df
 
 
+def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Aplica el enriquecimiento CMR a un DataFrame de ventas EN MEMORIA (parquet-native).
+    Reemplaza el viejo UPDATE a Turso. Idempotente: re-aplica a TODOS los candidatos
+    web-bruta=0 del DataFrame en cada corrida (el parquet se regenera de Odoo cada vez).
+
+    Candidatos: canal IN web AND venta_bruta=0 AND tipo_movimiento='Venta'.
+    Match greedy por (fecha_venta, sku) contra el Google Sheet CMR.
+    """
+    if df is None or df.empty:
+        return df
+    if not CREDENTIALS.exists():
+        print("   [CMR] credentials.json no existe — se omite enriquecimiento CMR", flush=True)
+        return df
+    try:
+        df_cmr = cargar_cmr_sheet()
+    except Exception as e:
+        print(f"   [CMR] no se pudo leer el sheet ({type(e).__name__}: {str(e)[:80]}) — se omite", flush=True)
+        return df
+    if df_cmr.empty:
+        print("   [CMR] sheet sin filas válidas — se omite", flush=True)
+        return df
+
+    df = df.copy()
+    fv = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    vb = pd.to_numeric(df['venta_bruta'], errors='coerce').fillna(0)
+    web = df['canal'].isin(['UnionX web', 'Shopify', 'Lhotse web', 'Simplit web'])
+    tv = (df.get('tipo_movimiento') == 'Venta')
+    cand_mask = web & (vb == 0) & tv
+
+    cand_idx = defaultdict(list)
+    for i in df.index[cand_mask]:
+        cand_idx[(fv[i], str(df.at[i, 'sku']).strip())].append(i)
+
+    asignados, n, total = set(), 0, 0.0
+    for _, cmr in df_cmr.iterrows():
+        key = (cmr['fecha'].isoformat(), str(cmr['sku']).strip())
+        for i in cand_idx.get(key, []):
+            if i in asignados:
+                continue
+            costo = float(pd.to_numeric(df.at[i, 'costo_total'], errors='coerce') or 0)
+            neta = float(cmr['venta_neta'] or 0)
+            bruta = float(cmr['venta_bruta'] or 0)
+            df.at[i, 'canal'] = 'CMR'
+            df.at[i, 'tipo_negocio'] = 'Fidelización CMR'
+            df.at[i, 'venta_bruta'] = bruta
+            df.at[i, 'venta_neta'] = neta
+            df.at[i, 'margen_front'] = neta - costo
+            df.at[i, 'margen_final'] = neta - costo
+            df.at[i, 'comision'] = 0
+            df.at[i, 'comision_pct'] = 0
+            df.at[i, 'logistica'] = 0
+            asignados.add(i); n += 1; total += bruta
+            break
+    print(f"   [CMR] {n} filas enriquecidas (Fidelización CMR), venta bruta +${total:,.0f}", flush=True)
+    return df
+
+
 def main():
+    """Standalone: aplica CMR directo al ventas_mes_actual.parquet (sin Turso)."""
+    if not CREDENTIALS.exists():
+        print(f"[ERROR] {CREDENTIALS} no existe")
+        sys.exit(1)
+    mes_parquet = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
+    if not mes_parquet.exists():
+        print(f"[ERROR] {mes_parquet} no existe")
+        sys.exit(1)
+    print(f"=== Enriquecer CMR en parquet — {datetime.now()} ===", flush=True)
+    df = pd.read_parquet(mes_parquet)
+    antes = float(pd.to_numeric(df['venta_bruta'], errors='coerce').fillna(0).sum())
+    df = enriquecer_cmr_df(df)
+    despues = float(pd.to_numeric(df['venta_bruta'], errors='coerce').fillna(0).sum())
+    df.to_parquet(mes_parquet, index=False)
+    print(f"[OK] {mes_parquet.name}: venta bruta {antes:,.0f} -> {despues:,.0f} (+{despues-antes:,.0f})", flush=True)
+
+
+def _main_turso_legacy():
     if not URL or not TOKEN:
         print("[ERROR] LIBSQL_URL/LIBSQL_AUTH_TOKEN faltan")
         sys.exit(1)

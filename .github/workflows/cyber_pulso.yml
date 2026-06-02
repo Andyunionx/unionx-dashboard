@@ -42,7 +42,17 @@ jobs:
           pip install -r requirements.txt
           pip install google-auth google-auth-oauthlib google-api-python-client
 
-      - name: Re-extract parquet desde Odoo (fresh)
+      - name: Restaurar credentials.json (para enriquecimiento CMR desde Sheet)
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+          else
+            echo "[WARN] GOOGLE_CREDENTIALS_JSON no configurado — CMR se omitirá"
+          fi
+
+      - name: Re-extract parquet desde Odoo (fresh) + enriquecer CMR
         env:
           LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
           LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
