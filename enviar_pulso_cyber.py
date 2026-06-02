@@ -531,7 +531,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
   </table>
 </div>"""
     else:
-        bloque_proy = ""
+        bloque_proy = '<p style="color:#64748B;font-size:0.85rem">📈 Proyección no disponible (sin data Cyber 2025 en histórico).</p>'
 
     color_avance = '#16A34A' if avance_pct >= 0.8 else ('#EA580C' if avance_pct >= 0.4 else '#DC2626')
 
