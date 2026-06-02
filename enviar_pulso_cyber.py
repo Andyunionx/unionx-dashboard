@@ -43,6 +43,15 @@ PROJECT_ROOT = Path(__file__).parent
 
 # Rango Cyber: Lun 1-jun 06:00 CLT a Jue 4-jun 22:00 CLT
 CHILE_TZ = timezone(timedelta(hours=-4))
+
+
+def hoy_comercial():
+    """Día comercial CLT. Si hora < 06:00, considera el día anterior
+    (el pulso de las 00:00 muestra el cierre del día Cyber recién terminado)."""
+    ahora = datetime.now(CHILE_TZ)
+    if ahora.hour < 6:
+        ahora = ahora - timedelta(days=1)
+    return ahora.strftime('%Y-%m-%d')
 RANGO_INICIO = datetime(2026, 6, 1, 6, 0, tzinfo=CHILE_TZ)
 RANGO_FIN = datetime(2026, 6, 4, 22, 0, tzinfo=CHILE_TZ)
 
@@ -141,7 +150,7 @@ def descargar_resumen(metas_canal):
     ))
 
     # Por hora HOY (CLT)
-    hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
+    hoy_str = hoy_comercial()
     por_hora_hoy = _rows(turso_query(
         f"SELECT hora_venta_num, COUNT(DISTINCT pedido), ROUND(SUM(venta_bruta),0) "
         f"FROM ventas WHERE fecha_venta='{hoy_str}' "
@@ -149,7 +158,7 @@ def descargar_resumen(metas_canal):
     ))
 
     # Cyber 2025 (LY) — leído desde parquet HISTÓRICO local (Turso ya no tiene 2025)
-    hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
+    hoy_str = hoy_comercial()
     fecha_ly = None
     for f26, f25 in CYBER_PAIRS:
         if f26 == hoy_str:
@@ -339,7 +348,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
     margen_pct = (margen_total / neta_total) if neta_total else 0
 
     # Hoy
-    hoy_str = ahora_clt.strftime('%Y-%m-%d')
+    hoy_str = hoy_comercial()
     dia_hoy = next((d for d in por_dia if d[0] == hoy_str), None)
     bruta_hoy = float(dia_hoy[2]) if dia_hoy and dia_hoy[2] else 0
     margen_hoy = float(dia_hoy[4]) if dia_hoy and dia_hoy[4] else 0
@@ -606,7 +615,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
 
 def descargar_excel_raw_hoy():
     ahora_clt = datetime.now(CHILE_TZ)
-    hoy_str = ahora_clt.strftime('%Y-%m-%d')
+    hoy_str = hoy_comercial()
     print(f"[3/5] Descargando Excel RAW {hoy_str}...", flush=True)
     sys.path.insert(0, str(PROJECT_ROOT))
     from enviar_excel_diario import DB_COLS, DB_TO_RAW
@@ -749,7 +758,7 @@ def validar_data_integrity(bruta_hoy: float, n_filas_hoy: int) -> tuple[bool, st
         if not uid:
             return False, "Odoo auth failed, no puedo validar — NO envío"
         models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object', allow_none=True)
-        hoy_chile_inicio = ahora_clt.strftime('%Y-%m-%d')
+        hoy_chile_inicio = hoy_comercial()
         desde_utc = f"{hoy_chile_inicio} 04:00:00"
         sos = models.execute_kw(odoo_db, uid, odoo_pwd, 'sale.order', 'search_read',
             [[('date_order','>=',desde_utc),('state','=','sale')]],
@@ -793,7 +802,7 @@ def main():
      cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta) = descargar_resumen(metas_canal)
 
     # VALIDACIÓN TEMPRANA contra Odoo
-    hoy_str = datetime.now(CHILE_TZ).strftime('%Y-%m-%d')
+    hoy_str = hoy_comercial()
     dia_hoy_data = next((d for d in por_dia if d[0] == hoy_str), None)
     bruta_hoy_early = float(dia_hoy_data[2]) if dia_hoy_data and dia_hoy_data[2] else 0
     ok_validate, msg = validar_data_integrity(bruta_hoy_early, 0)
