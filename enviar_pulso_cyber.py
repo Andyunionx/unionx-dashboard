@@ -829,6 +829,21 @@ def alertar_andres(asunto: str, detalle: str) -> bool:
 def main():
     if not _check_rango():
         return 0
+
+    # Email del pulso CADA 2H (horas pares CLT: 20, 22, ...). El refresco del
+    # parquet/app es horario (otro step del workflow); aquí solo se controla el EMAIL.
+    # Configurable: CYBER_EMAIL_HOURS="8,10,12,..." (CSV) sobreescribe la regla par.
+    hora_clt = datetime.now(CHILE_TZ).hour
+    _horas_cfg = os.environ.get('CYBER_EMAIL_HOURS', '').strip()
+    if _horas_cfg:
+        _permitido = hora_clt in {int(h) for h in _horas_cfg.split(',') if h.strip().isdigit()}
+    else:
+        _permitido = (hora_clt % 2 == 0)
+    if not _permitido:
+        print(f"[SKIP email] hora {hora_clt} CLT — el pulso al CEO es cada 2h (horas pares). "
+              f"El parquet/app ya se refrescó en el step previo.", flush=True)
+        return 0
+
     if not URL or not TOKEN or not RESEND_API_KEY:
         print("[ERROR] Faltan vars de entorno", flush=True)
         return 1
