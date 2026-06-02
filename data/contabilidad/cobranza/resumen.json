@@ -1,44 +1,44 @@
 {
-  "generado_en": "2026-06-02T15:56:48.054220",
+  "generado_en": "2026-06-02T20:34:06.743228",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11320,
-  "total_monto_pendiente_clp": 659621276.0,
+  "total_documentos_pendientes": 11477,
+  "total_monto_pendiente_clp": 667212179.0,
   "monto_por_aging": {
     "+90 días": 35240837.0,
-    "1-30 días": 398333394.0,
-    "31-60 días": 97211354.0,
+    "1-30 días": 404094233.0,
+    "31-60 días": 97091384.0,
     "61-90 días": 21922065.0,
-    "Vigente": 106913626.0
+    "Vigente": 108863660.0
   },
   "monto_por_tipo": {
-    "BOLETA": 588501539.0,
+    "BOLETA": 596092442.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 132322181.0
-    },
-    {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 84575479.0
+      "monto": 133460908.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 84398568.0
+      "monto": 86972633.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 85061329.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 61244633.0
+      "monto": 61756185.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 42248078.0
+      "monto": 43282340.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 24999690.0
+      "monto": 25243490.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 18735225.0
+      "monto": 18865486.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -58,11 +58,11 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 16909854.0
+      "monto": 17139850.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
-      "monto": 16728442.0
+      "monto": 16738833.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 3417594.0
+      "monto": 3574965.0
     }
   ],
-  "notas_credito_count": 533,
+  "notas_credito_count": 534,
   "pedidos_venta_count": 10000
 }
