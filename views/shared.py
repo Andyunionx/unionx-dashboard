@@ -504,6 +504,11 @@ class _DuckConn:
         rel = cur.execute(sql, params) if params else cur.execute(sql)
         return _DuckCursor(rel)
 
+    def cursor(self):
+        # Cursor DBAPI para pandas.read_sql_query (ej. descargar_raw, export):
+        # el cursor de DuckDB ya es DBAPI 2.0 compatible.
+        return self._con.cursor()
+
     def close(self):
         pass  # conexión compartida/cacheada: no cerrar
 
