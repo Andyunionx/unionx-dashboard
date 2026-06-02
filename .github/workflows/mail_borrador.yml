@@ -1,0 +1,20 @@
+name: "Mail Borrador Urgente"
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - run: pip install pandas pyarrow requests
+      - env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          PYTHONIOENCODING: utf-8
+        run: python mail_borrador_urgente.py
