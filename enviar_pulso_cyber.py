@@ -113,49 +113,66 @@ def cargar_metas_canal():
 
 
 def descargar_resumen(metas_canal):
-    print("[1/5] Descargando data Cyber desde Turso...", flush=True)
+    """Lee desde PARQUET local (data/historico/ventas_mes_actual.parquet).
+    Turso quedó como respaldo pero la fuente primaria es parquet dedupeado.
+    """
+    print("[1/5] Cargando data Cyber desde parquet local...", flush=True)
     t0 = time.time()
-    fechas_sql = ','.join(repr(f) for f in CYBER_FECHAS)
+    parquet_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
+    df_all = pd.read_parquet(parquet_path)
+    df_all['fecha_venta'] = pd.to_datetime(df_all['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df = df_all[df_all['fecha_venta'].isin(CYBER_FECHAS)].copy()
 
     # Por día
-    por_dia = _rows(turso_query(
-        "SELECT fecha_venta, COUNT(DISTINCT pedido), ROUND(SUM(venta_bruta),0), "
-        "ROUND(SUM(venta_neta),0), ROUND(SUM(margen_final),0), ROUND(SUM(cantidad),0) "
-        f"FROM ventas WHERE fecha_venta IN ({fechas_sql}) "
-        "GROUP BY fecha_venta ORDER BY fecha_venta"
-    ))
+    grp = df.groupby('fecha_venta').agg(
+        sos=('pedido', 'nunique'),
+        bruta=('venta_bruta', 'sum'),
+        neta=('venta_neta', 'sum'),
+        margen=('margen_final', 'sum'),
+        uds=('cantidad', 'sum'),
+    ).reset_index().sort_values('fecha_venta')
+    por_dia = [[r['fecha_venta'], int(r['sos']), float(round(r['bruta'])), float(round(r['neta'])),
+                float(round(r['margen'])), float(round(r['uds']))] for _, r in grp.iterrows()]
 
-    # Por canal × día (matriz)
-    por_canal_dia = _rows(turso_query(
-        "SELECT canal, fecha_venta, ROUND(SUM(venta_bruta),0), ROUND(SUM(margen_final),0), "
-        "ROUND(SUM(cantidad),0) "
-        f"FROM ventas WHERE fecha_venta IN ({fechas_sql}) "
-        "GROUP BY canal, fecha_venta"
-    ))
+    # Por canal × día
+    grp = df.groupby(['canal', 'fecha_venta']).agg(
+        bruta=('venta_bruta', 'sum'),
+        margen=('margen_final', 'sum'),
+        uds=('cantidad', 'sum'),
+    ).reset_index()
+    por_canal_dia = [[r['canal'], r['fecha_venta'], float(round(r['bruta'])),
+                      float(round(r['margen'])), float(round(r['uds']))] for _, r in grp.iterrows()]
 
     # Por canal acumulado
-    por_canal_acum = _rows(turso_query(
-        "SELECT canal, COUNT(DISTINCT pedido), ROUND(SUM(venta_bruta),0), "
-        "ROUND(SUM(margen_final),0), ROUND(SUM(cantidad),0) "
-        f"FROM ventas WHERE fecha_venta IN ({fechas_sql}) "
-        "GROUP BY canal ORDER BY 3 DESC"
-    ))
+    grp = df.groupby('canal').agg(
+        sos=('pedido', 'nunique'),
+        bruta=('venta_bruta', 'sum'),
+        margen=('margen_final', 'sum'),
+        uds=('cantidad', 'sum'),
+    ).reset_index().sort_values('bruta', ascending=False)
+    por_canal_acum = [[r['canal'], int(r['sos']), float(round(r['bruta'])),
+                       float(round(r['margen'])), float(round(r['uds']))] for _, r in grp.iterrows()]
 
-    # Modalidad
-    por_mod = _rows(turso_query(
-        "SELECT CASE WHEN LOWER(bodega) LIKE 'bodega fulfillment%' THEN 'Fulfillment' "
-        "ELSE 'Seller + Flex' END, COUNT(DISTINCT pedido), "
-        "ROUND(SUM(venta_bruta),0), ROUND(SUM(margen_final),0) "
-        f"FROM ventas WHERE fecha_venta IN ({fechas_sql}) GROUP BY 1"
-    ))
+    # Modalidad (Fulfillment vs Seller+Flex)
+    df['_mod'] = df['bodega'].astype(str).str.lower().str.startswith('bodega fulfillment').map({True: 'Fulfillment', False: 'Seller + Flex'})
+    grp = df.groupby('_mod').agg(
+        sos=('pedido', 'nunique'),
+        bruta=('venta_bruta', 'sum'),
+        margen=('margen_final', 'sum'),
+    ).reset_index()
+    por_mod = [[r['_mod'], int(r['sos']), float(round(r['bruta'])), float(round(r['margen']))]
+               for _, r in grp.iterrows()]
 
     # Por hora HOY (CLT)
     hoy_str = hoy_comercial()
-    por_hora_hoy = _rows(turso_query(
-        f"SELECT hora_venta_num, COUNT(DISTINCT pedido), ROUND(SUM(venta_bruta),0) "
-        f"FROM ventas WHERE fecha_venta='{hoy_str}' "
-        "GROUP BY hora_venta_num ORDER BY hora_venta_num"
-    ))
+    df_hoy = df[df['fecha_venta'] == hoy_str].copy()
+    df_hoy['hora_venta_num'] = pd.to_numeric(df_hoy['hora_venta_num'], errors='coerce')
+    grp = df_hoy.groupby('hora_venta_num').agg(
+        sos=('pedido', 'nunique'),
+        bruta=('venta_bruta', 'sum'),
+    ).reset_index().sort_values('hora_venta_num')
+    por_hora_hoy = [[float(r['hora_venta_num']), int(r['sos']), float(round(r['bruta']))]
+                    for _, r in grp.iterrows() if pd.notna(r['hora_venta_num'])]
 
     # Cyber 2025 (LY) — leído desde parquet HISTÓRICO local (Turso ya no tiene 2025)
     hoy_str = hoy_comercial()
