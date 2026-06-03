@@ -840,6 +840,10 @@ def main():
     else:
         # Horas pares dentro de la ventana 08:00 a 24:00 (medianoche=0). Excluye 2,4,6 am.
         _permitido = (hora_clt % 2 == 0) and (hora_clt == 0 or hora_clt >= 8)
+    # Bypass manual: force_email=true ignora la ventana horaria.
+    if os.environ.get('CYBER_FORCE_EMAIL') == '1':
+        _permitido = True
+        print(f"[FORCE email] envío forzado (ignora ventana horaria), hora {hora_clt} CLT", flush=True)
     if not _permitido:
         print(f"[SKIP email] hora {hora_clt} CLT — pulso al CEO cada 2h, ventana 08:00–24:00. "
               f"El parquet/app igual se refrescó en el step previo.", flush=True)

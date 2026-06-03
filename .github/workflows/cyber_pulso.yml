@@ -18,6 +18,12 @@ on:
         default: 'false'
         type: choice
         options: ['false','true']
+      force_email:
+        description: 'Forzar envío del email ignorando la ventana horaria 08:00-24:00'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false','true']
 
 permissions:
   contents: write
@@ -115,5 +121,6 @@ jobs:
           EMAIL_TO: ${{ github.event.inputs.preborrador == 'true' && 'andres@unionx.cl' || (vars.CYBER_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl') }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
           CYBER_PREBORRADOR: ${{ github.event.inputs.preborrador == 'true' && '1' || '0' }}
+          CYBER_FORCE_EMAIL: ${{ github.event.inputs.force_email == 'true' && '1' || '0' }}
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_cyber.py
