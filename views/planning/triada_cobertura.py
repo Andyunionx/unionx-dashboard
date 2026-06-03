@@ -90,7 +90,10 @@ def _preparar_datos() -> pd.DataFrame:
     """
 
     # ── 1. Base: todos los SKUs con historial de ventas ───────────────
+    # Cargamos solo los últimos 5 meses para limitar RAM en Streamlit Cloud.
+    # Es suficiente para ventas_6sem (42 días) + prom_3m (3 meses).
     path_hist = DATA_DIR / "historico" / "ventas_historico.parquet"
+    _corte_carga = _TODAY - pd.DateOffset(months=5)
     if path_hist.exists():
         import pyarrow.parquet as pq
         schema_cols = set(pq.ParquetFile(str(path_hist)).schema.names)
@@ -98,24 +101,28 @@ def _preparar_datos() -> pd.DataFrame:
                          "categoria_padre", "categoria_hijo", "categoria_comercial",
                          "cantidad"]
         cols = [c for c in cols_deseadas if c in schema_cols]
-        df_v = pd.read_parquet(path_hist, columns=cols)
-        df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"], errors="coerce")
-        df_v["sku"]         = df_v["sku"].astype(str)
-        df_v["cantidad"]    = pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
-        df_v = df_v[df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan")]
+        df_v_full = pd.read_parquet(path_hist, columns=cols)
+        df_v_full["fecha_venta"] = pd.to_datetime(df_v_full["fecha_venta"], errors="coerce")
+        df_v_full["sku"]         = df_v_full["sku"].astype(str)
+        df_v_full["cantidad"]    = pd.to_numeric(df_v_full.get("cantidad", 0), errors="coerce").fillna(0)
+        df_v_full = df_v_full[df_v_full["sku"].notna() & (df_v_full["sku"] != "") & (df_v_full["sku"] != "nan")]
+        # Metadatos desde historial completo (para no perder productos con venta hace >5m)
+        df_meta_full = (
+            df_v_full.sort_values("fecha_venta", ascending=False)
+            [[c for c in ["sku", "producto", "marca", "categoria_padre",
+                          "categoria_hijo", "categoria_comercial"] if c in df_v_full.columns]]
+            .drop_duplicates("sku").copy()
+        )
+        # Ventas y demanda solo de los últimos 5 meses
+        df_v = df_v_full[df_v_full["fecha_venta"] >= _corte_carga].copy()
     else:
-        df_v = pd.DataFrame(columns=["fecha_venta", "sku", "producto", "marca",
-                                      "categoria_padre", "categoria_hijo", "cantidad"])
+        df_v_full = pd.DataFrame(columns=["fecha_venta", "sku", "producto", "marca",
+                                           "categoria_padre", "categoria_hijo", "cantidad"])
+        df_meta_full = df_v_full.copy()
+        df_v = df_v_full.copy()
 
-    # ── 2. Metadata por SKU (registro más reciente) ───────────────────
-    meta_cols_disp = [c for c in ["sku", "producto", "marca", "categoria_padre",
-                                   "categoria_hijo", "categoria_comercial"]
-                      if c in df_v.columns]
-    df_meta = (
-        df_v.sort_values("fecha_venta", ascending=False)[meta_cols_disp]
-        .drop_duplicates("sku")
-        .copy()
-    )
+    # ── 2. Metadata por SKU (registro más reciente del historial completo) ─
+    df_meta = df_meta_full.copy()
 
     # ── 3. Ventas 6 semanas (42 días) → demanda diaria y por horizonte ─
     corte_6sem = _TODAY - timedelta(days=42)
