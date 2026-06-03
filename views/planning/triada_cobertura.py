@@ -554,15 +554,15 @@ def render():
             gb.configure_column("estado_fc3m", header_name="Estado", width=110,
                                 cellStyle=estado_cell_style)
 
-            # Opciones generales
+            # Auto-group column: muestra la jerarquia + totales en cada nivel
             gb.configure_grid_options(
-                groupDisplayType="groupRows",
-                groupDefaultExpanded=0,          # todo colapsado por defecto
+                groupDefaultExpanded=0,
                 animateRows=True,
-                domLayout="normal",
                 suppressAggFuncInHeader=True,
-                groupRowRendererParams={
-                    "suppressCount": False,
+                autoGroupColumnDef={
+                    "headerName": "Marca / Categoría / SKU",
+                    "minWidth": 280,
+                    "cellRendererParams": {"suppressCount": False},
                 },
             )
             gb.configure_default_column(resizable=True, sortable=True, filter=True)
