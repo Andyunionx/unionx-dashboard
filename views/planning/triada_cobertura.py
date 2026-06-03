@@ -21,6 +21,7 @@ import streamlit as st
 
 from views.planning._data_helpers import (
     DATA_DIR,
+    cargar_forecast_sku,
     cargar_transito,
 )
 
@@ -140,33 +141,66 @@ def _preparar_datos() -> pd.DataFrame:
     else:
         df_v = pd.DataFrame(columns=["fecha_venta", "sku", "cantidad"])
 
-    # ── 3. Ventas 6 semanas (42 días) → demanda diaria y por horizonte ─
+    # ── 3. Ventas 6 semanas (42 días) → tasa mensual equivalente ────────
+    # ventas_6sem se muestra como PROMEDIO MENSUAL: total_42d / 42 * 30
     corte_6sem = _TODAY - timedelta(days=42)
     df_6sem = df_v[(df_v["fecha_venta"] >= corte_6sem) & (df_v["fecha_venta"] < _TODAY)]
     ventas_6sem_agg = (
         df_6sem.groupby("sku")["cantidad"].sum()
-        .reset_index().rename(columns={"cantidad": "ventas_6sem"})
+        .reset_index().rename(columns={"cantidad": "_ventas_42d"})
     )
     df_meta = df_meta.merge(ventas_6sem_agg, on="sku", how="left")
-    df_meta["ventas_6sem"]    = df_meta["ventas_6sem"].fillna(0).clip(lower=0)
-    df_meta["demanda_diaria"] = (df_meta["ventas_6sem"] / 42).clip(lower=0)
+    df_meta["_ventas_42d"]   = df_meta["_ventas_42d"].fillna(0).clip(lower=0)
+    df_meta["demanda_diaria"] = (df_meta["_ventas_42d"] / 42).clip(lower=0)
+    # Columna display: tasa mensual (unidades / mes)
+    df_meta["ventas_6sem"]   = (df_meta["demanda_diaria"] * 30).round(1)
     for h in _HORIZONTES:
         df_meta[f"demanda_{h}d"] = (df_meta["demanda_diaria"] * h).clip(lower=0)
 
-    # ── 4. Promedio mensual — últimos 3 meses con datos disponibles ───
+    # ── 4. Venta prom 3m — FORECAST próximos 3 meses (mes actual + 2 sig.) ─
+    # Usa Prophet si disponible; fallback a historial si no hay forecast.
+    # ── 4a. Fallback histórico ────────────────────────────────────────────
     df_v["_mes"] = df_v["fecha_venta"].dt.to_period("M")
     meses_disp   = sorted(df_v["_mes"].dropna().unique())
     ultimos_3    = meses_disp[-3:] if len(meses_disp) >= 3 else meses_disp
-    df_3m = df_v[df_v["_mes"].isin(ultimos_3)]
-    prom3m = (
-        df_3m.groupby(["sku", "_mes"])["cantidad"].sum()
+    df_3m_hist = df_v[df_v["_mes"].isin(ultimos_3)]
+    prom3m_hist = (
+        df_3m_hist.groupby(["sku", "_mes"])["cantidad"].sum()
         .reset_index()
         .groupby("sku")["cantidad"].mean()
         .reset_index().rename(columns={"cantidad": "venta_prom_3m"})
     )
-    prom3m["venta_prom_3m"] = prom3m["venta_prom_3m"].clip(lower=0)
-    df_meta = df_meta.merge(prom3m, on="sku", how="left")
+    prom3m_hist["venta_prom_3m"] = prom3m_hist["venta_prom_3m"].clip(lower=0)
+    df_meta = df_meta.merge(prom3m_hist, on="sku", how="left")
     df_meta["venta_prom_3m"] = df_meta["venta_prom_3m"].fillna(0)
+
+    # ── 4b. Forecast Prophet (sobreescribe para SKUs con modelo) ─────────
+    try:
+        df_f = cargar_forecast_sku().copy()
+        df_f["ds"]  = pd.to_datetime(df_f["ds"])
+        df_f["sku"] = df_f["sku"].astype(str)
+        yhat_col = "yhat_anchored" if "yhat_anchored" in df_f.columns else "yhat_base"
+        df_f[yhat_col] = (
+            pd.to_numeric(df_f[yhat_col], errors="coerce").fillna(0).clip(lower=0)
+        )
+        meses_3_fc = pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")
+        df_f["_mes"] = df_f["ds"].dt.to_period("M")
+        df_f_3m = df_f[df_f["_mes"].isin(meses_3_fc)]
+        prom3m_fc = (
+            df_f_3m.groupby(["sku", "_mes"])[yhat_col].sum()
+            .reset_index()
+            .groupby("sku")[yhat_col].mean()
+            .reset_index()
+            .rename(columns={yhat_col: "_prom3m_fc"})
+        )
+        prom3m_fc["_prom3m_fc"] = prom3m_fc["_prom3m_fc"].clip(lower=0)
+        df_meta = df_meta.merge(prom3m_fc, on="sku", how="left")
+        # Sobreescribe con forecast solo donde es > 0
+        mask_fc = df_meta["_prom3m_fc"].notna() & (df_meta["_prom3m_fc"] > 0)
+        df_meta.loc[mask_fc, "venta_prom_3m"] = df_meta.loc[mask_fc, "_prom3m_fc"]
+        df_meta.drop(columns=["_prom3m_fc"], inplace=True)
+    except Exception:
+        pass  # mantiene fallback histórico
 
     # ── 6. Tránsito por horizonte ─────────────────────────────────────
     df_tr = cargar_transito().copy()
@@ -203,17 +237,16 @@ def _preparar_datos() -> pd.DataFrame:
         if c in df.columns:
             df[c] = df[c].fillna("Sin clasificar").replace("", "Sin clasificar")
 
-    # ── 8. Cobertura basada en ventas reales (rolling 6 semanas) ─────
-    # Convertir ventas_6sem a tasa mensual: / 42 días × 30 días/mes
-    demanda_mensual_6sem = (df["ventas_6sem"] / 42 * 30).clip(lower=0)
+    # ── 8. Cobertura basada en ventas reales (rolling 6 sem → tasa mensual) ─
+    # ventas_6sem ya es tasa mensual (42d / 42 * 30), se usa directo
     df["cobertura_6sem_meses"] = np.where(
-        demanda_mensual_6sem > 0,
-        df["stock_actual"] / demanda_mensual_6sem,
+        df["ventas_6sem"] > 0,
+        df["stock_actual"] / df["ventas_6sem"],
         np.nan,
     )
     df["estado_6sem"] = df["cobertura_6sem_meses"].apply(_clasificar_meses)
 
-    # ── 9. Cobertura proyectada (promedio mensual 3 meses históricos) ─
+    # ── 9. Cobertura proyectada (forecast próximos 3m, con fallback hist.) ─
     df["cobertura_fc3m_meses"] = np.where(
         df["venta_prom_3m"] > 0,
         df["stock_actual"] / df["venta_prom_3m"],
@@ -527,7 +560,7 @@ def render():
                 gb.configure_column(col_tr_jer,         header_name=f"Tránsito ≤{horizonte}d", width=120,
                                     type=["numericColumn"], enableValue=True, aggFunc="sum",
                                     valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
-            gb.configure_column("ventas_6sem",          header_name="Ventas 6sem",     width=110,
+            gb.configure_column("ventas_6sem",          header_name="Vta/Mes 6sem",     width=110,
                                 type=["numericColumn"], enableValue=True, aggFunc="sum",
                                 valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
             gb.configure_column("venta_prom_3m",        header_name="Vta/Mes",         width=95,
@@ -631,7 +664,7 @@ def render():
                 "cobertura_dias":         st.column_config.NumberColumn("Cob. Días (fc)", format="%.0f"),
                 "cobertura_meses":        st.column_config.NumberColumn("Cob. Meses (fc)",format="%.1f"),
                 "estado":                 st.column_config.TextColumn("Estado (fc)",      width=110),
-                "ventas_6sem":            st.column_config.NumberColumn("Ventas 6sem (u)",format="%d"),
+                "ventas_6sem":            st.column_config.NumberColumn("Vta/Mes 6sem",  format="%.1f"),
                 "cobertura_6sem_meses":   st.column_config.NumberColumn("Cob. Meses (6sem)", format="%.1f"),
                 "estado_6sem":            st.column_config.TextColumn("Estado (6sem)",    width=110),
                 "venta_prom_3m":          st.column_config.NumberColumn("Venta Prom 3m (u)", format="%.1f"),
