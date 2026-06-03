@@ -7,9 +7,11 @@ name: "Cyber Pulso (horario, Lun-Sab Cyber)"
 # Cron en UTC. Para cubrir 08-23 CLT (UTC-4): 12,13,...,23,00,01,02,03 UTC.
 
 on:
-  schedule:
-    # Cada hora durante junio (Cyber). El script _check_rango() filtra a 1-6 jun.
-    - cron: '0 * 1-7 6 *'
+  # schedule DESHABILITADO: el cron de GitHub Actions dropea runs (no confiable).
+  # El disparo ahora lo hace el Cloudflare Worker (scheduler/) vía workflow_dispatch,
+  # cada hora de forma confiable. Si alguna vez se retira el Worker, descomentar esto.
+  # schedule:
+  #   - cron: '0 * 1-7 6 *'
   workflow_dispatch:
     inputs:
       preborrador:
