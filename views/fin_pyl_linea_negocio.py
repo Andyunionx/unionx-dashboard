@@ -55,6 +55,7 @@ from views._fin_distribucion import (
     distribuir_monto_kam,
     driver_default,
     driver_default_gav,
+    tn_restriccion_gav,
 )
 
 
@@ -773,19 +774,33 @@ def render():
                 driver_label = f"directo KAM ({kam_match.title()})"
                 monto_kam_directo += monto
             else:
-                # Modo HEURÍSTICO: driver por área (lo de siempre)
-                driver = driver_default_gav(area)
-                if driver == "mc_absoluto" and pesos_mc_tn:
+                # Modo HEURÍSTICO: driver por área + restricción por sub-área
+                sub_area = g.get("sub_area", "")
+                tn_filtro = tn_restriccion_gav(sub_area)
+                driver    = driver_default_gav(area)
+
+                if tn_filtro:
+                    # Sub-área con causalidad directa: solo distribuir dentro del TN
+                    df_tn = df_ventas_drivers[
+                        df_ventas_drivers["tipo_negocio"] == tn_filtro
+                    ] if "tipo_negocio" in df_ventas_drivers.columns else pd.DataFrame()
+                    asignacion = (
+                        distribuir_monto_a_dimension(monto, df_tn, "venta", dimension=desglose)
+                        if not df_tn.empty else {}
+                    )
+                    driver_label = f"venta·TN={tn_filtro}"
+                elif driver == "mc_absoluto" and pesos_mc_tn:
                     asignacion = distribuir_monto_mc_absoluto(
                         monto, pesos_mc_tn, df_ventas_drivers,
                         dimension=desglose,
                     )
+                    driver_label = driver
                 else:
                     # Fallback: drivers tradicionales (equitativo / venta legacy)
                     asignacion = distribuir_monto_a_dimension(
                         monto, df_ventas_drivers, driver, dimension=desglose,
                     )
-                driver_label = driver
+                    driver_label = driver
                 monto_gav_heuristico += monto
                 if str(ca).upper().startswith("KAM") and not kam_match:
                     kams_no_matched.append(
