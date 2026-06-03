@@ -20,10 +20,9 @@ import pandas as pd
 import streamlit as st
 
 from views.planning._data_helpers import (
-    cargar_forecast_sku,
+    DATA_DIR,
     cargar_stock_diario,
     cargar_transito,
-    cargar_ventas_historicas,
 )
 
 # ── Constantes ────────────────────────────────────────────────────────
@@ -75,15 +74,88 @@ def _style_estado(val: str) -> str:
 @st.cache_data(ttl=3600, show_spinner=False)
 def _preparar_datos() -> pd.DataFrame:
     """
-    Tabla maestra por SKU. Columnas principales:
+    Tabla maestra por SKU.
+    Base: ventas_historico (todos los SKUs activos, sin depender de Prophet).
+    Demanda calculada desde ventas reales (no forecast Prophet).
+
+    Columnas principales:
       sku, producto, marca, categoria_padre, categoria_hijo,
       stock_actual,
-      transito_30d / 60d / 90d / 180d  (unidades con ETA ≤ fecha)
-      demanda_30d / 60d / 90d / 180d   (forecast acumulado)
-      demanda_diaria                    (promedio 90d)
+      transito_30d / 60d / 90d / 180d
+      ventas_6sem, demanda_diaria,
+      demanda_30d / 60d / 90d / 180d  (extrapolado desde demanda diaria)
+      venta_prom_3m                   (promedio mensual ultimos 3 meses disponibles)
+      cobertura_6sem_meses, estado_6sem
+      cobertura_fc3m_meses, estado_fc3m
     """
 
-    # ── 1. Stock actual (última fecha disponible) ─────────────────────
+    # ── 1. Base: todos los SKUs con historial de ventas ───────────────
+    path_hist = DATA_DIR / "historico" / "ventas_historico.parquet"
+    if path_hist.exists():
+        import pyarrow.parquet as pq
+        schema_cols = set(pq.ParquetFile(str(path_hist)).schema.names)
+        cols_deseadas = ["fecha_venta", "sku", "producto", "marca",
+                         "categoria_padre", "categoria_hijo", "categoria_comercial",
+                         "cantidad"]
+        cols = [c for c in cols_deseadas if c in schema_cols]
+        df_v = pd.read_parquet(path_hist, columns=cols)
+        df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"], errors="coerce")
+        df_v["sku"]         = df_v["sku"].astype(str)
+        df_v["cantidad"]    = pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
+        df_v = df_v[df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan")]
+    else:
+        df_v = pd.DataFrame(columns=["fecha_venta", "sku", "producto", "marca",
+                                      "categoria_padre", "categoria_hijo", "cantidad"])
+
+    # ── 2. Metadata por SKU (registro más reciente) ───────────────────
+    meta_cols_disp = [c for c in ["sku", "producto", "marca", "categoria_padre",
+                                   "categoria_hijo", "categoria_comercial"]
+                      if c in df_v.columns]
+    df_meta = (
+        df_v.sort_values("fecha_venta", ascending=False)[meta_cols_disp]
+        .drop_duplicates("sku")
+        .copy()
+    )
+
+    # ── 3. Ventas 6 semanas (42 días) → demanda diaria y por horizonte ─
+    corte_6sem = _TODAY - timedelta(days=42)
+    df_6sem = df_v[(df_v["fecha_venta"] >= corte_6sem) & (df_v["fecha_venta"] < _TODAY)]
+
+    ventas_6sem_agg = (
+        df_6sem.groupby("sku")["cantidad"]
+        .sum()
+        .reset_index()
+        .rename(columns={"cantidad": "ventas_6sem"})
+    )
+    df_meta = df_meta.merge(ventas_6sem_agg, on="sku", how="left")
+    df_meta["ventas_6sem"]    = df_meta["ventas_6sem"].fillna(0).clip(lower=0)
+    df_meta["demanda_diaria"] = (df_meta["ventas_6sem"] / 42).clip(lower=0)
+
+    for h in _HORIZONTES:
+        df_meta[f"demanda_{h}d"] = (df_meta["demanda_diaria"] * h).clip(lower=0)
+
+    # ── 4. Promedio mensual — últimos 3 meses con datos disponibles ───
+    df_v_copy = df_v.copy()
+    df_v_copy["_mes"] = df_v_copy["fecha_venta"].dt.to_period("M")
+    meses_disp = sorted(df_v_copy["_mes"].dropna().unique())
+    ultimos_3 = meses_disp[-3:] if len(meses_disp) >= 3 else meses_disp
+    df_3m = df_v_copy[df_v_copy["_mes"].isin(ultimos_3)]
+    prom3m = (
+        df_3m.groupby(["sku", "_mes"])["cantidad"]
+        .sum()
+        .reset_index()
+        .groupby("sku")["cantidad"]
+        .mean()
+        .reset_index()
+        .rename(columns={"cantidad": "venta_prom_3m"})
+    )
+    prom3m["venta_prom_3m"] = prom3m["venta_prom_3m"].clip(lower=0)
+    df_meta = df_meta.merge(prom3m, on="sku", how="left")
+    df_meta["venta_prom_3m"] = df_meta["venta_prom_3m"].fillna(0)
+
+    # ── 5. Stock actual ───────────────────────────────────────────────
+    # NOTA: stock_diario usa IDs Odoo (int) — no hace match con códigos de ventas.
+    # Stock aparecerá en 0 hasta que extract_stock_historico.py sea corregido.
     df_sh = cargar_stock_diario()
     ultima = df_sh["fecha"].max()
     df_stock = (
@@ -94,50 +166,10 @@ def _preparar_datos() -> pd.DataFrame:
     )
     df_stock["stock_actual"] = df_stock["stock_actual"].clip(lower=0)
     df_stock["sku"] = df_stock["sku"].astype(str)
+    df_meta = df_meta.merge(df_stock, on="sku", how="left")
+    df_meta["stock_actual"] = df_meta["stock_actual"].fillna(0)
 
-    # ── 2. Forecast demand por horizonte ─────────────────────────────
-    df_f = cargar_forecast_sku().copy()
-    df_f["ds"] = pd.to_datetime(df_f["ds"])
-    df_f["sku"] = df_f["sku"].astype(str)
-    df_f["yhat_anchored"] = pd.to_numeric(df_f["yhat_anchored"], errors="coerce").fillna(0).clip(lower=0)
-
-    demanda_parts = []
-    for h in _HORIZONTES:
-        mask = (df_f["ds"] >= _TODAY) & (df_f["ds"] < _TODAY + timedelta(days=h))
-        part = (
-            df_f[mask]
-            .groupby("sku")["yhat_anchored"]
-            .sum()
-            .reset_index()
-            .rename(columns={"yhat_anchored": f"demanda_{h}d"})
-        )
-        demanda_parts.append(part)
-
-    df_demanda = demanda_parts[0]
-    for p in demanda_parts[1:]:
-        df_demanda = df_demanda.merge(p, on="sku", how="outer")
-
-    df_demanda["demanda_diaria"] = (df_demanda.get("demanda_90d", 0) / 90).clip(lower=0)
-
-    # ── 2b. Forecast promedio próximos 3 meses (mes actual + 2 siguientes) ──
-    # Fórmula: stock / ((venta_mes1 + venta_mes2 + venta_mes3) / 3)
-    meses_3 = pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")
-    df_f["_mes"] = df_f["ds"].dt.to_period("M")
-    df_f_3m = df_f[df_f["_mes"].isin(meses_3)].copy()
-    monthly_fc = (
-        df_f_3m.groupby(["sku", "_mes"])["yhat_anchored"]
-        .sum()
-        .reset_index()
-    )
-    df_prom3m = (
-        monthly_fc.groupby("sku")["yhat_anchored"]
-        .mean()
-        .reset_index()
-        .rename(columns={"yhat_anchored": "venta_prom_3m"})
-    )
-    df_prom3m["venta_prom_3m"] = df_prom3m["venta_prom_3m"].clip(lower=0)
-
-    # ── 3. Tránsito por horizonte ─────────────────────────────────────
+    # ── 6. Tránsito por horizonte ─────────────────────────────────────
     df_tr = cargar_transito().copy()
     df_tr["sku"] = df_tr["sku"].astype(str)
     df_tr["fecha_eta_bodega"] = pd.to_datetime(df_tr["fecha_eta_bodega"])
@@ -159,86 +191,36 @@ def _preparar_datos() -> pd.DataFrame:
     for p in transito_parts[1:]:
         df_transito = df_transito.merge(p, on="sku", how="outer")
 
-    # ── 4. Metadata SKU ───────────────────────────────────────────────
-    df_meta = (
-        df_f[["sku", "producto", "marca", "categoria_padre"]]
-        .drop_duplicates("sku")
-        .copy()
-    )
+    df_meta = df_meta.merge(df_transito, on="sku", how="left")
+    for h in _HORIZONTES:
+        col = f"transito_{h}d"
+        if col in df_meta.columns:
+            df_meta[col] = df_meta[col].fillna(0)
 
-    # categoria_hijo, categoria_comercial y ventas_6sem desde ventas_historico
-    df_ventas_6sem = pd.DataFrame(columns=["sku", "ventas_6sem"])
-    try:
-        df_v = cargar_ventas_historicas()
-        df_v["sku"] = df_v["sku"].astype(str)
-        df_v = df_v[df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan")]
-        df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"])
-        df_v["cantidad"]    = pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
-
-        # Metadata: categorías desde la venta más reciente por SKU
-        df_v_sorted = df_v.sort_values("fecha_venta", ascending=False)
-        meta_cols = [c for c in ["sku", "categoria_hijo", "categoria_comercial"] if c in df_v_sorted.columns]
-        df_meta_v = df_v_sorted[meta_cols].drop_duplicates("sku")
-        df_meta = df_meta.merge(df_meta_v, on="sku", how="left")
-
-        # Ventas últimas 6 semanas — ventana rolling de 42 días desde hoy
-        corte_6sem = _TODAY - timedelta(days=42)
-        df_ventas_6sem = (
-            df_v[(df_v["fecha_venta"] >= corte_6sem) & (df_v["fecha_venta"] < _TODAY)]
-            .groupby("sku")["cantidad"]
-            .sum()
-            .reset_index()
-            .rename(columns={"cantidad": "ventas_6sem"})
-        )
-    except Exception:
-        df_meta["categoria_hijo"]    = ""
-        df_meta["categoria_comercial"] = ""
-
-    # Garantizar que categoria_hijo y categoria_comercial siempre existan,
-    # incluso si ventas_historico cargó OK pero no tenía esas columnas
-    if "categoria_hijo" not in df_meta.columns:
-        df_meta["categoria_hijo"] = "Sin clasificar"
-    if "categoria_comercial" not in df_meta.columns:
-        df_meta["categoria_comercial"] = "Sin clasificar"
-
-    # ── 5. Unir todo ──────────────────────────────────────────────────
     df = df_meta.copy()
-    df = df.merge(df_stock,       on="sku", how="left")
-    df = df.merge(df_demanda,     on="sku", how="left")
-    df = df.merge(df_transito,    on="sku", how="left")
-    df = df.merge(df_ventas_6sem, on="sku", how="left")
-    df = df.merge(df_prom3m,      on="sku", how="left")
 
-    fill_cols = (
-        ["stock_actual", "demanda_diaria", "ventas_6sem", "venta_prom_3m"]
-        + [f"demanda_{h}d"  for h in _HORIZONTES]
-        + [f"transito_{h}d" for h in _HORIZONTES]
-    )
-    for col in fill_cols:
-        if col in df.columns:
-            df[col] = df[col].fillna(0)
+    # ── 7. Textos vacíos ──────────────────────────────────────────────
+    for c in ["categoria_hijo", "categoria_comercial", "marca", "categoria_padre"]:
+        if c in df.columns:
+            df[c] = df[c].fillna("Sin clasificar").replace("", "Sin clasificar")
 
-    # ── 6a. Cobertura basada en ventas reales (rolling 6 semanas) ────
+    # ── 8. Cobertura basada en ventas reales (rolling 6 semanas) ─────
+    # Convertir ventas_6sem a tasa mensual: / 42 días × 30 días/mes
+    demanda_mensual_6sem = (df["ventas_6sem"] / 42 * 30).clip(lower=0)
     df["cobertura_6sem_meses"] = np.where(
-        df["ventas_6sem"] > 0,
-        df["stock_actual"] / df["ventas_6sem"],
+        demanda_mensual_6sem > 0,
+        df["stock_actual"] / demanda_mensual_6sem,
         np.nan,
     )
     df["estado_6sem"] = df["cobertura_6sem_meses"].apply(_clasificar_meses)
 
-    # ── 6b. Cobertura proyectada (forecast promedio 3 meses) ─────────
-    # Fórmula: stock_actual / promedio(mes_actual, mes+1, mes+2)
+    # ── 9. Cobertura proyectada (promedio mensual 3 meses históricos) ─
     df["cobertura_fc3m_meses"] = np.where(
         df["venta_prom_3m"] > 0,
         df["stock_actual"] / df["venta_prom_3m"],
         np.nan,
     )
     df["estado_fc3m"] = df["cobertura_fc3m_meses"].apply(_clasificar_meses)
-
-    # ── 7. Textos vacíos ──────────────────────────────────────────────
-    for c in ["categoria_hijo", "categoria_comercial", "marca", "categoria_padre"]:
-        if c in df.columns:
-            df[c] = df[c].fillna("Sin clasificar").replace("", "Sin clasificar")
 
     return df.reset_index(drop=True)
 
