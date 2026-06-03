@@ -179,11 +179,13 @@ def _preparar_datos() -> pd.DataFrame:
     for h in _HORIZONTES:
         df_meta[f"demanda_{h}d"] = (df_meta["demanda_diaria"] * h).clip(lower=0)
 
-    # ── 5. Vta/Mes forecast próximos 3m ──────────────────────────────────
-    # Prioridad: PPTO manual (planif_forecast_manual) > Prophet > histórico
+    # ── 5. Vta/Mes = PPTO manual próximos 3m (mes actual + 2 sig.) ───────
+    # Fuente principal: planif_forecast_manual ("Venta PPTO MES" del Excel FCST)
+    # Fallback: promedio histórico últimos 3 meses (mientras no exista el PPTO)
+    # NO usa Prophet — la proyección es siempre el PPTO de negocio.
     meses_3_obj = pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")
 
-    # 5a. Fallback: histórico últimos 3 meses
+    # 5a. Fallback histórico (hasta que Andrés cargue el FCST Excel a Turso)
     df_v["_mes"] = df_v["fecha_venta"].dt.to_period("M")
     meses_disp   = sorted(df_v["_mes"].dropna().unique())
     ultimos_3    = meses_disp[-3:] if len(meses_disp) >= 3 else meses_disp
@@ -197,30 +199,7 @@ def _preparar_datos() -> pd.DataFrame:
     df_meta = df_meta.merge(prom3m_hist, on="sku", how="left")
     df_meta["venta_prom_3m"] = df_meta["venta_prom_3m"].fillna(0)
 
-    # 5b. Prophet (sobreescribe 110 SKUs con modelo)
-    try:
-        df_f = cargar_forecast_sku().copy()
-        df_f["ds"]  = pd.to_datetime(df_f["ds"])
-        df_f["sku"] = df_f["sku"].astype(str)
-        yhat_col    = "yhat_anchored" if "yhat_anchored" in df_f.columns else "yhat_base"
-        df_f[yhat_col] = (
-            pd.to_numeric(df_f[yhat_col], errors="coerce").fillna(0).clip(lower=0)
-        )
-        df_f["_mes"] = df_f["ds"].dt.to_period("M")
-        prom_fc = (
-            df_f[df_f["_mes"].isin(meses_3_obj)]
-            .groupby(["sku", "_mes"])[yhat_col].sum().reset_index()
-            .groupby("sku")[yhat_col].mean().reset_index()
-            .rename(columns={yhat_col: "_tmp"})
-        )
-        df_meta = df_meta.merge(prom_fc, on="sku", how="left")
-        m = df_meta["_tmp"].notna() & (df_meta["_tmp"] > 0)
-        df_meta.loc[m, "venta_prom_3m"] = df_meta.loc[m, "_tmp"]
-        df_meta.drop(columns=["_tmp"], inplace=True)
-    except Exception:
-        pass
-
-    # 5c. PPTO manual (máxima prioridad — sobreescribe todo)
+    # 5b. PPTO manual (sobreescribe fallback cuando el Excel está cargado)
     try:
         df_ppto = cargar_forecast_manual_mensual()
         if not df_ppto.empty:
