@@ -455,7 +455,8 @@ def render():
         )
 
         st.divider()
-        solo_con_demanda = st.checkbox("Solo SKUs con demanda proyectada", value=True)
+        solo_con_demanda = st.checkbox("Solo SKUs con demanda o PPTO", value=True,
+                                         help="Incluye SKUs con ventas recientes O con PPTO cargado en el FCST")
         solo_con_stock   = st.checkbox("Solo SKUs con stock > 0", value=False)
 
     # ── Aplicar filtros y recalcular cobertura con horizonte ──────────
@@ -468,7 +469,9 @@ def render():
     if sel_estados:
         dff = dff[dff["estado"].isin(sel_estados)]
     if solo_con_demanda:
-        dff = dff[dff["demanda_diaria"] > 0]
+        # Incluir SKUs con ventas recientes (demanda_diaria) O con PPTO cargado (venta_prom_3m)
+        # Esto evita filtrar los 325 SKUs del FCST que no tuvieron ventas en las últimas 6 semanas
+        dff = dff[(dff["demanda_diaria"] > 0) | (dff["venta_prom_3m"] > 0)]
     if solo_con_stock:
         dff = dff[dff["stock_actual"] > 0]
 
