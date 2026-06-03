@@ -9,6 +9,11 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+try:
+    from views._parquet_source import read_parquet_smart
+except ImportError:
+    from _parquet_source import read_parquet_smart
+
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data" / "finanzas"
 RESUMEN_FILE = DATA_DIR / "resumen_general.json"
@@ -16,10 +21,8 @@ RESUMEN_FILE = DATA_DIR / "resumen_general.json"
 
 @st.cache_data(ttl=300)
 def _load_parquet(name: str) -> pd.DataFrame:
-    path = DATA_DIR / f"{name}.parquet"
-    if not path.exists():
-        return pd.DataFrame()
-    return pd.read_parquet(path)
+    # Opción C: lee desde GitHub Raw (si PARQUET_BASE_URL) o local. Fallback local.
+    return read_parquet_smart(DATA_DIR / f"{name}.parquet")
 
 
 def pyl() -> pd.DataFrame:
