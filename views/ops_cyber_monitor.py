@@ -2,22 +2,19 @@
 Monitor Cyber en vivo — Operaciones
 Pedidos y unidades por hora vs meta diaria durante el Cyber 2026.
 
-Fuente datos en vivo: SQLite local (Turso live + parquet historico, ~5 min lag).
+Fuente datos: parquet directo (historico + mes actual) — sin depender de shared/SQLite/Turso.
 Filtra bodegas propias — excluye fulfillment externo (ML Full, Falabella Full).
-Fuente metas:         data/planificacion/plan_cyber_2026.json
+Fuente metas: data/planificacion/plan_cyber_2026.json
 """
 from __future__ import annotations
 
 import json
-import sqlite3
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-
-from views.shared import get_local_db_path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 META_JSON   = PROJECT_ROOT / "data" / "planificacion" / "plan_cyber_2026.json"
