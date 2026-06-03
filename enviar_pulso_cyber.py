@@ -838,10 +838,11 @@ def main():
     if _horas_cfg:
         _permitido = hora_clt in {int(h) for h in _horas_cfg.split(',') if h.strip().isdigit()}
     else:
-        _permitido = (hora_clt % 2 == 0)
+        # Horas pares dentro de la ventana 08:00 a 24:00 (medianoche=0). Excluye 2,4,6 am.
+        _permitido = (hora_clt % 2 == 0) and (hora_clt == 0 or hora_clt >= 8)
     if not _permitido:
-        print(f"[SKIP email] hora {hora_clt} CLT — el pulso al CEO es cada 2h (horas pares). "
-              f"El parquet/app ya se refrescó en el step previo.", flush=True)
+        print(f"[SKIP email] hora {hora_clt} CLT — pulso al CEO cada 2h, ventana 08:00–24:00. "
+              f"El parquet/app igual se refrescó en el step previo.", flush=True)
         return 0
 
     if not URL or not TOKEN or not RESEND_API_KEY:
