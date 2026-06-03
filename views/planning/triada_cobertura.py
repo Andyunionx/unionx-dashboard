@@ -517,24 +517,24 @@ def render():
             gb.configure_column("categoria_padre", rowGroup=True, hide=True)
             gb.configure_column("categoria_hijo",  rowGroup=True, hide=True)
 
-            # Columnas visibles — aggFunc muestra totales/promedios en cada nivel jerarquico
+            # Columnas visibles — enableValue+aggFunc muestra totales en cada nivel
             gb.configure_column("sku",                  header_name="SKU",            width=140)
             gb.configure_column("producto",             header_name="Producto",        width=220)
             gb.configure_column("stock_actual",         header_name="Stock (u)",       width=110,
-                                type=["numericColumn"], aggFunc="sum",
+                                type=["numericColumn"], enableValue=True, aggFunc="sum",
                                 valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
             if col_tr_jer in df_jer.columns:
                 gb.configure_column(col_tr_jer,         header_name=f"Tránsito ≤{horizonte}d", width=120,
-                                    type=["numericColumn"], aggFunc="sum",
+                                    type=["numericColumn"], enableValue=True, aggFunc="sum",
                                     valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
             gb.configure_column("ventas_6sem",          header_name="Ventas 6sem",     width=110,
-                                type=["numericColumn"], aggFunc="sum",
+                                type=["numericColumn"], enableValue=True, aggFunc="sum",
                                 valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
             gb.configure_column("venta_prom_3m",        header_name="Vta/Mes",         width=95,
-                                type=["numericColumn"], aggFunc="sum",
+                                type=["numericColumn"], enableValue=True, aggFunc="sum",
                                 valueFormatter="x != null ? x.toFixed(1) : ''")
             gb.configure_column("cobertura_fc3m_meses", header_name="Cob. Meses",      width=110,
-                                type=["numericColumn"], aggFunc="avg",
+                                type=["numericColumn"], enableValue=True, aggFunc="avg",
                                 valueFormatter="x != null ? x.toFixed(1) : ''")
 
             # Colorear estado
