@@ -507,70 +507,71 @@ def render():
         ] if c in dff.columns]
 
         marcas_jer = sorted(dff["marca"].dropna().unique())
-        for marca in marcas_jer:
-            df_m = dff[dff["marca"] == marca]
-            peor_m   = _peor_estado_grupo(df_m["estado_fc3m"])
-            n_m      = len(df_m)
-            stock_m  = int(df_m["stock_actual"].sum())
-            critico_m = int((df_m["estado_fc3m"] == "CRÍTICO").sum())
-            label_m  = (f"{_ICONO_ESTADO[peor_m]} **{marca}** — "
-                        f"{n_m} SKUs · Stock: {stock_m:,}"
-                        + (f" · 🔴 {critico_m} críticos" if critico_m else ""))
+        with st.container(border=True):
+            for marca in marcas_jer:
+                df_m = dff[dff["marca"] == marca]
+                peor_m    = _peor_estado_grupo(df_m["estado_fc3m"])
+                n_m       = len(df_m)
+                stock_m   = int(df_m["stock_actual"].sum())
+                critico_m = int((df_m["estado_fc3m"] == "CRÍTICO").sum())
+                label_m   = (f"{_ICONO_ESTADO[peor_m]} **{marca}** — "
+                             f"{n_m} SKUs · Stock: {stock_m:,}"
+                             + (f" · 🔴 {critico_m} críticos" if critico_m else ""))
 
-            with st.expander(label_m):
-                cats_padre = sorted(df_m["categoria_padre"].dropna().unique())
-                for cat_p in cats_padre:
-                    df_cp    = df_m[df_m["categoria_padre"] == cat_p]
-                    peor_cp  = _peor_estado_grupo(df_cp["estado_fc3m"])
-                    n_cp     = len(df_cp)
-                    stock_cp = int(df_cp["stock_actual"].sum())
-                    critico_cp = int((df_cp["estado_fc3m"] == "CRÍTICO").sum())
-                    label_cp = (f"{_ICONO_ESTADO[peor_cp]} {cat_p} — "
-                                f"{n_cp} SKUs · Stock: {stock_cp:,}"
-                                + (f" · 🔴 {critico_cp}" if critico_cp else ""))
+                with st.expander(label_m):
+                    cats_padre = sorted(df_m["categoria_padre"].dropna().unique())
+                    for cat_p in cats_padre:
+                        df_cp     = df_m[df_m["categoria_padre"] == cat_p]
+                        peor_cp   = _peor_estado_grupo(df_cp["estado_fc3m"])
+                        n_cp      = len(df_cp)
+                        stock_cp  = int(df_cp["stock_actual"].sum())
+                        critico_cp = int((df_cp["estado_fc3m"] == "CRÍTICO").sum())
+                        label_cp  = (f"{_ICONO_ESTADO[peor_cp]} {cat_p} — "
+                                     f"{n_cp} SKUs · Stock: {stock_cp:,}"
+                                     + (f" · 🔴 {critico_cp}" if critico_cp else ""))
 
-                    with st.expander(label_cp):
-                        cats_hijo = sorted(df_cp["categoria_hijo"].dropna().unique())
-                        for cat_h in cats_hijo:
-                            df_ch    = df_cp[df_cp["categoria_hijo"] == cat_h]
-                            peor_ch  = _peor_estado_grupo(df_ch["estado_fc3m"])
-                            n_ch     = len(df_ch)
-                            stock_ch = int(df_ch["stock_actual"].sum())
-                            critico_ch = int((df_ch["estado_fc3m"] == "CRÍTICO").sum())
-                            label_ch = (f"{_ICONO_ESTADO[peor_ch]} {cat_h} — "
-                                        f"{n_ch} SKUs · Stock: {stock_ch:,}"
-                                        + (f" · 🔴 {critico_ch}" if critico_ch else ""))
+                        with st.expander(label_cp):
+                            cats_hijo = sorted(df_cp["categoria_hijo"].dropna().unique())
+                            for cat_h in cats_hijo:
+                                df_ch     = df_cp[df_cp["categoria_hijo"] == cat_h]
+                                peor_ch   = _peor_estado_grupo(df_ch["estado_fc3m"])
+                                n_ch      = len(df_ch)
+                                stock_ch  = int(df_ch["stock_actual"].sum())
+                                critico_ch = int((df_ch["estado_fc3m"] == "CRÍTICO").sum())
+                                label_ch  = (f"{_ICONO_ESTADO[peor_ch]} {cat_h} — "
+                                             f"{n_ch} SKUs · Stock: {stock_ch:,}"
+                                             + (f" · 🔴 {critico_ch}" if critico_ch else ""))
 
-                            with st.expander(label_ch):
-                                df_show = (
-                                    df_ch[cols_sku_jer].copy()
-                                    .sort_values("cobertura_fc3m_meses",
-                                                 ascending=True, na_position="last")
-                                )
-                                if "cobertura_fc3m_meses" in df_show.columns:
-                                    df_show["cobertura_fc3m_meses"] = df_show["cobertura_fc3m_meses"].round(1)
-                                if "venta_prom_3m" in df_show.columns:
-                                    df_show["venta_prom_3m"] = df_show["venta_prom_3m"].round(1)
+                                with st.expander(label_ch):
+                                    df_show = (
+                                        df_ch[cols_sku_jer].copy()
+                                        .sort_values("cobertura_fc3m_meses",
+                                                     ascending=True, na_position="last")
+                                    )
+                                    if "cobertura_fc3m_meses" in df_show.columns:
+                                        df_show["cobertura_fc3m_meses"] = df_show["cobertura_fc3m_meses"].round(1)
+                                    if "venta_prom_3m" in df_show.columns:
+                                        df_show["venta_prom_3m"] = df_show["venta_prom_3m"].round(1)
 
-                                st.dataframe(
-                                    df_show.style.map(
-                                        _style_estado,
-                                        subset=[c for c in ["estado_fc3m"] if c in df_show.columns]
-                                    ),
-                                    use_container_width=True,
-                                    height=min(420, 38 * len(df_show) + 40),
-                                    column_config={
-                                        "sku":                  st.column_config.TextColumn("SKU",           width=130),
-                                        "producto":             st.column_config.TextColumn("Producto",      width=220),
-                                        "stock_actual":         st.column_config.NumberColumn("Stock (u)",   format="%d"),
-                                        col_tr_jer:             st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
-                                        "ventas_6sem":          st.column_config.NumberColumn("Ventas 6sem", format="%d"),
-                                        "venta_prom_3m":        st.column_config.NumberColumn("Vta/Mes",     format="%.1f"),
-                                        "cobertura_fc3m_meses": st.column_config.NumberColumn("Cob. Meses",  format="%.1f"),
-                                        "estado_fc3m":          st.column_config.TextColumn("Estado",        width=100),
-                                    },
-                                    hide_index=True,
-                                )
+                                    st.dataframe(
+                                        df_show.style.map(
+                                            _style_estado,
+                                            subset=[c for c in ["estado_fc3m"] if c in df_show.columns]
+                                        ),
+                                        use_container_width=True,
+                                        height=min(420, 38 * len(df_show) + 40),
+                                        column_config={
+                                            "sku":                  st.column_config.TextColumn("SKU",           width=130),
+                                            "producto":             st.column_config.TextColumn("Producto",      width=220),
+                                            "stock_actual":         st.column_config.NumberColumn("Stock (u)",   format="%d"),
+                                            col_tr_jer:             st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
+                                            "ventas_6sem":          st.column_config.NumberColumn("Ventas 6sem", format="%d"),
+                                            "venta_prom_3m":        st.column_config.NumberColumn("Vta/Mes",     format="%.1f"),
+                                            "cobertura_fc3m_meses": st.column_config.NumberColumn("Cob. Meses",  format="%.1f"),
+                                            "estado_fc3m":          st.column_config.TextColumn("Estado",        width=100),
+                                        },
+                                        hide_index=True,
+                                    )
 
     # ── TAB 1 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
