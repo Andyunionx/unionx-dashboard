@@ -15,10 +15,16 @@ en vez de explotar.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+
+try:
+    from views._parquet_source import read_parquet_smart
+except ImportError:
+    from _parquet_source import read_parquet_smart
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / 'data'
@@ -81,27 +87,37 @@ def _try_turso_or_parquet(turso_fn, tabla: str, schema_cols: list | None = None,
 
     silent=True: no emite st.warning si todo falla. Para loaders que tienen
     su propio plan B (ej. cargar_planif_transito_live cae a comex/transito.parquet).
+
+    Con PARQUET_ONLY=1 NO intenta Turso: va directo al snapshot parquet (Opción C:
+    desde GitHub Raw si PARQUET_BASE_URL, si no local).
     """
-    try:
-        return turso_fn()
-    except Exception as e:
-        if not _is_turso_blocked(e):
-            if not silent:
-                st.warning(f"No pude leer {tabla}: {e}")
-            return pd.DataFrame(columns=schema_cols or [])
-        for source_path in (FALLBACK_PARQUETS.get(tabla), LEGACY_FALLBACKS.get(tabla)):
-            if source_path is None or not source_path.exists():
-                continue
-            try:
-                df = pd.read_parquet(source_path)
-                _marcar_bypass(source_path, tabla)
-                return df
-            except Exception as e2:
+    parquet_only = os.environ.get('PARQUET_ONLY') == '1'
+    if not parquet_only:
+        try:
+            return turso_fn()
+        except Exception as e:
+            if not _is_turso_blocked(e):
                 if not silent:
-                    st.warning(f"Fallback parquet {source_path.name} falló: {type(e2).__name__}: {e2}")
-        if not silent:
-            st.warning(f"No pude leer {tabla} (Turso bloqueado y sin snapshot local).")
-        return pd.DataFrame(columns=schema_cols or [])
+                    st.warning(f"No pude leer {tabla}: {e}")
+                return pd.DataFrame(columns=schema_cols or [])
+            # Turso bloqueado → cae a snapshot (mismo camino que parquet_only)
+
+    for source_path in (FALLBACK_PARQUETS.get(tabla), LEGACY_FALLBACKS.get(tabla)):
+        if source_path is None:
+            continue
+        try:
+            df = read_parquet_smart(source_path)  # URL (Opción C) o local
+        except Exception as e2:
+            if not silent:
+                st.warning(f"Snapshot {source_path.name} falló: {type(e2).__name__}: {e2}")
+            continue
+        if not df.empty:
+            if not parquet_only:
+                _marcar_bypass(source_path, tabla)
+            return df
+    if not silent and not parquet_only:
+        st.warning(f"No pude leer {tabla} (Turso bloqueado y sin snapshot).")
+    return pd.DataFrame(columns=schema_cols or [])
 
 
 # ============================================================
