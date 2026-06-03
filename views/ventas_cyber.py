@@ -404,6 +404,9 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
             day_label = d.strftime('%a %d-%b') if hasattr(d, 'strftime') else str(d)
             tabla[f'{day_label} · Venta'] = pv_v[d].map(fmt_money)
             tabla[f'{day_label} · Margen'] = pv_m[d].map(fmt_money)
+        # Índice 'Hora' a string ANTES de la fila TOTAL: evita una columna con
+        # tipos mezclados (int 0-23 + 'TOTAL') que rompe el render de pyarrow/Streamlit.
+        tabla.index = tabla.index.astype(str)
         # Fila TOTAL al final
         total_row = {}
         for d in pv_v.columns:
