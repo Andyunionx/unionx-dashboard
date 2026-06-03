@@ -535,7 +535,7 @@ def render():
                                 valueFormatter="x != null ? x.toFixed(1) : ''")
             gb.configure_column("cobertura_fc3m_meses", header_name="Cob. Meses",      width=110,
                                 type=["numericColumn"], enableValue=True, aggFunc="avg",
-                                valueFormatter="x != null ? x.toFixed(1) : ''")
+                                valueFormatter=JsCode("function(params){return params.value!=null?parseFloat(params.value).toFixed(1):''}"))
 
             # Colorear estado
             estado_cell_style = JsCode("""
@@ -560,7 +560,7 @@ def render():
                 animateRows=True,
                 suppressAggFuncInHeader=True,
                 autoGroupColumnDef={
-                    "headerName": "Marca / Categoría / SKU",
+                    "headerName": "Marca / Categoría",
                     "minWidth": 280,
                     "cellRendererParams": {"suppressCount": False},
                 },
