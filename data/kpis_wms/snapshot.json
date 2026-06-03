@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-06-03T08:21:21.581428",
+  "generado_en": "2026-06-03T18:46:58.073408",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.003611338239302262,
-      "total_pickings": 14676,
+      "valor": 0.0034105534105534105,
+      "total_pickings": 15540,
       "on_time": 53,
-      "on_time_pct": 0.003611338239302262,
-      "in_full": 14659,
-      "in_full_pct": 0.9988416462251295,
+      "on_time_pct": 0.0034105534105534105,
+      "in_full": 15523,
+      "in_full_pct": 0.998906048906049,
       "both": 53,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.06477732793522267,
-      "total_pickings": 494,
+      "valor": 0.06464646464646465,
+      "total_pickings": 495,
       "on_time": 34,
-      "on_time_pct": 0.06882591093117409,
-      "in_full": 490,
-      "in_full_pct": 0.9919028340080972,
+      "on_time_pct": 0.06868686868686869,
+      "in_full": 491,
+      "in_full_pct": 0.9919191919191919,
       "both": 32,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999800945508833,
-      "ok": 20091,
-      "total": 20095,
+      "valor": 0.9998111871607269,
+      "ok": 21181,
+      "total": 21185,
       "errores": 4,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8017380881030866,
-      "total_so": 16810,
-      "total_con_pickings": 16685,
-      "cumplidos": 13377,
+      "valor": 0.8026160004510345,
+      "total_so": 17862,
+      "total_con_pickings": 17737,
+      "cumplidos": 14236,
       "parciales": 15,
-      "sin_iniciar": 3293,
+      "sin_iniciar": 3486,
       "error": null
     },
     "oct_30d": {
-      "valor": 36.19670516595092,
-      "n_orders": 15058,
+      "valor": 35.44553948865024,
+      "n_orders": 15923,
       "min_h": 0.018333333333333333,
       "max_h": 597.8994444444445,
-      "mediana_h": 22.514722222222222,
+      "mediana_h": 22.353055555555557,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 4880,
+      "lineas": 5994,
       "mes": "2026-06",
       "error": null
     },
@@ -409,9 +409,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 48,
-          "tarde": 42,
-          "on_time_pct": 0.125
+          "total": 49,
+          "tarde": 43,
+          "on_time_pct": 0.12244897959183673
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -6720,31 +6720,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.003611338239302262,
-      "total_pickings": 14676,
+      "valor": 0.0034105534105534105,
+      "total_pickings": 15540,
       "on_time": 53,
-      "on_time_pct": 0.003611338239302262,
-      "in_full": 14659,
-      "in_full_pct": 0.9988416462251295,
+      "on_time_pct": 0.0034105534105534105,
+      "in_full": 15523,
+      "in_full_pct": 0.998906048906049,
       "both": 53,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.06477732793522267,
-      "total_pickings": 494,
+      "valor": 0.06464646464646465,
+      "total_pickings": 495,
       "on_time": 34,
-      "on_time_pct": 0.06882591093117409,
-      "in_full": 490,
-      "in_full_pct": 0.9919028340080972,
+      "on_time_pct": 0.06868686868686869,
+      "in_full": 491,
+      "in_full_pct": 0.9919191919191919,
       "both": 32,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999800945508833,
-      "ok": 20091,
-      "total": 20095,
+      "valor": 0.9998111871607269,
+      "ok": 21181,
+      "total": 21185,
       "errores": 4,
       "error": null
     }
