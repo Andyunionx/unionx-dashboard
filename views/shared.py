@@ -508,6 +508,13 @@ class _DuckConn:
         rel = cur.execute(sql, params) if params else cur.execute(sql)
         return _DuckCursor(rel)
 
+    def read_df(self, sql, params=None):
+        """DataFrame vía el .df() NATIVO de DuckDB (robusto). Evita el path DBAPI
+        no-testeado de pandas.read_sql (frágil/inestable con el adaptador)."""
+        cur = self._con.cursor()
+        rel = cur.execute(sql, list(params)) if params else cur.execute(sql)
+        return rel.df()
+
     def cursor(self):
         # Cursor DBAPI para pandas.read_sql_query (ej. descargar_raw, export):
         # el cursor de DuckDB ya es DBAPI 2.0 compatible.

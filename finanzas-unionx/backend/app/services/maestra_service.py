@@ -932,10 +932,12 @@ class MaestraService:
             'marketing': 'Marketing', 'margen_final': 'Mg final',
         }
         conn = self._conn()
-        df = pd.read_sql_query(
-            f"SELECT {','.join(DB_TO_RAW.keys())} FROM ventas "
-            "WHERE fecha_venta BETWEEN ? AND ? ORDER BY fecha_venta",
-            conn, params=[fecha_desde, fecha_hasta])
+        sql = (f"SELECT {','.join(DB_TO_RAW.keys())} FROM ventas "
+               "WHERE fecha_venta BETWEEN ? AND ? ORDER BY fecha_venta")
+        if hasattr(conn, 'read_df'):   # motor DuckDB → .df() nativo (robusto)
+            df = conn.read_df(sql, [fecha_desde, fecha_hasta])
+        else:                           # SQLite → pandas read_sql (soportado)
+            df = pd.read_sql_query(sql, conn, params=[fecha_desde, fecha_hasta])
         conn.close()
         df = df.rename(columns=DB_TO_RAW)
         return df
