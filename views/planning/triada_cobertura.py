@@ -551,8 +551,9 @@ def render():
     st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────
-    tab_jer, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
+    tab_jer, tab_proy, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
         "🌳 Jerárquico",
+        "📅 Proyección",
         "🔍 Por SKU",
         "🏷️ Por Marca",
         "📂 Por Categoría",
@@ -661,6 +662,105 @@ def render():
             st.info("Instalando streamlit-aggrid... El deploy tarda ~1 min. Recargá la página.")
             st.caption("Vista alternativa mientras carga:")
             st.dataframe(df_jer, use_container_width=True, height=500, hide_index=True)
+
+    # ── TAB PROYECCIÓN — Stock Mensual por SKU ────────────────────────
+    with tab_proy:
+        N_MESES = 6
+        meses_obj = [_TODAY + pd.DateOffset(months=i) for i in range(N_MESES)]
+        mes_strs  = [m.strftime("%Y-%m") for m in meses_obj]
+        mes_labels = [m.strftime("%b %y") for m in meses_obj]
+
+        # Cargar PPTO por SKU × mes
+        _path_ppto = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_manual.parquet"
+        if _path_ppto.exists():
+            df_ppto_p = pd.read_parquet(_path_ppto)
+            df_ppto_p["sku"] = df_ppto_p["sku"].astype(str)
+            df_ppto_p["unidades"] = pd.to_numeric(df_ppto_p["unidades"], errors="coerce").fillna(0)
+            ppto_pivot = df_ppto_p.pivot_table(
+                index="sku", columns="mes", values="unidades", aggfunc="sum"
+            ).fillna(0)
+        else:
+            ppto_pivot = pd.DataFrame()
+
+        # Cargar tránsito por SKU × mes ETA
+        df_tr_p = cargar_planif_transito_live()
+        if df_tr_p.empty:
+            df_tr_p = cargar_transito()
+        df_tr_p["sku"]     = df_tr_p["sku"].astype(str)
+        df_tr_p["cantidad"] = pd.to_numeric(df_tr_p["cantidad"], errors="coerce").fillna(0)
+        df_tr_p["mes_eta"] = pd.to_datetime(df_tr_p["fecha_eta_bodega"], errors="coerce").dt.strftime("%Y-%m")
+        tr_pivot = df_tr_p.pivot_table(
+            index="sku", columns="mes_eta", values="cantidad", aggfunc="sum"
+        ).fillna(0) if not df_tr_p.empty else pd.DataFrame()
+
+        # Construir proyección vectorizada por SKU
+        df_p = dff[["sku", "producto", "marca", "categoria_padre", "stock_actual",
+                     "venta_prom_3m"]].copy()
+        stock_v = df_p["stock_actual"].values.astype(float).copy()
+
+        rows_multi = []   # para MultiIndex columns
+
+        for mes_str, mes_label in zip(mes_strs, mes_labels):
+            # Venta del mes: PPTO si existe, venta_prom_3m como fallback
+            if mes_str in ppto_pivot.columns:
+                venta_v = ppto_pivot[mes_str].reindex(df_p["sku"].values, fill_value=0).values.astype(float)
+            else:
+                venta_v = df_p["venta_prom_3m"].values.astype(float)
+
+            # Tránsito del mes
+            tr_v = (tr_pivot[mes_str].reindex(df_p["sku"].values, fill_value=0).values.astype(float)
+                    if mes_str in tr_pivot.columns else np.zeros(len(df_p)))
+
+            cob_v = np.where(venta_v > 0, stock_v / venta_v, np.nan)
+            stock_fin_v = np.maximum(0.0, stock_v - venta_v + tr_v)
+
+            df_p[f"stock_ini_{mes_str}"] = np.round(stock_v).astype(int)
+            df_p[f"venta_{mes_str}"]     = np.round(venta_v, 1)
+            df_p[f"tr_{mes_str}"]        = np.round(tr_v).astype(int)
+            df_p[f"cob_{mes_str}"]       = np.round(cob_v, 1)
+
+            stock_v = stock_fin_v  # siguiente mes arranca con el fin del actual
+
+        # Construir MultiIndex para display
+        base_cols  = ["sku", "producto", "marca"]
+        mes_groups = []
+        for ms, ml in zip(mes_strs, mes_labels):
+            mes_groups += [
+                (ml, "Stock Ini"),
+                (ml, "Venta"),
+                (ml, "Tránsito"),
+                (ml, "Cob.Meses"),
+            ]
+        tuples = [("", c) for c in base_cols] + mes_groups
+        multi_idx = pd.MultiIndex.from_tuples(tuples)
+
+        flat_cols = (base_cols
+                     + [c for ms in mes_strs
+                        for c in [f"stock_ini_{ms}", f"venta_{ms}", f"tr_{ms}", f"cob_{ms}"]])
+        df_show = df_p[flat_cols].copy()
+        df_show.columns = multi_idx
+
+        st.caption(f"Proyección {N_MESES} meses · Stock Inicio → Stock - Venta PPTO + Tránsito ETA")
+
+        def _color_cob(val):
+            if pd.isna(val):   return ""
+            v = float(val)
+            if v < 1:          return "background-color:#FF4B4B;color:white"
+            if v < 2:          return "background-color:#FFD700;color:#333"
+            if v < 4:          return "background-color:#52C41A;color:white"
+            return "background-color:#722ED1;color:white"
+
+        cob_cols = [c for c in df_show.columns if c[1] == "Cob.Meses"]
+        st.dataframe(
+            df_show.style.applymap(_color_cob, subset=cob_cols),
+            use_container_width=True,
+            height=600,
+            hide_index=True,
+        )
+        csv_p = df_p[flat_cols].to_csv(index=False).encode("utf-8")
+        st.download_button("⬇️ Descargar proyección CSV", data=csv_p,
+                           file_name=f"proyeccion_{N_MESES}m_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
+                           mime="text/csv", key="dl_proy")
 
     # ── TAB 1 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
