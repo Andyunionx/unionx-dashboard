@@ -49,6 +49,119 @@ _TURSO_PROBED = False  # True si ya intentamos conectar (no reintentar en bucle)
 _DATA_CACHE = None  # cache in-memory del último _load() para evitar leer disk/red en cada get
 _DATA_CACHE_TS = 0
 
+# ── Modo parquet-only / Opción C (sin Turso) ──────────────────────────
+# Con PARQUET_ONLY=1 el store NO usa Turso. Lee el JSON commiteado desde
+# GitHub Raw (PARQUET_BASE_URL, fresco entre redeploys) con fallback local,
+# y al guardar commitea el JSON al repo vía GitHub API (GH_TOKEN) para que
+# las escrituras manuales (Gabriela) sobrevivan redeploys — equivalente a lo
+# que hace alertas.parquet, pero iniciado desde la app.
+_GH_REPO = "Andyunionx/unionx-dashboard"
+_GH_PATH = "data/ops_manuales/kpis.json"
+_GH_BRANCH = "main"
+
+
+def _secret(key: str, default: str = "") -> str:
+    """env primero; si no, st.secrets (guardado para uso CLI sin streamlit)."""
+    v = os.environ.get(key, "")
+    if v:
+        return v
+    try:
+        import streamlit as st  # noqa
+        return str(st.secrets.get(key, default) or default)
+    except Exception:
+        return default
+
+
+def _parquet_only() -> bool:
+    return _secret("PARQUET_ONLY") == "1"
+
+
+def _base_url() -> str:
+    return _secret("PARQUET_BASE_URL").rstrip("/")
+
+
+def _load_from_url():
+    """Opción C: lee el JSON commiteado desde GitHub Raw. None si falla/no configurado."""
+    base = _base_url()
+    if not base:
+        return None
+    try:
+        import urllib.request
+        url = f"{base}/{_GH_PATH}"
+        with urllib.request.urlopen(url, timeout=10) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        data.setdefault("_meta", {})["storage"] = "github_raw"
+        return data
+    except Exception as e:
+        print(f"[ops_data_helper] Opción C URL falló ({e}); caigo a JSON local")
+        return None
+
+
+def _commit_to_github(data: Dict) -> bool:
+    """Commitea kpis.json al repo vía GitHub Contents API. Requiere GH_TOKEN
+    (PAT fine-grained, Contents: Read & Write). False si no hay token o falla."""
+    token = _secret("GH_TOKEN") or _secret("GITHUB_TOKEN")
+    if not token:
+        return False
+    try:
+        import base64
+        import urllib.request
+        import urllib.error
+        api = f"https://api.github.com/repos/{_GH_REPO}/contents/{_GH_PATH}"
+        hdr = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "unionx-ops-app",
+        }
+        sha = None
+        try:
+            req = urllib.request.Request(f"{api}?ref={_GH_BRANCH}", headers=hdr)
+            with urllib.request.urlopen(req, timeout=10) as r:
+                sha = json.loads(r.read().decode())["sha"]
+        except urllib.error.HTTPError as e:
+            if e.code != 404:  # 404 = archivo aún no existe → commit nuevo
+                raise
+        content_b64 = base64.b64encode(
+            json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+        ).decode("ascii")
+        body = {
+            "message": f"ops: KPIs manuales {datetime.now().isoformat(timespec='minutes')}",
+            "content": content_b64,
+            "branch": _GH_BRANCH,
+        }
+        if sha:
+            body["sha"] = sha
+        put = urllib.request.Request(
+            api, method="PUT", data=json.dumps(body).encode(),
+            headers={**hdr, "Content-Type": "application/json"})
+        with urllib.request.urlopen(put, timeout=15) as r:
+            return r.status in (200, 201)
+    except Exception as e:
+        print(f"[ops_data_helper] GitHub commit falló: {e}")
+        return False
+
+
+def _load_local() -> Dict:
+    if DATA_FILE.exists():
+        try:
+            with open(DATA_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+            data.setdefault("_meta", {})["storage"] = "json_local"
+            return data
+        except Exception:
+            pass
+    return _empty_estructura()
+
+
+def _save_local(data: Dict) -> bool:
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception:
+        return False
+
 
 def _empty_estructura() -> Dict:
     return {
@@ -69,6 +182,8 @@ def _empty_estructura() -> Dict:
 def _get_turso_conn():
     """Devuelve conn Turso cacheada o None. Solo intenta conectar 1 vez por proceso."""
     global _TURSO_CONN, _TURSO_PROBED
+    if _parquet_only():  # modo parquet-only: Turso desactivado por completo
+        return None
     if _TURSO_PROBED:
         return _TURSO_CONN
     _TURSO_PROBED = True
@@ -103,32 +218,26 @@ def _load(force_refresh: bool = False) -> Dict:
     if not force_refresh and _DATA_CACHE is not None and (time.time() - _DATA_CACHE_TS) < 30:
         return _DATA_CACHE
 
-    conn = _get_turso_conn()
     data = None
-    if conn is not None:
-        try:
-            row = conn.execute("SELECT v FROM ops_kpis_manuales WHERE k = ?",
-                               (_TURSO_KEY,)).fetchone()
-            if row:
-                data = json.loads(row[0])
-            else:
-                data = _empty_estructura()
-            data.setdefault("_meta", {})["storage"] = "turso"
-        except Exception as e:
-            print(f"[ops_data_helper] Error leyendo de Turso: {e}")
-            data = None
 
-    # Fallback JSON local
-    if data is None:
-        if DATA_FILE.exists():
+    if _parquet_only():
+        # Opción C: JSON commiteado desde GitHub Raw → fallback local
+        data = _load_from_url()
+        if data is None:
+            data = _load_local()
+    else:
+        conn = _get_turso_conn()
+        if conn is not None:
             try:
-                with open(DATA_FILE, encoding="utf-8") as f:
-                    data = json.load(f)
-                    data.setdefault("_meta", {})["storage"] = "json_local"
-            except Exception:
-                data = _empty_estructura()
-        else:
-            data = _empty_estructura()
+                row = conn.execute("SELECT v FROM ops_kpis_manuales WHERE k = ?",
+                                   (_TURSO_KEY,)).fetchone()
+                data = json.loads(row[0]) if row else _empty_estructura()
+                data.setdefault("_meta", {})["storage"] = "turso"
+            except Exception as e:
+                print(f"[ops_data_helper] Error leyendo de Turso: {e}")
+                data = None
+        if data is None:
+            data = _load_local()
 
     _DATA_CACHE = data
     _DATA_CACHE_TS = time.time()
@@ -140,6 +249,15 @@ def _save(data: Dict) -> bool:
     global _DATA_CACHE, _DATA_CACHE_TS
     import time
     data.setdefault("_meta", {})["ultima_carga"] = datetime.now().isoformat()
+
+    if _parquet_only():
+        # Local (la sesión actual lo ve ya) + commit a GitHub (durable entre redeploys)
+        ok_local = _save_local(data)
+        ok_gh = _commit_to_github(data)
+        data["_meta"]["storage"] = "github" if ok_gh else "json_local_efimero"
+        _DATA_CACHE = data
+        _DATA_CACHE_TS = time.time()
+        return ok_local or ok_gh
 
     conn = _get_turso_conn()
     if conn is not None:
@@ -158,20 +276,32 @@ def _save(data: Dict) -> bool:
             print(f"[ops_data_helper] Error escribiendo a Turso: {e}")
 
     # Fallback JSON local
-    try:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        data["_meta"]["storage"] = "json_local"
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+    data["_meta"]["storage"] = "json_local"
+    if _save_local(data):
         _DATA_CACHE = data
         _DATA_CACHE_TS = time.time()
         return True
-    except Exception:
-        return False
+    return False
 
 
 def get_storage_status() -> Dict:
     """Diagnóstico para mostrar en la UI: dónde se está persistiendo."""
+    if _parquet_only():
+        tiene_token = bool(_secret("GH_TOKEN") or _secret("GITHUB_TOKEN"))
+        tiene_url = bool(_base_url())
+        return {
+            "turso_configurado": False,
+            "turso_alcanzable": False,
+            "storage_actual": (
+                "GitHub (commit, persiste redeploys)" if tiene_token
+                else "JSON local (efímero — sin GH_TOKEN)"
+            ),
+            "lee_opcion_c": tiene_url,
+            "advertencia": None if tiene_token else (
+                "Sin GH_TOKEN: las cargas manuales NO sobreviven al redeploy. "
+                "Setear GH_TOKEN (PAT Contents: Read & Write) para persistir."
+            ),
+        }
     conn = _get_turso_conn()
     ok = conn is not None
     return {
