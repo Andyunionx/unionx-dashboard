@@ -551,16 +551,15 @@ def render():
     st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────
-    tab_jer, tab_proy, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
+    tab_jer, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
         "🌳 Jerárquico",
-        "📅 Proyección",
         "🔍 Por SKU",
         "🏷️ Por Marca",
         "📂 Por Categoría",
         "📊 Marca × Categoría",
     ])
 
-    # ── TAB 0 — Jerárquico (tabla dinámica AG-Grid) ───────────────────
+    # ── TAB 0 — Jerárquico con proyección mensual integrada ──────────
     with tab_jer:
         try:
             from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
@@ -568,199 +567,128 @@ def render():
         except ImportError:
             _aggrid_ok = False
 
-        col_tr_jer = f"transito_{horizonte}d"
-        cols_jer = [c for c in [
-            "marca", "categoria_padre", "categoria_hijo",
-            "sku", "producto",
-            "stock_actual", col_tr_jer,
-            "ventas_6sem", "venta_prom_3m",
-            "cobertura_fc3m_meses", "estado_fc3m",
-        ] if c in dff.columns]
+        # ── Calcular proyección mensual (6 meses) ─────────────────────
+        N_MESES_J = 6
+        meses_j   = [_TODAY + pd.DateOffset(months=i) for i in range(N_MESES_J)]
+        mes_strs_j  = [m.strftime("%Y-%m") for m in meses_j]
+        mes_labels_j = [m.strftime("%b %y") for m in meses_j]
 
-        df_jer = dff[cols_jer].copy()
-        if "cobertura_fc3m_meses" in df_jer.columns:
-            df_jer["cobertura_fc3m_meses"] = df_jer["cobertura_fc3m_meses"].round(1)
-        if "venta_prom_3m" in df_jer.columns:
-            df_jer["venta_prom_3m"] = df_jer["venta_prom_3m"].round(1)
+        _path_ppto_j = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_manual.parquet"
+        if _path_ppto_j.exists():
+            _df_p = pd.read_parquet(_path_ppto_j)
+            _df_p["sku"] = _df_p["sku"].astype(str)
+            _df_p["unidades"] = pd.to_numeric(_df_p["unidades"], errors="coerce").fillna(0)
+            _ppto_piv = _df_p.pivot_table(index="sku", columns="mes", values="unidades", aggfunc="sum").fillna(0)
+        else:
+            _ppto_piv = pd.DataFrame()
+
+        _df_tr_j = cargar_planif_transito_live()
+        if _df_tr_j.empty:
+            _df_tr_j = cargar_transito()
+        _df_tr_j["sku"]     = _df_tr_j["sku"].astype(str)
+        _df_tr_j["cantidad"] = pd.to_numeric(_df_tr_j["cantidad"], errors="coerce").fillna(0)
+        _df_tr_j["mes_eta"] = pd.to_datetime(_df_tr_j["fecha_eta_bodega"], errors="coerce").dt.strftime("%Y-%m")
+        _tr_piv = _df_tr_j.pivot_table(index="sku", columns="mes_eta", values="cantidad", aggfunc="sum").fillna(0) if not _df_tr_j.empty else pd.DataFrame()
+
+        # Base del df para el grid
+        df_jer = dff[["marca", "categoria_padre", "categoria_hijo",
+                       "sku", "producto", "stock_actual", "venta_prom_3m"]].copy()
+        _stock_v = df_jer["stock_actual"].values.astype(float).copy()
+
+        for ms, ml in zip(mes_strs_j, mes_labels_j):
+            _venta = (_ppto_piv[ms].reindex(df_jer["sku"].values, fill_value=0).values.astype(float)
+                      if ms in _ppto_piv.columns
+                      else df_jer["venta_prom_3m"].values.astype(float))
+            _tr    = (_tr_piv[ms].reindex(df_jer["sku"].values, fill_value=0).values.astype(float)
+                      if ms in _tr_piv.columns
+                      else np.zeros(len(df_jer)))
+            _cob   = np.where(_venta > 0, np.round(_stock_v / _venta, 1), np.nan)
+            df_jer[f"si_{ms}"]  = np.round(_stock_v).astype(int)   # stock inicio
+            df_jer[f"vt_{ms}"]  = np.round(_venta, 1)              # venta ppto
+            df_jer[f"tr_{ms}"]  = np.round(_tr).astype(int)        # tránsito
+            df_jer[f"cb_{ms}"]  = _cob                             # cobertura meses
+            _stock_v = np.maximum(0.0, _stock_v - _venta + _tr)
+
         df_jer = df_jer.sort_values(
-            ["marca", "categoria_padre", "categoria_hijo", "cobertura_fc3m_meses"],
-            ascending=[True, True, True, True], na_position="last"
+            ["marca", "categoria_padre", "categoria_hijo"],
+            ascending=[True, True, True], na_position="last"
         )
 
         if _aggrid_ok:
             gb = GridOptionsBuilder.from_dataframe(df_jer)
-
-            # Columnas de agrupación (ocultas, solo para jerarquía)
-            gb.configure_column("marca",          rowGroup=True, hide=True)
+            gb.configure_column("marca",           rowGroup=True, hide=True)
             gb.configure_column("categoria_padre", rowGroup=True, hide=True)
             gb.configure_column("categoria_hijo",  rowGroup=True, hide=True)
-
-            # Columnas visibles — enableValue+aggFunc muestra totales en cada nivel
-            gb.configure_column("sku",                  header_name="SKU",            width=140)
-            gb.configure_column("producto",             header_name="Producto",        width=220)
-            gb.configure_column("stock_actual",         header_name="Stock (u)",       width=110,
+            gb.configure_column("sku",             header_name="SKU",     width=140)
+            gb.configure_column("producto",        header_name="Producto", width=200)
+            gb.configure_column("stock_actual",    header_name="Stock Hoy", width=100,
                                 type=["numericColumn"], enableValue=True, aggFunc="sum",
-                                valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
-            if col_tr_jer in df_jer.columns:
-                gb.configure_column(col_tr_jer,         header_name=f"Tránsito ≤{horizonte}d", width=120,
-                                    type=["numericColumn"], enableValue=True, aggFunc="sum",
-                                    valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
-            gb.configure_column("ventas_6sem",          header_name="Vta/Mes 6sem",     width=110,
+                                valueFormatter="x!=null?Math.round(x).toLocaleString():''")
+            gb.configure_column("venta_prom_3m",   header_name="Vta/Mes PPTO", width=110,
                                 type=["numericColumn"], enableValue=True, aggFunc="sum",
-                                valueFormatter="x != null ? Math.round(x).toLocaleString() : ''")
-            gb.configure_column("venta_prom_3m",        header_name="Vta/Mes",         width=95,
-                                type=["numericColumn"], enableValue=True, aggFunc="sum",
-                                valueFormatter="x != null ? x.toFixed(1) : ''")
-            gb.configure_column("cobertura_fc3m_meses", header_name="Cob. Meses",      width=110,
-                                type=["numericColumn"], enableValue=True, aggFunc="avg",
-                                valueFormatter=JsCode("function(params){return params.value!=null?parseFloat(params.value).toFixed(1):''}"))
+                                valueFormatter="x!=null?x.toFixed(1):''")
 
-            # Colorear estado
-            estado_cell_style = JsCode("""
-            function(params) {
-                const colores = {
-                    'CRITICO':    {background:'#FF4B4B', color:'white'},
-                    'CRÍTICO':    {background:'#FF4B4B', color:'white'},
-                    'AJUSTADO':   {background:'#FFD700', color:'#333'},
-                    'NORMAL':     {background:'#52C41A', color:'white'},
-                    'SOBRESTOCK': {background:'#722ED1', color:'white'},
-                    'SIN DEMANDA':{background:'#AAAAAA', color:'white'},
-                };
-                return colores[params.value] || {};
-            }
-            """)
-            gb.configure_column("estado_fc3m", header_name="Estado", width=110,
-                                cellStyle=estado_cell_style)
+            # Ocultar columnas proyección individuales (se mostrarán como grupos)
+            for ms in mes_strs_j:
+                for pref in ["si_","vt_","tr_","cb_"]:
+                    gb.configure_column(f"{pref}{ms}", hide=True)
 
-            # Auto-group column: muestra la jerarquia + totales en cada nivel
             gb.configure_grid_options(
                 groupDefaultExpanded=0,
                 animateRows=True,
                 suppressAggFuncInHeader=True,
                 autoGroupColumnDef={
                     "headerName": "Marca / Categoría",
-                    "minWidth": 280,
+                    "minWidth": 260,
                     "cellRendererParams": {"suppressCount": False},
                 },
             )
             gb.configure_default_column(resizable=True, sortable=True, filter=True)
-
             grid_options = gb.build()
 
+            # Agregar grupos de columnas por mes directamente en columnDefs
+            cob_formatter = JsCode("function(p){return p.value!=null?parseFloat(p.value).toFixed(1):''}")
+            cob_style = JsCode("""
+            function(p){
+              if(p.value==null)return{};
+              const v=parseFloat(p.value);
+              if(v<1)  return{background:'#FF4B4B',color:'white'};
+              if(v<2)  return{background:'#FFD700',color:'#333'};
+              if(v<4)  return{background:'#52C41A',color:'white'};
+              return{background:'#722ED1',color:'white'};
+            }""")
+            num_fmt = "x!=null?Math.round(x).toLocaleString():''"
+
+            for ms, ml in zip(mes_strs_j, mes_labels_j):
+                mes_group = {
+                    "headerName": ml,
+                    "children": [
+                        {"field": f"si_{ms}", "headerName": "Stock Ini", "width": 90,
+                         "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                         "valueFormatter": num_fmt},
+                        {"field": f"vt_{ms}", "headerName": "Venta",    "width": 80,
+                         "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                         "valueFormatter": "x!=null?x.toFixed(0):''"},
+                        {"field": f"tr_{ms}", "headerName": "Tránsito", "width": 80,
+                         "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                         "valueFormatter": num_fmt},
+                        {"field": f"cb_{ms}", "headerName": "Cob.",     "width": 70,
+                         "type": ["numericColumn"], "enableValue": True, "aggFunc": "avg",
+                         "valueFormatter": cob_formatter, "cellStyle": cob_style},
+                    ]
+                }
+                grid_options["columnDefs"].append(mes_group)
+
             AgGrid(
-                df_jer,
-                gridOptions=grid_options,
-                height=600,
+                df_jer, gridOptions=grid_options, height=640,
                 fit_columns_on_grid_load=False,
                 allow_unsafe_jscode=True,
                 theme="streamlit",
                 key="aggrid_jerarquico",
             )
-
         else:
-            # Fallback si el paquete no está disponible aún
-            st.info("Instalando streamlit-aggrid... El deploy tarda ~1 min. Recargá la página.")
-            st.caption("Vista alternativa mientras carga:")
-            st.dataframe(df_jer, use_container_width=True, height=500, hide_index=True)
-
-    # ── TAB PROYECCIÓN — Stock Mensual por SKU ────────────────────────
-    with tab_proy:
-        N_MESES = 6
-        meses_obj = [_TODAY + pd.DateOffset(months=i) for i in range(N_MESES)]
-        mes_strs  = [m.strftime("%Y-%m") for m in meses_obj]
-        mes_labels = [m.strftime("%b %y") for m in meses_obj]
-
-        # Cargar PPTO por SKU × mes
-        _path_ppto = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_manual.parquet"
-        if _path_ppto.exists():
-            df_ppto_p = pd.read_parquet(_path_ppto)
-            df_ppto_p["sku"] = df_ppto_p["sku"].astype(str)
-            df_ppto_p["unidades"] = pd.to_numeric(df_ppto_p["unidades"], errors="coerce").fillna(0)
-            ppto_pivot = df_ppto_p.pivot_table(
-                index="sku", columns="mes", values="unidades", aggfunc="sum"
-            ).fillna(0)
-        else:
-            ppto_pivot = pd.DataFrame()
-
-        # Cargar tránsito por SKU × mes ETA
-        df_tr_p = cargar_planif_transito_live()
-        if df_tr_p.empty:
-            df_tr_p = cargar_transito()
-        df_tr_p["sku"]     = df_tr_p["sku"].astype(str)
-        df_tr_p["cantidad"] = pd.to_numeric(df_tr_p["cantidad"], errors="coerce").fillna(0)
-        df_tr_p["mes_eta"] = pd.to_datetime(df_tr_p["fecha_eta_bodega"], errors="coerce").dt.strftime("%Y-%m")
-        tr_pivot = df_tr_p.pivot_table(
-            index="sku", columns="mes_eta", values="cantidad", aggfunc="sum"
-        ).fillna(0) if not df_tr_p.empty else pd.DataFrame()
-
-        # Construir proyección vectorizada por SKU
-        df_p = dff[["sku", "producto", "marca", "categoria_padre", "stock_actual",
-                     "venta_prom_3m"]].copy()
-        stock_v = df_p["stock_actual"].values.astype(float).copy()
-
-        rows_multi = []   # para MultiIndex columns
-
-        for mes_str, mes_label in zip(mes_strs, mes_labels):
-            # Venta del mes: PPTO si existe, venta_prom_3m como fallback
-            if mes_str in ppto_pivot.columns:
-                venta_v = ppto_pivot[mes_str].reindex(df_p["sku"].values, fill_value=0).values.astype(float)
-            else:
-                venta_v = df_p["venta_prom_3m"].values.astype(float)
-
-            # Tránsito del mes
-            tr_v = (tr_pivot[mes_str].reindex(df_p["sku"].values, fill_value=0).values.astype(float)
-                    if mes_str in tr_pivot.columns else np.zeros(len(df_p)))
-
-            cob_v = np.where(venta_v > 0, stock_v / venta_v, np.nan)
-            stock_fin_v = np.maximum(0.0, stock_v - venta_v + tr_v)
-
-            df_p[f"stock_ini_{mes_str}"] = np.round(stock_v).astype(int)
-            df_p[f"venta_{mes_str}"]     = np.round(venta_v, 1)
-            df_p[f"tr_{mes_str}"]        = np.round(tr_v).astype(int)
-            df_p[f"cob_{mes_str}"]       = np.round(cob_v, 1)
-
-            stock_v = stock_fin_v  # siguiente mes arranca con el fin del actual
-
-        # Construir MultiIndex para display
-        base_cols  = ["sku", "producto", "marca"]
-        mes_groups = []
-        for ms, ml in zip(mes_strs, mes_labels):
-            mes_groups += [
-                (ml, "Stock Ini"),
-                (ml, "Venta"),
-                (ml, "Tránsito"),
-                (ml, "Cob.Meses"),
-            ]
-        tuples = [("", c) for c in base_cols] + mes_groups
-        multi_idx = pd.MultiIndex.from_tuples(tuples)
-
-        flat_cols = (base_cols
-                     + [c for ms in mes_strs
-                        for c in [f"stock_ini_{ms}", f"venta_{ms}", f"tr_{ms}", f"cob_{ms}"]])
-        df_show = df_p[flat_cols].copy()
-        df_show.columns = multi_idx
-
-        st.caption(f"Proyección {N_MESES} meses · Stock Inicio → Stock - Venta PPTO + Tránsito ETA")
-
-        def _color_cob(val):
-            if pd.isna(val):   return ""
-            v = float(val)
-            if v < 1:          return "background-color:#FF4B4B;color:white"
-            if v < 2:          return "background-color:#FFD700;color:#333"
-            if v < 4:          return "background-color:#52C41A;color:white"
-            return "background-color:#722ED1;color:white"
-
-        cob_cols = [c for c in df_show.columns if c[1] == "Cob.Meses"]
-        st.dataframe(
-            df_show.style.applymap(_color_cob, subset=cob_cols),
-            use_container_width=True,
-            height=600,
-            hide_index=True,
-        )
-        csv_p = df_p[flat_cols].to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Descargar proyección CSV", data=csv_p,
-                           file_name=f"proyeccion_{N_MESES}m_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
-                           mime="text/csv", key="dl_proy")
+            st.info("streamlit-aggrid no disponible. Recargá la página.")
+            st.dataframe(df_jer[["sku","producto","marca","stock_actual"]], use_container_width=True, height=400)
 
     # ── TAB 1 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
