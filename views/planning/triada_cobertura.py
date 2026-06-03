@@ -202,10 +202,12 @@ def _preparar_datos() -> pd.DataFrame:
     # 5b. PPTO manual (sobreescribe fallback cuando el Excel está cargado)
     # Lee directo del parquet para evitar el bug de _is_turso_blocked cuando
     # las credenciales Turso no están seteadas (app de Felipe vs Andrés).
+    _ppto_status = "sin PPTO"   # debug — se muestra en sidebar
     try:
         _path_ppto = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_manual.parquet"
         if _path_ppto.exists():
             df_ppto = pd.read_parquet(_path_ppto)
+            _ppto_status = f"PPTO OK — {len(df_ppto)} filas"
         else:
             df_ppto = cargar_forecast_manual_mensual()   # fallback Turso si no hay parquet
         if not df_ppto.empty:
@@ -429,9 +431,13 @@ def render():
     with st.spinner("Cargando stock, tránsito y forecast…"):
         df_base = _preparar_datos()
 
+    # ── Debug: verificar si PPTO parquet está disponible ─────────────
+    _ppto_debug = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_manual.parquet"
+
     # ── Filtros ───────────────────────────────────────────────────────
     with st.sidebar:
         st.markdown("### 🔎 Filtros Cobertura")
+        st.caption(f"🔍 PPTO: {'✅ ' + str(round(__import__('pandas').read_parquet(_ppto_debug).__len__())) + ' filas' if _ppto_debug.exists() else '❌ no existe'}")
 
         horizonte = st.selectbox(
             "Horizonte de tránsito",
