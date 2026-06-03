@@ -513,9 +513,23 @@ class _DuckConn:
         pass  # conexión compartida/cacheada: no cerrar
 
 
-@st.cache_resource(show_spinner=False)
-def _get_duck_conn():
+def _parquet_version():
+    """Firma (mtimes) de los parquet de ventas. Cambia cuando GitHub Actions
+    commitea datos nuevos → fuerza rebuild de la conexión DuckDB cacheada."""
+    vs = []
+    for p in (HISTORICO_PARQUET, MES_ACTUAL_PARQUET):
+        try:
+            vs.append(round(p.stat().st_mtime, 0))
+        except Exception:
+            vs.append(0)
+    return tuple(vs)
+
+
+@st.cache_resource(show_spinner=False, ttl=900, max_entries=3)
+def _get_duck_conn(version=None):
     """Conexión DuckDB con ventas/dim_productos/metadata_cargas materializadas desde parquet.
+    Cacheada con clave `version` (mtime de los parquet) + TTL 15min → se reconstruye
+    al cambiar el parquet o cada 15 min, igual que el camino SQLite legacy.
     Cacheada (cache_resource) → se crea una sola vez, sin rebuild de 8s por request.
     fecha_venta se normaliza a VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al de SQLite."""
     import duckdb
@@ -562,7 +576,7 @@ def get_service():
     sin rebuild); si no, el SQLite local (Turso-first/parquet-fallback) de siempre."""
     if os.environ.get('PARQUET_ONLY') == '1':
         svc = MaestraService(':duckdb:')
-        _duck = _get_duck_conn()
+        _duck = _get_duck_conn(_parquet_version())
         svc._conn = lambda self=svc: _DuckConn(_duck)
         return svc
 
