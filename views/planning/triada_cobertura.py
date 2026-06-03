@@ -200,8 +200,14 @@ def _preparar_datos() -> pd.DataFrame:
     df_meta["venta_prom_3m"] = df_meta["venta_prom_3m"].fillna(0)
 
     # 5b. PPTO manual (sobreescribe fallback cuando el Excel está cargado)
+    # Lee directo del parquet para evitar el bug de _is_turso_blocked cuando
+    # las credenciales Turso no están seteadas (app de Felipe vs Andrés).
     try:
-        df_ppto = cargar_forecast_manual_mensual()
+        _path_ppto = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_manual.parquet"
+        if _path_ppto.exists():
+            df_ppto = pd.read_parquet(_path_ppto)
+        else:
+            df_ppto = cargar_forecast_manual_mensual()   # fallback Turso si no hay parquet
         if not df_ppto.empty:
             df_ppto["sku"]       = df_ppto["sku"].astype(str)
             df_ppto["_mes_per"]  = pd.to_datetime(
