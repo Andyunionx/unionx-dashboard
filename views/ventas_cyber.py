@@ -86,7 +86,10 @@ def load_ventas_cyber(include_sim: bool = False) -> pd.DataFrame:
     sql = f"SELECT {cols} FROM ventas WHERE fecha_venta BETWEEN ? AND ?"
     conn = get_service()._conn()  # motor activo (DuckDB con PARQUET_ONLY, si no SQLite)
     try:
-        df = pd.read_sql_query(sql, conn, params=(CYBER_START_STR, CYBER_END_STR))
+        if hasattr(conn, 'read_df'):   # motor DuckDB → .df() nativo (robusto)
+            df = conn.read_df(sql, (CYBER_START_STR, CYBER_END_STR))
+        else:
+            df = pd.read_sql_query(sql, conn, params=(CYBER_START_STR, CYBER_END_STR))
     finally:
         conn.close()
 
@@ -115,7 +118,10 @@ def load_ventas_4sem() -> pd.DataFrame:
     """
     conn = get_service()._conn()  # motor activo (DuckDB con PARQUET_ONLY, si no SQLite)
     try:
-        df = pd.read_sql_query(sql, conn, params=(desde,))
+        if hasattr(conn, 'read_df'):   # motor DuckDB → .df() nativo (robusto)
+            df = conn.read_df(sql, (desde,))
+        else:
+            df = pd.read_sql_query(sql, conn, params=(desde,))
     finally:
         conn.close()
     return df
