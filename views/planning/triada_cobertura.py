@@ -21,7 +21,6 @@ import streamlit as st
 
 from views.planning._data_helpers import (
     DATA_DIR,
-    cargar_stock_diario,
     cargar_transito,
 )
 
@@ -75,12 +74,13 @@ def _style_estado(val: str) -> str:
 def _preparar_datos() -> pd.DataFrame:
     """
     Tabla maestra por SKU.
-    Base: ventas_historico (todos los SKUs activos, sin depender de Prophet).
-    Demanda calculada desde ventas reales (no forecast Prophet).
+    Base: planif_master_sku.parquet — misma fuente que Triada Proyectada.
+    Stock desde 'Stock HOY' del master (IDs correctos, sin bug Odoo).
+    Demanda calculada desde ventas_historico (ventas reales, sin Prophet).
 
     Columnas principales:
       sku, producto, marca, categoria_padre, categoria_hijo,
-      stock_actual,
+      stock_actual (desde Stock HOY del master),
       transito_30d / 60d / 90d / 180d
       ventas_6sem, demanda_diaria,
       demanda_30d / 60d / 90d / 180d  (extrapolado desde demanda diaria)
@@ -89,92 +89,84 @@ def _preparar_datos() -> pd.DataFrame:
       cobertura_fc3m_meses, estado_fc3m
     """
 
-    # ── 1. Base: todos los SKUs con historial de ventas ───────────────
-    # Cargamos solo los últimos 5 meses para limitar RAM en Streamlit Cloud.
-    # Es suficiente para ventas_6sem (42 días) + prom_3m (3 meses).
+    # ── 1. Base: maestro de SKUs (igual que Triada Proyectada) ────────
+    path_master = DATA_DIR / "planificacion" / "snapshots" / "planif_master_sku.parquet"
+    if not path_master.exists():
+        path_master = DATA_DIR / "planificacion" / "baseline_master_sku_full.parquet"
+
+    if path_master.exists():
+        df_master = pd.read_parquet(path_master)
+        # Normalizar nombres de columnas al estándar lowercase del resto de la vista
+        df_master = df_master.rename(columns={
+            "Sku":             "sku",
+            "Descripcion":     "producto",
+            "Marca":           "marca",
+            "Categoria Padre": "categoria_padre",
+            "Categoria Hijo":  "categoria_hijo",
+            "Stock HOY":       "stock_actual",
+        })
+        df_master["sku"] = df_master["sku"].astype(str)
+        # Filtrar filas sin SKU válido (totales/subtotales de marca)
+        df_meta = df_master[
+            df_master["sku"].notna() &
+            (df_master["sku"] != "") &
+            (df_master["sku"] != "nan") &
+            (~df_master["sku"].str.startswith("Total", na=False))
+        ][["sku", "producto", "marca", "categoria_padre", "categoria_hijo",
+           "stock_actual"]].drop_duplicates("sku").copy()
+        df_meta["stock_actual"] = pd.to_numeric(
+            df_meta["stock_actual"], errors="coerce"
+        ).fillna(0).clip(lower=0)
+    else:
+        df_meta = pd.DataFrame(columns=["sku", "producto", "marca",
+                                         "categoria_padre", "categoria_hijo",
+                                         "stock_actual"])
+
+    # ── 2. Ventas históricas para demanda (últimos 5 meses) ───────────
     path_hist = DATA_DIR / "historico" / "ventas_historico.parquet"
     _corte_carga = _TODAY - pd.DateOffset(months=5)
     if path_hist.exists():
         import pyarrow.parquet as pq
         schema_cols = set(pq.ParquetFile(str(path_hist)).schema.names)
-        cols_deseadas = ["fecha_venta", "sku", "producto", "marca",
-                         "categoria_padre", "categoria_hijo", "categoria_comercial",
-                         "cantidad"]
-        cols = [c for c in cols_deseadas if c in schema_cols]
-        df_v_full = pd.read_parquet(path_hist, columns=cols)
-        df_v_full["fecha_venta"] = pd.to_datetime(df_v_full["fecha_venta"], errors="coerce")
-        df_v_full["sku"]         = df_v_full["sku"].astype(str)
-        df_v_full["cantidad"]    = pd.to_numeric(df_v_full.get("cantidad", 0), errors="coerce").fillna(0)
-        df_v_full = df_v_full[df_v_full["sku"].notna() & (df_v_full["sku"] != "") & (df_v_full["sku"] != "nan")]
-        # Metadatos desde historial completo (para no perder productos con venta hace >5m)
-        df_meta_full = (
-            df_v_full.sort_values("fecha_venta", ascending=False)
-            [[c for c in ["sku", "producto", "marca", "categoria_padre",
-                          "categoria_hijo", "categoria_comercial"] if c in df_v_full.columns]]
-            .drop_duplicates("sku").copy()
-        )
-        # Ventas y demanda solo de los últimos 5 meses
-        df_v = df_v_full[df_v_full["fecha_venta"] >= _corte_carga].copy()
+        cols_v = [c for c in ["fecha_venta", "sku", "cantidad"] if c in schema_cols]
+        df_v = pd.read_parquet(path_hist, columns=cols_v)
+        df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"], errors="coerce")
+        df_v["sku"]         = df_v["sku"].astype(str)
+        df_v["cantidad"]    = pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
+        df_v = df_v[
+            df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan") &
+            (df_v["fecha_venta"] >= _corte_carga)
+        ]
     else:
-        df_v_full = pd.DataFrame(columns=["fecha_venta", "sku", "producto", "marca",
-                                           "categoria_padre", "categoria_hijo", "cantidad"])
-        df_meta_full = df_v_full.copy()
-        df_v = df_v_full.copy()
-
-    # ── 2. Metadata por SKU (registro más reciente del historial completo) ─
-    df_meta = df_meta_full.copy()
+        df_v = pd.DataFrame(columns=["fecha_venta", "sku", "cantidad"])
 
     # ── 3. Ventas 6 semanas (42 días) → demanda diaria y por horizonte ─
     corte_6sem = _TODAY - timedelta(days=42)
     df_6sem = df_v[(df_v["fecha_venta"] >= corte_6sem) & (df_v["fecha_venta"] < _TODAY)]
-
     ventas_6sem_agg = (
-        df_6sem.groupby("sku")["cantidad"]
-        .sum()
-        .reset_index()
-        .rename(columns={"cantidad": "ventas_6sem"})
+        df_6sem.groupby("sku")["cantidad"].sum()
+        .reset_index().rename(columns={"cantidad": "ventas_6sem"})
     )
     df_meta = df_meta.merge(ventas_6sem_agg, on="sku", how="left")
     df_meta["ventas_6sem"]    = df_meta["ventas_6sem"].fillna(0).clip(lower=0)
     df_meta["demanda_diaria"] = (df_meta["ventas_6sem"] / 42).clip(lower=0)
-
     for h in _HORIZONTES:
         df_meta[f"demanda_{h}d"] = (df_meta["demanda_diaria"] * h).clip(lower=0)
 
     # ── 4. Promedio mensual — últimos 3 meses con datos disponibles ───
-    df_v_copy = df_v.copy()
-    df_v_copy["_mes"] = df_v_copy["fecha_venta"].dt.to_period("M")
-    meses_disp = sorted(df_v_copy["_mes"].dropna().unique())
-    ultimos_3 = meses_disp[-3:] if len(meses_disp) >= 3 else meses_disp
-    df_3m = df_v_copy[df_v_copy["_mes"].isin(ultimos_3)]
+    df_v["_mes"] = df_v["fecha_venta"].dt.to_period("M")
+    meses_disp   = sorted(df_v["_mes"].dropna().unique())
+    ultimos_3    = meses_disp[-3:] if len(meses_disp) >= 3 else meses_disp
+    df_3m = df_v[df_v["_mes"].isin(ultimos_3)]
     prom3m = (
-        df_3m.groupby(["sku", "_mes"])["cantidad"]
-        .sum()
+        df_3m.groupby(["sku", "_mes"])["cantidad"].sum()
         .reset_index()
-        .groupby("sku")["cantidad"]
-        .mean()
-        .reset_index()
-        .rename(columns={"cantidad": "venta_prom_3m"})
+        .groupby("sku")["cantidad"].mean()
+        .reset_index().rename(columns={"cantidad": "venta_prom_3m"})
     )
     prom3m["venta_prom_3m"] = prom3m["venta_prom_3m"].clip(lower=0)
     df_meta = df_meta.merge(prom3m, on="sku", how="left")
     df_meta["venta_prom_3m"] = df_meta["venta_prom_3m"].fillna(0)
-
-    # ── 5. Stock actual ───────────────────────────────────────────────
-    # NOTA: stock_diario usa IDs Odoo (int) — no hace match con códigos de ventas.
-    # Stock aparecerá en 0 hasta que extract_stock_historico.py sea corregido.
-    df_sh = cargar_stock_diario()
-    ultima = df_sh["fecha"].max()
-    df_stock = (
-        df_sh[df_sh["fecha"] == ultima]
-        .groupby("sku", as_index=False)["cantidad"]
-        .sum()
-        .rename(columns={"cantidad": "stock_actual"})
-    )
-    df_stock["stock_actual"] = df_stock["stock_actual"].clip(lower=0)
-    df_stock["sku"] = df_stock["sku"].astype(str)
-    df_meta = df_meta.merge(df_stock, on="sku", how="left")
-    df_meta["stock_actual"] = df_meta["stock_actual"].fillna(0)
 
     # ── 6. Tránsito por horizonte ─────────────────────────────────────
     df_tr = cargar_transito().copy()
