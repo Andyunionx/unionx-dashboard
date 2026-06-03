@@ -22,6 +22,11 @@ import streamlit as st
 from views.planning._data_helpers import (
     DATA_DIR,
     cargar_forecast_sku,
+    cargar_forecast_manual_mensual,
+    cargar_planif_master,
+    cargar_planif_stock_baseline,
+    cargar_planif_stock_live,
+    cargar_planif_transito_live,
     cargar_transito,
 )
 
@@ -74,58 +79,75 @@ def _style_estado(val: str) -> str:
 @st.cache_data(ttl=3600, show_spinner=False)
 def _preparar_datos() -> pd.DataFrame:
     """
-    Tabla maestra por SKU.
-    Base: planif_master_sku.parquet — misma fuente que Triada Proyectada.
-    Stock desde 'Stock HOY' del master (IDs correctos, sin bug Odoo).
-    Demanda calculada desde ventas_historico (ventas reales, sin Prophet).
+    Tabla maestra por SKU — alineada con Triada Proyectada para migración sin cambios.
 
-    Columnas principales:
-      sku, producto, marca, categoria_padre, categoria_hijo,
-      stock_actual (desde Stock HOY del master),
-      transito_30d / 60d / 90d / 180d
-      ventas_6sem, demanda_diaria,
-      demanda_30d / 60d / 90d / 180d  (extrapolado desde demanda diaria)
-      venta_prom_3m                   (promedio mensual ultimos 3 meses disponibles)
-      cobertura_6sem_meses, estado_6sem
-      cobertura_fc3m_meses, estado_fc3m
+    Fuentes (misma jerarquía que Triada):
+      Base SKUs : cargar_planif_master()         → planif_master_sku (Turso/parquet)
+      Stock     : cargar_planif_stock_live()      → cargar_planif_stock_baseline()
+      Ventas    : ventas_historico.parquet         → rolling 42d → tasa mensual
+      Vta/Mes   : planif_forecast_manual (PPTO)   → Prophet forecast → histórico
+      Tránsito  : cargar_planif_transito_live()   → cargar_transito()
     """
 
-    # ── 1. Base: maestro de SKUs (igual que Triada Proyectada) ────────
-    path_master = DATA_DIR / "planificacion" / "snapshots" / "planif_master_sku.parquet"
-    if not path_master.exists():
-        path_master = DATA_DIR / "planificacion" / "baseline_master_sku_full.parquet"
-
-    if path_master.exists():
-        df_master = pd.read_parquet(path_master)
-        # Normalizar nombres de columnas al estándar lowercase del resto de la vista
-        df_master = df_master.rename(columns={
-            "Sku":             "sku",
-            "Descripcion":     "producto",
-            "Marca":           "marca",
-            "Categoria Padre": "categoria_padre",
-            "Categoria Hijo":  "categoria_hijo",
-            "Stock HOY":       "stock_actual",
-        })
-        df_master["sku"] = df_master["sku"].astype(str)
-        # Filtrar filas sin SKU válido (totales/subtotales de marca)
-        df_meta = df_master[
-            df_master["sku"].notna() &
-            (df_master["sku"] != "") &
-            (df_master["sku"] != "nan") &
-            (~df_master["sku"].str.startswith("Total", na=False))
-        ][["sku", "producto", "marca", "categoria_padre", "categoria_hijo",
-           "stock_actual"]].drop_duplicates("sku").copy()
-        df_meta["stock_actual"] = pd.to_numeric(
-            df_meta["stock_actual"], errors="coerce"
-        ).fillna(0).clip(lower=0)
+    # ── 1. Base SKUs: planif_master_sku (igual que Triada Proyectada) ────
+    df_master_raw = cargar_planif_master()
+    if not df_master_raw.empty:
+        # cargar_planif_master devuelve cols en lowercase desde Turso
+        # o CamelCase desde parquet — normalizamos ambos
+        col_map = {
+            # parquet CamelCase → estándar
+            "Sku": "sku", "SKU": "sku",
+            "Descripcion": "producto", "descripcion": "producto",
+            "Marca": "marca",
+            "Categoria Padre": "categoria_padre", "categoria_padre": "categoria_padre",
+            "Categoria Hijo":  "categoria_hijo",  "categoria_hijo":  "categoria_hijo",
+        }
+        df_master_raw = df_master_raw.rename(columns=col_map)
+        for req in ["sku", "producto", "marca", "categoria_padre", "categoria_hijo"]:
+            if req not in df_master_raw.columns:
+                df_master_raw[req] = ""
+        df_master_raw["sku"] = df_master_raw["sku"].astype(str)
+        df_meta = df_master_raw[
+            df_master_raw["sku"].notna() &
+            (df_master_raw["sku"] != "") &
+            (df_master_raw["sku"] != "nan") &
+            (~df_master_raw["sku"].str.startswith("Total", na=False))
+        ][["sku", "producto", "marca", "categoria_padre", "categoria_hijo"]
+          ].drop_duplicates("sku").copy()
     else:
         df_meta = pd.DataFrame(columns=["sku", "producto", "marca",
-                                         "categoria_padre", "categoria_hijo",
-                                         "stock_actual"])
+                                         "categoria_padre", "categoria_hijo"])
 
-    # ── 2. Ventas históricas para demanda (últimos 5 meses) ───────────
-    path_hist = DATA_DIR / "historico" / "ventas_historico.parquet"
-    _corte_carga = _TODAY - pd.DateOffset(months=5)
+    # ── 2. Stock live (Turso diario) → fallback baseline (parquet) ───────
+    df_stock_live = cargar_planif_stock_live()
+    if not df_stock_live.empty:
+        # Turso: cols lowercase — stock_total
+        df_stock = df_stock_live[["sku", "stock_total"]].rename(
+            columns={"stock_total": "stock_actual"}
+        )
+    else:
+        df_stock_bl = cargar_planif_stock_baseline()
+        if not df_stock_bl.empty:
+            # parquet: cols como 'SKU', 'Stock total'
+            df_stock_bl = df_stock_bl.rename(columns={
+                "SKU": "sku", "Sku": "sku",
+                "Stock total": "stock_actual", "stock_total": "stock_actual",
+            })
+            df_stock = df_stock_bl[["sku", "stock_actual"]].copy()
+        else:
+            df_stock = pd.DataFrame(columns=["sku", "stock_actual"])
+
+    df_stock["sku"]          = df_stock["sku"].astype(str)
+    df_stock["stock_actual"] = (
+        pd.to_numeric(df_stock["stock_actual"], errors="coerce").fillna(0).clip(lower=0)
+    )
+    df_stock = df_stock.groupby("sku", as_index=False)["stock_actual"].sum()
+    df_meta = df_meta.merge(df_stock, on="sku", how="left")
+    df_meta["stock_actual"] = df_meta["stock_actual"].fillna(0)
+
+    # ── 3. Ventas históricas (últimos 5 meses) ────────────────────────────
+    path_hist     = DATA_DIR / "historico" / "ventas_historico.parquet"
+    _corte_carga  = _TODAY - pd.DateOffset(months=5)
     if path_hist.exists():
         import pyarrow.parquet as pq
         schema_cols = set(pq.ParquetFile(str(path_hist)).schema.names)
@@ -133,7 +155,9 @@ def _preparar_datos() -> pd.DataFrame:
         df_v = pd.read_parquet(path_hist, columns=cols_v)
         df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"], errors="coerce")
         df_v["sku"]         = df_v["sku"].astype(str)
-        df_v["cantidad"]    = pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
+        df_v["cantidad"]    = (
+            pd.to_numeric(df_v.get("cantidad", 0), errors="coerce").fillna(0)
+        )
         df_v = df_v[
             df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan") &
             (df_v["fecha_venta"] >= _corte_carga)
@@ -141,8 +165,7 @@ def _preparar_datos() -> pd.DataFrame:
     else:
         df_v = pd.DataFrame(columns=["fecha_venta", "sku", "cantidad"])
 
-    # ── 3. Ventas 6 semanas (42 días) → tasa mensual equivalente ────────
-    # ventas_6sem se muestra como PROMEDIO MENSUAL: total_42d / 42 * 30
+    # ── 4. Ventas 6 semanas → tasa mensual (total_42d / 42 * 30) ─────────
     corte_6sem = _TODAY - timedelta(days=42)
     df_6sem = df_v[(df_v["fecha_venta"] >= corte_6sem) & (df_v["fecha_venta"] < _TODAY)]
     ventas_6sem_agg = (
@@ -150,60 +173,83 @@ def _preparar_datos() -> pd.DataFrame:
         .reset_index().rename(columns={"cantidad": "_ventas_42d"})
     )
     df_meta = df_meta.merge(ventas_6sem_agg, on="sku", how="left")
-    df_meta["_ventas_42d"]   = df_meta["_ventas_42d"].fillna(0).clip(lower=0)
+    df_meta["_ventas_42d"]    = df_meta["_ventas_42d"].fillna(0).clip(lower=0)
     df_meta["demanda_diaria"] = (df_meta["_ventas_42d"] / 42).clip(lower=0)
-    # Columna display: tasa mensual (unidades / mes)
-    df_meta["ventas_6sem"]   = (df_meta["demanda_diaria"] * 30).round(1)
+    df_meta["ventas_6sem"]    = (df_meta["demanda_diaria"] * 30).round(1)  # u/mes
     for h in _HORIZONTES:
         df_meta[f"demanda_{h}d"] = (df_meta["demanda_diaria"] * h).clip(lower=0)
 
-    # ── 4. Venta prom 3m — FORECAST próximos 3 meses (mes actual + 2 sig.) ─
-    # Usa Prophet si disponible; fallback a historial si no hay forecast.
-    # ── 4a. Fallback histórico ────────────────────────────────────────────
+    # ── 5. Vta/Mes forecast próximos 3m ──────────────────────────────────
+    # Prioridad: PPTO manual (planif_forecast_manual) > Prophet > histórico
+    meses_3_obj = pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")
+
+    # 5a. Fallback: histórico últimos 3 meses
     df_v["_mes"] = df_v["fecha_venta"].dt.to_period("M")
     meses_disp   = sorted(df_v["_mes"].dropna().unique())
     ultimos_3    = meses_disp[-3:] if len(meses_disp) >= 3 else meses_disp
-    df_3m_hist = df_v[df_v["_mes"].isin(ultimos_3)]
-    prom3m_hist = (
-        df_3m_hist.groupby(["sku", "_mes"])["cantidad"].sum()
-        .reset_index()
-        .groupby("sku")["cantidad"].mean()
-        .reset_index().rename(columns={"cantidad": "venta_prom_3m"})
+    prom3m_hist  = (
+        df_v[df_v["_mes"].isin(ultimos_3)]
+        .groupby(["sku", "_mes"])["cantidad"].sum().reset_index()
+        .groupby("sku")["cantidad"].mean().reset_index()
+        .rename(columns={"cantidad": "venta_prom_3m"})
     )
     prom3m_hist["venta_prom_3m"] = prom3m_hist["venta_prom_3m"].clip(lower=0)
     df_meta = df_meta.merge(prom3m_hist, on="sku", how="left")
     df_meta["venta_prom_3m"] = df_meta["venta_prom_3m"].fillna(0)
 
-    # ── 4b. Forecast Prophet (sobreescribe para SKUs con modelo) ─────────
+    # 5b. Prophet (sobreescribe 110 SKUs con modelo)
     try:
         df_f = cargar_forecast_sku().copy()
         df_f["ds"]  = pd.to_datetime(df_f["ds"])
         df_f["sku"] = df_f["sku"].astype(str)
-        yhat_col = "yhat_anchored" if "yhat_anchored" in df_f.columns else "yhat_base"
+        yhat_col    = "yhat_anchored" if "yhat_anchored" in df_f.columns else "yhat_base"
         df_f[yhat_col] = (
             pd.to_numeric(df_f[yhat_col], errors="coerce").fillna(0).clip(lower=0)
         )
-        meses_3_fc = pd.period_range(_TODAY.to_period("M"), periods=3, freq="M")
         df_f["_mes"] = df_f["ds"].dt.to_period("M")
-        df_f_3m = df_f[df_f["_mes"].isin(meses_3_fc)]
-        prom3m_fc = (
-            df_f_3m.groupby(["sku", "_mes"])[yhat_col].sum()
-            .reset_index()
-            .groupby("sku")[yhat_col].mean()
-            .reset_index()
-            .rename(columns={yhat_col: "_prom3m_fc"})
+        prom_fc = (
+            df_f[df_f["_mes"].isin(meses_3_obj)]
+            .groupby(["sku", "_mes"])[yhat_col].sum().reset_index()
+            .groupby("sku")[yhat_col].mean().reset_index()
+            .rename(columns={yhat_col: "_tmp"})
         )
-        prom3m_fc["_prom3m_fc"] = prom3m_fc["_prom3m_fc"].clip(lower=0)
-        df_meta = df_meta.merge(prom3m_fc, on="sku", how="left")
-        # Sobreescribe con forecast solo donde es > 0
-        mask_fc = df_meta["_prom3m_fc"].notna() & (df_meta["_prom3m_fc"] > 0)
-        df_meta.loc[mask_fc, "venta_prom_3m"] = df_meta.loc[mask_fc, "_prom3m_fc"]
-        df_meta.drop(columns=["_prom3m_fc"], inplace=True)
+        df_meta = df_meta.merge(prom_fc, on="sku", how="left")
+        m = df_meta["_tmp"].notna() & (df_meta["_tmp"] > 0)
+        df_meta.loc[m, "venta_prom_3m"] = df_meta.loc[m, "_tmp"]
+        df_meta.drop(columns=["_tmp"], inplace=True)
     except Exception:
-        pass  # mantiene fallback histórico
+        pass
 
-    # ── 6. Tránsito por horizonte ─────────────────────────────────────
-    df_tr = cargar_transito().copy()
+    # 5c. PPTO manual (máxima prioridad — sobreescribe todo)
+    try:
+        df_ppto = cargar_forecast_manual_mensual()
+        if not df_ppto.empty:
+            df_ppto["sku"]       = df_ppto["sku"].astype(str)
+            df_ppto["_mes_per"]  = pd.to_datetime(
+                df_ppto["mes"] + "-01", errors="coerce"
+            ).dt.to_period("M")
+            df_ppto["unidades"]  = (
+                pd.to_numeric(df_ppto["unidades"], errors="coerce").fillna(0).clip(lower=0)
+            )
+            prom_ppto = (
+                df_ppto[df_ppto["_mes_per"].isin(meses_3_obj)]
+                .groupby(["sku", "_mes_per"])["unidades"].sum().reset_index()
+                .groupby("sku")["unidades"].mean().reset_index()
+                .rename(columns={"unidades": "_tmp"})
+            )
+            if not prom_ppto.empty:
+                df_meta = df_meta.merge(prom_ppto, on="sku", how="left")
+                m = df_meta["_tmp"].notna() & (df_meta["_tmp"] > 0)
+                df_meta.loc[m, "venta_prom_3m"] = df_meta.loc[m, "_tmp"]
+                df_meta.drop(columns=["_tmp"], inplace=True)
+    except Exception:
+        pass
+
+    # ── 6. Tránsito live (Turso) → fallback comex/transito.parquet ───────
+    df_tr_raw = cargar_planif_transito_live()
+    if df_tr_raw.empty:
+        df_tr_raw = cargar_transito()
+    df_tr = df_tr_raw.copy()
     df_tr["sku"] = df_tr["sku"].astype(str)
     df_tr["fecha_eta_bodega"] = pd.to_datetime(df_tr["fecha_eta_bodega"])
     df_tr["cantidad"] = pd.to_numeric(df_tr["cantidad"], errors="coerce").fillna(0)
