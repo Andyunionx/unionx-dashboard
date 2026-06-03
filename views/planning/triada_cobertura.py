@@ -151,7 +151,8 @@ def _preparar_datos() -> pd.DataFrame:
     if path_hist.exists():
         import pyarrow.parquet as pq
         schema_cols = set(pq.ParquetFile(str(path_hist)).schema.names)
-        cols_v = [c for c in ["fecha_venta", "sku", "cantidad"] if c in schema_cols]
+        cols_v = [c for c in ["fecha_venta", "sku", "cantidad", "tipo_marca"]
+                  if c in schema_cols]
         df_v = pd.read_parquet(path_hist, columns=cols_v)
         df_v["fecha_venta"] = pd.to_datetime(df_v["fecha_venta"], errors="coerce")
         df_v["sku"]         = df_v["sku"].astype(str)
@@ -162,8 +163,19 @@ def _preparar_datos() -> pd.DataFrame:
             df_v["sku"].notna() & (df_v["sku"] != "") & (df_v["sku"] != "nan") &
             (df_v["fecha_venta"] >= _corte_carga)
         ]
+        # tipo_marca: tomar el valor más reciente por SKU
+        if "tipo_marca" in df_v.columns:
+            tipo_marca_map = (
+                df_v.sort_values("fecha_venta", ascending=False)
+                [["sku", "tipo_marca"]].drop_duplicates("sku")
+            )
+            df_meta = df_meta.merge(tipo_marca_map, on="sku", how="left")
+            df_meta["tipo_marca"] = df_meta["tipo_marca"].fillna("Sin clasificar")
     else:
         df_v = pd.DataFrame(columns=["fecha_venta", "sku", "cantidad"])
+
+    if "tipo_marca" not in df_meta.columns:
+        df_meta["tipo_marca"] = "Sin clasificar"
 
     # ── 4. Ventas 6 semanas → tasa mensual (total_42d / 42 * 30) ─────────
     corte_6sem = _TODAY - timedelta(days=42)
@@ -455,8 +467,8 @@ def render():
         )
 
         st.divider()
-        solo_con_demanda = st.checkbox("Solo SKUs con demanda o PPTO", value=True,
-                                         help="Incluye SKUs con ventas recientes O con PPTO cargado en el FCST")
+        solo_marca_propia = st.checkbox("Solo SKUs marca propia", value=True,
+                                          help="Filtra solo marcas propias (tipo_marca = Propia)")
         solo_con_stock   = st.checkbox("Solo SKUs con stock > 0", value=False)
 
     # ── Aplicar filtros y recalcular cobertura con horizonte ──────────
@@ -468,10 +480,8 @@ def render():
         dff = dff[dff["categoria_padre"].isin(sel_cats)]
     if sel_estados:
         dff = dff[dff["estado"].isin(sel_estados)]
-    if solo_con_demanda:
-        # Incluir SKUs con ventas recientes (demanda_diaria) O con PPTO cargado (venta_prom_3m)
-        # Esto evita filtrar los 325 SKUs del FCST que no tuvieron ventas en las últimas 6 semanas
-        dff = dff[(dff["demanda_diaria"] > 0) | (dff["venta_prom_3m"] > 0)]
+    if solo_marca_propia:
+        dff = dff[dff["tipo_marca"] == "Propia"]
     if solo_con_stock:
         dff = dff[dff["stock_actual"] > 0]
 
