@@ -534,41 +534,60 @@ def _get_duck_conn(version=None):
     fecha_venta se normaliza a VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al de SQLite."""
     import duckdb
     from datetime import datetime as _dt
+
+    def _build(con, srcs, fuente):
+        union = " UNION ALL BY NAME ".join(srcs)
+        con.execute(f"""
+            CREATE TABLE ventas AS
+            SELECT * EXCLUDE (fecha_venta),
+                   CAST(CAST(fecha_venta AS DATE) AS VARCHAR) AS fecha_venta
+            FROM ({union})
+        """)
+        dim_cols = ', '.join(f"ANY_VALUE({c}) AS {c}" for c in _COLS_DIM if c != 'sku')
+        con.execute(f"CREATE TABLE dim_productos AS SELECT sku, {dim_cols} "
+                    f"FROM ventas WHERE sku IS NOT NULL GROUP BY sku")
+        n = con.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+        fmin, fmax = con.execute("SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
+        if fuente == 'url':
+            fcarga = _dt.now().isoformat(timespec='seconds')  # recién bajado de GitHub Raw
+        else:
+            _mt = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
+            fcarga = (_dt.fromtimestamp(max(_mt)).isoformat(timespec='seconds')
+                      if _mt else _dt.now().isoformat(timespec='seconds'))
+        con.execute("CREATE TABLE metadata_cargas (fecha_carga VARCHAR, fuente VARCHAR, "
+                    "filas_cargadas BIGINT, fecha_min_datos VARCHAR, fecha_max_datos VARCHAR, tipo VARCHAR)")
+        con.execute("INSERT INTO metadata_cargas VALUES (?,?,?,?,?,?)",
+                    [fcarga, 'parquet', n, fmin, fmax, 'parquet'])
+        global _DB_BUILD_STATS
+        _DB_BUILD_STATS = {
+            'filas_total': n, 'filas_historico': n, 'filas_turso': 0, 'chunks_turso': 0,
+            'turso_error': None, 'max_fecha': fmax, 'build_duration_s': 0,
+            'built_at': fcarga, 'local_path': ':duckdb:', 'fuente': f'duckdb-{fuente}',
+        }
+        print(f"[DuckDB engine] tablas listas ({fuente}): {n:,} filas ventas, max {fmax}", flush=True)
+        return con
+
+    # Opción C: si PARQUET_BASE_URL está seteado, leer desde GitHub Raw vía httpfs.
+    # ttl=900 (arriba) re-baja el parquet cada 15 min SIN redeploy. Fallback a local ante error.
+    base = os.environ.get('PARQUET_BASE_URL', '').rstrip('/')
+    if base:
+        try:
+            con = duckdb.connect(':memory:')
+            con.execute("INSTALL httpfs; LOAD httpfs;")
+            srcs = [f"SELECT * FROM read_parquet('{base}/data/historico/ventas_historico.parquet')",
+                    f"SELECT * FROM read_parquet('{base}/data/historico/ventas_mes_actual.parquet')"]
+            return _build(con, srcs, 'url')
+        except Exception as e:
+            print(f"[DuckDB engine] URL falló ({type(e).__name__}: {str(e)[:80]}) → fallback local", flush=True)
+
+    # Local (default / fallback): parquet del checkout
     con = duckdb.connect(':memory:')
     srcs = []
     if HISTORICO_PARQUET.exists():
         srcs.append(f"SELECT * FROM read_parquet('{HISTORICO_PARQUET.as_posix()}')")
     if MES_ACTUAL_PARQUET.exists():
         srcs.append(f"SELECT * FROM read_parquet('{MES_ACTUAL_PARQUET.as_posix()}')")
-    union = " UNION ALL BY NAME ".join(srcs)
-    con.execute(f"""
-        CREATE TABLE ventas AS
-        SELECT * EXCLUDE (fecha_venta),
-               CAST(CAST(fecha_venta AS DATE) AS VARCHAR) AS fecha_venta
-        FROM ({union})
-    """)
-    dim_cols = ', '.join(f"ANY_VALUE({c}) AS {c}" for c in _COLS_DIM if c != 'sku')
-    con.execute(f"""
-        CREATE TABLE dim_productos AS
-        SELECT sku, {dim_cols} FROM ventas WHERE sku IS NOT NULL GROUP BY sku
-    """)
-    n = con.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
-    fmin, fmax = con.execute("SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
-    _mtimes = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
-    fcarga = (_dt.fromtimestamp(max(_mtimes)).isoformat(timespec='seconds')
-              if _mtimes else _dt.now().isoformat(timespec='seconds'))
-    con.execute("CREATE TABLE metadata_cargas (fecha_carga VARCHAR, fuente VARCHAR, "
-                "filas_cargadas BIGINT, fecha_min_datos VARCHAR, fecha_max_datos VARCHAR, tipo VARCHAR)")
-    con.execute("INSERT INTO metadata_cargas VALUES (?,?,?,?,?,?)",
-                [fcarga, 'parquet', n, fmin, fmax, 'parquet'])
-    global _DB_BUILD_STATS
-    _DB_BUILD_STATS = {
-        'filas_total': n, 'filas_historico': n, 'filas_turso': 0, 'chunks_turso': 0,
-        'turso_error': None, 'max_fecha': fmax, 'build_duration_s': 0,
-        'built_at': fcarga, 'local_path': ':duckdb:', 'fuente': 'duckdb',
-    }
-    print(f"[DuckDB engine] tablas listas: {n:,} filas ventas, max {fmax}", flush=True)
-    return con
+    return _build(con, srcs, 'local')
 
 
 def get_service():
