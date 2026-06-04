@@ -144,6 +144,28 @@ def cmd_detectar_y_clasificar(args):
 
     if not facturas:
         print("✓ No hay facturas pendientes de distribución.\n")
+        # Igual enviamos el mail con las otras secciones (RUTs + SII)
+        if args.test or args.send_mail:
+            print("► Enviando mail de análisis diario (sin distribuciones hoy)...")
+            if args.test:
+                destinatarios = ["andres@unionx.cl"]; cc = []
+                print("  [MODO PRUEBA] Solo a andres@unionx.cl")
+            else:
+                destinatarios = ["camila@unionx.cl", "victor@unionx.cl"]
+                cc = ["andres@unionx.cl"]
+            resultado_mail = send_propuesta_completa(
+                excels=[],
+                facturas_resumen=[],
+                ruts_sin_partner=ruts_sin_partner,
+                comparacion_sii=comparacion_sii,
+                token_path=TOKEN_GMAIL,
+                destinatarios=destinatarios,
+                cc=cc,
+            )
+            if resultado_mail["ok"]:
+                print(f"  ✓ Mail enviado (message_id={resultado_mail['message_id']})")
+            else:
+                print(f"  ✗ Error: {resultado_mail['error']}")
         return []
 
     print(f"  {len(facturas)} factura(s) encontradas:\n")
