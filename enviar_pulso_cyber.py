@@ -137,7 +137,7 @@ def descargar_resumen(metas_canal):
         sos=('pedido', 'nunique'),
         bruta=('venta_bruta', 'sum'),
         neta=('venta_neta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
         uds=('cantidad', 'sum'),
     ).reset_index().sort_values('fecha_venta')
     por_dia = [[r['fecha_venta'], int(r['sos']), float(round(r['bruta'])), float(round(r['neta'])),
@@ -146,7 +146,7 @@ def descargar_resumen(metas_canal):
     # Por canal × día
     grp = df.groupby(['canal', 'fecha_venta']).agg(
         bruta=('venta_bruta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
         uds=('cantidad', 'sum'),
     ).reset_index()
     por_canal_dia = [[r['canal'], r['fecha_venta'], float(round(r['bruta'])),
@@ -156,7 +156,7 @@ def descargar_resumen(metas_canal):
     grp = df.groupby('canal').agg(
         sos=('pedido', 'nunique'),
         bruta=('venta_bruta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
         uds=('cantidad', 'sum'),
     ).reset_index().sort_values('bruta', ascending=False)
     por_canal_acum = [[r['canal'], int(r['sos']), float(round(r['bruta'])),
@@ -167,7 +167,7 @@ def descargar_resumen(metas_canal):
     grp = df.groupby('_mod').agg(
         sos=('pedido', 'nunique'),
         bruta=('venta_bruta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
     ).reset_index()
     por_mod = [[r['_mod'], int(r['sos']), float(round(r['bruta'])), float(round(r['margen']))]
                for _, r in grp.iterrows()]
@@ -190,7 +190,7 @@ def descargar_resumen(metas_canal):
     grp = df.groupby(['marca', 'fecha_venta']).agg(
         bruta=('venta_bruta', 'sum'),
         neta=('venta_neta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
     ).reset_index()
     por_marca_dia = [[r['marca'] or '(sin marca)', r['fecha_venta'],
                       float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
@@ -200,7 +200,7 @@ def descargar_resumen(metas_canal):
     grp = df.groupby(['categoria_padre', 'fecha_venta']).agg(
         bruta=('venta_bruta', 'sum'),
         neta=('venta_neta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
     ).reset_index()
     por_categoria_dia = [[(r['categoria_padre'] or '(sin cat)'), r['fecha_venta'],
                           float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
@@ -211,7 +211,7 @@ def descargar_resumen(metas_canal):
         uds=('cantidad', 'sum'),
         bruta=('venta_bruta', 'sum'),
         neta=('venta_neta', 'sum'),
-        margen=('margen_final', 'sum'),
+        margen=('margen_front', 'sum'),
     ).reset_index()
     grp_sku['margen_pct'] = grp_sku.apply(lambda r: (r['margen']/r['neta']*100) if r['neta'] else 0, axis=1)
     top_skus_venta = grp_sku.sort_values('bruta', ascending=False).head(10)
@@ -245,7 +245,7 @@ def descargar_resumen(metas_canal):
     total_oct_val = margen_oct_val = neta_oct_val = 0
     cyber_oct_bruta = cyber_oct_margen = cyber_oct_neta = 0
     try:
-        hist_df = pd.read_parquet(hist_path, columns=['fecha_venta','hora_venta','venta_bruta','venta_neta','margen_final'])
+        hist_df = pd.read_parquet(hist_path, columns=['fecha_venta','hora_venta','venta_bruta','venta_neta','margen_front'])
         hist_df['fecha_venta'] = pd.to_datetime(hist_df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
 
         dia_ly = hist_df[hist_df['fecha_venta'] == fecha_ly].copy()
@@ -255,24 +255,24 @@ def descargar_resumen(metas_canal):
             dia_ly['h'] = dia_ly['h'].astype(int)
             curva_ly = dia_ly.groupby('h')['venta_bruta'].sum().reset_index().values.tolist()
             total_ly_val = float(dia_ly['venta_bruta'].sum())
-            margen_ly_val = float(dia_ly['margen_final'].sum())
+            margen_ly_val = float(dia_ly['margen_front'].sum())
             neta_ly_val = float(dia_ly['venta_neta'].sum())
 
         cyber_jun = hist_df[hist_df['fecha_venta'].isin(CYBER_2025_FECHAS)]
         if not cyber_jun.empty:
             cyber_ly_bruta = float(cyber_jun['venta_bruta'].sum())
-            cyber_ly_margen = float(cyber_jun['margen_final'].sum())
+            cyber_ly_margen = float(cyber_jun['margen_front'].sum())
             cyber_ly_neta = float(cyber_jun['venta_neta'].sum())
 
         if fecha_oct:
             dia_oct = hist_df[hist_df['fecha_venta'] == fecha_oct]
             total_oct_val = float(dia_oct['venta_bruta'].sum()) if not dia_oct.empty else 0
-            margen_oct_val = float(dia_oct['margen_final'].sum()) if not dia_oct.empty else 0
+            margen_oct_val = float(dia_oct['margen_front'].sum()) if not dia_oct.empty else 0
             neta_oct_val = float(dia_oct['venta_neta'].sum()) if not dia_oct.empty else 0
         cyber_oct = hist_df[hist_df['fecha_venta'].isin(CYBER_OCT2025_FECHAS)]
         if not cyber_oct.empty:
             cyber_oct_bruta = float(cyber_oct['venta_bruta'].sum())
-            cyber_oct_margen = float(cyber_oct['margen_final'].sum())
+            cyber_oct_margen = float(cyber_oct['margen_front'].sum())
             cyber_oct_neta = float(cyber_oct['venta_neta'].sum())
     except Exception as e:
         print(f"      [WARN] Error histórico Cyber 2025: {e}", flush=True)
@@ -502,29 +502,28 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
     # NUEVOS BLOQUES — marcas × día, categorías × día, top SKUs
     # ============================================================
     def _matriz_dia(rows, label_col_name):
-        """Construye matriz NxD: filas=entidad, cols=día, valores=bruta/margen."""
+        """Construye matriz NxD: filas=entidad, cols=día, valores=bruta/margen.
+        Acumulado: V, M, %M (margen/neta) y %Share (venta entidad / venta total Cyber)."""
         if not rows:
             return ''
         import pandas as _pd
         _df = _pd.DataFrame(rows, columns=[label_col_name, 'fecha', 'bruta', 'neta', 'margen'])
-        # Solo días hasta hoy_str (no mostrar días futuros vacíos)
         dias_pintar = [f for f in CYBER_FECHAS if f <= hoy_str]
         _df = _df[_df['fecha'].isin(dias_pintar)]
         if _df.empty:
             return ''
-        # Total por entidad para ordenar y filtrar top 10
+        total_cyber_bruta = _df['bruta'].sum() or 1
         tot = _df.groupby(label_col_name).agg(b=('bruta','sum'), m=('margen','sum'), n=('neta','sum'))
         tot['pct_m'] = tot.apply(lambda r: (r['m']/r['n']*100) if r['n'] else 0, axis=1)
+        tot['share'] = tot['b'] / total_cyber_bruta * 100
         tot = tot.sort_values('b', ascending=False).head(10)
-        # Headers
         headers = '<th align="left">' + label_col_name.capitalize() + '</th>'
         for f in dias_pintar:
             idx = CYBER_FECHAS.index(f)
             headers += f'<th align="right" colspan="2">{CYBER_LABELS_SHORT[idx]}</th>'
-        headers += '<th align="right" colspan="3">Acumulado</th>'
+        headers += '<th align="right" colspan="4">Acumulado</th>'
         sub = '<th></th>' + ('<th align="right">V</th><th align="right">M</th>' * len(dias_pintar))
-        sub += '<th align="right">V</th><th align="right">M</th><th align="right">%M</th>'
-        # Filas
+        sub += '<th align="right">V</th><th align="right">M</th><th align="right">%M</th><th align="right">%Share</th>'
         body = ''
         for ent, t in tot.iterrows():
             body += f'<tr><td>{ent[:30]}</td>'
@@ -534,7 +533,8 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
                     body += f'<td align="right">{fmt_m(m["bruta"].iloc[0])}</td><td align="right">{fmt_m(m["margen"].iloc[0])}</td>'
                 else:
                     body += '<td align="right">-</td><td align="right">-</td>'
-            body += f'<td align="right"><b>{fmt_m(t["b"])}</b></td><td align="right"><b>{fmt_m(t["m"])}</b></td><td align="right">{t["pct_m"]:.1f}%</td></tr>'
+            body += f'<td align="right"><b>{fmt_m(t["b"])}</b></td><td align="right"><b>{fmt_m(t["m"])}</b></td>'
+            body += f'<td align="right">{t["pct_m"]:.1f}%</td><td align="right">{t["share"]:.1f}%</td></tr>'
         return headers, sub, body
 
     # Marca × día
@@ -566,25 +566,31 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
     # Top SKUs (lado a lado: venta + margen)
     bloque_top_skus = ''
     if top_skus_venta or top_skus_margen:
+        total_cyber_b = sum(float(d[2] or 0) for d in por_dia)
+        total_cyber_m = sum(float(d[4] or 0) for d in por_dia)
         def _tabla_sku(rows, titulo, ord_label):
             if not rows:
                 return ''
             body = ''
             for sku, prod, uds, bruta, margen, pctm in rows:
+                share_v = bruta / total_cyber_b * 100 if total_cyber_b else 0
+                share_m = margen / total_cyber_m * 100 if total_cyber_m else 0
                 body += f'<tr><td>{sku[:14]}</td><td>{prod}</td><td align="right">{uds:,}</td>'
                 body += f'<td align="right">{fmt_m(bruta)}</td><td align="right">{fmt_m(margen)}</td>'
-                body += f'<td align="right">{pctm:.1f}%</td></tr>'
+                body += f'<td align="right">{pctm:.1f}%</td>'
+                body += f'<td align="right">{share_v:.1f}%</td><td align="right">{share_m:.1f}%</td></tr>'
             return f"""
 <h4 style="margin:16px 0 6px 0;font-size:0.9rem">{titulo}</h4>
 <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">
   <th align="left">SKU</th><th align="left">Producto</th><th align="right">Uds</th>
   <th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th>
+  <th align="right">%Sh V</th><th align="right">%Sh M</th>
 </tr></thead><tbody>{body}</tbody></table>"""
         bloque_top_skus = f"""
-<h3 style="margin:24px 0 8px 0;font-size:1rem">⭐ Top 10 SKUs acumulado Cyber</h3>
+<h3 style="margin:24px 0 8px 0;font-size:1rem">⭐ Top 10 SKUs acumulado Cyber (%Sh = % del total Cyber)</h3>
 {_tabla_sku(top_skus_venta, "🥇 Top 10 por VENTA bruta", "venta")}
-{_tabla_sku(top_skus_margen, "💰 Top 10 por MARGEN final", "margen")}"""
+{_tabla_sku(top_skus_margen, "💰 Top 10 por MARGEN front", "margen")}"""
 
     # Alarma stock
     if alarma_stock:
@@ -682,7 +688,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         ({avance_cyber_proy*100:.1f}% meta venta $505.9 M)</td></tr>
     <tr><td>Cyber Jun 2025 completo (6 días):</td>
         <td align="right">{fmt_m(cyber_ly_bruta)} bruta · {fmt_m(cyber_ly_margen)} margen ({(cyber_ly_margen/cyber_ly_neta*100 if cyber_ly_neta else 0):.1f}%)</td></tr>
-    <tr><td>Cyber Oct 2025 completo (3 días):</td>
+    <tr><td>Cyber Oct 2025 ventana 6d (Lun-Sáb):</td>
         <td align="right">{fmt_m(cyber_oct_bruta)} bruta · {fmt_m(cyber_oct_margen)} margen ({(cyber_oct_margen/cyber_oct_neta*100 if cyber_oct_neta else 0):.1f}%)</td></tr>
     <tr><td>YoY Cyber vs Jun 2025:</td>
         <td align="right">
@@ -777,14 +783,17 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
 
 
 def descargar_excel_raw_hoy():
-    """Genera Excel RAW del día desde el PARQUET local (no Turso)."""
+    """Genera Excel RAW del día desde el PARQUET local (no Turso).
+    Excluye columna venta_neta (preferencia operativa)."""
     hoy_str = hoy_comercial()
     print(f"[3/5] Generando Excel RAW {hoy_str} desde parquet...", flush=True)
     parquet_path = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
     df_all = pd.read_parquet(parquet_path)
     df_all['fecha_venta'] = pd.to_datetime(df_all['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
     df = df_all[df_all['fecha_venta'] == hoy_str].copy()
-    print(f"      [OK] {len(df):,} filas hoy", flush=True)
+    if 'venta_neta' in df.columns:
+        df = df.drop(columns=['venta_neta'])
+    print(f"      [OK] {len(df):,} filas hoy ({len(df.columns)} cols, sin venta_neta)", flush=True)
     buf = io.BytesIO()
     with pd.ExcelWriter(buf, engine='openpyxl') as w:
         df.to_excel(w, index=False, sheet_name=f'Cyber {hoy_str}')
