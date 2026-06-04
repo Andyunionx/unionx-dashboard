@@ -770,6 +770,14 @@ def render():
             }""")
             grid_options["getRowStyle"] = total_row_style
 
+            # Clase CSS para la fila total (ocultar ícono expand y contador)
+            total_row_class = JsCode("""
+            function(params) {
+                if (params.data && params.data._is_total) return 'ag-total-row';
+                return '';
+            }""")
+            grid_options["getRowClass"] = total_row_class
+
             AgGrid(
                 df_jer_with_total, gridOptions=grid_options,
                 height=_grid_h,
@@ -777,6 +785,12 @@ def render():
                 allow_unsafe_jscode=True,
                 theme="streamlit",
                 key="aggrid_jerarquico",
+                custom_css={
+                    ".ag-total-row .ag-group-expanded":     {"display": "none !important"},
+                    ".ag-total-row .ag-group-contracted":   {"display": "none !important"},
+                    ".ag-total-row .ag-group-child-count":  {"display": "none !important"},
+                    ".ag-total-row .ag-cell-expandable":    {"cursor": "default !important"},
+                },
             )
         else:
             st.info("streamlit-aggrid no disponible. Recargá la página.")
