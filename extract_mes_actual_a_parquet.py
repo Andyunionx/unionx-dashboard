@@ -305,6 +305,15 @@ def main():
         print("\n[GATE 1] NO se publica el parquet — se conserva el último bueno.", flush=True)
         sys.exit(0)  # salida limpia: el commit posterior no verá cambios
 
+    # Excluir cargos de envío (SKU Delivery_*): no son ventas reales, infla
+    # margen con costo=0. Decisión Andrés 2026-06-04.
+    if 'sku' in df.columns:
+        pre_n = len(df); pre_b = pd.to_numeric(df['venta_bruta']).sum()
+        df = df[~df['sku'].astype(str).str.startswith('Delivery_')].copy()
+        delta_n = pre_n - len(df); delta_b = pre_b - pd.to_numeric(df['venta_bruta']).sum()
+        if delta_n > 0:
+            print(f"   [FILTER] Excluidos {delta_n:,} cargos Delivery_* (-${delta_b:,.0f} venta bruta)")
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")
