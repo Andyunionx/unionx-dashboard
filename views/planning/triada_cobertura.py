@@ -681,11 +681,19 @@ def render():
                 for pref in ["si_","vt_","tr_","cb_"]:
                     gb.configure_column(f"{pref}{ms}", hide=True)
 
+            # Calcular altura exacta: filas visibles (marcas colapsadas) + header + total
+            _n_top_rows = df_jer["marca"].dropna().nunique()
+            _row_h      = 42   # AG-Grid default row height
+            _header_h   = 60   # 2 niveles de header × 30px
+            _grid_h     = _n_top_rows * _row_h + _header_h + _row_h + 6  # +1 fila total
+
             gb.configure_grid_options(
                 groupDefaultExpanded=0,
                 animateRows=True,
                 suppressAggFuncInHeader=True,
-                domLayout="autoHeight",
+                rowHeight=_row_h,
+                headerHeight=30,
+                groupHeaderHeight=30,
                 autoGroupColumnDef={
                     "headerName": "Marca / Categoría",
                     "minWidth": 260,
@@ -752,6 +760,7 @@ def render():
 
             AgGrid(
                 df_jer, gridOptions=grid_options,
+                height=_grid_h,
                 fit_columns_on_grid_load=False,
                 allow_unsafe_jscode=True,
                 theme="streamlit",
