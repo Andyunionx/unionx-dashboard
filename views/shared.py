@@ -536,7 +536,7 @@ def _parquet_version():
     return tuple(vs)
 
 
-@st.cache_resource(show_spinner=False, ttl=900, max_entries=3)
+@st.cache_resource(show_spinner=False, ttl=900, max_entries=1)
 def _get_duck_conn(version=None):
     """Conexión DuckDB con ventas/dim_productos/metadata_cargas materializadas desde parquet.
     Cacheada con clave `version` (mtime de los parquet) + TTL 15min → se reconstruye
@@ -544,7 +544,13 @@ def _get_duck_conn(version=None):
     Cacheada (cache_resource) → se crea una sola vez, sin rebuild de 8s por request.
     fecha_venta se normaliza a VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al de SQLite."""
     import duckdb
+    import gc
     from datetime import datetime as _dt
+
+    # Al reconstruir (nuevo parquet cada hora en Cyber) liberar la copia en memoria
+    # anterior que cache_resource acaba de desalojar (max_entries=1) → evita que se
+    # acumulen bases DuckDB de 445k filas y reviente la RAM (OOM → healthz reset).
+    gc.collect()
 
     def _build(con, srcs, fuente):
         union = " UNION ALL BY NAME ".join(srcs)
