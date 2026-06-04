@@ -114,13 +114,16 @@ def cargar_metas_canal():
 
 def cargar_metas_marca_categoria():
     """Lee metas_marca y metas_categoria del plan_cyber_2026.json.
-    Devuelve (metas_marca_dict, metas_categoria_dict): nombre → meta_venta float."""
+    Devuelve (metas_marca_dict, metas_categoria_dict): nombre UPPER stripped → meta_venta float.
+    Normaliza con upper+strip para que match sea case-insensitive ("LEVO" vs "Levo")."""
     path = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_2026.json'
     if not path.exists():
         return {}, {}
     data = json.loads(path.read_text(encoding='utf-8'))
-    mm = {m['marca']: float(m.get('meta_venta', 0)) for m in data.get('metas_marca', [])}
-    mc = {m['categoria']: float(m.get('meta_venta', 0)) for m in data.get('metas_categoria', [])}
+    def _key(s):
+        return str(s or '').strip().upper()
+    mm = {_key(m['marca']): float(m.get('meta_venta', 0)) for m in data.get('metas_marca', [])}
+    mc = {_key(m['categoria']): float(m.get('meta_venta', 0)) for m in data.get('metas_categoria', [])}
     return mm, mc
 
 
@@ -208,13 +211,13 @@ def descargar_resumen(metas_canal):
                       float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
                      for _, r in grp.iterrows()]
 
-    # Por categoría_padre × día
-    grp = df.groupby(['categoria_padre', 'fecha_venta']).agg(
+    # Por categoría (categoria_hijo == "Tipo producto" del Plan Cyber Excel)
+    grp = df.groupby(['categoria_hijo', 'fecha_venta']).agg(
         bruta=('venta_bruta', 'sum'),
         neta=('venta_neta', 'sum'),
         margen=('margen_front', 'sum'),
     ).reset_index()
-    por_categoria_dia = [[(r['categoria_padre'] or '(sin cat)'), r['fecha_venta'],
+    por_categoria_dia = [[(r['categoria_hijo'] or '(sin cat)'), r['fecha_venta'],
                           float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
                          for _, r in grp.iterrows()]
 
@@ -529,7 +532,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         tot['pct_m'] = tot.apply(lambda r: (r['m']/r['n']*100) if r['n'] else 0, axis=1)
         tot['share'] = tot['b'] / total_cyber_bruta * 100
         if meta_dict:
-            tot['meta'] = tot.index.map(lambda x: meta_dict.get(x, 0))
+            tot['meta'] = tot.index.map(lambda x: meta_dict.get(str(x or '').strip().upper(), 0))
             tot['pct_meta'] = tot.apply(lambda r: (r['b']/r['meta']*100) if r['meta'] else 0, axis=1)
         tot = tot.sort_values('b', ascending=False).head(10)
         headers = '<th align="left">' + label_col_name.capitalize() + '</th>'
