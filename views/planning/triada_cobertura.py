@@ -738,11 +738,12 @@ def render():
                 }
                 grid_options["columnDefs"].append(mes_group)
 
-            # ── Fila TOTAL como fila normal al fondo ─────────────────
-            # (no pinnedBottomRowData — ese deja espacio vacío)
+            # ── Fila TOTAL como pinnedBottomRowData ───────────────────
+            # pinnedBottomRowData = fila leaf sin expand, siempre al fondo
+            # Altura exacta = filas visibles × row_h + header + pinned row
             total_row = {
-                "marca": "➕ TOTAL GENERAL", "categoria_padre": "", "categoria_hijo": "",
-                "sku": "", "producto": "TOTAL GENERAL",
+                "marca": "", "categoria_padre": "", "categoria_hijo": "",
+                "sku": "TOTAL GENERAL", "producto": "TOTAL GENERAL",
                 "stock_actual": int(df_jer["stock_actual"].sum()),
                 "venta_prom_3m": round(df_jer["venta_prom_3m"].sum(), 1),
                 "_is_total": True,
@@ -756,41 +757,25 @@ def render():
                 si_sum = df_jer[si_col].sum() if si_col in df_jer.columns else 0
                 total_row[cb_col] = round(si_sum / vt_sum, 1) if vt_sum > 0 else None
 
-            df_jer_with_total = pd.concat(
-                [df_jer, pd.DataFrame([total_row])], ignore_index=True
-            )
+            grid_options["pinnedBottomRowData"] = [total_row]
 
-            # Estilo para la fila total
+            # Estilo para la fila total (bold + fondo gris)
             total_row_style = JsCode("""
             function(params) {
-                if (params.data && params.data._is_total) {
-                    return { fontWeight: 'bold', background: '#f0f0f0', borderTop: '2px solid #999' };
+                if (params.node && params.node.rowPinned === 'bottom') {
+                    return { fontWeight: 'bold', background: '#f0f0f0' };
                 }
                 return {};
             }""")
             grid_options["getRowStyle"] = total_row_style
 
-            # Clase CSS para la fila total (ocultar ícono expand y contador)
-            total_row_class = JsCode("""
-            function(params) {
-                if (params.data && params.data._is_total) return 'ag-total-row';
-                return '';
-            }""")
-            grid_options["getRowClass"] = total_row_class
-
             AgGrid(
-                df_jer_with_total, gridOptions=grid_options,
+                df_jer, gridOptions=grid_options,
                 height=_grid_h,
                 fit_columns_on_grid_load=False,
                 allow_unsafe_jscode=True,
                 theme="streamlit",
                 key="aggrid_jerarquico",
-                custom_css={
-                    ".ag-total-row .ag-group-expanded":     {"display": "none !important"},
-                    ".ag-total-row .ag-group-contracted":   {"display": "none !important"},
-                    ".ag-total-row .ag-group-child-count":  {"display": "none !important"},
-                    ".ag-total-row .ag-cell-expandable":    {"cursor": "default !important"},
-                },
             )
         else:
             st.info("streamlit-aggrid no disponible. Recargá la página.")
