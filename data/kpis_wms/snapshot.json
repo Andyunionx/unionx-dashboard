@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-06-04T07:26:44.474591",
+  "generado_en": "2026-06-04T17:46:59.408804",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0035744924220760654,
-      "total_pickings": 13988,
+      "valor": 0.0035253472467038005,
+      "total_pickings": 14183,
       "on_time": 50,
-      "on_time_pct": 0.0035744924220760654,
-      "in_full": 13981,
-      "in_full_pct": 0.9994995710609094,
+      "on_time_pct": 0.0035253472467038005,
+      "in_full": 14176,
+      "in_full_pct": 0.9995064513854615,
       "both": 50,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.06471816283924843,
-      "total_pickings": 479,
+      "valor": 0.06288032454361055,
+      "total_pickings": 493,
       "on_time": 33,
-      "on_time_pct": 0.06889352818371608,
-      "in_full": 475,
-      "in_full_pct": 0.9916492693110647,
+      "on_time_pct": 0.06693711967545639,
+      "in_full": 489,
+      "in_full_pct": 0.9918864097363083,
       "both": 31,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999793217535153,
-      "ok": 19340,
-      "total": 19344,
+      "valor": 0.9997969336988527,
+      "ok": 19694,
+      "total": 19698,
       "errores": 4,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.7074224443056423,
-      "total_so": 19332,
-      "total_con_pickings": 19212,
-      "cumplidos": 13591,
+      "valor": 0.7016588642377366,
+      "total_so": 19772,
+      "total_con_pickings": 19652,
+      "cumplidos": 13789,
       "parciales": 14,
-      "sin_iniciar": 5607,
+      "sin_iniciar": 5849,
       "error": null
     },
     "oct_30d": {
-      "valor": 31.861833913649026,
-      "n_orders": 14360,
+      "valor": 31.71012274921637,
+      "n_orders": 14569,
       "min_h": 0.025,
       "max_h": 597.8994444444445,
-      "mediana_h": 21.545833333333334,
+      "mediana_h": 21.40388888888889,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 6257,
+      "lineas": 6614,
       "mes": "2026-06",
       "error": null
     },
@@ -403,15 +403,15 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 92,
-          "tarde": 88,
-          "on_time_pct": 0.043478260869565216
+          "total": 105,
+          "tarde": 101,
+          "on_time_pct": 0.0380952380952381
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 47,
-          "tarde": 42,
-          "on_time_pct": 0.10638297872340426
+          "total": 48,
+          "tarde": 43,
+          "on_time_pct": 0.10416666666666667
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -6720,31 +6720,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0035744924220760654,
-      "total_pickings": 13988,
+      "valor": 0.0035253472467038005,
+      "total_pickings": 14183,
       "on_time": 50,
-      "on_time_pct": 0.0035744924220760654,
-      "in_full": 13981,
-      "in_full_pct": 0.9994995710609094,
+      "on_time_pct": 0.0035253472467038005,
+      "in_full": 14176,
+      "in_full_pct": 0.9995064513854615,
       "both": 50,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.06471816283924843,
-      "total_pickings": 479,
+      "valor": 0.06288032454361055,
+      "total_pickings": 493,
       "on_time": 33,
-      "on_time_pct": 0.06889352818371608,
-      "in_full": 475,
-      "in_full_pct": 0.9916492693110647,
+      "on_time_pct": 0.06693711967545639,
+      "in_full": 489,
+      "in_full_pct": 0.9918864097363083,
       "both": 31,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999793217535153,
-      "ok": 19340,
-      "total": 19344,
+      "valor": 0.9997969336988527,
+      "ok": 19694,
+      "total": 19698,
       "errores": 4,
       "error": null
     }
