@@ -134,7 +134,7 @@ def cargar_cmr_sheet():
     df = pd.DataFrame(rows[1:], columns=headers)
     print(f"   {len(df)} filas crudas | columnas: {list(df.columns)}", flush=True)
 
-    # Renombrar
+    # Renombrar (acepta variantes nuevas y viejas del header del Sheet)
     df = df.rename(columns={
         'Name': 'cmr_name',
         'SKU': 'sku',
@@ -145,11 +145,19 @@ def cargar_cmr_sheet():
         'Cantidad': 'cantidad_raw',
         'Venta CMR Bruto': 'venta_bruta_raw',
         'Venta CMR Neto': 'venta_neta_raw',
+        # Variantes del header de pago (nombres cambiaron en jun-2026)
         'Pago CMR': 'pago_cmr_raw',
+        'Pago CMR Neto': 'pago_cmr_raw',
         'Comisión CMR': 'comision_raw',
+        'Comisión CMR Neto': 'comision_raw',
         'Comisión %': 'comision_pct_raw',
         'Envío CMR': 'envio_raw',
     })
+    # Defensivo: si alguna col esperada falta, créala vacía para evitar KeyError
+    for c in ('cmr_name','sku','fecha_raw','cantidad_raw','venta_bruta_raw',
+              'venta_neta_raw','pago_cmr_raw','comision_raw','comision_pct_raw','envio_raw'):
+        if c not in df.columns:
+            df[c] = ''
 
     df['fecha'] = df['fecha_raw'].apply(_parse_fecha_dmy)
     df['cantidad'] = df['cantidad_raw'].apply(_parse_num_cl)
