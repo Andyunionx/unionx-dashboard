@@ -18,8 +18,10 @@ import streamlit as st
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 META_JSON    = PROJECT_ROOT / "data" / "planificacion" / "plan_cyber_2026.json"
+SLA_CONFIG   = PROJECT_ROOT / "data" / "ops_manuales" / "cyber_sla_config.json"
 HIST_PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 MES_PARQUET  = PROJECT_ROOT / "data" / "historico" / "ventas_mes_actual.parquet"
+WMS_PARQUET  = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
 
 CYBER_START  = date(2026, 6, 1)
 CYBER_END    = date(2026, 6, 6)
@@ -270,6 +272,144 @@ def _tab_metas(meta: dict):
                  use_container_width=True, hide_index=True, height=480)
 
 
+# ── SLA / Backlog ─────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _load_sla_config() -> dict:
+    if not SLA_CONFIG.exists():
+        return {}
+    return json.loads(SLA_CONFIG.read_text(encoding="utf-8")).get("canales", {})
+
+
+def _corte_canal(canal: str, config: dict) -> tuple[str, str]:
+    """Devuelve (corte_str_HH:MM, modalidad) para un canal dado."""
+    c = config.get(canal) or config.get("_default", {"corte": "16:00", "modalidad": "nextday"})
+    return c["corte"], c["modalidad"]
+
+
+def _corte_a_hora(corte_str: str) -> int:
+    """'14:00' → 14"""
+    return int(corte_str.split(":")[0])
+
+
+@st.cache_data(ttl=180, show_spinner=False)
+def _wms_pickings_dia(fecha: date) -> pd.DataFrame:
+    """Pickings outgoing del día desde el parquet WMS."""
+    if not WMS_PARQUET.exists():
+        return pd.DataFrame()
+    df = pd.read_parquet(WMS_PARQUET)
+    df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
+    df["date"] = df["fecha_done"].dt.date
+    df["hour"] = df["fecha_done"].dt.hour
+    mask = (df["date"] == fecha) & (df["picking_type_code"] == "outgoing")
+    return df[mask][["picking_id", "hour", "n_unidades", "n_lineas"]].copy()
+
+
+def _tab_backlog(fecha: date):
+    """Tab Backlog SLA: pedidos urgentes (antes del corte) vs despachados."""
+    sla = _load_sla_config()
+    ahora_h = datetime.now().hour
+
+    st.markdown(f"### Backlog SLA — {fecha.strftime('%d/%m/%Y')}")
+    st.caption("Urgentes = pedidos recibidos ANTES del corte del canal (deben salir hoy). "
+               "Programados = recibidos DESPUÉS del corte (salen mañana).")
+
+    if st.button("Actualizar", key="sla_refresh", use_container_width=False):
+        _cargar_ventas_cyber.clear()
+        _wms_pickings_dia.clear()
+
+    df_v = _ventas_dia(fecha)
+    df_wms = _wms_pickings_dia(fecha)
+
+    if df_v.empty:
+        st.warning("Sin datos de ventas para esta fecha.")
+        return
+
+    # Clasificar cada pedido como urgente/programado según corte de canal
+    def clasificar(row):
+        corte_str, modalidad = _corte_canal(row["canal"] if "canal" in row.index else "", sla)
+        corte_h = _corte_a_hora(corte_str)
+        hora_venta = int(row["hour"]) if pd.notna(row.get("hour")) else 0
+        return "urgente" if hora_venta < corte_h else "programado"
+
+    df_v["clasificacion"] = df_v.apply(clasificar, axis=1)
+    df_v["canal"] = df_v.get("canal", "")
+
+    # KPIs globales
+    urgentes   = df_v[df_v["clasificacion"] == "urgente"]
+    programados = df_v[df_v["clasificacion"] == "programado"]
+    ped_urg    = urgentes["pedido"].nunique()
+    uds_urg    = int(urgentes["cantidad"].sum())
+    ped_prog   = programados["pedido"].nunique()
+    uds_prog   = int(programados["cantidad"].sum())
+
+    # Despachados WMS hoy
+    uds_desp   = int(df_wms["n_unidades"].sum()) if not df_wms.empty else 0
+    backlog    = max(0, uds_urg - uds_desp)
+    pct_desp   = min(100, uds_desp / uds_urg * 100) if uds_urg else 0
+
+    c1, c2, c3, c4 = st.columns(4)
+    col_back = "#DC2626" if backlog > 200 else ("#EA580C" if backlog > 50 else "#16A34A")
+    c1.metric("Pedidos urgentes (hoy)", f"{ped_urg:,}".replace(",", "."),
+              f"{uds_urg:,} uds antes del corte".replace(",", "."))
+    c2.metric("Despachados WMS", f"{uds_desp:,}".replace(",", "."),
+              f"{pct_desp:.0f}% de urgentes")
+    c3.metric("Backlog urgente", f"{backlog:,}".replace(",", "."),
+              "uds pendientes de hoy", delta_color="inverse" if backlog > 0 else "off")
+    c4.metric("Programados mañana", f"{ped_prog:,}".replace(",", "."),
+              f"{uds_prog:,} uds".replace(",", "."))
+
+    st.markdown("---")
+
+    # Tabla por canal con corte y estado
+    st.markdown("#### Por canal — estado SLA")
+    rows = []
+    for canal, grp in df_v.groupby("canal"):
+        corte_str, modalidad = _corte_canal(canal, sla)
+        corte_h = _corte_a_hora(corte_str)
+        urg  = grp[grp["clasificacion"] == "urgente"]
+        prog = grp[grp["clasificacion"] == "programado"]
+        u_ped  = urg["pedido"].nunique()
+        u_uds  = int(urg["cantidad"].sum())
+        p_ped  = prog["pedido"].nunique()
+        pasado = ahora_h >= corte_h
+        estado = "🔒 Cerrado" if pasado else f"🟢 Abierto (cierra {corte_str})"
+        rows.append({
+            "Canal": canal,
+            "Modalidad": modalidad,
+            "Corte": corte_str,
+            "Estado": estado,
+            "Ped urgentes": u_ped,
+            "Uds urgentes": u_uds,
+            "Ped progr.": p_ped,
+        })
+    df_sla = pd.DataFrame(rows).sort_values(["Corte", "Canal"])
+    st.dataframe(df_sla, use_container_width=True, hide_index=True, height=420)
+
+    # Evolución backlog por hora
+    st.markdown("#### Acumulado ventas urgentes vs despachos (por hora)")
+    by_hora_v = urgentes.groupby("hour").agg(uds_v=("cantidad","sum")).reindex(range(0,24), fill_value=0).reset_index()
+    by_hora_v["acum_v"] = by_hora_v["uds_v"].cumsum()
+
+    if not df_wms.empty:
+        by_hora_w = df_wms.groupby("hour").agg(uds_w=("n_unidades","sum")).reindex(range(0,24), fill_value=0).reset_index()
+        by_hora_w["acum_w"] = by_hora_w["uds_w"].cumsum()
+    else:
+        by_hora_w = pd.DataFrame({"hour": range(24), "acum_w": [0]*24})
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=by_hora_v["hour"], y=by_hora_v["acum_v"],
+                             name="Vendido urgente acum.", mode="lines+markers",
+                             line=dict(color="#DC2626", width=2)))
+    fig.add_trace(go.Scatter(x=by_hora_w["hour"], y=by_hora_w["acum_w"],
+                             name="Despachado WMS acum.", mode="lines+markers",
+                             line=dict(color="#16A34A", width=2)))
+    fig.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                      xaxis=dict(title="Hora", dtick=1), yaxis=dict(title="Uds acumuladas"),
+                      legend=dict(orientation="h", y=1.08), margin=dict(t=30, b=20))
+    st.plotly_chart(fig, use_container_width=True)
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def render():
@@ -295,20 +435,35 @@ def render():
         dia_idx = _dia_cyber(hoy)
         st.success(f"CYBER EN VIVO — Día {dia_idx + 1}/6 · {CYBER_DIAS[dia_idx]}")
 
-    tab_hoy, tab_acum, tab_metas = st.tabs(["Hoy en vivo", "Acumulado Cyber", "Metas por canal"])
+    tab_hoy, tab_sla, tab_acum, tab_metas = st.tabs([
+        "Hoy en vivo", "Backlog SLA", "Acumulado Cyber", "Metas por canal"
+    ])
+
+    # Selector de fecha compartido
+    fechas = [CYBER_START + timedelta(days=i) for i in range(7)
+              if CYBER_START + timedelta(days=i) <= hoy]
 
     with tab_hoy:
-        fechas = [CYBER_START + timedelta(days=i) for i in range(6)
-                  if CYBER_START + timedelta(days=i) <= hoy]
         if not fechas:
             st.info("El Cyber aún no ha comenzado.")
         else:
             fecha_sel = st.selectbox(
                 "Fecha", fechas, index=len(fechas) - 1,
-                format_func=lambda d: f"{CYBER_DIAS[_dia_cyber(d)]} {d.strftime('%d/%m')}",
+                format_func=lambda d: f"{CYBER_DIAS[_dia_cyber(d)]} {d.strftime('%d/%m')}" if _dia_cyber(d) is not None else d.strftime('%d/%m'),
                 key="cyber_fecha_sel",
             )
             _tab_hoy(meta, fecha_sel)
+
+    with tab_sla:
+        if not fechas:
+            st.info("El Cyber aún no ha comenzado.")
+        else:
+            fecha_sla = st.selectbox(
+                "Fecha", fechas, index=len(fechas) - 1,
+                format_func=lambda d: f"{CYBER_DIAS[_dia_cyber(d)]} {d.strftime('%d/%m')}" if _dia_cyber(d) is not None else d.strftime('%d/%m'),
+                key="cyber_fecha_sla",
+            )
+            _tab_backlog(fecha_sla)
 
     with tab_acum:
         _tab_acumulado(meta)

@@ -1,0 +1,16 @@
+{
+  "_nota": "Horarios de corte por canal para despacho mismo día. Pedidos recibidos DESPUÉS del corte se procesan al día siguiente.",
+  "_ml_nota": "ML no distingue Flex (corte 14:00) vs Colecta (corte 12:00) en los datos actuales — se usa 12:00 (conservador). Actualizar cuando el campo tipo_despacho esté disponible.",
+  "canales": {
+    "Mercado Libre":  { "corte": "12:00", "modalidad": "sameday", "descripcion": "ML Colecta/Flex (conservador 12:00)" },
+    "Falabella":      { "corte": "14:00", "modalidad": "sameday", "descripcion": "Falabella sameday" },
+    "Simplit web":    { "corte": "14:00", "modalidad": "sameday", "descripcion": "Página web" },
+    "Lhotse web":     { "corte": "14:00", "modalidad": "sameday", "descripcion": "Página web" },
+    "UnionX web":     { "corte": "14:00", "modalidad": "sameday", "descripcion": "Página web" },
+    "Paris":          { "corte": "23:59", "modalidad": "sameday", "descripcion": "Paris — despacho hasta cierre" },
+    "Walmart":        { "corte": "10:00", "modalidad": "sameday", "descripcion": "Walmart sameday" },
+    "Kitchen Center": { "corte": "16:00", "modalidad": "sameday", "descripcion": "Kitchen Center sameday" },
+    "Travel Duty":    { "corte": "16:00", "modalidad": "sameday", "descripcion": "Travel Duty sameday" },
+    "_default":       { "corte": "16:00", "modalidad": "nextday",  "descripcion": "Resto canales — nextday corte 16:00" }
+  }
+}
