@@ -468,7 +468,7 @@ def render():
 
         st.divider()
         solo_marca_propia = st.checkbox("Solo SKUs marca propia", value=True,
-                                          help="Filtra solo marcas propias (tipo_marca = Propia)")
+                                          help="Excluye SKUs sin marca asignada (Sin clasificar)")
         solo_con_stock   = st.checkbox("Solo SKUs con stock > 0", value=False)
 
     # ── Aplicar filtros y recalcular cobertura con horizonte ──────────
@@ -481,7 +481,10 @@ def render():
     if sel_estados:
         dff = dff[dff["estado"].isin(sel_estados)]
     if solo_marca_propia:
-        dff = dff[dff["tipo_marca"] == "Propia"]
+        # Usar marca del master directamente (no tipo_marca de ventas_historico)
+        # Excluye solo "Sin clasificar" — productos nuevos sin historial siguen siendo propios
+        _MARCAS_NO_PROPIAS = {"Sin clasificar", "sin clasificar", ""}
+        dff = dff[~dff["marca"].isin(_MARCAS_NO_PROPIAS) & dff["marca"].notna()]
     if solo_con_stock:
         dff = dff[dff["stock_actual"] > 0]
 
