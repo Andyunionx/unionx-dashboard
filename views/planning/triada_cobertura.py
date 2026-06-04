@@ -601,8 +601,23 @@ def render():
         _tr_piv = _df_tr_j.dropna(subset=["mes_eta"]).pivot_table(
             index="sku", columns="mes_eta", values="cantidad", aggfunc="sum"
         ).fillna(0) if not _df_tr_j.empty else pd.DataFrame()
-        # TODO: para meses sin datos en comex, agregar tránsito proyectado del FCST
-        # cuando esté disponible en planif_forecast_manual o planif_transito_baseline
+        # Tránsito proyectado FCST (planif_forecast_transito.parquet)
+        # Generado por extract_forecast_transito.py desde el Excel FCST.
+        # Solo se usa para meses SIN datos en comex (fallback mes a mes).
+        _path_tr_fcst = DATA_DIR / "planificacion" / "snapshots" / "planif_forecast_transito.parquet"
+        if _path_tr_fcst.exists():
+            _df_tr_fcst = pd.read_parquet(_path_tr_fcst)
+            _df_tr_fcst["sku"]      = _df_tr_fcst["sku"].astype(str)
+            _df_tr_fcst["unidades"] = pd.to_numeric(_df_tr_fcst["unidades"], errors="coerce").fillna(0)
+            _tr_fcst_piv = _df_tr_fcst.pivot_table(
+                index="sku", columns="mes", values="unidades", aggfunc="sum"
+            ).fillna(0)
+            # Agregar al pivot principal solo para meses no cubiertos por comex
+            for _mc in _tr_fcst_piv.columns:
+                if _mc not in _tr_piv.columns:
+                    _tr_piv[_mc] = _tr_fcst_piv[_mc]
+        # Si no existe el parquet FCST, los meses sin comex quedan en 0
+        # → correr extract_forecast_transito.py con el Excel FCST para generarlo
 
         # Base del df para el grid
         df_jer = dff[["marca", "categoria_padre", "categoria_hijo",
