@@ -119,8 +119,8 @@ jobs:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
-          # preborrador=true -> solo andres@unionx.cl. preborrador=false -> los 4.
-          EMAIL_TO: ${{ github.event.inputs.preborrador == 'true' && 'andres@unionx.cl' || (vars.CYBER_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl') }}
+          # preborrador=true -> solo andres@unionx.cl. preborrador=false -> los 10.
+          EMAIL_TO: ${{ github.event.inputs.preborrador == 'true' && 'andres@unionx.cl' || (vars.CYBER_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl,sguzman@grupoeter.cl,trinidad@unionx.cl,claudia@unionx.cl,ignacia@unionx.cl,michela@unionx.cl,felipe@unionx.cl') }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
           CYBER_PREBORRADOR: ${{ github.event.inputs.preborrador == 'true' && '1' || '0' }}
           CYBER_FORCE_EMAIL: ${{ github.event.inputs.force_email == 'true' && '1' || '0' }}
