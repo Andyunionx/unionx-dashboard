@@ -585,10 +585,24 @@ def render():
         _df_tr_j = cargar_planif_transito_live()
         if _df_tr_j.empty:
             _df_tr_j = cargar_transito()
-        _df_tr_j["sku"]     = _df_tr_j["sku"].astype(str)
+        _df_tr_j["sku"]      = _df_tr_j["sku"].astype(str)
         _df_tr_j["cantidad"] = pd.to_numeric(_df_tr_j["cantidad"], errors="coerce").fillna(0)
-        _df_tr_j["mes_eta"] = pd.to_datetime(_df_tr_j["fecha_eta_bodega"], errors="coerce").dt.strftime("%Y-%m")
-        _tr_piv = _df_tr_j.pivot_table(index="sku", columns="mes_eta", values="cantidad", aggfunc="sum").fillna(0) if not _df_tr_j.empty else pd.DataFrame()
+        _df_tr_j["_eta"]     = pd.to_datetime(_df_tr_j["fecha_eta_bodega"], errors="coerce")
+
+        # Regla de corte día 5:
+        #   ETA día 1-5 del mes M  → tránsito de MES M  (llega a tiempo para venderse)
+        #   ETA día 6+ del mes M   → tránsito de MES M+1 (llega tarde, se vende el mes siguiente)
+        def _mes_transito(fecha):
+            if pd.isna(fecha):
+                return None
+            return (fecha if fecha.day <= 5 else fecha + pd.DateOffset(months=1)).strftime("%Y-%m")
+
+        _df_tr_j["mes_eta"] = _df_tr_j["_eta"].apply(_mes_transito)
+        _tr_piv = _df_tr_j.dropna(subset=["mes_eta"]).pivot_table(
+            index="sku", columns="mes_eta", values="cantidad", aggfunc="sum"
+        ).fillna(0) if not _df_tr_j.empty else pd.DataFrame()
+        # TODO: para meses sin datos en comex, agregar tránsito proyectado del FCST
+        # cuando esté disponible en planif_forecast_manual o planif_transito_baseline
 
         # Base del df para el grid
         df_jer = dff[["marca", "categoria_padre", "categoria_hijo",
