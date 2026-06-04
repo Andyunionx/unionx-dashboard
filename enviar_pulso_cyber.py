@@ -206,7 +206,7 @@ def descargar_resumen(metas_canal):
                           float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
                          for _, r in grp.iterrows()]
 
-    # Top 10 SKUs por venta bruta y por margen final (acumulado Cyber)
+    # Top 10 SKUs por venta bruta y por margen front (acumulado Cyber)
     grp_sku = df.groupby(['sku', 'producto']).agg(
         uds=('cantidad', 'sum'),
         bruta=('venta_bruta', 'sum'),
@@ -544,7 +544,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         if res:
             h, s, b = res
             bloque_marca_dia = f"""
-<h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Marcas × día (top 10 por venta) — V = venta bruta, M = margen final</h3>
+<h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Marcas × día (top 10 por venta) — V = venta bruta, M = margen front</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{h}</tr>
 <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{s}</tr></thead>
@@ -557,7 +557,7 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         if res:
             h, s, b = res
             bloque_categoria_dia = f"""
-<h3 style="margin:24px 0 8px 0;font-size:1rem">📂 Categorías × día (top 10 por venta) — V = venta bruta, M = margen final</h3>
+<h3 style="margin:24px 0 8px 0;font-size:1rem">📂 Categorías × día (top 10 por venta) — V = venta bruta, M = margen front</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{h}</tr>
 <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{s}</tr></thead>
