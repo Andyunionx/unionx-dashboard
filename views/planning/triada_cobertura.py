@@ -736,30 +736,44 @@ def render():
                 }
                 grid_options["columnDefs"].append(mes_group)
 
-            # ── Fila TOTAL al fondo (pinnedBottomRowData) ─────────────
+            # ── Fila TOTAL como fila normal al fondo ─────────────────
+            # (no pinnedBottomRowData — ese deja espacio vacío)
             total_row = {
-                "marca": "TOTAL", "categoria_padre": "", "categoria_hijo": "",
+                "marca": "➕ TOTAL GENERAL", "categoria_padre": "", "categoria_hijo": "",
                 "sku": "", "producto": "TOTAL GENERAL",
                 "stock_actual": int(df_jer["stock_actual"].sum()),
                 "venta_prom_3m": round(df_jer["venta_prom_3m"].sum(), 1),
+                "_is_total": True,
             }
             for ms in mes_strs_j:
-                si_col = f"si_{ms}"
-                vt_col = f"vt_{ms}"
-                tr_col = f"tr_{ms}"
-                cb_col = f"cb_{ms}"
+                si_col, vt_col, tr_col, cb_col = f"si_{ms}", f"vt_{ms}", f"tr_{ms}", f"cb_{ms}"
                 total_row[si_col] = int(df_jer[si_col].sum()) if si_col in df_jer.columns else 0
                 total_row[vt_col] = round(df_jer[vt_col].sum(), 1) if vt_col in df_jer.columns else 0
                 total_row[tr_col] = int(df_jer[tr_col].sum()) if tr_col in df_jer.columns else 0
-                # Cobertura total = Stock total / Venta total del mes
                 vt_sum = df_jer[vt_col].sum() if vt_col in df_jer.columns else 0
                 si_sum = df_jer[si_col].sum() if si_col in df_jer.columns else 0
                 total_row[cb_col] = round(si_sum / vt_sum, 1) if vt_sum > 0 else None
 
-            grid_options["pinnedBottomRowData"] = [total_row]
+            df_jer["_is_total"] = False
+            df_jer_with_total = pd.concat(
+                [df_jer, pd.DataFrame([total_row])], ignore_index=True
+            )
+
+            # Estilo para la fila total
+            total_row_style = JsCode("""
+            function(params) {
+                if (params.data && params.data._is_total) {
+                    return { fontWeight: 'bold', background: '#f0f0f0', borderTop: '2px solid #999' };
+                }
+                return {};
+            }""")
+            grid_options["getRowStyle"] = total_row_style
+
+            # Ocultar columna auxiliar _is_total
+            gb.configure_column("_is_total", hide=True)
 
             AgGrid(
-                df_jer, gridOptions=grid_options,
+                df_jer_with_total, gridOptions=grid_options,
                 height=_grid_h,
                 fit_columns_on_grid_load=False,
                 allow_unsafe_jscode=True,
