@@ -675,7 +675,7 @@ def render():
                                 valueFormatter="x!=null?Math.round(x).toLocaleString():''")
             gb.configure_column("venta_prom_3m",   header_name="Vta/Mes PPTO", width=110,
                                 type=["numericColumn"], enableValue=True, aggFunc="sum",
-                                valueFormatter="x!=null?x.toFixed(1):''")
+                                valueFormatter="x!=null?Math.round(x).toLocaleString():''")
 
             # Ocultar columnas proyección individuales (se mostrarán como grupos)
             for ms in mes_strs_j:
@@ -727,7 +727,7 @@ def render():
                          "valueFormatter": num_fmt},
                         {"field": f"vt_{ms}", "headerName": "Venta",    "width": 80,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
-                         "valueFormatter": "x!=null?x.toFixed(0):''"},
+                         "valueFormatter": num_fmt},
                         {"field": f"tr_{ms}", "headerName": "Tránsito", "width": 80,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
