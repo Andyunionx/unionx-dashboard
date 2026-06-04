@@ -702,6 +702,7 @@ def render():
                 },
             )
             gb.configure_default_column(resizable=True, sortable=True, filter=True)
+            gb.configure_column("_is_total", hide=True)   # ocultar columna auxiliar de estilo
             grid_options = gb.build()
 
             # Agregar grupos de columnas por mes directamente en columnDefs
@@ -768,9 +769,6 @@ def render():
                 return {};
             }""")
             grid_options["getRowStyle"] = total_row_style
-
-            # Ocultar columna auxiliar _is_total
-            gb.configure_column("_is_total", hide=True)
 
             AgGrid(
                 df_jer_with_total, gridOptions=grid_options,
