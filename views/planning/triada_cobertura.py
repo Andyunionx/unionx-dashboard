@@ -582,16 +582,32 @@ def render():
         else:
             _ppto_piv = pd.DataFrame()
 
+        # Fuente de tránsito confirmado:
+        # 1. planif_transito_live (Turso, diario) → más actualizado
+        # 2. planif_transito_baseline (snapshot FCST Excel) → confirmados hasta jun
+        # 3. comex/transito (solo si los anteriores están vacíos, filtrando RFQ)
         _df_tr_j = cargar_planif_transito_live()
         if _df_tr_j.empty:
-            _df_tr_j = cargar_transito()
+            # Usar baseline del FCST (tránsito confirmado del Excel)
+            _path_tr_base = DATA_DIR / "planificacion" / "snapshots" / "planif_transito_baseline.parquet"
+            if _path_tr_base.exists():
+                _df_tr_base = pd.read_parquet(_path_tr_base)
+                # Normalizar nombre de columnas (baseline usa CamelCase)
+                _df_tr_base.columns = [c.lower().replace(" ", "_") for c in _df_tr_base.columns]
+                if "sku" in _df_tr_base.columns and "cantidad" in _df_tr_base.columns:
+                    _df_tr_j = _df_tr_base[["sku", "cantidad", "fecha_eta_bodega"]].copy()
+            if _df_tr_j.empty:
+                # Último fallback: comex filtrando solo confirmados (excluye RFQ)
+                _df_tr_comex = cargar_transito()
+                if "status" in _df_tr_comex.columns:
+                    _df_tr_comex = _df_tr_comex[~_df_tr_comex["status"].str.contains("RFQ", na=False)]
+                _df_tr_j = _df_tr_comex
+
         _df_tr_j["sku"]      = _df_tr_j["sku"].astype(str)
         _df_tr_j["cantidad"] = pd.to_numeric(_df_tr_j["cantidad"], errors="coerce").fillna(0)
         _df_tr_j["_eta"]     = pd.to_datetime(_df_tr_j["fecha_eta_bodega"], errors="coerce")
 
-        # Regla de corte día 5:
-        #   ETA día 1-5 del mes M  → tránsito de MES M  (llega a tiempo para venderse)
-        #   ETA día 6+ del mes M   → tránsito de MES M+1 (llega tarde, se vende el mes siguiente)
+        # Regla día 5: ETA 1-5 → mismo mes | ETA 6+ → mes siguiente
         def _mes_transito(fecha):
             if pd.isna(fecha):
                 return None
