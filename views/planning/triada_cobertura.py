@@ -755,6 +755,11 @@ def render():
                 allow_unsafe_jscode=True,
                 theme="streamlit",
                 key="aggrid_jerarquico",
+                custom_css={
+                    ".ag-floating-bottom": {"border-top": "none !important"},
+                    ".ag-floating-bottom-container": {"border-top": "none !important"},
+                    ".ag-pinned-bottom-floating-bottom": {"border-top": "none !important"},
+                },
             )
         else:
             st.info("streamlit-aggrid no disponible. Recargá la página.")
