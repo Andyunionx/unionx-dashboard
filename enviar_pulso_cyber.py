@@ -61,9 +61,9 @@ CYBER_LABELS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 # Cyber 2025 JUNIO (referencia YoY mismo día): Lun 2-jun → Sáb 7-jun
 CYBER_2025_FECHAS = ['2025-06-02', '2025-06-03', '2025-06-04', '2025-06-05', '2025-06-06', '2025-06-07']
 CYBER_PAIRS = list(zip(CYBER_FECHAS, CYBER_2025_FECHAS))
-# Cyber 2025 OCTUBRE (CyberMonday Chile, Lun 6-oct → Mié 8-oct, 3 días)
-CYBER_OCT2025_FECHAS = ['2025-10-06', '2025-10-07', '2025-10-08']
-CYBER_OCT_PAIRS = list(zip(CYBER_FECHAS[:3], CYBER_OCT2025_FECHAS))
+# Cyber 2025 OCTUBRE — Semana COMPLETA Lun-Sab (CyberMonday Chile 6-8 oct + extension 9-11 oct)
+CYBER_OCT2025_FECHAS = ['2025-10-06', '2025-10-07', '2025-10-08', '2025-10-09', '2025-10-10', '2025-10-11']
+CYBER_OCT_PAIRS = list(zip(CYBER_FECHAS, CYBER_OCT2025_FECHAS))
 CURVA_PCT = [0.30, 0.25, 0.20, 0.12, 0.08, 0.05]
 META_TOTAL = 505_915_976
 META_DIA_BRUTA = [META_TOTAL * p for p in CURVA_PCT]
@@ -183,6 +183,46 @@ def descargar_resumen(metas_canal):
     por_hora_hoy = [[float(r['hora_venta_num']), int(r['sos']), float(round(r['bruta']))]
                     for _, r in grp.iterrows() if pd.notna(r['hora_venta_num'])]
 
+    # ============================================================
+    # NUEVOS BLOQUES: marcas × día, categorías × día, top SKUs
+    # ============================================================
+    # Por marca × día
+    grp = df.groupby(['marca', 'fecha_venta']).agg(
+        bruta=('venta_bruta', 'sum'),
+        neta=('venta_neta', 'sum'),
+        margen=('margen_final', 'sum'),
+    ).reset_index()
+    por_marca_dia = [[r['marca'] or '(sin marca)', r['fecha_venta'],
+                      float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
+                     for _, r in grp.iterrows()]
+
+    # Por categoría_padre × día
+    grp = df.groupby(['categoria_padre', 'fecha_venta']).agg(
+        bruta=('venta_bruta', 'sum'),
+        neta=('venta_neta', 'sum'),
+        margen=('margen_final', 'sum'),
+    ).reset_index()
+    por_categoria_dia = [[(r['categoria_padre'] or '(sin cat)'), r['fecha_venta'],
+                          float(round(r['bruta'])), float(round(r['neta'])), float(round(r['margen']))]
+                         for _, r in grp.iterrows()]
+
+    # Top 10 SKUs por venta bruta y por margen final (acumulado Cyber)
+    grp_sku = df.groupby(['sku', 'producto']).agg(
+        uds=('cantidad', 'sum'),
+        bruta=('venta_bruta', 'sum'),
+        neta=('venta_neta', 'sum'),
+        margen=('margen_final', 'sum'),
+    ).reset_index()
+    grp_sku['margen_pct'] = grp_sku.apply(lambda r: (r['margen']/r['neta']*100) if r['neta'] else 0, axis=1)
+    top_skus_venta = grp_sku.sort_values('bruta', ascending=False).head(10)
+    top_skus_margen = grp_sku.sort_values('margen', ascending=False).head(10)
+    top_skus_venta = [[r['sku'], str(r['producto'])[:60], int(r['uds']),
+                       float(round(r['bruta'])), float(round(r['margen'])), float(r['margen_pct'])]
+                      for _, r in top_skus_venta.iterrows()]
+    top_skus_margen = [[r['sku'], str(r['producto'])[:60], int(r['uds']),
+                        float(round(r['bruta'])), float(round(r['margen'])), float(r['margen_pct'])]
+                       for _, r in top_skus_margen.iterrows()]
+
     # Cyber 2025 (LY) — leído desde parquet HISTÓRICO local (Turso ya no tiene 2025)
     hoy_str = hoy_comercial()
     fecha_ly = None
@@ -243,7 +283,8 @@ def descargar_resumen(metas_canal):
             fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
             cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
             fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
-            cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta)
+            cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta,
+            por_marca_dia, por_categoria_dia, top_skus_venta, top_skus_margen)
 
 
 def cargar_alarma_stock():
@@ -359,7 +400,9 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
                 cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
                 fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
                 cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta,
-                alarma_stock, metas_canal):
+                alarma_stock, metas_canal,
+                por_marca_dia=None, por_categoria_dia=None,
+                top_skus_venta=None, top_skus_margen=None):
     ahora_clt = datetime.now(CHILE_TZ)
     fecha_hora = ahora_clt.strftime('%d-%b-%Y %H:%M CLT')
     hora_actual = ahora_clt.hour
@@ -454,6 +497,94 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
             f'<td align="right">{share*100:.1f}%</td></tr>'
         )
     tabla_mod = '\n'.join(rows_mod)
+
+    # ============================================================
+    # NUEVOS BLOQUES — marcas × día, categorías × día, top SKUs
+    # ============================================================
+    def _matriz_dia(rows, label_col_name):
+        """Construye matriz NxD: filas=entidad, cols=día, valores=bruta/margen."""
+        if not rows:
+            return ''
+        import pandas as _pd
+        _df = _pd.DataFrame(rows, columns=[label_col_name, 'fecha', 'bruta', 'neta', 'margen'])
+        # Solo días hasta hoy_str (no mostrar días futuros vacíos)
+        dias_pintar = [f for f in CYBER_FECHAS if f <= hoy_str]
+        _df = _df[_df['fecha'].isin(dias_pintar)]
+        if _df.empty:
+            return ''
+        # Total por entidad para ordenar y filtrar top 10
+        tot = _df.groupby(label_col_name).agg(b=('bruta','sum'), m=('margen','sum'), n=('neta','sum'))
+        tot['pct_m'] = tot.apply(lambda r: (r['m']/r['n']*100) if r['n'] else 0, axis=1)
+        tot = tot.sort_values('b', ascending=False).head(10)
+        # Headers
+        headers = '<th align="left">' + label_col_name.capitalize() + '</th>'
+        for f in dias_pintar:
+            idx = CYBER_FECHAS.index(f)
+            headers += f'<th align="right" colspan="2">{CYBER_LABELS_SHORT[idx]}</th>'
+        headers += '<th align="right" colspan="3">Acumulado</th>'
+        sub = '<th></th>' + ('<th align="right">V</th><th align="right">M</th>' * len(dias_pintar))
+        sub += '<th align="right">V</th><th align="right">M</th><th align="right">%M</th>'
+        # Filas
+        body = ''
+        for ent, t in tot.iterrows():
+            body += f'<tr><td>{ent[:30]}</td>'
+            for f in dias_pintar:
+                m = _df[(_df[label_col_name]==ent) & (_df['fecha']==f)]
+                if not m.empty:
+                    body += f'<td align="right">{fmt_m(m["bruta"].iloc[0])}</td><td align="right">{fmt_m(m["margen"].iloc[0])}</td>'
+                else:
+                    body += '<td align="right">-</td><td align="right">-</td>'
+            body += f'<td align="right"><b>{fmt_m(t["b"])}</b></td><td align="right"><b>{fmt_m(t["m"])}</b></td><td align="right">{t["pct_m"]:.1f}%</td></tr>'
+        return headers, sub, body
+
+    # Marca × día
+    bloque_marca_dia = ''
+    if por_marca_dia:
+        res = _matriz_dia(por_marca_dia, 'marca')
+        if res:
+            h, s, b = res
+            bloque_marca_dia = f"""
+<h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Marcas × día (top 10 por venta) — V = venta bruta, M = margen final</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{h}</tr>
+<tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{s}</tr></thead>
+<tbody>{b}</tbody></table>"""
+
+    # Categoría × día
+    bloque_categoria_dia = ''
+    if por_categoria_dia:
+        res = _matriz_dia(por_categoria_dia, 'categoria')
+        if res:
+            h, s, b = res
+            bloque_categoria_dia = f"""
+<h3 style="margin:24px 0 8px 0;font-size:1rem">📂 Categorías × día (top 10 por venta) — V = venta bruta, M = margen final</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{h}</tr>
+<tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{s}</tr></thead>
+<tbody>{b}</tbody></table>"""
+
+    # Top SKUs (lado a lado: venta + margen)
+    bloque_top_skus = ''
+    if top_skus_venta or top_skus_margen:
+        def _tabla_sku(rows, titulo, ord_label):
+            if not rows:
+                return ''
+            body = ''
+            for sku, prod, uds, bruta, margen, pctm in rows:
+                body += f'<tr><td>{sku[:14]}</td><td>{prod}</td><td align="right">{uds:,}</td>'
+                body += f'<td align="right">{fmt_m(bruta)}</td><td align="right">{fmt_m(margen)}</td>'
+                body += f'<td align="right">{pctm:.1f}%</td></tr>'
+            return f"""
+<h4 style="margin:16px 0 6px 0;font-size:0.9rem">{titulo}</h4>
+<table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">
+  <th align="left">SKU</th><th align="left">Producto</th><th align="right">Uds</th>
+  <th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th>
+</tr></thead><tbody>{body}</tbody></table>"""
+        bloque_top_skus = f"""
+<h3 style="margin:24px 0 8px 0;font-size:1rem">⭐ Top 10 SKUs acumulado Cyber</h3>
+{_tabla_sku(top_skus_venta, "🥇 Top 10 por VENTA bruta", "venta")}
+{_tabla_sku(top_skus_margen, "💰 Top 10 por MARGEN final", "margen")}"""
 
     # Alarma stock
     if alarma_stock:
@@ -624,6 +755,12 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
   <th align="right">Bruta</th><th align="right">Margen</th><th align="right">Share</th>
 </tr></thead>
 <tbody>{tabla_mod}</tbody></table>
+
+{bloque_marca_dia}
+
+{bloque_categoria_dia}
+
+{bloque_top_skus}
 
 {bloque_alarma}
 
@@ -873,7 +1010,8 @@ def main():
      fecha_ly, total_ly_val, margen_ly_val, neta_ly_val,
      cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
      fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
-     cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta) = descargar_resumen(metas_canal)
+     cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta,
+     por_marca_dia, por_categoria_dia, top_skus_venta, top_skus_margen) = descargar_resumen(metas_canal)
 
     # VALIDACIÓN TEMPRANA contra Odoo
     hoy_str = hoy_comercial()
@@ -893,7 +1031,8 @@ def main():
         cyber_ly_bruta, cyber_ly_margen, cyber_ly_neta,
         fecha_oct, total_oct_val, margen_oct_val, neta_oct_val,
         cyber_oct_bruta, cyber_oct_margen, cyber_oct_neta,
-        alarma_stock, metas_canal
+        alarma_stock, metas_canal,
+        por_marca_dia, por_categoria_dia, top_skus_venta, top_skus_margen
     )
 
     # Excel del día con reintento si Turso devuelve 0 pero hay venta esperada
