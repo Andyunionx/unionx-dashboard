@@ -685,6 +685,7 @@ def render():
                 groupDefaultExpanded=0,
                 animateRows=True,
                 suppressAggFuncInHeader=True,
+                domLayout="autoHeight",
                 autoGroupColumnDef={
                     "headerName": "Marca / Categoría",
                     "minWidth": 260,
@@ -750,16 +751,11 @@ def render():
             grid_options["pinnedBottomRowData"] = [total_row]
 
             AgGrid(
-                df_jer, gridOptions=grid_options, height=640,
+                df_jer, gridOptions=grid_options,
                 fit_columns_on_grid_load=False,
                 allow_unsafe_jscode=True,
                 theme="streamlit",
                 key="aggrid_jerarquico",
-                custom_css={
-                    ".ag-floating-bottom": {"border-top": "none !important"},
-                    ".ag-floating-bottom-container": {"border-top": "none !important"},
-                    ".ag-pinned-bottom-floating-bottom": {"border-top": "none !important"},
-                },
             )
         else:
             st.info("streamlit-aggrid no disponible. Recargá la página.")
