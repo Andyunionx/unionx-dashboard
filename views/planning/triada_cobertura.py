@@ -657,6 +657,7 @@ def render():
             df_jer[f"cb_{ms}"]  = _cob                             # cobertura meses
             _stock_v = np.maximum(0.0, _stock_v - _venta + _tr)
 
+        df_jer["_is_total"] = False   # columna auxiliar para estilo total
         df_jer = df_jer.sort_values(
             ["marca", "categoria_padre", "categoria_hijo"],
             ascending=[True, True, True], na_position="last"
@@ -754,7 +755,6 @@ def render():
                 si_sum = df_jer[si_col].sum() if si_col in df_jer.columns else 0
                 total_row[cb_col] = round(si_sum / vt_sum, 1) if vt_sum > 0 else None
 
-            df_jer["_is_total"] = False
             df_jer_with_total = pd.concat(
                 [df_jer, pd.DataFrame([total_row])], ignore_index=True
             )
