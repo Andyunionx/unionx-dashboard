@@ -5,58 +5,57 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-04 (sesión 3 — larga)
+## 🗓️ Última sesión: 2026-06-04 (sesión final)
 
-### ✅ Lo que se hizo esta sesión
+### ✅ Estado actual — Vista Cobertura por Producto COMPLETA
 
-#### 1. Vista Cobertura — rediseño completo con AG-Grid jerárquico
-- **Tab "🌳 Jerárquico"**: tabla dinámica tipo Excel con desplegables
-  - Jerarquía: Marca → Categoría Padre → Categoría Hijo → SKU
-  - **Proyección 6 meses integrada** (Jun–Nov 2026):
-    - Stock Inicio | Venta PPTO | Tránsito ETA | Cob.Meses (colores)
-  - **Fila TOTAL GENERAL** al fondo (negrita, fondo gris), sin ícono expandir
-  - Totales aggregados en cada nivel (sum stock/venta/tránsito, avg cob.)
+#### Tab "🌳 Jerárquico" — funcionalidad completa
+- **Tabla dinámica AG-Grid** con desplegables Marca → Cat Padre → Cat Hijo → SKU
+- **Proyección 6 meses integrada** (Jun–Nov 2026):
+  - Columnas agrupadas por mes: Stock Ini | Venta | Tránsito | Cob. Meses
+  - Venta = PPTO del FCST (planif_forecast_manual) — si no hay PPTO, muestra 0
+  - Tránsito = planif_transito_baseline con regla día 5 (6+ = mes siguiente)
+  - Cobertura con colores: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
+- **TOTAL GENERAL** pinneado al fondo: sin ícono expandir, sin contadores
+- **Números**: separador de miles, sin decimales (excepto Cob. = 1 decimal)
+- **Totales aggregados** por nivel (sum stock/venta/tránsito, avg cob)
+- **Filtro "Solo SKUs marca propia"** (default ON) → excluye "Sin clasificar"
 
-#### 2. Correcciones de datos
-- **Filtro "Solo SKUs marca propia"**: cambiado de `tipo_marca` a `marca` del master
-  - Fix: productos nuevos sin historial de ventas (Lhotse/Simplit) ahora incluidos
-  - Lhotse: +49 SKUs, +925u PPTO jun | Simplit: +17 SKUs, +520u PPTO jun
-- **Tránsito confirmado**: cambiado a `planif_transito_baseline` (excluye TRANSITO_RFQ)
-  - Jun: 15,424u → Jul: 30,566u (con regla día 1-5)
-- **Regla día 5**: ETA 1-5 → mismo mes | ETA 6+ → mes siguiente
-
-#### 3. Fuentes de datos alineadas a Triada Proyectada
-- Base SKUs: `planif_master_sku` (3,006 SKUs, igual que Triada)
+#### Fuentes de datos (alineadas a Triada Proyectada)
+- Base SKUs: `planif_master_sku` (3,006 SKUs)
 - Stock: `planif_stock_baseline` (IDs correctos, 3,797 SKUs)
-- Venta proyectada: `planif_forecast_manual` (PPTO Jun-Ago, 622 SKUs) > histórico
-- Tránsito: `planif_transito_baseline` (confirmados ETA hasta jun)
-- Ventas 6sem: rolling 42 días → tasa mensual (/42×30)
+- Venta proyectada: `planif_forecast_manual` (PPTO FCST, 622 SKUs con Jun-Ago)
+- Tránsito: `planif_transito_baseline` (confirmados, sin RFQ)
+- Ventas 6sem: ventas_historico rolling 42d → tasa mensual
 
-#### 4. Filtro y visualización
-- "Solo SKUs marca propia" (default: ON) → excluye "Sin clasificar"
-- KPI único: forecast promedio 3m (PPTO Jun+Jul+Ago)
-- 658 SKUs marca propia visibles
-- Números validados vs FCST: Lhotse 14,587 ✅ Simplit 17,453 ✅
+#### Números validados vs FCST
+- Lhotse junio: **14,587** ✅ | Simplit junio: **17,453** ✅
+- TOTAL GENERAL: **128,674** stock | **40,531** venta jun | **3.2** cob jun
 
 ---
 
 ## 🔲 Pendientes Felipe (próxima sesión)
 
-- [ ] **Verificar visualmente** que TOTAL GENERAL no muestre ícono `>` ni `(1)`
-  → commit `a8f5121` debería haberlo arreglado con `getRowClass + custom_css`
-- [ ] Agregar tránsito proyectado del FCST para Ago-Nov:
-  → Correr `python extract_forecast_transito.py` cuando Andrés tenga el Excel FCST
-- [ ] Cuando Turso tenga los datos del PPTO actualizado, verificar que `cargar_forecast_manual_mensual()` lo tome automático
-- [ ] Revisar si hay que agregar `Bandú` como marca propia al filtro
+- [ ] Verificar visualmente la tabla después del merge de Andrés
+- [ ] Cuando Turso tenga datos → verificar que `cargar_forecast_manual_mensual()` lo tome
+- [ ] Agregar tránsito proyectado FCST para Ago-Nov:
+  → Correr `python extract_forecast_transito.py` con el Excel FCST
+- [ ] Actualizar `ventas_historico.parquet` con datos de Mayo+Junio 2026
 
 ---
 
-## 🔔 Pendientes para Andrés
+## 🔔 Para Andrés — mergear a main
 
-- [ ] **PR a main** — toda la funcionalidad de Cobertura está en `feat/fc-planif-onboarding`
-- [ ] Actualizar `ventas_historico.parquet` con datos de Mayo+Junio 2026
-- [ ] Poner `FORECAST FINAL SKU 26-27 V2.xlsx` en `data/planificacion/` para extraer tránsito Ago-Nov
-- [ ] Arreglar billing Turso para que el pipeline automático funcione
+**Branch**: `feat/fc-planif-onboarding`
+**Último commit**: `24336cc` — formato miles sin decimales
+
+**Qué incluye este branch:**
+1. Vista completa "Cobertura por Producto" (`views/planning/triada_cobertura.py`)
+2. Nuevo script `extract_forecast_transito.py` — para tránsito FCST Aug-Nov
+3. Snapshots desde main: `planif_forecast_manual`, `planif_stock_live`, `planif_ventas_diarias_sku`
+4. `requirements.txt` con `streamlit-aggrid==1.0.5`
+
+**Impacto**: CERO impacto en vistas existentes. Solo agrega/mejora la vista Cobertura.
 
 ---
 
@@ -65,36 +64,13 @@
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `a8f5121` — ocultar botón expand en TOTAL GENERAL |
+| Último commit | `24336cc` — números con separador de miles |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
 | App oficial | `https://unionx-planificacion.streamlit.app/` |
-| Reboot method | JS sequence: Manage app → expand terminal → click ⋮ → Reboot app |
-| PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` — 677 SKUs |
-| Stock file | `data/planificacion/snapshots/planif_stock_baseline.parquet` — 3,797 SKUs |
-| Tránsito file | `data/planificacion/snapshots/planif_transito_baseline.parquet` — confirmado hasta jun |
-
----
-
-## 📋 Arquitectura de datos (alineada a Triada Proyectada)
-
-```
-Base SKUs    → cargar_planif_master()         (planif_master_sku, 3006 SKUs)
-Stock        → cargar_planif_stock_live()      → cargar_planif_stock_baseline()
-Ventas       → ventas_historico.parquet        (últimos 5 meses, rolling 42d → tasa mensual)
-Vta/Mes      → planif_forecast_manual (PPTO) > histórico (SIN Prophet)
-Tránsito     → planif_transito_baseline        (filtra TRANSITO_RFQ)
-```
-
-## 📋 Lógica de proyección mensual
-
-```
-Para cada mes M (6 meses forward, Jun-Nov 2026):
-  Stock Inicio M = stock_actual (mes actual) | Stock Fin M-1 (meses futuros)
-  Venta M = planif_forecast_manual[sku][mes] | 0 si no tiene PPTO
-  Tránsito M = planif_transito_baseline con regla día 5
-  Cob M = Stock Ini M / Venta M
-  Stock Fin M = max(0, Stock Ini - Venta + Tránsito)
-```
+| Reboot | JS: Manage app → expand terminal → ⋮ → Reboot app |
+| PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
+| Stock file | `data/planificacion/snapshots/planif_stock_baseline.parquet` |
+| Tránsito | `data/planificacion/snapshots/planif_transito_baseline.parquet` |
 
 ---
 
