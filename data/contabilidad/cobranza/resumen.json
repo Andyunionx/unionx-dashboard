@@ -1,52 +1,52 @@
 {
-  "generado_en": "2026-06-03T16:14:16.833957",
+  "generado_en": "2026-06-04T09:41:52.011927",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13010,
-  "total_monto_pendiente_clp": 728026802.0,
+  "total_documentos_pendientes": 13088,
+  "total_monto_pendiente_clp": 710087265.0,
   "monto_por_aging": {
-    "+90 días": 35475938.0,
-    "1-30 días": 460238727.0,
-    "31-60 días": 102546891.0,
-    "61-90 días": 21637470.0,
-    "Vigente": 108127776.0
+    "+90 días": 35644828.0,
+    "1-30 días": 435578726.0,
+    "31-60 días": 107999576.0,
+    "61-90 días": 21526929.0,
+    "Vigente": 109337206.0
   },
   "monto_por_tipo": {
-    "BOLETA": 656907065.0,
+    "BOLETA": 638967528.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 145231520.0
-    },
-    {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 105632558.0
+      "monto": 147405063.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 88585641.0
+      "monto": 97412489.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 96477446.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 70203340.0
-    },
-    {
-      "partner": "Duty Free T C S A",
-      "monto": 44382211.0
+      "monto": 72119626.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 31910208.0
+      "monto": 27636900.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23665431.0
+      "monto": 25006787.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 22681069.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 20988720.0
+      "monto": 21397313.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 9407091.0
+      "monto": 11512300.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -94,7 +94,7 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 3574965.0
+      "monto": 3828330.0
     }
   ],
   "notas_credito_count": 533,
