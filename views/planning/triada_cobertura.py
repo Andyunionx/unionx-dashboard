@@ -727,6 +727,28 @@ def render():
                 }
                 grid_options["columnDefs"].append(mes_group)
 
+            # ── Fila TOTAL al fondo (pinnedBottomRowData) ─────────────
+            total_row = {
+                "marca": "TOTAL", "categoria_padre": "", "categoria_hijo": "",
+                "sku": "", "producto": "TOTAL GENERAL",
+                "stock_actual": int(df_jer["stock_actual"].sum()),
+                "venta_prom_3m": round(df_jer["venta_prom_3m"].sum(), 1),
+            }
+            for ms in mes_strs_j:
+                si_col = f"si_{ms}"
+                vt_col = f"vt_{ms}"
+                tr_col = f"tr_{ms}"
+                cb_col = f"cb_{ms}"
+                total_row[si_col] = int(df_jer[si_col].sum()) if si_col in df_jer.columns else 0
+                total_row[vt_col] = round(df_jer[vt_col].sum(), 1) if vt_col in df_jer.columns else 0
+                total_row[tr_col] = int(df_jer[tr_col].sum()) if tr_col in df_jer.columns else 0
+                # Cobertura total = Stock total / Venta total del mes
+                vt_sum = df_jer[vt_col].sum() if vt_col in df_jer.columns else 0
+                si_sum = df_jer[si_col].sum() if si_col in df_jer.columns else 0
+                total_row[cb_col] = round(si_sum / vt_sum, 1) if vt_sum > 0 else None
+
+            grid_options["pinnedBottomRowData"] = [total_row]
+
             AgGrid(
                 df_jer, gridOptions=grid_options, height=640,
                 fit_columns_on_grid_load=False,
