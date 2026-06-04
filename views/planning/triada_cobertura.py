@@ -598,7 +598,7 @@ def render():
         for ms, ml in zip(mes_strs_j, mes_labels_j):
             _venta = (_ppto_piv[ms].reindex(df_jer["sku"].values, fill_value=0).values.astype(float)
                       if ms in _ppto_piv.columns
-                      else df_jer["venta_prom_3m"].values.astype(float))
+                      else np.zeros(len(df_jer)))
             _tr    = (_tr_piv[ms].reindex(df_jer["sku"].values, fill_value=0).values.astype(float)
                       if ms in _tr_piv.columns
                       else np.zeros(len(df_jer)))
