@@ -37,7 +37,8 @@ from src.actions.distribucion.clasificador import clasificar_factura
 from src.actions.distribucion.template_excel import generar_excel_aprobacion
 from src.actions.distribucion.memoria import cargar_memoria, resumen_memoria
 from src.actions.distribucion.aplicador import aplicar_distribucion, aplicar_directo
-from src.actions.distribucion.gmail_distribucion import send_propuesta, leer_respuestas
+from src.actions.distribucion.gmail_distribucion import send_propuesta_completa, leer_respuestas
+from src.actions.distribucion.analisis_ruts import detectar_ruts_sin_partner
 
 TOKEN_GMAIL  = PROJECT_ROOT / "agente-comex" / "config" / "token.json"
 DIR_DISTRIBUCION = AGENTE_ROOT / "data" / "distribucion"
@@ -74,12 +75,72 @@ def cmd_detectar_y_clasificar(args):
         excluidos = {r.strip() for r in args.excluir_rut.split(",")}
         facturas = [f for f in facturas if f.partner_rut not in excluidos]
 
-    # Excluir Liquidaciones-Factura (FAL) — no son facturas regulares
+    # Excluir Liquidaciones-Factura (FAL)
     facturas_fal = [f for f in facturas if f.name.upper().startswith("FAL")]
     facturas = [f for f in facturas if not f.name.upper().startswith("FAL")]
     if facturas_fal:
         print(f"  (Excluidas {len(facturas_fal)} liquidaciones FAL: "
               f"{', '.join(f.name for f in facturas_fal)})")
+
+    # ── Análisis paralelo: RUTs sin partner ───────────────────────────────
+    print("► Detectando proveedores sin RUT configurado en Odoo (últimos 30 días)...")
+    ruts_sin_partner = detectar_ruts_sin_partner(client, dias=30)
+    if ruts_sin_partner:
+        print(f"  ⚠️  {len(ruts_sin_partner)} proveedor(es) sin RUT:")
+        for r in ruts_sin_partner[:5]:
+            print(f"    • {r.partner_nombre} | {r.n_facturas} facturas | ${r.monto_total:,.0f}")
+    else:
+        print("  ✓ Todos los proveedores tienen RUT configurado")
+    print()
+
+    # ── Análisis SII vs Odoo ───────────────────────────────────────────────
+    comparacion_sii = None
+    print("► Comparando SII vs Odoo (faltantes en Odoo)...")
+    try:
+        from src.actions.compras.descarga_sii import descargar_mes_actual_y_anterior
+        from src.actions.compras.sii_parser import parse_libro_sii, cargar_directorio
+        from src.actions.compras.odoo_compras import OdooCompras
+        from src.actions.compras.compara_sii_odoo import comparar
+        from datetime import date
+
+        sii_rut = os.environ.get("SII_RUT", "")
+        sii_pwd = os.environ.get("SII_PASSWORD", "")
+
+        if sii_rut and sii_pwd:
+            resultados_descarga = descargar_mes_actual_y_anterior(rut=sii_rut, password=sii_pwd)
+            descargados = [r for r in resultados_descarga if r["ok"]]
+            if descargados:
+                print(f"  ✓ SII descargado ({len(descargados)} mes/es)")
+            else:
+                print("  ⚠️  No se pudo descargar el SII automáticamente")
+        else:
+            print("  (SII_RUT/SII_PASSWORD no configurados — skip descarga automática)")
+
+        # Intentar leer archivos ya existentes en disco
+        sii_dir = PROJECT_ROOT / "data" / "contabilidad" / "sii"
+        compras_sii = cargar_directorio(sii_dir) if sii_dir.exists() else []
+
+        if compras_sii:
+            hoy = date.today()
+            oc = OdooCompras(client)
+            compras_odoo = []
+            for mes_offset in [0, 1]:
+                m = hoy.month - mes_offset
+                y = hoy.year
+                if m <= 0:
+                    m += 12; y -= 1
+                compras_odoo.extend(oc.listar_compras_mes(y, m))
+
+            periodo = f"{hoy.year}-{hoy.month:02d}"
+            comparacion_sii = comparar(compras_sii, compras_odoo, periodo)
+            print(f"  SII: {comparacion_sii.total_sii} docs | "
+                  f"Odoo: {comparacion_sii.total_odoo} docs | "
+                  f"Faltantes en Odoo: {len(comparacion_sii.faltantes_en_odoo)}")
+        else:
+            print("  (Sin libro SII en disco — subir a data/contabilidad/sii/ para comparar)")
+    except Exception as e:
+        print(f"  (Error en análisis SII: {e})")
+    print()
 
     if not facturas:
         print("✓ No hay facturas pendientes de distribución.\n")
@@ -148,9 +209,11 @@ def cmd_detectar_y_clasificar(args):
             destinatarios = ["camila@unionx.cl", "victor@unionx.cl"]
             cc = ["andres@unionx.cl"]
 
-        resultado_mail = send_propuesta(
-            excels=[excel_path],
+        resultado_mail = send_propuesta_completa(
+            excels=[excel_path] if excels_generados else [],
             facturas_resumen=resumen_facturas,
+            ruts_sin_partner=ruts_sin_partner,
+            comparacion_sii=comparacion_sii,
             token_path=TOKEN_GMAIL,
             destinatarios=destinatarios,
             cc=cc,
