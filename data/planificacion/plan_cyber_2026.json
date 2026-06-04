@@ -145,7 +145,7 @@
       "uds_esperadas": 3116
     },
     {
-      "dia": "Miércoles",
+      "dia": "MiÃ©rcoles",
       "pct": 0.2,
       "uds_esperadas": 2493
     },
@@ -160,7 +160,7 @@
       "uds_esperadas": 997
     },
     {
-      "dia": "Sábado",
+      "dia": "SÃ¡bado",
       "pct": 0.05,
       "uds_esperadas": 623
     }
@@ -168,21 +168,330 @@
   "resumen": {
     "Concepto": "Valor",
     "Unidades Cyber total (todos los canales)": "20,486",
-    "Unidades vía Full Objetivo": "8,022",
+    "Unidades vÃ­a Full Objetivo": "8,022",
     "Unidades a cargo del equipo": "12,464",
-    "– Sameday (urgencia diaria)": "8,740",
-    "– Nextday (flexibilidad)": "3,724",
+    "â Sameday (urgencia diaria)": "8,740",
+    "â Nextday (flexibilidad)": "3,724",
     "Venta Cyber total": "$ 505.915.975",
-    "Venta vía Full Objetivo": "$ 208.625.234",
+    "Venta vÃ­a Full Objetivo": "$ 208.625.234",
     "Venta atribuible al equipo": "$ 297.290.741",
     "Ticket promedio (equipo)": "$ 23.852",
     "Equipo base": "5 personas",
-    "Jornada Cyber": "13 horas/día",
-    "Días de operación Cyber": "6 días",
+    "Jornada Cyber": "13 horas/dÃ­a",
+    "DÃ­as de operaciÃ³n Cyber": "6 dÃ­as",
     "Productividad observada (promedio)": "40.1 uds/h-persona",
     "Productividad observada (P90)": "67.1 uds/h-persona",
     "ESCENARIO A: Horas extras solas": "$ 1.950.000",
     "ESCENARIO B: HE + Refuerzo pico": "$ 2.050.000",
     "ESCENARIO C: Solo refuerzo, sin HE": "$ 300.000"
-  }
+  },
+  "metas_marca": [
+    {
+      "marca": "Simplit",
+      "meta_venta": 248349905.0,
+      "meta_uds": 9213
+    },
+    {
+      "marca": "LEVO",
+      "meta_venta": 101244516.0,
+      "meta_uds": 2044
+    },
+    {
+      "marca": "Lhotse",
+      "meta_venta": 71378341.0,
+      "meta_uds": 3357
+    },
+    {
+      "marca": "Xroad",
+      "meta_venta": 13192795.0,
+      "meta_uds": 373
+    },
+    {
+      "marca": "Caracol Natural",
+      "meta_venta": 2664446.0,
+      "meta_uds": 118
+    },
+    {
+      "marca": "Dynamo TL",
+      "meta_venta": 19415903.0,
+      "meta_uds": 578
+    },
+    {
+      "marca": "Bandú",
+      "meta_venta": 9986499.0,
+      "meta_uds": 291
+    },
+    {
+      "marca": "Atmosphera",
+      "meta_venta": 8403806.0,
+      "meta_uds": 235
+    },
+    {
+      "marca": "T-Care",
+      "meta_venta": 5882444.0,
+      "meta_uds": 121
+    },
+    {
+      "marca": "Braintoys",
+      "meta_venta": 5543722.0,
+      "meta_uds": 171
+    },
+    {
+      "marca": "UMA",
+      "meta_venta": 5117927.0,
+      "meta_uds": 336
+    }
+  ],
+  "metas_categoria": [
+    {
+      "categoria": "Baterías de cocina",
+      "meta_venta": 93607339.0,
+      "meta_uds": 1478
+    },
+    {
+      "categoria": "Proyectores",
+      "meta_venta": 33207401.0,
+      "meta_uds": 221
+    },
+    {
+      "categoria": "Juego de Loza",
+      "meta_venta": 44287077.0,
+      "meta_uds": 883
+    },
+    {
+      "categoria": "Contenedores",
+      "meta_venta": 16466022.0,
+      "meta_uds": 1145
+    },
+    {
+      "categoria": "Secadores de platos",
+      "meta_venta": 29327820.0,
+      "meta_uds": 2320
+    },
+    {
+      "categoria": "Telones Proyector",
+      "meta_venta": 15082927.0,
+      "meta_uds": 280
+    },
+    {
+      "categoria": "Cuchilleria",
+      "meta_venta": 26848318.0,
+      "meta_uds": 899
+    },
+    {
+      "categoria": "Botellas Termicas",
+      "meta_venta": 7986022.0,
+      "meta_uds": 812
+    },
+    {
+      "categoria": "Vasos",
+      "meta_venta": 13137209.0,
+      "meta_uds": 911
+    },
+    {
+      "categoria": "Gaming",
+      "meta_venta": 6120297.0,
+      "meta_uds": 166
+    },
+    {
+      "categoria": "Audífonos",
+      "meta_venta": 10946647.0,
+      "meta_uds": 825
+    },
+    {
+      "categoria": "Mochilas",
+      "meta_venta": 7987578.0,
+      "meta_uds": 481
+    },
+    {
+      "categoria": "Barras y Portaequipaje",
+      "meta_venta": 4111792.0,
+      "meta_uds": 81
+    },
+    {
+      "categoria": "Espumadores",
+      "meta_venta": 3393030.0,
+      "meta_uds": 119
+    },
+    {
+      "categoria": "Sillas escritorio",
+      "meta_venta": 18594083.0,
+      "meta_uds": 244
+    },
+    {
+      "categoria": "Maletas",
+      "meta_venta": 7552285.0,
+      "meta_uds": 108
+    },
+    {
+      "categoria": "Bolsos deportivos",
+      "meta_venta": 3400171.0,
+      "meta_uds": 134
+    },
+    {
+      "categoria": "Smartwatch",
+      "meta_venta": 4760114.0,
+      "meta_uds": 76
+    },
+    {
+      "categoria": "Mochilas viaje",
+      "meta_venta": 11419403.0,
+      "meta_uds": 229
+    },
+    {
+      "categoria": "Taladro y Atornilladores",
+      "meta_venta": 16068679.0,
+      "meta_uds": 526
+    },
+    {
+      "categoria": "Pick Up Pads",
+      "meta_venta": 2647631.0,
+      "meta_uds": 54
+    },
+    {
+      "categoria": "Parlantes",
+      "meta_venta": 4519920.0,
+      "meta_uds": 429
+    },
+    {
+      "categoria": "Secadores de pelo",
+      "meta_venta": 5676168.0,
+      "meta_uds": 84
+    },
+    {
+      "categoria": "Utensilios de cocina",
+      "meta_venta": 4105823.0,
+      "meta_uds": 315
+    },
+    {
+      "categoria": "Cocina y Accesorios",
+      "meta_venta": 5811280.0,
+      "meta_uds": 112
+    },
+    {
+      "categoria": "Monitores",
+      "meta_venta": 5455635.0,
+      "meta_uds": 54
+    },
+    {
+      "categoria": "Basureros",
+      "meta_venta": 3549875.0,
+      "meta_uds": 61
+    },
+    {
+      "categoria": "Cafeteras",
+      "meta_venta": 2972099.0,
+      "meta_uds": 208
+    },
+    {
+      "categoria": "Toldos y Carpas",
+      "meta_venta": 2555203.0,
+      "meta_uds": 18
+    },
+    {
+      "categoria": "Oficina",
+      "meta_venta": 6727139.0,
+      "meta_uds": 236
+    },
+    {
+      "categoria": "Especieros",
+      "meta_venta": 2525791.0,
+      "meta_uds": 191
+    },
+    {
+      "categoria": "Termos líquidos",
+      "meta_venta": 5631195.0,
+      "meta_uds": 246
+    },
+    {
+      "categoria": "Sartenes y Ollas",
+      "meta_venta": 4943255.0,
+      "meta_uds": 257
+    },
+    {
+      "categoria": "Accesorios de Camping",
+      "meta_venta": 2527659.0,
+      "meta_uds": 31
+    },
+    {
+      "categoria": "Cobertores y Tapices",
+      "meta_venta": 3331533.0,
+      "meta_uds": 190
+    },
+    {
+      "categoria": "Didacticos",
+      "meta_venta": 5735392.0,
+      "meta_uds": 191
+    },
+    {
+      "categoria": "Herramientas de Asistencia",
+      "meta_venta": 2768296.0,
+      "meta_uds": 40
+    },
+    {
+      "categoria": "Fundas",
+      "meta_venta": 3972687.0,
+      "meta_uds": 165
+    },
+    {
+      "categoria": "Cámaras de seguridad",
+      "meta_venta": 1861270.0,
+      "meta_uds": 69
+    },
+    {
+      "categoria": "Cámaras de automovil",
+      "meta_venta": 978329.0,
+      "meta_uds": 41
+    },
+    {
+      "categoria": "Bananos",
+      "meta_venta": 2277641.0,
+      "meta_uds": 193
+    },
+    {
+      "categoria": "Cubetas de hielo",
+      "meta_venta": 577386.0,
+      "meta_uds": 113
+    },
+    {
+      "categoria": "Alfombras",
+      "meta_venta": 2853958.0,
+      "meta_uds": 51
+    },
+    {
+      "categoria": "Termos de comida",
+      "meta_venta": 514078.0,
+      "meta_uds": 26
+    },
+    {
+      "categoria": "Soportes de Television",
+      "meta_venta": 4191726.0,
+      "meta_uds": 678
+    },
+    {
+      "categoria": "Cremas",
+      "meta_venta": 1927869.0,
+      "meta_uds": 75
+    },
+    {
+      "categoria": "Cubiertos",
+      "meta_venta": 939124.0,
+      "meta_uds": 56
+    },
+    {
+      "categoria": "Mantequilleros",
+      "meta_venta": 1761961.0,
+      "meta_uds": 183
+    },
+    {
+      "categoria": "Bar",
+      "meta_venta": 2995214.0,
+      "meta_uds": 225
+    },
+    {
+      "categoria": "Pantallas Publicitarias",
+      "meta_venta": 2074976.0,
+      "meta_uds": 3
+    }
+  ]
 }

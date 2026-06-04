@@ -112,6 +112,18 @@ def cargar_metas_canal():
     return metas
 
 
+def cargar_metas_marca_categoria():
+    """Lee metas_marca y metas_categoria del plan_cyber_2026.json.
+    Devuelve (metas_marca_dict, metas_categoria_dict): nombre → meta_venta float."""
+    path = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_2026.json'
+    if not path.exists():
+        return {}, {}
+    data = json.loads(path.read_text(encoding='utf-8'))
+    mm = {m['marca']: float(m.get('meta_venta', 0)) for m in data.get('metas_marca', [])}
+    mc = {m['categoria']: float(m.get('meta_venta', 0)) for m in data.get('metas_categoria', [])}
+    return mm, mc
+
+
 def descargar_resumen(metas_canal):
     """Combina histórico parquet (1-jun foto fija) + mes_actual.parquet (2-jun+).
     Turso no se usa para evitar bug sync silencioso.
@@ -501,9 +513,9 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
     # ============================================================
     # NUEVOS BLOQUES — marcas × día, categorías × día, top SKUs
     # ============================================================
-    def _matriz_dia(rows, label_col_name):
+    def _matriz_dia(rows, label_col_name, meta_dict=None):
         """Construye matriz NxD: filas=entidad, cols=día, valores=bruta/margen.
-        Acumulado: V, M, %M (margen/neta) y %Share (venta entidad / venta total Cyber)."""
+        Acumulado: V, M, %M (margen/neta), %Share, y %Meta (si meta_dict provisto)."""
         if not rows:
             return ''
         import pandas as _pd
@@ -516,14 +528,20 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
         tot = _df.groupby(label_col_name).agg(b=('bruta','sum'), m=('margen','sum'), n=('neta','sum'))
         tot['pct_m'] = tot.apply(lambda r: (r['m']/r['n']*100) if r['n'] else 0, axis=1)
         tot['share'] = tot['b'] / total_cyber_bruta * 100
+        if meta_dict:
+            tot['meta'] = tot.index.map(lambda x: meta_dict.get(x, 0))
+            tot['pct_meta'] = tot.apply(lambda r: (r['b']/r['meta']*100) if r['meta'] else 0, axis=1)
         tot = tot.sort_values('b', ascending=False).head(10)
         headers = '<th align="left">' + label_col_name.capitalize() + '</th>'
         for f in dias_pintar:
             idx = CYBER_FECHAS.index(f)
             headers += f'<th align="right" colspan="2">{CYBER_LABELS_SHORT[idx]}</th>'
-        headers += '<th align="right" colspan="4">Acumulado</th>'
+        acum_cols = 6 if meta_dict else 4
+        headers += f'<th align="right" colspan="{acum_cols}">Acumulado</th>'
         sub = '<th></th>' + ('<th align="right">V</th><th align="right">M</th>' * len(dias_pintar))
         sub += '<th align="right">V</th><th align="right">M</th><th align="right">%M</th><th align="right">%Share</th>'
+        if meta_dict:
+            sub += '<th align="right">Meta</th><th align="right">%Meta</th>'
         body = ''
         for ent, t in tot.iterrows():
             body += f'<tr><td>{ent[:30]}</td>'
@@ -534,13 +552,21 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
                 else:
                     body += '<td align="right">-</td><td align="right">-</td>'
             body += f'<td align="right"><b>{fmt_m(t["b"])}</b></td><td align="right"><b>{fmt_m(t["m"])}</b></td>'
-            body += f'<td align="right">{t["pct_m"]:.1f}%</td><td align="right">{t["share"]:.1f}%</td></tr>'
+            body += f'<td align="right">{t["pct_m"]:.1f}%</td><td align="right">{t["share"]:.1f}%</td>'
+            if meta_dict:
+                color = '#16A34A' if t["pct_meta"] >= 80 else ('#EA580C' if t["pct_meta"] >= 40 else '#DC2626')
+                body += f'<td align="right">{fmt_m(t["meta"])}</td>'
+                body += f'<td align="right" style="color:{color};font-weight:600">{t["pct_meta"]:.1f}%</td>'
+            body += '</tr>'
         return headers, sub, body
 
-    # Marca × día
+    # Cargar metas marca + categoría
+    metas_marca_dict, metas_cat_dict = cargar_metas_marca_categoria()
+
+    # Marca × día (con %Meta)
     bloque_marca_dia = ''
     if por_marca_dia:
-        res = _matriz_dia(por_marca_dia, 'marca')
+        res = _matriz_dia(por_marca_dia, 'marca', meta_dict=metas_marca_dict)
         if res:
             h, s, b = res
             bloque_marca_dia = f"""
@@ -550,10 +576,10 @@ def render_html(por_dia, por_canal_dia, por_canal_acum, por_mod, por_hora_hoy,
 <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0">{s}</tr></thead>
 <tbody>{b}</tbody></table>"""
 
-    # Categoría × día
+    # Categoría × día (con %Meta)
     bloque_categoria_dia = ''
     if por_categoria_dia:
-        res = _matriz_dia(por_categoria_dia, 'categoria')
+        res = _matriz_dia(por_categoria_dia, 'categoria', meta_dict=metas_cat_dict)
         if res:
             h, s, b = res
             bloque_categoria_dia = f"""
