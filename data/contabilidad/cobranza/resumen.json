@@ -1,60 +1,60 @@
 {
-  "generado_en": "2026-06-04T09:41:52.011927",
+  "generado_en": "2026-06-05T02:09:10.716266",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13088,
-  "total_monto_pendiente_clp": 710087265.0,
+  "total_documentos_pendientes": 14538,
+  "total_monto_pendiente_clp": 782092685.0,
   "monto_por_aging": {
-    "+90 días": 35644828.0,
-    "1-30 días": 435578726.0,
-    "31-60 días": 107999576.0,
-    "61-90 días": 21526929.0,
-    "Vigente": 109337206.0
+    "+90 días": 35730818.0,
+    "1-30 días": 490213008.0,
+    "31-60 días": 113033356.0,
+    "61-90 días": 28699540.0,
+    "Vigente": 114415963.0
   },
   "monto_por_tipo": {
-    "BOLETA": 638967528.0,
+    "BOLETA": 710972948.0,
     "FACTURA": 71119737.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 147405063.0
-    },
-    {
-      "partner": "Cliente Kitchen Center",
-      "monto": 97412489.0
+      "monto": 140435773.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 96477446.0
+      "monto": 124975878.0
+    },
+    {
+      "partner": "Cliente Kitchen Center",
+      "monto": 104768883.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 72119626.0
-    },
-    {
-      "partner": "Cliente Ripley",
-      "monto": 27636900.0
+      "monto": 85976681.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 25006787.0
+      "monto": 35483137.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 22681069.0
+      "partner": "Cliente Ripley",
+      "monto": 32999952.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 21397313.0
+      "monto": 24824040.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 24816803.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 20435799.0
     },
     {
       "partner": "FALABELLA.COM",
       "monto": 19556704.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19253514.0
     },
     {
       "partner": "SODIMAC S.A.",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 11512300.0
+      "monto": 11456317.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -85,18 +85,18 @@
       "monto": 6245489.0
     },
     {
+      "partner": "Sawa SPA",
+      "monto": 4609512.0
+    },
+    {
       "partner": "Showtime SpA",
       "monto": 4602400.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 4223623.0
-    },
-    {
-      "partner": "Global Reward Solutions",
-      "monto": 3828330.0
     }
   ],
-  "notas_credito_count": 533,
+  "notas_credito_count": 531,
   "pedidos_venta_count": 10000
 }
