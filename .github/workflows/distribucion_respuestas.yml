@@ -48,10 +48,6 @@ jobs:
           mkdir -p agente-comex/config
           echo "$GMAIL_TOKEN_JSON" > agente-comex/config/token.json
 
-      - name: Crear .env con credenciales
-        run: |
-          echo "ANDRES_ODOO_PASSWORD=${{ secrets.ANDRES_ODOO_PASSWORD }}" >> .env
-
       - name: Restaurar módulos desde git
         run: |
           git checkout agente-odoo/src/actions/distribucion/ \
@@ -60,6 +56,7 @@ jobs:
       - name: Leer respuestas y aplicar en Odoo
         env:
           PYTHONIOENCODING: utf-8
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
         run: python -X utf8 agente-odoo/scripts/run_distribucion.py --leer-respuestas
 
       - name: Commit memoria actualizada

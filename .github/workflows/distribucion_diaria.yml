@@ -53,13 +53,7 @@ jobs:
           mkdir -p agente-comex/config
           echo "$GMAIL_TOKEN_JSON" > agente-comex/config/token.json
 
-      - name: Crear .env con credenciales
-        run: |
-          echo "ANDRES_ODOO_PASSWORD=${{ secrets.ANDRES_ODOO_PASSWORD }}" >> .env
-          echo "SII_RUT=${{ secrets.SII_RUT }}" >> .env
-          echo "SII_PASSWORD=${{ secrets.SII_PASSWORD }}" >> .env
-
-      - name: Restaurar módulos desde git (por si Google Drive evictó archivos)
+      - name: Restaurar módulos desde git
         run: |
           git checkout agente-odoo/src/actions/distribucion/ \
                        agente-odoo/src/actions/compras/ \
@@ -69,6 +63,9 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
           DISPLAY: ':99'
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          SII_RUT: ${{ secrets.SII_RUT }}
+          SII_PASSWORD: ${{ secrets.SII_PASSWORD }}
         run: |
           Xvfb :99 -screen 0 1280x800x24 &
           sleep 2
