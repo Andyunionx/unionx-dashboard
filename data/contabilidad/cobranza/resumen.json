@@ -1,28 +1,32 @@
 {
-  "generado_en": "2026-06-05T09:27:28.358611",
+  "generado_en": "2026-06-05T14:22:23.468835",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 14538,
-  "total_monto_pendiente_clp": 782092685.0,
+  "total_documentos_pendientes": 14753,
+  "total_monto_pendiente_clp": 933594761.0,
   "monto_por_aging": {
     "+90 días": 35730818.0,
-    "1-30 días": 490213008.0,
-    "31-60 días": 113033356.0,
+    "1-30 días": 595158465.0,
+    "31-60 días": 112873940.0,
     "61-90 días": 28699540.0,
-    "Vigente": 114415963.0
+    "Vigente": 161131998.0
   },
   "monto_por_tipo": {
-    "BOLETA": 710972948.0,
-    "FACTURA": 71119737.0
+    "BOLETA": 716968630.0,
+    "FACTURA": 216626131.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 140435773.0
+      "monto": 143679132.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 124975878.0
+      "monto": 125905428.0
+    },
+    {
+      "partner": "MercadoLibre Chile LTDA",
+      "monto": 109451656.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,27 +34,31 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 85976681.0
+      "monto": 87551665.0
+    },
+    {
+      "partner": "Falabella.com SPA",
+      "monto": 42548235.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 35483137.0
+      "monto": 36512847.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 32999952.0
+      "monto": 33318232.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 24824040.0
+      "monto": 25441360.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 24816803.0
+      "monto": 22834609.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20435799.0
+      "monto": 20687018.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -69,10 +77,6 @@
       "monto": 15827000.0
     },
     {
-      "partner": "MercadoLibre Chile LTDA",
-      "monto": 13611765.0
-    },
-    {
       "partner": "abc S.A.",
       "monto": 11456317.0
     },
@@ -85,16 +89,12 @@
       "monto": 6245489.0
     },
     {
+      "partner": "Cencosud Retail S.A",
+      "monto": 6183410.0
+    },
+    {
       "partner": "Sawa SPA",
       "monto": 4609512.0
-    },
-    {
-      "partner": "Showtime SpA",
-      "monto": 4602400.0
-    },
-    {
-      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-      "monto": 4223623.0
     }
   ],
   "notas_credito_count": 531,
