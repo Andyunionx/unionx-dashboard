@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-06-05T13:13:11.753606",
+  "generado_en": "2026-06-05T17:21:22.687835",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0029784065524944155,
-      "total_pickings": 16116,
+      "valor": 0.0029529375576745616,
+      "total_pickings": 16255,
       "on_time": 48,
-      "on_time_pct": 0.0029784065524944155,
-      "in_full": 16110,
-      "in_full_pct": 0.9996276991809382,
+      "on_time_pct": 0.0029529375576745616,
+      "in_full": 16249,
+      "in_full_pct": 0.9996308828052907,
       "both": 48,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.05471698113207547,
-      "total_pickings": 530,
+      "valor": 0.053604436229205174,
+      "total_pickings": 541,
       "on_time": 31,
-      "on_time_pct": 0.05849056603773585,
-      "in_full": 526,
-      "in_full_pct": 0.9924528301886792,
+      "on_time_pct": 0.05730129390018484,
+      "in_full": 537,
+      "in_full_pct": 0.9926062846580407,
       "both": 29,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998191272891702,
-      "ok": 22111,
-      "total": 22115,
+      "valor": 0.9998207082025997,
+      "ok": 22306,
+      "total": 22310,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.125276763990268,
-      "n_recepciones": 274,
+      "valor": 7.057298435619735,
+      "n_recepciones": 277,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00869",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-06-05 16:35",
+          "done": "2026-06-05 16:38"
+        },
+        {
+          "picking": "CA1/IN/00868",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-06-05 16:11",
+          "done": "2026-06-05 16:16"
+        },
+        {
+          "picking": "CA1/IN/00867",
+          "proveedor": "",
+          "horas": 2.4,
+          "scheduled": "2026-06-05 13:43",
+          "done": "2026-06-05 16:08"
+        },
         {
           "picking": "CA1/IN/00866",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -153,46 +174,25 @@
           "horas": 0.9,
           "scheduled": "2026-05-28 13:26",
           "done": "2026-05-28 14:18"
-        },
-        {
-          "picking": "CA1/IN/00846",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-28 13:56",
-          "done": "2026-05-28 13:56"
-        },
-        {
-          "picking": "CA1/IN/00845",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 2.6,
-          "scheduled": "2026-05-27 21:27",
-          "done": "2026-05-28 00:03"
-        },
-        {
-          "picking": "CA1/RET/00993",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-05-27 21:50",
-          "done": "2026-05-27 21:53"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8012827038582918,
-      "total_so": 19759,
-      "total_con_pickings": 19646,
-      "cumplidos": 15742,
+      "valor": 0.7981093176446925,
+      "total_so": 20000,
+      "total_con_pickings": 19887,
+      "cumplidos": 15872,
       "parciales": 18,
-      "sin_iniciar": 3886,
+      "sin_iniciar": 3997,
       "error": null
     },
     "oct_30d": {
-      "valor": 32.96331479354331,
-      "n_orders": 16541,
+      "valor": 32.870333316689965,
+      "n_orders": 16690,
       "min_h": 0.025,
       "max_h": 597.8994444444445,
-      "mediana_h": 23.189444444444444,
+      "mediana_h": 23.16583333333333,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -339,14 +339,14 @@
     },
     "merma_odoo_90d": {
       "valor": null,
-      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od"
+      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <ProtocolError for unionxb2b.odoo.com/xmlrpc/2/object: 503 SERV"
     },
     "ajustes_inventario": {
       "n_ajustes": 0,
-      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
     },
     "lineas_mes_actual": {
-      "lineas": 9700,
+      "lineas": 9895,
       "mes": "2026-06",
       "error": null
     },
@@ -403,15 +403,15 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 115,
-          "tarde": 113,
-          "on_time_pct": 0.017391304347826087
+          "total": 124,
+          "tarde": 122,
+          "on_time_pct": 0.016129032258064516
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 45,
-          "tarde": 40,
-          "on_time_pct": 0.1111111111111111
+          "total": 47,
+          "tarde": 42,
+          "on_time_pct": 0.10638297872340426
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -436,8 +436,8 @@
     }
   },
   "errores": [
-    "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od",
-    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
+    "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <ProtocolError for unionxb2b.odoo.com/xmlrpc/2/object: 503 SERV",
+    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
   ],
   "otif_drive": {
     "meses_disponibles": [
@@ -6720,42 +6720,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0029784065524944155,
-      "total_pickings": 16116,
+      "valor": 0.0029529375576745616,
+      "total_pickings": 16255,
       "on_time": 48,
-      "on_time_pct": 0.0029784065524944155,
-      "in_full": 16110,
-      "in_full_pct": 0.9996276991809382,
+      "on_time_pct": 0.0029529375576745616,
+      "in_full": 16249,
+      "in_full_pct": 0.9996308828052907,
       "both": 48,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.05471698113207547,
-      "total_pickings": 530,
+      "valor": 0.053604436229205174,
+      "total_pickings": 541,
       "on_time": 31,
-      "on_time_pct": 0.05849056603773585,
-      "in_full": 526,
-      "in_full_pct": 0.9924528301886792,
+      "on_time_pct": 0.05730129390018484,
+      "in_full": 537,
+      "in_full_pct": 0.9926062846580407,
       "both": 29,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998191272891702,
-      "ok": 22111,
-      "total": 22115,
+      "valor": 0.9998207082025997,
+      "ok": 22306,
+      "total": 22310,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.125276763990268,
-      "n_recepciones": 274,
+      "valor": 7.057298435619735,
+      "n_recepciones": 277,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00869",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-06-05 16:35",
+          "done": "2026-06-05 16:38"
+        },
+        {
+          "picking": "CA1/IN/00868",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-06-05 16:11",
+          "done": "2026-06-05 16:16"
+        },
+        {
+          "picking": "CA1/IN/00867",
+          "proveedor": "",
+          "horas": 2.4,
+          "scheduled": "2026-06-05 13:43",
+          "done": "2026-06-05 16:08"
+        },
         {
           "picking": "CA1/IN/00866",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -6874,27 +6895,6 @@
           "horas": 0.9,
           "scheduled": "2026-05-28 13:26",
           "done": "2026-05-28 14:18"
-        },
-        {
-          "picking": "CA1/IN/00846",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-28 13:56",
-          "done": "2026-05-28 13:56"
-        },
-        {
-          "picking": "CA1/IN/00845",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 2.6,
-          "scheduled": "2026-05-27 21:27",
-          "done": "2026-05-28 00:03"
-        },
-        {
-          "picking": "CA1/RET/00993",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-05-27 21:50",
-          "done": "2026-05-27 21:53"
         }
       ],
       "error": null
