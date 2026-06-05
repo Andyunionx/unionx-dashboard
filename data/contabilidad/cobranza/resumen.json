@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-06-05T14:22:23.468835",
+  "generado_en": "2026-06-05T19:29:37.269956",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 14753,
-  "total_monto_pendiente_clp": 933594761.0,
+  "total_documentos_pendientes": 14800,
+  "total_monto_pendiente_clp": 895995612.0,
   "monto_por_aging": {
-    "+90 días": 35730818.0,
-    "1-30 días": 595158465.0,
-    "31-60 días": 112873940.0,
-    "61-90 días": 28699540.0,
-    "Vigente": 161131998.0
+    "+90 días": 35450978.0,
+    "1-30 días": 593389207.0,
+    "31-60 días": 93675834.0,
+    "61-90 días": 11232352.0,
+    "Vigente": 162247241.0
   },
   "monto_por_tipo": {
-    "BOLETA": 716968630.0,
+    "BOLETA": 679369481.0,
     "FACTURA": 216626131.0
   },
   "top_20_deudores": [
@@ -22,19 +22,19 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 125905428.0
+      "monto": 125780488.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
       "monto": 109451656.0
     },
     {
-      "partner": "Cliente Kitchen Center",
-      "monto": 104768883.0
+      "partner": "Cliente Shopify",
+      "monto": 87607625.0
     },
     {
-      "partner": "Cliente Shopify",
-      "monto": 87551665.0
+      "partner": "Cliente Kitchen Center",
+      "monto": 68890843.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 36512847.0
+      "monto": 36249183.0
     },
     {
       "partner": "Cliente Ripley",
@@ -54,11 +54,11 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 22834609.0
+      "monto": 23174529.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20687018.0
+      "monto": 20736011.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -69,12 +69,12 @@
       "monto": 17291199.0
     },
     {
-      "partner": "Comercializadora SP Digital SPA",
-      "monto": 16738833.0
-    },
-    {
       "partner": "AUTOBAHN S A",
       "monto": 15827000.0
+    },
+    {
+      "partner": "Comercializadora SP Digital SPA",
+      "monto": 13861219.0
     },
     {
       "partner": "abc S.A.",
@@ -97,6 +97,6 @@
       "monto": 4609512.0
     }
   ],
-  "notas_credito_count": 531,
+  "notas_credito_count": 535,
   "pedidos_venta_count": 10000
 }
