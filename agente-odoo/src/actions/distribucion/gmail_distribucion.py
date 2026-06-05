@@ -90,11 +90,34 @@ def _seccion_sii(comparacion_sii) -> str:
     if comparacion_sii is None:
         return ""
     faltantes = comparacion_sii.faltantes_en_odoo
+    total_sii  = comparacion_sii.total_sii
+    total_odoo = comparacion_sii.total_odoo
+    es_resumen = getattr(comparacion_sii, "_resumen", None) is not None
+
+    # Sin detalle (solo resumen CSV): nunca decir "sin diferencias" si los totales no cuadran
+    if not faltantes and es_resumen:
+        if total_sii != total_odoo:
+            return f"""
+<h3 style="color:#E65100;margin-top:28px">⚠️ SII vs Odoo — diferencia en totales (detalle pendiente)</h3>
+<p style="font-size:13px">
+  Libro SII: <strong>{total_sii}</strong> docs ·
+  Odoo: <strong>{total_odoo}</strong> docs ·
+  Diferencia: <strong>{total_sii - total_odoo}</strong> documentos.<br>
+  <em>El detalle exacto (RUT/folio por documento) estará disponible en la próxima corrida
+  cuando el SII termine de generar el libro de Descargas Diferidas.</em>
+</p>"""
+        else:
+            return f"""
+<h3 style="color:#1B5E20;margin-top:28px">✅ SII vs Odoo — totales cuadran</h3>
+<p style="font-size:13px">{total_sii} documentos SII · {total_odoo} en Odoo
+(basado en resumen de totales — detalle disponible mañana)</p>"""
+
+    # Con detalle completo y sin faltantes: sí es correcto decir "sin diferencias"
     if not faltantes:
         return f"""
 <h3 style="color:#1B5E20;margin-top:28px">✅ SII vs Odoo — sin diferencias</h3>
 <p style="font-size:13px">Todos los documentos del libro SII están ingresados en Odoo.
-({comparacion_sii.total_sii} documentos SII · {comparacion_sii.total_odoo} en Odoo)</p>"""
+({total_sii} documentos SII · {total_odoo} en Odoo)</p>"""
 
     monto_faltante = sum(f.monto_total for f in faltantes)
     filas = "".join(
