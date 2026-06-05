@@ -2648,6 +2648,68 @@ def _render_forecast_estacional(year: int):
             unsafe_allow_html=True,
         )
 
+    # ─── PVP por segmento vs Costo Operativo ──────────────────────
+    st.markdown("### 💰 PVP por segmento vs Costo Operativo")
+    st.caption("PVP promedio por pedido desde ventas reales del año. Costo OP/pedido calculado sobre el total operaciones.")
+
+    @st.cache_data(ttl=1800, show_spinner=False)
+    def _pvp_segmento(yr: int) -> pd.DataFrame:
+        try:
+            mes_path = PROJECT_ROOT / "data" / "historico" / "ventas_mes_actual.parquet"
+            dfs = [pd.read_parquet(VENTAS_HIST)]
+            if mes_path.exists():
+                dfs.append(pd.read_parquet(mes_path))
+            df = pd.concat(dfs, ignore_index=True)
+            df["fecha_venta"] = pd.to_datetime(df["fecha_venta"], errors="coerce")
+            df = df[(df["fecha_venta"].dt.year == yr) &
+                    (df["tipo_movimiento"] != "Nota de crédito") &
+                    (df["cantidad"] > 0) &
+                    (~df["tipo_negocio"].isin(["Distribución", ""]))].copy()
+            if df.empty:
+                return pd.DataFrame()
+            rows = []
+            for tn, grp in df.groupby("tipo_negocio"):
+                by_ped   = grp.groupby("pedido")["venta_bruta"].sum()
+                pvp_avg  = by_ped.mean()
+                pvp_med  = by_ped.median()
+                n_ped    = by_ped.count()
+                uds      = grp["cantidad"].sum()
+                vb_uds   = grp["venta_bruta"].sum() / uds if uds > 0 else 0
+                seg      = "B2B" if tn == "Corporativo" else "B2C"
+                rows.append({"Segmento": seg, "Tipo negocio": tn,
+                              "PVP/ped avg": pvp_avg, "PVP/ped med": pvp_med,
+                              "VBruta/uds": vb_uds, "Pedidos": int(n_ped)})
+            return pd.DataFrame(rows).sort_values(["Segmento", "PVP/ped avg"], ascending=[True, False])
+        except Exception:
+            return pd.DataFrame()
+
+    df_pvp = _pvp_segmento(year)
+    if not df_pvp.empty and cpp_avg > 0:
+        df_pvp["Costo OP/ped"] = cpp_avg
+        df_pvp["%COP/PVP"] = cpp_avg / df_pvp["PVP/ped avg"] * 100
+
+        def _color_ratio(p):
+            if p <= 12: return "🟢"
+            if p <= 18: return "🟡"
+            return "🔴"
+
+        df_show_pvp = df_pvp.copy()
+        df_show_pvp["PVP/ped avg"]  = df_show_pvp["PVP/ped avg"].apply(lambda v: f"${v:,.0f}".replace(",","."))
+        df_show_pvp["PVP/ped med"]  = df_show_pvp["PVP/ped med"].apply(lambda v: f"${v:,.0f}".replace(",","."))
+        df_show_pvp["VBruta/uds"]   = df_show_pvp["VBruta/uds"].apply(lambda v: f"${v:,.0f}".replace(",","."))
+        df_show_pvp["Costo OP/ped"] = df_show_pvp["Costo OP/ped"].apply(lambda v: f"${v:,.0f}".replace(",","."))
+        df_show_pvp["%COP/PVP"]     = df_pvp["%COP/PVP"].apply(lambda v: f"{_color_ratio(v)} {v:.1f}%")
+        df_show_pvp["Pedidos"]      = df_show_pvp["Pedidos"].apply(lambda v: f"{v:,}".replace(",","."))
+
+        st.dataframe(df_show_pvp[["Segmento","Tipo negocio","Pedidos",
+                                   "PVP/ped avg","PVP/ped med","VBruta/uds",
+                                   "Costo OP/ped","%COP/PVP"]],
+                     use_container_width=True, hide_index=True)
+        st.caption(f"Costo OP/pedido = ${cpp_avg:,.0f} (costo operaciones anual / pedidos totales). "
+                   "🟢 ≤12% · 🟡 12-18% · 🔴 >18%".replace(",","."))
+    else:
+        st.info("Sin datos de ventas para calcular PVP del año seleccionado.")
+
     # ─── Tabla mes a mes (TODOS los KPIs derivados) ────────────────
     st.markdown("### 📊 Detalle mensual año completo")
     df_show = proy.copy()
