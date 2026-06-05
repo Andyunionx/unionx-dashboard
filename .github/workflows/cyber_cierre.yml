@@ -1,0 +1,36 @@
+name: "Cierre Cyber 2026 (one-shot Lun 8-jun)"
+
+# Reporte CIERRE Cyber UnionX 2026 — dispara una sola vez Lun 8-jun 08:00 CLT (12:00 UTC).
+# El cron está acotado al 8 de junio para evitar re-ejecutarse.
+
+on:
+  schedule:
+    - cron: '0 12 8 6 *'   # 12:00 UTC = 08:00 CLT del 8 de junio
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  cierre:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Instalar deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas openpyxl requests pyarrow google-auth google-auth-oauthlib google-api-python-client
+
+      - name: Enviar Cierre Cyber
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          # 12 destinatarios: 11 del pulso + gabriela
+          EMAIL_TO: ${{ vars.CIERRE_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl,sguzman@grupoeter.cl,trinidad@unionx.cl,claudia@unionx.cl,ignacia@unionx.cl,michela@unionx.cl,felipe@unionx.cl,maximiliano@unionx.cl,gabriela@grupoeter.cl' }}
+          EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
+          PYTHONIOENCODING: utf-8
+        run: python enviar_cierre_cyber.py
