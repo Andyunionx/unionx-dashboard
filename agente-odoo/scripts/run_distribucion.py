@@ -57,6 +57,30 @@ def conectar_odoo():
     return client
 
 
+def _leer_resumen_sii_csv(sii_dir: Path, anio: int, mes: int) -> dict:
+    """Lee el CSV de resumen del SII (totales por tipo de documento)."""
+    archivo = sii_dir / f"libro_compras_{anio:04d}-{mes:02d}.xlsx"
+    if not archivo.exists():
+        return {}
+    try:
+        contenido = archivo.read_text(encoding="utf-8", errors="replace")
+        if "Tipo Documento" not in contenido:
+            return {}
+        total_docs = 0
+        monto_neto = 0.0
+        for linea in contenido.splitlines()[1:]:  # skip header
+            partes = linea.split(";")
+            if len(partes) >= 4:
+                try:
+                    total_docs += int(partes[1])
+                    monto_neto  += float(partes[3])
+                except (ValueError, IndexError):
+                    pass
+        return {"total_docs": total_docs, "monto_total": monto_neto}
+    except Exception:
+        return {}
+
+
 def cmd_detectar_y_clasificar(args):
     print(f"=== DISTRIBUCIÓN SERVICIOS — {datetime.now().strftime('%Y-%m-%d %H:%M')} ===\n")
     client = conectar_odoo()
@@ -107,12 +131,31 @@ def cmd_detectar_y_clasificar(args):
         sii_pwd = os.environ.get("SII_PASSWORD", "")
 
         if sii_rut and sii_pwd:
-            resultados_descarga = descargar_mes_actual_y_anterior(rut=sii_rut, password=sii_pwd)
-            descargados = [r for r in resultados_descarga if r["ok"]]
-            if descargados:
-                print(f"  ✓ SII descargado ({len(descargados)} mes/es)")
+            from src.actions.compras.descarga_sii import descargar_detalle_compras
+
+            # Intentar descargar el DETALLE (Descargas Diferidas) — comparación exacta
+            hoy_d = date.today()
+            resultado_detalle = descargar_detalle_compras(
+                hoy_d.year, hoy_d.month,
+                rut=sii_rut, password=sii_pwd,
+                headless=True,
+                esperar_generacion_seg=300,  # esperar hasta 5 min
+            )
+            if resultado_detalle["estado"] == "descargado":
+                print(f"  ✓ Detalle SII descargado: {resultado_detalle['archivo'].name}")
+            elif resultado_detalle["estado"] == "solicitado":
+                print("  📋 Detalle SII solicitado — estará listo en la próxima corrida")
+                # Mientras tanto, descargar el resumen para comparación de totales
+                resultados_resumen = descargar_mes_actual_y_anterior(rut=sii_rut, password=sii_pwd)
+                descargados = [r for r in resultados_resumen if r["ok"]]
+                if descargados:
+                    print(f"  ✓ Resumen SII descargado ({len(descargados)} mes/es)")
             else:
-                print("  ⚠️  No se pudo descargar el SII automáticamente")
+                print(f"  ⚠️  Error SII: {resultado_detalle['error']}")
+                resultados_resumen = descargar_mes_actual_y_anterior(rut=sii_rut, password=sii_pwd)
+                descargados = [r for r in resultados_resumen if r["ok"]]
+                if descargados:
+                    print(f"  ✓ Resumen SII (fallback): {len(descargados)} mes/es")
         else:
             print("  (SII_RUT/SII_PASSWORD no configurados — skip descarga automática)")
 
@@ -137,7 +180,26 @@ def cmd_detectar_y_clasificar(args):
                   f"Odoo: {comparacion_sii.total_odoo} docs | "
                   f"Faltantes en Odoo: {len(comparacion_sii.faltantes_en_odoo)}")
         else:
-            print("  (Sin libro SII en disco — subir a data/contabilidad/sii/ para comparar)")
+            # Los archivos descargados son resumen CSV (no detalle).
+            # Comparar totales Odoo vs totales SII usando el CSV de resumen.
+            hoy = date.today()
+            resumen_sii = _leer_resumen_sii_csv(sii_dir, hoy.year, hoy.month)
+            if resumen_sii:
+                oc = OdooCompras(client)
+                compras_odoo = oc.listar_compras_mes(hoy.year, hoy.month)
+                total_odoo = sum(c.get("amount_total", 0) for c in compras_odoo)
+                print(f"  SII (resumen): {resumen_sii['total_docs']} docs, "
+                      f"${resumen_sii['monto_total']:,.0f} neto")
+                print(f"  Odoo: {len(compras_odoo)} docs, ${total_odoo:,.0f} total")
+                comparacion_sii = type('SIIResumen', (), {
+                    'faltantes_en_odoo': [],
+                    'total_sii': resumen_sii['total_docs'],
+                    'total_odoo': len(compras_odoo),
+                    '_resumen': resumen_sii,
+                    '_odoo_total': total_odoo,
+                })()
+            else:
+                print("  (Sin libro SII en disco — subir a data/contabilidad/sii/ para comparar)")
     except Exception as e:
         print(f"  (Error en análisis SII: {e})")
     print()

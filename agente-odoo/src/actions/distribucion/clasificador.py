@@ -23,7 +23,7 @@ CUENTAS_DESTINO = {
         "keywords": ["despacho gratis", "despacho", "envio", "envío", "flete",
                      "ultima milla", "última milla", "fulfillment", "courier",
                      "delivery", "transporte", "sdlc", "last mile",
-                     "almacenamiento", "logist", "cobro log"],
+                     "logist", "cobro log"],
     },
     "COMISION_GRANDES_CUENTAS": {
         "codigo": "42410104", "nombre": "COMISIÓN GRANDES CUENTAS", "odoo_id": 1377,
@@ -35,7 +35,15 @@ CUENTAS_DESTINO = {
                      # Fulfillment MKP por categoría de producto
                      "ventas mkp", "devoluciones mkp", ": ventas", ": devoluciones",
                      # Boletas/NC de fulfillment (formato "Boletas (N) del periodo")
-                     "del periodo desde", "boletas (", "notas de credito"],
+                     "del periodo desde", "boletas (", "notas de credito",
+                     # Hites: encoding roto de "Comisión"
+                     "comisiï¿½n",
+                     # Fintoc / Digital Payments
+                     "uso api", "fintoc", "iniciaci", "reembolso", "pago anticipado",
+                     # Ripley B2B, centralización
+                     "cobro uso b2b", "centralizacion", "centralización",
+                     # FBR: almacenamiento = comisión (no envíos)
+                     "almacenamiento"],
     },
 }
 
