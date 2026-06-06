@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-06-05T17:21:22.687835",
+  "generado_en": "2026-06-06T06:32:22.805385",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0029529375576745616,
-      "total_pickings": 16255,
+      "valor": 0.003072,
+      "total_pickings": 15625,
       "on_time": 48,
-      "on_time_pct": 0.0029529375576745616,
-      "in_full": 16249,
-      "in_full_pct": 0.9996308828052907,
+      "on_time_pct": 0.003072,
+      "in_full": 15619,
+      "in_full_pct": 0.999616,
       "both": 48,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.053604436229205174,
-      "total_pickings": 541,
+      "valor": 0.05534351145038168,
+      "total_pickings": 524,
       "on_time": 31,
-      "on_time_pct": 0.05730129390018484,
-      "in_full": 537,
-      "in_full_pct": 0.9926062846580407,
+      "on_time_pct": 0.05916030534351145,
+      "in_full": 521,
+      "in_full_pct": 0.9942748091603053,
       "both": 29,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998207082025997,
-      "ok": 22306,
-      "total": 22310,
-      "errores": 4,
+      "valor": 0.9998603481984918,
+      "ok": 21479,
+      "total": 21482,
+      "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.7981093176446925,
-      "total_so": 20000,
-      "total_con_pickings": 19887,
-      "cumplidos": 15872,
+      "valor": 0.7824787190920146,
+      "total_so": 19845,
+      "total_con_pickings": 19736,
+      "cumplidos": 15443,
       "parciales": 18,
-      "sin_iniciar": 3997,
+      "sin_iniciar": 4275,
       "error": null
     },
     "oct_30d": {
-      "valor": 32.870333316689965,
-      "n_orders": 16690,
+      "valor": 33.22555746015915,
+      "n_orders": 16043,
       "min_h": 0.025,
       "max_h": 597.8994444444445,
-      "mediana_h": 23.16583333333333,
+      "mediana_h": 23.235833333333332,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -339,14 +339,14 @@
     },
     "merma_odoo_90d": {
       "valor": null,
-      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <ProtocolError for unionxb2b.odoo.com/xmlrpc/2/object: 503 SERV"
+      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od"
     },
     "ajustes_inventario": {
       "n_ajustes": 0,
-      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9895,
+      "lineas": 10088,
       "mes": "2026-06",
       "error": null
     },
@@ -361,20 +361,14 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 191,
-          "tarde": 191,
+          "total": 179,
+          "tarde": 179,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 71,
-          "tarde": 71,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Lokal SpA",
-          "total": 10,
-          "tarde": 10,
+          "total": 68,
+          "tarde": 68,
           "on_time_pct": 0.0
         },
         {
@@ -391,6 +385,12 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 9,
+          "tarde": 9,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Lokal SpA",
           "total": 9,
           "tarde": 9,
           "on_time_pct": 0.0
@@ -415,9 +415,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 8,
-          "tarde": 4,
-          "on_time_pct": 0.5
+          "total": 7,
+          "tarde": 3,
+          "on_time_pct": 0.5714285714285714
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -436,8 +436,8 @@
     }
   },
   "errores": [
-    "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <ProtocolError for unionxb2b.odoo.com/xmlrpc/2/object: 503 SERV",
-    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
+    "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od",
+    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
   ],
   "otif_drive": {
     "meses_disponibles": [
@@ -6720,32 +6720,32 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0029529375576745616,
-      "total_pickings": 16255,
+      "valor": 0.003072,
+      "total_pickings": 15625,
       "on_time": 48,
-      "on_time_pct": 0.0029529375576745616,
-      "in_full": 16249,
-      "in_full_pct": 0.9996308828052907,
+      "on_time_pct": 0.003072,
+      "in_full": 15619,
+      "in_full_pct": 0.999616,
       "both": 48,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.053604436229205174,
-      "total_pickings": 541,
+      "valor": 0.05534351145038168,
+      "total_pickings": 524,
       "on_time": 31,
-      "on_time_pct": 0.05730129390018484,
-      "in_full": 537,
-      "in_full_pct": 0.9926062846580407,
+      "on_time_pct": 0.05916030534351145,
+      "in_full": 521,
+      "in_full_pct": 0.9942748091603053,
       "both": 29,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998207082025997,
-      "ok": 22306,
-      "total": 22310,
-      "errores": 4,
+      "valor": 0.9998603481984918,
+      "ok": 21479,
+      "total": 21482,
+      "errores": 3,
       "error": null
     }
   },
