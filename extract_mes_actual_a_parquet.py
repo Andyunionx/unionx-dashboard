@@ -357,6 +357,25 @@ def main():
                 except Exception as e:
                     print(f"   [WARN] manual {mf.name} no aplicado: {type(e).__name__}: {str(e)[:80]}")
 
+    # DEDUP literal: el extract de Odoo trae duplicados de origen (algun JOIN
+    # multiplica filas). Limpia filas 100% identicas en columnas clave.
+    n_pre = len(df)
+    df_dedup = df.copy()
+    for c in df_dedup.columns:
+        if str(df_dedup[c].dtype) == 'category':
+            df_dedup[c] = df_dedup[c].astype('object')
+    df_dedup['_fv_str'] = pd.to_datetime(df_dedup['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    df_dedup['_vb_r'] = pd.to_numeric(df_dedup['venta_bruta'], errors='coerce').fillna(0).round(2)
+    df_dedup['_qty'] = pd.to_numeric(df_dedup['cantidad'], errors='coerce').fillna(0)
+    df_dedup = df_dedup.drop_duplicates(
+        subset=['pedido', 'sku', '_fv_str', 'documento', 'tipo_movimiento', '_vb_r', '_qty'],
+        keep='first',
+    ).drop(columns=['_fv_str', '_vb_r', '_qty'])
+    n_post = len(df_dedup)
+    if n_post < n_pre:
+        print(f"   [dedup] {n_pre:,} -> {n_post:,} filas (-{n_pre-n_post} duplicados literales)")
+    df = df_dedup
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")
