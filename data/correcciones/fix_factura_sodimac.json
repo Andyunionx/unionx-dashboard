@@ -1,0 +1,65 @@
+{
+  "_meta": {
+    "doc": "Asocia SKUs reales y actualiza costos para FAC 097825 (Sodimac, ventas B2B). Mantiene canal 'UnionX B2B'.",
+    "fecha_creacion": "2026-06-08",
+    "autor": "Andres",
+    "fuente": "Detalle real de factura entregado manualmente por Andres"
+  },
+  "documento": "FAC 097825",
+  "lineas": [
+    {
+      "match_producto": "Libros Patagonia (primera compra)",
+      "sku_nuevo": "LBPATASOD",
+      "costo_unitario": 14700,
+      "costo_total": 2352000
+    },
+    {
+      "match_producto": "Libros Patagonia (segunda compra)",
+      "sku_nuevo": "LBPATASOD",
+      "costo_unitario": 14700,
+      "costo_total": 558600
+    },
+    {
+      "match_producto": "Puzzles Colori Diferentes Diseño 1000 Piezas 70x50cm (primera compra)",
+      "sku_nuevo": "PUZCOLSODI",
+      "costo_unitario": 6000,
+      "costo_total": 960000
+    },
+    {
+      "match_producto": "Puzzles Colori Diferentes Diseño 1000 Piezas 70x50cm (segunda compra)",
+      "sku_nuevo": "PUZCOLSODI",
+      "costo_unitario": 6000,
+      "costo_total": 180000
+    },
+    {
+      "match_producto": "Cajas Sodimac 1ero a 4to Medio",
+      "sku_nuevo": "CAJASOD1A4M",
+      "costo_unitario": 6826,
+      "costo_total": 1092160
+    },
+    {
+      "match_producto": "Cajas Sodimac Tecnico Profecional",
+      "sku_nuevo": "CAJASODTP",
+      "costo_unitario": 6826,
+      "costo_total": 887380
+    },
+    {
+      "match_producto": "Cajas Sodimac Educacion Superior",
+      "sku_nuevo": "CAJASODEP",
+      "costo_unitario": 6826,
+      "costo_total": 525602
+    },
+    {
+      "match_producto": "Cajas Sodimac 1ero a 4to Basico",
+      "sku_nuevo": "CAJASOD1A4B",
+      "costo_unitario": 6826,
+      "costo_total": 1092160
+    },
+    {
+      "match_producto": "Cajas Sodimac 5to a 8vo Basico Rojas",
+      "sku_nuevo": "CAJASOD5A8",
+      "costo_unitario": 6200,
+      "costo_total": 279000
+    }
+  ]
+}
