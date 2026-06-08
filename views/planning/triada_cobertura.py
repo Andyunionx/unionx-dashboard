@@ -170,7 +170,7 @@ def _preparar_datos() -> pd.DataFrame:
                 [["sku", "tipo_marca"]].drop_duplicates("sku")
             )
             df_meta = df_meta.merge(tipo_marca_map, on="sku", how="left")
-            df_meta["tipo_marca"] = df_meta["tipo_marca"].fillna("Sin clasificar")
+            df_meta["tipo_marca"] = df_meta["tipo_marca"].astype("object").fillna("Sin clasificar")
     else:
         df_v = pd.DataFrame(columns=["fecha_venta", "sku", "cantidad"])
 
