@@ -1,3 +1,4 @@
+# updated 2026-06-04b - pinnedBottomRowData fix
 google-api-python-client==2.142.0
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.1
@@ -6,9 +7,10 @@ pandas==2.2.3
 pyarrow==17.0.0
 xlrd==2.0.1
 pyyaml==6.0.2
-rich==13.9.4
+rich==13.9.3
 streamlit==1.56.0
 streamlit-authenticator==0.4.2
+streamlit-aggrid==1.0.5
 extra-streamlit-components==0.1.71
 plotly==6.7.0
 matplotlib==3.10.0
