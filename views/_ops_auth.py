@@ -169,7 +169,7 @@ def _login_form(app_name: str = "Operaciones", icon: str = "🚢"):
             email = st.text_input("Email Odoo", placeholder="ej: bodega@grupoeter.cl")
             password = st.text_input("Password Odoo", type="password")
             submit = st.form_submit_button("Ingresar", type="primary",
-                                           use_container_width=True)
+                                           width='stretch')
 
             if submit:
                 if not email or not password:
@@ -231,7 +231,7 @@ def require_login_ops(app_name: str = "Operaciones", icon: str = "🚢"):
         with st.sidebar:
             email = st.session_state.get("ops_email", "")
             st.markdown(f"👤 **{email}**")
-            if st.button("Cerrar sesión", use_container_width=True, key="ops_logout"):
+            if st.button("Cerrar sesión", width='stretch', key="ops_logout"):
                 _delete_cookie_token()
                 for k in ["ops_authenticated", "ops_email", "ops_uid",
                           "name", "authentication_status"]:
@@ -250,7 +250,7 @@ def require_login_ops(app_name: str = "Operaciones", icon: str = "🚢"):
             with st.sidebar:
                 st.markdown(f"👤 **{email}**")
                 st.caption("🍪 Sesión restaurada")
-                if st.button("Cerrar sesión", use_container_width=True,
+                if st.button("Cerrar sesión", width='stretch',
                              key="ops_logout_cookie"):
                     _delete_cookie_token()
                     for k in ["ops_authenticated", "ops_email", "ops_uid",

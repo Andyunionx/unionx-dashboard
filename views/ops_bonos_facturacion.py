@@ -369,7 +369,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
                                 index=hoy.month - 1, key="resumen_mes")
     with c_sel3:
         st.write("")
-        if st.button("🔄 Refrescar desde Turso", use_container_width=False):
+        if st.button("🔄 Refrescar desde Turso", width='content'):
             st.cache_data.clear()
             st.rerun()
 
@@ -542,7 +542,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             "Aporta al bono": f"**${r['bono_devengado']:,.0f}**",
         },
     ])
-    st.dataframe(df_kpi, use_container_width=True, hide_index=True)
+    st.dataframe(df_kpi, width='stretch', hide_index=True)
 
     # ----------- BLOQUE 4: DIAGNÓSTICO -----------
     with st.expander("🔍 Diagnóstico — fuentes de datos del bono"):
@@ -579,7 +579,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
             'Valor crudo': int(meta_mes),
             'Usado': f"{int(meta_mes):,}",
         }])
-        st.dataframe(diag, use_container_width=True, hide_index=True)
+        st.dataframe(diag, width='stretch', hide_index=True)
         st.caption(
             "OTIF prioriza: manual override (si hay) → auto Drive → 0. "
             "Para forzar el auto, deja en blanco el manual en 💵 Carga Bonos."
@@ -649,7 +649,7 @@ def _render_tab_resumen(ventas, nc, ppto, hoy, modo_meta, meta_manual,
         lambda r: "—" if r['_es_futuro'] else f"{r['Pedidos B2C']:,}", axis=1)
     show_evo['Meta B2C'] = show_evo['Meta B2C'].apply(lambda x: f"{x:,}")
     show_evo = show_evo.drop(columns=['mes_num', '_es_futuro', '_es_actual'])
-    st.dataframe(show_evo, use_container_width=True, hide_index=True)
+    st.dataframe(show_evo, width='stretch', hide_index=True)
 
     # Gráfico líneas — solo Productividad real + OTIF cargada (futuro queda en NaN para no engañar)
     chart_data = df_evo.copy()
@@ -826,7 +826,7 @@ def _render_tab_config(hoy):
             'otif_pct': 'OTIF M-1', 'espiritu_mll_pct': 'Espíritu',
             'bono_pagado_real_clp': 'Pagado real', 'observacion': 'Obs.',
         })
-        st.dataframe(show, use_container_width=True, hide_index=True)
+        st.dataframe(show, width='stretch', hide_index=True)
 
 
 def _render_tab_roadmap():
@@ -880,7 +880,7 @@ def _render_tab_roadmap():
             "Estado": "⏳ Pendiente",
         },
     ]
-    st.dataframe(pd.DataFrame(fases), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(fases), width='stretch', hide_index=True)
 
     st.divider()
     st.markdown("#### 🔄 Flujo mensual")

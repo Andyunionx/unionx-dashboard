@@ -144,7 +144,7 @@ def _login_form():
             email = st.text_input("Email Odoo", placeholder="ej: andres@grupoeter.cl")
             password = st.text_input("Password Odoo", type="password")
             submit = st.form_submit_button("Ingresar", type="primary",
-                                            use_container_width=True)
+                                            width='stretch')
             if submit:
                 if not email or not password:
                     st.error("Ingresá email y password")

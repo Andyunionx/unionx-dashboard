@@ -37,7 +37,7 @@ def render():
         st.markdown("### 💼 **Contribución**")
         st.caption("Resultados Generales")
         st.markdown("---")
-        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="cgen_refresh"):
+        if st.button("🔄 Refrescar Sheet", width='stretch', type="primary", key="cgen_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -200,7 +200,7 @@ def render():
         if metric_col != 'Venta REAL KAM':
             layout_kwargs['yaxis2'] = dict(title=f'{metric_sel} ($)', overlaying='y', side='right', tickformat=',.0f')
         fig.update_layout(**layout_kwargs)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with col_m2:
         st.markdown(f"##### Mix {metric_sel} 2026 por Canal (top 10)")
@@ -217,7 +217,7 @@ def render():
                 legend=dict(orientation='v', yanchor='middle', y=0.5, xanchor='left', x=1.05, font=dict(size=10)),
             )
             fig_mix.update_traces(textinfo='label+percent', textfont_size=11)
-            st.plotly_chart(fig_mix, use_container_width=True)
+            st.plotly_chart(fig_mix, width='stretch')
 
     st.divider()
 
@@ -232,4 +232,4 @@ def render():
         for c in ['Venta REAL KAM', 'Costo Venta KAM', 'Margen Directo KAM', 'Total Comisiones KAM', 'Resultado Contribución KAM']:
             if c in df_show.columns:
                 df_show[c] = df_show[c].apply(fmt_pesos_M)
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=400)

@@ -83,7 +83,7 @@ with st.sidebar:
     user = get_fin_user()
     if user:
         st.caption(f"👤 {user['email']}")
-        if st.button("Cerrar sesión", use_container_width=True, key="fin_logout"):
+        if st.button("Cerrar sesión", width='stretch', key="fin_logout"):
             logout_fin()
 
     # Info de actualización

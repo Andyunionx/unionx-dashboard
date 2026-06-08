@@ -184,7 +184,7 @@ def render():
                 help='positivo = teórico mayor a real'),
             'gap_pct': st.column_config.NumberColumn('Gap % baseline', format='%.1f%%'),
         }
-        st.dataframe(view[cols_show].head(500), use_container_width=True,
+        st.dataframe(view[cols_show].head(500), width='stretch',
                       hide_index=True, column_config=cfg, height=600)
 
         st.download_button(
@@ -214,7 +214,7 @@ def render():
             st.warning("Sin columna marca.")
         else:
             st.markdown(f"**{len(g):,} marcas con gap ≥ {umbral_gap}**")
-            st.dataframe(g, use_container_width=True, hide_index=True, height=500)
+            st.dataframe(g, width='stretch', hide_index=True, height=500)
 
     with tab3:
         g = _agrupar(['categoria_padre'])
@@ -222,4 +222,4 @@ def render():
             st.warning("Sin columna categoria_padre.")
         else:
             st.markdown(f"**{len(g):,} categorías padre con gap ≥ {umbral_gap}**")
-            st.dataframe(g, use_container_width=True, hide_index=True, height=500)
+            st.dataframe(g, width='stretch', hide_index=True, height=500)

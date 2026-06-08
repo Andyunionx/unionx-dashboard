@@ -201,7 +201,7 @@ def render_carga_offline_tab():
 
     # Preview
     st.subheader("Preview (primeras 20 filas)")
-    st.dataframe(df_raw.head(20), use_container_width=True)
+    st.dataframe(df_raw.head(20), width='stretch')
 
     # Resumen
     total_venta = pd.to_numeric(df_raw['Venta bruta'], errors='coerce').fillna(0).sum()

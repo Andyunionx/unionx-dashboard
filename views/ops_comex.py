@@ -170,7 +170,7 @@ def _tab_resumen(df: pd.DataFrame, val_resumen: dict):
             df_alert['% recibido'] = (df_alert['% recibido'] * 100).round(1).astype(str) + '%'
             df_alert['Esperado'] = df_alert['Esperado'].apply(lambda v: f'{v:,.0f}')
             df_alert['Recibido (Odoo)'] = df_alert['Recibido (Odoo)'].apply(lambda v: f'{v:,.0f}')
-            st.dataframe(df_alert, use_container_width=True, hide_index=True)
+            st.dataframe(df_alert, width='stretch', hide_index=True)
 
 
 def _tab_por_pi(df: pd.DataFrame, val_resumen: dict | None = None):
@@ -234,7 +234,7 @@ def _tab_por_pi(df: pd.DataFrame, val_resumen: dict | None = None):
                'fecha_eta_chile': 'ETA Chile', 'fecha_eta_bodega': 'ETA Bodega',
                'skus': 'SKUs'}
 
-    st.dataframe(pi_agg[cols_show].rename(columns=rename), use_container_width=True, hide_index=True, height=400)
+    st.dataframe(pi_agg[cols_show].rename(columns=rename), width='stretch', hide_index=True, height=400)
 
     st.markdown("##### Timeline de llegadas a bodega")
     df_tl = pi_agg.dropna(subset=['fecha_eta_bodega']).sort_values('fecha_eta_bodega')
@@ -260,7 +260,7 @@ def _tab_por_pi(df: pd.DataFrame, val_resumen: dict | None = None):
         margin=dict(t=20, b=40, l=60, r=20),
         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption("Tamaño = USD del PI · 🟢 ≤14d · 🟡 15-30d · ⚪ >30d · 🔴 vencido")
 
 
@@ -294,7 +294,7 @@ def _tab_detalle_skus(df: pd.DataFrame):
         lambda v: f'${v:,.0f}' if pd.notna(v) and v > 0 else 'Pendiente'
     )
     st.caption(f"{len(df_disp):,} filas")
-    st.dataframe(df_disp, use_container_width=True, hide_index=True, height=600)
+    st.dataframe(df_disp, width='stretch', hide_index=True, height=600)
 
 
 def _tab_triangulacion(df_transito: pd.DataFrame, df_stock: pd.DataFrame, df_fc: pd.DataFrame):
@@ -371,7 +371,7 @@ def _tab_triangulacion(df_transito: pd.DataFrame, df_stock: pd.DataFrame, df_fc:
     df_show['brecha_dias_stock'] = df_show['brecha_dias_stock'].apply(lambda v: f'{v:.0f}d' if v < 999 else '∞')
     df_show.columns = ['SKU', 'Stock actual', 'En tránsito', f'Demanda {horizonte}d',
                         'Disp total', 'Brecha', 'Días stock', 'Estado']
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=500)
+    st.dataframe(df_show, width='stretch', hide_index=True, height=500)
 
     if df_stock.empty:
         st.warning("⚠️ Sin data de stock LIVE en `data/stock/skus.parquet`. La triangulación cruza solo COMEX vs Forecast.")
@@ -458,7 +458,7 @@ def _tab_volumen_pallets(df_dim: pd.DataFrame, resumen_dim: dict):
                 lambda v: f'{v:,.2f} m³ (¡anómalo!)'
             )
             df_anom.columns = ['SKU', 'Producto', 'Volumen unit Odoo']
-            st.dataframe(df_anom, use_container_width=True, hide_index=True)
+            st.dataframe(df_anom, width='stretch', hide_index=True)
 
     asunc = resumen_dim.get('asunciones', {})
     st.caption(
@@ -494,7 +494,7 @@ def _tab_volumen_pallets(df_dim: pd.DataFrame, resumen_dim: dict):
         df_show.columns = ['PI', 'Transp.', 'Embarque', 'ETA bodega', 'SKUs',
                             'Unidades', 'Peso', 'Volumen', 'Pallets', 'Cont 20\'',
                             'Cont 40\' HC', 'Cob. peso', 'Cob. vol']
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=380)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=380)
 
     st.divider()
 
@@ -532,7 +532,7 @@ def _tab_volumen_pallets(df_dim: pd.DataFrame, resumen_dim: dict):
     df_disp.columns = ['PI', 'SKU', 'Producto', 'Cantidad', 'Peso unit', 'Peso total',
                         'Vol unit', 'Vol total', 'Caja master qty', 'Cajas estim', 'Odoo']
     st.caption(f"{len(df_disp):,} líneas")
-    st.dataframe(df_disp, use_container_width=True, hide_index=True, height=420)
+    st.dataframe(df_disp, width='stretch', hide_index=True, height=420)
 
     # SKUs sin match
     sin_match = resumen_dim.get('skus_sin_match', [])
@@ -583,15 +583,15 @@ def _tab_alertas(alertas: dict):
         if not sin_po.empty:
             st.error(f"🔴 **{len(sin_po)} PI(s) SIN PO en Odoo** — acción requerida")
             st.dataframe(sin_po[['pi', 'skus', 'unidades', 'eta', 'razon']],
-                          hide_index=True, use_container_width=True)
+                          hide_index=True, width='stretch')
         if not recibidos.empty:
             st.warning(f"🟡 **{len(recibidos)} PI(s) ya recibido(s) en Odoo** — sugerir a Martín mover a 'EN BODEGA'")
             st.dataframe(recibidos[['pi', 'skus', 'unidades', 'eta', 'razon']],
-                          hide_index=True, use_container_width=True)
+                          hide_index=True, width='stretch')
         if not otros.empty:
             st.info(f"ℹ️ **{len(otros)} PI(s) en otro estado**")
             st.dataframe(otros[['pi', 'skus', 'unidades', 'eta', 'razon']],
-                          hide_index=True, use_container_width=True)
+                          hide_index=True, width='stretch')
     else:
         st.success("✅ Todos los PIs del Sheet están en el extract Odoo activo.")
 
@@ -599,14 +599,14 @@ def _tab_alertas(alertas: dict):
     if odoo_only:
         st.markdown("##### ℹ️ PIs en Odoo pero no en Sheet")
         st.caption("Embarques que el agente creó en Odoo pero el Sheet de Martín aún no refleja.")
-        st.dataframe(pd.DataFrame(odoo_only), hide_index=True, use_container_width=True)
+        st.dataframe(pd.DataFrame(odoo_only), hide_index=True, width='stretch')
 
     warn = alertas.get('warn_qty_difieren', [])
     if warn:
         st.markdown("##### ⚖️ Cantidades por SKU difieren entre fuentes")
         st.caption("Mismo PI+SKU con qty distinta en Odoo vs Sheet. Probable error de parsing decimal o carga manual.")
         df_w = pd.DataFrame(warn)
-        st.dataframe(df_w, hide_index=True, use_container_width=True)
+        st.dataframe(df_w, hide_index=True, width='stretch')
 
 
 def render():
@@ -614,7 +614,7 @@ def render():
         st.markdown("### 🚢 **COMEX**")
         st.caption("Embarques en tránsito")
         st.markdown("---")
-        if st.button("🔄 Refrescar", use_container_width=True, type="primary", key="comex_refresh"):
+        if st.button("🔄 Refrescar", width='stretch', type="primary", key="comex_refresh"):
             st.cache_data.clear()
             st.rerun()
 

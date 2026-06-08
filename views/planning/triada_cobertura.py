@@ -414,7 +414,7 @@ def _render_tabla_agg(
 
     st.dataframe(
         df_show.style.map(_style_estado, subset=["estado"]),
-        use_container_width=True,
+        width='stretch',
         height=450,
         column_config=col_cfg,
     )
@@ -779,7 +779,7 @@ def render():
             )
         else:
             st.info("streamlit-aggrid no disponible. Recargá la página.")
-            st.dataframe(df_jer[["sku","producto","marca","stock_actual"]], use_container_width=True, height=400)
+            st.dataframe(df_jer[["sku","producto","marca","stock_actual"]], width='stretch', height=400)
 
     # ── TAB 1 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
@@ -812,7 +812,7 @@ def render():
         style_cols = [c for c in ["estado", "estado_6sem", "estado_fc3m"] if c in df_sku.columns]
         st.dataframe(
             df_sku.style.map(_style_estado, subset=style_cols),
-            use_container_width=True,
+            width='stretch',
             height=520,
             column_config={
                 "sku":                    st.column_config.TextColumn("SKU",              width=130),

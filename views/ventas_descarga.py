@@ -1,16 +1,46 @@
-"""Descarga RAW de ventas (Excel 40 columnas)."""
+"""Descarga RAW de ventas (Excel/CSV.gz/Parquet, 40 columnas).
+
+Streaming-first: para rangos grandes evita to_excel() (que materializa todo
+en RAM y mata Streamlit Cloud). Excel solo se ofrece para rangos <= 90 dias.
+"""
+import gc
 import io
-from datetime import datetime
+from datetime import datetime, date
 
 import pandas as pd
 import streamlit as st
 
 from views.shared import get_service
 
+EXCEL_LIMITE_DIAS = 90
+EXCEL_AVISO_FILAS = 100_000
+
+
+def _excel_bytes(df: pd.DataFrame) -> bytes:
+    """Solo para df pequenios. Materializa en RAM."""
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as w:
+        df.to_excel(w, index=False, sheet_name='RAW')
+    return output.getvalue()
+
+
+def _csv_gz_streamed(df: pd.DataFrame) -> bytes:
+    """CSV gzip comprimido on-the-fly. ~5x mas chico que Excel."""
+    buf = io.BytesIO()
+    df.to_csv(buf, index=False, compression='gzip')
+    return buf.getvalue()
+
+
+def _parquet_bytes(df: pd.DataFrame) -> bytes:
+    """Parquet zstd. ~20x mas chico, requiere herramientas para abrir."""
+    buf = io.BytesIO()
+    df.to_parquet(buf, index=False, compression='zstd', compression_level=3)
+    return buf.getvalue()
+
 
 def render():
     st.title("⬇️ Descargar RAW de Ventas")
-    st.caption("Excel con las 40 columnas RAW (formato histórico)")
+    st.caption("Excel / CSV.gz / Parquet — 40 columnas RAW (formato histórico)")
 
     col_d1, col_d2 = st.columns([2, 1])
     with col_d1:
@@ -22,23 +52,81 @@ def render():
             key="rango_dl",
         )
 
-    if isinstance(rango_dl, tuple) and len(rango_dl) == 2:
-        d1, d2 = rango_dl
-        with col_d2:
-            st.write("")
-            if st.button("📥 Generar Excel", use_container_width=True, type="primary"):
-                with st.spinner('Generando Excel...'):
-                    df_raw = get_service().descargar_raw(d1.strftime('%Y-%m-%d'), d2.strftime('%Y-%m-%d'))
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as w:
-                        df_raw.to_excel(w, index=False, sheet_name='RAW')
-                    output.seek(0)
+    if not (isinstance(rango_dl, tuple) and len(rango_dl) == 2):
+        st.info("Selecciona un rango (desde — hasta).")
+        return
 
-                    st.success(f"✅ {len(df_raw):,} filas listas para descargar")
-                    st.download_button(
-                        label=f"💾 Descargar Excel ({len(df_raw):,} filas)",
-                        data=output,
-                        file_name=f"Raw_ventas_Y_{d1}_{d2}.xlsx",
-                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        use_container_width=True,
-                    )
+    d1, d2 = rango_dl
+    dias = (d2 - d1).days + 1
+
+    # Formato segun tamano
+    excel_permitido = dias <= EXCEL_LIMITE_DIAS
+    formatos = []
+    if excel_permitido:
+        formatos.append("Excel (.xlsx)")
+    formatos.extend(["CSV comprimido (.csv.gz)", "Parquet (.parquet)"])
+
+    with col_d2:
+        st.write("")
+        fmt = st.selectbox("Formato", formatos, key="fmt_dl")
+
+    # Aviso si rango grande
+    if dias > EXCEL_LIMITE_DIAS:
+        st.warning(
+            f"Rango de **{dias} días** > {EXCEL_LIMITE_DIAS} días. "
+            f"Excel no disponible (rompe la app por uso de RAM). "
+            f"Usa **CSV.gz** (se abre con Excel y pesa 5x menos) o **Parquet** (20x menos)."
+        )
+    elif dias > 30:
+        st.info(f"Rango de **{dias} días**. Excel funciona pero CSV.gz es más rápido y liviano.")
+
+    if not st.button("📥 Generar descarga", width='stretch', type="primary"):
+        return
+
+    with st.spinner(f'Consultando {dias} días de ventas...'):
+        df_raw = get_service().descargar_raw(d1.strftime('%Y-%m-%d'), d2.strftime('%Y-%m-%d'))
+
+    n = len(df_raw)
+    if n == 0:
+        st.warning("Sin datos en el período.")
+        return
+
+    if n > EXCEL_AVISO_FILAS and fmt.startswith("Excel"):
+        st.error(
+            f"❌ {n:,} filas es demasiado para Excel en Streamlit Cloud. "
+            f"Cambia a CSV.gz o Parquet."
+        )
+        return
+
+    with st.spinner(f'Empaquetando {n:,} filas como {fmt}...'):
+        try:
+            if fmt.startswith("Excel"):
+                data = _excel_bytes(df_raw)
+                fname = f"Raw_ventas_{d1}_{d2}.xlsx"
+                mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            elif fmt.startswith("CSV"):
+                data = _csv_gz_streamed(df_raw)
+                fname = f"Raw_ventas_{d1}_{d2}.csv.gz"
+                mime = 'application/gzip'
+            else:
+                data = _parquet_bytes(df_raw)
+                fname = f"Raw_ventas_{d1}_{d2}.parquet"
+                mime = 'application/octet-stream'
+        except MemoryError:
+            st.error(
+                "❌ Sin memoria suficiente. Reduce el rango o usa Parquet (20x más liviano)."
+            )
+            return
+        finally:
+            del df_raw
+            gc.collect()
+
+    size_mb = len(data) / (1024 * 1024)
+    st.success(f"✅ {n:,} filas listas — {size_mb:.1f} MB")
+    st.download_button(
+        label=f"💾 Descargar {fmt} ({size_mb:.1f} MB)",
+        data=data,
+        file_name=fname,
+        mime=mime,
+        width='stretch',
+    )

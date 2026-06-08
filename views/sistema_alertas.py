@@ -212,7 +212,7 @@ def render():
         st.markdown("### 🚨 **Alertas del Sistema**")
         st.caption("Health-check de servicios cloud")
         st.markdown("---")
-        if st.button("🔄 Verificar ahora", use_container_width=True, type="primary", key="alertas_refresh"):
+        if st.button("🔄 Verificar ahora", width='stretch', type="primary", key="alertas_refresh"):
             _run_all_checks.clear()
             st.rerun()
 
@@ -281,19 +281,19 @@ def render():
         st.link_button(
             "📊 Ver app en Streamlit",
             "https://share.streamlit.io/",
-            use_container_width=True,
+            width='stretch',
         )
     with col2:
         st.link_button(
             "🐙 Ver workflows GH Actions",
             "https://github.com/Andyunionx/unionx-dashboard/actions",
-            use_container_width=True,
+            width='stretch',
         )
     with col3:
         st.link_button(
             "💾 Ver Turso DB",
             "https://app.turso.tech/andresunionx",
-            use_container_width=True,
+            width='stretch',
         )
 
     st.caption(f"Última verificación: {datetime.now().strftime('%H:%M:%S')} · Click en 'Verificar ahora' para refrescar")

@@ -30,7 +30,7 @@ def render():
         st.markdown("### 📊 **Cobertura por Canal**")
         st.caption("Stock soportando ventas por canal")
         st.markdown("---")
-        if st.button("🔄 Refrescar todo", use_container_width=True, type="primary", key="cob_refresh"):
+        if st.button("🔄 Refrescar todo", width='stretch', type="primary", key="cob_refresh"):
             cached_stock.clear()
             cached_ventas_canal_30d.clear()
             st.rerun()
@@ -66,7 +66,7 @@ def render():
                           paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                           showlegend=False)
     fig_can.update_traces(texttemplate='$%{text:,.0f}', textposition='outside', textfont_size=9)
-    st.plotly_chart(fig_can, use_container_width=True)
+    st.plotly_chart(fig_can, width='stretch')
 
     st.divider()
 
@@ -108,5 +108,5 @@ def render():
             'Qty': '{:,.0f}', 'Vta 30d Qty': '{:,.0f}',
             'Dias Stock': '{:,.0f}', 'Cobertura este canal (días)': '{:,.0f}',
         }),
-        height=500, use_container_width=True, hide_index=True,
+        height=500, width='stretch', hide_index=True,
     )

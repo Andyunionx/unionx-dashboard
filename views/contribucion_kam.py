@@ -27,7 +27,7 @@ def render():
         st.markdown("### 👤 **Vista KAM**")
         st.caption("Ranking y drill por KAM/Canal")
         st.markdown("---")
-        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="ckam_refresh"):
+        if st.button("🔄 Refrescar Sheet", width='stretch', type="primary", key="ckam_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -78,7 +78,7 @@ def render():
     fig.update_layout(height=380, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                       xaxis_tickangle=-30, yaxis=dict(tickformat=',.0f'))
     fig.update_traces(texttemplate='$%{text:,.0f}', textposition='outside', textfont_size=9)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.divider()
 
@@ -95,4 +95,4 @@ def render():
     for c in cols_show:
         if c != 'Canal' and c in df_show.columns:
             df_show[c] = df_show[c].apply(fmt_pesos_M)
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+    st.dataframe(df_show, width='stretch', hide_index=True, height=400)

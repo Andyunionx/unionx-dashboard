@@ -76,7 +76,7 @@ def render():
         margin=dict(l=10, r=10, t=10, b=10),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
     )
-    st.plotly_chart(fig_w, use_container_width=True)
+    st.plotly_chart(fig_w, width='stretch')
 
     # Tabla detalle
     st.markdown("##### Detalle por semana")
@@ -91,5 +91,5 @@ def render():
     df_view['% Mg'] = (df_view['margen_ty'] / df_view['venta_neta_ty'].replace(0, 1) * 100).round(1).astype(str) + '%'
     st.dataframe(
         df_view[['Semana', 'Período', 'Venta TY', 'Venta LY', 'Var %', 'Mg TY', 'Unid TY', '% Mg']],
-        hide_index=True, use_container_width=True,
+        hide_index=True, width='stretch',
     )

@@ -66,10 +66,10 @@ def _tab_volumen(df: pd.DataFrame, meses: int):
     fig.update_layout(xaxis_tickangle=-45, height=420, margin=dict(t=20, b=120),
                       paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     fig.update_traces(texttemplate='$%{text:,.0f}', textposition='outside', textfont_size=9)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.dataframe(
-        g, use_container_width=True, hide_index=True,
+        g, width='stretch', hide_index=True,
         column_config={
             'costo_total': st.column_config.NumberColumn('Compra (costo)', format='$%.0f'),
             'venta_neta': st.column_config.NumberColumn('Venta neta', format='$%.0f'),
@@ -103,7 +103,7 @@ def _tab_evolucion_costo(df: pd.DataFrame):
     fig = px.line(g, x='mes', y='costo_prom', markers=True,
                   labels={'costo_prom': 'Costo unitario promedio CLP', 'mes': 'Mes'})
     fig.update_layout(height=360, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     if len(g) >= 2:
         inicial = g['costo_prom'].iloc[0]
@@ -127,7 +127,7 @@ def _tab_compra_cruzada(df: pd.DataFrame):
     ).reset_index().sort_values('costo', ascending=False).head(40)
 
     st.dataframe(
-        g, use_container_width=True, hide_index=True,
+        g, width='stretch', hide_index=True,
         column_config={
             'costo': st.column_config.NumberColumn('Compra acumulada', format='$%.0f'),
         },
@@ -150,7 +150,7 @@ def _tab_concentracion(df: pd.DataFrame):
                  labels={'pct': '% del costo total', 'proveedor': 'Proveedor'})
     fig.update_layout(xaxis_tickangle=-45, height=400, paper_bgcolor='rgba(0,0,0,0)',
                       plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     n_para_80 = (g['pct_acum'] <= 80).sum() + 1
     st.info(f"📊 **{n_para_80} proveedores concentran el 80% de las compras** (de un total de {len(g)}).")

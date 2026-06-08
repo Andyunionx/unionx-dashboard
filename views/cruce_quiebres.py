@@ -17,7 +17,7 @@ def render():
         st.markdown("### 🚨 **Quiebres con Demanda**")
         st.caption("SKUs en quiebre que SÍ están vendiendo")
         st.markdown("---")
-        if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="qb_refresh"):
+        if st.button("🔄 Refrescar Odoo", width='stretch', type="primary", key="qb_refresh"):
             cached_stock.clear()
             st.rerun()
 
@@ -68,7 +68,7 @@ def render():
             'Vta 30d $': '${:,.0f}', 'Precio Prom': '${:,.0f}',
             'Riesgo Venta 30d $': '${:,.0f}', 'Dias Stock': '{:,.0f}',
         }),
-        height=500, use_container_width=True, hide_index=True,
+        height=500, width='stretch', hide_index=True,
     )
 
     st.markdown("#### Top 15 mayor riesgo de venta perdida")
@@ -83,4 +83,4 @@ def render():
     fig.update_layout(xaxis_tickangle=-45, height=400, margin=dict(t=20, b=120),
                       paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     fig.update_traces(texttemplate='$%{text:,.0f}', textposition='outside', textfont_size=9)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')

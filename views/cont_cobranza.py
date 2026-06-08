@@ -97,7 +97,7 @@ def render():
             margin=dict(t=20, b=40, l=70, r=20),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     # ─── TOP DEUDORES ─────────────────────────────────────────────────
     st.markdown("### 🔝 Top 20 deudores")
@@ -108,7 +108,7 @@ def render():
         st.dataframe(
             df_top[["partner", "Monto pendiente"]].rename(
                 columns={"partner": "Cliente"}),
-            use_container_width=True, hide_index=True, height=400,
+            width='stretch', hide_index=True, height=400,
         )
 
     st.divider()
@@ -136,7 +136,7 @@ def render():
         df_disp.columns = ["Documento", "F. Emisión", "F. Vencim.", "Días venc.",
                             "Aging", "Cliente", "Total", "Pendiente",
                             "Estado", "Pedido SO"]
-        st.dataframe(df_disp, use_container_width=True, hide_index=True, height=500)
+        st.dataframe(df_disp, width='stretch', hide_index=True, height=500)
 
         # Excel descarga
         buf = io.BytesIO()
@@ -174,7 +174,7 @@ def render():
             df_disp = df_so.copy()
             df_disp["monto_total"] = df_disp["monto_total"].apply(fmt_clp)
             df_disp.columns = [c.replace("_", " ").title() for c in df_disp.columns]
-            st.dataframe(df_disp, use_container_width=True, hide_index=True, height=500)
+            st.dataframe(df_disp, width='stretch', hide_index=True, height=500)
 
     st.divider()
 

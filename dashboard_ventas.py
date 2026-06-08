@@ -155,7 +155,7 @@ with st.sidebar:
                     f"Turso {turso_n:,} en {stats.get('chunks_turso',0)} chunks · "
                     f"max {max_f}"
                 )
-            if st.button("🔄 Forzar recarga DB", use_container_width=True, key="force_db_refresh"):
+            if st.button("🔄 Forzar recarga DB", width='stretch', key="force_db_refresh"):
                 force_refresh_db_local()
                 st.rerun()
     except Exception:

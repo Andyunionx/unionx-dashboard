@@ -222,13 +222,13 @@ def render():
         col1, col2, col3 = st.columns(3)
         with col1:
             st.link_button("🔐 Streamlit Secrets",
-                           "https://share.streamlit.io/", use_container_width=True)
+                           "https://share.streamlit.io/", width='stretch')
         with col2:
             st.link_button("☁️ Turso Console",
-                           "https://app.turso.tech/", use_container_width=True)
+                           "https://app.turso.tech/", width='stretch')
         with col3:
             st.link_button("📧 Resend Dashboard",
-                           "https://resend.com/dashboard", use_container_width=True)
+                           "https://resend.com/dashboard", width='stretch')
 
         st.markdown(f"*Última carga: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
 
@@ -270,7 +270,7 @@ def render():
             df_logs['Cuándo'] = pd.to_datetime(df_logs['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
             st.dataframe(
                 df_logs[['Cuándo', 'usuario', 'Estado', 'ip']],
-                use_container_width=True, hide_index=True, height=500,
+                width='stretch', hide_index=True, height=500,
             )
 
             # Alerta si hay muchos fallidos del mismo user

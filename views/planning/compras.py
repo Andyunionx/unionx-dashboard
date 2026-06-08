@@ -83,7 +83,7 @@ def render():
 
     st.dataframe(
         df_view.head(500),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
         column_config={
             'stock_actual': st.column_config.NumberColumn('Stock', format='%.0f'),
             'demanda': st.column_config.NumberColumn(f'Demanda {horizonte}d', format='%.0f'),

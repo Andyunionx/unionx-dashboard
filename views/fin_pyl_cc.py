@@ -166,7 +166,7 @@ def render():
         "Var Abs": top["var_abs"].apply(lambda v: f"${v/1e6:+,.1f} MM"),
         "Var %": top["var_pct"].apply(lambda v: f"{v*100:+.1f}%" if pd.notna(v) else "—"),
     })
-    st.dataframe(df_top, use_container_width=True, hide_index=True, height=420)
+    st.dataframe(df_top, width='stretch', hide_index=True, height=420)
 
     st.divider()
 
@@ -184,7 +184,7 @@ def render():
         "Var Abs": df_full["var_abs"].apply(lambda v: f"${v/1e6:+,.1f} MM"),
         "Var %": df_full["var_pct"].apply(lambda v: f"{v*100:+.1f}%" if pd.notna(v) else "—"),
     })
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=500)
+    st.dataframe(df_show, width='stretch', hide_index=True, height=500)
     st.caption(
         f"Total: {len(df_full)} CCs. Semáforo: 🟢 cumple/mejor que ppto (±5%) · "
         "🟡 cerca del ppto · 🔴 desvío >5% (signo según sea costo o ingreso)."
@@ -240,4 +240,4 @@ def render():
             margin=dict(t=50, b=40, l=70, r=20),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')

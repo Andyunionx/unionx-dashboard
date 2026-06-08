@@ -36,7 +36,7 @@ def render():
         st.markdown("### 📦 **Stock LIVE**")
         st.caption("Inventario en tiempo real")
         st.markdown("---")
-        if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="stock_refresh"):
+        if st.button("🔄 Refrescar Odoo", width='stretch', type="primary", key="stock_refresh"):
             cached_stock.clear()
             st.rerun()
 
@@ -124,12 +124,12 @@ def render():
                 'Qty': '{:,.0f}', 'Reservada': '{:,.0f}', 'Disponible': '{:,.0f}',
                 'Costo Unit': '${:,.0f}', 'Valor': '${:,.0f}',
             }),
-            height=520, use_container_width=True, hide_index=True,
+            height=520, width='stretch', hide_index=True,
         )
         st.caption(f"{len(dfd):,} SKUs · Valor total: ${dfd['Valor'].sum() if 'Valor' in dfd.columns else 0:,.0f}")
 
         # Descarga Excel del Stock Total
-        if st.button("📥 Descargar Stock Total (Excel)", key="dl_stock_total", use_container_width=True):
+        if st.button("📥 Descargar Stock Total (Excel)", key="dl_stock_total", width='stretch'):
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as w:
                 dfd.to_excel(w, index=False, sheet_name='Stock Total')
@@ -140,7 +140,7 @@ def render():
                 file_name=f"Stock_total_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 key="dl_stock_total_btn",
-                use_container_width=True,
+                width='stretch',
             )
 
     with tab2:
@@ -165,11 +165,11 @@ def render():
                 'Qty': '{:,.0f}', 'Reservada': '{:,.0f}', 'Disponible': '{:,.0f}',
                 'Costo Unit': '${:,.0f}', 'Valor': '${:,.0f}',
             }),
-            height=520, use_container_width=True, hide_index=True,
+            height=520, width='stretch', hide_index=True,
         )
         st.caption(f"{len(df_d2):,} líneas · Valor: ${df_d2['Valor'].sum() if 'Valor' in df_d2.columns else 0:,.0f}")
 
-        if st.button("📥 Descargar Por Bodega (Excel)", key="dl_stock_bodega", use_container_width=True):
+        if st.button("📥 Descargar Por Bodega (Excel)", key="dl_stock_bodega", width='stretch'):
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as w:
                 df_d2_sorted.to_excel(w, index=False, sheet_name='Stock por Bodega')
@@ -180,7 +180,7 @@ def render():
                 file_name=f"Stock_por_bodega_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 key="dl_stock_bodega_btn",
-                use_container_width=True,
+                width='stretch',
             )
 
     st.markdown("---")

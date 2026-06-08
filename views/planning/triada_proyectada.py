@@ -295,10 +295,10 @@ def render():
                 cmap='RdYlGn', subset=[c for c in stock_cols if c in cols_show],
                 vmin=-50, vmax=500,
             )
-            st.dataframe(sty, use_container_width=True, hide_index=True,
+            st.dataframe(sty, width='stretch', hide_index=True,
                          column_config=col_config_sku, height=600)
         except Exception:
-            st.dataframe(view[cols_show], use_container_width=True, hide_index=True,
+            st.dataframe(view[cols_show], width='stretch', hide_index=True,
                          column_config=col_config_sku, height=600)
 
         d1, d2 = st.columns(2)
@@ -337,10 +337,10 @@ def render():
                 cmap='RdYlGn', subset=[c for c in stock_cols if c in cols_show],
                 vmin=-50, vmax=vmax,
             )
-            st.dataframe(sty, use_container_width=True, hide_index=True,
+            st.dataframe(sty, width='stretch', hide_index=True,
                          column_config=col_config_g, height=600)
         except Exception:
-            st.dataframe(g[cols_show], use_container_width=True, hide_index=True,
+            st.dataframe(g[cols_show], width='stretch', hide_index=True,
                          column_config=col_config_g, height=600)
 
     with tab2:
@@ -390,7 +390,7 @@ def render():
             top_gap['abs_gap'] = top_gap['gap'].abs()
             st.caption("Top 30 SKUs con mayor gap:")
             st.dataframe(top_gap.nlargest(30, 'abs_gap').drop(columns='abs_gap'),
-                         use_container_width=True, hide_index=True)
+                         width='stretch', hide_index=True)
 
     # ---- Footer metodología ----
     st.divider()

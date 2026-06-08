@@ -280,7 +280,7 @@ def _hero_global_empresa(year: int):
                 legend=dict(orientation="h", yanchor="bottom", y=1.02,
                               xanchor="right", x=1, font=dict(size=10)),
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
     except Exception as e:
         st.caption(f"_(Tendencia mensual no disponible: {e})_")
 
@@ -921,7 +921,7 @@ def render():
 
             edited = st.data_editor(
                 df_drivers_ui,
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
                 disabled=["Sub-área", "Centro de Costo", "F/V", "Monto (M$)"],
                 column_config={
                     "Driver": st.column_config.SelectboxColumn(
@@ -963,7 +963,7 @@ def render():
             for k, v in DRIVER_DEFAULT_POR_CC.items()
             if "Ó" not in k and "Á" not in k and "Í" not in k
         ])
-        st.dataframe(df_defaults, use_container_width=True, hide_index=True)
+        st.dataframe(df_defaults, width='stretch', hide_index=True)
 
     # NOTA: la distribución (costo_op_por_dim, gav_por_dim, drilldowns)
     # ya se calculó arriba antes del resumen consolidado, para que los
@@ -1023,7 +1023,7 @@ def render():
                         agg_op = agg_op[["Sub-área", "Centro de Costo",
                                           "Driver", "Monto (MM$)"]]
                         agg_op = agg_op.sort_values("Monto (MM$)", ascending=False)
-                        st.dataframe(agg_op, use_container_width=True,
+                        st.dataframe(agg_op, width='stretch',
                                       hide_index=True, height=280)
                     else:
                         st.info("Sin costos OP en el período.")
@@ -1038,7 +1038,7 @@ def render():
                         agg_gav["Monto (MM$)"] = (agg_gav["Monto"] / 1_000_000).round(1)
                         agg_gav = agg_gav[["Área GAV", "Driver", "Monto (MM$)"]]
                         agg_gav = agg_gav.sort_values("Monto (MM$)", ascending=False)
-                        st.dataframe(agg_gav, use_container_width=True,
+                        st.dataframe(agg_gav, width='stretch',
                                       hide_index=True, height=280)
                     else:
                         st.info("Sin GAV en el período.")
@@ -1078,7 +1078,7 @@ def render():
                 "monto_MM": "Monto (MM$)",
                 "driver": "Driver",
             })
-            st.dataframe(df_show, use_container_width=True, hide_index=True,
+            st.dataframe(df_show, width='stretch', hide_index=True,
                           height=380)
 
             tot_fijo = df_costos[df_costos["tipo_costo"] == "FIJO"]["monto"].sum()
@@ -1107,7 +1107,7 @@ def render():
                 "monto_MM": "Monto (MM$)",
                 "driver": "Driver",
             })
-            st.dataframe(df_gav_show, use_container_width=True, hide_index=True)
+            st.dataframe(df_gav_show, width='stretch', hide_index=True)
             st.markdown(
                 f"**Total GAV puro:** `${_fmt_clp(gav_total / 1_000_000)} MM`"
             )
@@ -1200,7 +1200,7 @@ def render():
                 "cuenta_analitica": "Cuenta Analítica (cargo)",
                 "monto_MM": "Monto (MM$)",
             })
-            st.dataframe(df_det_show, use_container_width=True, hide_index=True,
+            st.dataframe(df_det_show, width='stretch', hide_index=True,
                           height=420)
 
             with st.expander("ℹ️ Cómo se usa este desglose"):
@@ -1244,7 +1244,7 @@ def render():
                 )
             except (ImportError, ModuleNotFoundError):
                 styled = pivot.style.format("{:,.1f}")
-            st.dataframe(styled, use_container_width=True)
+            st.dataframe(styled, width='stretch')
             st.caption("Cifras en MM$. Cada fila se distribuye según su driver.")
         else:
             st.info("Sin distribución calculada.")
@@ -1270,7 +1270,7 @@ def render():
                 )
             except (ImportError, ModuleNotFoundError):
                 styled_g = pivot_g.style.format("{:,.1f}")
-            st.dataframe(styled_g, use_container_width=True)
+            st.dataframe(styled_g, width='stretch')
             st.caption("Cifras en MM$. Cada área se distribuye con su driver propio.")
 
         st.markdown("---")
@@ -1292,7 +1292,7 @@ def render():
                     "venta_neta": "${:,.0f}",
                     "% venta": "{:.1f}%",
                 }),
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
     # ─── TAB AYUDA ──────────────────────────────────────────────────────
@@ -1903,7 +1903,7 @@ def _render_tab_proyeccion_fcst(year: int):
 
     st.dataframe(
         df_show_full,
-        use_container_width=True, hide_index=True, height=520,
+        width='stretch', hide_index=True, height=520,
         column_config={
             "Venta (MM)": st.column_config.NumberColumn(format="$ %.1f"),
             "MC (MM)": st.column_config.NumberColumn(format="$ %.1f"),
@@ -1990,7 +1990,7 @@ def _render_tab_proyeccion_fcst(year: int):
         legend=dict(orientation="h", yanchor="bottom", y=1.02,
                       xanchor="right", x=1),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.caption(
         "💡 Líneas con diamante en EBIT = mes proyectado. Círculo = mes real. "
@@ -2037,7 +2037,7 @@ def _render_transparencia_gav(df_gav: pd.DataFrame, year: int,
                 df_in["Monto (MM)"] = (df_in["monto"] / 1_000_000).round(1)
                 df_in = df_in[["area", "Monto (MM)"]].rename(
                     columns={"area": "Área"})
-                st.dataframe(df_in, use_container_width=True,
+                st.dataframe(df_in, width='stretch',
                               hide_index=True, height=240)
                 tot = df_gav["monto"].sum() / 1_000_000
                 st.markdown(f"**Total GAV puro:** `${tot:,.1f} MM`")
@@ -2074,7 +2074,7 @@ def _render_transparencia_gav(df_gav: pd.DataFrame, year: int,
                     df_ops_agg["Monto (MM)"] = (df_ops_agg["monto"] / 1_000_000).round(1)
                     df_ops_agg = df_ops_agg[["area", "Monto (MM)"]].rename(
                         columns={"area": "Área (excluida)"})
-                    st.dataframe(df_ops_agg, use_container_width=True,
+                    st.dataframe(df_ops_agg, width='stretch',
                                   hide_index=True, height=240)
                     tot_ops = df_ops_agg["Monto (MM)"].sum()
                     st.markdown(
@@ -2148,7 +2148,7 @@ def _render_drilldown_filtrado(
                     "Sub-área", "Centro de Costo", "Driver",
                     _label_dim(desglose), "Monto (MM)"
                 ]].sort_values("Monto (MM)", ascending=False)
-                st.dataframe(df_op, use_container_width=True,
+                st.dataframe(df_op, width='stretch',
                               hide_index=True, height=320)
                 st.caption(
                     f"💡 Cada CC se distribuye al {_label_dim(desglose).lower()} "
@@ -2166,7 +2166,7 @@ def _render_drilldown_filtrado(
                 df_g = df_g[[
                     "Área GAV", "Driver", _label_dim(desglose), "Monto (MM)"
                 ]].sort_values("Monto (MM)", ascending=False)
-                st.dataframe(df_g, use_container_width=True,
+                st.dataframe(df_g, width='stretch',
                               hide_index=True, height=320)
                 st.caption(
                     f"💡 GAV puro del P&L Drive. Áreas operativas (OPS, LOG, "

@@ -127,7 +127,7 @@ def _tab_cierre_mes(resumen: dict, fc_diario: pd.DataFrame):
         margin=dict(t=20, b=40, l=60, r=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1), hovermode='x unified',
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # ============================================================
@@ -178,7 +178,7 @@ def _tab_horizontes(resumen: dict, fc_diario: pd.DataFrame):
         margin=dict(t=20, b=40, l=60, r=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1), hovermode='x unified',
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # KPIs derivados
     promedio_diario = float(df_h['yhat'].mean())
@@ -242,7 +242,7 @@ def _tab_anio(resumen: dict, fc_anual: pd.DataFrame):
         df_t['LY'] = df_t['venta_ly'].apply(lambda v: f"${v/1e6:,.0f}M" if v > 0 else '—')
         df_t['Δ% vs LY'] = df_t['pct_vs_ly'].apply(lambda v: f"{v:+.1f}%" if v is not None else '—')
         df_t['Tipo'] = df_t['tipo'].map({'real': '✅ Real', 'mixto': '🔄 En curso', 'forecast': '📈 Forecast'})
-        st.dataframe(df_t[['Mes', 'Proyección', 'LY', 'Δ% vs LY', 'Tipo']], use_container_width=True, hide_index=True)
+        st.dataframe(df_t[['Mes', 'Proyección', 'LY', 'Δ% vs LY', 'Tipo']], width='stretch', hide_index=True)
 
         # Chart barras mes a mes (proyección vs LY)
         fig = go.Figure()
@@ -257,7 +257,7 @@ def _tab_anio(resumen: dict, fc_anual: pd.DataFrame):
             margin=dict(t=20, b=40, l=60, r=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
             legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
         st.caption("🟢 Real (mes cerrado) · 🟠 En curso (real + forecast) · 🔵 Forecast puro")
 
     # Línea anual con banda
@@ -279,7 +279,7 @@ def _tab_anio(resumen: dict, fc_anual: pd.DataFrame):
             margin=dict(t=20, b=40, l=60, r=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
             legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1), hovermode='x unified',
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
 
 
 # ============================================================
@@ -299,7 +299,7 @@ def _tab_componentes(df_comp: pd.DataFrame):
     fig.update_layout(height=240, margin=dict(t=10, b=30, l=60, r=20),
                       yaxis=dict(title='Venta base ($)', tickformat=',.0f'),
                       paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption("Crecimiento orgánico del negocio sin estacionalidad ni eventos.")
 
     # Weekly
@@ -315,7 +315,7 @@ def _tab_componentes(df_comp: pd.DataFrame):
         fig_w.update_layout(height=240, margin=dict(t=10, b=30, l=60, r=20),
                              yaxis=dict(title='Efecto sobre venta ($)', tickformat=',.0f'),
                              paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig_w, use_container_width=True)
+        st.plotly_chart(fig_w, width='stretch')
         st.caption("Cuánto suma o resta cada día de la semana respecto al promedio.")
 
     # Yearly
@@ -334,7 +334,7 @@ def _tab_componentes(df_comp: pd.DataFrame):
                              xaxis=dict(title='Día del año', tickformat='%b'),
                              yaxis=dict(title='Efecto sobre venta ($)', tickformat=',.0f'),
                              paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig_y, use_container_width=True)
+        st.plotly_chart(fig_y, width='stretch')
         st.caption("Picos ≈ Cyber Day (jun), Día Madre (may), CyberMonday (oct), Black Friday (nov), Navidad (dic).")
 
     # Holidays
@@ -347,7 +347,7 @@ def _tab_componentes(df_comp: pd.DataFrame):
             fig_h.update_layout(height=240, margin=dict(t=10, b=30, l=60, r=20),
                                  yaxis=dict(title='Boost del evento ($)', tickformat=',.0f'),
                                  paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig_h, use_container_width=True)
+            st.plotly_chart(fig_h, width='stretch')
             st.caption("Aporte de Cyber Day, CyberMonday, Black Friday, Día Madre/Padre, FFPP, Navidad y feriados Chile.")
 
 
@@ -466,7 +466,7 @@ def _tab_jerarquia(fc_skus: pd.DataFrame, fc_marca_canal: pd.DataFrame,
                             xaxis=dict(title='Aporte total al forecast (unid)'),
                             paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                         )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width='stretch')
                         st.caption("Cuantas unidades aporta cada componente al forecast del periodo. Verde suma, rojo resta.")
 
 
@@ -489,7 +489,7 @@ def _chart_forecast(df: pd.DataFrame, titulo: str):
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
         hovermode='x unified',
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # ============================================================
@@ -517,7 +517,7 @@ def _tab_canales(fc_canal: pd.DataFrame):
     fig.update_layout(height=360, xaxis=dict(title='Fecha'), yaxis=dict(title='Venta diaria ($)', tickformat=',.0f'),
                       margin=dict(t=20, b=40, l=60, r=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                       legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # ============================================================
@@ -548,19 +548,19 @@ def _tab_validation(df_val: pd.DataFrame, summary: dict):
                        yaxis=dict(title='Pares (sku,canal)'),
                        margin=dict(t=20, b=40, l=60, r=20),
                        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.markdown("##### Top 20 mejores y peores predicciones")
     cols = st.columns(2)
     cols[0].markdown("**Mejores (MAPE bajo):**")
     cols[0].dataframe(
         df_clean.nsmallest(20, 'mape_pct')[['sku', 'canal', 'mape_pct', 'venta_real_test', 'venta_pred_test', 'sesgo']],
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
     cols[1].markdown("**Peores (MAPE alto):**")
     cols[1].dataframe(
         df_clean.nlargest(20, 'mape_pct')[['sku', 'canal', 'mape_pct', 'venta_real_test', 'venta_pred_test', 'sesgo']],
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
 
     st.caption("MAPE = error % promedio. Sesgo positivo = sobre-estimamos. "
@@ -590,10 +590,10 @@ def _tab_pricing_basket(df_elast_cat: pd.DataFrame, df_elast_sku: pd.DataFrame,
             fig.update_layout(height=600, margin=dict(t=10, b=30, l=180, r=20),
                                 xaxis=dict(title='Elasticidad-precio (negativo = elastica, baja precio sube venta)'),
                                 paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             st.caption("🟥 muy elasticas (precio sensible) · 🟧 elasticas suaves · ⬜ inelasticas/positivas (baja calidad de regresion o efecto Veblen)")
             with st.expander("📋 Tabla completa"):
-                st.dataframe(df_show, use_container_width=True, hide_index=True)
+                st.dataframe(df_show, width='stretch', hide_index=True)
 
     with sub_tabs[1]:
         if df_elast_sku.empty:
@@ -604,10 +604,10 @@ def _tab_pricing_basket(df_elast_cat: pd.DataFrame, df_elast_sku: pd.DataFrame,
             cols = st.columns(2)
             cols[0].markdown("**Mas elasticos (oportunidad de promo):**")
             cols[0].dataframe(df_show.head(15)[['sku', 'canal', 'elasticidad', 'r2', 'n_obs']],
-                               use_container_width=True, hide_index=True)
+                               width='stretch', hide_index=True)
             cols[1].markdown("**Menos elasticos (precio firme posible):**")
             cols[1].dataframe(df_show.tail(15)[['sku', 'canal', 'elasticidad', 'r2', 'n_obs']],
-                               use_container_width=True, hide_index=True)
+                               width='stretch', hide_index=True)
 
     with sub_tabs[2]:
         if df_basket.empty:
@@ -623,7 +623,7 @@ def _tab_pricing_basket(df_elast_cat: pd.DataFrame, df_elast_sku: pd.DataFrame,
             df_filt = df_filt.sort_values('lift', ascending=False).head(50)
             st.dataframe(
                 df_filt[['sku_a', 'sku_b', 'n_pedidos_juntos', 'lift', 'confidence_a_to_b', 'confidence_b_to_a']],
-                use_container_width=True, hide_index=True,
+                width='stretch', hide_index=True,
             )
 
 
@@ -656,7 +656,7 @@ def _tab_mint(df_recon: pd.DataFrame, mint_meta: dict):
         fig.update_layout(height=320, margin=dict(t=20, b=40, l=60, r=20),
                            yaxis=dict(title='Forecast (unid)', tickformat=',.0f'),
                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     st.caption("Todos los niveles suman exactamente — coherencia garantizada.")
 
@@ -723,7 +723,7 @@ def _tab_demanda_evento(df_dem: pd.DataFrame, df_skus_anchor: pd.DataFrame, reco
             'categoria_padre': 'Categoria', 'canal': 'Canal',
             'unidades': 'Unidades', 'boost': 'Boost evento', 'lift_pct': 'Δ% vs base',
         }),
-        use_container_width=True, hide_index=True, height=600,
+        width='stretch', hide_index=True, height=600,
     )
 
 
@@ -735,7 +735,7 @@ def render():
         st.markdown("### 📈 **Forecast**")
         st.caption("Prophet + Holidays Chile")
         st.markdown("---")
-        if st.button("🔄 Refrescar caché", use_container_width=True, type="primary", key="fc_refresh"):
+        if st.button("🔄 Refrescar caché", width='stretch', type="primary", key="fc_refresh"):
             st.cache_data.clear()
             st.rerun()
 

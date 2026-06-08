@@ -137,7 +137,7 @@ def render():
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             legend=dict(orientation="h", y=1.05, x=0),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Meses inventario / CxC / CxP (CCC)
         st.markdown("##### Meses de inventario · CxC · CxP")
@@ -192,7 +192,7 @@ def render():
                 paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                 title="Saldo final deuda financiera",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         # Gasto en intereses
         df_int = df_deuda[
@@ -204,7 +204,7 @@ def render():
                 "Mes": df_int["fecha"].dt.strftime("%b %Y"),
                 "Intereses": df_int["valor"].apply(lambda v: f"${v:,.0f} M"),
             })
-            st.dataframe(df_int_show, use_container_width=True, hide_index=True, height=240)
+            st.dataframe(df_int_show, width='stretch', hide_index=True, height=240)
 
     st.divider()
 
@@ -221,4 +221,4 @@ def render():
                 lambda v: f"${v:,.0f} M" if pd.notna(v) else "—"),
             "Nota": df_show["nota"].fillna("").str[:30],
         })
-        st.dataframe(df_disp, use_container_width=True, hide_index=True, height=400)
+        st.dataframe(df_disp, width='stretch', hide_index=True, height=400)
