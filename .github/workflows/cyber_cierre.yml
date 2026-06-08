@@ -4,8 +4,11 @@ name: "Cierre Cyber 2026 (one-shot Lun 8-jun)"
 # El cron está acotado al 8 de junio para evitar re-ejecutarse.
 
 on:
-  schedule:
-    - cron: '0 12 8 6 *'   # 12:00 UTC = 08:00 CLT del 8 de junio
+  # Cron deshabilitado tras Cyber 2026: el cron dispara con delay variable
+  # en GH Actions y generó duplicados (manual + cron tarde el 8-jun).
+  # Para futuros Cyber: cambiar fecha y descomentar.
+  # schedule:
+  #   - cron: '0 12 8 6 *'   # 12:00 UTC = 08:00 CLT
   workflow_dispatch: {}
 
 permissions:
