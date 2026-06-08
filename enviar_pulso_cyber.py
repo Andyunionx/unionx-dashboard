@@ -865,7 +865,9 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list):
         part = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         part.set_payload(xlsx_bytes)
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename="Raw Cyber {hoy_str}.xlsx"')
+        # Si hoy_str empieza con "Reporte" lo usamos tal cual; sino el legacy "Raw Cyber".
+        fname = hoy_str if str(hoy_str).startswith(('Reporte', 'Cierre', 'Mes')) else f'Raw Cyber {hoy_str}'
+        part.add_header('Content-Disposition', f'attachment; filename="{fname}.xlsx"')
         msg.attach(part)
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()

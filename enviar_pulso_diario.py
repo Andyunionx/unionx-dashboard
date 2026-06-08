@@ -227,10 +227,12 @@ def main():
     print(f'[2/3] HTML: {len(html):,} bytes | acum {mes_nom}: {fmt_m(b_mes)}', flush=True)
 
     xlsx_bytes, n = generar_excel_mes(df, ayer)
-    print(f'[3/3] Excel acumulado mes: {n:,} filas', flush=True)
+    print(f'[3/3] Excel acumulado mes: {n:,} filas (hasta {ayer})', flush=True)
 
     asunto = f'📊 Pulso Diario · {mes_nom} acum al {ayer.strftime("%d")} · {fmt_m(b_mes)}'
-    msg_id = _enviar_via_gmail(asunto, html, xlsx_bytes, f'mes_acum_{ayer.strftime("%Y-%m-%d")}', EMAIL_TO)
+    # Filename del adjunto: "Reporte Comercial - Ventas y Margen YYYY-MM-DD.xlsx"
+    fname = f'Reporte Comercial - Ventas y Margen {ayer.strftime("%Y-%m-%d")}'
+    msg_id = _enviar_via_gmail(asunto, html, xlsx_bytes, fname, EMAIL_TO)
     print(f'[OK] enviado msg_id={msg_id}', flush=True)
     return 0
 
