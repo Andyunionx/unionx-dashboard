@@ -614,13 +614,18 @@ def _get_duck_conn(version=None):
 
     # Opción C: si PARQUET_BASE_URL está seteado, leer desde GitHub Raw vía httpfs.
     # ttl=900 (arriba) re-baja el parquet cada 15 min SIN redeploy. Fallback a local ante error.
+    # CUTOFF: mes_actual se filtra a >= CUTOFF_HISTORICO para evitar doble-conteo
+    # con el historico (que tiene foto fija hasta 1-jun inclusive).
     base = os.environ.get('PARQUET_BASE_URL', '').rstrip('/')
     if base:
         try:
             con = duckdb.connect(':memory:')
             con.execute("INSTALL httpfs; LOAD httpfs;")
-            srcs = [f"SELECT * FROM read_parquet('{base}/data/historico/ventas_historico.parquet')",
-                    f"SELECT * FROM read_parquet('{base}/data/historico/ventas_mes_actual.parquet')"]
+            srcs = [
+                f"SELECT * FROM read_parquet('{base}/data/historico/ventas_historico.parquet')",
+                f"SELECT * FROM read_parquet('{base}/data/historico/ventas_mes_actual.parquet') "
+                f"WHERE CAST(fecha_venta AS VARCHAR) >= '{CUTOFF_HISTORICO}'",
+            ]
             return _build(con, srcs, 'url')
         except Exception as e:
             print(f"[DuckDB engine] URL falló ({type(e).__name__}: {str(e)[:80]}) → fallback local", flush=True)
@@ -631,7 +636,10 @@ def _get_duck_conn(version=None):
     if HISTORICO_PARQUET.exists():
         srcs.append(f"SELECT * FROM read_parquet('{HISTORICO_PARQUET.as_posix()}')")
     if MES_ACTUAL_PARQUET.exists():
-        srcs.append(f"SELECT * FROM read_parquet('{MES_ACTUAL_PARQUET.as_posix()}')")
+        srcs.append(
+            f"SELECT * FROM read_parquet('{MES_ACTUAL_PARQUET.as_posix()}') "
+            f"WHERE CAST(fecha_venta AS VARCHAR) >= '{CUTOFF_HISTORICO}'"
+        )
     return _build(con, srcs, 'local')
 
 
