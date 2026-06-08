@@ -13,8 +13,10 @@ Approach: manipulacion ZIP segura.
 
 Salida: data/outputs/Reporte Ventas Empresa LIVE.xlsx
 """
+import os
 import re
 import shutil
+import sys
 import tempfile
 import zipfile
 from datetime import date, timedelta
@@ -26,8 +28,14 @@ from openpyxl.utils import get_column_letter
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 ORIGINAL = PROJECT_ROOT / 'data' / 'planillas' / 'Reporte Ventas Empresa 2026 VS 2025 RAW.xlsx'
-# Carpeta Drive sincronizada localmente (la ve Drive Desktop y sincroniza solo)
-OUTPUT = Path('G:/Mi unidad/Reporte Automático RAW/Reporte Ventas Empresa LIVE.xlsx')
+# Carpeta Drive "Reporte Automático RAW" (id fijo, compartida con OAuth user)
+DRIVE_CARPETA_ID = '18RKgdGwWGM8tEGqltcrruCPB-LaTwZxx'
+NOMBRE_LIVE = 'Reporte Ventas Empresa LIVE.xlsx'
+# Output local: en GH Actions usa /tmp, local usa data/outputs/
+if os.environ.get('GITHUB_ACTIONS') == 'true':
+    OUTPUT = Path('/tmp') / NOMBRE_LIVE
+else:
+    OUTPUT = PROJECT_ROOT / 'data' / 'outputs' / NOMBRE_LIVE
 
 # 56 columnas en el ORDEN EXACTO del original (validado contra archivo)
 RAW_COLUMNS = [
@@ -308,5 +316,19 @@ def _set_refresh_on_load(xlsx_path: Path):
     shutil.move(str(tmp), str(xlsx_path))
 
 
+def subir_a_drive():
+    """Sube el archivo OUTPUT al Drive del user via OAuth user."""
+    from drive_user_helpers import subir_o_actualizar
+    file_id, link = subir_o_actualizar(
+        OUTPUT, DRIVE_CARPETA_ID, NOMBRE_LIVE, hacer_publico=True
+    )
+    print(f'\n[drive] file_id: {file_id}')
+    print(f'[drive] link:    {link}')
+    return file_id, link
+
+
 if __name__ == '__main__':
     construir_live()
+    # Solo subir a Drive si estamos en GH Actions o si se pide explicito
+    if os.environ.get('GITHUB_ACTIONS') == 'true' or '--upload' in sys.argv:
+        subir_a_drive()

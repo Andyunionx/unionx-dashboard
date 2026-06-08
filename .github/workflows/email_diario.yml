@@ -59,6 +59,13 @@ jobs:
             git push || echo "Push falló (no crítico)"
           fi
 
+      - name: Regenerar Reporte Ventas Empresa LIVE + subir a Drive
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: python actualizar_raw_diario.py
+        continue-on-error: true
+
       - name: Enviar Pulso Diario
         env:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
