@@ -71,7 +71,7 @@ DB_TO_RAW = {
     'hora_venta_num': 'Hora venta',
     'cantidad': 'Cantidad',
     'venta_bruta': 'Venta bruta',
-    'venta_neta': 'Venta Neta',
+    # venta_neta excluida por preferencia operativa
     'costo_unitario': 'Costo Unitario',
     'costo_total': 'Costo Total',
     'margen_front': 'Margen Front',

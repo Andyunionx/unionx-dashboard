@@ -1,0 +1,76 @@
+name: "Sync Alertas Export"
+
+# Evalúa las reglas de alertas (evaluar_alertas.py) leyendo los parquet de ventas
+# con DuckDB y escribe data/exports/alertas.parquet directamente. SIN Turso.
+# (Antes: evaluar_alertas escribía a Turso y extract_alertas_turso.py exportaba.)
+#
+# Schema: id, fecha_creada, fecha_objetivo, fecha_resuelta, tipo,
+# severity (info|warning|critical), titulo, mensaje, contexto (JSON),
+# target_apps (CSV), status, resuelta_por.
+
+on:
+  schedule:
+    # 11:30 UTC = 08:30 Chile invierno. Después de sync_kam_drive (10:00 UTC).
+    - cron: '30 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync_alertas_export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow duckdb
+
+      - name: Evaluar alertas (DuckDB sobre parquet, sin Turso)
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python evaluar_alertas.py
+
+      - name: Diagnostico
+        if: always()
+        run: |
+          f="data/exports/alertas.parquet"
+          if [ -f "$f" ]; then
+            size=$(stat -c%s "$f" 2>/dev/null || echo "?")
+            mod=$(stat -c%y "$f" 2>/dev/null || echo "?")
+            echo "OK $f -- ${size} bytes -- ${mod}"
+          else
+            echo "FALTA $f"
+          fi
+
+      - name: Commit si cambio
+        if: always()
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Alertas Export"
+          git pull --rebase origin main || true
+          git add data/exports/alertas.parquet || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios para commitear"
+          else
+            git commit -m "Alertas export $(date -u +'%Y-%m-%d %H:%M UTC')"
+            for i in 1 2 3; do
+              if git push; then
+                echo "Push OK (intento $i)"
+                break
+              fi
+              echo "Push fallo (intento $i), reintentando..."
+              git pull --rebase origin main || true
+              sleep 5
+            done
+          fi

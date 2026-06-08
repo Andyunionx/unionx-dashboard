@@ -16,9 +16,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / 'finanzas-unionx' / 'backend'))
 
 # Streamlit Cloud: exponer secretos como env vars
-for _key in ('LIBSQL_URL', 'LIBSQL_AUTH_TOKEN', 'ANDRES_ODOO_PASSWORD'):
-    if _key in st.secrets and not os.environ.get(_key):
-        os.environ[_key] = str(st.secrets[_key])
+for _key in ('LIBSQL_URL', 'LIBSQL_AUTH_TOKEN', 'ANDRES_ODOO_PASSWORD',
+             'PARQUET_ONLY', 'PARQUET_BASE_URL'):
+    try:
+        if _key in st.secrets and not os.environ.get(_key):
+            os.environ[_key] = str(st.secrets[_key])
+    except Exception:
+        pass
 
 from app.services.maestra_service import MaestraService
 from db_client import get_db_path
@@ -26,7 +30,57 @@ from db_client import get_db_path
 DB_PATH = get_db_path()
 HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
 MES_ACTUAL_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
-CUTOFF_HISTORICO = '2026-05-01'
+CUTOFF_HISTORICO = '2026-06-02'  # 1-jun foto fija en histórico parquet; Turso solo desde 2-jun
+
+# ============================================================
+# Schema/columnas compartidos por ambos builders del SQLite local
+# (camino Turso legacy y camino parquet-only de la migración)
+# ============================================================
+_SCHEMA_SQL = [
+    """CREATE TABLE ventas (
+        tipo_movimiento TEXT, bodega TEXT, documento TEXT, fecha_documento TEXT,
+        pedido TEXT, estado_pedido TEXT, tipo_despacho TEXT, sku TEXT, canal TEXT,
+        fecha_venta TEXT, hora_venta TEXT, producto TEXT,
+        categoria_macro TEXT, categoria_padre TEXT, categoria_hijo TEXT, categoria_comercial TEXT,
+        estado_sku TEXT, pack TEXT, marca TEXT, proveedor TEXT,
+        tipo_marca TEXT, tipo_compra TEXT, tipo_negocio TEXT, kam TEXT,
+        estado_canal TEXT, anio_venta INT, mes_venta INT, semana_venta INT,
+        dia_semana TEXT, hora_venta_num INT,
+        cantidad REAL, venta_bruta REAL, venta_neta REAL, costo_unitario REAL, costo_total REAL,
+        margen_front REAL, comision_pct REAL, comision REAL,
+        logistica REAL, marketing REAL, margen_final REAL
+    )""",
+    """CREATE TABLE dim_productos (
+        sku TEXT PRIMARY KEY, producto TEXT, categoria_macro TEXT, categoria_padre TEXT,
+        categoria_hijo TEXT, categoria_comercial TEXT, estado_sku TEXT, pack TEXT,
+        marca TEXT, proveedor TEXT, tipo_marca TEXT, tipo_compra TEXT
+    )""",
+    "CREATE TABLE metadata_cargas (fecha_carga TEXT, fuente TEXT, filas_cargadas INT, fecha_min_datos TEXT, fecha_max_datos TEXT, tipo TEXT)",
+    "CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta)",
+    "CREATE INDEX idx_ventas_canal ON ventas(canal)",
+    "CREATE INDEX idx_ventas_marca ON ventas(marca)",
+    "CREATE INDEX idx_ventas_sku ON ventas(sku)",
+]
+
+_COLS_V = ['tipo_movimiento', 'bodega', 'documento', 'fecha_documento', 'pedido', 'estado_pedido',
+           'tipo_despacho', 'sku', 'canal', 'fecha_venta', 'hora_venta', 'producto',
+           'categoria_macro', 'categoria_padre', 'categoria_hijo', 'categoria_comercial',
+           'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra', 'tipo_negocio',
+           'kam', 'estado_canal', 'anio_venta', 'mes_venta', 'semana_venta', 'dia_semana',
+           'hora_venta_num', 'cantidad', 'venta_bruta', 'venta_neta', 'costo_unitario', 'costo_total',
+           'margen_front', 'comision_pct', 'comision', 'logistica', 'marketing', 'margen_final']
+
+_COLS_DIM = ['sku', 'producto', 'categoria_macro', 'categoria_padre', 'categoria_hijo',
+             'categoria_comercial', 'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra']
+
+
+def _normalize_fecha_venta_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Convierte fecha_venta a string YYYY-MM-DD (sin timestamp) para que
+    queries con BETWEEN '2026-05-01' AND '2026-05-25' incluyan el día 25."""
+    if 'fecha_venta' in df.columns:
+        df = df.copy()
+        df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    return df
 
 
 # ============================================================
@@ -86,13 +140,55 @@ def _read_historico_parquet():
     return df
 
 
-@st.cache_resource(ttl=1800, show_spinner="Cargando datos (primera vez ~60s)…")
-def get_local_db_path():
-    """SQLite local combinando histórico (parquet) + live (Turso). TTL 30min.
+# Path estable del SQLite local (mtime-based invalidation, no depende de cache_resource ttl).
+_LOCAL_DB_PATH = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v4.db'
+_LOCAL_DB_TTL_S = 900  # 15 min
 
-    Si Turso es lento desde Streamlit Cloud, el build inicial puede tomar
-    1-2 min. TTL 30min: mismo cron del parquet mes_actual.
+
+def get_local_db_path():
+    """SQLite local combinando histórico (parquet) + live (Turso).
+
+    Estrategia de invalidación:
+    1. Por mtime del archivo (>15 min → rebuild)
+    2. Por contenido: si estamos en Cyber pero el SQLite no tiene venta de
+       hoy/junio, está stale → rebuild forzado.
     """
+    parquet_only = os.environ.get('PARQUET_ONLY') == '1'
+    if not parquet_only and not os.environ.get('LIBSQL_URL'):
+        return str(DB_PATH)
+
+    if _LOCAL_DB_PATH.exists():
+        age = _time.time() - _LOCAL_DB_PATH.stat().st_mtime
+        if age < _LOCAL_DB_TTL_S:
+            # Validar contenido: si estamos en Cyber, verificar que tenga junio.
+            # Solo aplica al camino Turso (carrera con el sync); en parquet el dato es fijo.
+            hoy_str = datetime.now().strftime('%Y-%m-%d')
+            if not parquet_only and '2026-06-01' <= hoy_str <= '2026-06-06':
+                try:
+                    _c = sqlite3.connect(str(_LOCAL_DB_PATH))
+                    venta_jun = _c.execute(
+                        "SELECT COALESCE(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta >= '2026-06-01'"
+                    ).fetchone()[0]
+                    _c.close()
+                    if venta_jun < 1_000_000:
+                        print(f"[Local DB] Cache stale (junio ${venta_jun:,.0f} < $1M), rebuild", flush=True)
+                        try:
+                            _LOCAL_DB_PATH.unlink()
+                        except Exception:
+                            pass
+                        return _build_local_db()
+                except Exception as e:
+                    print(f"[Local DB] Validate cache failed: {e}", flush=True)
+            return str(_LOCAL_DB_PATH)
+
+    return _build_local_db()
+
+
+def _build_local_db():
+    """Construye el SQLite local desde histórico parquet + Turso live."""
+    # Camino B de la migración: si PARQUET_ONLY=1, construir 100% desde parquet (sin Turso).
+    if os.environ.get('PARQUET_ONLY') == '1':
+        return _build_local_db_parquet()
     if not os.environ.get('LIBSQL_URL'):
         return str(DB_PATH)
 
@@ -118,61 +214,23 @@ def get_local_db_path():
                 _t.sleep(1 + i * 2)  # 1s, 3s, 5s
         raise last
 
-    # v3: fix fechas con timestamp que excluian ultimo dia del BETWEEN.
-    # Nombre nuevo fuerza rebuild completo en Streamlit Cloud aunque cache_resource este pegado.
-    tmp_path = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v3.db'
+    # Usar path estable v4 (mtime-based invalidation)
+    tmp_path = _LOCAL_DB_PATH
     if tmp_path.exists():
         tmp_path.unlink()
 
     conn = sqlite3.connect(str(tmp_path))
 
-    schema_sql = [
-        """CREATE TABLE ventas (
-            tipo_movimiento TEXT, bodega TEXT, documento TEXT, fecha_documento TEXT,
-            pedido TEXT, estado_pedido TEXT, tipo_despacho TEXT, sku TEXT, canal TEXT,
-            fecha_venta TEXT, hora_venta TEXT, producto TEXT,
-            categoria_macro TEXT, categoria_padre TEXT, categoria_hijo TEXT, categoria_comercial TEXT,
-            estado_sku TEXT, pack TEXT, marca TEXT, proveedor TEXT,
-            tipo_marca TEXT, tipo_compra TEXT, tipo_negocio TEXT, kam TEXT,
-            estado_canal TEXT, anio_venta INT, mes_venta INT, semana_venta INT,
-            dia_semana TEXT, hora_venta_num INT,
-            cantidad REAL, venta_bruta REAL, venta_neta REAL, costo_unitario REAL, costo_total REAL,
-            margen_front REAL, comision_pct REAL, comision REAL,
-            logistica REAL, marketing REAL, margen_final REAL
-        )""",
-        """CREATE TABLE dim_productos (
-            sku TEXT PRIMARY KEY, producto TEXT, categoria_macro TEXT, categoria_padre TEXT,
-            categoria_hijo TEXT, categoria_comercial TEXT, estado_sku TEXT, pack TEXT,
-            marca TEXT, proveedor TEXT, tipo_marca TEXT, tipo_compra TEXT
-        )""",
-        "CREATE TABLE metadata_cargas (fecha_carga TEXT, fuente TEXT, filas_cargadas INT, fecha_min_datos TEXT, fecha_max_datos TEXT, tipo TEXT)",
-        "CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta)",
-        "CREATE INDEX idx_ventas_canal ON ventas(canal)",
-        "CREATE INDEX idx_ventas_marca ON ventas(marca)",
-        "CREATE INDEX idx_ventas_sku ON ventas(sku)",
-    ]
-    for sql in schema_sql:
+    for sql in _SCHEMA_SQL:
         conn.execute(sql)
     conn.commit()
 
-    cols_v = ['tipo_movimiento', 'bodega', 'documento', 'fecha_documento', 'pedido', 'estado_pedido',
-              'tipo_despacho', 'sku', 'canal', 'fecha_venta', 'hora_venta', 'producto',
-              'categoria_macro', 'categoria_padre', 'categoria_hijo', 'categoria_comercial',
-              'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra', 'tipo_negocio',
-              'kam', 'estado_canal', 'anio_venta', 'mes_venta', 'semana_venta', 'dia_semana',
-              'hora_venta_num', 'cantidad', 'venta_bruta', 'venta_neta', 'costo_unitario', 'costo_total',
-              'margen_front', 'comision_pct', 'comision', 'logistica', 'marketing', 'margen_final']
+    cols_v = _COLS_V
     cols_csv = ','.join(cols_v)
     placeholders = ','.join(['?'] * len(cols_v))
     insert_sql = f"INSERT INTO ventas ({cols_csv}) VALUES ({placeholders})"
 
-    def _normalize_fecha_venta(df: pd.DataFrame) -> pd.DataFrame:
-        """Convierte fecha_venta a string YYYY-MM-DD (sin timestamp) para que
-        queries con BETWEEN '2026-05-01' AND '2026-05-25' incluyan el día 25."""
-        if 'fecha_venta' in df.columns:
-            df = df.copy()
-            df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
-        return df
+    _normalize_fecha_venta = _normalize_fecha_venta_df
 
     # Parquet histórico (cacheado por separado para no re-leerlo si invalida la DB local)
     df_hist = _read_historico_parquet()
@@ -246,6 +304,27 @@ def get_local_db_path():
     # Stats finales
     n_ventas = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
     max_fecha = conn.execute("SELECT MAX(fecha_venta) FROM ventas").fetchone()[0]
+
+    # VALIDACIÓN: si estamos en Cyber (1-jun a 6-jun 2026), el mes actual debe
+    # tener venta. Si la query a Turso devolvió 0 (sync en curso), no servir
+    # este SQLite vacío — borrarlo para que la próxima request lo reconstruya.
+    hoy_str = datetime.now().strftime('%Y-%m-%d')
+    if '2026-06-01' <= hoy_str <= '2026-06-06':
+        venta_hoy = conn.execute(
+            "SELECT COALESCE(SUM(venta_bruta),0) FROM ventas WHERE fecha_venta >= '2026-06-01'"
+        ).fetchone()[0]
+        if venta_hoy < 1_000_000:  # menos de $1M en junio = data parcial probable
+            print(f"[Local DB] WARN: venta junio {venta_hoy:,.0f} < $1M — Turso sync probable. "
+                  f"Borrando SQLite y reintentando.", flush=True)
+            conn.close()
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
+            # Reintentar UNA vez después de 10s (espera que termine sync Turso)
+            _t.sleep(10)
+            return _build_local_db()
+
     print(f"[Local DB] BUILD COMPLETO: {n_ventas:,} filas, max fecha {max_fecha}", flush=True)
 
     # Guardar stats para que el sidebar las muestre
@@ -265,6 +344,93 @@ def get_local_db_path():
     return str(tmp_path)
 
 
+def _build_local_db_parquet():
+    """Construye el SQLite local 100% desde parquet (sin Turso) — Camino B de la migración.
+
+    Fuente única de verdad: ventas_historico.parquet + ventas_mes_actual.parquet.
+    dim_productos y metadata_cargas se DERIVAN del propio parquet (no requieren Turso/Odoo).
+    MaestraService queda intacto: solo cambia de dónde se alimenta el SQLite.
+    """
+    import time as _t
+    build_started = _t.time()
+    print(f"[Local DB][parquet] Build {datetime.now()}", flush=True)
+
+    tmp_path = _LOCAL_DB_PATH
+    if tmp_path.exists():
+        tmp_path.unlink()
+
+    conn = sqlite3.connect(str(tmp_path))
+    for sql in _SCHEMA_SQL:
+        conn.execute(sql)
+    conn.commit()
+
+    # ventas = histórico + mes actual, ambos desde parquet
+    df_hist = _read_historico_parquet()
+    n_hist = 0
+    if not df_hist.empty:
+        df_hist = _normalize_fecha_venta_df(df_hist)
+        df_hist[_COLS_V].to_sql('ventas', conn, if_exists='append', index=False,
+                                chunksize=10000)
+        n_hist = len(df_hist)
+        print(f"[Local DB][parquet] Histórico: {n_hist:,} filas", flush=True)
+
+    n_mes = 0
+    if MES_ACTUAL_PARQUET.exists():
+        df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
+        if not df_mes.empty:
+            df_mes = _normalize_fecha_venta_df(df_mes)
+            df_mes[_COLS_V].to_sql('ventas', conn, if_exists='append', index=False,
+                                   chunksize=10000)
+            n_mes = len(df_mes)
+            print(f"[Local DB][parquet] Mes actual: {n_mes:,} filas (hasta {df_mes['fecha_venta'].max()})", flush=True)
+
+    # dim_productos derivado del propio ventas (un registro por sku)
+    conn.execute(f"""
+        INSERT OR IGNORE INTO dim_productos ({','.join(_COLS_DIM)})
+        SELECT {','.join(_COLS_DIM)} FROM ventas
+        WHERE sku IS NOT NULL
+        GROUP BY sku
+    """)
+    conn.commit()
+
+    n_ventas = conn.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+    fecha_min, max_fecha = conn.execute(
+        "SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
+
+    # metadata_cargas sintética (lo que health() espera para mostrar última carga).
+    # fecha_carga = mtime del parquet más reciente (frescura REAL del dato),
+    # no now(), para que el header "última sincronización" sea honesto si un
+    # GitHub Action falló y el parquet quedó viejo.
+    _mtimes = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
+    fecha_carga = (datetime.fromtimestamp(max(_mtimes)).isoformat(timespec='seconds')
+                   if _mtimes else datetime.now().isoformat(timespec='seconds'))
+    conn.execute(
+        "INSERT INTO metadata_cargas (fecha_carga, fuente, filas_cargadas, fecha_min_datos, fecha_max_datos, tipo) "
+        "VALUES (?,?,?,?,?,?)",
+        (fecha_carga, 'parquet', n_ventas, fecha_min, max_fecha, 'parquet'),
+    )
+    conn.commit()
+
+    global _DB_BUILD_STATS
+    _DB_BUILD_STATS = {
+        'filas_total': n_ventas,
+        'filas_historico': n_hist,
+        'filas_turso': n_mes,  # reutiliza el campo para "mes actual" (ahora parquet)
+        'chunks_turso': 0,
+        'turso_error': None,
+        'max_fecha': max_fecha,
+        'build_duration_s': round(_t.time() - build_started, 1),
+        'built_at': datetime.now().isoformat(timespec='seconds'),
+        'local_path': str(tmp_path),
+        'fuente': 'parquet',
+    }
+    conn.close()
+    print(f"[Local DB][parquet] COMPLETO: {n_ventas:,} filas "
+          f"(hist {n_hist:,} + mes {n_mes:,}), max fecha {max_fecha}, "
+          f"{_DB_BUILD_STATS['build_duration_s']}s", flush=True)
+    return str(tmp_path)
+
+
 _DB_BUILD_STATS: dict = {}
 
 
@@ -274,11 +440,15 @@ def get_db_build_stats() -> dict:
 
 
 def force_refresh_db_local():
-    """Limpia TODOS los caches para forzar reconstrucción completa."""
-    get_local_db_path.clear()
+    """Limpia TODOS los caches y borra archivo SQLite local para forzar reconstrucción."""
+    # Borrar archivo físico → próxima llamada a get_local_db_path() rebuild
+    try:
+        if _LOCAL_DB_PATH.exists():
+            _LOCAL_DB_PATH.unlink()
+    except Exception:
+        pass
     cached_health.clear()
     cached_filtros.clear()
-    # Limpiar también las caches de KPIs/tendencias/canales (TTL 60s pero forzar ya)
     try:
         _cached_kpis_inner.clear()
         cached_mensual.clear()
@@ -287,11 +457,165 @@ def force_refresh_db_local():
         _cached_canales_inner.clear()
         _cached_top_skus_inner.clear()
     except Exception:
-        pass  # Si alguna cache no existe aún, no romper
+        pass
+
+
+# ============================================================
+# Motor DuckDB sobre parquet (Camino A) — sin rebuild de SQLite
+# ============================================================
+class _DuckRow:
+    """Fila estilo sqlite3.Row: soporta acceso por índice y por nombre + dict(row)."""
+    __slots__ = ('_cols', '_vals', '_map')
+
+    def __init__(self, cols, vals):
+        self._cols = cols
+        self._vals = vals
+        self._map = {c: v for c, v in zip(cols, vals)}
+
+    def __getitem__(self, k):
+        return self._vals[k] if isinstance(k, int) else self._map[k]
+
+    def keys(self):
+        return self._cols
+
+    def __iter__(self):
+        return iter(self._vals)
+
+    def __len__(self):
+        return len(self._vals)
+
+
+class _DuckCursor:
+    def __init__(self, rel):
+        self._cols = [d[0] for d in rel.description] if rel.description else []
+        self._rows = rel.fetchall()
+
+    def fetchone(self):
+        return _DuckRow(self._cols, self._rows[0]) if self._rows else None
+
+    def fetchall(self):
+        return [_DuckRow(self._cols, r) for r in self._rows]
+
+
+class _DuckConn:
+    """Adaptador que emula la API de sqlite3.Connection sobre DuckDB.
+    Usa un cursor por query (thread-safe sobre la conexión compartida)."""
+    def __init__(self, con):
+        self._con = con
+
+    def execute(self, sql, params=None):
+        cur = self._con.cursor()
+        rel = cur.execute(sql, params) if params else cur.execute(sql)
+        return _DuckCursor(rel)
+
+    def read_df(self, sql, params=None):
+        """DataFrame vía el .df() NATIVO de DuckDB (robusto). Evita el path DBAPI
+        no-testeado de pandas.read_sql (frágil/inestable con el adaptador)."""
+        cur = self._con.cursor()
+        rel = cur.execute(sql, list(params)) if params else cur.execute(sql)
+        return rel.df()
+
+    def cursor(self):
+        # Cursor DBAPI para pandas.read_sql_query (ej. descargar_raw, export):
+        # el cursor de DuckDB ya es DBAPI 2.0 compatible.
+        return self._con.cursor()
+
+    def close(self):
+        pass  # conexión compartida/cacheada: no cerrar
+
+
+def _parquet_version():
+    """Firma (mtimes) de los parquet de ventas. Cambia cuando GitHub Actions
+    commitea datos nuevos → fuerza rebuild de la conexión DuckDB cacheada."""
+    vs = []
+    for p in (HISTORICO_PARQUET, MES_ACTUAL_PARQUET):
+        try:
+            vs.append(round(p.stat().st_mtime, 0))
+        except Exception:
+            vs.append(0)
+    return tuple(vs)
+
+
+@st.cache_resource(show_spinner=False, ttl=900, max_entries=1)
+def _get_duck_conn(version=None):
+    """Conexión DuckDB con ventas/dim_productos/metadata_cargas materializadas desde parquet.
+    Cacheada con clave `version` (mtime de los parquet) + TTL 15min → se reconstruye
+    al cambiar el parquet o cada 15 min, igual que el camino SQLite legacy.
+    Cacheada (cache_resource) → se crea una sola vez, sin rebuild de 8s por request.
+    fecha_venta se normaliza a VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al de SQLite."""
+    import duckdb
+    import gc
+    from datetime import datetime as _dt
+
+    # Al reconstruir (nuevo parquet cada hora en Cyber) liberar la copia en memoria
+    # anterior que cache_resource acaba de desalojar (max_entries=1) → evita que se
+    # acumulen bases DuckDB de 445k filas y reviente la RAM (OOM → healthz reset).
+    gc.collect()
+
+    def _build(con, srcs, fuente):
+        union = " UNION ALL BY NAME ".join(srcs)
+        con.execute(f"""
+            CREATE TABLE ventas AS
+            SELECT * EXCLUDE (fecha_venta),
+                   CAST(CAST(fecha_venta AS DATE) AS VARCHAR) AS fecha_venta
+            FROM ({union})
+        """)
+        dim_cols = ', '.join(f"ANY_VALUE({c}) AS {c}" for c in _COLS_DIM if c != 'sku')
+        con.execute(f"CREATE TABLE dim_productos AS SELECT sku, {dim_cols} "
+                    f"FROM ventas WHERE sku IS NOT NULL GROUP BY sku")
+        n = con.execute("SELECT COUNT(*) FROM ventas").fetchone()[0]
+        fmin, fmax = con.execute("SELECT MIN(fecha_venta), MAX(fecha_venta) FROM ventas").fetchone()
+        if fuente == 'url':
+            fcarga = _dt.now().isoformat(timespec='seconds')  # recién bajado de GitHub Raw
+        else:
+            _mt = [p.stat().st_mtime for p in (MES_ACTUAL_PARQUET, HISTORICO_PARQUET) if p.exists()]
+            fcarga = (_dt.fromtimestamp(max(_mt)).isoformat(timespec='seconds')
+                      if _mt else _dt.now().isoformat(timespec='seconds'))
+        con.execute("CREATE TABLE metadata_cargas (fecha_carga VARCHAR, fuente VARCHAR, "
+                    "filas_cargadas BIGINT, fecha_min_datos VARCHAR, fecha_max_datos VARCHAR, tipo VARCHAR)")
+        con.execute("INSERT INTO metadata_cargas VALUES (?,?,?,?,?,?)",
+                    [fcarga, 'parquet', n, fmin, fmax, 'parquet'])
+        global _DB_BUILD_STATS
+        _DB_BUILD_STATS = {
+            'filas_total': n, 'filas_historico': n, 'filas_turso': 0, 'chunks_turso': 0,
+            'turso_error': None, 'max_fecha': fmax, 'build_duration_s': 0,
+            'built_at': fcarga, 'local_path': ':duckdb:', 'fuente': f'duckdb-{fuente}',
+        }
+        print(f"[DuckDB engine] tablas listas ({fuente}): {n:,} filas ventas, max {fmax}", flush=True)
+        return con
+
+    # Opción C: si PARQUET_BASE_URL está seteado, leer desde GitHub Raw vía httpfs.
+    # ttl=900 (arriba) re-baja el parquet cada 15 min SIN redeploy. Fallback a local ante error.
+    base = os.environ.get('PARQUET_BASE_URL', '').rstrip('/')
+    if base:
+        try:
+            con = duckdb.connect(':memory:')
+            con.execute("INSTALL httpfs; LOAD httpfs;")
+            srcs = [f"SELECT * FROM read_parquet('{base}/data/historico/ventas_historico.parquet')",
+                    f"SELECT * FROM read_parquet('{base}/data/historico/ventas_mes_actual.parquet')"]
+            return _build(con, srcs, 'url')
+        except Exception as e:
+            print(f"[DuckDB engine] URL falló ({type(e).__name__}: {str(e)[:80]}) → fallback local", flush=True)
+
+    # Local (default / fallback): parquet del checkout
+    con = duckdb.connect(':memory:')
+    srcs = []
+    if HISTORICO_PARQUET.exists():
+        srcs.append(f"SELECT * FROM read_parquet('{HISTORICO_PARQUET.as_posix()}')")
+    if MES_ACTUAL_PARQUET.exists():
+        srcs.append(f"SELECT * FROM read_parquet('{MES_ACTUAL_PARQUET.as_posix()}')")
+    return _build(con, srcs, 'local')
 
 
 def get_service():
-    """Retorna MaestraService apuntando al SQLite local."""
+    """MaestraService. Con PARQUET_ONLY=1 usa motor DuckDB sobre parquet (Camino A,
+    sin rebuild); si no, el SQLite local (Turso-first/parquet-fallback) de siempre."""
+    if os.environ.get('PARQUET_ONLY') == '1':
+        svc = MaestraService(':duckdb:')
+        _duck = _get_duck_conn(_parquet_version())
+        svc._conn = lambda self=svc: _DuckConn(_duck)
+        return svc
+
     local_path = get_local_db_path()
     svc = MaestraService(local_path)
 
@@ -471,13 +795,13 @@ def cached_stock():
 @st.cache_data(ttl=900, show_spinner="Consultando ventas por canal últimos 30 días…")
 def cached_ventas_canal_30d():
     """Ventas últimos 30 días por SKU+canal.
-    Estrategia: Turso primero (más fresco), fallback parquet local si Turso falla."""
+    Con PARQUET_ONLY=1 lee solo parquet (DuckDB-era); si no, Turso primero con fallback parquet."""
     desde = (datetime.now() - pd.Timedelta(days=30)).strftime('%Y-%m-%d')
 
-    # Intento 1: Turso (más fresco)
+    # Intento 1: Turso (más fresco) — solo si NO estamos en modo parquet/DuckDB
     url = os.environ.get('LIBSQL_URL', '').rstrip('/')
     token = os.environ.get('LIBSQL_AUTH_TOKEN', '')
-    if url:
+    if url and os.environ.get('PARQUET_ONLY') != '1':
         sql = f"""
             SELECT sku, canal, tipo_negocio,
                    ROUND(SUM(cantidad), 0) as cantidad,

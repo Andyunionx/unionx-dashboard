@@ -1,9 +1,10 @@
 name: "Sync mes actual a parquet"
 
 on:
-  schedule:
-    # Cada hora en el minuto :30 (después del sync_diario que corre en :00)
-    - cron: '30 * * * *'
+  # CRON PAUSADO 2026-06-02: ciclo destructivo Turso (sync incompleto deja
+  # data inconsistente). Reactivar tras validar mecanismo idempotente.
+  # schedule:
+  #   - cron: '*/15 * * * *'
   workflow_dispatch:
     inputs:
       mes:
@@ -55,6 +56,19 @@ jobs:
           echo "[debug] secrets: LIBSQL_URL=${LIBSQL_URL:+set} ANDRES_ODOO_PASSWORD=${ANDRES_ODOO_PASSWORD:+set}" | tee -a data/logs/sync_mes_actual_last.log
           echo "[debug] python version: $(python --version)" | tee -a data/logs/sync_mes_actual_last.log
           python extract_mes_actual_a_parquet.py --source $SOURCE $MES_ARG 2>&1 | tee -a data/logs/sync_mes_actual_last.log
+
+      - name: Sincronizar parquet a Turso (incluye manual_externa + fixes)
+        env:
+          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
+          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
+          PYTHONIOENCODING: utf-8
+        continue-on-error: true  # si Turso falla, el parquet ya está commiteado
+        run: |
+          MES_ARG=""
+          if [ -n "${{ github.event.inputs.mes }}" ]; then
+            MES_ARG="--mes ${{ github.event.inputs.mes }}"
+          fi
+          python sync_parquet_to_turso.py $MES_ARG 2>&1 | tee -a data/logs/sync_mes_actual_last.log
 
       - name: Upload log siempre (debug)
         if: always()

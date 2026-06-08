@@ -24,10 +24,13 @@ def render():
     c1, c2 = st.columns([2, 3])
     with c1:
         hoy = datetime.now().date()
-        ini_mes = hoy.replace(day=1)
+        # Default: mes actual desde día 1 hasta hoy. Si hoy es día 1 el rango
+        # default es solo día 1 (con su data); el usuario puede cambiar.
+        ini_default = hoy.replace(day=1)
+        fin_default = hoy
         rango = st.date_input(
             "Período de análisis (TY)",
-            value=(ini_mes, hoy),
+            value=(ini_default, fin_default),
             max_value=hoy,
             format="YYYY-MM-DD",
             key="rango_general",

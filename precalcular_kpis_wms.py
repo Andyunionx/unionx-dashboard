@@ -12,6 +12,7 @@ Schedule (GH Action):
 
 Output: data/kpis_wms/snapshot.json
 """
+import argparse
 import json
 import os
 import sys
@@ -51,7 +52,13 @@ def _save_partial(snapshot: dict):
 
 
 def main():
-    print(f"=== Pre-cálculo KPIs WMS — {datetime.now().isoformat()} ===")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--quick", action="store_true",
+                    help="Solo KPIs core + OTIF Drive. Omite tendencia/productividad/auditoria.")
+    args = ap.parse_args()
+    QUICK = args.quick
+
+    print(f"=== Pre-cálculo KPIs WMS {'[QUICK]' if QUICK else '[FULL]'} — {datetime.now().isoformat()} ===")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Imports tardíos para que el path esté seteado
@@ -95,70 +102,85 @@ def main():
     snapshot["kpis"]["volumen_movs_90d"] = _safe_run("Vol movs", kpi_volumen_movimientos, dias=90); _save_partial(snapshot)
     snapshot["kpis"]["top_clientes_otif_30d"] = _safe_run("Top clientes OTIF", top_clientes_otif_problemas, dias=30, top_n=15); _save_partial(snapshot)
 
-    # === Tendencia (6 meses) ===
-    snapshot["tendencia_6m"] = _safe_run("Tendencia 6m", tendencia_mensual, meses=6); _save_partial(snapshot)
+    if not QUICK:
+        # === Tendencia (6 meses) ===
+        snapshot["tendencia_6m"] = _safe_run("Tendencia 6m", tendencia_mensual, meses=6); _save_partial(snapshot)
 
-    # === Forecast operacional ===
-    snapshot["forecast_3m"] = _safe_run("Forecast 3m", forecast_volumen_picking, meses_adelante=3); _save_partial(snapshot)
+        # === Forecast operacional ===
+        snapshot["forecast_3m"] = _safe_run("Forecast 3m", forecast_volumen_picking, meses_adelante=3); _save_partial(snapshot)
 
-    # === Productividad por período ===
-    snapshot["productividad_dia_30d"] = _safe_run("Prod día 30d", productividad_periodo, periodo="dia", n_periodos=30); _save_partial(snapshot)
-    snapshot["productividad_semana_12s"] = _safe_run("Prod sem 12s", productividad_periodo, periodo="semana", n_periodos=12); _save_partial(snapshot)
-    snapshot["productividad_mes_6m"] = _safe_run("Prod mes 6m", productividad_periodo, periodo="mes", n_periodos=6); _save_partial(snapshot)
+        # === Productividad por período ===
+        snapshot["productividad_dia_30d"] = _safe_run("Prod día 30d", productividad_periodo, periodo="dia", n_periodos=30); _save_partial(snapshot)
+        snapshot["productividad_semana_12s"] = _safe_run("Prod sem 12s", productividad_periodo, periodo="semana", n_periodos=12); _save_partial(snapshot)
+        snapshot["productividad_mes_6m"] = _safe_run("Prod mes 6m", productividad_periodo, periodo="mes", n_periodos=6); _save_partial(snapshot)
 
-    # === Plan auditoría semanal ===
-    snapshot["plan_auditoria"] = _safe_run("Plan auditoría", plan_auditoria_semanal, top_n_priorizar=50, dias_sin_ajuste=30); _save_partial(snapshot)
+        # === Plan auditoría semanal ===
+        snapshot["plan_auditoria"] = _safe_run("Plan auditoría", plan_auditoria_semanal, top_n_priorizar=50, dias_sin_ajuste=30); _save_partial(snapshot)
 
-    # === Pick Accuracy REAL (devoluciones por error) ===
-    snapshot["kpis"]["devoluciones_picking_error_90d"] = _safe_run(
-        "Devoluciones por error 90d", kpi_devoluciones_picking_error, dias=90); _save_partial(snapshot)
-    snapshot["kpis"]["devoluciones_picking_error_30d"] = _safe_run(
-        "Devoluciones por error 30d", kpi_devoluciones_picking_error, dias=30); _save_partial(snapshot)
+        # === Pick Accuracy REAL (devoluciones por error) ===
+        snapshot["kpis"]["devoluciones_picking_error_90d"] = _safe_run(
+            "Devoluciones por error 90d", kpi_devoluciones_picking_error, dias=90); _save_partial(snapshot)
+        snapshot["kpis"]["devoluciones_picking_error_30d"] = _safe_run(
+            "Devoluciones por error 30d", kpi_devoluciones_picking_error, dias=30); _save_partial(snapshot)
 
-    # === Productividad calendario (últimos 12 meses + semanas mes actual + días) ===
-    snapshot["productividad_meses_12m"] = _safe_run(
-        "Prod meses calendario", productividad_calendario, tipo="mes"); _save_partial(snapshot)
-    snapshot["productividad_semanas_mes_actual"] = _safe_run(
-        "Prod semanas mes actual", productividad_calendario, tipo="semana_de_mes"); _save_partial(snapshot)
-    snapshot["productividad_dias_14d"] = _safe_run(
-        "Prod últimos 14 días", productividad_calendario, tipo="dia_especifico"); _save_partial(snapshot)
+        # === Productividad calendario (últimos 12 meses + semanas mes actual + días) ===
+        snapshot["productividad_meses_12m"] = _safe_run(
+            "Prod meses calendario", productividad_calendario, tipo="mes"); _save_partial(snapshot)
+        snapshot["productividad_semanas_mes_actual"] = _safe_run(
+            "Prod semanas mes actual", productividad_calendario, tipo="semana_de_mes"); _save_partial(snapshot)
+        snapshot["productividad_dias_14d"] = _safe_run(
+            "Prod últimos 14 días", productividad_calendario, tipo="dia_especifico"); _save_partial(snapshot)
 
     # === OTIF desde Drive Sheet (precalculado para no bloquear app) ===
     print("\n--- OTIF DRIVE ---", flush=True)
     try:
+        from datetime import date as _date
         from views._ops_otif_drive import (
             kpi_otif_resumen, kpi_otif_por_mes, kpi_otif_por_cliente,
             kpi_otif_por_courier, top_pedidos_tarde, meses_disponibles,
+            cortes_otif_disponibles, dashboard_otif_corte,
         )
-        meses_dispon = meses_disponibles()
+        _hoy_ym = _date.today().strftime("%Y-%m")
+        # Filtrar meses con fechas corruptas (> mes actual) que vienen del Sheet
+        meses_dispon = [m for m in meses_disponibles() if m <= _hoy_ym]
+        cortes = cortes_otif_disponibles()
+        cortes = [c for c in cortes if c["key"] <= _hoy_ym]  # descartar cortes futuros
+        print(f"  Meses válidos: {meses_dispon[:6]}", flush=True)
+        print(f"  Cortes válidos: {len(cortes)} cortes, computando top 6...", flush=True)
+        dashboard_por_corte = {}
+        for c in cortes[:6]:
+            try:
+                dashboard_por_corte[c["key"]] = dashboard_otif_corte(c["key"])
+                print(f"    corte {c['key']} OK", flush=True)
+            except Exception as ec:
+                print(f"    corte {c['key']} ERROR: {ec}", flush=True)
         snapshot["otif_drive"] = {
             "meses_disponibles": meses_dispon,
+            "cortes_disponibles": cortes,
+            "dashboard_por_corte": dashboard_por_corte,
             "por_mes": kpi_otif_por_mes(),
             "resumen_por_mes": {m: kpi_otif_resumen(m) for m in meses_dispon[:6]},
             "clientes_por_mes": {m: kpi_otif_por_cliente(m, top_n=20) for m in meses_dispon[:6]},
             "couriers_por_mes": {m: kpi_otif_por_courier(m) for m in meses_dispon[:6]},
             "tarde_por_mes": {m: top_pedidos_tarde(m, top_n=50) for m in meses_dispon[:6]},
         }
-        print(f"  OK: {len(meses_dispon)} meses disponibles, datos para top 6", flush=True)
+        print(f"  OK: {len(meses_dispon)} meses, {len(cortes)} cortes, {len(dashboard_por_corte)} dashboards precalculados", flush=True)
     except Exception as e:
         print(f"  ERROR OTIF Drive: {type(e).__name__}: {e}", flush=True)
         snapshot["otif_drive"] = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
     _save_partial(snapshot)
 
-    # === OTIF para distintas ventanas (para Tab OTIF) ===
-    snapshot["otif_ventanas"] = {}
-    for dias in [7, 14, 30, 60, 90]:
-        snapshot["otif_ventanas"][f"b2c_{dias}d"] = _safe_run(f"OTIF B2C {dias}d", kpi_otif, dias=dias, canal_b2b=False)
-        snapshot["otif_ventanas"][f"b2b_{dias}d"] = _safe_run(f"OTIF B2B {dias}d", kpi_otif, dias=dias, canal_b2b=True)
-
-    # === Pick / Tiempo recepción para distintas ventanas ===
-    snapshot["pick_ventanas"] = {}
-    for dias in [7, 14, 30, 60, 90]:
-        snapshot["pick_ventanas"][f"{dias}d"] = _safe_run(f"Pick Acc {dias}d", kpi_pick_accuracy, dias=dias)
-
-    snapshot["recepcion_ventanas"] = {}
-    for dias in [30, 60, 90, 180, 365]:
-        snapshot["recepcion_ventanas"][f"{dias}d"] = _safe_run(f"Tiempo Rec {dias}d", kpi_tiempo_recepcion, dias=dias)
+    # === Ventanas — alias de kpis core (sin queries extra a Odoo) ===
+    snapshot["otif_ventanas"] = {
+        "b2c_30d": snapshot["kpis"].get("otif_b2c_30d"),
+        "b2b_30d": snapshot["kpis"].get("otif_b2b_30d"),
+    }
+    snapshot["pick_ventanas"] = {
+        "30d": snapshot["kpis"].get("pick_accuracy_30d"),
+    }
+    snapshot["recepcion_ventanas"] = {
+        "90d": snapshot["kpis"].get("tiempo_recepcion_90d"),
+    }
 
     # Recolectar errores
     for k, v in snapshot["kpis"].items():

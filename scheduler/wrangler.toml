@@ -1,0 +1,25 @@
+name = "unionx-pulso-scheduler"
+main = "worker.js"
+compatibility_date = "2026-06-03"
+
+# Cron de Cloudflare (UTC, confiable). Dispara el workflow cada hora.
+# El workflow refresca el parquet (frescura de la app) y manda email solo en su
+# ventana 08:00-24:00 CLT horas pares (gate interno). CLT = UTC-4.
+#
+# CYBER (ahora): cada hora.
+[triggers]
+crons = ["0 * * * *"]
+
+# Variables NO secretas (el token va por `wrangler secret put GH_TOKEN`).
+[vars]
+GH_OWNER = "Andyunionx"
+GH_REPO = "unionx-dashboard"
+GH_WORKFLOW = "cyber_pulso.yml"
+GH_REF = "main"
+
+# --- POST-CYBER (semana normal) ---
+# Cuando termine el Cyber, cambiar el cron a la cadencia normal y, si se separa
+# el refresco del email, apuntar a los workflows correspondientes. Ej:
+#   crons = ["0 */2 * * *"]   # app cada 2h
+# y un workflow aparte para el informe diario 9 AM (13:00 UTC):
+#   crons = ["0 13 * * *"]

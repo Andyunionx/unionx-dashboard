@@ -95,6 +95,29 @@ AREAS_OPERATIVAS_EXCLUIR = {
     "OPERACIONES", "LOGISTICA", "POSTVENTA",
 }
 
+# Sub-áreas con causalidad directa a un tipo_negocio específico.
+# El costo se distribuye SOLO entre los canales de ese TN (driver venta interno).
+# Evita que costos de Distribución o Páginas Web se imputen a Marketplace/ML.
+SUBAREA_GAV_RESTRICCION_TN = {
+    "DISTRIBUCIÓN":    "Distribución",
+    "DISTRIBUCION":    "Distribución",
+    "PAGINAS WEB":     "Páginas Propias",
+    "PÁGINAS WEB":     "Páginas Propias",
+    "TRADE MARKETING": "Tiendas Propias",
+}
+
+
+def tn_restriccion_gav(sub_area: str) -> str | None:
+    """Retorna el tipo_negocio al que se restringe una sub-área del GAV,
+    o None si el gasto es transversal (distribución normal por driver de área).
+    """
+    if not sub_area:
+        return None
+    sa = (sub_area.upper().strip()
+          .replace("Ó", "O").replace("Á", "A").replace("É", "E")
+          .replace("Í", "I").replace("Ú", "U"))
+    return SUBAREA_GAV_RESTRICCION_TN.get(sa)
+
 
 def driver_default_gav(area: str) -> str:
     """Driver para una sub-área del GAV (control de gestión)."""
@@ -573,8 +596,19 @@ def distribuir_monto_mc_absoluto(
         return {tn: monto * w for tn, w in pesos_mc_por_tn.items()}
 
     if dimension == "kam":
-        # Sin mapping tn→kam acá, devolvemos los tn (la vista normaliza)
-        return {tn: monto * w for tn, w in pesos_mc_por_tn.items()}
+        if df_ventas.empty or "tipo_negocio" not in df_ventas.columns or "kam" not in df_ventas.columns:
+            return {tn: monto * w for tn, w in pesos_mc_por_tn.items()}
+        out: dict[str, float] = {}
+        for tn, w_tn in pesos_mc_por_tn.items():
+            sub = df_ventas[df_ventas["tipo_negocio"] == tn]
+            total_tn = sub["venta_neta"].sum() if "venta_neta" in sub.columns else 0
+            if total_tn <= 0:
+                continue
+            for kam, v_kam in sub.groupby("kam")["venta_neta"].sum().items():
+                if not kam or v_kam <= 0:
+                    continue
+                out[kam] = out.get(kam, 0) + monto * w_tn * (v_kam / total_tn)
+        return out
 
     if dimension == "canal":
         if df_ventas.empty or "tipo_negocio" not in df_ventas.columns:

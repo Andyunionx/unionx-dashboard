@@ -183,6 +183,10 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
         if fcol in df.columns:
             df[fcol] = pd.to_datetime(df[fcol], errors='coerce').dt.strftime('%Y-%m-%d')
 
+    # Reclasificar canales: Casa Mila SpA es la razón social de UnionX B2B (no entidad externa)
+    if 'canal' in df.columns:
+        df['canal'] = df['canal'].replace({'Casa Mila': 'UnionX B2B'})
+
     # Inyectar facturas manual_externa (Sodimac y similares cargadas a Turso manualmente).
     # Estas NO están en Odoo, entonces el extract las pierde. Se conservan en CSV local.
     manual_csv = PROJECT_ROOT / 'data' / 'manual_externa_facturas.csv'
@@ -201,6 +205,45 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
             for c in COLS_DB:
                 if c not in manual.columns:
                     manual[c] = ''
+
+            # Enriquecer manual_externa con Matriz Productos (lookup por SKU).
+            # Las filas que vienen del CSV tienen categoría vacía; la matriz les da contexto.
+            try:
+                matriz_path = PROJECT_ROOT / 'data' / 'planillas' / 'Matriz productos.xlsx'
+                if matriz_path.exists():
+                    matriz = pd.read_excel(matriz_path, sheet_name='Productos')
+                    matriz['SKU_norm'] = matriz['SKU'].astype(str).str.strip()
+                    mp = matriz.set_index('SKU_norm')
+                    enriched = 0
+                    for idx, row in manual.iterrows():
+                        sku = str(row.get('sku','')).strip()
+                        if not sku or sku not in mp.index:
+                            continue
+                        m = mp.loc[sku]
+                        if isinstance(m, pd.DataFrame):
+                            m = m.iloc[0]
+                        # Solo completar campos vacíos en la fila manual
+                        mapping = {
+                            'categoria_macro': 'Categoría macro',
+                            'categoria_padre': 'Categoría padre',
+                            'categoria_hijo': 'Categoría hijo',
+                            'categoria_comercial': 'Categoría comercial',
+                            'marca': 'Marca',
+                            'proveedor': 'Proveedor',
+                            'pack': 'Pack',
+                            'estado_sku': 'In/out',
+                            'tipo_marca': 'Estado marca',
+                        }
+                        for db_col, mat_col in mapping.items():
+                            if mat_col in m.index and pd.notna(m[mat_col]):
+                                if not str(row.get(db_col,'')).strip():
+                                    manual.at[idx, db_col] = str(m[mat_col])
+                        enriched += 1
+                    if enriched:
+                        print(f"   [manual_externa] Categorías heredadas de Matriz para {enriched}/{len(manual)} filas")
+            except Exception as e:
+                print(f"   [WARN] No se pudo enriquecer manual_externa con Matriz: {type(e).__name__}: {str(e)[:80]}")
+
             df = pd.concat([df, manual[COLS_DB]], ignore_index=True)
 
     return df
@@ -230,7 +273,62 @@ def main():
 
     df = _coerce_dtypes(df)
 
+    # Enriquecimiento CMR (Fidelización CMR) desde Google Sheet.
+    # Antes era un UPDATE directo a Turso (extract_cmr_ventas.py); ahora se aplica
+    # al parquet para que DuckDB lo vea. Se re-aplica en cada generación.
+    try:
+        from extract_cmr_ventas import enriquecer_cmr_df
+        df = enriquecer_cmr_df(df)
+    except Exception as e:
+        print(f"   [WARN] CMR enrichment saltado: {type(e).__name__}: {str(e)[:100]}")
+
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    # GATE 1 (mecanismo de seguridad): validar contra el último parquet bueno.
+    # Si falla, NO sobreescribir — la app sigue mostrando el último dato válido.
+    import json as _json
+    from datetime import datetime as _dt
+    from validacion_ventas import validar_ventas_df, resumen_validacion
+    df_previo = None
+    if OUT_PATH.exists():
+        try:
+            df_previo = pd.read_parquet(OUT_PATH)
+        except Exception:
+            df_previo = None
+    ok, problemas, stats = validar_ventas_df(df, df_previo)
+    print("\n" + resumen_validacion(ok, problemas, stats))
+    marker = OUT_PATH.parent / 'validacion_ventas.json'
+    marker.write_text(_json.dumps({
+        'ts': _dt.now().isoformat(timespec='seconds'), 'ok': ok, 'problemas': problemas, 'stats': stats,
+    }, default=str, ensure_ascii=False), encoding='utf-8')
+    if not ok:
+        print("\n[GATE 1] NO se publica el parquet — se conserva el último bueno.", flush=True)
+        sys.exit(0)  # salida limpia: el commit posterior no verá cambios
+
+    # Overlay correcciones fecha_venta (cuando Yuju/integrador cargó tarde a Odoo)
+    overlay_path = PROJECT_ROOT / 'data' / 'correcciones' / 'fix_fechas_yuju.json'
+    if overlay_path.exists():
+        try:
+            ovl = _json.loads(overlay_path.read_text(encoding='utf-8')).get('correcciones', {})
+            if ovl:
+                ped_str = df['pedido'].astype(str)
+                mask = ped_str.isin(ovl.keys())
+                n_fix = int(mask.sum())
+                if n_fix > 0:
+                    pre = df.loc[mask, 'fecha_venta'].value_counts().to_dict()
+                    df.loc[mask, 'fecha_venta'] = ped_str[mask].map(ovl)
+                    # Recalcular campos derivados de fecha
+                    fv_dt = pd.to_datetime(df.loc[mask, 'fecha_venta'], errors='coerce')
+                    if 'anio_venta' in df.columns: df.loc[mask, 'anio_venta'] = fv_dt.dt.year
+                    if 'mes_venta' in df.columns: df.loc[mask, 'mes_venta'] = fv_dt.dt.month
+                    if 'semana_venta' in df.columns: df.loc[mask, 'semana_venta'] = fv_dt.dt.isocalendar().week
+                    if 'dia_semana' in df.columns:
+                        dia_nom = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo']
+                        df.loc[mask, 'dia_semana'] = fv_dt.dt.dayofweek.map(lambda i: dia_nom[i] if pd.notna(i) else None)
+                    print(f"   [overlay fecha] {n_fix} filas corregidas con fix_fechas_yuju.json | pre={pre}")
+        except Exception as e:
+            print(f"   [WARN] overlay fecha_venta no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")

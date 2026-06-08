@@ -1,13 +1,13 @@
 {
-  "generado_en": "2026-05-11T12:07:48.053773",
-  "bottom_up_skus_anchored_$": 8246082223.56575,
-  "total_anchored_mismo_rango_$": 8918856802.0,
-  "gap_pct": -7.543282657967826,
-  "rango_dias": 365,
-  "fecha_desde": "2026-05-12",
-  "fecha_hasta": "2027-05-11",
-  "n_skus_forecasteados": 110,
-  "n_pares_sku_canal": 200,
-  "cobertura_estimada_pct": 92.45671734203216,
+  "generado_en": "2026-06-07T14:54:11.372104",
+  "bottom_up_skus_anchored_$": 1583749205.5641084,
+  "total_anchored_mismo_rango_$": 1190841068.0,
+  "gap_pct": 32.99417093701612,
+  "rango_dias": 60,
+  "fecha_desde": "2026-06-08",
+  "fecha_hasta": "2026-08-06",
+  "n_skus_forecasteados": 87,
+  "n_pares_sku_canal": 179,
+  "cobertura_estimada_pct": 132.99417093701612,
   "note": "Bottom-up cubre los SKUs forecasteados (top ~90% venta LY). Gap negativo esperado = cola larga no modelada."
 }

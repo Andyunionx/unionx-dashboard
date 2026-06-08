@@ -19,8 +19,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-URL = os.environ.get('LIBSQL_URL', '').rstrip('/')
-TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '')
+URL = os.environ.get('LIBSQL_URL', '').strip().rstrip('/')
+TOKEN = os.environ.get('LIBSQL_AUTH_TOKEN', '').strip()
 
 if not URL or not TOKEN:
     print("[ERROR] LIBSQL_URL/LIBSQL_AUTH_TOKEN no seteados", flush=True)
@@ -34,6 +34,8 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Cargar parquet histórico para no quemar Turso
 HIST_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+# Parquet del mes actual (refrescado cada hora por sync_mes_actual.yml — bypass Turso)
+MES_ACTUAL_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
 
 
 def _q(sql: str, retries: int = 3):
@@ -60,41 +62,60 @@ def _val(row, idx):
     return cell.get('value')
 
 
+def _agregar_diaria_de_parquet(path: Path, label: str) -> pd.DataFrame:
+    """Lee parquet de ventas y agrega por fecha_venta. Devuelve DataFrame [ds, y]."""
+    if not path.exists():
+        return pd.DataFrame(columns=['ds', 'y'])
+    df = pd.read_parquet(path, columns=['fecha_venta', 'venta_bruta', 'tipo_movimiento'])
+    df = df[df['tipo_movimiento'] == 'Venta']
+    df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce')
+    df = df.dropna(subset=['fecha_venta'])
+    agg = df.groupby(df['fecha_venta'].dt.date)['venta_bruta'].sum().reset_index()
+    agg.columns = ['ds', 'y']
+    agg['ds'] = pd.to_datetime(agg['ds'])
+    print(f"  {label}: {len(agg)} días "
+          f"({agg['ds'].min().date() if len(agg) else '-'} -> "
+          f"{agg['ds'].max().date() if len(agg) else '-'})", flush=True)
+    return agg
+
+
 def cargar_serie_diaria_total() -> pd.DataFrame:
-    """Carga venta diaria TOTAL combinando parquet histórico + Turso live."""
+    """Carga venta diaria TOTAL desde 3 fuentes con prioridad por frescura:
+      1. ventas_historico.parquet (snapshot al ~14-may, datos pre-mes-actual)
+      2. ventas_mes_actual.parquet (refrescado c/1h por sync_mes_actual.yml — bypass Turso)
+      3. Turso live (opcional — si bloqueado o falla, se usa solo las 2 primeras)
+
+    Para fechas duplicadas se prioriza la fuente más reciente (Turso > mes_actual > histórico).
+    """
     print("[1/4] Cargando serie histórica completa...", flush=True)
 
-    # Parte 1: parquet histórico (pre 2026-04-01)
-    df_hist = pd.DataFrame()
-    if HIST_PARQUET.exists():
-        df_h = pd.read_parquet(HIST_PARQUET, columns=['fecha_venta', 'venta_bruta', 'tipo_movimiento'])
-        df_h = df_h[df_h['tipo_movimiento'] == 'Venta']
-        df_h['fecha_venta'] = pd.to_datetime(df_h['fecha_venta'], errors='coerce')
-        df_h = df_h.dropna(subset=['fecha_venta'])
-        df_hist = df_h.groupby(df_h['fecha_venta'].dt.date)['venta_bruta'].sum().reset_index()
-        df_hist.columns = ['ds', 'y']
-        print(f"  Parquet histórico: {len(df_hist)} días (pre-abril)")
+    df_hist = _agregar_diaria_de_parquet(HIST_PARQUET, 'Parquet histórico')
+    df_mes = _agregar_diaria_de_parquet(MES_ACTUAL_PARQUET, 'Parquet mes actual')
 
-    # Parte 2: Turso (April+)
-    rows = _q("""
-        SELECT fecha_venta, ROUND(SUM(venta_bruta), 0)
-        FROM ventas
-        WHERE fecha_venta >= '2026-04-01' AND tipo_movimiento = 'Venta'
-        GROUP BY fecha_venta
-        ORDER BY fecha_venta
-    """)
-    df_live = pd.DataFrame([{
-        'ds': pd.to_datetime(_val(r, 0)),
-        'y': float(_val(r, 1) or 0),
-    } for r in rows])
-    print(f"  Turso live: {len(df_live)} días (abril+)")
+    # Turso opcional — con try/except para no romper si está bloqueado
+    df_live = pd.DataFrame(columns=['ds', 'y'])
+    try:
+        rows = _q("""
+            SELECT fecha_venta, ROUND(SUM(venta_bruta), 0)
+            FROM ventas
+            WHERE fecha_venta >= '2026-04-01' AND tipo_movimiento = 'Venta'
+            GROUP BY fecha_venta
+            ORDER BY fecha_venta
+        """)
+        df_live = pd.DataFrame([{
+            'ds': pd.to_datetime(_val(r, 0)),
+            'y': float(_val(r, 1) or 0),
+        } for r in rows])
+        print(f"  Turso live: {len(df_live)} días (abril+)", flush=True)
+    except Exception as e:
+        print(f"  [WARN] Turso no disponible ({type(e).__name__}: {str(e)[:80]}). "
+              f"Continuando con parquets locales.", flush=True)
 
-    # Combinar
-    if not df_hist.empty:
-        df_hist['ds'] = pd.to_datetime(df_hist['ds'])
-        df = pd.concat([df_hist, df_live], ignore_index=True).drop_duplicates(subset='ds').sort_values('ds')
-    else:
-        df = df_live
+    # Combinar priorizando la fuente más fresca (Turso > mes_actual > histórico)
+    df = pd.concat([df_hist, df_mes, df_live], ignore_index=True)
+    if df.empty:
+        return pd.DataFrame(columns=['ds', 'y'])
+    df = df.sort_values('ds').drop_duplicates(subset='ds', keep='last').reset_index(drop=True)
 
     df = df[df['y'] > 0]  # quitar días con venta=0 (puede ser cierre)
     print(f"  Total combinado: {len(df)} días desde {df['ds'].min().date()} a {df['ds'].max().date()}\n")
