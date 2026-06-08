@@ -379,6 +379,13 @@ def _build_local_db_parquet():
         df_mes = pd.read_parquet(MES_ACTUAL_PARQUET)
         if not df_mes.empty:
             df_mes = _normalize_fecha_venta_df(df_mes)
+            # FIX doble-conteo: histórico tiene foto fija hasta 1-jun-2026 inclusive;
+            # mes_actual también trae 1-jun. Sin filtrar se cuenta 2 veces.
+            n_pre = len(df_mes)
+            df_mes = df_mes[df_mes['fecha_venta'].astype(str) >= CUTOFF_HISTORICO]
+            if len(df_mes) < n_pre:
+                print(f"[Local DB][parquet] Filtro CUTOFF {CUTOFF_HISTORICO}: "
+                      f"{n_pre:,} -> {len(df_mes):,} filas mes_actual", flush=True)
             df_mes[_COLS_V].to_sql('ventas', conn, if_exists='append', index=False,
                                    chunksize=10000)
             n_mes = len(df_mes)
