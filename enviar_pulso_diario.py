@@ -216,6 +216,7 @@ def render_html(df):
 <hr style="border:none;border-top:1px solid #E2E8F0;margin:24px 0">
 <p style="font-size:0.85rem;color:#64748B">
 🔗 Dashboard live: <a href="https://unionx-ventas.streamlit.app">unionx-ventas.streamlit.app</a><br>
+📊 Reporte Ventas Empresa 2026 vs 2025 (pivot viva): <a href="https://drive.google.com/file/d/1jcLmmLn4oHoen9FpL-UuWnYTxaYACQHL/view?usp=sharing">abrir en Drive</a><br>
 📎 Adjunto: Excel RAW {mes_nom} acumulado al {ayer.strftime("%d-%b")} (sin venta_neta).<br>
 Fuente: parquet local (Odoo + CMR + manuales) · Sin Delivery_*.
 </p>
