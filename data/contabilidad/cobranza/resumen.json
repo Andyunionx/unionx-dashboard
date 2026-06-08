@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-08T10:14:53.415823",
+  "generado_en": "2026-06-08T15:25:00.955379",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 14879,
-  "total_monto_pendiente_clp": 899218455.0,
+  "total_documentos_pendientes": 13726,
+  "total_monto_pendiente_clp": 873433666.0,
   "monto_por_aging": {
-    "+90 días": 35583878.0,
-    "1-30 días": 586112011.0,
-    "31-60 días": 109046361.0,
-    "61-90 días": 14815997.0,
-    "Vigente": 153660208.0
+    "+90 días": 35247774.0,
+    "1-30 días": 577488068.0,
+    "31-60 días": 91319119.0,
+    "61-90 días": 14724415.0,
+    "Vigente": 154654290.0
   },
   "monto_por_tipo": {
-    "BOLETA": 682592324.0,
+    "BOLETA": 656807535.0,
     "FACTURA": 216626131.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 143679132.0
+      "monto": 149917402.0
     },
     {
       "partner": "Cliente Falabella Fcom",
@@ -30,11 +30,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 87607625.0
+      "monto": 87611804.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 71773053.0
+      "monto": 71765063.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 36189193.0
+      "monto": 36176203.0
     },
     {
       "partner": "Cliente Ripley",
@@ -57,16 +57,12 @@
       "monto": 23174529.0
     },
     {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20736011.0
-    },
-    {
       "partner": "FALABELLA.COM",
       "monto": 19556704.0
     },
     {
-      "partner": "SODIMAC S.A.",
-      "monto": 17291199.0
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 18812792.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -85,18 +81,22 @@
       "monto": 8442326.0
     },
     {
-      "partner": "Cliente Mercado Libre, Cliente Mercado Libre",
-      "monto": 6245489.0
-    },
-    {
       "partner": "Cencosud Retail S.A",
       "monto": 6183410.0
     },
     {
-      "partner": "Sawa SPA",
-      "monto": 4609512.0
+      "partner": "Showtime SpA",
+      "monto": 4602400.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 4461746.0
+    },
+    {
+      "partner": "Walmart Serv. Generales Ltda.",
+      "monto": 3392680.0
     }
   ],
-  "notas_credito_count": 535,
+  "notas_credito_count": 532,
   "pedidos_venta_count": 10000
 }
