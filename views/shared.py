@@ -165,8 +165,22 @@ def get_local_db_path():
         return str(DB_PATH)
 
     if _LOCAL_DB_PATH.exists():
-        age = _time.time() - _LOCAL_DB_PATH.stat().st_mtime
-        if age < _LOCAL_DB_TTL_S:
+        sqlite_mtime = _LOCAL_DB_PATH.stat().st_mtime
+        age = _time.time() - sqlite_mtime
+        # Invalidacion por mtime del parquet: si el parquet es mas nuevo que
+        # el SQLite, rebuild (ej. tras dedup, re-extract, sync de github).
+        parquet_mtime = 0.0
+        for _p in (HISTORICO_PARQUET, MES_ACTUAL_PARQUET):
+            if _p.exists():
+                parquet_mtime = max(parquet_mtime, _p.stat().st_mtime)
+        if parquet_mtime > sqlite_mtime:
+            print(f"[Local DB] Parquet mas nuevo que SQLite "
+                  f"(parquet={parquet_mtime:.0f} > sqlite={sqlite_mtime:.0f}), rebuild", flush=True)
+            try:
+                _LOCAL_DB_PATH.unlink()
+            except Exception:
+                pass
+        elif age < _LOCAL_DB_TTL_S:
             # Validar contenido: si estamos en Cyber, verificar que tenga junio.
             # Solo aplica al camino Turso (carrera con el sync); en parquet el dato es fijo.
             hoy_str = datetime.now().strftime('%Y-%m-%d')
