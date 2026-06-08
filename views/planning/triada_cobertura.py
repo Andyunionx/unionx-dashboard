@@ -27,6 +27,7 @@ from views.planning._data_helpers import (
     cargar_planif_stock_baseline,
     cargar_planif_stock_live,
     cargar_planif_transito_live,
+    cargar_stock_live_skus,
     cargar_transito,
 )
 
@@ -118,24 +119,27 @@ def _preparar_datos() -> pd.DataFrame:
         df_meta = pd.DataFrame(columns=["sku", "producto", "marca",
                                          "categoria_padre", "categoria_hijo"])
 
-    # ── 2. Stock live (Turso diario) → fallback baseline (parquet) ───────
-    df_stock_live = cargar_planif_stock_live()
-    if not df_stock_live.empty:
-        # Turso: cols lowercase — stock_total
-        df_stock = df_stock_live[["sku", "stock_total"]].rename(
-            columns={"stock_total": "stock_actual"}
-        )
-    else:
-        df_stock_bl = cargar_planif_stock_baseline()
-        if not df_stock_bl.empty:
-            # parquet: cols como 'SKU', 'Stock total'
-            df_stock_bl = df_stock_bl.rename(columns={
-                "SKU": "sku", "Sku": "sku",
-                "Stock total": "stock_actual", "stock_total": "stock_actual",
-            })
-            df_stock = df_stock_bl[["sku", "stock_actual"]].copy()
+    # ── 2. Stock — jerarquía de fuentes (más fresco primero) ─────────────
+    # 1. data/stock/skus.parquet  (Stock LIVE, actualizado cada 3h por sync_stock.yml)
+    # 2. planif_stock_live        (Turso diario)
+    # 3. planif_stock_baseline    (snapshot FCST)
+    df_stock = cargar_stock_live_skus()    # data/stock/skus.parquet
+    if df_stock.empty:
+        df_stock_t = cargar_planif_stock_live()
+        if not df_stock_t.empty:
+            df_stock = df_stock_t[["sku", "stock_total"]].rename(
+                columns={"stock_total": "stock_actual"}
+            )
         else:
-            df_stock = pd.DataFrame(columns=["sku", "stock_actual"])
+            df_stock_bl = cargar_planif_stock_baseline()
+            if not df_stock_bl.empty:
+                df_stock_bl = df_stock_bl.rename(columns={
+                    "SKU": "sku", "Sku": "sku",
+                    "Stock total": "stock_actual", "stock_total": "stock_actual",
+                })
+                df_stock = df_stock_bl[["sku", "stock_actual"]].copy()
+            else:
+                df_stock = pd.DataFrame(columns=["sku", "stock_actual"])
 
     df_stock["sku"]          = df_stock["sku"].astype(str)
     df_stock["stock_actual"] = (
