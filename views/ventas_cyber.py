@@ -202,7 +202,7 @@ def render():
         )
         if sim_on:
             st.warning("🧪 Simulación ACTIVA — datos sintéticos")
-        if st.button("🔄 Refrescar venta", use_container_width=True, key="cyber_refresh_venta"):
+        if st.button("🔄 Refrescar venta", width='stretch', key="cyber_refresh_venta"):
             load_ventas_cyber.clear()
             load_ventas_4sem.clear()
             st.rerun()
@@ -357,7 +357,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
                       legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0),
                       yaxis_title='CLP',
                       xaxis=dict(type='category'))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.dataframe(
         g_dia.assign(
@@ -368,7 +368,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
             margen_pct=g_dia['margen_pct'].map(lambda x: fmt_pct(x) if pd.notna(x) else '—'),
             uds=g_dia['uds'].astype(int),
         )[['fecha_venta', 'venta_bruta', 'margen', 'margen_pct', 'uds', 'venta_acum', 'margen_acum']],
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
 
     # Por hora
@@ -388,7 +388,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
                                   mode='lines+markers', line=dict(color='#16A34A')))
         fig2.update_layout(height=280, xaxis_title='Hora', hovermode='x unified',
                            legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
 
     # Tabla por día × hora: venta y margen
     if 'hora_venta_num' in df.columns:
@@ -421,7 +421,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
             total_row[f'{day_label} · Margen'] = fmt_money(pv_m[d].sum())
         tabla.loc['TOTAL'] = total_row
 
-        st.dataframe(tabla, use_container_width=True, height=min(880, 40 + 25*25))
+        st.dataframe(tabla, width='stretch', height=min(880, 40 + 25*25))
 
     # Heatmap día × hora (visual)
     if 'hora_venta_num' in df.columns and len(sel_dias) > 1:
@@ -436,7 +436,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
             hovertemplate='%{x} %{y}h<br>$%{z:,.0f}<extra></extra>',
         ))
         fig_h.update_layout(height=420, yaxis_title='Hora', xaxis_title='')
-        st.plotly_chart(fig_h, use_container_width=True)
+        st.plotly_chart(fig_h, width='stretch')
 
     # Fulfillment vs Seller+Flex
     st.markdown("**📦 Fulfillment vs Seller + Flex**")
@@ -466,7 +466,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
                 margen_pct=g_f['margen_pct'].map(fmt_pct),
                 uds=g_f['uds'].astype(int),
             )[['modalidad', 'sos', 'uds', 'venta_bruta', 'margen', 'margen_pct', 'share']],
-            use_container_width=True, hide_index=True,
+            width='stretch', hide_index=True,
         )
     with col_b:
         if not g_f.empty:
@@ -476,7 +476,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
                 marker=dict(colors=['#EA580C', '#2563EB']),
             ))
             fig_f.update_layout(height=220, margin=dict(t=10, b=10, l=10, r=10), showlegend=True)
-            st.plotly_chart(fig_f, use_container_width=True)
+            st.plotly_chart(fig_f, width='stretch')
 
     # Por canal
     st.markdown("**Por canal (en filtro)**")
@@ -492,7 +492,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
         fig3 = px.bar(g_can, x='canal', y='venta_bruta', color='canal',
                       labels={'venta_bruta': 'Venta bruta', 'canal': ''}, height=350)
         fig3.update_layout(showlegend=False)
-        st.plotly_chart(fig3, use_container_width=True)
+        st.plotly_chart(fig3, width='stretch')
     with col2:
         st.dataframe(
             g_can.assign(
@@ -501,7 +501,7 @@ def _tab_acumulado(ventas: pd.DataFrame, meta_total_venta: float = 0):
                 margen_pct=g_can['margen_pct'].map(fmt_pct),
                 uds=g_can['uds'].astype(int),
             ),
-            use_container_width=True, hide_index=True, height=350,
+            width='stretch', hide_index=True, height=350,
         )
 
     # Footer comparación final vs meta (con filtros aplicados)
@@ -577,7 +577,7 @@ def _tab_top(ventas: pd.DataFrame):
             margen_pct=g_prod['margen_pct'].map(fmt_pct),
             uds=g_prod['uds'].astype(int),
         ),
-        use_container_width=True, hide_index=True, height=420,
+        width='stretch', hide_index=True, height=420,
     )
 
     # Categoría padre
@@ -597,7 +597,7 @@ def _tab_top(ventas: pd.DataFrame):
                 margen_pct=g_pad['margen_pct'].map(fmt_pct),
                 uds=g_pad['uds'].astype(int),
             ),
-            use_container_width=True, hide_index=True, height=320,
+            width='stretch', hide_index=True, height=320,
         )
 
     # Categoría hijo
@@ -617,7 +617,7 @@ def _tab_top(ventas: pd.DataFrame):
                 margen_pct=g_hij['margen_pct'].map(fmt_pct),
                 uds=g_hij['uds'].astype(int),
             ),
-            use_container_width=True, hide_index=True, height=320,
+            width='stretch', hide_index=True, height=320,
         )
 
 
@@ -690,7 +690,7 @@ def _tab_stock_alarma():
     alarma_display['dias_cobertura'] = alarma_display['dias_cobertura'].round(1)
     alarma_display['valor_perdido_proy'] = alarma_display['valor_perdido_proy'].map(fmt_money)
 
-    st.dataframe(alarma_display, use_container_width=True, hide_index=True, height=500)
+    st.dataframe(alarma_display, width='stretch', hide_index=True, height=500)
     st.caption(f"Valor perdido proyectado = (venta esperada 7d − stock disponible) × costo unitario. "
                f"Total acumulado: {fmt_money(alarma['valor_perdido_proy'].sum())}")
 
@@ -728,7 +728,7 @@ def _tab_vs_meta(ventas: pd.DataFrame, metas: pd.DataFrame):
                 marker_color='#2563EB', text=cmp['venta_real'].map(fmt_money), textposition='outside')
     fig.update_layout(barmode='group', height=400, hovermode='x unified',
                       legend=dict(orientation='h', yanchor='bottom', y=1.02, x=0))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.dataframe(
         cmp.assign(
@@ -739,7 +739,7 @@ def _tab_vs_meta(ventas: pd.DataFrame, metas: pd.DataFrame):
             meta_uds=cmp['meta_uds'].astype(int),
             uds_real=cmp['uds_real'].astype(int),
         )[['canal', 'modalidad', 'meta_uds', 'uds_real', 'meta_venta', 'venta_real', 'avance_pct', 'gap']],
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
 
     # Comparativo diario vs curva esperada
@@ -769,7 +769,7 @@ def _tab_vs_meta(ventas: pd.DataFrame, metas: pd.DataFrame):
     fig2.add_trace(go.Scatter(x=curva['fecha'], y=curva['real_acum'], name='Real acumulado',
                               mode='lines+markers', line=dict(color='#2563EB', width=3)))
     fig2.update_layout(height=350, hovermode='x unified')
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width='stretch')
 
     st.dataframe(
         curva.assign(
@@ -779,7 +779,7 @@ def _tab_vs_meta(ventas: pd.DataFrame, metas: pd.DataFrame):
             real_acum=curva['real_acum'].map(fmt_money),
             pct=curva['pct'].map(lambda x: f"{x:.0%}"),
         )[['fecha', 'dia_nombre', 'pct', 'meta_dia', 'real', 'meta_acum', 'real_acum']],
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
     )
 
 
@@ -823,7 +823,7 @@ def _tab_status_dim(ventas: pd.DataFrame, metas: pd.DataFrame):
                  color_continuous_scale='RdYlGn', range_color=[0, 0.4],
                  labels={'venta_bruta': 'Venta bruta', 'margen_pct': 'Margen %'},
                  height=400)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.dataframe(
         g.assign(
@@ -834,5 +834,5 @@ def _tab_status_dim(ventas: pd.DataFrame, metas: pd.DataFrame):
             share_pct=g['share_pct'].map(fmt_pct),
             uds=g['uds'].astype(int),
         ),
-        use_container_width=True, hide_index=True, height=400,
+        width='stretch', hide_index=True, height=400,
     )

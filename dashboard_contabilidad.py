@@ -59,7 +59,7 @@ with st.sidebar:
     user = get_cont_user()
     if user:
         st.caption(f"👤 {user['email']}")
-        if st.button("Cerrar sesión", use_container_width=True, key="cont_logout"):
+        if st.button("Cerrar sesión", width='stretch', key="cont_logout"):
             logout_cont()
     st.divider()
 

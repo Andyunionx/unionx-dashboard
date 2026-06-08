@@ -29,7 +29,7 @@ def render():
         st.markdown("### 🔥 **Bestsellers + Stock**")
         st.caption("Top SKUs por venta cruzados con su stock actual")
         st.markdown("---")
-        if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="bs_refresh"):
+        if st.button("🔄 Refrescar Odoo", width='stretch', type="primary", key="bs_refresh"):
             cached_stock.clear()
             st.rerun()
 
@@ -83,5 +83,5 @@ def render():
             'Qty': '{:,.0f}', 'Valor': '${:,.0f}',
             'Dias Stock': '{:,.0f}', 'Rot 30d Uds': '{:.2f}x',
         }),
-        height=550, use_container_width=True, hide_index=True,
+        height=550, width='stretch', hide_index=True,
     )

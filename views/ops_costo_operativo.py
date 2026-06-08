@@ -765,7 +765,7 @@ def _tab_detalle_cc(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
                           .pivot(index="escenario", columns="month", values="valor")
                           .fillna(0))
         debug_pivot = (debug_pivot / 1000).round(1)
-        st.dataframe(debug_pivot, use_container_width=True)
+        st.dataframe(debug_pivot, width='stretch')
         st.caption(
             "Compará estos totales con la suma del Sheet filtrado por "
             f"AREA EMPRESA = {AREA_PNL_OPS} y kpi=GASTO."
@@ -1949,7 +1949,7 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             legend=dict(orientation="h", y=1.05, x=0),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     st.divider()
 
@@ -2112,7 +2112,7 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
         st.dataframe(
             df_show[["canal", "Venta", "Margen Dir", "Comisiones", "Contribución", "MC %"]]
                    .rename(columns={"canal": "Canal"}),
-            use_container_width=True, hide_index=True, height=320,
+            width='stretch', hide_index=True, height=320,
         )
 
     st.divider()
@@ -2704,7 +2704,7 @@ def _render_forecast_estacional(year: int):
         st.dataframe(df_show_pvp[["Segmento","Tipo negocio","Pedidos",
                                    "PVP/ped avg","PVP/ped med","VBruta/uds",
                                    "Costo OP/ped","%COP/PVP"]],
-                     use_container_width=True, hide_index=True)
+                     width='stretch', hide_index=True)
         st.caption(f"Costo OP/pedido = ${cpp_avg:,.0f} (costo operaciones anual / pedidos totales). "
                    "🟢 ≤12% · 🟡 12-18% · 🔴 >18%".replace(",","."))
     else:
@@ -2769,7 +2769,7 @@ def _render_forecast_estacional(year: int):
                   .background_gradient(cmap="RdYlGn_r", subset=["Costo/Unidad ($)"]))
     except (ImportError, ModuleNotFoundError):
         styled = df_show[cols_show].style.format(fmt)
-    st.dataframe(styled, use_container_width=True, hide_index=True, height=420)
+    st.dataframe(styled, width='stretch', hide_index=True, height=420)
 
     # ─── Gráficos: venta vs costo + costo/pedido ───────────────────
     g1, g2 = st.columns(2)
@@ -2803,7 +2803,7 @@ def _render_forecast_estacional(year: int):
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             hovermode="x unified",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     with g2:
         st.markdown("##### 💵 Costo / Pedido vs banda objetivo")
@@ -2830,7 +2830,7 @@ def _render_forecast_estacional(year: int):
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             hovermode="x unified",
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width='stretch')
 
     # ─── Análisis estacional: mes peak vs mes bajo ────────────────
     st.markdown("### 🎯 Análisis estacional — entender la diferencia")
@@ -3009,7 +3009,7 @@ def _render_forecast_estacional(year: int):
         ],
     }
     df_resumen = pd.DataFrame(resumen_data)
-    st.dataframe(df_resumen, use_container_width=True, hide_index=True,
+    st.dataframe(df_resumen, width='stretch', hide_index=True,
                   height=420)
 
     # Insight final

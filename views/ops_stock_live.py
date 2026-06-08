@@ -68,7 +68,7 @@ def render():
         st.markdown("### 📦 **Stock LIVE**")
         st.caption("Disponibilidad + WMS Operacional")
         st.markdown("---")
-        if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="ops_stock_refresh"):
+        if st.button("🔄 Refrescar Odoo", width='stretch', type="primary", key="ops_stock_refresh"):
             st.cache_data.clear()
             st.session_state.pop('_ops_stock_errors', None)
             st.rerun()
@@ -187,7 +187,7 @@ def render():
                 'Qty': '{:,.0f}', 'Reservada': '{:,.0f}', 'Disponible': '{:,.0f}',
                 'Costo Unit': '${:,.0f}', 'Valor': '${:,.0f}',
             }),
-            height=520, use_container_width=True, hide_index=True,
+            height=520, width='stretch', hide_index=True,
         )
         st.caption(f"{len(dfd):,} SKUs · Valor: ${dfd['Valor'].sum() if 'Valor' in dfd.columns else 0:,.0f}")
 
@@ -202,7 +202,7 @@ def render():
             file_name=f"Stock_total_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             key="ops_dl_stock_total",
-            use_container_width=True,
+            width='stretch',
         )
 
     # ============================================================
@@ -232,7 +232,7 @@ def render():
                     'Qty': '{:,.0f}', 'Reservada': '{:,.0f}', 'Disponible': '{:,.0f}',
                     'Costo Unit': '${:,.0f}', 'Valor': '${:,.0f}',
                 }),
-                height=520, use_container_width=True, hide_index=True,
+                height=520, width='stretch', hide_index=True,
             )
             st.caption(f"{len(df_d2):,} líneas · Valor: ${df_d2['Valor'].sum() if 'Valor' in df_d2.columns else 0:,.0f}")
 
@@ -246,7 +246,7 @@ def render():
                 file_name=f"Stock_por_bodega_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 key="ops_dl_stock_bodega",
-                use_container_width=True,
+                width='stretch',
             )
 
     # ============================================================
@@ -427,7 +427,7 @@ def render():
 
                 if rows:
                     df_pos = pd.DataFrame(rows).sort_values(["Estado", "Posición"])
-                    st.dataframe(df_pos, use_container_width=True, hide_index=True, height=400)
+                    st.dataframe(df_pos, width='stretch', hide_index=True, height=400)
 
                     out_pos = io.BytesIO()
                     with pd.ExcelWriter(out_pos, engine='openpyxl') as w:
@@ -439,7 +439,7 @@ def render():
                         file_name=f"Posiciones_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                         mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         key="ops_dl_posiciones",
-                        use_container_width=True,
+                        width='stretch',
                     )
 
         # ── 4.2 Slots liberables ────────────────────────────────────────
@@ -488,7 +488,7 @@ def render():
                         "Detalle slots": " · ".join(d["slots_a_liberar"][:3]),
                     })
                 df_sl = pd.DataFrame(rows)
-                st.dataframe(df_sl, use_container_width=True, hide_index=True, height=480)
+                st.dataframe(df_sl, width='stretch', hide_index=True, height=480)
 
                 # Descarga full
                 df_sl_full = pd.DataFrame([{
@@ -509,7 +509,7 @@ def render():
                     file_name=f"Slots_liberables_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     key="ops_dl_slots_lib",
-                    use_container_width=True,
+                    width='stretch',
                 )
             else:
                 st.success("✅ No se detectan fragmentos consolidables — slotting óptimo")
@@ -558,7 +558,7 @@ def render():
                         "qty_movida_30d": f"Qty movida ({ventana}d)",
                         "movs_posicion_actual": "Movs en su posición",
                     }),
-                    use_container_width=True, hide_index=True, height=480,
+                    width='stretch', hide_index=True, height=480,
                 )
 
                 out_su = io.BytesIO()
@@ -571,7 +571,7 @@ def render():
                     file_name=f"Slotting_suboptimo_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     key="ops_dl_slot_sub",
-                    use_container_width=True,
+                    width='stretch',
                 )
             else:
                 st.success("✅ Top SKUs A correctamente ubicados en zona caliente")
@@ -617,7 +617,7 @@ def render():
                     df_a = pd.DataFrame(det["activas"])
                     cols_drop = [c for c in ["location_id"] if c in df_a.columns]
                     df_a = df_a.drop(columns=cols_drop).rename(columns={"nombre": "Posición", "n_skus": "SKUs"})
-                    st.dataframe(df_a, use_container_width=True, hide_index=True, height=400)
+                    st.dataframe(df_a, width='stretch', hide_index=True, height=400)
                 else:
                     st.info("Sin datos")
 
@@ -627,7 +627,7 @@ def render():
                     df_d = pd.DataFrame(det["dormidas"])
                     cols_drop = [c for c in ["location_id"] if c in df_d.columns]
                     df_d = df_d.drop(columns=cols_drop).rename(columns={"nombre": "Posición", "n_skus": "SKUs"})
-                    st.dataframe(df_d, use_container_width=True, hide_index=True, height=400)
+                    st.dataframe(df_d, width='stretch', hide_index=True, height=400)
                 else:
                     st.success("✅ Sin posiciones dormidas")
 
@@ -636,7 +636,7 @@ def render():
                     df_v = pd.DataFrame(det["vacias"])
                     cols_drop = [c for c in ["location_id"] if c in df_v.columns]
                     df_v = df_v.drop(columns=cols_drop).rename(columns={"nombre": "Posición", "n_skus": "SKUs"})
-                    st.dataframe(df_v, use_container_width=True, hide_index=True, height=400)
+                    st.dataframe(df_v, width='stretch', hide_index=True, height=400)
                 else:
                     st.warning("⚠️ Sin posiciones vacías — bodega saturada")
 
@@ -645,7 +645,7 @@ def render():
                 if ranking:
                     st.markdown("**Top posiciones con más movimientos en los últimos 30 días.**")
                     st.caption("Posiciones 'calientes' — los SKUs A deberían estar cerca del área de packing.")
-                    st.dataframe(pd.DataFrame(ranking), use_container_width=True, hide_index=True, height=520)
+                    st.dataframe(pd.DataFrame(ranking), width='stretch', hide_index=True, height=520)
                 else:
                     st.info("Sin datos de movimientos")
         else:
@@ -685,7 +685,7 @@ def render():
                                     "Rot 30d Uds", "Rot 90d Uds", "Semaforo"] if c in df_r.columns]
             if "Vta 30d Qty" in df_r.columns:
                 top_movers = df_r[df_r["Vta 30d Qty"] > 0].nlargest(20, "Rot 30d Uds")[cols_top]
-                st.dataframe(top_movers, use_container_width=True, hide_index=True)
+                st.dataframe(top_movers, width='stretch', hide_index=True)
             else:
                 st.info("Sin columna Vta 30d Qty")
 
@@ -696,7 +696,7 @@ def render():
                 bottom = df_r[(df_r["Vta 30d Qty"] == 0) & (df_r["Qty"] > 0)]
                 if "Valor" in bottom.columns:
                     bottom = bottom.nlargest(20, "Valor")
-                st.dataframe(bottom[cols_bot], use_container_width=True, hide_index=True)
+                st.dataframe(bottom[cols_bot], width='stretch', hide_index=True)
 
     # ============================================================
     # TAB 7 — ALERTAS

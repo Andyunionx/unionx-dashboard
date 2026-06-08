@@ -30,7 +30,7 @@ def render():
         st.markdown("### 📈 **Rotación**")
         st.caption("Velocidad de rotación de inventario")
         st.markdown("---")
-        if st.button("🔄 Refrescar", use_container_width=True, type="primary", key="rot_refresh"):
+        if st.button("🔄 Refrescar", width='stretch', type="primary", key="rot_refresh"):
             cached_stock.clear()
             st.rerun()
 
@@ -90,7 +90,7 @@ def render():
                     yaxis=dict(showgrid=True, gridcolor='#F1F5F9'),
                 )
                 fig_r30.update_traces(texttemplate='%{text:.1f}x', textposition='outside', textfont_size=9)
-                st.plotly_chart(fig_r30, use_container_width=True)
+                st.plotly_chart(fig_r30, width='stretch')
 
                 cols_r30 = [c for c in [
                     'SKU', 'Producto', 'Categoria', 'Marca', 'Qty', 'Vta 30d Qty', 'Rot 30d Uds',
@@ -102,7 +102,7 @@ def render():
                         'Costo Vta 30d': '${:,.0f}', 'Valor': '${:,.0f}', 'Rot 30d $': '{:.2f}x',
                         'Dias Stock': '{:,.0f}',
                     }),
-                    height=420, use_container_width=True, hide_index=True,
+                    height=420, width='stretch', hide_index=True,
                 )
             else:
                 st.info("Sin SKUs con ventas en 30 días.")
@@ -139,7 +139,7 @@ def render():
                     yaxis=dict(showgrid=True, gridcolor='#F1F5F9'),
                 )
                 fig_r90.update_traces(texttemplate='%{text:.1f}x', textposition='outside', textfont_size=9)
-                st.plotly_chart(fig_r90, use_container_width=True)
+                st.plotly_chart(fig_r90, width='stretch')
 
                 cols_r90 = [c for c in [
                     'SKU', 'Producto', 'Categoria', 'Marca', 'Qty', 'Vta 90d Qty', 'Rot 90d Uds',
@@ -151,7 +151,7 @@ def render():
                         'Costo Vta 90d': '${:,.0f}', 'Valor': '${:,.0f}', 'Rot 90d $': '{:.2f}x',
                         'Dias Stock': '{:,.0f}',
                     }),
-                    height=420, use_container_width=True, hide_index=True,
+                    height=420, width='stretch', hide_index=True,
                 )
             else:
                 st.info("Sin SKUs con ventas en 90 días.")

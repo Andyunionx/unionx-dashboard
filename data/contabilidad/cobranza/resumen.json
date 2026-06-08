@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-06-08T14:51:50.434779",
+  "generado_en": "2026-06-08T15:25:00.955379",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 14535,
-  "total_monto_pendiente_clp": 892869428.0,
+  "total_documentos_pendientes": 13726,
+  "total_monto_pendiente_clp": 873433666.0,
   "monto_por_aging": {
-    "+90 días": 35583878.0,
-    "1-30 días": 579243801.0,
-    "31-60 días": 108754240.0,
-    "61-90 días": 14749405.0,
-    "Vigente": 154538104.0
+    "+90 días": 35247774.0,
+    "1-30 días": 577488068.0,
+    "31-60 días": 91319119.0,
+    "61-90 días": 14724415.0,
+    "Vigente": 154654290.0
   },
   "monto_por_tipo": {
-    "BOLETA": 676243297.0,
+    "BOLETA": 656807535.0,
     "FACTURA": 216626131.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 125717508.0
+      "monto": 125780488.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 87606863.0
+      "monto": 87611804.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -65,10 +65,6 @@
       "monto": 18812792.0
     },
     {
-      "partner": "SODIMAC S.A.",
-      "monto": 17291199.0
-    },
-    {
       "partner": "AUTOBAHN S A",
       "monto": 15827000.0
     },
@@ -89,12 +85,16 @@
       "monto": 6183410.0
     },
     {
-      "partner": "Sawa SPA",
-      "monto": 4609512.0
-    },
-    {
       "partner": "Showtime SpA",
       "monto": 4602400.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 4461746.0
+    },
+    {
+      "partner": "Walmart Serv. Generales Ltda.",
+      "monto": 3392680.0
     }
   ],
   "notas_credito_count": 532,

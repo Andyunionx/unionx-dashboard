@@ -47,7 +47,7 @@ def render():
     tab1, tab2, tab3 = st.tabs(["📋 Maestro completo", "🔍 Gaps (SKUs sin proveedor)", "🚢 Cruce con tránsito"])
 
     with tab1:
-        st.dataframe(df_prov, use_container_width=True, hide_index=True)
+        st.dataframe(df_prov, width='stretch', hide_index=True)
         st.caption(f"Total: {len(df_prov)} proveedores")
 
     with tab2:
@@ -85,7 +85,7 @@ def _mostrar_gaps_proveedor_sin_maestro(df_prov: pd.DataFrame = None):
     st.caption(f"{len(gaps)} proveedores con venta últimos 12 meses sin ficha completa")
     st.dataframe(
         gaps[['proveedor', 'skus', 'uds', 'venta']].head(50),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
         column_config={
             'venta': st.column_config.NumberColumn('Venta 12m', format='$%.0f'),
             'uds': st.column_config.NumberColumn('Unidades', format='%.0f'),
@@ -106,4 +106,4 @@ def _mostrar_cruce_con_transito(df_prov: pd.DataFrame):
         "**Pendiente integración**: cruzar PIs activas con el maestro de proveedores "
         "(requiere que el maestro tenga la columna `proveedor_id` mapeada al `proveedor` de dim_productos)."
     )
-    st.dataframe(df_transito.head(20), use_container_width=True, hide_index=True)
+    st.dataframe(df_transito.head(20), width='stretch', hide_index=True)

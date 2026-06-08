@@ -20,7 +20,7 @@ def render():
         st.markdown("### 💡 **Oportunidades**")
         st.caption("Brechas vs meta")
         st.markdown("---")
-        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="copo_refresh"):
+        if st.button("🔄 Refrescar Sheet", width='stretch', type="primary", key="copo_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -64,7 +64,7 @@ def render():
             if c in df_show.columns:
                 df_show[c] = df_show[c].apply(fmt_pesos_M)
         df_show['% Cumpl Venta'] = df_show['% Cumpl Venta'].astype(str) + '%'
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=380)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=380)
     else:
         st.success("✅ No hay brechas negativas")
 
@@ -83,7 +83,7 @@ def render():
             if c in df_show.columns:
                 df_show[c] = df_show[c].apply(fmt_pesos_M)
         df_show['% Cumpl Venta'] = df_show['% Cumpl Venta'].astype(str) + '%'
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=380)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=380)
 
     st.divider()
 
@@ -100,4 +100,4 @@ def render():
             if c in df_show.columns:
                 df_show[c] = df_show[c].apply(fmt_pesos_M)
         df_show['% Cumpl Contrib'] = df_show['% Cumpl Contrib'].astype(str) + '%'
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=380)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=380)

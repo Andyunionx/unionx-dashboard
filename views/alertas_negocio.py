@@ -87,7 +87,7 @@ def _render_view(target_app: str, key_prefix: str):
         st.markdown("### 🔔 **Alertas Negocio**")
         st.caption(f"App actual: {target_app} · bus compartido")
         st.markdown("---")
-        if st.button("🔄 Refrescar", use_container_width=True, type="primary", key=f"{key_prefix}_refresh"):
+        if st.button("🔄 Refrescar", width='stretch', type="primary", key=f"{key_prefix}_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -113,7 +113,7 @@ def _render_view(target_app: str, key_prefix: str):
                     'Título': a['titulo'],
                     'Creada': a['fecha_creada'][:19].replace('T', ' '),
                 } for a in cerradas])
-                st.dataframe(df, use_container_width=True, hide_index=True)
+                st.dataframe(df, width='stretch', hide_index=True)
             else:
                 st.caption("Sin histórico aún.")
         return
@@ -162,7 +162,7 @@ def _render_view(target_app: str, key_prefix: str):
                 'Resuelta': a.get('contexto', {}).get('resuelta_por', '?'),
                 'Creada': a['fecha_creada'][:19].replace('T', ' '),
             } for a in resueltas])
-            st.dataframe(df, use_container_width=True, hide_index=True, height=300)
+            st.dataframe(df, width='stretch', hide_index=True, height=300)
         else:
             st.caption("Sin histórico")
 

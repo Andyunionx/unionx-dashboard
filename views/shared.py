@@ -931,10 +931,10 @@ def render_ventas_filters_top(prefix="ventas"):
 def render_dashboard_actions_sidebar(prefix="ventas"):
     """Botones de acción en sidebar (refrescar / forzar sync)."""
     st.sidebar.divider()
-    if st.sidebar.button("🔄 Refrescar caché", use_container_width=True, key=f"{prefix}_refrescar"):
+    if st.sidebar.button("🔄 Refrescar caché", width='stretch', key=f"{prefix}_refrescar"):
         st.cache_data.clear()
         st.rerun()
-    if st.sidebar.button("⚡ Forzar sync desde Turso", use_container_width=True, key=f"{prefix}_force"):
+    if st.sidebar.button("⚡ Forzar sync desde Turso", width='stretch', key=f"{prefix}_force"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.rerun()

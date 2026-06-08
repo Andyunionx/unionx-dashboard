@@ -457,7 +457,7 @@ def _tab_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         "KPI": "**TOTAL**", "Peso": "**100%**", "Objetivo": "", "Real": "",
         "Ratio paga": f"**{r['factor_total']*100:.0f}%**",
         "Aporta al bono": f"**{_fmt_clp(r['bono_devengado'])}**"})
-    st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(filas), width='stretch', hide_index=True)
 
     # ── Bloque 4: Evolución mensual ──────────────────────────────────────────
     st.divider()
@@ -497,7 +497,7 @@ def _tab_resumen(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
         })
 
     df_evo = pd.DataFrame(evo_rows)
-    st.dataframe(df_evo.drop(columns=["_p", "_o"]), use_container_width=True, hide_index=True)
+    st.dataframe(df_evo.drop(columns=["_p", "_o"]), width='stretch', hide_index=True)
     chart_df = df_evo.set_index("Mes")[["_p", "_o"]].rename(
         columns={"_p": "Productividad %", "_o": "OTIF %"})
     st.line_chart(chart_df, height=280)
@@ -626,7 +626,7 @@ def _tab_carga(equipo_cfg: dict, df_cfg: pd.DataFrame, hoy: date):
                 lambda x: f"{x:.0f}%" if pd.notna(x) else "—")
             rename["error_despacho_pct"] = "Error Desp"
         cols_show = [c for c in rename if c in show.columns]
-        st.dataframe(show[cols_show].rename(columns=rename), use_container_width=True, hide_index=True)
+        st.dataframe(show[cols_show].rename(columns=rename), width='stretch', hide_index=True)
 
 
 # ── Historial tab ─────────────────────────────────────────────────────────────
@@ -725,9 +725,9 @@ def _tab_historial(equipo_cfg: dict, df_cfg: pd.DataFrame):
             )
             .properties(height=280, title=f"Bonos {equipo_cfg['label']}")
         )
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width='stretch')
 
-    st.dataframe(pd.DataFrame(rows_disp), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows_disp), width='stretch', hide_index=True)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

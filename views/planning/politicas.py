@@ -66,7 +66,7 @@ def _tab_politica():
 
         st.markdown("##### Sugerencia inicial (Diamante/Oro/Plata/Bronce/Nuevo/Pack/In_Out)")
         df_default = _politica_default_sugerida()
-        st.dataframe(df_default, use_container_width=True, hide_index=True)
+        st.dataframe(df_default, width='stretch', hide_index=True)
         if st.button("💾 Guardar política inicial sugerida", type="primary"):
             df_default.to_parquet(PLAN_DIR / 'stock_objetivo.parquet', index=False)
             cargar_politicas_stock.clear()
@@ -80,7 +80,7 @@ def _tab_politica():
     st.success(f"✅ Política definida para {len(df_pol)} categorías")
     edited = st.data_editor(
         df_pol,
-        use_container_width=True,
+        width='stretch',
         num_rows="dynamic",
         column_config={
             'meses_cobertura_objetivo': st.column_config.NumberColumn(min_value=0, max_value=12, step=0.25),
@@ -139,7 +139,7 @@ def _tab_caracterizacion():
 
     st.dataframe(
         df_show,
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
         column_config={
             'categoria_comercial': 'Categoría',
             'n_skus': st.column_config.NumberColumn('# SKUs', format='%d'),
@@ -166,7 +166,7 @@ def _tab_caracterizacion():
         fig.update_traces(texttemplate='%{text:.1f}x', textposition='outside')
         fig.update_layout(height=380, showlegend=False, margin=dict(t=40, b=40),
                           paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     with g2:
         fig = px.bar(df_cat, x='categoria_comercial', y='roi_periodo_mediano',
                      color='categoria_comercial', text='roi_periodo_mediano',
@@ -176,7 +176,7 @@ def _tab_caracterizacion():
         fig.update_traces(texttemplate='%{text:.2f}', textposition='outside')
         fig.update_layout(height=380, showlegend=False, margin=dict(t=40, b=40),
                           paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     # Diagnóstico
     st.divider()
@@ -267,13 +267,13 @@ def _tab_movimiento_sku():
                       labels={'uds': 'Unidades vendidas', 'mes': 'Mes'},
                       title='Volumen mensual')
         fig.update_layout(height=340, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     with c2:
         fig = px.line(g, x='mes', y='margen_pct', markers=True,
                       labels={'margen_pct': 'Margen %', 'mes': 'Mes'},
                       title='Margen % mensual')
         fig.update_layout(height=340, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     # Tendencia
     if len(g) >= 4:
@@ -327,7 +327,7 @@ def _tab_drift():
     df_drift = df_drift.sort_values('score', ascending=False)
     st.dataframe(
         df_drift.head(300),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
         column_config={
             'rotacion_anual': st.column_config.NumberColumn('Rotación anual', format='%.2f'),
             'roi_periodo': st.column_config.NumberColumn(f'ROI {dias}d', format='%.2f'),
@@ -395,7 +395,7 @@ def _mostrar_categorias_detectadas():
         venta=('venta_neta', 'sum'),
     ).reset_index().sort_values('venta', ascending=False)
     st.dataframe(
-        g, use_container_width=True, hide_index=True,
+        g, width='stretch', hide_index=True,
         column_config={'venta': st.column_config.NumberColumn('Venta 12m', format='$%.0f')},
     )
 

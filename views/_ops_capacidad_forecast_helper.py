@@ -341,7 +341,7 @@ def render_forecast_capacidad():
         df_show.columns = ['PI', 'ETA bodega', 'Transp.', 'Unidades', 'm³',
                             'Pallets PI', 'Pallets acum.',
                             'Pos libres si no sale nada', 'Estado']
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=320)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=320)
         st.caption(
             "**Lógica de la columna 'Pos libres si no sale nada'**: "
             f"asume que se reciben todos los PIs SIN que salga nada por venta. "
@@ -403,7 +403,7 @@ def render_forecast_capacidad():
         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(orientation='h', y=1.05, x=0),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption(
         f"🟢 Triángulos = días con llegada de PI · "
         f"Total entrante 90d: {resumen.get('pallets_total_entrantes_horizonte', 0):,.0f} pallets · "
@@ -429,7 +429,7 @@ def render_forecast_capacidad():
             lambda v: '🔴 sin stock ni tránsito' if v else '🟡 stock insuficiente'
         )
         df_nc.columns = ['SKU', 'Unid demanda 90d NO cubierta', 'Estado']
-        st.dataframe(df_nc.head(20), use_container_width=True, hide_index=True, height=420)
+        st.dataframe(df_nc.head(20), width='stretch', hide_index=True, height=420)
         st.caption(
             f"💡 Total no cubierto: {sal_dbg.get('demanda_no_cubierta_unidades_total', 0):,.0f} unidades "
             f"distribuidas en {sal_dbg.get('sku_sin_match_stock_count', 0)} SKUs sin reposición."
@@ -465,7 +465,7 @@ def render_forecast_capacidad():
                            'pct_ocupacion', 'alerta']]
         df_show.columns = ['Fecha', 'Pos Ocup', 'Pos Disp',
                            'Pal Entran', 'Pal Salen', '% Ocup', 'Estado']
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=400)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=400)
 
     # ─── ANOMALÍAS STOCK ─────────────────────────────────────────────────
     anom_count = resumen.get('stock_anomalies_count', 0)
@@ -484,4 +484,4 @@ def render_forecast_capacidad():
             if top:
                 df_anom = pd.DataFrame(top)
                 df_anom.columns = ['SKU', 'Vol unit Odoo (anómalo)', 'Stock unidades']
-                st.dataframe(df_anom, use_container_width=True, hide_index=True)
+                st.dataframe(df_anom, width='stretch', hide_index=True)

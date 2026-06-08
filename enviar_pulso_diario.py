@@ -45,10 +45,29 @@ def cargar_metas_v06():
 
 
 def cargar_data():
-    """Histórico + mes_actual combinados."""
+    """Histórico (foto fija hasta 2026-06-01) + mes_actual (2-jun en adelante).
+    Para evitar duplicados, mes_actual se filtra a >= CUTOFF_HISTORICO."""
+    # Leer cutoff de views/shared.py (fuente única de verdad)
+    cutoff = '2026-06-02'
+    try:
+        shared_path = PROJECT_ROOT / 'views' / 'shared.py'
+        if shared_path.exists():
+            for line in shared_path.read_text(encoding='utf-8').splitlines():
+                if line.strip().startswith('CUTOFF_HISTORICO'):
+                    # CUTOFF_HISTORICO = '2026-06-02'  # comentario
+                    val = line.split('=', 1)[1].strip().split('#')[0].strip().strip("'\"")
+                    if len(val) == 10 and val[4] == '-':
+                        cutoff = val
+                    break
+    except Exception:
+        pass
+
     hist = pd.read_parquet(PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet')
     mes = pd.read_parquet(PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet')
     cols = [c for c in mes.columns if c in hist.columns]
+    # mes_actual SOLO >= cutoff (evita duplicar con foto fija del histórico)
+    mes_fv = pd.to_datetime(mes['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    mes = mes[mes_fv >= cutoff].copy()
     df = pd.concat([hist[cols], mes[cols]], ignore_index=True)
     df['fv'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
     df['fv_dt'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.date
@@ -197,6 +216,7 @@ def render_html(df):
 <hr style="border:none;border-top:1px solid #E2E8F0;margin:24px 0">
 <p style="font-size:0.85rem;color:#64748B">
 🔗 Dashboard live: <a href="https://unionx-ventas.streamlit.app">unionx-ventas.streamlit.app</a><br>
+📊 Reporte Ventas Empresa 2026 vs 2025 (pivot viva): <a href="https://drive.google.com/file/d/1jcLmmLn4oHoen9FpL-UuWnYTxaYACQHL/view?usp=sharing">abrir en Drive</a><br>
 📎 Adjunto: Excel RAW {mes_nom} acumulado al {ayer.strftime("%d-%b")} (sin venta_neta).<br>
 Fuente: parquet local (Odoo + CMR + manuales) · Sin Delivery_*.
 </p>

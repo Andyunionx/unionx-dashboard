@@ -190,7 +190,7 @@ def render():
                 "Δ pp YoY": merged["delta_pp"].apply(
                     lambda v: f"{v*100:+.1f}pp" if pd.notna(v) else "—"),
             })
-            st.dataframe(df_show, use_container_width=True, hide_index=True, height=420)
+            st.dataframe(df_show, width='stretch', hide_index=True, height=420)
             st.caption(
                 f"Venta {MESES_ES[mes_sel]} 2026: ${venta:,.0f} M · "
                 f"Líneas con peso ≥ 0.5% mostradas. "
@@ -235,7 +235,7 @@ def render():
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         legend=dict(orientation="h", y=1.05, x=0),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.divider()
 
@@ -266,6 +266,6 @@ def render():
             "Var % vs Ppto": df_show["var_pct_ppto"].apply(_fmt_pct),
             "Var % YoY": df_show["var_pct_yoy"].apply(_fmt_pct),
         })
-        st.dataframe(df_disp, use_container_width=True, hide_index=True, height=400)
+        st.dataframe(df_disp, width='stretch', hide_index=True, height=400)
     else:
         st.info("Sin datos de Resumen YTD")

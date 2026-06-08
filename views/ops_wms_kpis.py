@@ -80,7 +80,7 @@ def render():
         st.markdown("### 🎯 **KPIs WMS**")
         st.caption("Operación de bodega · Plan 2026-2028")
         st.markdown("---")
-        if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="wms_refresh"):
+        if st.button("🔄 Refrescar Odoo", width='stretch', type="primary", key="wms_refresh"):
             st.cache_data.clear()
             st.session_state.pop('_wms_errors', None)
             st.rerun()
@@ -153,7 +153,7 @@ def render():
                                                 help="Default: 42 (L-J 9h + V 6h)")
                     cb3.markdown("&nbsp;", unsafe_allow_html=True)
                     if cb3.button("💾 Guardar config", key="cfg_save",
-                                  type="primary", use_container_width=True):
+                                  type="primary", width='stretch'):
                         if set_config_equipo(int(n_pers), float(hrs_sem)):
                             st.success("✅ Configuración guardada")
                             st.cache_data.clear()
@@ -191,7 +191,7 @@ def render():
                             "Hrs equipo": h.get("horas_total", 0),
                             "Fuente": h.get("fuente", ""),
                         })
-                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                    st.dataframe(pd.DataFrame(rows), width='stretch', hide_index=True)
 
                 # ── Override manual opcional (vacaciones, ausencias, etc.) ──
                 with st.expander("✏️ Override manual de un mes (vacaciones, ausencias)"):
@@ -439,7 +439,7 @@ def render():
                         f"{v*100:.2f}%" if v else "—",
                      "Benchmark": "≤ 0.5%", "Fuente": "Retail multicategoría"},
                 ]
-                st.dataframe(pd.DataFrame(bench), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(bench), width='stretch', hide_index=True)
 
                 # Errores capturados en el snapshot
                 errs_snap = snap.get("errores", [])
@@ -592,7 +592,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                         legend=dict(orientation="h", y=1.08, x=0),
                         hovermode="x unified",
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
                     # Tabla
                     df_display = df_pivot.copy()
@@ -605,7 +605,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                             "Total": "{:,.0f}",
                             "% B2B": "{:.1f}%",
                         }),
-                        use_container_width=True,
+                        width='stretch',
                     )
 
                 with sub_tabs_ped[0]:
@@ -677,7 +677,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 "Líneas/Pedido B2B": "{:.2f}",
                                 "Líneas/Pedido B2C": "{:.2f}",
                             }),
-                            use_container_width=True,
+                            width='stretch',
                             height=480,
                         )
 
@@ -727,7 +727,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 b2b_filas[[col1_name, col2_name, "n_pedidos"]].rename(columns={
                                     "n_pedidos": "# Pedidos",
                                 }),
-                                use_container_width=True, hide_index=True,
+                                width='stretch', hide_index=True,
                                 height=400,
                             )
                         with c2:
@@ -736,7 +736,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 b2c_filas[[col1_name, col2_name, "n_pedidos"]].rename(columns={
                                     "n_pedidos": "# Pedidos",
                                 }),
-                                use_container_width=True, hide_index=True,
+                                width='stretch', hide_index=True,
                                 height=400,
                             )
                         st.caption(
@@ -771,7 +771,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                     )
                 with cdb:
                     st.link_button("🔗 Abrir reporte Drive", OTIF_DRIVE_URL,
-                                   use_container_width=True, type="primary")
+                                   width='stretch', type="primary")
 
             st.divider()
             st.markdown("### 📊 Dashboard OTIF Union X")
@@ -1033,7 +1033,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
 
                             st.dataframe(
                                 df_show.style.map(_color_otif, subset=["NS EMP %", "NS COU %", "OTIF %"]),
-                                use_container_width=True, hide_index=True, height=420
+                                width='stretch', hide_index=True, height=420
                             )
 
                     with col_right:
@@ -1070,7 +1070,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 xaxis=dict(tickangle=-45),
                                 margin=dict(t=40, b=80),
                             )
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width='stretch')
 
                             df_show_p = df_par[[df_par.columns[0], "monto_MM",
                                                 "n_ordenes", "pct_acum_pct"]].rename(
@@ -1079,7 +1079,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                          "n_ordenes": "# Órdenes",
                                          "pct_acum_pct": "% Acum"})
                             with st.expander("📋 Tabla detallada"):
-                                st.dataframe(df_show_p, use_container_width=True, hide_index=True)
+                                st.dataframe(df_show_p, width='stretch', hide_index=True)
                         else:
                             st.info("Sin quiebres registrados en este corte")
 
@@ -1218,7 +1218,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                 with st.expander("🐌 Top 20 SO con OCT más alto"):
                     if oct_t.get("detalle"):
                         st.dataframe(pd.DataFrame(oct_t["detalle"]),
-                                     use_container_width=True, hide_index=True)
+                                     width='stretch', hide_index=True)
 
             st.divider()
 
@@ -1489,7 +1489,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                      "ped_per_pers_h": "Ped/persona/h",
                                      "lin_per_pers_h": "Lín/persona/h",
                                      "uds_per_pers_h": "Uds/persona/h"})
-                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        st.dataframe(df_show, width='stretch', hide_index=True)
                         st.caption(f"Asume {personas} personas constantes. Mes hábil = 21 días.")
                     else:
                         st.info("Sin datos en snapshot. Esperá próxima actualización 00:00 Chile.")
@@ -1521,7 +1521,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                      "ped_per_pers_h": "Ped/persona/h",
                                      "lin_per_pers_h": "Lín/persona/h",
                                      "uds_per_pers_h": "Uds/persona/h"})
-                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        st.dataframe(df_show, width='stretch', hide_index=True)
                         st.caption(f"Asume {personas} personas, ~{horas_sem:.0f}h/semana, 5 días hábiles.")
                     else:
                         st.info("Sin datos en snapshot.")
@@ -1553,7 +1553,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                      "ped_per_pers_h": "Ped/persona/h",
                                      "lin_per_pers_h": "Lín/persona/h",
                                      "uds_per_pers_h": "Uds/persona/h"})
-                        st.dataframe(df_show, use_container_width=True, hide_index=True)
+                        st.dataframe(df_show, width='stretch', hide_index=True)
                         st.caption(f"Asume {personas} personas, ~{horas_dia:.1f}h/día hábil. Sáb/Dom = 0 esperado.")
                     else:
                         st.info("Sin datos en snapshot.")
@@ -1615,7 +1615,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 lambda v: f"{v:.0f}%" if v is not None else "—")
                             df_show_fc["% vs LY"] = df_show_fc["% vs LY"].apply(
                                 lambda v: f"{v:+.1f}%" if v else "—")
-                            st.dataframe(df_show_fc, use_container_width=True, hide_index=True)
+                            st.dataframe(df_show_fc, width='stretch', hide_index=True)
 
                             # Banda de confianza Prophet (low/high)
                             with st.expander("📊 Banda de confianza forecast Prophet (low/high)"):
@@ -1624,7 +1624,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 for c in ["venta_proj_clp_low", "venta_proj_clp", "venta_proj_clp_high"]:
                                     df_band[c] = df_band[c].apply(lambda v: f"${v/1e6:,.0f}MM")
                                 df_band.columns = ["Mes", "Banda baja (P10)", "Punto medio", "Banda alta (P90)"]
-                                st.dataframe(df_band, use_container_width=True, hide_index=True)
+                                st.dataframe(df_band, width='stretch', hide_index=True)
 
                             # Histórico+forecast en gráfico
                             st.markdown("##### Histórico + Forecast (líneas pickeadas)")
@@ -1701,7 +1701,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                 st.markdown("#### Detalle últimas 20 recepciones")
                 if rec.get("detalle"):
                     st.dataframe(pd.DataFrame(rec["detalle"]),
-                                 use_container_width=True, hide_index=True)
+                                 width='stretch', hide_index=True)
 
             st.divider()
 
@@ -1791,14 +1791,14 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                             df_top["valor_neto"] = df_top["valor_neto"].apply(lambda v: f"${v:,.0f}")
                             df_top.columns = ["SKU", "# Ajustes", "Qty surplus",
                                               "Qty pérdida", "$ neto"]
-                            st.dataframe(df_top, use_container_width=True, hide_index=True,
+                            st.dataframe(df_top, width='stretch', hide_index=True,
                                          height=300)
 
                         with st.expander(f"📋 Ver últimos {len(inv.get('detalle', []))} ajustes"):
                             if inv.get("detalle"):
                                 df_det = pd.DataFrame(inv["detalle"])
                                 df_det["valor"] = df_det["valor"].apply(lambda v: f"${v:,.0f}")
-                                st.dataframe(df_det, use_container_width=True,
+                                st.dataframe(df_det, width='stretch',
                                              hide_index=True, height=400)
 
                         st.caption(f"Datos desde {inv.get('desde')} · Cache 10 min")
@@ -1864,7 +1864,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                             "valor_stock_actual": "$ en stock",
                             "prioridad_score": "Score",
                         })
-                        st.dataframe(df_show, use_container_width=True, hide_index=True, height=420)
+                        st.dataframe(df_show, width='stretch', hide_index=True, height=420)
 
                         # Descarga
                         import io
@@ -1878,7 +1878,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                             file_name=f"Plan_auditoria_{datetime.now().strftime('%Y%m%d')}.xlsx",
                             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                             key="dl_plan_au",
-                            use_container_width=True,
+                            width='stretch',
                         )
 
                         st.caption(f"💡 Sugerencia: el operario audita ~"
@@ -1938,7 +1938,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                             df_top_m["valor_mermado"] = df_top_m["valor_mermado"].apply(
                                 lambda v: f"${v:,.0f}")
                             df_top_m.columns = ["SKU", "Qty mermada", "$ mermado", "# Scraps"]
-                            st.dataframe(df_top_m, use_container_width=True, hide_index=True,
+                            st.dataframe(df_top_m, width='stretch', hide_index=True,
                                          height=300)
 
                         with st.expander(f"📋 Ver últimos {len(merma_o.get('detalle', []))} scraps"):
@@ -1946,7 +1946,7 @@ Se usa solo si Odoo no responde. Los tiempos pueden diferir.
                                 df_det_m = pd.DataFrame(merma_o["detalle"])
                                 df_det_m["valor"] = df_det_m["valor"].apply(
                                     lambda v: f"${v:,.0f}")
-                                st.dataframe(df_det_m, use_container_width=True,
+                                st.dataframe(df_det_m, width='stretch',
                                              hide_index=True, height=400)
                 else:
                     st.info("👆 Click 'Cargar merma desde Odoo'. Query 10-20s.")

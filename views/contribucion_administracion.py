@@ -14,7 +14,7 @@ def render():
         st.markdown("### 🛠️ **Administración**")
         st.caption("Detalle EERR para auditoría")
         st.markdown("---")
-        if st.button("🔄 Refrescar Sheets", use_container_width=True, type="primary", key="cadm_refresh"):
+        if st.button("🔄 Refrescar Sheets", width='stretch', type="primary", key="cadm_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -66,7 +66,7 @@ def render():
                     df_f = df_f[df_f['Canal'] == f_canal]
 
                 st.caption(f"Filas: {len(df_f):,}")
-                st.dataframe(df_f, use_container_width=True, hide_index=True, height=500)
+                st.dataframe(df_f, width='stretch', hide_index=True, height=500)
 
     with tab2:
         try:
@@ -78,7 +78,7 @@ def render():
                 st.info("Sin facturas en provisión")
             else:
                 st.caption(f"Filas: {len(df):,}")
-                st.dataframe(df, use_container_width=True, hide_index=True, height=500)
+                st.dataframe(df, width='stretch', hide_index=True, height=500)
 
     with tab3:
         try:
@@ -90,4 +90,4 @@ def render():
                 st.info("Sin partidas fuera de mes")
             else:
                 st.caption(f"Filas: {len(df):,}")
-                st.dataframe(df, use_container_width=True, hide_index=True, height=500)
+                st.dataframe(df, width='stretch', hide_index=True, height=500)

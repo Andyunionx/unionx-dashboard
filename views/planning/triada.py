@@ -35,7 +35,7 @@ def render():
     with st.sidebar:
         st.markdown("### ⚙️ Parámetros")
         horizonte = st.slider("Horizonte (días)", 30, 180, 60, step=15, key="plan_triada_horiz")
-        if st.button("🔄 Refrescar fuentes", use_container_width=True, key="plan_triada_refresh"):
+        if st.button("🔄 Refrescar fuentes", width='stretch', key="plan_triada_refresh"):
             cargar_forecast_sku.clear()
             cargar_transito.clear()
             cached_stock.clear()
@@ -123,7 +123,7 @@ def render():
 
     st.dataframe(
         df_view[cols_show].head(500),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
         column_config={
             'stock_actual': st.column_config.NumberColumn('Stock hoy', format='%.0f'),
             'llegadas': st.column_config.NumberColumn(f'Llegadas {horizonte}d', format='%.0f'),

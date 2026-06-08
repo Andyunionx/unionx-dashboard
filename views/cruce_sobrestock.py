@@ -30,7 +30,7 @@ def render():
         st.markdown("### 💰 **Sobrestock**")
         st.caption("Capital inmovilizado")
         st.markdown("---")
-        if st.button("🔄 Refrescar Odoo", use_container_width=True, type="primary", key="ss_refresh"):
+        if st.button("🔄 Refrescar Odoo", width='stretch', type="primary", key="ss_refresh"):
             cached_stock.clear()
             st.rerun()
 
@@ -76,13 +76,13 @@ def render():
     fig_cat.update_layout(xaxis_tickangle=-45, height=400, margin=dict(t=20, b=80),
                           paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     fig_cat.update_traces(texttemplate='$%{text:,.0f}', textposition='outside', textfont_size=9, marker_color='#3B82F6')
-    st.plotly_chart(fig_cat, use_container_width=True)
+    st.plotly_chart(fig_cat, width='stretch')
 
     st.markdown("#### Capital inmovilizado por Marca")
     df_marca = df_so.groupby('Marca').agg({'Valor': 'sum', 'Qty': 'sum', 'SKU': 'count'}).reset_index()
     df_marca = df_marca.rename(columns={'SKU': 'N° SKUs'}).sort_values('Valor', ascending=False).head(15)
     st.dataframe(df_marca.style.format({'Valor': '${:,.0f}', 'Qty': '{:,.0f}'}),
-                 use_container_width=True, hide_index=True)
+                 width='stretch', hide_index=True)
 
     st.markdown("#### Detalle de SKUs (ordenados por valor inmovilizado)")
     df_so = df_so.sort_values('Valor', ascending=False)
@@ -94,5 +94,5 @@ def render():
             'Vta 30d Qty': '{:,.0f}', 'Vta 90d Qty': '{:,.0f}',
             'Dias Stock': '{:,.0f}',
         }),
-        height=500, use_container_width=True, hide_index=True,
+        height=500, width='stretch', hide_index=True,
     )

@@ -125,7 +125,7 @@ def render():
         margin=dict(l=10, r=10, t=20, b=10),
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
     )
-    st.plotly_chart(fig_m, use_container_width=True)
+    st.plotly_chart(fig_m, width='stretch')
 
     # Diaria
     st.subheader(f"📅 Tendencia diaria — {hasta.strftime('%B %Y')} vs LY")
@@ -148,7 +148,7 @@ def render():
             margin=dict(l=10, r=10, t=10, b=10),
             legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
         )
-        st.plotly_chart(fig_d, use_container_width=True)
+        st.plotly_chart(fig_d, width='stretch')
 
     st.divider()
 
@@ -164,7 +164,7 @@ def render():
             df_c['% Mg'] = df_c['pct_margen'].apply(lambda v: f"{v:.1f}%" if v is not None else '—')
             st.dataframe(
                 df_c[['canal', 'Venta TY', 'Venta LY', 'Var Venta %', '% Mg']],
-                hide_index=True, use_container_width=True, height=400,
+                hide_index=True, width='stretch', height=400,
             )
     with col_b:
         st.subheader("Top 20 SKUs")
@@ -175,5 +175,5 @@ def render():
             df_s['% Mg'] = df_s['pct_margen'].apply(lambda v: f"{v}%" if v is not None else '—')
             st.dataframe(
                 df_s[['sku', 'producto', 'Venta TY', 'Var %', '% Mg']],
-                hide_index=True, use_container_width=True, height=400,
+                hide_index=True, width='stretch', height=400,
             )

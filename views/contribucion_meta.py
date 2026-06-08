@@ -21,7 +21,7 @@ def render():
         st.markdown("### 🎯 **vs Presupuesto**")
         st.caption("Cumplimiento de meta")
         st.markdown("---")
-        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="cmeta_refresh"):
+        if st.button("🔄 Refrescar Sheet", width='stretch', type="primary", key="cmeta_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -85,14 +85,14 @@ def render():
                            color_discrete_map={'Meta Venta': '#94A3B8', 'Resultado Venta': '#1E40AF'})
             fig_v.update_layout(height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                                 yaxis=dict(tickformat=',.0f'))
-            st.plotly_chart(fig_v, use_container_width=True)
+            st.plotly_chart(fig_v, width='stretch')
         with c2:
             fig_c = px.bar(df_t, x='Trimestre', y=['Meta Contribución', 'Resultado Contribución'],
                            barmode='group', title="Meta vs Real — Contribución",
                            color_discrete_map={'Meta Contribución': '#94A3B8', 'Resultado Contribución': '#10B981'})
             fig_c.update_layout(height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                                 yaxis=dict(tickformat=',.0f'))
-            st.plotly_chart(fig_c, use_container_width=True)
+            st.plotly_chart(fig_c, width='stretch')
 
     st.divider()
 
@@ -107,4 +107,4 @@ def render():
         df_show['% Cumpl C'] = (df_show['Resultado Contribución'] / df_show['Meta Contribución'].replace(0, 1) * 100).round(1).astype(str) + '%'
         for c in ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']:
             df_show[c] = df_show[c].apply(fmt_pesos_M)
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=500)
+    st.dataframe(df_show, width='stretch', hide_index=True, height=500)

@@ -24,7 +24,7 @@ def render():
         st.markdown("### ⚖️ **Comercial vs Contable**")
         st.caption("Visión KAM vs Visión Contable")
         st.markdown("---")
-        if st.button("🔄 Refrescar Sheet", use_container_width=True, type="primary", key="ccc_refresh"):
+        if st.button("🔄 Refrescar Sheet", width='stretch', type="primary", key="ccc_refresh"):
             st.cache_data.clear()
             st.rerun()
 
@@ -80,7 +80,7 @@ def render():
     for c in ['KAM (Comercial)', 'Contable', 'Δ KAM-Contable']:
         df_show[c] = df_show[c].apply(fmt_pesos_M)
 
-    st.dataframe(df_show, use_container_width=True, hide_index=True)
+    st.dataframe(df_show, width='stretch', hide_index=True)
 
     # Gráfico comparativo
     st.markdown("### Visualización")
@@ -93,7 +93,7 @@ def render():
         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # Detalle por canal
     st.divider()
@@ -111,4 +111,4 @@ def render():
               'Resultado Contribución KAM', 'Total Contribución Contable', 'Δ Contrib']:
         df_canal_show[c] = df_canal_show[c].apply(fmt_pesos_M)
 
-    st.dataframe(df_canal_show, use_container_width=True, hide_index=True, height=400)
+    st.dataframe(df_canal_show, width='stretch', hide_index=True, height=400)

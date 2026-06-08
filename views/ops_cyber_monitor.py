@@ -138,7 +138,7 @@ def _tab_hoy(meta: dict, fecha: date):
 
     col_btn, col_info = st.columns([1, 4])
     with col_btn:
-        if st.button("Actualizar", key="cyber_refresh_hoy", use_container_width=True):
+        if st.button("Actualizar", key="cyber_refresh_hoy", width='stretch'):
             _cargar_ventas_cyber.clear()
     with col_info:
         st.caption("Parquet actualizado cada ~15 min. Solo bodega propia, sin fulfillment externo.")
@@ -193,7 +193,7 @@ def _tab_hoy(meta: dict, fecha: date):
     fig.update_layout(height=360, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                       xaxis=dict(title="Hora", dtick=1), yaxis=dict(title="Unidades"),
                       legend=dict(orientation="h", y=1.08), margin=dict(t=30, b=20))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     st.markdown("#### Detalle por hora")
     df_show = by_hora.copy()
@@ -203,7 +203,7 @@ def _tab_hoy(meta: dict, fecha: date):
         lambda r: f"{r['real_acum']/r['meta_acum']*100:.1f}%" if r["meta_acum"] > 0 else "—", axis=1)
     df_show.columns = ["Hora", "Pedidos", "Uds reales", "Meta hora",
                        "Meta acum", "Real acum", "Gap", "% Avance"]
-    st.dataframe(df_show, use_container_width=True, hide_index=True, height=340)
+    st.dataframe(df_show, width='stretch', hide_index=True, height=340)
 
 
 def _tab_acumulado(meta: dict):
@@ -242,11 +242,11 @@ def _tab_acumulado(meta: dict):
     fig.update_layout(height=320, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                       yaxis_title="Unidades", legend=dict(orientation="h", y=1.08),
                       margin=dict(t=30, b=20))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     df_show = by_dia[["dia_nombre", "fecha_venta", "pedidos", "uds", "meta_uds", "avance_pct"]].copy()
     df_show.columns = ["Día", "Fecha", "Pedidos", "Unidades", "Meta", "% Avance"]
-    st.dataframe(df_show, use_container_width=True, hide_index=True)
+    st.dataframe(df_show, width='stretch', hide_index=True)
 
 
 def _tab_metas(meta: dict):
@@ -269,7 +269,7 @@ def _tab_metas(meta: dict):
                              "meta_uds": "Meta Uds", "meta_venta": "Meta Venta",
                              "ticket_meta": "Ticket", "pct": "% Total"})
     st.dataframe(df[["Canal", "Modalidad", "Meta Uds", "% Total", "Meta Venta"]],
-                 use_container_width=True, hide_index=True, height=480)
+                 width='stretch', hide_index=True, height=480)
 
 
 # ── SLA / Backlog ─────────────────────────────────────────────────────────────
@@ -314,7 +314,7 @@ def _tab_backlog(fecha: date):
     st.caption("Urgentes = pedidos recibidos ANTES del corte del canal (deben salir hoy). "
                "Programados = recibidos DESPUÉS del corte (salen mañana).")
 
-    if st.button("Actualizar", key="sla_refresh", use_container_width=False):
+    if st.button("Actualizar", key="sla_refresh", width='content'):
         _cargar_ventas_cyber.clear()
         _wms_pickings_dia.clear()
 
@@ -384,7 +384,7 @@ def _tab_backlog(fecha: date):
             "Ped progr.": p_ped,
         })
     df_sla = pd.DataFrame(rows).sort_values(["Corte", "Canal"])
-    st.dataframe(df_sla, use_container_width=True, hide_index=True, height=420)
+    st.dataframe(df_sla, width='stretch', hide_index=True, height=420)
 
     # Evolución backlog por hora
     st.markdown("#### Acumulado ventas urgentes vs despachos (por hora)")
@@ -407,7 +407,7 @@ def _tab_backlog(fecha: date):
     fig.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                       xaxis=dict(title="Hora", dtick=1), yaxis=dict(title="Uds acumuladas"),
                       legend=dict(orientation="h", y=1.08), margin=dict(t=30, b=20))
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

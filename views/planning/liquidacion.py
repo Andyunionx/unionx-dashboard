@@ -79,7 +79,7 @@ def render():
 
     st.dataframe(
         df_sobre.head(200),
-        use_container_width=True, hide_index=True,
+        width='stretch', hide_index=True,
         column_config={
             'stock_actual': st.column_config.NumberColumn('Stock', format='%.0f'),
             'cobertura_dias': st.column_config.NumberColumn('Cobertura (d)', format='%.0f'),

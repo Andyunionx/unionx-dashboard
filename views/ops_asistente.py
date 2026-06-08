@@ -604,7 +604,7 @@ def render():
         st.markdown("### 🤖 **Asistente IA**")
         st.caption("Gemini — gratis")
         st.divider()
-        if st.button("🗑️ Limpiar conversación", use_container_width=True):
+        if st.button("🗑️ Limpiar conversación", width='stretch'):
             st.session_state.pop("ops_chat_msgs", None)
             st.rerun()
 
@@ -705,7 +705,7 @@ ESTILO:
         col1, col2 = st.columns(2)
         for i, s in enumerate(SUGERENCIAS):
             col = col1 if i % 2 == 0 else col2
-            if col.button(s, key=f"sug_{i}", use_container_width=True):
+            if col.button(s, key=f"sug_{i}", width='stretch'):
                 st.session_state["_ops_chat_input"] = s
                 st.rerun()
 

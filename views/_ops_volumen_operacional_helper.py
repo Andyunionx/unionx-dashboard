@@ -276,7 +276,7 @@ def render_volumen_operacional():
         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(orientation='h', y=1.05, x=0),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption(
         "🟦 OK · 🟡 carga alta (70-90%) · 🟠 atención (90-110%) · 🔴 sobrecarga (>110%) · "
         "Demanda S/D se acumula al lunes (bodega no opera fin de semana)"
@@ -299,7 +299,7 @@ def render_volumen_operacional():
         )
         df_sem.columns = ['Semana', 'Pedidos', 'Líneas', 'Unidades',
                            'Días sobrecarga', 'Días atención', 'Estado']
-        st.dataframe(df_sem, use_container_width=True, hide_index=True, height=280)
+        st.dataframe(df_sem, width='stretch', hide_index=True, height=280)
 
     st.divider()
 
@@ -332,4 +332,4 @@ def render_volumen_operacional():
                             'sku_distintos']]
         df_show.columns = ['Fecha', 'Día', 'Pedidos', 'Líneas', 'Unidades',
                             '% Carga', 'Estado', 'SKUs distintos']
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=420)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=420)

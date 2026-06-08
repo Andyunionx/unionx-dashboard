@@ -245,7 +245,7 @@ def render():
         for c in pivot_disp.columns:
             pivot_disp[c] = pivot_disp[c].apply(_fmt_clp)
 
-        st.dataframe(pivot_disp, use_container_width=True, height=520)
+        st.dataframe(pivot_disp, width='stretch', height=520)
 
         # Excel descarga
         buf = io.BytesIO()
@@ -295,7 +295,7 @@ def render():
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
             legend=dict(orientation="h", y=1.05, x=0),
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     st.divider()
 
@@ -323,7 +323,7 @@ def render():
             "Gap": df_gap_sorted["gap"].apply(_fmt_clp),
             "Gap %": df_gap_sorted["gap_pct"].apply(_fmt_pct),
         })
-        st.dataframe(df_show, use_container_width=True, hide_index=True, height=420)
+        st.dataframe(df_show, width='stretch', hide_index=True, height=420)
 
     st.divider()
 

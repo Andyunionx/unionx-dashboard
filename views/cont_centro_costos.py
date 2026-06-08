@@ -157,7 +157,7 @@ def render():
             margin=dict(t=20, b=40, l=70, r=20),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     else:
         st.info("Sin datos de centros de costo todavía. Subí libro + memoria.")
 
@@ -168,7 +168,7 @@ def render():
         df_ct = pd.DataFrame(top_ct)
         df_ct["Monto"] = df_ct["monto"].apply(fmt_clp)
         st.dataframe(df_ct[["cuenta", "Monto"]].rename(columns={"cuenta": "Cuenta"}),
-                     use_container_width=True, hide_index=True, height=280)
+                     width='stretch', hide_index=True, height=280)
 
     st.divider()
 
@@ -191,7 +191,7 @@ def render():
             df_disp = df_listos[cols_show].copy()
             if "monto_total" in df_disp.columns:
                 df_disp["monto_total"] = df_disp["monto_total"].apply(fmt_clp)
-            st.dataframe(df_disp, use_container_width=True, hide_index=True, height=420)
+            st.dataframe(df_disp, width='stretch', hide_index=True, height=420)
 
             buf = io.BytesIO()
             with pd.ExcelWriter(buf, engine="openpyxl") as w:
@@ -225,7 +225,7 @@ def render():
             df_disp = df_pendientes[cols_show].copy()
             if "monto_total" in df_disp.columns:
                 df_disp["monto_total"] = df_disp["monto_total"].apply(fmt_clp)
-            st.dataframe(df_disp, use_container_width=True, hide_index=True, height=420)
+            st.dataframe(df_disp, width='stretch', hide_index=True, height=420)
 
             # Sugerencia: bajar Excel de pendientes para completar
             buf = io.BytesIO()

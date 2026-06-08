@@ -329,6 +329,34 @@ def main():
         except Exception as e:
             print(f"   [WARN] overlay fecha_venta no aplicado: {type(e).__name__}: {str(e)[:80]}")
 
+    # Append manuales (ventas externas no en Odoo: El Volcan, Sodimac manual, etc.)
+    # Cada archivo en data/manuales/*.parquet se concatena al final del extract.
+    manuales_dir = PROJECT_ROOT / 'data' / 'manuales'
+    if manuales_dir.exists():
+        manual_files = sorted(manuales_dir.glob('*.parquet'))
+        if manual_files:
+            for mf in manual_files:
+                try:
+                    df_m = pd.read_parquet(mf)
+                    if 'fecha_venta' in df_m.columns:
+                        df_m['fecha_venta'] = pd.to_datetime(df_m['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+                    # Solo agregar filas del mes/rango del df principal
+                    desde_str = str(df['fecha_venta'].min())[:10]
+                    hasta_str = str(df['fecha_venta'].max())[:10]
+                    df_m = df_m[(df_m['fecha_venta'] >= desde_str) & (df_m['fecha_venta'] <= hasta_str)]
+                    if not df_m.empty:
+                        # Alinear cols
+                        cols_align = [c for c in df.columns if c in df_m.columns]
+                        df_m = df_m[cols_align]
+                        for c in df.columns:
+                            if c not in df_m.columns:
+                                df_m[c] = '' if df[c].dtype == 'object' else 0
+                        df_m = df_m[df.columns]
+                        df = pd.concat([df, df_m], ignore_index=True)
+                        print(f"   [manual] +{len(df_m)} filas desde {mf.name}")
+                except Exception as e:
+                    print(f"   [WARN] manual {mf.name} no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")

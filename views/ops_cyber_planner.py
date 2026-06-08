@@ -310,7 +310,7 @@ def render():
 
     col_carga, col_info = st.columns([1, 2])
     with col_carga:
-        if st.button("🔄 Cargar desde Drive maestro", use_container_width=True, type='primary'):
+        if st.button("🔄 Cargar desde Drive maestro", width='stretch', type='primary'):
             cargar_cyber_desde_drive.clear()
             try:
                 df_loaded = cargar_cyber_desde_drive(DRIVE_FILE_ID_DEFAULT)
@@ -330,7 +330,7 @@ def render():
     df_canal = st.data_editor(
         st.session_state['ocp_df_canal'],
         num_rows="dynamic",
-        use_container_width=True,
+        width='stretch',
         key="ocp_editor",
         column_config={
             'canal': st.column_config.TextColumn('Canal'),
@@ -350,7 +350,7 @@ def render():
     st.subheader("2. Curva de distribución diaria")
     curva_df = pd.DataFrame(CURVA_DEFAULT, columns=['Día', '% Curva']).head(dias_evento)
     curva_edit = st.data_editor(
-        curva_df, hide_index=True, use_container_width=True, key='ocp_curva',
+        curva_df, hide_index=True, width='stretch', key='ocp_curva',
         column_config={
             'Día': st.column_config.TextColumn('Día'),
             '% Curva': st.column_config.NumberColumn('% del volumen', min_value=0, max_value=100, step=1),
@@ -408,13 +408,13 @@ def render():
         "Esc. C — Solo refuerzo", "Distribución diaria",
     ])
     with tab_a:
-        st.dataframe(esc['A']['tabla'], use_container_width=True, hide_index=True)
+        st.dataframe(esc['A']['tabla'], width='stretch', hide_index=True)
         st.caption(f"Costo total: $ {esc['A']['costo']:,}".replace(',', '.'))
     with tab_b:
-        st.dataframe(esc['B']['tabla'], use_container_width=True, hide_index=True)
+        st.dataframe(esc['B']['tabla'], width='stretch', hide_index=True)
         st.caption(f"Costo total: $ {esc['B']['costo']:,} ({esc['B']['refuerzo_dp']} días-persona refuerzo)".replace(',', '.'))
     with tab_c:
-        st.dataframe(esc['C']['tabla'], use_container_width=True, hide_index=True)
+        st.dataframe(esc['C']['tabla'], width='stretch', hide_index=True)
         st.caption(f"Costo total: $ {esc['C']['costo']:,} ({esc['C']['refuerzo_dp']} días-persona refuerzo)".replace(',', '.'))
     with tab_dist:
         dist_df = pd.DataFrame(esc['distribucion'])
@@ -433,8 +433,8 @@ def render():
                           plot_bgcolor='rgba(0,0,0,0)',
                           xaxis_title='Día', yaxis_title='Unidades',
                           showlegend=True, legend=dict(orientation='h', yanchor='bottom', y=1.02))
-        st.plotly_chart(fig, use_container_width=True)
-        st.dataframe(dist_df, use_container_width=True, hide_index=True)
+        st.plotly_chart(fig, width='stretch')
+        st.dataframe(dist_df, width='stretch', hide_index=True)
 
     # === Sección 6: Recomendación ===
     st.divider()
@@ -468,5 +468,5 @@ def render():
         data=xlsx_bytes,
         file_name=f"plan_cyber_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
         mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        use_container_width=True,
+        width='stretch',
     )

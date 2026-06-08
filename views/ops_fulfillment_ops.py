@@ -38,7 +38,7 @@ def render():
 
     import pandas as pd
     df = pd.DataFrame(kpis, columns=["KPI", "Meta", "Definición"])
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width='stretch', hide_index=True)
 
     st.divider()
 
