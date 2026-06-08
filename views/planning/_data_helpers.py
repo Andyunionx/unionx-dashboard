@@ -185,6 +185,23 @@ def cargar_ventas_historicas(meses: int = 24) -> pd.DataFrame:
     return df[df['fecha_venta'] >= corte].copy()
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def cargar_stock_live_skus() -> pd.DataFrame:
+    """Stock LIVE desde data/stock/skus.parquet (mismo que vista Stock LIVE de Andrés).
+    Actualizado cada 3h vía sync_stock.yml. Devuelve [sku, stock_actual] agrupado por SKU.
+    """
+    path = DATA_DIR / 'stock' / 'skus.parquet'
+    if not path.exists():
+        return pd.DataFrame(columns=['sku', 'stock_actual'])
+    df = pd.read_parquet(path)
+    df['SKU'] = df['SKU'].astype(str)
+    df['Qty'] = pd.to_numeric(df.get('Qty', df.get('stock_total', 0)),
+                               errors='coerce').fillna(0).clip(lower=0)
+    agg = df.groupby('SKU', as_index=False)['Qty'].sum()
+    agg.columns = ['sku', 'stock_actual']
+    return agg
+
+
 @st.cache_data(ttl=1800, show_spinner=False)
 def cargar_stock_diario(dias: int = 120) -> pd.DataFrame:
     """Stock diario histórico, filtrado a los últimos N días para no traer 5M filas."""
