@@ -305,6 +305,30 @@ def main():
         print("\n[GATE 1] NO se publica el parquet — se conserva el último bueno.", flush=True)
         sys.exit(0)  # salida limpia: el commit posterior no verá cambios
 
+    # Overlay correcciones fecha_venta (cuando Yuju/integrador cargó tarde a Odoo)
+    overlay_path = PROJECT_ROOT / 'data' / 'correcciones' / 'fix_fechas_yuju.json'
+    if overlay_path.exists():
+        try:
+            ovl = _json.loads(overlay_path.read_text(encoding='utf-8')).get('correcciones', {})
+            if ovl:
+                ped_str = df['pedido'].astype(str)
+                mask = ped_str.isin(ovl.keys())
+                n_fix = int(mask.sum())
+                if n_fix > 0:
+                    pre = df.loc[mask, 'fecha_venta'].value_counts().to_dict()
+                    df.loc[mask, 'fecha_venta'] = ped_str[mask].map(ovl)
+                    # Recalcular campos derivados de fecha
+                    fv_dt = pd.to_datetime(df.loc[mask, 'fecha_venta'], errors='coerce')
+                    if 'anio_venta' in df.columns: df.loc[mask, 'anio_venta'] = fv_dt.dt.year
+                    if 'mes_venta' in df.columns: df.loc[mask, 'mes_venta'] = fv_dt.dt.month
+                    if 'semana_venta' in df.columns: df.loc[mask, 'semana_venta'] = fv_dt.dt.isocalendar().week
+                    if 'dia_semana' in df.columns:
+                        dia_nom = ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo']
+                        df.loc[mask, 'dia_semana'] = fv_dt.dt.dayofweek.map(lambda i: dia_nom[i] if pd.notna(i) else None)
+                    print(f"   [overlay fecha] {n_fix} filas corregidas con fix_fechas_yuju.json | pre={pre}")
+        except Exception as e:
+            print(f"   [WARN] overlay fecha_venta no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")
