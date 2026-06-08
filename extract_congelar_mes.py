@@ -255,8 +255,11 @@ def main():
     df_total = df_total.sort_values('fecha_venta', kind='stable')
     df_total['fecha_venta'] = df_total['fecha_venta'].dt.strftime('%Y-%m-%d')
 
-    df_total[COLS].to_parquet(PARQUET_PATH, index=False)
-    print(f"[4/4] Guardado {PARQUET_PATH} ({len(df_total):,} filas)")
+    # Compactar tipos antes de guardar (crítico para RAM Streamlit Cloud)
+    from compactar_parquet import compactar_ventas, mem_mb
+    df_save = compactar_ventas(df_total[COLS])
+    df_save.to_parquet(PARQUET_PATH, index=False)
+    print(f"[4/4] Guardado {PARQUET_PATH} ({len(df_save):,} filas, {mem_mb(df_save):.0f} MB RAM)")
 
     # 7. Actualizar CUTOFF_HISTORICO en views/shared.py
     nuevo_cutoff = hasta  # el día 1 del mes siguiente
