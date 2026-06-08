@@ -129,15 +129,22 @@ COLOR_NEUTRO = '#64748B'     # gris
 # Local SQLite combinando parquet histórico + Turso live
 # ============================================================
 @st.cache_resource(show_spinner=False)
-def _read_historico_parquet():
-    """Lectura del parquet histórico (no cambia día a día).
-    cache_resource: zero overhead vs cache_data que serializa el DataFrame en cada acceso.
-    """
+def _read_historico_parquet_inner(_mtime: float):
+    """Lectura del parquet historico, cacheada por mtime.
+    Si el parquet se actualiza en disco (nuevo mtime), Streamlit recalcula."""
     if not HISTORICO_PARQUET.exists():
         return pd.DataFrame()
     df = pd.read_parquet(HISTORICO_PARQUET)
-    print(f"[historico_parquet] {len(df):,} filas cargadas desde {HISTORICO_PARQUET.name}", flush=True)
+    print(f"[historico_parquet] {len(df):,} filas cargadas (mtime={_mtime:.0f})", flush=True)
     return df
+
+
+def _read_historico_parquet():
+    """Wrapper que invalida cache cuando el parquet cambia en disco."""
+    if not HISTORICO_PARQUET.exists():
+        return pd.DataFrame()
+    mtime = HISTORICO_PARQUET.stat().st_mtime
+    return _read_historico_parquet_inner(mtime)
 
 
 # Path estable del SQLite local (mtime-based invalidation, no depende de cache_resource ttl).
