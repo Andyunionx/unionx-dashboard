@@ -149,7 +149,7 @@ def _read_historico_parquet():
 
 # Path estable del SQLite local (mtime-based invalidation, no depende de cache_resource ttl).
 _LOCAL_DB_PATH = Path(tempfile.gettempdir()) / 'unionx_dashboard_local_v4.db'
-_LOCAL_DB_TTL_S = 900  # 15 min
+_LOCAL_DB_TTL_S = 300  # 5 min (antes 15min; reducido para que cambios se vean mas rapido)
 
 
 def get_local_db_path():
@@ -564,11 +564,12 @@ def _parquet_version():
     return tuple(vs)
 
 
-@st.cache_resource(show_spinner=False, ttl=900, max_entries=1)
+@st.cache_resource(show_spinner=False, ttl=300, max_entries=1)
 def _get_duck_conn(version=None):
     """Conexión DuckDB con ventas/dim_productos/metadata_cargas materializadas desde parquet.
-    Cacheada con clave `version` (mtime de los parquet) + TTL 15min → se reconstruye
-    al cambiar el parquet o cada 15 min, igual que el camino SQLite legacy.
+    Cacheada con clave `version` (mtime de los parquet) + TTL 5min → se reconstruye
+    al cambiar el parquet o cada 5 min (antes 15min, reducido para que cambios
+    nuevos se vean mas rapido en sesiones activas).
     Cacheada (cache_resource) → se crea una sola vez, sin rebuild de 8s por request.
     fecha_venta se normaliza a VARCHAR 'YYYY-MM-DD' para que el SQL sea idéntico al de SQLite."""
     import duckdb

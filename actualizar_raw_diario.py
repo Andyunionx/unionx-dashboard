@@ -190,7 +190,8 @@ def construir_live():
 
     print('[3/5] Construyendo archivo LIVE...')
 
-    # Archivos a CONSERVAR del original
+    # Archivos a CONSERVAR del original (NO incluimos pivotCacheRecords3.xml:
+    # lo reemplazamos por uno vacio para forzar refresh desde Raw al abrir)
     KEEP_EXACT = {
         'xl/worksheets/sheet1.xml',
         'xl/worksheets/_rels/sheet1.xml.rels',
@@ -198,7 +199,6 @@ def construir_live():
         'xl/pivotTables/_rels/pivotTable1.xml.rels',
         'xl/pivotCache/pivotCacheDefinition3.xml',
         'xl/pivotCache/_rels/pivotCacheDefinition3.xml.rels',
-        'xl/pivotCache/pivotCacheRecords3.xml',
         'xl/printerSettings/printerSettings1.bin',
         'xl/sharedStrings.xml',
         'xl/styles.xml',
@@ -232,6 +232,14 @@ def construir_live():
 
         # 2) sheet3.xml (Raw) = nueva version del parquet
         dst.writestr('xl/worksheets/sheet3.xml', new_raw_xml)
+
+        # 2b) pivotCacheRecords3.xml VACIO (count=0). Excel detecta cache stale
+        # con refreshOnLoad=1 y la regenera desde la nueva Raw al abrir.
+        empty_records = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+                         '<pivotCacheRecords xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+                         'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+                         'count="0"/>')
+        dst.writestr('xl/pivotCache/pivotCacheRecords3.xml', empty_records)
 
         # 3) workbook.xml: limpiar
         wb = src.read('xl/workbook.xml').decode('utf-8')
@@ -297,7 +305,7 @@ def _set_refresh_on_load(xlsx_path: Path):
         for name in src.namelist():
             if name == 'xl/pivotCache/pivotCacheDefinition3.xml':
                 content = src.read(name).decode('utf-8')
-                # Agregar refreshOnLoad=1 si no existe
+                # refreshOnLoad=1: Excel refresca al abrir
                 if 'refreshOnLoad' in content:
                     content = re.sub(r'refreshOnLoad="\d"', 'refreshOnLoad="1"', content)
                 else:
@@ -305,6 +313,8 @@ def _set_refresh_on_load(xlsx_path: Path):
                         '<pivotCacheDefinition ',
                         '<pivotCacheDefinition refreshOnLoad="1" ', 1
                     )
+                # recordCount=0: marca cache como vacia (combinado con records vacios fuerza rebuild)
+                content = re.sub(r'recordCount="\d+"', 'recordCount="0"', content)
                 dst.writestr(name, content)
             else:
                 with src.open(name) as fin, dst.open(name, 'w', force_zip64=True) as fout:

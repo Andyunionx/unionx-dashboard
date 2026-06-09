@@ -1,4 +1,4 @@
-name: Pulso Diario UnionX (Lun-Vie 08:00 CLT)
+name: Pulso Diario UnionX (Lun-Vie 07:30 CLT)
 
 # Pulso diario con acumulado mes + YoY mismo período + Top canales/marcas/categorías.
 # Excel RAW adjunto = ventas acumuladas del mes hasta el día anterior (sin venta_neta).
@@ -6,8 +6,9 @@ name: Pulso Diario UnionX (Lun-Vie 08:00 CLT)
 
 on:
   schedule:
-    # 08:00 AM Chile = 12:00 UTC (Chile UTC-4, sin DST)
-    - cron: '0 12 * * 1-5'
+    # 07:30 AM Chile = 11:30 UTC. 30 min antes de 08:00 para absorber el delay
+    # variable que GitHub Actions aplica a crons en plan free (5-30 min).
+    - cron: '30 11 * * 1-5'
   workflow_dispatch: {}
 
 permissions:
