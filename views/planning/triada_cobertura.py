@@ -647,7 +647,7 @@ def render():
                        "sku", "producto", "stock_actual", "venta_prom_3m"]].copy()
         _stock_v = df_jer["stock_actual"].values.astype(float).copy()
 
-        # Pre-computar PPTO por mes (para promedio rolling 3m en la cobertura)
+        # Pre-computar PPTO por mes (para promedio rolling 3m) — v2 jun-2026
         _skus_arr = df_jer["sku"].values
         _ppto_by_month = []
         for ms in mes_strs_j:
