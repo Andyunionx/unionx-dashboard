@@ -86,6 +86,42 @@ pero no tienen RUT (VAT) configurado en Odoo. Requieren acción: crear o complet
 </table>"""
 
 
+def _seccion_faltantes_manual(faltantes: list[dict]) -> str:
+    if not faltantes:
+        return ""
+    mes_actual = datetime.now().strftime("%B %Y").capitalize()
+    filas = "".join(
+        f"<tr>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{f['nombre']}</td>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee;text-align:center'>{f['rut']}</td>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{f['portal']}</td>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee;text-align:center'>{f['ultimo_fecha']}</td>"
+        f"<td style='padding:6px 10px;border-bottom:1px solid #eee'>{f['ultimo_doc']}</td>"
+        f"</tr>"
+        for f in faltantes
+    )
+    return f"""
+<h3 style="color:#B71C1C;margin-top:28px">🔴 Ingreso pendiente en Odoo — {mes_actual}</h3>
+<p style="font-size:13px">
+  Los siguientes proveedores <strong>no tienen facturas registradas en Odoo</strong> para el mes actual.<br>
+  Deben ingresarse <strong>manualmente</strong> desde el portal de cada proveedor o desde el SII.<br>
+  Sin este ingreso, la predistribución de cuentas no puede operar correctamente.
+</p>
+<table style="border-collapse:collapse;width:100%;margin:12px 0;font-size:13px">
+  <thead><tr style="background:#B71C1C;color:white">
+    <th style="padding:7px 10px;text-align:left">Proveedor</th>
+    <th style="padding:7px 10px">RUT</th>
+    <th style="padding:7px 10px;text-align:left">Portal</th>
+    <th style="padding:7px 10px">Último mes</th>
+    <th style="padding:7px 10px;text-align:left">Último doc</th>
+  </tr></thead>
+  <tbody>{filas}</tbody>
+</table>
+<p style="font-size:12px;background:#FFF3E0;padding:10px;border-radius:4px;border-left:3px solid #E65100">
+  <strong>Acción:</strong> Ingresar facturas en Odoo → Contabilidad → Facturas de proveedor.
+</p>"""
+
+
 def _seccion_sii(comparacion_sii) -> str:
     if comparacion_sii is None:
         return ""
@@ -153,6 +189,7 @@ def send_propuesta_completa(
     facturas_resumen: list[dict],
     token_path,
     ruts_sin_partner=None,
+    faltantes_manual=None,
     comparacion_sii=None,
     destinatarios: list[str] = None,
     cc: list[str] = None,
@@ -167,6 +204,8 @@ def send_propuesta_completa(
         partes.append(f"{len(facturas_resumen)} factura(s) para redistribuir")
     if ruts_sin_partner:
         partes.append(f"{len(ruts_sin_partner)} proveedor(es) sin RUT")
+    if faltantes_manual:
+        partes.append(f"{len(faltantes_manual)} ingreso(s) manual(es) pendiente(s)")
     if comparacion_sii and comparacion_sii.faltantes_en_odoo:
         partes.append(f"{len(comparacion_sii.faltantes_en_odoo)} faltante(s) SII→Odoo")
 
@@ -186,10 +225,11 @@ def send_propuesta_completa(
 
     # Agregar secciones extras
     sec2 = _seccion_ruts(ruts_sin_partner or [])
-    sec3 = _seccion_sii(comparacion_sii)
+    sec3 = _seccion_faltantes_manual(faltantes_manual or [])
+    sec4 = _seccion_sii(comparacion_sii)
     footer = f'\n<p style="color:#666;font-size:12px;margin-top:24px">— Agente UnionX · {datetime.now().strftime("%d/%m/%Y %H:%M")}</p></body></html>'
 
-    cuerpo = sec1 + sec2 + sec3 + footer
+    cuerpo = sec1 + sec2 + sec3 + sec4 + footer
 
     return _enviar(cuerpo, asunto, excels, token_path, destinatarios, cc)
 

@@ -39,8 +39,45 @@ from src.actions.distribucion.memoria import cargar_memoria, resumen_memoria
 from src.actions.distribucion.aplicador import aplicar_distribucion, aplicar_directo
 from src.actions.distribucion.gmail_distribucion import send_propuesta_completa, leer_respuestas
 from src.actions.distribucion.analisis_ruts import detectar_ruts_sin_partner
+from datetime import date as _date
 
 TOKEN_GMAIL  = PROJECT_ROOT / "agente-comex" / "config" / "token.json"
+
+PROVEEDORES_INGRESO_MANUAL = {
+    "77398220-1": {"nombre": "MercadoLibre Chile Ltda.", "portal": "Seller Center ML"},
+    "76516950-K": {"nombre": "Mercado Pago Operadora S.A.", "portal": "Portal Mercado Pago"},
+    "96874030-K": {"nombre": "ABC S.A.", "portal": "Portal ABC"},
+}
+
+
+def _detectar_faltantes_ingreso_manual(client, year: int, month: int) -> list[dict]:
+    import xmlrpc.client as xc
+    URL = client.url; DB = client.db; PWD = client.password
+    uid = client.authenticate()
+    models = xc.ServerProxy(f"{URL}/xmlrpc/2/object", allow_none=True)
+    mes_inicio = f"{year:04d}-{month:02d}-01"
+    mes_fin    = f"{year:04d}-{month:02d}-28"
+    faltantes = []
+    for rut, meta in PROVEEDORES_INGRESO_MANUAL.items():
+        este_mes = models.execute_kw(DB, uid, PWD, "account.move", "search_read",
+            [[["move_type", "in", ["in_invoice", "in_refund"]],
+              ["partner_id.vat", "=", rut],
+              ["invoice_date", ">=", mes_inicio], ["invoice_date", "<=", mes_fin]]],
+            {"fields": ["id"], "limit": 1})
+        if este_mes:
+            continue
+        ultimo = models.execute_kw(DB, uid, PWD, "account.move", "search_read",
+            [[["move_type", "in", ["in_invoice", "in_refund"]], ["partner_id.vat", "=", rut]]],
+            {"fields": ["invoice_date", "create_date", "create_uid", "ref", "name"],
+             "limit": 1, "order": "invoice_date desc"})
+        ultimo_doc = ultimo[0] if ultimo else None
+        faltantes.append({
+            "rut": rut, "nombre": meta["nombre"], "portal": meta["portal"],
+            "ultimo_doc": (ultimo_doc.get("ref") or ultimo_doc.get("name")) if ultimo_doc else "—",
+            "ultimo_fecha": ultimo_doc.get("invoice_date", "—") if ultimo_doc else "—",
+            "ingresado_por": (ultimo_doc.get("create_uid") or [None, "—"])[1] if ultimo_doc else "—",
+        })
+    return faltantes
 DIR_DISTRIBUCION = AGENTE_ROOT / "data" / "distribucion"
 DIR_MEMORIA  = AGENTE_ROOT / "data" / "memoria_distribucion"
 
@@ -115,6 +152,22 @@ def cmd_detectar_y_clasificar(args):
             print(f"    • {r.partner_nombre} | {r.n_facturas} facturas | ${r.monto_total:,.0f}")
     else:
         print("  ✓ Todos los proveedores tienen RUT configurado")
+    print()
+
+    # ── Proveedores de ingreso manual (ML, MP, ABC) ───────────────────────
+    hoy_obj = _date.today()
+    print(f"► Verificando ingreso de proveedores manuales ({hoy_obj.year}-{hoy_obj.month:02d})...")
+    try:
+        faltantes_manual = _detectar_faltantes_ingreso_manual(client, hoy_obj.year, hoy_obj.month)
+        if faltantes_manual:
+            print(f"  ⚠️  {len(faltantes_manual)} proveedor(es) sin ingresar este mes:")
+            for f in faltantes_manual:
+                print(f"    • {f['nombre']} | último doc: {f['ultimo_doc']} ({f['ultimo_fecha']})")
+        else:
+            print("  ✓ Todos los proveedores manuales ya tienen facturas este mes")
+    except Exception as e:
+        print(f"  (Error verificando proveedores manuales: {e})")
+        faltantes_manual = []
     print()
 
     # ── Análisis SII vs Odoo ───────────────────────────────────────────────
@@ -219,6 +272,7 @@ def cmd_detectar_y_clasificar(args):
                 excels=[],
                 facturas_resumen=[],
                 ruts_sin_partner=ruts_sin_partner,
+                faltantes_manual=faltantes_manual,
                 comparacion_sii=comparacion_sii,
                 token_path=TOKEN_GMAIL,
                 destinatarios=destinatarios,
@@ -297,6 +351,7 @@ def cmd_detectar_y_clasificar(args):
             excels=[excel_path] if excels_generados else [],
             facturas_resumen=resumen_facturas,
             ruts_sin_partner=ruts_sin_partner,
+            faltantes_manual=faltantes_manual,
             comparacion_sii=comparacion_sii,
             token_path=TOKEN_GMAIL,
             destinatarios=destinatarios,
