@@ -10,7 +10,7 @@ Flujo:
 2. Match contra Turso: (fecha_venta, sku, canal IN ('UnionX web','Shopify'), venta_bruta=0).
 3. UPDATE las filas matched:
    - canal = 'CMR'
-   - tipo_negocio = 'Fidelización CMR'
+   - tipo_negocio = 'Fidelización'
    - venta_bruta = Venta CMR Bruto (PVP)
    - venta_neta = Venta CMR Neto
    - margen_front = venta_neta - costo_total (recalculado)
@@ -219,7 +219,7 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
             neta = float(cmr['venta_neta'] or 0)
             bruta = float(cmr['venta_bruta'] or 0)
             df.at[i, 'canal'] = 'CMR'
-            df.at[i, 'tipo_negocio'] = 'Fidelización CMR'
+            df.at[i, 'tipo_negocio'] = 'Fidelización'
             df.at[i, 'venta_bruta'] = bruta
             df.at[i, 'venta_neta'] = neta
             df.at[i, 'margen_front'] = neta - costo
@@ -229,7 +229,7 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
             df.at[i, 'logistica'] = 0
             asignados.add(i); n += 1; total += bruta
             break
-    print(f"   [CMR] {n} filas enriquecidas (Fidelización CMR), venta bruta +${total:,.0f}", flush=True)
+    print(f"   [CMR] {n} filas enriquecidas (Fidelización), venta bruta +${total:,.0f}", flush=True)
     return df
 
 
@@ -289,7 +289,7 @@ def _main_turso_legacy():
         FROM ventas
         WHERE (
             (canal IN ('UnionX web', 'Shopify', 'Lhotse web', 'Simplit web') AND venta_bruta = 0)
-            OR (canal = 'CMR' AND tipo_negocio = 'Fidelización CMR')
+            OR (canal = 'CMR' AND tipo_negocio = 'Fidelización')
           )
           AND fecha_venta >= '{CUTOFF_FECHA}'
           AND tipo_movimiento = 'Venta'
@@ -384,7 +384,7 @@ def _main_turso_legacy():
             update_sql = (
                 f"UPDATE ventas SET "
                 f"canal = 'CMR', "
-                f"tipo_negocio = 'Fidelización CMR', "
+                f"tipo_negocio = 'Fidelización', "
                 f"venta_bruta = {bruta}, "
                 f"venta_neta = {neta}, "
                 f"margen_front = {margen_front}, "
