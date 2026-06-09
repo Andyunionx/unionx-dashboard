@@ -8,6 +8,11 @@ name: Distribución Diaria (42410104)
 
 on:
   workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Enviar solo a andres@unionx.cl (prueba)'
+        type: boolean
+        default: false
   schedule:
     # 9 AM Chile = 12 UTC (UTC-3 horario invierno)
     - cron: '0 12 * * 1-5'
@@ -69,7 +74,8 @@ jobs:
         run: |
           Xvfb :99 -screen 0 1280x800x24 &
           sleep 2
-          python -X utf8 agente-odoo/scripts/run_distribucion.py --send-mail
+          FLAG=$([ "${{ github.event.inputs.test_mode }}" = "true" ] && echo "--test" || echo "--send-mail")
+          python -X utf8 agente-odoo/scripts/run_distribucion.py $FLAG
 
       - name: Commit memoria + archivos SII descargados
         run: |
