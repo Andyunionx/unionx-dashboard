@@ -1,18 +1,14 @@
 """
-Opcion B — Auto-importacion SII → Odoo.
-Usa Playwright para: login SII, navegar RCV, listar DTEs, descargar XMLs.
+Opcion B — Obtiene DTEs del SII desde el detalle de Descargas Diferidas.
+
+Reutiliza descarga_sii.descargar_detalle_compras() que ya funciona en produccion.
+Si el detalle no esta listo, retorna lista vacia (la proxima corrida lo tendra).
 """
 from __future__ import annotations
-import time
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-
-SII_LOGIN_URL = "https://zeusr.sii.cl/AUT2000/InicioAutenticacion/IngresoRutClave.html"
-SII_RCV_URL   = "https://www4.sii.cl/consdcvinternetui/"
-TIPOS_AUTO_IMPORTAR = {"33", "34", "61"}
-TIPO_DOC_MOVE_TYPE = {"33": "in_invoice", "34": "in_invoice",
-                      "43": "in_invoice", "61": "in_refund", "56": "in_refund"}
 
 
 @dataclass
@@ -25,7 +21,7 @@ class DTERecibido:
     monto_neto: float
     monto_iva: float
     monto_total: float
-    xml_disponible: bool = True
+    xml_disponible: bool = False
     xml_bytes: Optional[bytes] = None
     error: Optional[str] = None
 
@@ -40,137 +36,177 @@ class ResultadoRCV:
     dtes: list = field(default_factory=list)
 
 
-def _login_rcv(page, rut: str, password: str):
-    rut_limpio = rut.replace(".", "").replace("-", "").upper()
-    page.goto(f"{SII_LOGIN_URL}?{SII_RCV_URL}", timeout=30_000)
-    page.wait_for_load_state("networkidle", timeout=15_000)
-    for sel in ["#rutcontribuyente", "#rut", "input[name='rut ']"]:
-        try:
-            page.fill(sel, rut_limpio, timeout=3_000); break
-        except Exception:
-            continue
-    for sel in ["#clave", "input[name='clave ']", "input[type='password ']"]:
-        try:
-            page.fill(sel, password, timeout=3_000); break
-        except Exception:
-            continue
-    page.keyboard.press("Enter")
-    time.sleep(8)
-    page.wait_for_load_state("networkidle", timeout=20_000)
+# Tipos de documento que se importan automaticamente a Odoo
+TIPOS_AUTO_IMPORTAR = {"33", "34", "61"}
+
+# Mapeo codigo SII → nombre legible
+NOMBRE_TIPO_DOC = {
+    "33": "Factura electrónica",
+    "34": "Factura no afecta",
+    "43": "Liquidación-Factura",
+    "56": "Nota de débito",
+    "61": "Nota de crédito",
+}
 
 
-def _extraer_tabla_dte(page) -> list:
-    docs = []
+def _parsear_excel_detalle(archivo: Path) -> list[dict]:
+    """
+    Parsea el Excel de Detalle de Compras del SII.
+
+    Columnas esperadas (el SII puede variar el orden):
+      RUT Proveedor | Razon Social | Tipo Doc | Folio | Fecha | Monto Neto | IVA | Total
+    """
     try:
-        rows = page.query_selector_all("table tbody tr")
-        for row in rows:
-            cells = row.query_selector_all("td")
-            if len(cells) < 6:
-                continue
-            texts = [c.inner_text().strip() for c in cells]
-            try:
-                docs.append({
-                    "rut_emisor":  texts[0].replace(".","").replace("-","").upper(),
-                    "razon_social": texts[1] if len(texts) > 1 else "",
-                    "tipo_doc":    texts[2].strip() if len(texts) > 2 else "",
-                    "folio":       texts[3].strip() if len(texts) > 3 else "",
-                    "fecha":       texts[4].strip() if len(texts) > 4 else "",
-                    "monto_neto":  float(texts[5].replace(".","").replace(",",".")
-                                         .replace("$","") or "0") if len(texts) > 5 else 0,
-                    "monto_total": float(texts[6].replace(".","").replace(",",".")
-                                         .replace("$","") or "0") if len(texts) > 6 else 0,
-                })
-            except Exception:
-                continue
-    except Exception:
-        pass
-    return docs
+        import openpyxl
+    except ImportError:
+        return []
 
+    wb = openpyxl.load_workbook(str(archivo), read_only=True, data_only=True)
+    ws = wb.active
 
-def _descargar_xml_dte(page, tipo_doc: str, folio: str, rut_e: str) -> Optional[bytes]:
-    try:
-        with page.expect_download(timeout=15_000) as dl_info:
-            page.click(f"text={folio}", timeout=5_000)
-        download = dl_info.value
-        tmp = Path("/tmp") / f"dte_{rut_e}_{tipo_doc}_{folio}.xml"
-        download.save_as(str(tmp))
-        return tmp.read_bytes()
-    except Exception:
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return []
+
+    # Detectar cabecera — primera fila con texto
+    header_idx = 0
+    for i, row in enumerate(rows):
+        if any(isinstance(c, str) and len(str(c)) > 2 for c in row if c is not None):
+            header_idx = i
+            break
+
+    headers = [str(c).strip().lower() if c else "" for c in rows[header_idx]]
+
+    def _idx(*names):
+        for n in names:
+            for i, h in enumerate(headers):
+                if n in h:
+                    return i
         return None
+
+    i_rut    = _idx("rut prov", "rut emi", "rut")
+    i_razon  = _idx("razón", "razon", "nombre")
+    i_tipo   = _idx("tipo doc", "codigo doc", "tipo")
+    i_folio  = _idx("folio")
+    i_fecha  = _idx("fecha doc", "fecha emi", "fecha")
+    i_neto   = _idx("monto neto", "neto")
+    i_iva    = _idx("iva", "impuesto")
+    i_total  = _idx("monto total", "total")
+
+    docs = []
+    for row in rows[header_idx + 1:]:
+        if not any(row):
+            continue
+        def val(idx):
+            return row[idx] if idx is not None and idx < len(row) else None
+
+        rut = str(val(i_rut) or "").strip()
+        if not rut or rut.lower() in ("rut", "none", ""):
+            continue
+
+        try:
+            neto  = float(str(val(i_neto)  or "0").replace(".", "").replace(",", ".").replace("$", "")) if i_neto  is not None else 0.0
+            iva   = float(str(val(i_iva)   or "0").replace(".", "").replace(",", ".").replace("$", "")) if i_iva   is not None else 0.0
+            total = float(str(val(i_total) or "0").replace(".", "").replace(",", ".").replace("$", "")) if i_total is not None else 0.0
+        except (ValueError, AttributeError):
+            neto = iva = total = 0.0
+
+        fecha = val(i_fecha)
+        if hasattr(fecha, "strftime"):
+            fecha = fecha.strftime("%Y-%m-%d")
+        else:
+            fecha = str(fecha or "").strip()[:10]
+
+        tipo_raw = str(val(i_tipo) or "").strip()
+        # El SII a veces entrega el nombre completo; extraer solo el codigo si es numerico
+        tipo = tipo_raw if tipo_raw.isdigit() else ""
+
+        folio = str(val(i_folio) or "").strip().split(".")[0]  # quitar decimales si es float
+
+        docs.append({
+            "rut_emisor":   rut.replace(".", "").replace("-", "").upper(),
+            "razon_social": str(val(i_razon) or "").strip(),
+            "tipo_doc":     tipo,
+            "folio":        folio,
+            "fecha":        fecha,
+            "monto_neto":   neto,
+            "monto_iva":    iva,
+            "monto_total":  total,
+        })
+
+    wb.close()
+    return docs
 
 
 def listar_y_descargar_rcv(year: int, month: int, rut: str, password: str,
                             folios_ya_en_odoo=None, headless: bool = False) -> ResultadoRCV:
-    from playwright.sync_api import sync_playwright
+    """
+    Obtiene DTEs del mes desde el detalle SII.
+
+    Flujo:
+      1. Llama a descargar_detalle_compras() — reutiliza el scraper que ya funciona
+      2. Si hay Excel descargado, lo parsea fila por fila
+      3. Filtra los que ya estan en Odoo (folios_ya_en_odoo)
+      4. Retorna solo los nuevos que corresponde importar
+    """
+    from src.actions.compras.descarga_sii import descargar_detalle_compras
+
     folios_ya_en_odoo = folios_ya_en_odoo or set()
     resultado = ResultadoRCV(periodo=f"{year:04d}-{month:02d}")
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
-        ctx = browser.new_context(accept_downloads=True)
-        page = ctx.new_page()
-        try:
-            _login_rcv(page, rut, password)
-            if SII_RCV_URL not in page.url and "consdcv" not in page.url:
-                resultado.errores.append(f"Login fallo — URL: {page.url[:80]}")
-                return resultado
+    # Intentar obtener el detalle (puede estar ya en disco de corridas anteriores)
+    res_descarga = descargar_detalle_compras(
+        year, month,
+        rut=rut, password=password,
+        headless=headless,
+        esperar_generacion_seg=120,
+    )
 
-            # Navegar a detalle del periodo
-            page.goto(f"{SII_RCV_URL}#/index", timeout=20_000)
-            time.sleep(3)
-            try:
-                page.click("text=Compras", timeout=5_000)
-                time.sleep(1)
-            except Exception:
-                pass
-            mes_str = f"{month:02d}/{year}"
-            for sel in ["input[placeholder*='Período ']", "input[placeholder*='periodo ']",
-                        "input[placeholder*='mes ']", "#periodo"]:
-                try:
-                    page.fill(sel, mes_str, timeout=3_000); break
-                except Exception:
-                    continue
-            for btn in ["Consultar", "Buscar"]:
-                try:
-                    page.click(f"button:has-text('{btn} ')", timeout=3_000)
-                    time.sleep(3)
-                    break
-                except Exception:
-                    continue
-            page.wait_for_load_state("networkidle", timeout=15_000)
+    if res_descarga.get("estado") == "solicitado":
+        resultado.errores.append("Detalle SII solicitado — listo en próxima corrida")
+        return resultado
 
-            filas = _extraer_tabla_dte(page)
-            resultado.total_sii = len(filas)
+    if res_descarga.get("estado") == "error" or not res_descarga.get("archivo"):
+        resultado.errores.append(res_descarga.get("error", "Error desconocido al descargar detalle"))
+        # Intentar leer archivo existente en disco como fallback
+        from src.actions.compras.descarga_sii import DOWNLOADS_DIR
+        archivo_disco = DOWNLOADS_DIR / f"detalle_compras_{year:04d}-{month:02d}.xlsx"
+        if not archivo_disco.exists():
+            return resultado
+        archivo = archivo_disco
+    else:
+        archivo = res_descarga["archivo"]
 
-            for fila in filas:
-                tipo = fila.get("tipo_doc", "")
-                folio = fila.get("folio", "")
-                rut_e = fila.get("rut_emisor", "")
-                dte = DTERecibido(
-                    rut_emisor=rut_e, razon_social=fila.get("razon_social", ""),
-                    tipo_doc=tipo, folio=folio, fecha_emision=fila.get("fecha", ""),
-                    monto_neto=fila.get("monto_neto", 0), monto_iva=0,
-                    monto_total=fila.get("monto_total", 0))
+    filas = _parsear_excel_detalle(Path(archivo))
+    resultado.total_sii = len(filas)
 
-                if folio in folios_ya_en_odoo:
-                    resultado.ya_en_odoo += 1
-                    dte.xml_disponible = False
-                    resultado.dtes.append(dte); continue
+    for fila in filas:
+        folio = fila.get("folio", "")
+        tipo  = fila.get("tipo_doc", "")
 
-                if tipo not in TIPOS_AUTO_IMPORTAR:
-                    dte.xml_disponible = False
-                    dte.error = f"Tipo {tipo} no auto-importable"
-                    resultado.dtes.append(dte); continue
+        dte = DTERecibido(
+            rut_emisor=fila.get("rut_emisor", ""),
+            razon_social=fila.get("razon_social", ""),
+            tipo_doc=tipo,
+            folio=folio,
+            fecha_emision=fila.get("fecha", ""),
+            monto_neto=fila.get("monto_neto", 0),
+            monto_iva=fila.get("monto_iva", 0),
+            monto_total=fila.get("monto_total", 0),
+        )
 
-                xml = _descargar_xml_dte(page, tipo, folio, rut_e)
-                if xml:
-                    dte.xml_bytes = xml
-                    resultado.importados += 1
-                else:
-                    dte.error = "No se pudo descargar XML"
-                resultado.dtes.append(dte)
-        except Exception as e:
-            resultado.errores.append(str(e))
-        finally:
-            browser.close()
+        if folio in folios_ya_en_odoo:
+            resultado.ya_en_odoo += 1
+            continue
+
+        if tipo and tipo not in TIPOS_AUTO_IMPORTAR:
+            dte.error = f"Tipo {tipo} ({NOMBRE_TIPO_DOC.get(tipo, '?')}) no auto-importable"
+            resultado.dtes.append(dte)
+            continue
+
+        # Sin XML (el detalle Excel no incluye el XML DTE individual)
+        # importador_odoo.py crea la linea con los datos del Excel
+        dte.xml_disponible = False
+        resultado.dtes.append(dte)
+
     return resultado
