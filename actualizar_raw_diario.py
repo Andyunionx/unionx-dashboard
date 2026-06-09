@@ -95,8 +95,13 @@ def cargar_raw_parquet() -> pd.DataFrame:
     # Construir DataFrame con las 56 columnas del Excel
     out = pd.DataFrame(index=df.index)
 
-    # Columna 1: Fecha Comp = fecha_venta + 364 dias (formato date)
-    out['Fecha Comp'] = (df['fv'] + pd.Timedelta(days=364)).dt.strftime('%Y-%m-%d')
+    # Columna 1: Fecha Comp para alinear LY a TY (sin meter fechas en TY+1)
+    # - Filas LY (2025): fecha_venta + 364 dias -> 2026 (alinea con TY)
+    # - Filas TY (2026): fecha_venta misma (sin alterar, ya esta en TY)
+    fc = df['fv'].copy()
+    es_ly = df['anio'] < ANIO_TY
+    fc.loc[es_ly] = fc.loc[es_ly] + pd.Timedelta(days=364)
+    out['Fecha Comp'] = fc.dt.strftime('%Y-%m-%d')
 
     # Columnas mapeadas directo del parquet
     for excel_col, parq_col in PARQUET_MAP.items():
