@@ -1,36 +1,32 @@
 {
-  "generado_en": "2026-06-09T08:57:41.817606",
+  "generado_en": "2026-06-09T19:55:26.409298",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13821,
-  "total_monto_pendiente_clp": 874612354.0,
+  "total_documentos_pendientes": 11910,
+  "total_monto_pendiente_clp": 780842607.0,
   "monto_por_aging": {
     "+90 días": 35446517.0,
-    "1-30 días": 576810687.0,
-    "31-60 días": 91342739.0,
+    "1-30 días": 483433335.0,
+    "31-60 días": 83048874.0,
     "61-90 días": 14805648.0,
-    "Vigente": 156206763.0
+    "Vigente": 164108233.0
   },
   "monto_por_tipo": {
-    "BOLETA": 657986223.0,
-    "FACTURA": 216626131.0
+    "BOLETA": 564186495.0,
+    "FACTURA": 216656112.0
   },
   "top_20_deudores": [
     {
-      "partner": "Cliente Mercado Libre",
-      "monto": 153804647.0
+      "partner": "Cliente Falabella Fcom",
+      "monto": 127934448.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 128607198.0
+      "partner": "Cliente Mercado Libre",
+      "monto": 115079026.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
       "monto": 109451656.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 79441223.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -54,7 +50,11 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 23174529.0
+      "monto": 25201422.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 23044918.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -62,7 +62,11 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 18699415.0
+      "monto": 18963346.0
+    },
+    {
+      "partner": "abc S.A.",
+      "monto": 18665456.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -70,11 +74,7 @@
     },
     {
       "partner": "Comercializadora SP Digital SPA",
-      "monto": 14123544.0
-    },
-    {
-      "partner": "abc S.A.",
-      "monto": 13617139.0
+      "monto": 13357074.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 5007200.0
+      "monto": 5140179.0
     },
     {
       "partner": "Showtime SpA",
@@ -97,6 +97,6 @@
       "monto": 3392680.0
     }
   ],
-  "notas_credito_count": 534,
+  "notas_credito_count": 540,
   "pedidos_venta_count": 10000
 }
