@@ -647,18 +647,40 @@ def render():
                        "sku", "producto", "stock_actual", "venta_prom_3m"]].copy()
         _stock_v = df_jer["stock_actual"].values.astype(float).copy()
 
-        for ms, ml in zip(mes_strs_j, mes_labels_j):
-            _venta = (_ppto_piv[ms].reindex(df_jer["sku"].values, fill_value=0).values.astype(float)
-                      if ms in _ppto_piv.columns
-                      else np.zeros(len(df_jer)))
-            _tr    = (_tr_piv[ms].reindex(df_jer["sku"].values, fill_value=0).values.astype(float)
-                      if ms in _tr_piv.columns
-                      else np.zeros(len(df_jer)))
-            _cob   = np.where(_venta > 0, np.round(_stock_v / _venta, 1), np.nan)
-            df_jer[f"si_{ms}"]  = np.round(_stock_v).astype(int)   # stock inicio
-            df_jer[f"vt_{ms}"]  = np.round(_venta, 1)              # venta ppto
-            df_jer[f"tr_{ms}"]  = np.round(_tr).astype(int)        # tránsito
-            df_jer[f"cb_{ms}"]  = _cob                             # cobertura meses
+        # Pre-computar PPTO por mes (para promedio rolling 3m en la cobertura)
+        _skus_arr = df_jer["sku"].values
+        _ppto_by_month = []
+        for ms in mes_strs_j:
+            if ms in _ppto_piv.columns:
+                v = _ppto_piv[ms].reindex(_skus_arr, fill_value=0).values.astype(float)
+            else:
+                v = np.zeros(len(df_jer))
+            _ppto_by_month.append(v)
+
+        for i, (ms, ml) in enumerate(zip(mes_strs_j, mes_labels_j)):
+            _venta = _ppto_by_month[i]   # PPTO específico del mes
+            _tr    = (_tr_piv[ms].reindex(_skus_arr, fill_value=0).values.astype(float)
+                      if ms in _tr_piv.columns else np.zeros(len(df_jer)))
+
+            # Promedio rolling 3 meses: (PPTO_M + PPTO_M+1 + PPTO_M+2) / 3
+            v0 = _ppto_by_month[i]
+            v1 = _ppto_by_month[i+1] if i+1 < N_MESES_J else v0
+            v2 = _ppto_by_month[i+2] if i+2 < N_MESES_J else v1
+            _avg_ppto = (v0 + v1 + v2) / 3
+
+            # Stock + Pedido = Stock Inicio + Llegadas
+            _sp = _stock_v + _tr
+
+            # Cobertura = (Stock + Llegadas) / promedio 3m PPTO
+            _cob = np.where(_avg_ppto > 0, np.round(_sp / _avg_ppto, 1), np.nan)
+
+            df_jer[f"si_{ms}"] = np.round(_stock_v).astype(int)  # Stock Inicial
+            df_jer[f"tr_{ms}"] = np.round(_tr).astype(int)       # Llegadas/Tránsito
+            df_jer[f"sp_{ms}"] = np.round(_sp).astype(int)       # Stock + Pedido
+            df_jer[f"vt_{ms}"] = np.round(_venta, 1)             # Venta PPTO (mes específico)
+            df_jer[f"cb_{ms}"] = _cob                            # Cobertura meses
+
+            # Stock siguiente mes = stock - ventas + llegadas
             _stock_v = np.maximum(0.0, _stock_v - _venta + _tr)
 
         df_jer["_is_total"] = False   # columna auxiliar para estilo total
@@ -683,7 +705,7 @@ def render():
 
             # Ocultar columnas proyección individuales (se mostrarán como grupos)
             for ms in mes_strs_j:
-                for pref in ["si_","vt_","tr_","cb_"]:
+                for pref in ["si_","vt_","tr_","sp_","cb_"]:
                     gb.configure_column(f"{pref}{ms}", hide=True)
 
             # Calcular altura exacta: filas visibles (marcas colapsadas) + header + total
@@ -726,16 +748,19 @@ def render():
                 mes_group = {
                     "headerName": ml,
                     "children": [
-                        {"field": f"si_{ms}", "headerName": "Stock Ini", "width": 90,
+                        {"field": f"si_{ms}",  "headerName": "Stock Ini",  "width": 90,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"vt_{ms}", "headerName": "Venta",    "width": 80,
+                        {"field": f"tr_{ms}",  "headerName": "Llegadas",   "width": 80,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"tr_{ms}", "headerName": "Tránsito", "width": 80,
+                        {"field": f"sp_{ms}",  "headerName": "Stk+Ped",   "width": 80,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"cb_{ms}", "headerName": "Cob.",     "width": 70,
+                        {"field": f"vt_{ms}",  "headerName": "Vta PPTO",  "width": 80,
+                         "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                         "valueFormatter": num_fmt},
+                        {"field": f"cb_{ms}",  "headerName": "Cobert.",    "width": 72,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "avg",
                          "valueFormatter": cob_formatter, "cellStyle": cob_style},
                     ]
@@ -753,13 +778,15 @@ def render():
                 "_is_total": True,
             }
             for ms in mes_strs_j:
-                si_col, vt_col, tr_col, cb_col = f"si_{ms}", f"vt_{ms}", f"tr_{ms}", f"cb_{ms}"
+                si_col, vt_col = f"si_{ms}", f"vt_{ms}"
+                tr_col, sp_col, cb_col = f"tr_{ms}", f"sp_{ms}", f"cb_{ms}"
                 total_row[si_col] = int(df_jer[si_col].sum()) if si_col in df_jer.columns else 0
-                total_row[vt_col] = round(df_jer[vt_col].sum(), 1) if vt_col in df_jer.columns else 0
                 total_row[tr_col] = int(df_jer[tr_col].sum()) if tr_col in df_jer.columns else 0
+                total_row[sp_col] = int(df_jer[sp_col].sum()) if sp_col in df_jer.columns else 0
+                total_row[vt_col] = round(df_jer[vt_col].sum(), 1) if vt_col in df_jer.columns else 0
+                sp_sum = df_jer[sp_col].sum() if sp_col in df_jer.columns else 0
                 vt_sum = df_jer[vt_col].sum() if vt_col in df_jer.columns else 0
-                si_sum = df_jer[si_col].sum() if si_col in df_jer.columns else 0
-                total_row[cb_col] = round(si_sum / vt_sum, 1) if vt_sum > 0 else None
+                total_row[cb_col] = round(sp_sum / vt_sum, 1) if vt_sum > 0 else None
 
             grid_options["pinnedBottomRowData"] = [total_row]
 
