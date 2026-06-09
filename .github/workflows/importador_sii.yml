@@ -2,6 +2,11 @@ name: Importador SII -> Odoo (Auto-ingreso DTEs)
 
 on:
   workflow_dispatch:
+    inputs:
+      full_chain:
+        description: 'Importar + predistribuir + enviar borrador (solo a andres@)'
+        type: boolean
+        default: false
   schedule:
     # 8:30 AM Chile (11:30 UTC invierno) -- 30 min antes de distribucion_diaria
     - cron: "30 11 * * 1-5"
@@ -57,12 +62,16 @@ jobs:
         run: |
           Xvfb :99 -screen 0 1280x800x24 &
           sleep 2
-          python -X utf8 agente-odoo/scripts/run_importador_sii.py
+          CHAIN=$([ "${{ github.event.inputs.full_chain }}" = "true" ] && echo "--full-chain --test" || echo "")
+          python -X utf8 agente-odoo/scripts/run_importador_sii.py $CHAIN
 
-      - name: Upload debug si falla
-        if: failure()
+      - name: Upload debug (screenshots + XMLs)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: importador-debug-${{ github.run_id }}
-          path: /tmp/dte_*.xml
-          retention-days: 3
+          path: |
+            /tmp/dte_*.xml
+            data/contabilidad/sii/debug_xml/
+          if-no-files-found: ignore
+          retention-days: 5
