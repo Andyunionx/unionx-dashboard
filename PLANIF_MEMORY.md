@@ -5,57 +5,66 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-04 (sesión final)
+## 🗓️ Última sesión: 2026-06-09
 
 ### ✅ Estado actual — Vista Cobertura por Producto COMPLETA
 
-#### Tab "🌳 Jerárquico" — funcionalidad completa
+#### Tab "🌳 Jerárquico" — funcionalidad completa (desplegado en prod)
 - **Tabla dinámica AG-Grid** con desplegables Marca → Cat Padre → Cat Hijo → SKU
 - **Proyección 6 meses integrada** (Jun–Nov 2026):
-  - Columnas agrupadas por mes: Stock Ini | Venta | Tránsito | Cob. Meses
-  - Venta = PPTO del FCST (planif_forecast_manual) — si no hay PPTO, muestra 0
-  - Tránsito = planif_transito_baseline con regla día 5 (6+ = mes siguiente)
-  - Cobertura con colores: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
-- **TOTAL GENERAL** pinneado al fondo: sin ícono expandir, sin contadores
-- **Números**: separador de miles, sin decimales (excepto Cob. = 1 decimal)
-- **Totales aggregados** por nivel (sum stock/venta/tránsito, avg cob)
+  - Columnas agrupadas por mes: **Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
+  - Stock Ini = stock actual al inicio de cada mes
+  - Llegadas = tránsito COMEX confirmado (ETA con regla día 5)
+  - Stk+Ped = Stock Ini + Llegadas
+  - Vta PPTO = forecast del FCST (planif_forecast_manual)
+  - Cobertura = (Stock Ini + Llegadas) / avg(PPTO_M, PPTO_M+1, PPTO_M+2)
+  - Colores cobertura: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
+- **TOTAL GENERAL** pinneado al fondo: sin ícono expandir
 - **Filtro "Solo SKUs marca propia"** (default ON) → excluye "Sin clasificar"
 
-#### Fuentes de datos (alineadas a Triada Proyectada)
-- Base SKUs: `planif_master_sku` (3,006 SKUs)
-- Stock: `planif_stock_baseline` (IDs correctos, 3,797 SKUs)
-- Venta proyectada: `planif_forecast_manual` (PPTO FCST, 622 SKUs con Jun-Ago)
-- Tránsito: `planif_transito_baseline` (confirmados, sin RFQ)
-- Ventas 6sem: ventas_historico rolling 42d → tasa mensual
+#### Datos Jun 26 validados
+| Marca | Stock Hoy | Llegadas | Stk+Ped | Vta PPTO |
+|-------|-----------|----------|---------|----------|
+| Lhotse | 61.406 | 800 | 62.206 | 14.587 |
+| Simplit | 31.260 | 3.860 | 35.120 | 17.453 |
+| **TOTAL** | **121.165** | **6.779** | **127.944** | **40.531** |
 
-#### Números validados vs FCST
-- Lhotse junio: **14,587** ✅ | Simplit junio: **17,453** ✅
-- TOTAL GENERAL: **128,674** stock | **40,531** venta jun | **3.2** cob jun
+#### Fuentes de datos
+- Base SKUs: `planif_master_sku` (3,006 SKUs)
+- **Stock: `data/stock/skus.parquet`** (Stock LIVE, actualizado cada 3h via sync_stock.yml)
+- Venta proyectada: `planif_forecast_manual` (PPTO FCST, 677 SKUs Jun-Ene)
+- Tránsito: `planif_transito_baseline` (confirmados hasta jun-25)
+- Tránsito futuro: `planif_forecast_transito` (FCST Aug-Nov, si existe)
+
+#### Fix pantuflas aplicado
+- 23 SKUs Lhotse pantuflas actualizados de `LHPANIM{color}-{XX}/{YY}` → `LHPANIM{color}{XX}-{YY}`
+- Commit: `9263ec2`
 
 ---
 
 ## 🔲 Pendientes Felipe (próxima sesión)
 
-- [ ] Verificar visualmente la tabla después del merge de Andrés
-- [ ] Cuando Turso tenga datos → verificar que `cargar_forecast_manual_mensual()` lo tome
-- [ ] Agregar tránsito proyectado FCST para Ago-Nov:
-  → Correr `python extract_forecast_transito.py` con el Excel FCST
+- [ ] Verificar cobertura de Lhotse con los nuevos números (debería ser ~4.3-4.6m)
+- [ ] Agregar columna **"Compra"** desde el FCST Excel → script `extract_forecast_transito.py` ya existe, hay que agregar extracción de columnas `Compra PPTO MES`
 - [ ] Actualizar `ventas_historico.parquet` con datos de Mayo+Junio 2026
+- [ ] PR #90 merge → para que Andrés tenga los cambios en la app oficial
 
 ---
 
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `24336cc` — formato miles sin decimales
+**Último commit**: `d270888` — Cobertura avg 3m + Stk+Ped + Stock LIVE
 
 **Qué incluye este branch:**
-1. Vista completa "Cobertura por Producto" (`views/planning/triada_cobertura.py`)
-2. Nuevo script `extract_forecast_transito.py` — para tránsito FCST Aug-Nov
-3. Snapshots desde main: `planif_forecast_manual`, `planif_stock_live`, `planif_ventas_diarias_sku`
-4. `requirements.txt` con `streamlit-aggrid==1.0.5`
+1. Vista "Cobertura por Producto" completamente renovada
+   - Fórmula correcta: `(Stk+Ped) / avg(PPTO_M, M+1, M+2)`
+   - Columnas: Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.
+2. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
+3. Fix pantuflas Lhotse (23 SKUs formato nuevo)
+4. `requirements.txt` actualizado
 
-**Impacto**: CERO impacto en vistas existentes. Solo agrega/mejora la vista Cobertura.
+**Impacto**: CERO impacto en vistas existentes.
 
 ---
 
@@ -64,14 +73,25 @@
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `24336cc` — números con separador de miles |
+| Último commit | `d270888` |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
 | App oficial | `https://unionx-planificacion.streamlit.app/` |
-| Reboot | JS: Manage app → expand terminal → ⋮ → Reboot app |
+| Reboot full | Abrir panel ⋮ → "Reboot app" → Confirmar (funciona desde la login page con el panel expandido) |
+| **IMPORTANTE** | Para forzar full redeploy (re-clonar repo): cambiar versión en requirements.txt + commit que toque triada_cobertura.py al mismo tiempo → luego Reboot manual desde el ⋮ |
 | PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
-| Stock file | `data/planificacion/snapshots/planif_stock_baseline.parquet` |
+| Stock file | `data/stock/skus.parquet` (Stock LIVE) |
 | Tránsito | `data/planificacion/snapshots/planif_transito_baseline.parquet` |
+| Master SKU | `data/planificacion/snapshots/planif_master_sku.parquet` |
+
+### 🔁 Cómo forzar redeploy en Streamlit Cloud (lección aprendida)
+
+Streamlit Cloud **NO** re-clona el repo automáticamente para cambios de Python (solo soft restart).
+Para forzar un full redeploy que tome los últimos commits:
+1. Hacer un commit que cambie `requirements.txt` (versión real, no solo comentario) **Y** también el archivo `.py` que necesita actualizarse
+2. Push
+3. En el app: abrir panel "Manage app" → click `⋮` → "Reboot app" → Confirmar
+4. Streamlit hará un full redeploy con re-clone del repo
 
 ---
 
-*Actualizado automáticamente por Claude al cierre de sesión.*
+*Actualizado automáticamente por Claude al cierre de sesión 2026-06-09.*
