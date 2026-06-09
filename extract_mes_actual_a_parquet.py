@@ -329,6 +329,26 @@ def main():
         except Exception as e:
             print(f"   [WARN] overlay fecha_venta no aplicado: {type(e).__name__}: {str(e)[:80]}")
 
+    # Overlay canal B2B (pedidos B2B que en Odoo quedan con canal vacio/Website)
+    overlay_canal = PROJECT_ROOT / 'data' / 'correcciones' / 'fix_canal_b2b.json'
+    if overlay_canal.exists():
+        try:
+            ovl_b2b = _json.loads(overlay_canal.read_text(encoding='utf-8')).get('correcciones', {})
+            if ovl_b2b:
+                ped_str = df['pedido'].astype(str)
+                n_fix = 0
+                for pedido, fix in ovl_b2b.items():
+                    mask = ped_str == pedido
+                    if mask.sum() > 0:
+                        for col, val in fix.items():
+                            if col in df.columns:
+                                df.loc[mask, col] = val
+                        n_fix += int(mask.sum())
+                if n_fix > 0:
+                    print(f"   [overlay canal B2B] {n_fix} filas reclasificadas con fix_canal_b2b.json")
+        except Exception as e:
+            print(f"   [WARN] overlay canal B2B no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     # Append manuales (ventas externas no en Odoo: El Volcan, Sodimac manual, etc.)
     # Cada archivo en data/manuales/*.parquet se concatena al final del extract.
     manuales_dir = PROJECT_ROOT / 'data' / 'manuales'
