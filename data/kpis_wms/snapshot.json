@@ -1,14 +1,14 @@
 {
-  "generado_en": "2026-06-10T07:11:24.687351",
+  "generado_en": "2026-06-10T18:00:56.206497",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0034591357323558265,
-      "total_pickings": 19369,
+      "valor": 0.003451473315474964,
+      "total_pickings": 19412,
       "on_time": 67,
-      "on_time_pct": 0.0034591357323558265,
-      "in_full": 19365,
-      "in_full_pct": 0.9997934844338892,
+      "on_time_pct": 0.003451473315474964,
+      "in_full": 19408,
+      "in_full_pct": 0.9997939418916134,
       "both": 67,
       "error": null
     },
@@ -23,18 +23,39 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998850750842783,
-      "ok": 26101,
-      "total": 26104,
+      "valor": 0.9998853824405899,
+      "ok": 26171,
+      "total": 26174,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.0573286699107864,
-      "n_recepciones": 274,
+      "valor": 6.981006819093461,
+      "n_recepciones": 277,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/00997",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-06-10 16:02",
+          "done": "2026-06-10 16:03"
+        },
+        {
+          "picking": "CA1/RET/00998",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-06-10 16:03",
+          "done": "2026-06-10 16:03"
+        },
+        {
+          "picking": "CA1/IN/00881",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-10 13:20",
+          "done": "2026-06-10 13:21"
+        },
         {
           "picking": "CA1/IN/00879",
           "proveedor": "Cliente Interno",
@@ -153,46 +174,25 @@
           "horas": 0.5,
           "scheduled": "2026-05-29 12:47",
           "done": "2026-05-29 13:15"
-        },
-        {
-          "picking": "CA1/IN/00855",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-28 17:49",
-          "done": "2026-05-28 17:49"
-        },
-        {
-          "picking": "CA1/IN/00854",
-          "proveedor": "Importaciones Andres Matias Muñoz Suban E.I. De Responsabilidad Li",
-          "horas": 0.3,
-          "scheduled": "2026-05-28 16:58",
-          "done": "2026-05-28 17:16"
-        },
-        {
-          "picking": "CA1/IN/00852",
-          "proveedor": "Partners Impresores SPA",
-          "horas": 0.4,
-          "scheduled": "2026-05-28 16:48",
-          "done": "2026-05-28 17:15"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9002337873551535,
+      "valor": 0.8962503810588355,
       "total_so": 20000,
-      "total_con_pickings": 19676,
-      "cumplidos": 17713,
+      "total_con_pickings": 19682,
+      "cumplidos": 17640,
       "parciales": 19,
-      "sin_iniciar": 1944,
+      "sin_iniciar": 2023,
       "error": null
     },
     "oct_30d": {
-      "valor": 42.51915096733536,
-      "n_orders": 19923,
+      "valor": 42.476287355170456,
+      "n_orders": 19966,
       "min_h": 0.025,
       "max_h": 597.8994444444445,
-      "mediana_h": 27.736666666666668,
+      "mediana_h": 27.665555555555557,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 15559,
+      "lineas": 15629,
       "mes": "2026-06",
       "error": null
     },
@@ -6720,12 +6720,12 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0034591357323558265,
-      "total_pickings": 19369,
+      "valor": 0.003451473315474964,
+      "total_pickings": 19412,
       "on_time": 67,
-      "on_time_pct": 0.0034591357323558265,
-      "in_full": 19365,
-      "in_full_pct": 0.9997934844338892,
+      "on_time_pct": 0.003451473315474964,
+      "in_full": 19408,
+      "in_full_pct": 0.9997939418916134,
       "both": 67,
       "error": null
     },
@@ -6742,20 +6742,41 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998850750842783,
-      "ok": 26101,
-      "total": 26104,
+      "valor": 0.9998853824405899,
+      "ok": 26171,
+      "total": 26174,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.0573286699107864,
-      "n_recepciones": 274,
+      "valor": 6.981006819093461,
+      "n_recepciones": 277,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/00997",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-06-10 16:02",
+          "done": "2026-06-10 16:03"
+        },
+        {
+          "picking": "CA1/RET/00998",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-06-10 16:03",
+          "done": "2026-06-10 16:03"
+        },
+        {
+          "picking": "CA1/IN/00881",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-10 13:20",
+          "done": "2026-06-10 13:21"
+        },
         {
           "picking": "CA1/IN/00879",
           "proveedor": "Cliente Interno",
@@ -6874,27 +6895,6 @@
           "horas": 0.5,
           "scheduled": "2026-05-29 12:47",
           "done": "2026-05-29 13:15"
-        },
-        {
-          "picking": "CA1/IN/00855",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-28 17:49",
-          "done": "2026-05-28 17:49"
-        },
-        {
-          "picking": "CA1/IN/00854",
-          "proveedor": "Importaciones Andres Matias Muñoz Suban E.I. De Responsabilidad Li",
-          "horas": 0.3,
-          "scheduled": "2026-05-28 16:58",
-          "done": "2026-05-28 17:16"
-        },
-        {
-          "picking": "CA1/IN/00852",
-          "proveedor": "Partners Impresores SPA",
-          "horas": 0.4,
-          "scheduled": "2026-05-28 16:48",
-          "done": "2026-05-28 17:15"
         }
       ],
       "error": null
