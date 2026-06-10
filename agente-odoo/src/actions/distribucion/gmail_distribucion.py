@@ -184,6 +184,18 @@ def _seccion_sii(comparacion_sii) -> str:
 </table>{nota_truncado}"""
 
 
+def ya_enviado_hoy(token_path) -> bool:
+    """True si ya se envió el mail de análisis diario hoy (evita pulsos duplicados)."""
+    try:
+        service = _get_service(token_path)
+        hoy = datetime.now().strftime("%Y/%m/%d")
+        query = f'in:sent subject:"{ASUNTO_PREFIJO}" subject:"Análisis diario" after:{hoy}'
+        res = service.users().messages().list(userId="me", q=query, maxResults=1).execute()
+        return bool(res.get("messages"))
+    except Exception:
+        return False  # ante la duda, enviar
+
+
 def send_propuesta_completa(
     excels: list[Path],
     facturas_resumen: list[dict],

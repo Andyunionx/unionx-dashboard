@@ -334,7 +334,7 @@ def listar_y_descargar_rcv(
     # ── Paso 1: obtener Excel con lista de docs ─────────────────────────────
     res = descargar_detalle_compras(
         year, month, rut=rut, password=password,
-        headless=headless, esperar_generacion_seg=120,
+        headless=headless, esperar_generacion_seg=300,
     )
 
     if res.get("estado") == "solicitado":

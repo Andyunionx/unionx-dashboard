@@ -43,7 +43,9 @@ CUENTAS_DESTINO = {
                      # Ripley B2B, centralización
                      "cobro uso b2b", "centralizacion", "centralización",
                      # FBR: almacenamiento = comisión (no envíos)
-                     "almacenamiento"],
+                     "almacenamiento",
+                     # Duty Free y otros: acciones comerciales = comisión por venta
+                     "acciones comerciales", "accion comercial", "acción comercial"],
     },
 }
 

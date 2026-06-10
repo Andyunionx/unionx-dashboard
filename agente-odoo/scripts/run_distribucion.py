@@ -37,7 +37,8 @@ from src.actions.distribucion.clasificador import clasificar_factura
 from src.actions.distribucion.template_excel import generar_excel_aprobacion
 from src.actions.distribucion.memoria import cargar_memoria, resumen_memoria
 from src.actions.distribucion.aplicador import aplicar_distribucion, aplicar_directo
-from src.actions.distribucion.gmail_distribucion import send_propuesta_completa, leer_respuestas
+from src.actions.distribucion.gmail_distribucion import (
+    send_propuesta_completa, leer_respuestas, ya_enviado_hoy)
 from src.actions.distribucion.analisis_ruts import detectar_ruts_sin_partner
 from datetime import date as _date
 
@@ -261,6 +262,9 @@ def cmd_detectar_y_clasificar(args):
         print("✓ No hay facturas pendientes de distribución.\n")
         # Igual enviamos el mail con las otras secciones (RUTs + SII)
         if args.test or args.send_mail:
+            if args.send_mail and not args.test and ya_enviado_hoy(TOKEN_GMAIL):
+                print("► Mail de análisis diario ya enviado hoy — skip (pulso 1x/día)")
+                return []
             print("► Enviando mail de análisis diario (sin distribuciones hoy)...")
             if args.test:
                 destinatarios = ["andres@unionx.cl"]; cc = []
@@ -327,6 +331,10 @@ def cmd_detectar_y_clasificar(args):
     print(f"✓ Excel generado: {excel_path.name}\n")
 
     if args.test or args.send_mail:
+        if args.send_mail and not args.test and ya_enviado_hoy(TOKEN_GMAIL):
+            print("► Mail de análisis diario ya enviado hoy — skip (pulso 1x/día)")
+            print(f"  Excel disponible en: agente-odoo/data/distribucion/{excel_path.name}")
+            return excels_generados
         print("► Enviando correo...")
         resumen_facturas = [
             {

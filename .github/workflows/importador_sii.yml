@@ -8,8 +8,10 @@ on:
         type: boolean
         default: false
   schedule:
-    # 8:30 AM Chile (11:30 UTC invierno) -- 30 min antes de distribucion_diaria
+    # Mañana: solicita/descarga detalle SII — 30 min antes de distribucion_diaria
     - cron: "30 11 * * 1-5"
+    # Tarde (15:00 Chile): descarga el detalle solicitado en la mañana (mismo día)
+    - cron: "0 19 * * 1-5"
 
 concurrency:
   group: importador-sii
