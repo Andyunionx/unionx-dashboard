@@ -31,6 +31,7 @@ ORIGINAL = PROJECT_ROOT / 'data' / 'planillas' / 'Reporte Ventas Empresa 2026 VS
 # Carpeta Drive "Reporte Automático RAW" (id fijo, compartida con OAuth user)
 DRIVE_CARPETA_ID = '18RKgdGwWGM8tEGqltcrruCPB-LaTwZxx'
 NOMBRE_LIVE = 'Reporte Ventas Empresa LIVE.xlsx'
+ANIO_TY = 2026  # Ano TY (This Year). LY = ANIO_TY - 1.
 # Output local: en GH Actions usa /tmp, local usa data/outputs/
 if os.environ.get('GITHUB_ACTIONS') == 'true':
     OUTPUT = Path('/tmp') / NOMBRE_LIVE
