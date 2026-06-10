@@ -1,28 +1,28 @@
 {
-  "generado_en": "2026-06-10T14:49:55.636865",
+  "generado_en": "2026-06-10T20:09:10.091854",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11740,
-  "total_monto_pendiente_clp": 773328665.0,
+  "total_documentos_pendientes": 11552,
+  "total_monto_pendiente_clp": 766775685.0,
   "monto_por_aging": {
     "+90 días": 35472775.0,
-    "1-30 días": 476567676.0,
+    "1-30 días": 474558226.0,
     "31-60 días": 82908024.0,
     "61-90 días": 14766370.0,
-    "Vigente": 163613820.0
+    "Vigente": 159070290.0
   },
   "monto_por_tipo": {
-    "BOLETA": 556672553.0,
-    "FACTURA": 216656112.0
+    "BOLETA": 556302983.0,
+    "FACTURA": 210472702.0
   },
   "top_20_deudores": [
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 122806298.0
+      "partner": "Cliente Mercado Libre",
+      "monto": 118711177.0
     },
     {
-      "partner": "Cliente Mercado Libre",
-      "monto": 115079026.0
+      "partner": "Cliente Falabella Fcom",
+      "monto": 110779451.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
@@ -38,15 +38,15 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 37112883.0
+      "monto": 37620763.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 30533593.0
+      "monto": 30861404.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 26039170.0
+      "monto": 26306070.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 22742678.0
+      "monto": 23367755.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -81,8 +81,8 @@
       "monto": 8442326.0
     },
     {
-      "partner": "Cencosud Retail S.A",
-      "monto": 6183410.0
+      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+      "monto": 5487008.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -97,6 +97,6 @@
       "monto": 3392680.0
     }
   ],
-  "notas_credito_count": 540,
+  "notas_credito_count": 541,
   "pedidos_venta_count": 10000
 }
