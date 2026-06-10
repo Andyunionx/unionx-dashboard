@@ -2,8 +2,13 @@
   "_meta": {
     "doc": "Asocia SKUs reales y actualiza costos para FAC 097825 (Sodimac, ventas B2B). Mantiene canal 'UnionX B2B'.",
     "fecha_creacion": "2026-06-08",
+    "ultima_actualizacion": "2026-06-10",
     "autor": "Andres",
-    "fuente": "Detalle real de factura entregado manualmente por Andres"
+    "fuente": "Detalle real de factura entregado manualmente por Andres",
+    "notas": [
+      "Cajas Sodimac 5to a 8vo Basico estandar (160u) YA viene de Odoo, asignar SKU/costo en lineas (no en adicionales).",
+      "CAJASOD4DISE: 4 lineas error de diseno, SKU diferenciado por variante para evitar dedup literal."
+    ]
   },
   "documento": "FAC 097825",
   "lineas": [
@@ -33,6 +38,7 @@
     },
     {
       "match_producto": "Cajas Sodimac 1ero a 4to Medio",
+      "match_exact_end": true,
       "sku_nuevo": "CAJASOD1A4M",
       "costo_unitario": 6826,
       "costo_total": 1092160
@@ -45,12 +51,14 @@
     },
     {
       "match_producto": "Cajas Sodimac Educacion Superior",
+      "match_exact_end": true,
       "sku_nuevo": "CAJASODEP",
       "costo_unitario": 6826,
       "costo_total": 525602
     },
     {
       "match_producto": "Cajas Sodimac 1ero a 4to Basico",
+      "match_exact_end": true,
       "sku_nuevo": "CAJASOD1A4B",
       "costo_unitario": 6826,
       "costo_total": 1092160
@@ -60,12 +68,19 @@
       "sku_nuevo": "CAJASOD5A8",
       "costo_unitario": 6200,
       "costo_total": 279000
+    },
+    {
+      "match_producto": "Cajas Sodimac 5to a 8vo Basico",
+      "match_exact_end": true,
+      "sku_nuevo": "CAJASOD5A8",
+      "costo_unitario": 6826,
+      "costo_total": 1092160
     }
   ],
   "lineas_adicionales": [
     {
       "producto": "Cajas Sodimac 1ero a 4to Basico (error de diseño)",
-      "sku": "CAJASOD4DISE",
+      "sku": "CAJASOD4DISE-1A4B",
       "cantidad": 2,
       "venta_bruta": 0,
       "venta_neta": 0,
@@ -74,7 +89,7 @@
     },
     {
       "producto": "Cajas Sodimac 5to a 8vo Basico Rojas (error de diseño)",
-      "sku": "CAJASOD4DISE",
+      "sku": "CAJASOD4DISE-5A8R",
       "cantidad": 2,
       "venta_bruta": 0,
       "venta_neta": 0,
@@ -83,7 +98,7 @@
     },
     {
       "producto": "Cajas Sodimac Educacion Superior (error de diseño)",
-      "sku": "CAJASOD4DISE",
+      "sku": "CAJASOD4DISE-EP",
       "cantidad": 2,
       "venta_bruta": 0,
       "venta_neta": 0,
@@ -92,21 +107,12 @@
     },
     {
       "producto": "Cajas Sodimac 1ero a 4to Medio (error de diseño)",
-      "sku": "CAJASOD4DISE",
+      "sku": "CAJASOD4DISE-1A4M",
       "cantidad": 2,
       "venta_bruta": 0,
       "venta_neta": 0,
       "costo_unitario": 20000,
       "costo_total": 40000
-    },
-    {
-      "producto": "Cajas Sodimac 5to a 8vo Basico",
-      "sku": "CAJASOD5A8",
-      "cantidad": 160,
-      "venta_bruta": 0,
-      "venta_neta": 0,
-      "costo_unitario": 6826,
-      "costo_total": 1092160
     },
     {
       "producto": "Audifonos Bluetooth TWS Pantalla Touch ANC RMPLUS+ Lhotse (Blanco) - adicionales",
