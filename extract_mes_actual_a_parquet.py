@@ -396,6 +396,21 @@ def main():
         print(f"   [dedup] {n_pre:,} -> {n_post:,} filas (-{n_pre-n_post} duplicados literales)")
     df = df_dedup
 
+    # Forzar columnas object/texto a string. Los archivos manuales pueden traer
+    # datetime.time / int / etc, y al concat con extract Odoo se mezclan tipos.
+    # PyArrow rompe en to_parquet si una columna object tiene tipos heterogeneos.
+    cols_texto_final = [c for c in COLS_DB if c not in (
+        'cantidad', 'venta_bruta', 'venta_neta', 'costo_unitario', 'costo_total',
+        'margen_front', 'comision_pct', 'comision', 'logistica', 'marketing',
+        'margen_final', 'anio_venta', 'mes_venta', 'semana_venta', 'hora_venta_num',
+        'fecha_venta',
+    )]
+    for c in cols_texto_final:
+        if c in df.columns:
+            df[c] = df[c].apply(
+                lambda v: '' if v is None or (isinstance(v, float) and pd.isna(v)) else str(v)
+            )
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")
