@@ -919,6 +919,23 @@ def render():
                     c for c in _go2.get("columnDefs", [])
                     if not any(str(c.get("field","")).startswith(p) for p in _pref_men)
                 ]
+                # Asegurar que stock_cst_m y venta_prom_cst_m estén en columnDefs
+                # (a veces gb2.build() no los incluye si hay conflictos de campo)
+                _fields_presentes = {str(c.get("field","")) for c in _go2["columnDefs"]}
+                if "stock_cst_m" not in _fields_presentes:
+                    _go2["columnDefs"].append({
+                        "field": "stock_cst_m", "headerName": "Stock Hoy ($M)",
+                        "width": 115, "minWidth": 100, "suppressSizeToFit": True,
+                        "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                        "valueFormatter": _mfmt2
+                    })
+                if "venta_prom_cst_m" not in _fields_presentes:
+                    _go2["columnDefs"].append({
+                        "field": "venta_prom_cst_m", "headerName": "Vta/Mes ($M)",
+                        "width": 105, "minWidth": 95, "suppressSizeToFit": True,
+                        "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                        "valueFormatter": _mfmt2
+                    })
 
                 # Grupos de meses — misma estructura que Jerárquico
                 for _i_cst, (_ms2, _ml2) in enumerate(zip(mes_strs_j, mes_labels_j)):
