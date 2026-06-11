@@ -748,11 +748,12 @@ def render():
             }""")
             num_fmt = "x!=null?Math.round(x).toLocaleString():''"
 
-            for ms, ml in zip(mes_strs_j, mes_labels_j):
+            for _i_mes, (ms, ml) in enumerate(zip(mes_strs_j, mes_labels_j)):
+                _si_header = "Stock Hoy" if _i_mes == 0 else "Stock Ini"
                 mes_group = {
                     "headerName": ml,
                     "children": [
-                        {"field": f"si_{ms}",  "headerName": "Stock Ini",  "width": 90,  "minWidth": 75,
+                        {"field": f"si_{ms}",  "headerName": _si_header,  "width": 90,  "minWidth": 75,
                          "suppressSizeToFit": True,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
@@ -905,13 +906,14 @@ def render():
                     if not any(str(c.get("field","")).startswith(p) for p in _pref_mensuales)
                 ]
                 # Insertar grupos de meses después de stock_cst_m
-                for _ms2, _ml2 in zip(mes_strs_j, mes_labels_j):
+                for _i_cst, (_ms2, _ml2) in enumerate(zip(mes_strs_j, mes_labels_j)):
                     if f'csi_{_ms2}' not in _df_cst.columns:
                         continue
+                    _csi_header = "Stock Hoy ($M)" if _i_cst == 0 else "Stk Ini ($M)"
                     _go2["columnDefs"].append({
                         "headerName": _ml2,
                         "children": [
-                            {"field": f"csi_{_ms2}", "headerName": "Stk Ini ($M)", "width": 95,
+                            {"field": f"csi_{_ms2}", "headerName": _csi_header, "width": 105 if _i_cst == 0 else 95,
                              "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                              "valueFormatter": _mfmt2},
                             {"field": f"ctr_{_ms2}", "headerName": "Llegadas ($M)", "width": 100,
