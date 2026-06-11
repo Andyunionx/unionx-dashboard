@@ -5,115 +5,89 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-11
+## 🗓️ Última sesión: 2026-06-12
 
-### ✅ Estado actual — Vista Cobertura por Producto
-
-#### Tab "🌳 Jerárquico" — OK
-- Columnas por mes: **Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
+### ✅ Tab "🌳 Jerárquico" — Completamente funcional
+- Columnas mes actual: **Stock Hoy | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
+- Columnas meses futuros: **Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
 - Fórmula: `(Stock Ini + Llegadas) / avg(PPTO_M, M+1, M+2)`
 - Colores: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
-- Datos Jun 26: Lhotse 61.406u, Stk+Ped 62.206u, Cobert. 4.9m
+- Aggregación en filas de grupo ✅ (Bandú=1.270, Lhotse=61.406, etc.)
+- TOTAL GENERAL pinneado: 121.165 stock | 40.531 vta | 127.944 stk+ped
 
-#### Tab "💰 A Costo ($M)" — NUEVO ✅
-- Misma jerarquía que Jerárquico (Marca → Cat. Padre → Cat. Hijo → SKU)
-- Columna fija: **Stock Hoy ($M)** = stock_actual × Costo Unit / 1M
-- Columnas por mes: **Stk Ini ($M) | Llegadas ($M) | Stk+Ped ($M) | Vta PPTO ($M) | Cobert.**
-- **TOTAL GENERAL: $925,3M** (valor CIF internado de todo el inventario)
-- Formato: `$1,2M` (CLP millones, 1 decimal)
-- Costo Unit: columna `Costo Unit` de `data/stock/skus.parquet` (CIF internado)
-- Cobertura = mismos colores que Jerárquico (ratio unidades, no cambia con costo)
+### 🔶 Tab "💰 A Costo ($M)" — EN PROGRESO
+- **Estructura**: columnas correctas ($M CLP) ✅
+- **TOTAL GENERAL**: $925,3M Stock | $306,5M Vta/Mes ✅ 
+- **Filas de marca (agrupadas)**: NO muestran valores — bug de aggregación AG-Grid
+- **Filas expandidas (SKU)**: muestran valores correctamente ✅
+- **Último commit**: `cafa706` (fix NameError + DataFrame mínimo)
 
-#### Fuentes de datos
-- Base SKUs: `planif_master_sku` (3,006 SKUs)
-- Stock: `data/stock/skus.parquet` (Stock LIVE, actualizado cada 3h)
-- Costo: columna `Costo Unit` del mismo `skus.parquet` (CIF internado por SKU)
-- Venta proyectada: `planif_forecast_manual` (PPTO FCST, 677 SKUs Jun-Ene)
-- Tránsito confirmado: `planif_transito_baseline` (hasta jun-25)
-- Tránsito FCST: `planif_forecast_transito` (Jul-Nov 2026, 952 registros)
+#### Historia del bug de aggregación A Costo:
+El problema es que las **filas grupales** (marca/categoría) no muestran valores agregados para `stock_cst_m` y `venta_prom_cst_m`, aunque el TOTAL GENERAL pinneado SÍ muestra los valores (calculados en Python).
 
-#### Fix pantuflas
-- 23 SKUs Lhotse con formato nuevo (`LHPANIM{color}{XX}-{YY}`)
+**Lo que se investigó:**
+- Los valores $M están en `_df_grid_cst` (DataFrame mínimo, solo columnas necesarias) ✓
+- `aggFunc="sum"` y `enableValue=True` están configurados ✓
+- AG-Grid CommunityEdition SÍ soporta aggregation en group rows ✓
+- La razón exacta: desconocida — las celdas `[col-id="stock_cst_m"]` NO aparecen en las filas grupales (solo en el pinned row y header)
+
+**Pendiente diagnosticar/solucionar:**
+- Intentar con `groupDisplayType="singleColumn"` (sin "multipleColumns")
+- Intentar pre-computar aggregados en Python y pasarlos como extra rows
+- Intentar con `rowModelType="clientSide"` explícito
+- Verificar si el issue es específico de streamlit-aggrid 1.0.5
 
 ---
 
-## 🔲 Pendientes Felipe (próxima sesión)
+## 🔲 Pendientes Felipe
 
-- [ ] **Sobrestock por Categoria Padre** (stand by — retomar después del dashboard a costo)
-  - Tab nuevo "Sobrestock" dentro de Cobertura por Producto
-  - Productos con cobertura > 4m, agrupados por Categoria Padre
-  - Formato similar a hoja "Detalle Critico" del Excel analisis_planificacion_JUN26.xlsx
-- [ ] PR #90 merge → para que Andrés tenga los cambios en app oficial
-- [ ] Actualizar `ventas_historico.parquet` con datos de Mayo+Junio 2026
-- [ ] Actualizar FCST desde Google Drive cuando Andrés suba el link
+- [ ] **Fix aggregación filas grupo en tab A Costo** ← bloqueante
+- [ ] **Sobrestock por Categoria Padre** (stand by)
+- [ ] PR #90 merge → app oficial (Andrés)
+- [ ] Actualizar `ventas_historico.parquet` con Mayo+Junio 2026
+- [ ] FCST desde Google Drive (cuando Andrés suba el link)
 
 ---
 
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `44f6fd3`
+**Último commit**: `cafa706`
 
-**Qué incluye:**
-1. Tab "🌳 Jerárquico" — Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert. (fórmula avg 3m)
-2. Tab "💰 A Costo ($M)" — misma vista pero en $M CLP a costo CIF
+**Incluye:**
+1. Tab Jerárquico completo (Stock Hoy/Ini, Llegadas, Stk+Ped, Vta PPTO, Cobert.)
+2. Tab A Costo ($M) — estructura lista, aggregación de grupos pendiente
 3. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
-4. `cargar_costo_unit_sku()` en `_data_helpers.py`
-5. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
-6. Fix pantuflas Lhotse (23 SKUs)
-
-**Impacto**: CERO impacto en vistas existentes.
+4. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
+5. Fix pantuflas Lhotse (23 SKUs formato nuevo)
 
 ---
 
-## 🧠 Contexto técnico importante
+## 🧠 Contexto técnico
 
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `7083b4d` |
+| Último commit | `cafa706` |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
-| App oficial | `https://unionx-planificacion.streamlit.app/` |
-| Stock LIVE | `data/stock/skus.parquet` — columnas: SKU, Qty, Costo Unit, Valor, etc. |
+| Stock LIVE | `data/stock/skus.parquet` — col: SKU, Qty, Costo Unit, Valor |
 | PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
-| Tránsito file | `data/planificacion/snapshots/planif_transito_baseline.parquet` |
 | Tránsito FCST | `data/planificacion/snapshots/planif_forecast_transito.parquet` |
 | Master SKU | `data/planificacion/snapshots/planif_master_sku.parquet` |
-| Excel análisis | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\Analisis Planificacion\analisis_planificacion_JUN26.xlsx` |
+| FCST Excel local | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\FORECAST FINAL SKU 26-27 V2.xlsx` |
 
-### 🔁 Cómo forzar redeploy en Streamlit Cloud
-
-Streamlit Cloud NO re-clona para cambios Python (soft restart). Para full redeploy:
-1. Cambiar versión real en `requirements.txt` (ej: `rich==13.9.3` ↔ `rich==13.9.4`)
+### 🔁 Forzar full redeploy Streamlit Cloud
+1. Cambiar versión real en `requirements.txt` (rich 13.9.3 ↔ 13.9.4)
 2. Push
-3. Abrir Manage app → `⋮` → "Reboot app" → confirmar
+3. Manage app → ⋮ → Reboot app → Reboot
 
-### 🐛 Bug resuelto: columnas angostas en Jerárquico
-- **Síntoma**: columnas de Jun/Jul se achicaban a ~20px (números truncados como "1.")
-- **Causa**: AG-Grid redimensionaba las columnas visibles iniciales para llenar el viewport
-- **Fix**: agregar `minWidth` y `suppressSizeToFit=True` a cada columna de grupo
-- Commit: `09a41a2`
-
-### 🐛 Bug AG-Grid resuelto: columnDefs duplicados
-- **Síntoma**: columnas de meses no aparecían en tab A Costo
-- **Causa**: AG-Grid no soporta el mismo `field` en dos lugares de `columnDefs` (como columna individual hidden + como hijo de un grupo)
-- **Fix**: después de `gb.build()`, filtrar `columnDefs` para eliminar las definiciones individuales de columnas mensuales antes de agregar los grupos
-
-```python
-_pref_mensuales = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
-_go2["columnDefs"] = [
-    c for c in _go2.get("columnDefs", [])
-    if not any(str(c.get("field","")).startswith(p) for p in _pref_mensuales)
-]
-```
-
-### 📊 Excel de referencia: analisis_planificacion_JUN26.xlsx
-Hojas: Cómo Vamos Junio | Comp. Marcas | Comp. Canales | VTA x Marca JUN 26 | CST x Marca | Crítico x Marca | Detalle Crítico | Tránsitos por Embarque | Nuevos en Tránsito | TD REPORTES UNID
-
-- **TD REPORTES UNID** = fuente de datos base (Marca, Cat. Padre, Cat. Hijo, SKU, Stock HOY, Embarcado, Cobert. por mes)
-- **CST x Marca** = valores en $M CLP con misma estructura que tab A Costo
-- **Crítico x Marca** = referencia para tab Sobrestock futuro
+### 📌 Estructura A Costo (_df_grid_cst)
+DataFrame mínimo con solo:
+- Columnas id: `marca, categoria_padre, categoria_hijo, sku, produto, _is_total`
+- Columnas fijas: `stock_cst_m, venta_prom_cst_m`
+- Columnas mensuales (costo): `csi_YYYY-MM, ctr_, csp_, cvt_, cb_` × 6 meses
+- Fórmula: `col_cst = col_unidades × Costo_Unit / 1_000_000`
 
 ---
 
-*Actualizado automáticamente por Claude al cierre de sesión 2026-06-11.*
+*Actualizado: 2026-06-12*
