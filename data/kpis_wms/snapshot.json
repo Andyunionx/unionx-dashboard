@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-06-11T08:06:27.638223",
+  "generado_en": "2026-06-11T18:17:07.059121",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.003594080338266385,
-      "total_pickings": 18920,
-      "on_time": 68,
-      "on_time_pct": 0.003594080338266385,
-      "in_full": 18916,
-      "in_full_pct": 0.9997885835095137,
-      "both": 68,
+      "valor": 0.0036123763153761584,
+      "total_pickings": 19101,
+      "on_time": 69,
+      "on_time_pct": 0.0036123763153761584,
+      "in_full": 19097,
+      "in_full_pct": 0.999790586880268,
+      "both": 69,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.03458646616541353,
-      "total_pickings": 665,
-      "on_time": 25,
-      "on_time_pct": 0.03759398496240601,
-      "in_full": 661,
-      "in_full_pct": 0.9939849624060151,
-      "both": 23,
+      "valor": 0.03582089552238806,
+      "total_pickings": 670,
+      "on_time": 26,
+      "on_time_pct": 0.03880597014925373,
+      "in_full": 666,
+      "in_full_pct": 0.9940298507462687,
+      "both": 24,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998815960847772,
-      "ok": 25334,
-      "total": 25337,
+      "valor": 0.9998827667057444,
+      "ok": 25587,
+      "total": 25590,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 6.981006819093461,
-      "n_recepciones": 277,
+      "valor": 7.010440647482014,
+      "n_recepciones": 278,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00882",
+          "proveedor": "",
+          "horas": 15.2,
+          "scheduled": "2026-06-10 21:48",
+          "done": "2026-06-11 12:58"
+        },
         {
           "picking": "CA1/RET/00997",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-05-29 13:37",
           "done": "2026-05-29 13:38"
-        },
-        {
-          "picking": "CA1/IN/00856",
-          "proveedor": "",
-          "horas": 0.5,
-          "scheduled": "2026-05-29 12:47",
-          "done": "2026-05-29 13:15"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9092063814652982,
+      "valor": 0.9106979579396526,
       "total_so": 20000,
-      "total_con_pickings": 19682,
-      "cumplidos": 17895,
+      "total_con_pickings": 19686,
+      "cumplidos": 17928,
       "parciales": 19,
-      "sin_iniciar": 1768,
+      "sin_iniciar": 1739,
       "error": null
     },
     "oct_30d": {
-      "valor": 42.338599894397355,
-      "n_orders": 19465,
+      "valor": 43.30728043835988,
+      "n_orders": 19649,
       "min_h": 0.025,
       "max_h": 597.8994444444445,
-      "mediana_h": 26.950555555555557,
+      "mediana_h": 27.113333333333333,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 16206,
+      "lineas": 16463,
       "mes": "2026-06",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 320,
-          "tarde": 320,
+          "total": 321,
+          "tarde": 321,
           "on_time_pct": 0.0
         },
         {
@@ -403,9 +403,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 121,
-          "tarde": 119,
-          "on_time_pct": 0.01652892561983471
+          "total": 124,
+          "tarde": 122,
+          "on_time_pct": 0.016129032258064516
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
@@ -428,6 +428,12 @@
         {
           "cliente": "Falabella Retail",
           "total": 4,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "WALMART CHILE COM. LTDA",
+          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -6720,42 +6726,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.003594080338266385,
-      "total_pickings": 18920,
-      "on_time": 68,
-      "on_time_pct": 0.003594080338266385,
-      "in_full": 18916,
-      "in_full_pct": 0.9997885835095137,
-      "both": 68,
+      "valor": 0.0036123763153761584,
+      "total_pickings": 19101,
+      "on_time": 69,
+      "on_time_pct": 0.0036123763153761584,
+      "in_full": 19097,
+      "in_full_pct": 0.999790586880268,
+      "both": 69,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.03458646616541353,
-      "total_pickings": 665,
-      "on_time": 25,
-      "on_time_pct": 0.03759398496240601,
-      "in_full": 661,
-      "in_full_pct": 0.9939849624060151,
-      "both": 23,
+      "valor": 0.03582089552238806,
+      "total_pickings": 670,
+      "on_time": 26,
+      "on_time_pct": 0.03880597014925373,
+      "in_full": 666,
+      "in_full_pct": 0.9940298507462687,
+      "both": 24,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998815960847772,
-      "ok": 25334,
-      "total": 25337,
+      "valor": 0.9998827667057444,
+      "ok": 25587,
+      "total": 25590,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 6.981006819093461,
-      "n_recepciones": 277,
+      "valor": 7.010440647482014,
+      "n_recepciones": 278,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00882",
+          "proveedor": "",
+          "horas": 15.2,
+          "scheduled": "2026-06-10 21:48",
+          "done": "2026-06-11 12:58"
+        },
         {
           "picking": "CA1/RET/00997",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -6888,13 +6901,6 @@
           "horas": 0.0,
           "scheduled": "2026-05-29 13:37",
           "done": "2026-05-29 13:38"
-        },
-        {
-          "picking": "CA1/IN/00856",
-          "proveedor": "",
-          "horas": 0.5,
-          "scheduled": "2026-05-29 12:47",
-          "done": "2026-05-29 13:15"
         }
       ],
       "error": null
