@@ -38,24 +38,58 @@ def conectar_odoo():
     return client
 
 
+def _norm_folio(s) -> str:
+    """'002256' / 'FAC 002256' / 2256.0 → '2256' (solo dígitos, sin ceros izq)."""
+    digits = "".join(ch for ch in str(s or "") if ch.isdigit())
+    return str(int(digits)) if digits else ""
+
+
+def _norm_rut(v) -> str:
+    """'76.243.813-5' → '76243813' (sin puntos, guión ni DV)."""
+    v = str(v or "").replace(".", "").replace("-", "").strip().upper()
+    return v[:-1] if len(v) > 1 else v
+
+
 def _folios_en_odoo(client, year: int, month: int) -> set:
+    """
+    Set de claves (rut_sin_dv, folio_normalizado) de las facturas ya en Odoo.
+
+    Ventana: desde el 1 del mes ANTERIOR hasta fin del mes consultado — el RCV
+    incluye docs fechados el mes previo pero recibidos este periodo.
+    """
     import xmlrpc.client as xc
+    import calendar
     uid = client.authenticate()
     models = xc.ServerProxy(f"{client.url}/xmlrpc/2/object", allow_none=True)
+
+    prev_y, prev_m = (year - 1, 12) if month == 1 else (year, month - 1)
+    ultimo_dia = calendar.monthrange(year, month)[1]
+
     res = models.execute_kw(client.db, uid, client.password, "account.move", "search_read",
         [[["move_type", "in", ["in_invoice", "in_refund"]],
-          ["invoice_date", ">=", f"{year:04d}-{month:02d}-01"],
-          ["invoice_date", "<=", f"{year:04d}-{month:02d}-28"]]],
-        {"fields": ["l10n_latam_document_number", "ref"], "limit": 500})
-    folios = set()
+          ["invoice_date", ">=", f"{prev_y:04d}-{prev_m:02d}-01"],
+          ["invoice_date", "<=", f"{year:04d}-{month:02d}-{ultimo_dia}"]]],
+        {"fields": ["l10n_latam_document_number", "ref", "partner_id"], "limit": 1000})
+
+    pids = {r["partner_id"][0] for r in res if r.get("partner_id")}
+    vat_por_pid = {}
+    if pids:
+        partners = models.execute_kw(client.db, uid, client.password, "res.partner", "read",
+            [list(pids)], {"fields": ["vat"]})
+        vat_por_pid = {p["id"]: p.get("vat") or "" for p in partners}
+
+    claves = set()
     for r in res:
-        if r.get("l10n_latam_document_number"):
-            folios.add(r["l10n_latam_document_number"])
+        rut = _norm_rut(vat_por_pid.get(r["partner_id"][0], "")) if r.get("partner_id") else ""
+        candidatos = [r.get("l10n_latam_document_number")]
         ref = str(r.get("ref") or "")
-        parts = ref.split()
-        if len(parts) >= 2:
-            folios.add(parts[-1])
-    return folios
+        if ref.split():
+            candidatos.append(ref.split()[-1])
+        for cand in candidatos:
+            folio = _norm_folio(cand)
+            if folio:
+                claves.add((rut, folio))
+    return claves
 
 
 def run_importador(args, year: int, month: int, client) -> int:

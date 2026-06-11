@@ -127,13 +127,25 @@ def importar_dte_a_odoo(client, dte, dry_run: bool = False) -> ResultadoImportOd
 
     models, uid, db, pwd = _get_models(client)
 
-    existente = models.execute_kw(db, uid, pwd, "account.move", "search_read",
-        [[["move_type", "=", move_type],
-          ["l10n_latam_document_number", "=", folio],
-          ["partner_id.vat", "ilike", rut_e[:6]]]],
-        {"fields": ["id", "name"], "limit": 1})
-    if existente:
-        return ResultadoImportOdoo(ok=False, error=f"Ya existe: {existente[0]['name']}")
+    # Anti-duplicado: comparar folios del partner normalizados (sin ceros izq)
+    def _nf(s):
+        digits = "".join(ch for ch in str(s or "") if ch.isdigit())
+        return str(int(digits)) if digits else ""
+
+    rut_body = rut_e.replace(".", "").replace("-", "").strip().upper()
+    rut_body = rut_body[:-1] if len(rut_body) > 1 else rut_body
+    del_partner = models.execute_kw(db, uid, pwd, "account.move", "search_read",
+        [[["move_type", "in", ["in_invoice", "in_refund"]],
+          ["partner_id.vat", "ilike", rut_body]]],
+        {"fields": ["name", "ref", "l10n_latam_document_number"], "limit": 300})
+    folio_n = _nf(folio)
+    for ex in del_partner:
+        candidatos = [ex.get("l10n_latam_document_number")]
+        ref = str(ex.get("ref") or "")
+        if ref.split():
+            candidatos.append(ref.split()[-1])
+        if folio_n and folio_n in {_nf(c) for c in candidatos}:
+            return ResultadoImportOdoo(ok=False, error=f"Ya existe: {ex['name']}")
 
     partner_id  = _get_partner_id(models, uid, db, pwd, rut_e, razon)
     doc_type_id = _get_doc_type_id(models, uid, db, pwd, tipo_doc)
