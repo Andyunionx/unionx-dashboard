@@ -889,7 +889,14 @@ def render():
 
                 # Columnas agrupadas por mes
                 _go2 = gb2.build()
-                _go2.setdefault("columnDefs", [])
+                # Eliminar definiciones individuales de columnas mensuales:
+                # AG-Grid no permite el mismo field en dos lugares de columnDefs.
+                # Los meses se definen SOLO en los grupos que se agregan abajo.
+                _pref_mensuales = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
+                _go2["columnDefs"] = [
+                    c for c in _go2.get("columnDefs", [])
+                    if not any(str(c.get("field","")).startswith(p) for p in _pref_mensuales)
+                ]
                 # Insertar grupos de meses después de stock_cst_m
                 for _ms2, _ml2 in zip(mes_strs_j, mes_labels_j):
                     if f'csi_{_ms2}' not in _df_cst.columns:
