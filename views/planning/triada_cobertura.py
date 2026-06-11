@@ -913,29 +913,34 @@ def render():
                   return{background:'#722ED1',color:'white'};
                 }""")
 
-                # Eliminar defs individuales de mensuales (mismo fix que Jerárquico)
-                _pref_men = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
+                # Reconstruir columnDefs limpio: solo identidad + fijas explícitas
+                # Evita conflictos de col-id numérico que genera AG-Grid para columnas nuevas
+                _pref_men = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_',
+                             'stock_cst_m','venta_prom_cst_m','costo_unit','stock_actual',
+                             'venta_prom_3m','ventas_','coberturas','cobertura_','estado',
+                             'demanda_','venta_bruta','tipo_marca','_is_total')
+                _cols_fijas_ok = {'marca','categoria_padre','categoria_hijo','sku','producto',
+                                  'ag-Grid-AutoColumn'}
                 _go2["columnDefs"] = [
                     c for c in _go2.get("columnDefs", [])
-                    if not any(str(c.get("field","")).startswith(p) for p in _pref_men)
+                    if any(str(c.get("field","")).startswith(k) for k in _cols_fijas_ok)
+                    or str(c.get("colId","")).startswith("ag-Grid")
                 ]
-                # Asegurar que stock_cst_m y venta_prom_cst_m estén en columnDefs
-                # (a veces gb2.build() no los incluye si hay conflictos de campo)
-                _fields_presentes = {str(c.get("field","")) for c in _go2["columnDefs"]}
-                if "stock_cst_m" not in _fields_presentes:
-                    _go2["columnDefs"].append({
-                        "field": "stock_cst_m", "headerName": "Stock Hoy ($M)",
-                        "width": 115, "minWidth": 100, "suppressSizeToFit": True,
-                        "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
-                        "valueFormatter": _mfmt2
-                    })
-                if "venta_prom_cst_m" not in _fields_presentes:
-                    _go2["columnDefs"].append({
-                        "field": "venta_prom_cst_m", "headerName": "Vta/Mes ($M)",
-                        "width": 105, "minWidth": 95, "suppressSizeToFit": True,
-                        "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
-                        "valueFormatter": _mfmt2
-                    })
+                # Agregar columnas fijas a costo con colId explícito
+                _go2["columnDefs"].append({
+                    "field": "stock_cst_m", "colId": "stock_cst_m",
+                    "headerName": "Stock Hoy ($M)", "width": 115, "minWidth": 100,
+                    "suppressSizeToFit": True,
+                    "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                    "valueFormatter": _mfmt2
+                })
+                _go2["columnDefs"].append({
+                    "field": "venta_prom_cst_m", "colId": "venta_prom_cst_m",
+                    "headerName": "Vta/Mes ($M)", "width": 105, "minWidth": 95,
+                    "suppressSizeToFit": True,
+                    "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                    "valueFormatter": _mfmt2
+                })
 
                 # Grupos de meses — misma estructura que Jerárquico
                 for _i_cst, (_ms2, _ml2) in enumerate(zip(mes_strs_j, mes_labels_j)):
