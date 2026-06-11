@@ -891,6 +891,8 @@ def render():
                 _go2 = gb2.build()
 
                 # Opciones de agrupación — seteadas en _go2 post-build (igual que versión funcional)
+                # autoGroupColumnDef pinned=left → Marca/Cat.Padre/Cat.Hijo quedan a la izquierda de SKU/Produto
+                _go2["autoGroupColumnDef"]      = {"pinned": "left", "minWidth": 160, "cellRendererParams": {"suppressCount": False}}
                 _go2["groupDisplayType"]        = "multipleColumns"
                 _go2["groupDefaultExpanded"]    = 0
                 _go2["suppressAggFuncInHeader"] = True
