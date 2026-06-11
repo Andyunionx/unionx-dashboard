@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-06-10T18:00:56.206497",
+  "generado_en": "2026-06-11T08:06:27.638223",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.003451473315474964,
-      "total_pickings": 19412,
-      "on_time": 67,
-      "on_time_pct": 0.003451473315474964,
-      "in_full": 19408,
-      "in_full_pct": 0.9997939418916134,
-      "both": 67,
+      "valor": 0.003594080338266385,
+      "total_pickings": 18920,
+      "on_time": 68,
+      "on_time_pct": 0.003594080338266385,
+      "in_full": 18916,
+      "in_full_pct": 0.9997885835095137,
+      "both": 68,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.03988183161004431,
-      "total_pickings": 677,
-      "on_time": 29,
-      "on_time_pct": 0.04283604135893648,
-      "in_full": 673,
-      "in_full_pct": 0.9940915805022157,
-      "both": 27,
+      "valor": 0.03458646616541353,
+      "total_pickings": 665,
+      "on_time": 25,
+      "on_time_pct": 0.03759398496240601,
+      "in_full": 661,
+      "in_full_pct": 0.9939849624060151,
+      "both": 23,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998853824405899,
-      "ok": 26171,
-      "total": 26174,
+      "valor": 0.9998815960847772,
+      "ok": 25334,
+      "total": 25337,
       "errores": 3,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8962503810588355,
+      "valor": 0.9092063814652982,
       "total_so": 20000,
       "total_con_pickings": 19682,
-      "cumplidos": 17640,
+      "cumplidos": 17895,
       "parciales": 19,
-      "sin_iniciar": 2023,
+      "sin_iniciar": 1768,
       "error": null
     },
     "oct_30d": {
-      "valor": 42.476287355170456,
-      "n_orders": 19966,
+      "valor": 42.338599894397355,
+      "n_orders": 19465,
       "min_h": 0.025,
       "max_h": 597.8994444444445,
-      "mediana_h": 27.665555555555557,
+      "mediana_h": 26.950555555555557,
       "detalle": [
         {
           "so": "CIERRE MES DE MARZO 2026",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 15629,
+      "lineas": 16206,
       "mes": "2026-06",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 228,
-      "outgoing": 29639,
-      "internal": 20133,
+      "outgoing": 29781,
+      "internal": 19991,
       "total": 50000,
       "error": null
     },
@@ -361,32 +361,32 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 316,
-          "tarde": 316,
+          "total": 320,
+          "tarde": 320,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 82,
-          "tarde": 82,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 10,
-          "tarde": 10,
+          "total": 78,
+          "tarde": 78,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Comercializadora SP Digital SPA",
-          "total": 26,
-          "tarde": 26,
+          "total": 24,
+          "tarde": 24,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Comercializadora Rigan SpA",
           "total": 3,
           "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -403,21 +403,15 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 119,
-          "tarde": 117,
-          "on_time_pct": 0.01680672268907563
+          "total": 121,
+          "tarde": 119,
+          "on_time_pct": 0.01652892561983471
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 49,
-          "tarde": 46,
-          "on_time_pct": 0.061224489795918366
-        },
-        {
-          "cliente": "Cliente Mercado Libre",
-          "total": 11,
-          "tarde": 4,
-          "on_time_pct": 0.6363636363636364
+          "total": 44,
+          "tarde": 41,
+          "on_time_pct": 0.06818181818181818
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -426,8 +420,14 @@
           "on_time_pct": 0.6666666666666666
         },
         {
+          "cliente": "Cliente Mercado Libre",
+          "total": 10,
+          "tarde": 3,
+          "on_time_pct": 0.7
+        },
+        {
           "cliente": "Falabella Retail",
-          "total": 8,
+          "total": 4,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -6720,31 +6720,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.003451473315474964,
-      "total_pickings": 19412,
-      "on_time": 67,
-      "on_time_pct": 0.003451473315474964,
-      "in_full": 19408,
-      "in_full_pct": 0.9997939418916134,
-      "both": 67,
+      "valor": 0.003594080338266385,
+      "total_pickings": 18920,
+      "on_time": 68,
+      "on_time_pct": 0.003594080338266385,
+      "in_full": 18916,
+      "in_full_pct": 0.9997885835095137,
+      "both": 68,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.03988183161004431,
-      "total_pickings": 677,
-      "on_time": 29,
-      "on_time_pct": 0.04283604135893648,
-      "in_full": 673,
-      "in_full_pct": 0.9940915805022157,
-      "both": 27,
+      "valor": 0.03458646616541353,
+      "total_pickings": 665,
+      "on_time": 25,
+      "on_time_pct": 0.03759398496240601,
+      "in_full": 661,
+      "in_full_pct": 0.9939849624060151,
+      "both": 23,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998853824405899,
-      "ok": 26171,
-      "total": 26174,
+      "valor": 0.9998815960847772,
+      "ok": 25334,
+      "total": 25337,
       "errores": 3,
       "error": null
     }
