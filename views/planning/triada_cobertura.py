@@ -913,20 +913,23 @@ def render():
                   return{background:'#722ED1',color:'white'};
                 }""")
 
-                # Reconstruir columnDefs limpio: solo identidad + fijas explícitas
-                # Evita conflictos de col-id numérico que genera AG-Grid para columnas nuevas
-                _pref_men = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_',
-                             'stock_cst_m','venta_prom_cst_m','costo_unit','stock_actual',
-                             'venta_prom_3m','ventas_','coberturas','cobertura_','estado',
-                             'demanda_','venta_bruta','tipo_marca','_is_total')
-                _cols_fijas_ok = {'marca','categoria_padre','categoria_hijo','sku','producto',
-                                  'ag-Grid-AutoColumn'}
+                # Eliminar defs individuales de mensuales (mismo fix que Jerárquico)
+                # También quitamos las columnas heredadas de df_jer que no son costo
+                _pref_men = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
+                _campos_a_quitar = {
+                    'costo_unit','stock_actual','venta_prom_3m','ventas_6sem',
+                    'cobertura_6sem_meses','estado_6sem','cobertura_fc3m_meses',
+                    'estado_fc3m','demanda_diaria','cobertura_dias','cobertura_meses',
+                    'estado','venta_bruta','tipo_marca','_is_total',
+                }
                 _go2["columnDefs"] = [
                     c for c in _go2.get("columnDefs", [])
-                    if any(str(c.get("field","")).startswith(k) for k in _cols_fijas_ok)
-                    or str(c.get("colId","")).startswith("ag-Grid")
+                    if not any(str(c.get("field","")).startswith(p) for p in _pref_men)
+                    and str(c.get("field","")) not in _campos_a_quitar
                 ]
-                # Agregar columnas fijas a costo con colId explícito
+                # Agregar columnas fijas a costo con colId explícito (garantiza col-id correcto)
+                _go2["columnDefs"] = [c for c in _go2["columnDefs"]
+                                      if str(c.get("field","")) not in ("stock_cst_m","venta_prom_cst_m")]
                 _go2["columnDefs"].append({
                     "field": "stock_cst_m", "colId": "stock_cst_m",
                     "headerName": "Stock Hoy ($M)", "width": 115, "minWidth": 100,
