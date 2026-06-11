@@ -5,64 +5,62 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-09
+## 🗓️ Última sesión: 2026-06-11
 
-### ✅ Estado actual — Vista Cobertura por Producto COMPLETA
+### ✅ Estado actual — Vista Cobertura por Producto
 
-#### Tab "🌳 Jerárquico" — funcionalidad completa (desplegado en prod)
-- **Tabla dinámica AG-Grid** con desplegables Marca → Cat Padre → Cat Hijo → SKU
-- **Proyección 6 meses integrada** (Jun–Nov 2026):
-  - Columnas agrupadas por mes: **Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
-  - Stock Ini = stock actual al inicio de cada mes
-  - Llegadas = tránsito COMEX confirmado (ETA con regla día 5)
-  - Stk+Ped = Stock Ini + Llegadas
-  - Vta PPTO = forecast del FCST (planif_forecast_manual)
-  - Cobertura = (Stock Ini + Llegadas) / avg(PPTO_M, PPTO_M+1, PPTO_M+2)
-  - Colores cobertura: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
-- **TOTAL GENERAL** pinneado al fondo: sin ícono expandir
-- **Filtro "Solo SKUs marca propia"** (default ON) → excluye "Sin clasificar"
+#### Tab "🌳 Jerárquico" — OK
+- Columnas por mes: **Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
+- Fórmula: `(Stock Ini + Llegadas) / avg(PPTO_M, M+1, M+2)`
+- Colores: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
+- Datos Jun 26: Lhotse 61.406u, Stk+Ped 62.206u, Cobert. 4.9m
 
-#### Datos Jun 26 validados
-| Marca | Stock Hoy | Llegadas | Stk+Ped | Vta PPTO |
-|-------|-----------|----------|---------|----------|
-| Lhotse | 61.406 | 800 | 62.206 | 14.587 |
-| Simplit | 31.260 | 3.860 | 35.120 | 17.453 |
-| **TOTAL** | **121.165** | **6.779** | **127.944** | **40.531** |
+#### Tab "💰 A Costo ($M)" — NUEVO ✅
+- Misma jerarquía que Jerárquico (Marca → Cat. Padre → Cat. Hijo → SKU)
+- Columna fija: **Stock Hoy ($M)** = stock_actual × Costo Unit / 1M
+- Columnas por mes: **Stk Ini ($M) | Llegadas ($M) | Stk+Ped ($M) | Vta PPTO ($M) | Cobert.**
+- **TOTAL GENERAL: $925,3M** (valor CIF internado de todo el inventario)
+- Formato: `$1,2M` (CLP millones, 1 decimal)
+- Costo Unit: columna `Costo Unit` de `data/stock/skus.parquet` (CIF internado)
+- Cobertura = mismos colores que Jerárquico (ratio unidades, no cambia con costo)
 
 #### Fuentes de datos
 - Base SKUs: `planif_master_sku` (3,006 SKUs)
-- **Stock: `data/stock/skus.parquet`** (Stock LIVE, actualizado cada 3h via sync_stock.yml)
+- Stock: `data/stock/skus.parquet` (Stock LIVE, actualizado cada 3h)
+- Costo: columna `Costo Unit` del mismo `skus.parquet` (CIF internado por SKU)
 - Venta proyectada: `planif_forecast_manual` (PPTO FCST, 677 SKUs Jun-Ene)
-- Tránsito: `planif_transito_baseline` (confirmados hasta jun-25)
-- Tránsito futuro: `planif_forecast_transito` (FCST Aug-Nov, si existe)
+- Tránsito confirmado: `planif_transito_baseline` (hasta jun-25)
+- Tránsito FCST: `planif_forecast_transito` (Jul-Nov 2026, 952 registros)
 
-#### Fix pantuflas aplicado
-- 23 SKUs Lhotse pantuflas actualizados de `LHPANIM{color}-{XX}/{YY}` → `LHPANIM{color}{XX}-{YY}`
-- Commit: `9263ec2`
+#### Fix pantuflas
+- 23 SKUs Lhotse con formato nuevo (`LHPANIM{color}{XX}-{YY}`)
 
 ---
 
 ## 🔲 Pendientes Felipe (próxima sesión)
 
-- [ ] Verificar cobertura de Lhotse con los nuevos números (debería ser ~4.3-4.6m)
-- [ ] Agregar columna **"Compra"** desde el FCST Excel → script `extract_forecast_transito.py` ya existe, hay que agregar extracción de columnas `Compra PPTO MES`
+- [ ] **Sobrestock por Categoria Padre** (stand by — retomar después del dashboard a costo)
+  - Tab nuevo "Sobrestock" dentro de Cobertura por Producto
+  - Productos con cobertura > 4m, agrupados por Categoria Padre
+  - Formato similar a hoja "Detalle Critico" del Excel analisis_planificacion_JUN26.xlsx
+- [ ] PR #90 merge → para que Andrés tenga los cambios en app oficial
 - [ ] Actualizar `ventas_historico.parquet` con datos de Mayo+Junio 2026
-- [ ] PR #90 merge → para que Andrés tenga los cambios en la app oficial
+- [ ] Actualizar FCST desde Google Drive cuando Andrés suba el link
 
 ---
 
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `d270888` — Cobertura avg 3m + Stk+Ped + Stock LIVE
+**Último commit**: `7083b4d`
 
-**Qué incluye este branch:**
-1. Vista "Cobertura por Producto" completamente renovada
-   - Fórmula correcta: `(Stk+Ped) / avg(PPTO_M, M+1, M+2)`
-   - Columnas: Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.
-2. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
-3. Fix pantuflas Lhotse (23 SKUs formato nuevo)
-4. `requirements.txt` actualizado
+**Qué incluye:**
+1. Tab "🌳 Jerárquico" — Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert. (fórmula avg 3m)
+2. Tab "💰 A Costo ($M)" — misma vista pero en $M CLP a costo CIF
+3. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
+4. `cargar_costo_unit_sku()` en `_data_helpers.py`
+5. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
+6. Fix pantuflas Lhotse (23 SKUs)
 
 **Impacto**: CERO impacto en vistas existentes.
 
@@ -73,25 +71,43 @@
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `d270888` |
+| Último commit | `7083b4d` |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
 | App oficial | `https://unionx-planificacion.streamlit.app/` |
-| Reboot full | Abrir panel ⋮ → "Reboot app" → Confirmar (funciona desde la login page con el panel expandido) |
-| **IMPORTANTE** | Para forzar full redeploy (re-clonar repo): cambiar versión en requirements.txt + commit que toque triada_cobertura.py al mismo tiempo → luego Reboot manual desde el ⋮ |
+| Stock LIVE | `data/stock/skus.parquet` — columnas: SKU, Qty, Costo Unit, Valor, etc. |
 | PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
-| Stock file | `data/stock/skus.parquet` (Stock LIVE) |
-| Tránsito | `data/planificacion/snapshots/planif_transito_baseline.parquet` |
+| Tránsito file | `data/planificacion/snapshots/planif_transito_baseline.parquet` |
+| Tránsito FCST | `data/planificacion/snapshots/planif_forecast_transito.parquet` |
 | Master SKU | `data/planificacion/snapshots/planif_master_sku.parquet` |
+| Excel análisis | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\Analisis Planificacion\analisis_planificacion_JUN26.xlsx` |
 
-### 🔁 Cómo forzar redeploy en Streamlit Cloud (lección aprendida)
+### 🔁 Cómo forzar redeploy en Streamlit Cloud
 
-Streamlit Cloud **NO** re-clona el repo automáticamente para cambios de Python (solo soft restart).
-Para forzar un full redeploy que tome los últimos commits:
-1. Hacer un commit que cambie `requirements.txt` (versión real, no solo comentario) **Y** también el archivo `.py` que necesita actualizarse
+Streamlit Cloud NO re-clona para cambios Python (soft restart). Para full redeploy:
+1. Cambiar versión real en `requirements.txt` (ej: `rich==13.9.3` ↔ `rich==13.9.4`)
 2. Push
-3. En el app: abrir panel "Manage app" → click `⋮` → "Reboot app" → Confirmar
-4. Streamlit hará un full redeploy con re-clone del repo
+3. Abrir Manage app → `⋮` → "Reboot app" → confirmar
+
+### 🐛 Bug AG-Grid resuelto: columnDefs duplicados
+- **Síntoma**: columnas de meses no aparecían en tab A Costo
+- **Causa**: AG-Grid no soporta el mismo `field` en dos lugares de `columnDefs` (como columna individual hidden + como hijo de un grupo)
+- **Fix**: después de `gb.build()`, filtrar `columnDefs` para eliminar las definiciones individuales de columnas mensuales antes de agregar los grupos
+
+```python
+_pref_mensuales = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
+_go2["columnDefs"] = [
+    c for c in _go2.get("columnDefs", [])
+    if not any(str(c.get("field","")).startswith(p) for p in _pref_mensuales)
+]
+```
+
+### 📊 Excel de referencia: analisis_planificacion_JUN26.xlsx
+Hojas: Cómo Vamos Junio | Comp. Marcas | Comp. Canales | VTA x Marca JUN 26 | CST x Marca | Crítico x Marca | Detalle Crítico | Tránsitos por Embarque | Nuevos en Tránsito | TD REPORTES UNID
+
+- **TD REPORTES UNID** = fuente de datos base (Marca, Cat. Padre, Cat. Hijo, SKU, Stock HOY, Embarcado, Cobert. por mes)
+- **CST x Marca** = valores en $M CLP con misma estructura que tab A Costo
+- **Crítico x Marca** = referencia para tab Sobrestock futuro
 
 ---
 
-*Actualizado automáticamente por Claude al cierre de sesión 2026-06-09.*
+*Actualizado automáticamente por Claude al cierre de sesión 2026-06-11.*
