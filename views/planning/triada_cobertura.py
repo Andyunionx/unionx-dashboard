@@ -854,15 +854,19 @@ def render():
 
             if _aggrid_cst_ok:
                 # ── mismo orden que Jerárquico ────────────────────────────────
-                gb2 = GridOptionsBuilder.from_dataframe(_df_cst)
-                gb2.configure_column("marca",           rowGroup=True, hide=True)
-                gb2.configure_column("categoria_padre", rowGroup=True, hide=True)
-                gb2.configure_column("categoria_hijo",  rowGroup=True, hide=True)
-                gb2.configure_column("sku",             header_name="SKU",     width=140)
-                gb2.configure_column("producto",        header_name="Producto", width=200)
-
                 _mfmt2 = "x!=null?'$'+x.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':''"
 
+                gb2 = GridOptionsBuilder.from_dataframe(_df_cst)
+                gb2.configure_default_column(resizable=True, sortable=True, filter=True)
+
+                # Columnas de identidad — misma estructura que versión funcional
+                gb2.configure_column("marca",          header_name="Marca / Categoría", rowGroup=True, hide=True, pinned="left")
+                gb2.configure_column("categoria_padre",header_name="Cat. Padre",         rowGroup=True, hide=True)
+                gb2.configure_column("categoria_hijo", header_name="Cat. Hijo",          rowGroup=True, hide=True)
+                gb2.configure_column("sku",            header_name="SKU",     width=130, pinned="left")
+                gb2.configure_column("producto",       header_name="Producto", width=220, pinned="left")
+
+                # Columnas fijas a costo
                 gb2.configure_column("stock_cst_m",      header_name="Stock Hoy ($M)", width=115, minWidth=100,
                                      suppressSizeToFit=True,
                                      type=["numericColumn"], enableValue=True, aggFunc="sum",
@@ -872,19 +876,11 @@ def render():
                                      type=["numericColumn"], enableValue=True, aggFunc="sum",
                                      valueFormatter=_mfmt2)
 
-                # Ocultar columnas heredadas de df_jer que no son costo
-                for _col_hide in ['stock_actual','venta_prom_3m','ventas_6sem','cobertura_6sem_meses',
-                                  'estado_6sem','cobertura_fc3m_meses','estado_fc3m','demanda_diaria',
-                                  'cobertura_dias','cobertura_meses','estado','venta_bruta','tipo_marca',
-                                  '_is_total','costo_unit']:
-                    gb2.configure_column(_col_hide, hide=True)
-
                 # Ocultar proyecciones individuales (se muestran en grupos)
                 for _ms in mes_strs_j:
                     for _pref in ["csi_","ctr_","csp_","cvt_","si_","tr_","sp_","vt_","cb_"]:
                         gb2.configure_column(f"{_pref}{_ms}", hide=True)
 
-                gb2.configure_default_column(resizable=True, sortable=True, filter=True)
                 gb2.configure_column("_is_total",  hide=True)
                 gb2.configure_column("costo_unit", hide=True)
                 _go2 = gb2.build()
