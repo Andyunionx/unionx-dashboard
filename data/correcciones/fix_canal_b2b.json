@@ -1,12 +1,38 @@
 {
   "descripcion": "Override canal/tipo_negocio para pedidos B2B que en Odoo quedaron con team_id=Website. Aplica al extract.",
-  "ultima_actualizacion": "2026-06-08",
+  "ultima_actualizacion": "2026-06-11",
   "correcciones": {
-    "S239038": {"canal": "UnionX B2B", "tipo_negocio": "Distribución"},
-    "S244811": {"canal": "UnionX B2B", "tipo_negocio": "Distribución"},
-    "S234262": {"canal": "UnionX B2B", "tipo_negocio": "Distribución"},
-    "S244416": {"canal": "UnionX B2B", "tipo_negocio": "Distribución"},
-    "S245012": {"canal": "UnionX B2B", "tipo_negocio": "Distribución"},
-    "S248412": {"canal": "UnionX B2B", "tipo_negocio": "Distribución"}
+    "S239038": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S244811": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S234262": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S244416": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S245012": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S248412": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S250595": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    },
+    "S250612": {
+      "canal": "UnionX B2B",
+      "tipo_negocio": "Distribución"
+    }
   }
 }

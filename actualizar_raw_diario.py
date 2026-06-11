@@ -83,11 +83,31 @@ PARQUET_MAP = {
 
 
 def cargar_raw_parquet() -> pd.DataFrame:
-    """Lee parquet (hist + mes_actual), filtra a 2025-2026, prepara 56 cols."""
+    """Lee parquet (hist + mes_actual), filtra a 2025-2026, prepara 56 cols.
+
+    CRITICAL: mes_actual se filtra a >= CUTOFF_HISTORICO. El historico tiene
+    foto fija que ya incluye 31-may y 1-jun; sin el filtro esos dias se
+    cuentan DOS veces (bug $647M vs $538M en pivot LIVE, 11-jun-2026).
+    """
+    cutoff = '2026-06-02'
+    try:
+        shared_path = PROJECT_ROOT / 'views' / 'shared.py'
+        if shared_path.exists():
+            for line in shared_path.read_text(encoding='utf-8').splitlines():
+                if line.strip().startswith('CUTOFF_HISTORICO'):
+                    val = line.split('=', 1)[1].strip().split('#')[0].strip().strip("'\"")
+                    if len(val) == 10 and val[4] == '-':
+                        cutoff = val
+                    break
+    except Exception:
+        pass
+
     h = pd.read_parquet(PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet')
     m = pd.read_parquet(PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet')
+    m_fv = pd.to_datetime(m['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
+    m = m[m_fv >= cutoff].copy()
     cols = [c for c in m.columns if c in h.columns]
-    df = pd.concat([h[cols], m], ignore_index=True)
+    df = pd.concat([h[cols], m[cols]], ignore_index=True)
 
     df['fv'] = pd.to_datetime(df['fecha_venta'], errors='coerce')
     df['anio'] = df['fv'].dt.year
