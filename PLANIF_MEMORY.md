@@ -52,7 +52,7 @@
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `7083b4d`
+**Último commit**: `44f6fd3`
 
 **Qué incluye:**
 1. Tab "🌳 Jerárquico" — Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert. (fórmula avg 3m)
