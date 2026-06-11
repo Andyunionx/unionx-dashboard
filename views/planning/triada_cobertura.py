@@ -868,8 +868,8 @@ def render():
                 gb2.configure_column("marca",          header_name="Marca / Categoría", rowGroup=True, hide=True, pinned="left")
                 gb2.configure_column("categoria_padre",header_name="Cat. Padre",         rowGroup=True, hide=True)
                 gb2.configure_column("categoria_hijo", header_name="Cat. Hijo",          rowGroup=True, hide=True)
-                gb2.configure_column("sku",            header_name="SKU",     width=130, pinned="left")
-                gb2.configure_column("producto",       header_name="Producto", width=220, pinned="left")
+                gb2.configure_column("sku",            header_name="SKU",     width=140)
+                gb2.configure_column("producto",       header_name="Producto", width=200)
 
                 # Columnas fijas a costo
                 gb2.configure_column("stock_cst_m",      header_name="Stock Hoy ($M)", width=115, minWidth=100,
