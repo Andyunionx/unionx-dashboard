@@ -88,6 +88,12 @@ Streamlit Cloud NO re-clona para cambios Python (soft restart). Para full redepl
 2. Push
 3. Abrir Manage app → `⋮` → "Reboot app" → confirmar
 
+### 🐛 Bug resuelto: columnas angostas en Jerárquico
+- **Síntoma**: columnas de Jun/Jul se achicaban a ~20px (números truncados como "1.")
+- **Causa**: AG-Grid redimensionaba las columnas visibles iniciales para llenar el viewport
+- **Fix**: agregar `minWidth` y `suppressSizeToFit=True` a cada columna de grupo
+- Commit: `09a41a2`
+
 ### 🐛 Bug AG-Grid resuelto: columnDefs duplicados
 - **Síntoma**: columnas de meses no aparecían en tab A Costo
 - **Causa**: AG-Grid no soporta el mismo `field` en dos lugares de `columnDefs` (como columna individual hidden + como hijo de un grupo)
