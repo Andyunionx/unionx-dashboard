@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-10T16:38:02.525981",
+  "generado_en": "2026-06-11T16:51:15.501253",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1362,
   "capacidad_bodega_m3": 2451.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1362,
-    "posiciones_ocupadas_hoy": 873,
-    "posiciones_libres_hoy": 489,
-    "pct_ocupacion_hoy": 64.1,
-    "m3_stock_calculado": 952.6
+    "posiciones_ocupadas_hoy": 875,
+    "posiciones_libres_hoy": 487,
+    "pct_ocupacion_hoy": 64.2,
+    "m3_stock_calculado": 939.8
   },
   "pico_proyectado": {
     "fecha": "2026-06-19",
-    "posiciones_ocupadas": 904.2,
-    "pct_ocupacion": 66.4
+    "posiciones_ocupadas": 912.1,
+    "pct_ocupacion": 67.0
   },
   "minimo_proyectado": {
-    "fecha": "2026-08-08",
-    "posiciones_ocupadas": 770.8,
-    "pct_ocupacion": 56.6
+    "fecha": "2026-08-10",
+    "posiciones_ocupadas": 773.1,
+    "pct_ocupacion": 56.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -101,83 +101,83 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 240.8,
-  "pallets_total_salientes_horizonte": 264.2,
+  "pallets_total_salientes_horizonte": 263.9,
   "m3_total_entrante_horizonte": 288.9,
-  "m3_total_saliente_horizonte": 317.0,
+  "m3_total_saliente_horizonte": 316.6,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 615,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00558,
-    "demanda_total_unidades_horizonte": 94148.0,
-    "demanda_cumplida_unidades": 17970.0,
-    "demanda_no_cubierta_unidades_total": 76178.0,
-    "pct_demanda_cumplida": 19.1,
-    "sku_sin_match_stock_count": 36,
+    "demanda_total_unidades_horizonte": 90497.0,
+    "demanda_cumplida_unidades": 18063.0,
+    "demanda_no_cubierta_unidades_total": 72434.0,
+    "pct_demanda_cumplida": 20.0,
+    "sku_sin_match_stock_count": 35,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
-        "unid_no_cubiertas": 53754.0,
+        "unid_no_cubiertas": 52633.0,
         "sin_match_stock": true
       },
       {
         "sku": "LHMALEXPBK-70",
-        "unid_no_cubiertas": 17180.0,
+        "unid_no_cubiertas": 14228.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 614.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 479.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "1650301031879",
-        "unid_no_cubiertas": 456.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 397.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "LVAUDGM-BK",
-        "unid_no_cubiertas": 380.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "PACK34",
-        "unid_no_cubiertas": 358.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "Pack261",
-        "unid_no_cubiertas": 242.0,
+        "unid_no_cubiertas": 650.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVSPTVUN",
-        "unid_no_cubiertas": 236.0,
+        "unid_no_cubiertas": 622.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SMBATSAV9-CR",
+        "unid_no_cubiertas": 491.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1650301031879",
+        "unid_no_cubiertas": 448.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVAUDGM-BK",
+        "unid_no_cubiertas": 384.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "PACK34",
+        "unid_no_cubiertas": 353.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SIMJULZSIE-30",
+        "unid_no_cubiertas": 343.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "Pack261",
+        "unid_no_cubiertas": 251.0,
         "sin_match_stock": true
       },
       {
         "sku": "1658525816907",
-        "unid_no_cubiertas": 204.0,
+        "unid_no_cubiertas": 218.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 191.0,
+        "unid_no_cubiertas": 195.0,
         "sin_match_stock": true
       },
       {
         "sku": "Pack365",
-        "unid_no_cubiertas": 176.0,
+        "unid_no_cubiertas": 183.0,
         "sin_match_stock": true
       },
       {
@@ -187,32 +187,32 @@
       },
       {
         "sku": "1650302269777",
-        "unid_no_cubiertas": 142.0,
+        "unid_no_cubiertas": 138.0,
         "sin_match_stock": true
       },
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 134.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "Pack366",
-        "unid_no_cubiertas": 93.0,
+        "unid_no_cubiertas": 108.0,
         "sin_match_stock": true
       },
       {
         "sku": "1634845754276",
-        "unid_no_cubiertas": 86.0,
+        "unid_no_cubiertas": 101.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1661872956577",
-        "unid_no_cubiertas": 75.0,
+        "sku": "Pack366",
+        "unid_no_cubiertas": 92.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SIMCUSTA-5",
+        "unid_no_cubiertas": 85.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVPROORI",
-        "unid_no_cubiertas": 74.0,
+        "unid_no_cubiertas": 83.0,
         "sin_match_stock": true
       }
     ],
@@ -220,7 +220,7 @@
       "Delivery_007"
     ]
   },
-  "stock_anomalies_count": 66,
+  "stock_anomalies_count": 65,
   "top_stock_anomalies": [
     {
       "sku": "6902221386601",
@@ -268,9 +268,9 @@
       "qty": 1.0
     },
     {
-      "sku": "1661892870974",
+      "sku": "1628016796209",
       "vol_unit_m3": 8.47,
-      "qty": 1.0
+      "qty": 2.0
     }
   ]
 }
