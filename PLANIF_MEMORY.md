@@ -5,45 +5,34 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-12
+## 🗓️ Última sesión: 2026-06-12 (tarde)
 
 ### ✅ Tab "🌳 Jerárquico" — Completamente funcional
-- Columnas mes actual: **Stock Hoy | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
-- Columnas meses futuros: **Stock Ini | Llegadas | Stk+Ped | Vta PPTO | Cobert.**
-- Fórmula: `(Stock Ini + Llegadas) / avg(PPTO_M, M+1, M+2)`
-- Colores: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
-- Aggregación en filas de grupo ✅ (Bandú=1.270, Lhotse=61.406, etc.)
-- TOTAL GENERAL pinneado: 121.165 stock | 40.531 vta | 127.944 stk+ped
+- Mes actual: **Stock Hoy** | Llegadas | Stk+Ped | Vta PPTO | Cobert.
+- Meses futuros: **Stock Ini** | Llegadas | Stk+Ped | Vta PPTO | Cobert.
+- Aggregación en filas de marca ✅
 
-### 🔶 Tab "💰 A Costo ($M)" — EN PROGRESO
-- **Estructura**: columnas correctas ($M CLP) ✅
-- **TOTAL GENERAL**: $925,3M Stock | $306,5M Vta/Mes ✅ 
-- **Filas de marca (agrupadas)**: NO muestran valores — bug de aggregación AG-Grid
-- **Filas expandidas (SKU)**: muestran valores correctamente ✅
-- **Último commit**: `cafa706` (fix NameError + DataFrame mínimo)
+### ✅ Tab "💰 A Costo ($M)" — FUNCIONANDO COMPLETO
+- Orden columnas: **Marca/Categoría | Cat. Padre | Cat. Hijo | SKU | Producto | Stock Hoy ($M) | Vta/Mes ($M) | [grupos mes]**
+- Aggregación en filas de marca ✅:
+  - Bandú: $15,0M | Dynamo: $10,3M | Lhotse: $322,6M | Simplit: $279,8M
+  - **TOTAL GENERAL: $925,3M** stock | $306,5M vta/mes
+- Mes actual: **Stock Hoy ($M)** | Llegadas ($M) | Stk+Ped ($M) | Vta PPTO ($M) | Cobert.
+- Meses futuros: **Stk Ini ($M)** | Llegadas ($M) | Stk+Ped ($M) | Vta PPTO ($M) | Cobert.
+- Colores cobertura: 🔴🟡🟢🟣 (mismos que Jerárquico)
 
-#### Historia del bug de aggregación A Costo:
-El problema es que las **filas grupales** (marca/categoría) no muestran valores agregados para `stock_cst_m` y `venta_prom_cst_m`, aunque el TOTAL GENERAL pinneado SÍ muestra los valores (calculados en Python).
-
-**Lo que se investigó:**
-- Los valores $M están en `_df_grid_cst` (DataFrame mínimo, solo columnas necesarias) ✓
-- `aggFunc="sum"` y `enableValue=True` están configurados ✓
-- AG-Grid CommunityEdition SÍ soporta aggregation en group rows ✓
-- La razón exacta: desconocida — las celdas `[col-id="stock_cst_m"]` NO aparecen en las filas grupales (solo en el pinned row y header)
-
-**Pendiente diagnosticar/solucionar:**
-- Intentar con `groupDisplayType="singleColumn"` (sin "multipleColumns")
-- Intentar pre-computar aggregados en Python y pasarlos como extra rows
-- Intentar con `rowModelType="clientSide"` explícito
-- Verificar si el issue es específico de streamlit-aggrid 1.0.5
+#### Clave del fix de aggregación:
+`_go2["autoGroupColumnDef"] = {"pinned": "left", ...}` → fuerza las columnas jerárquicas a la izquierda Y activa la aggregación en filas de grupo. Commit: `c26fcf1`
 
 ---
 
 ## 🔲 Pendientes Felipe
 
-- [ ] **Fix aggregación filas grupo en tab A Costo** ← bloqueante
-- [ ] **Sobrestock por Categoria Padre** (stand by)
-- [ ] PR #90 merge → app oficial (Andrés)
+- [ ] **Sobrestock por Categoria Padre** (estaba en stand by)
+  - Tab nuevo dentro de Cobertura por Producto
+  - Productos con cobertura > 4m, agrupados por Cat. Padre
+  - Referencia: hoja "Detalle Critico" del Excel analisis_planificacion_JUN26.xlsx
+- [ ] PR merge → app oficial (Andrés)
 - [ ] Actualizar `ventas_historico.parquet` con Mayo+Junio 2026
 - [ ] FCST desde Google Drive (cuando Andrés suba el link)
 
@@ -52,14 +41,14 @@ El problema es que las **filas grupales** (marca/categoría) no muestran valores
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `cafa706`
+**Último commit**: `f3aba16`
 
 **Incluye:**
-1. Tab Jerárquico completo (Stock Hoy/Ini, Llegadas, Stk+Ped, Vta PPTO, Cobert.)
-2. Tab A Costo ($M) — estructura lista, aggregación de grupos pendiente
+1. Tab Jerárquico completo ✅
+2. Tab A Costo ($M) completo ✅ (aggregación + orden correcto)
 3. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
 4. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
-5. Fix pantuflas Lhotse (23 SKUs formato nuevo)
+5. Fix pantuflas Lhotse (23 SKUs)
 
 ---
 
@@ -68,25 +57,35 @@ El problema es que las **filas grupales** (marca/categoría) no muestran valores
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `cafa706` |
+| Último commit | `f3aba16` |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
-| Stock LIVE | `data/stock/skus.parquet` — col: SKU, Qty, Costo Unit, Valor |
+| Stock LIVE | `data/stock/skus.parquet` — cols: SKU, Qty, Costo Unit, Valor |
 | PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
 | Tránsito FCST | `data/planificacion/snapshots/planif_forecast_transito.parquet` |
 | Master SKU | `data/planificacion/snapshots/planif_master_sku.parquet` |
 | FCST Excel local | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\FORECAST FINAL SKU 26-27 V2.xlsx` |
 
 ### 🔁 Forzar full redeploy Streamlit Cloud
-1. Cambiar versión real en `requirements.txt` (rich 13.9.3 ↔ 13.9.4)
+1. Cambiar versión en `requirements.txt` (rich 13.9.3 ↔ 13.9.4)
 2. Push
 3. Manage app → ⋮ → Reboot app → Reboot
 
 ### 📌 Estructura A Costo (_df_grid_cst)
-DataFrame mínimo con solo:
-- Columnas id: `marca, categoria_padre, categoria_hijo, sku, produto, _is_total`
-- Columnas fijas: `stock_cst_m, venta_prom_cst_m`
-- Columnas mensuales (costo): `csi_YYYY-MM, ctr_, csp_, cvt_, cb_` × 6 meses
+DataFrame mínimo con solo columnas necesarias (igual que df_jer en Jerárquico):
+- `marca, categoria_padre, categoria_hijo, sku, producto, _is_total`
+- `stock_cst_m, venta_prom_cst_m`
+- `csi_{ms}, ctr_{ms}, csp_{ms}, cvt_{ms}, cb_{ms}` × 6 meses
 - Fórmula: `col_cst = col_unidades × Costo_Unit / 1_000_000`
+- Grid: `_go2["autoGroupColumnDef"] = {"pinned": "left", ...}` — CRÍTICO para aggregación
+
+### 📊 Valores A Costo confirmados (Jun 26)
+| Marca | Stock Hoy ($M) | Vta/Mes ($M) |
+|-------|---------------|-------------|
+| Bandú | $15,0M | $11,1M |
+| Dynamo | $10,3M | $5,9M |
+| Lhotse | $322,6M | $83,1M |
+| Simplit | $279,8M | $117,0M |
+| **TOTAL** | **$925,3M** | **$306,5M** |
 
 ---
 
