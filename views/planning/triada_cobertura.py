@@ -913,8 +913,9 @@ def render():
                   return{background:'#722ED1',color:'white'};
                 }""")
 
-                # Eliminar defs individuales de mensuales (mismo fix que Jerárquico)
-                # También quitamos las columnas heredadas de df_jer que no son costo
+                # Filtrar columnDefs: eliminar mensuales individuales y columnas df_jer no-costo
+                # IMPORTANTE: NO eliminar stock_cst_m ni venta_prom_cst_m — deben venir del build
+                # para preservar su registro como value columns (necesario para agregar en grupos)
                 _pref_men = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
                 _campos_a_quitar = {
                     'costo_unit','stock_actual','venta_prom_3m','ventas_6sem',
@@ -927,23 +928,16 @@ def render():
                     if not any(str(c.get("field","")).startswith(p) for p in _pref_men)
                     and str(c.get("field","")) not in _campos_a_quitar
                 ]
-                # Agregar columnas fijas a costo con colId explícito (garantiza col-id correcto)
-                _go2["columnDefs"] = [c for c in _go2["columnDefs"]
-                                      if str(c.get("field","")) not in ("stock_cst_m","venta_prom_cst_m")]
-                _go2["columnDefs"].append({
-                    "field": "stock_cst_m", "colId": "stock_cst_m",
-                    "headerName": "Stock Hoy ($M)", "width": 115, "minWidth": 100,
-                    "suppressSizeToFit": True,
-                    "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
-                    "valueFormatter": _mfmt2
-                })
-                _go2["columnDefs"].append({
-                    "field": "venta_prom_cst_m", "colId": "venta_prom_cst_m",
-                    "headerName": "Vta/Mes ($M)", "width": 105, "minWidth": 95,
-                    "suppressSizeToFit": True,
-                    "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
-                    "valueFormatter": _mfmt2
-                })
+                # Si venta_prom_cst_m no quedó en el build, agregarlo manualmente
+                _fields_en_go2 = {str(c.get("field","")) for c in _go2["columnDefs"]}
+                if "venta_prom_cst_m" not in _fields_en_go2:
+                    _go2["columnDefs"].append({
+                        "field": "venta_prom_cst_m", "colId": "venta_prom_cst_m",
+                        "headerName": "Vta/Mes ($M)", "width": 105, "minWidth": 95,
+                        "suppressSizeToFit": True,
+                        "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                        "valueFormatter": _mfmt2
+                    })
 
                 # Grupos de meses — misma estructura que Jerárquico
                 for _i_cst, (_ms2, _ml2) in enumerate(zip(mes_strs_j, mes_labels_j)):
