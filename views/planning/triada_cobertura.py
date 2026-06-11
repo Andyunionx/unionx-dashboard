@@ -866,9 +866,10 @@ def render():
                                      width=110, type=["numericColumn"], enableValue=True, aggFunc="sum",
                                      valueFormatter="x!=null?'$'+x.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':''")
 
-                # Ocultar columnas crudas
+                # Ocultar todas las columnas crudas (solo quedan las configuradas explícitamente)
+                _cols_visibles = {'marca','categoria_padre','categoria_hijo','sku','producto','stock_cst_m'}
                 for _col in _df_cst.columns:
-                    if _col not in ['marca','categoria_padre','categoria_hijo','sku','producto','stock_cst_m','costo_unit','stock_actual']:
+                    if _col not in _cols_visibles:
                         gb2.configure_column(_col, hide=True)
 
                 # Formato $M
