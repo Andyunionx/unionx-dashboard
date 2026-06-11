@@ -872,6 +872,13 @@ def render():
                                      type=["numericColumn"], enableValue=True, aggFunc="sum",
                                      valueFormatter=_mfmt2)
 
+                # Ocultar columnas heredadas de df_jer que no son costo
+                for _col_hide in ['stock_actual','venta_prom_3m','ventas_6sem','cobertura_6sem_meses',
+                                  'estado_6sem','cobertura_fc3m_meses','estado_fc3m','demanda_diaria',
+                                  'cobertura_dias','cobertura_meses','estado','venta_bruta','tipo_marca',
+                                  '_is_total','costo_unit']:
+                    gb2.configure_column(_col_hide, hide=True)
+
                 # Ocultar proyecciones individuales (se muestran en grupos)
                 for _ms in mes_strs_j:
                     for _pref in ["csi_","ctr_","csp_","cvt_","si_","tr_","sp_","vt_","cb_"]:
