@@ -841,22 +841,26 @@ def render():
         if not _df_cst.empty:
             _M  = 1_000_000
             _cu = _df_cst['sku'].map(_costo_map).fillna(0).values
-            _df_cst['costo_unit']        = _cu
-            _df_cst['stock_cst_m']       = np.round(_df_cst['stock_actual'].values   * _cu / _M, 2)
-            _df_cst['venta_prom_cst_m']  = np.round(_df_cst['venta_prom_3m'].values  * _cu / _M, 2)
 
+            # Construir DataFrame MÍNIMO — solo columnas necesarias (igual que df_jer en Jerárquico)
+            # Esto evita que columnas extra interfieran con la agregación de AG-Grid
+            _id_cols = ['marca','categoria_padre','categoria_hijo','sku','producto','_is_total']
+            _cst_data = {c: _df_cst[c].values for c in _id_cols if c in _df_cst.columns}
+            _cst_data['stock_cst_m']      = np.round(_df_grid_cst['stock_actual'].values  * _cu / _M, 2)
+            _cst_data['venta_prom_cst_m'] = np.round(_df_grid_cst['venta_prom_3m'].values * _cu / _M, 2)
             for _ms in mes_strs_j:
                 if f'si_{_ms}' in _df_cst.columns:
-                    _df_cst[f'csi_{_ms}'] = np.round(_df_cst[f'si_{_ms}'].values * _cu / _M, 2)
-                    _df_cst[f'ctr_{_ms}'] = np.round(_df_cst[f'tr_{_ms}'].values * _cu / _M, 2)
-                    _df_cst[f'csp_{_ms}'] = np.round(_df_cst[f'sp_{_ms}'].values * _cu / _M, 2)
-                    _df_cst[f'cvt_{_ms}'] = np.round(_df_cst[f'vt_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'csi_{_ms}'] = np.round(_df_grid_cst[f'si_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'ctr_{_ms}'] = np.round(_df_grid_cst[f'tr_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'csp_{_ms}'] = np.round(_df_grid_cst[f'sp_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'cvt_{_ms}'] = np.round(_df_grid_cst[f'vt_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'cb_{_ms}']  = _df_cst[f'cb_{_ms}'].values  # cobertura = misma ratio
+            _df_grid_cst = pd.DataFrame(_cst_data)
 
             if _aggrid_cst_ok:
-                # ── mismo orden que Jerárquico ────────────────────────────────
                 _mfmt2 = "x!=null?'$'+x.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':''"
 
-                gb2 = GridOptionsBuilder.from_dataframe(_df_cst)
+                gb2 = GridOptionsBuilder.from_dataframe(_df_grid_cst)
                 gb2.configure_default_column(resizable=True, sortable=True, filter=True)
 
                 # Columnas de identidad — misma estructura que versión funcional
@@ -894,7 +898,7 @@ def render():
                 _go2["groupHeaderHeight"]       = 28
 
                 # Altura del grid
-                _n_top_cst  = _df_cst["marca"].dropna().nunique()
+                _n_top_cst  = _df_grid_cst["marca"].dropna().nunique()
                 _height_cst = min(max(_n_top_cst * 28 + 60 + 28 + 20, 300), 700)
 
                 # Formatters de cobertura (iguales que Jerárquico)
@@ -948,17 +952,17 @@ def render():
                 _total_cst = {
                     "marca": "", "categoria_padre": "", "categoria_hijo": "",
                     "sku": "TOTAL GENERAL", "producto": "TOTAL GENERAL",
-                    "stock_cst_m":      round(_df_cst["stock_cst_m"].sum(), 2),
-                    "venta_prom_cst_m": round(_df_cst["venta_prom_cst_m"].sum(), 2),
+                    "stock_cst_m":      round(_df_grid_cst["stock_cst_m"].sum(), 2),
+                    "venta_prom_cst_m": round(_df_grid_cst["venta_prom_cst_m"].sum(), 2),
                     "_is_total": True,
                 }
                 for _ms2 in mes_strs_j:
                     for _pref2 in ["csi_", "ctr_", "csp_", "cvt_"]:
                         _c2 = f"{_pref2}{_ms2}"
-                        _total_cst[_c2] = round(_df_cst[_c2].sum(), 2) if _c2 in _df_cst.columns else 0
+                        _total_cst[_c2] = round(_df_grid_cst[_c2].sum(), 2) if _c2 in _df_grid_cst.columns else 0
                     _cvt2 = f"cvt_{_ms2}"; _csp2 = f"csp_{_ms2}"; _cb2 = f"cb_{_ms2}"
-                    _vs = _df_cst[_cvt2].sum() if _cvt2 in _df_cst.columns else 0
-                    _ss = _df_cst[_csp2].sum() if _csp2 in _df_cst.columns else 0
+                    _vs = _df_grid_cst[_cvt2].sum() if _cvt2 in _df_cst.columns else 0
+                    _ss = _df_grid_cst[_csp2].sum() if _csp2 in _df_cst.columns else 0
                     _total_cst[_cb2] = round(_ss / _vs, 1) if _vs > 0 else None
 
                 _go2["pinnedBottomRowData"] = [_total_cst]
@@ -970,7 +974,7 @@ def render():
                 }""")
 
                 AgGrid(
-                    _df_cst,
+                    _df_grid_cst,
                     gridOptions=_go2,
                     height=_height_cst,
                     fit_columns_on_grid_load=False,
@@ -980,7 +984,7 @@ def render():
                 )
             else:
                 st.info("streamlit-aggrid no disponible.")
-                st.dataframe(_df_cst[["sku", "producto", "marca", "stock_cst_m"]])
+                st.dataframe(_df_grid_cst[["sku", "producto", "marca", "stock_cst_m"]])
 
     # ── TAB 2 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
