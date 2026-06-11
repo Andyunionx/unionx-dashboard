@@ -884,29 +884,22 @@ def render():
                     for _pref in ["csi_","ctr_","csp_","cvt_","si_","tr_","sp_","vt_","cb_"]:
                         gb2.configure_column(f"{_pref}{_ms}", hide=True)
 
-                # Altura igual que Jerárquico
-                _n_top_cst  = _df_cst["marca"].dropna().nunique()
-                _row_h_cst  = 42
-                _header_cst = 60
-                _height_cst = _n_top_cst * _row_h_cst + _header_cst + _row_h_cst + 6
-
-                gb2.configure_grid_options(
-                    groupDefaultExpanded=0,
-                    animateRows=True,
-                    suppressAggFuncInHeader=True,
-                    rowHeight=_row_h_cst,
-                    headerHeight=30,
-                    groupHeaderHeight=30,
-                    autoGroupColumnDef={
-                        "headerName": "Marca / Categoría",
-                        "minWidth": 260,
-                        "cellRendererParams": {"suppressCount": False},
-                    },
-                )
                 gb2.configure_default_column(resizable=True, sortable=True, filter=True)
-                gb2.configure_column("_is_total",   hide=True)
-                gb2.configure_column("costo_unit",  hide=True)
+                gb2.configure_column("_is_total",  hide=True)
+                gb2.configure_column("costo_unit", hide=True)
                 _go2 = gb2.build()
+
+                # Opciones de agrupación — seteadas en _go2 post-build (igual que versión funcional)
+                _go2["groupDisplayType"]        = "multipleColumns"
+                _go2["groupDefaultExpanded"]    = 0
+                _go2["suppressAggFuncInHeader"] = True
+                _go2["rowHeight"]               = 28
+                _go2["headerHeight"]            = 32
+                _go2["groupHeaderHeight"]       = 28
+
+                # Altura del grid
+                _n_top_cst  = _df_cst["marca"].dropna().nunique()
+                _height_cst = min(max(_n_top_cst * 28 + 60 + 28 + 20, 300), 700)
 
                 # Formatters de cobertura (iguales que Jerárquico)
                 _cob_fmt2 = JsCode2("function(p){if(p.value==null||isNaN(p.value))return '';return p.value.toFixed(1)+'m';}")
