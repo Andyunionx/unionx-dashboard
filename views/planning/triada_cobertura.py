@@ -698,10 +698,12 @@ def render():
             gb.configure_column("categoria_hijo",  rowGroup=True, hide=True)
             gb.configure_column("sku",             header_name="SKU",     width=140)
             gb.configure_column("producto",        header_name="Producto", width=200)
-            gb.configure_column("stock_actual",    header_name="Stock Hoy", width=100,
+            gb.configure_column("stock_actual",  header_name="Stock Hoy", width=100, minWidth=90,
+                                suppressSizeToFit=True,
                                 type=["numericColumn"], enableValue=True, aggFunc="sum",
                                 valueFormatter="x!=null?Math.round(x).toLocaleString():''")
-            gb.configure_column("venta_prom_3m",   header_name="Vta/Mes PPTO", width=110,
+            gb.configure_column("venta_prom_3m", header_name="Vta/Mes PPTO", width=110, minWidth=100,
+                                suppressSizeToFit=True,
                                 type=["numericColumn"], enableValue=True, aggFunc="sum",
                                 valueFormatter="x!=null?Math.round(x).toLocaleString():''")
 
@@ -750,19 +752,24 @@ def render():
                 mes_group = {
                     "headerName": ml,
                     "children": [
-                        {"field": f"si_{ms}",  "headerName": "Stock Ini",  "width": 90,
+                        {"field": f"si_{ms}",  "headerName": "Stock Ini",  "width": 90,  "minWidth": 75,
+                         "suppressSizeToFit": True,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"tr_{ms}",  "headerName": "Llegadas",   "width": 80,
+                        {"field": f"tr_{ms}",  "headerName": "Llegadas",   "width": 80,  "minWidth": 70,
+                         "suppressSizeToFit": True,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"sp_{ms}",  "headerName": "Stk+Ped",   "width": 80,
+                        {"field": f"sp_{ms}",  "headerName": "Stk+Ped",   "width": 80,  "minWidth": 70,
+                         "suppressSizeToFit": True,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"vt_{ms}",  "headerName": "Vta PPTO",  "width": 80,
+                        {"field": f"vt_{ms}",  "headerName": "Vta PPTO",  "width": 80,  "minWidth": 70,
+                         "suppressSizeToFit": True,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
                          "valueFormatter": num_fmt},
-                        {"field": f"cb_{ms}",  "headerName": "Cobert.",    "width": 72,
+                        {"field": f"cb_{ms}",  "headerName": "Cobert.",    "width": 72,  "minWidth": 62,
+                         "suppressSizeToFit": True,
                          "type": ["numericColumn"], "enableValue": True, "aggFunc": "avg",
                          "valueFormatter": cob_formatter, "cellStyle": cob_style},
                     ]
