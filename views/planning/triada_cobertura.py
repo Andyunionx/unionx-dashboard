@@ -846,16 +846,17 @@ def render():
             # Esto evita que columnas extra interfieran con la agregación de AG-Grid
             _id_cols = ['marca','categoria_padre','categoria_hijo','sku','producto','_is_total']
             _cst_data = {c: _df_cst[c].values for c in _id_cols if c in _df_cst.columns}
-            _cst_data['stock_cst_m']      = np.round(_df_grid_cst['stock_actual'].values  * _cu / _M, 2)
-            _cst_data['venta_prom_cst_m'] = np.round(_df_grid_cst['venta_prom_3m'].values * _cu / _M, 2)
+            # Usar _df_cst como fuente (tiene todas las columnas de df_jer)
+            _cst_data['stock_cst_m']      = np.round(_df_cst['stock_actual'].values  * _cu / _M, 2)
+            _cst_data['venta_prom_cst_m'] = np.round(_df_cst['venta_prom_3m'].values * _cu / _M, 2)
             for _ms in mes_strs_j:
                 if f'si_{_ms}' in _df_cst.columns:
-                    _cst_data[f'csi_{_ms}'] = np.round(_df_grid_cst[f'si_{_ms}'].values * _cu / _M, 2)
-                    _cst_data[f'ctr_{_ms}'] = np.round(_df_grid_cst[f'tr_{_ms}'].values * _cu / _M, 2)
-                    _cst_data[f'csp_{_ms}'] = np.round(_df_grid_cst[f'sp_{_ms}'].values * _cu / _M, 2)
-                    _cst_data[f'cvt_{_ms}'] = np.round(_df_grid_cst[f'vt_{_ms}'].values * _cu / _M, 2)
-                    _cst_data[f'cb_{_ms}']  = _df_cst[f'cb_{_ms}'].values  # cobertura = misma ratio
-            _df_grid_cst = pd.DataFrame(_cst_data)
+                    _cst_data[f'csi_{_ms}'] = np.round(_df_cst[f'si_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'ctr_{_ms}'] = np.round(_df_cst[f'tr_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'csp_{_ms}'] = np.round(_df_cst[f'sp_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'cvt_{_ms}'] = np.round(_df_cst[f'vt_{_ms}'].values * _cu / _M, 2)
+                    _cst_data[f'cb_{_ms}']  = _df_cst[f'cb_{_ms}'].values
+            _df_grid_cst = pd.DataFrame(_cst_data)  # DataFrame mínimo para AG-Grid
 
             if _aggrid_cst_ok:
                 _mfmt2 = "x!=null?'$'+x.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':''"
@@ -898,7 +899,7 @@ def render():
                 _go2["groupHeaderHeight"]       = 28
 
                 # Altura del grid
-                _n_top_cst  = _df_grid_cst["marca"].dropna().nunique()
+                _n_top_cst  = _df_grid_cst['marca'].dropna().nunique()
                 _height_cst = min(max(_n_top_cst * 28 + 60 + 28 + 20, 300), 700)
 
                 # Formatters de cobertura (iguales que Jerárquico)
