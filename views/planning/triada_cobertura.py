@@ -21,6 +21,7 @@ import streamlit as st
 
 from views.planning._data_helpers import (
     DATA_DIR,
+    cargar_costo_unit_sku,
     cargar_forecast_sku,
     cargar_forecast_manual_mensual,
     cargar_planif_master,
@@ -558,8 +559,9 @@ def render():
     st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────
-    tab_jer, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
+    tab_jer, tab_cst, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
         "🌳 Jerárquico",
+        "💰 A Costo ($M)",
         "🔍 Por SKU",
         "🏷️ Por Marca",
         "📂 Por Categoría",
@@ -812,7 +814,159 @@ def render():
             st.info("streamlit-aggrid no disponible. Recargá la página.")
             st.dataframe(df_jer[["sku","producto","marca","stock_actual"]], width='stretch', height=400)
 
-    # ── TAB 1 — Por SKU ───────────────────────────────────────────────
+    # ── TAB 1 — A Costo ($M) ─────────────────────────────────────────
+    with tab_cst:
+        try:
+            from st_aggrid import AgGrid, GridOptionsBuilder, JsCode as JsCode2
+            _aggrid_cst_ok = True
+        except ImportError:
+            _aggrid_cst_ok = False
+
+        # Cargar costo unitario por SKU
+        _costo_map = cargar_costo_unit_sku()
+
+        # Reutilizar df_jer ya calculado en tab_jer (misma sesión, ya está en memoria)
+        # Si df_jer no existe todavía, reproducir el cálculo mínimo
+        try:
+            _df_cst = df_jer.copy()
+        except NameError:
+            st.warning("Cargá primero el tab Jerárquico para inicializar los datos.")
+            _df_cst = pd.DataFrame()
+
+        if not _df_cst.empty:
+            # Mapear costo unitario al DataFrame
+            _df_cst['costo_unit'] = _df_cst['sku'].map(_costo_map).fillna(0)
+
+            # Calcular columnas de costo ($M) por mes
+            _M = 1_000_000
+            for _ms in mes_strs_j:
+                _cu = _df_cst['costo_unit'].values
+                if f'si_{_ms}' in _df_cst.columns:
+                    _df_cst[f'csi_{_ms}'] = np.round(_df_cst[f'si_{_ms}'].values * _cu / _M, 2)
+                    _df_cst[f'ctr_{_ms}'] = np.round(_df_cst[f'tr_{_ms}'].values * _cu / _M, 2)
+                    _df_cst[f'csp_{_ms}'] = np.round(_df_cst[f'sp_{_ms}'].values * _cu / _M, 2)
+                    _df_cst[f'cvt_{_ms}'] = np.round(_df_cst[f'vt_{_ms}'].values * _cu / _M, 2)
+
+            # Stock hoy a costo
+            _df_cst['stock_cst_m'] = np.round(_df_cst['stock_actual'].values * _df_cst['costo_unit'].values / _M, 2)
+
+            if _aggrid_cst_ok:
+                gb2 = GridOptionsBuilder.from_dataframe(_df_cst)
+                gb2.configure_default_column(resizable=True, sortable=True, filter=True)
+
+                # Fijar columnas de identidad
+                gb2.configure_column("marca",          header_name="Marca / Categoría", rowGroup=True,  hide=True, pinned="left")
+                gb2.configure_column("categoria_padre",header_name="Cat. Padre",         rowGroup=True,  hide=True)
+                gb2.configure_column("categoria_hijo", header_name="Cat. Hijo",          rowGroup=True,  hide=True)
+                gb2.configure_column("sku",            header_name="SKU",                width=130,      pinned="left")
+                gb2.configure_column("producto",       header_name="Producto",           width=220,      pinned="left")
+
+                # Stock hoy a costo
+                gb2.configure_column("stock_cst_m", header_name="Stock Hoy ($M)",
+                                     width=110, type=["numericColumn"], enableValue=True, aggFunc="sum",
+                                     valueFormatter="x!=null?'$'+x.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':''")
+
+                # Ocultar columnas crudas
+                for _col in _df_cst.columns:
+                    if _col not in ['marca','categoria_padre','categoria_hijo','sku','producto','stock_cst_m','costo_unit','stock_actual']:
+                        gb2.configure_column(_col, hide=True)
+
+                # Formato $M
+                _mfmt2 = "x!=null?'$'+x.toLocaleString('es-CL',{minimumFractionDigits:1,maximumFractionDigits:1})+'M':''"
+
+                # Cobertura — mismos colores que el tab jerárquico
+                _cob_fmt2 = JsCode2("function(p){if(p.value==null||isNaN(p.value))return '';return p.value.toFixed(1)+'m';}")
+                _cob_sty2 = JsCode2("""
+                function(p){
+                  var v=p.value;
+                  if(v==null||isNaN(v)) return{};
+                  if(v<1)  return{background:'#FF4B4B',color:'white'};
+                  if(v<2)  return{background:'#FFD700',color:'#333'};
+                  if(v<4)  return{background:'#52C41A',color:'white'};
+                  return{background:'#722ED1',color:'white'};
+                }""")
+
+                # Columnas agrupadas por mes
+                _go2 = gb2.build()
+                _go2.setdefault("columnDefs", [])
+                # Insertar grupos de meses después de stock_cst_m
+                for _ms2, _ml2 in zip(mes_strs_j, mes_labels_j):
+                    if f'csi_{_ms2}' not in _df_cst.columns:
+                        continue
+                    _go2["columnDefs"].append({
+                        "headerName": _ml2,
+                        "children": [
+                            {"field": f"csi_{_ms2}", "headerName": "Stk Ini ($M)", "width": 95,
+                             "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                             "valueFormatter": _mfmt2},
+                            {"field": f"ctr_{_ms2}", "headerName": "Llegadas ($M)", "width": 100,
+                             "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                             "valueFormatter": _mfmt2},
+                            {"field": f"csp_{_ms2}", "headerName": "Stk+Ped ($M)", "width": 95,
+                             "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                             "valueFormatter": _mfmt2},
+                            {"field": f"cvt_{_ms2}", "headerName": "Vta PPTO ($M)", "width": 100,
+                             "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
+                             "valueFormatter": _mfmt2},
+                            {"field": f"cb_{_ms2}", "headerName": "Cobert.", "width": 72,
+                             "type": ["numericColumn"], "enableValue": True, "aggFunc": "avg",
+                             "valueFormatter": _cob_fmt2, "cellStyle": _cob_sty2},
+                        ]
+                    })
+
+                # Fila TOTAL a costo
+                _total_cst = {
+                    "marca": "", "categoria_padre": "", "categoria_hijo": "",
+                    "sku": "TOTAL GENERAL", "producto": "TOTAL GENERAL",
+                    "stock_cst_m": round(_df_cst["stock_cst_m"].sum(), 2),
+                    "_is_total": True,
+                }
+                for _ms2 in mes_strs_j:
+                    for _pref in ["csi_", "ctr_", "csp_", "cvt_"]:
+                        _c = f"{_pref}{_ms2}"
+                        _total_cst[_c] = round(_df_cst[_c].sum(), 2) if _c in _df_cst.columns else 0
+                    _cb = f"cb_{_ms2}"
+                    _cvt = f"cvt_{_ms2}"
+                    _csp = f"csp_{_ms2}"
+                    _s = _df_cst[_cvt].sum() if _cvt in _df_cst.columns else 0
+                    _sp_s = _df_cst[_csp].sum() if _csp in _df_cst.columns else 0
+                    _total_cst[_cb] = round(_sp_s / _s, 1) if _s > 0 else None
+
+                _go2["pinnedBottomRowData"] = [_total_cst]
+
+                # Opciones de agrupación
+                _go2["groupDisplayType"]        = "multipleColumns"
+                _go2["groupDefaultExpanded"]    = 0
+                _go2["suppressAggFuncInHeader"] = True
+                _go2["rowHeight"]               = 28
+                _go2["headerHeight"]            = 32
+                _go2["groupHeaderHeight"]        = 28
+
+                _go2["getRowStyle"] = JsCode2("""
+                function(p){
+                    if(p.node && p.node.rowPinned==='bottom')
+                        return{fontWeight:'bold',background:'#f0f0f0'};
+                    return{};
+                }""")
+
+                _n_rows_cst = len(_df_cst)
+                _row_h2, _header_h2 = 28, 32 + 28
+                _height_cst = min(max(_n_rows_cst * _row_h2 + _header_h2 + _row_h2 + 20, 300), 700)
+
+                AgGrid(
+                    _df_cst,
+                    gridOptions=_go2,
+                    height=_height_cst,
+                    fit_columns_on_grid_load=False,
+                    allow_unsafe_jscode=True,
+                    theme="streamlit",
+                    key="aggrid_costo",
+                )
+            else:
+                st.info("streamlit-aggrid no disponible.")
+                st.dataframe(_df_cst[["sku", "producto", "marca", "stock_cst_m"]])
+
+    # ── TAB 2 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
         col_tr = f"transito_{horizonte}d"
         cols_show = [
