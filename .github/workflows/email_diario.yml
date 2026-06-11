@@ -5,10 +5,11 @@ name: Pulso Diario UnionX (Lun-Vie 07:30 CLT)
 # Destinatarios via vars.PULSO_DIARIO_EMAIL_TO (default 12).
 
 on:
-  schedule:
-    # 07:30 AM Chile = 11:30 UTC. 30 min antes de 08:00 para absorber el delay
-    # variable que GitHub Actions aplica a crons en plan free (5-30 min).
-    - cron: '30 11 * * 1-5'
+  # SIN cron de GitHub Actions: el trigger oficial es el Cloudflare Worker
+  # "patient-cloud-327e" (cron 30 11 * * MON-FRI = 07:30 CLT), que hace
+  # workflow_dispatch via API. El cron de GHA free tier disparaba con delay
+  # de hasta 3.5h y duplicaba el mail (incidente 11-jun-2026: pulso 07:30
+  # via Cloudflare + pulso 11:03 via cron GHA atrasado).
   workflow_dispatch: {}
 
 permissions:
