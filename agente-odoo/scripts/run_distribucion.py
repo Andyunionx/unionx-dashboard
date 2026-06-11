@@ -171,89 +171,59 @@ def cmd_detectar_y_clasificar(args):
         faltantes_manual = []
     print()
 
-    # ── Análisis SII vs Odoo ───────────────────────────────────────────────
+    # ── Análisis SII vs Odoo (detalle exacto via API interna del RCV) ──────
     comparacion_sii = None
     print("► Comparando SII vs Odoo (faltantes en Odoo)...")
     try:
-        from src.actions.compras.descarga_sii import descargar_mes_actual_y_anterior
-        from src.actions.compras.sii_parser import parse_libro_sii, cargar_directorio
-        from src.actions.compras.odoo_compras import OdooCompras
-        from src.actions.compras.compara_sii_odoo import comparar
+        from types import SimpleNamespace
         from datetime import date
+        from src.actions.compras.detalle_rcv import (
+            obtener_detalle_compras_api, claves_compras_odoo,
+            norm_folio, norm_rut_sin_dv, NOMBRE_TIPO_DOC)
 
         sii_rut = os.environ.get("SII_RUT", "")
         sii_pwd = os.environ.get("SII_PASSWORD", "")
 
-        if sii_rut and sii_pwd:
-            from src.actions.compras.descarga_sii import descargar_detalle_compras
-
-            # Intentar descargar el DETALLE (Descargas Diferidas) — comparación exacta
-            hoy_d = date.today()
-            resultado_detalle = descargar_detalle_compras(
-                hoy_d.year, hoy_d.month,
-                rut=sii_rut, password=sii_pwd,
-                headless=True,
-                esperar_generacion_seg=300,  # esperar hasta 5 min
-            )
-            if resultado_detalle["estado"] == "descargado":
-                print(f"  ✓ Detalle SII descargado: {resultado_detalle['archivo'].name}")
-            elif resultado_detalle["estado"] == "solicitado":
-                print("  📋 Detalle SII solicitado — estará listo en la próxima corrida")
-                # Mientras tanto, descargar el resumen para comparación de totales
-                resultados_resumen = descargar_mes_actual_y_anterior(rut=sii_rut, password=sii_pwd)
-                descargados = [r for r in resultados_resumen if r["ok"]]
-                if descargados:
-                    print(f"  ✓ Resumen SII descargado ({len(descargados)} mes/es)")
-            else:
-                print(f"  ⚠️  Error SII: {resultado_detalle['error']}")
-                resultados_resumen = descargar_mes_actual_y_anterior(rut=sii_rut, password=sii_pwd)
-                descargados = [r for r in resultados_resumen if r["ok"]]
-                if descargados:
-                    print(f"  ✓ Resumen SII (fallback): {len(descargados)} mes/es")
+        if not sii_rut or not sii_pwd:
+            print("  (SII_RUT/SII_PASSWORD no configurados — skip)")
         else:
-            print("  (SII_RUT/SII_PASSWORD no configurados — skip descarga automática)")
-
-        # Intentar leer archivos ya existentes en disco
-        sii_dir = PROJECT_ROOT / "data" / "contabilidad" / "sii"
-        compras_sii = cargar_directorio(sii_dir) if sii_dir.exists() else []
-
-        if compras_sii:
             hoy = date.today()
-            oc = OdooCompras(client)
-            compras_odoo = []
-            for mes_offset in [0, 1]:
-                m = hoy.month - mes_offset
-                y = hoy.year
-                if m <= 0:
-                    m += 12; y -= 1
-                compras_odoo.extend(oc.listar_compras_mes(y, m))
+            docs_sii, errs_api = obtener_detalle_compras_api(
+                hoy.year, hoy.month, rut=sii_rut, password=sii_pwd, headless=False)
+            for e in errs_api:
+                print(f"  ⚠️  {e}")
 
-            periodo = f"{hoy.year}-{hoy.month:02d}"
-            comparacion_sii = comparar(compras_sii, compras_odoo, periodo)
-            print(f"  SII: {comparacion_sii.total_sii} docs | "
-                  f"Odoo: {comparacion_sii.total_odoo} docs | "
-                  f"Faltantes en Odoo: {len(comparacion_sii.faltantes_en_odoo)}")
-        else:
-            # Los archivos descargados son resumen CSV (no detalle).
-            # Comparar totales Odoo vs totales SII usando el CSV de resumen.
-            hoy = date.today()
-            resumen_sii = _leer_resumen_sii_csv(sii_dir, hoy.year, hoy.month)
-            if resumen_sii:
-                oc = OdooCompras(client)
-                compras_odoo = oc.listar_compras_mes(hoy.year, hoy.month)
-                total_odoo = sum(c.get("amount_total", 0) for c in compras_odoo)
-                print(f"  SII (resumen): {resumen_sii['total_docs']} docs, "
-                      f"${resumen_sii['monto_total']:,.0f} neto")
-                print(f"  Odoo: {len(compras_odoo)} docs, ${total_odoo:,.0f} total")
-                comparacion_sii = type('SIIResumen', (), {
-                    'faltantes_en_odoo': [],
-                    'total_sii': resumen_sii['total_docs'],
-                    'total_odoo': len(compras_odoo),
-                    '_resumen': resumen_sii,
-                    '_odoo_total': total_odoo,
-                })()
+            if docs_sii:
+                claves_odoo = claves_compras_odoo(client, hoy.year, hoy.month)
+                faltantes = [
+                    SimpleNamespace(
+                        fecha=d["fecha"],
+                        tipo_doc_nombre=NOMBRE_TIPO_DOC.get(d["tipo_doc"], d["tipo_doc"]),
+                        folio=d["folio"],
+                        rut=d["rut_emisor"],
+                        razon_social=d["razon_social"],
+                        monto_total=d["monto_total"],
+                    )
+                    for d in docs_sii
+                    if (norm_rut_sin_dv(d["rut_emisor"]), norm_folio(d["folio"]))
+                       not in claves_odoo
+                ]
+                comparacion_sii = SimpleNamespace(
+                    faltantes_en_odoo=faltantes,
+                    total_sii=len(docs_sii),
+                    total_odoo=len(docs_sii) - len(faltantes),
+                )
+                monto_faltante = sum(f.monto_total for f in faltantes)
+                print(f"  SII: {len(docs_sii)} docs | En Odoo: "
+                      f"{comparacion_sii.total_odoo} | Faltantes: {len(faltantes)} "
+                      f"(${monto_faltante:,.0f})")
+                for f in faltantes[:10]:
+                    print(f"    • {f.tipo_doc_nombre[:20]:20} {f.folio:>10} | "
+                          f"{f.razon_social[:35]:35} | ${f.monto_total:,.0f}")
+                if len(faltantes) > 10:
+                    print(f"    ... y {len(faltantes) - 10} más")
             else:
-                print("  (Sin libro SII en disco — subir a data/contabilidad/sii/ para comparar)")
+                print("  (API RCV sin documentos — sin comparación hoy)")
     except Exception as e:
         print(f"  (Error en análisis SII: {e})")
     print()
