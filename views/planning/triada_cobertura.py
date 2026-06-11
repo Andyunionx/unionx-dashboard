@@ -909,31 +909,9 @@ def render():
                   return{background:'#722ED1',color:'white'};
                 }""")
 
-                # Filtrar columnDefs: eliminar mensuales individuales y columnas df_jer no-costo
-                # IMPORTANTE: NO eliminar stock_cst_m ni venta_prom_cst_m — deben venir del build
-                # para preservar su registro como value columns (necesario para agregar en grupos)
-                _pref_men = ('csi_','ctr_','csp_','cvt_','si_','tr_','sp_','vt_','cb_')
-                _campos_a_quitar = {
-                    'costo_unit','stock_actual','venta_prom_3m','ventas_6sem',
-                    'cobertura_6sem_meses','estado_6sem','cobertura_fc3m_meses',
-                    'estado_fc3m','demanda_diaria','cobertura_dias','cobertura_meses',
-                    'estado','venta_bruta','tipo_marca','_is_total',
-                }
-                _go2["columnDefs"] = [
-                    c for c in _go2.get("columnDefs", [])
-                    if not any(str(c.get("field","")).startswith(p) for p in _pref_men)
-                    and str(c.get("field","")) not in _campos_a_quitar
-                ]
-                # Si venta_prom_cst_m no quedó en el build, agregarlo manualmente
-                _fields_en_go2 = {str(c.get("field","")) for c in _go2["columnDefs"]}
-                if "venta_prom_cst_m" not in _fields_en_go2:
-                    _go2["columnDefs"].append({
-                        "field": "venta_prom_cst_m", "colId": "venta_prom_cst_m",
-                        "headerName": "Vta/Mes ($M)", "width": 105, "minWidth": 95,
-                        "suppressSizeToFit": True,
-                        "type": ["numericColumn"], "enableValue": True, "aggFunc": "sum",
-                        "valueFormatter": _mfmt2
-                    })
+                # NO filtramos columnDefs — dejamos todo del build intacto
+                # para preservar la agregación de group rows (stock_cst_m, venta_prom_cst_m)
+                # Los meses se agregan como grupos abajo; el duplicate-field no afecta aggregation
 
                 # Grupos de meses — misma estructura que Jerárquico
                 for _i_cst, (_ms2, _ml2) in enumerate(zip(mes_strs_j, mes_labels_j)):
