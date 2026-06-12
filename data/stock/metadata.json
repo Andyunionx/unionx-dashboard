@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-11T22:50:56.136632",
+  "generado_en": "2026-06-12T03:57:59.797000",
   "total_skus": 1897,
   "total_quants": 4469,
   "total_locations": 1413,
@@ -8,13 +8,13 @@
     "valor_total": 1053114055.47,
     "unidades_total": 173899.0,
     "costo_promedio_sku": 555147.1,
-    "n_quiebre_critico": 123,
-    "n_bajo": 175,
-    "n_optimo": 135,
-    "n_sobrestock": 291,
-    "n_sin_venta": 1173,
-    "rot_30d_promedio": 0.91,
-    "rot_90d_promedio": 3.43
+    "n_quiebre_critico": 119,
+    "n_bajo": 176,
+    "n_optimo": 136,
+    "n_sobrestock": 289,
+    "n_sin_venta": 1177,
+    "rot_30d_promedio": 0.89,
+    "rot_90d_promedio": 3.42
   },
   "ocupacion": {
     "positions": [
@@ -411,8 +411,8 @@
       {
         "Posicion": "101C12",
         "Ubicacion": "CA1/Stock/101C12",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "101C13",
@@ -508,7 +508,7 @@
         "Posicion": "101D01",
         "Ubicacion": "CA1/Stock/101D01",
         "Estado": "Ocupada",
-        "SKUs": 2
+        "SKUs": 1
       },
       {
         "Posicion": "101D02",
@@ -4299,8 +4299,8 @@
       {
         "Posicion": "201D15",
         "Ubicacion": "CA1/Stock/201D15",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "201D16",
@@ -4677,8 +4677,8 @@
       {
         "Posicion": "201F22",
         "Ubicacion": "CA1/Stock/201F22",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "201F23",
@@ -6009,8 +6009,8 @@
       {
         "Posicion": "301E11",
         "Ubicacion": "CA1/Stock/301E11",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "301E12",
@@ -8192,30 +8192,30 @@
       }
     ],
     "total": 1362,
-    "occupied": 874,
-    "empty": 488,
-    "pct": 64.2
+    "occupied": 870,
+    "empty": 492,
+    "pct": 63.9
   },
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1173
+      "SKUs": 1177
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 291
+      "SKUs": 289
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 175
+      "SKUs": 176
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 135
+      "SKUs": 136
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 123
+      "SKUs": 119
     }
   ],
   "valor_bodega": [
