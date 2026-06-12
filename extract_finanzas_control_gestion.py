@@ -79,72 +79,63 @@ def _parse_clp(s):
         return 0.0
 
 
-# Conceptos de remuneración que SÍ pueden venir como monto entero legítimo
-# (bonos, leyes sociales, indemnizaciones) y NO deben tratarse como nómina
-# duplicada aunque no tengan decimales.
-_REMUN_NO_NOMINA = ("BONO", "AGUINALDO", "GRATIF", "HHEE", "INDEMN", "LEYES")
+_LINE_DIMS = ["year", "month", "linea_negocio", "canal", "tipo_costo", "area",
+              "sub_area", "centro_costo", "cuenta_analitica"]
 
 
 def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
     """Red de seguridad ante errores de carga en el Sheet P&L.
 
-    Corrige dos problemas detectados en marzo/abril 2026 (la fuente traía
-    basura que inflaba el costo operativo ~80%):
+    La fuente traía basura que inflaba el costo operativo ~80% en varios meses.
+    Hay DOS mecanismos de duplicado, ambos corregidos acá:
 
-      1) FILAS DUPLICADAS EXACTAS — la misma línea pegada 2+ veces. En un
-         libro mayor en formato largo nunca hay dos líneas byte-idénticas
-         legítimas, así que se colapsan.
+      1) FILAS FCST DUPLICADAS EXACTAS — la misma línea pegada 2+ veces. En un
+         libro mayor en formato largo nunca hay dos líneas idénticas legítimas,
+         así que se colapsan (afectaba sobre todo a marzo 2026).
 
-      2) DOBLE NÓMINA — algunos meses traen DOS sets de remuneraciones: la
-         nómina detallada (con decimales, por empleado) y una segunda nómina
-         agregada (montos redondeados) que se suma encima y duplica el costo
-         de personal. Regla: dentro de REMUNERACIONES, si en un (año, mes,
-         área) ya existe nómina CON decimales, se eliminan las filas ENTERAS
-         que NO sean bonos/leyes (la nómina duplicada). Si no hay nómina con
-         decimales, no se toca nada (evita borrar la única nómina del mes).
+      2) FCST = PPTO (presupuesto copiado como forecast) — la pista la dio
+         Andrés: una fila FCST duplicada tiene EXACTAMENTE el mismo monto que
+         la PPTO de esa línea/mes (presupuesto recargado como real). Regla: se
+         elimina la fila FCST cuyo (línea, monto) coincide con una PPTO **solo
+         si existe OTRA fila FCST en la misma línea que NO sea igual a PPTO**
+         (el real distinto). Así, en meses futuros donde FCST legítimamente ==
+         PPTO (sin real aún) NO se borra nada.
 
-    Requiere la columna `valor_raw` (texto original del Sheet) para detectar
-    decimales. Loguea todo lo que elimina.
+    Loguea todo lo que elimina.
     """
     n0 = len(df)
+    dims = [c for c in _LINE_DIMS if c in df.columns]
 
     # ── Paso 1: filas duplicadas exactas ────────────────────────────────
-    dims = [c for c in ["year", "month", "linea_negocio", "canal",
-                        "tipo_costo", "area", "sub_area", "centro_costo",
-                        "cuenta_analitica", "cuenta_analitica_persona",
-                        "escenario", "kpi", "valor"] if c in df.columns]
-    df = df.drop_duplicates(subset=dims).copy()
+    df = df.drop_duplicates(subset=dims + ["escenario", "kpi", "valor"]).copy()
     n1 = len(df)
     if n0 - n1:
         print(f"    [limpieza] {n0 - n1:,} filas duplicadas exactas eliminadas",
               flush=True)
 
-    # ── Paso 2: doble nómina ─────────────────────────────────────────────
-    if "valor_raw" in df.columns and "centro_costo" in df.columns:
-        tiene_dec = df["valor_raw"].astype(str).str.contains(",")
-        es_remun = df["centro_costo"] == "REMUNERACIONES"
-        cta = df["cuenta_analitica"].astype(str).str.upper()
-        es_bono = cta.apply(lambda c: any(k in c for k in _REMUN_NO_NOMINA))
+    # ── Paso 2: FCST = PPTO con hermano real ─────────────────────────────
+    if {"escenario", "kpi"}.issubset(df.columns):
+        gasto = df[df["kpi"] == "GASTO"]
+        ppto_keys = set(map(tuple,
+            gasto[gasto["escenario"] == "PPTO"][dims + ["valor"]]
+            .round({"valor": 2}).values))
 
-        # Grupos (año, mes, área) que tienen nómina detallada con decimales
-        nomina_dec = df[es_remun & tiene_dec & ~es_bono]
-        grupos_con_dec = set(
-            map(tuple, nomina_dec[["year", "month", "area"]].dropna().values)
-        )
-        clave = list(zip(df["year"], df["month"], df["area"]))
-        en_grupo_dec = pd.Series(
-            [g in grupos_con_dec for g in clave], index=df.index
-        )
-        # Marcar nómina duplicada: REMUN, entera, no-bono, en grupo con nómina decimal
-        dup_nomina = es_remun & ~tiene_dec & ~es_bono & en_grupo_dec
-        if dup_nomina.any():
-            quitado = abs(df.loc[dup_nomina, "valor"].sum())
-            print(f"    [limpieza] {int(dup_nomina.sum()):,} filas de nómina "
-                  f"duplicada eliminadas (${quitado * 1000:,.0f} CLP). "
-                  f"Meses afectados: "
-                  f"{sorted(df.loc[dup_nomina, 'mes_text'].unique().tolist())}",
-                  flush=True)
-            df = df[~dup_nomina].copy()
+        fc = gasto[gasto["escenario"] == "FCST"].copy()
+        if len(fc):
+            fc["_esPPTO"] = [tuple(r) in ppto_keys
+                             for r in fc[dims + ["valor"]].round({"valor": 2}).values]
+            drop_idx = []
+            for _, grp in fc.groupby(dims, dropna=False):
+                # Solo si la línea está duplicada Y conviven copia-de-PPTO + real distinto
+                if len(grp) > 1 and grp["_esPPTO"].any() and (~grp["_esPPTO"]).any():
+                    drop_idx.extend(grp.index[grp["_esPPTO"]].tolist())
+            if drop_idx:
+                quitado = abs(df.loc[drop_idx, "valor"].sum())
+                meses = sorted(df.loc[drop_idx, "mes_text"].unique().tolist())
+                print(f"    [limpieza] {len(drop_idx):,} filas FCST=PPTO "
+                      f"(presupuesto copiado) eliminadas (${quitado * 1000:,.0f} "
+                      f"CLP). Meses: {meses}", flush=True)
+                df = df.drop(index=drop_idx).copy()
 
     return df
 
