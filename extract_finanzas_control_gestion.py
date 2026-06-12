@@ -101,13 +101,14 @@ def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
       2) NÓMINA GENÉRICA DUPLICADA — en REMUNERACIONES conviven la nómina
          detallada (cada cargo con el NOMBRE de la persona en
          cuenta_analitica_persona) y una segunda nómina genérica (los mismos
-         cargos sin persona y montos redondeados) que se suma encima y duplica
-         el costo de personal (ej. abril 2026). Regla: SOLO en un (año, mes,
-         área) donde existe nómina CON PERSONA, se eliminan las filas
-         REMUNERACIONES SIN persona que NO sean leyes/bonos. La señal de persona
-         es la única confiable: en meses sin esa columna (ene-mar) NO se toca
-         nada, porque ahí un monto redondeado puede ser un cargo legítimo (p.ej.
-         marzo trae GERENCIA/JEFATURA/ADMINISTRATIVO sin decimales y SON reales).
+         cargos sin persona) que duplica el costo de personal (ej. abril 2026).
+         Regla (conservadora, por cargo): se elimina una fila REMUNERACIONES SIN
+         persona solo si su MISMO cargo (sin sufijo numérico) aparece TAMBIÉN
+         con persona en ese (año, mes, área) — duplicado confirmado. Si el cargo
+         no tiene versión con persona, se conserva (puede ser rol legítimo sin
+         persona asignada: ej. abril LOGISTIC MANAGER / OPERARIO-CHOFER). En
+         meses sin columna persona (ene-mar) no se toca nada. Excluye
+         leyes/bonos. Evita el sobre-limpiado de borrar cargos reales.
 
       3) FCST = PPTO (presupuesto copiado como forecast) — la pista la dio
          Andrés: una fila FCST duplicada tiene EXACTAMENTE el mismo monto que
@@ -129,21 +130,27 @@ def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
         print(f"    [limpieza] {n0 - n1:,} filas duplicadas exactas eliminadas",
               flush=True)
 
-    # ── Paso 2: nómina genérica duplicada (señal = PERSONA) ──────────────
+    # ── Paso 2: nómina genérica duplicada (señal = PERSONA, por cargo) ───
     if "centro_costo" in df.columns and "cuenta_analitica_persona" in df.columns:
         es_remun = df["centro_costo"] == "REMUNERACIONES"
         con_per = df["cuenta_analitica_persona"].astype(str).str.strip() != ""
         cta = df["cuenta_analitica"].astype(str).str.upper()
         es_exc = cta.apply(lambda c: any(k in c for k in _REMUN_EXC))
+        # Cargo base (sin sufijo numérico): OPERARIO-LOGISTICO1 → OPERARIO-LOGISTICO
+        base = cta.str.replace(r"\d+$", "", regex=True).str.strip()
 
-        # Grupos (año, mes, área) con nómina por empleado (con persona)
-        det_keys = set(map(tuple,
-            df[es_remun & con_per][["year", "month", "area"]].dropna().values))
-        en_det = pd.Series(
-            [(y, m, a) in det_keys for y, m, a in
-             zip(df["year"], df["month"], df["area"])], index=df.index)
-        # Duplicado = REMUN SIN persona, no-leyes, en grupo que SÍ tiene nómina con persona
-        dup_nom = es_remun & ~con_per & ~es_exc & en_det
+        # Set de (año, mes, área, cargo) que SÍ tienen una fila con persona.
+        # Solo se borra una fila SIN persona si su MISMO cargo aparece con
+        # persona en ese mes/área (duplicado confirmado). Si el cargo no tiene
+        # versión con persona, se conserva (puede ser un rol legítimo sin
+        # persona asignada — ej. abril: LOGISTIC MANAGER, OPERARIO-CHOFER).
+        roles_con_per = set(map(tuple,
+            pd.concat([df.loc[es_remun & con_per, ["year", "month", "area"]],
+                       base[es_remun & con_per].rename("base")], axis=1).dropna().values))
+        clave_cargo = list(zip(df["year"], df["month"], df["area"], base))
+        es_dup_cargo = pd.Series(
+            [k in roles_con_per for k in clave_cargo], index=df.index)
+        dup_nom = es_remun & ~con_per & ~es_exc & es_dup_cargo
         # Solo nómina FCST (no tocar PPTO)
         if "escenario" in df.columns:
             dup_nom &= df["escenario"] == "FCST"
