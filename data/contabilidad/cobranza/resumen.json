@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-06-12T09:55:11.891420",
+  "generado_en": "2026-06-12T14:30:50.044757",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10855,
-  "total_monto_pendiente_clp": 647176066.0,
+  "total_documentos_pendientes": 10870,
+  "total_monto_pendiente_clp": 644524641.0,
   "monto_por_aging": {
     "+90 días": 36177561.0,
-    "1-30 días": 382009219.0,
+    "1-30 días": 379284569.0,
     "31-60 días": 61316987.0,
     "61-90 días": 13224267.0,
-    "Vigente": 154448032.0
+    "Vigente": 154521257.0
   },
   "monto_por_tipo": {
-    "BOLETA": 530965352.0,
+    "BOLETA": 528313927.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
@@ -22,11 +22,11 @@
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 72811694.0
+      "monto": 73228614.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 58320484.0
+      "monto": 58420474.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 21639701.0
+      "monto": 21695685.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -97,6 +97,6 @@
       "monto": 3279035.0
     }
   ],
-  "notas_credito_count": 540,
+  "notas_credito_count": 541,
   "pedidos_venta_count": 10000
 }
