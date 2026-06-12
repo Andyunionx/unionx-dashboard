@@ -99,13 +99,15 @@ def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
          así que se colapsan (afectaba sobre todo a marzo 2026).
 
       2) NÓMINA GENÉRICA DUPLICADA — en REMUNERACIONES conviven la nómina
-         detallada (por empleado: con decimales y/o con persona en
-         cuenta_analitica_persona) y una segunda nómina genérica (cargos sin
-         persona y montos redondeados) que se suma encima y duplica el costo de
-         personal (ej. abril 2026). Regla: en un (año, mes, área) donde existe
-         nómina DETALLADA (con decimales o con persona), se eliminan las filas
-         REMUNERACIONES que NO sean detalladas y NO sean leyes/bonos. Si no hay
-         set detallado, no se toca nada (meses sin esa columna quedan intactos).
+         detallada (cada cargo con el NOMBRE de la persona en
+         cuenta_analitica_persona) y una segunda nómina genérica (los mismos
+         cargos sin persona y montos redondeados) que se suma encima y duplica
+         el costo de personal (ej. abril 2026). Regla: SOLO en un (año, mes,
+         área) donde existe nómina CON PERSONA, se eliminan las filas
+         REMUNERACIONES SIN persona que NO sean leyes/bonos. La señal de persona
+         es la única confiable: en meses sin esa columna (ene-mar) NO se toca
+         nada, porque ahí un monto redondeado puede ser un cargo legítimo (p.ej.
+         marzo trae GERENCIA/JEFATURA/ADMINISTRATIVO sin decimales y SON reales).
 
       3) FCST = PPTO (presupuesto copiado como forecast) — la pista la dio
          Andrés: una fila FCST duplicada tiene EXACTAMENTE el mismo monto que
@@ -127,25 +129,21 @@ def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
         print(f"    [limpieza] {n0 - n1:,} filas duplicadas exactas eliminadas",
               flush=True)
 
-    # ── Paso 2: nómina genérica duplicada ────────────────────────────────
-    if "centro_costo" in df.columns:
+    # ── Paso 2: nómina genérica duplicada (señal = PERSONA) ──────────────
+    if "centro_costo" in df.columns and "cuenta_analitica_persona" in df.columns:
         es_remun = df["centro_costo"] == "REMUNERACIONES"
-        con_dec = (df["valor_raw"].astype(str).str.contains(",")
-                   if "valor_raw" in df.columns else pd.Series(False, index=df.index))
-        con_per = (df["cuenta_analitica_persona"].astype(str).str.strip() != ""
-                   if "cuenta_analitica_persona" in df.columns
-                   else pd.Series(False, index=df.index))
-        detalle = con_dec | con_per  # fila de nómina "real" (por empleado)
+        con_per = df["cuenta_analitica_persona"].astype(str).str.strip() != ""
         cta = df["cuenta_analitica"].astype(str).str.upper()
         es_exc = cta.apply(lambda c: any(k in c for k in _REMUN_EXC))
 
-        # Grupos (año, mes, área) con nómina detallada
+        # Grupos (año, mes, área) con nómina por empleado (con persona)
         det_keys = set(map(tuple,
-            df[es_remun & detalle][["year", "month", "area"]].dropna().values))
+            df[es_remun & con_per][["year", "month", "area"]].dropna().values))
         en_det = pd.Series(
             [(y, m, a) in det_keys for y, m, a in
              zip(df["year"], df["month"], df["area"])], index=df.index)
-        dup_nom = es_remun & ~detalle & ~es_exc & en_det
+        # Duplicado = REMUN SIN persona, no-leyes, en grupo que SÍ tiene nómina con persona
+        dup_nom = es_remun & ~con_per & ~es_exc & en_det
         # Solo nómina FCST (no tocar PPTO)
         if "escenario" in df.columns:
             dup_nom &= df["escenario"] == "FCST"
