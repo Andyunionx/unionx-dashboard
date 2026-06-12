@@ -79,6 +79,76 @@ def _parse_clp(s):
         return 0.0
 
 
+# Conceptos de remuneración que SÍ pueden venir como monto entero legítimo
+# (bonos, leyes sociales, indemnizaciones) y NO deben tratarse como nómina
+# duplicada aunque no tengan decimales.
+_REMUN_NO_NOMINA = ("BONO", "AGUINALDO", "GRATIF", "HHEE", "INDEMN", "LEYES")
+
+
+def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
+    """Red de seguridad ante errores de carga en el Sheet P&L.
+
+    Corrige dos problemas detectados en marzo/abril 2026 (la fuente traía
+    basura que inflaba el costo operativo ~80%):
+
+      1) FILAS DUPLICADAS EXACTAS — la misma línea pegada 2+ veces. En un
+         libro mayor en formato largo nunca hay dos líneas byte-idénticas
+         legítimas, así que se colapsan.
+
+      2) DOBLE NÓMINA — algunos meses traen DOS sets de remuneraciones: la
+         nómina detallada (con decimales, por empleado) y una segunda nómina
+         agregada (montos redondeados) que se suma encima y duplica el costo
+         de personal. Regla: dentro de REMUNERACIONES, si en un (año, mes,
+         área) ya existe nómina CON decimales, se eliminan las filas ENTERAS
+         que NO sean bonos/leyes (la nómina duplicada). Si no hay nómina con
+         decimales, no se toca nada (evita borrar la única nómina del mes).
+
+    Requiere la columna `valor_raw` (texto original del Sheet) para detectar
+    decimales. Loguea todo lo que elimina.
+    """
+    n0 = len(df)
+
+    # ── Paso 1: filas duplicadas exactas ────────────────────────────────
+    dims = [c for c in ["year", "month", "linea_negocio", "canal",
+                        "tipo_costo", "area", "sub_area", "centro_costo",
+                        "cuenta_analitica", "cuenta_analitica_persona",
+                        "escenario", "kpi", "valor"] if c in df.columns]
+    df = df.drop_duplicates(subset=dims).copy()
+    n1 = len(df)
+    if n0 - n1:
+        print(f"    [limpieza] {n0 - n1:,} filas duplicadas exactas eliminadas",
+              flush=True)
+
+    # ── Paso 2: doble nómina ─────────────────────────────────────────────
+    if "valor_raw" in df.columns and "centro_costo" in df.columns:
+        tiene_dec = df["valor_raw"].astype(str).str.contains(",")
+        es_remun = df["centro_costo"] == "REMUNERACIONES"
+        cta = df["cuenta_analitica"].astype(str).str.upper()
+        es_bono = cta.apply(lambda c: any(k in c for k in _REMUN_NO_NOMINA))
+
+        # Grupos (año, mes, área) que tienen nómina detallada con decimales
+        nomina_dec = df[es_remun & tiene_dec & ~es_bono]
+        grupos_con_dec = set(
+            map(tuple, nomina_dec[["year", "month", "area"]].dropna().values)
+        )
+        clave = list(zip(df["year"], df["month"], df["area"]))
+        en_grupo_dec = pd.Series(
+            [g in grupos_con_dec for g in clave], index=df.index
+        )
+        # Marcar nómina duplicada: REMUN, entera, no-bono, en grupo con nómina decimal
+        dup_nomina = es_remun & ~tiene_dec & ~es_bono & en_grupo_dec
+        if dup_nomina.any():
+            quitado = abs(df.loc[dup_nomina, "valor"].sum())
+            print(f"    [limpieza] {int(dup_nomina.sum()):,} filas de nómina "
+                  f"duplicada eliminadas (${quitado * 1000:,.0f} CLP). "
+                  f"Meses afectados: "
+                  f"{sorted(df.loc[dup_nomina, 'mes_text'].unique().tolist())}",
+                  flush=True)
+            df = df[~dup_nomina].copy()
+
+    return df
+
+
 def _normalizar_tipo(t: str) -> tuple[str, str]:
     """('PPTO GASTO' | 'FCST CONTRIB') → (escenario, kpi)
     escenario in {'PPTO', 'FCST'}; kpi in {'VENTA','COSTO','GASTO','CONTRIB'}.
@@ -192,6 +262,11 @@ def main():
     valid = df["year"].notna() & df["month"].notna() & (df["escenario"] != "")
     df = df[valid].copy()
     print(f"    Filas válidas: {len(df):,}", flush=True)
+
+    # Red de seguridad: filas duplicadas exactas + doble nómina (ver docstring)
+    print(f"\n[2b] Limpiando duplicados de la fuente...", flush=True)
+    df = _limpiar_duplicados(df)
+    print(f"    Filas tras limpieza: {len(df):,}", flush=True)
 
     # Fecha (1er día del mes)
     df["fecha"] = pd.to_datetime(
