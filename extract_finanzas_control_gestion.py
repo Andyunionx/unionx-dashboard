@@ -82,18 +82,32 @@ def _parse_clp(s):
 _LINE_DIMS = ["year", "month", "linea_negocio", "canal", "tipo_costo", "area",
               "sub_area", "centro_costo", "cuenta_analitica"]
 
+# Conceptos de REMUNERACIONES que pueden venir sin persona y SIN decimales de
+# forma legítima (no son nómina por empleado), por lo que NO se tratan como
+# nómina genérica duplicada.
+_REMUN_EXC = ("LEYES", "BONO", "AGUINALDO", "GRATIF", "INDEMN", "HHEE")
+
 
 def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
     """Red de seguridad ante errores de carga en el Sheet P&L.
 
     La fuente traía basura que inflaba el costo operativo ~80% en varios meses.
-    Hay DOS mecanismos de duplicado, ambos corregidos acá:
+    Hay TRES mecanismos de duplicado, todos corregidos acá:
 
       1) FILAS FCST DUPLICADAS EXACTAS — la misma línea pegada 2+ veces. En un
          libro mayor en formato largo nunca hay dos líneas idénticas legítimas,
          así que se colapsan (afectaba sobre todo a marzo 2026).
 
-      2) FCST = PPTO (presupuesto copiado como forecast) — la pista la dio
+      2) NÓMINA GENÉRICA DUPLICADA — en REMUNERACIONES conviven la nómina
+         detallada (por empleado: con decimales y/o con persona en
+         cuenta_analitica_persona) y una segunda nómina genérica (cargos sin
+         persona y montos redondeados) que se suma encima y duplica el costo de
+         personal (ej. abril 2026). Regla: en un (año, mes, área) donde existe
+         nómina DETALLADA (con decimales o con persona), se eliminan las filas
+         REMUNERACIONES que NO sean detalladas y NO sean leyes/bonos. Si no hay
+         set detallado, no se toca nada (meses sin esa columna quedan intactos).
+
+      3) FCST = PPTO (presupuesto copiado como forecast) — la pista la dio
          Andrés: una fila FCST duplicada tiene EXACTAMENTE el mismo monto que
          la PPTO de esa línea/mes (presupuesto recargado como real). Regla: se
          elimina la fila FCST cuyo (línea, monto) coincide con una PPTO **solo
@@ -113,7 +127,37 @@ def _limpiar_duplicados(df: pd.DataFrame) -> pd.DataFrame:
         print(f"    [limpieza] {n0 - n1:,} filas duplicadas exactas eliminadas",
               flush=True)
 
-    # ── Paso 2: FCST = PPTO con hermano real ─────────────────────────────
+    # ── Paso 2: nómina genérica duplicada ────────────────────────────────
+    if "centro_costo" in df.columns:
+        es_remun = df["centro_costo"] == "REMUNERACIONES"
+        con_dec = (df["valor_raw"].astype(str).str.contains(",")
+                   if "valor_raw" in df.columns else pd.Series(False, index=df.index))
+        con_per = (df["cuenta_analitica_persona"].astype(str).str.strip() != ""
+                   if "cuenta_analitica_persona" in df.columns
+                   else pd.Series(False, index=df.index))
+        detalle = con_dec | con_per  # fila de nómina "real" (por empleado)
+        cta = df["cuenta_analitica"].astype(str).str.upper()
+        es_exc = cta.apply(lambda c: any(k in c for k in _REMUN_EXC))
+
+        # Grupos (año, mes, área) con nómina detallada
+        det_keys = set(map(tuple,
+            df[es_remun & detalle][["year", "month", "area"]].dropna().values))
+        en_det = pd.Series(
+            [(y, m, a) in det_keys for y, m, a in
+             zip(df["year"], df["month"], df["area"])], index=df.index)
+        dup_nom = es_remun & ~detalle & ~es_exc & en_det
+        # Solo nómina FCST (no tocar PPTO)
+        if "escenario" in df.columns:
+            dup_nom &= df["escenario"] == "FCST"
+        if dup_nom.any():
+            quitado = abs(df.loc[dup_nom, "valor"].sum())
+            meses = sorted(df.loc[dup_nom, "mes_text"].unique().tolist())
+            print(f"    [limpieza] {int(dup_nom.sum()):,} filas de nómina "
+                  f"genérica duplicada eliminadas (${quitado * 1000:,.0f} CLP). "
+                  f"Meses: {meses}", flush=True)
+            df = df[~dup_nom].copy()
+
+    # ── Paso 3: FCST = PPTO con hermano real ─────────────────────────────
     if {"escenario", "kpi"}.issubset(df.columns):
         gasto = df[df["kpi"] == "GASTO"]
         ppto_keys = set(map(tuple,
