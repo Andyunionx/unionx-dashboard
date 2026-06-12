@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-06-12T14:30:50.044757",
+  "generado_en": "2026-06-12T19:50:59.207928",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10870,
-  "total_monto_pendiente_clp": 644524641.0,
+  "total_documentos_pendientes": 10790,
+  "total_monto_pendiente_clp": 645126712.0,
   "monto_por_aging": {
     "+90 días": 36177561.0,
-    "1-30 días": 379284569.0,
-    "31-60 días": 61316987.0,
-    "61-90 días": 13224267.0,
-    "Vigente": 154521257.0
+    "1-30 días": 382432939.0,
+    "31-60 días": 60903542.0,
+    "61-90 días": 13170287.0,
+    "Vigente": 152442383.0
   },
   "monto_por_tipo": {
-    "BOLETA": 528313927.0,
+    "BOLETA": 528915998.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 112676691.0
+      "monto": 117050102.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 73228614.0
+      "monto": 73275604.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 58420474.0
+      "monto": 61673201.0
     },
     {
       "partner": "MercadoLibre Chile LTDA",
@@ -38,27 +38,23 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 36744843.0
-    },
-    {
-      "partner": "Cliente Ripley",
-      "monto": 31193174.0
+      "monto": 37656513.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 27031810.0
+      "monto": 27475570.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 27377742.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 24004559.0
+      "monto": 24187160.0
     },
     {
       "partner": "Duty Free T C S A",
       "monto": 21695685.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19638428.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -66,7 +62,11 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 18682949.0
+      "monto": 18204951.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 16527334.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -97,6 +97,6 @@
       "monto": 3279035.0
     }
   ],
-  "notas_credito_count": 541,
+  "notas_credito_count": 542,
   "pedidos_venta_count": 10000
 }
