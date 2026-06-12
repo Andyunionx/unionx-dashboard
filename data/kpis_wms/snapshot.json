@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-06-11T18:17:07.059121",
+  "generado_en": "2026-06-12T07:25:29.263414",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0036123763153761584,
-      "total_pickings": 19101,
-      "on_time": 69,
-      "on_time_pct": 0.0036123763153761584,
-      "in_full": 19097,
-      "in_full_pct": 0.999790586880268,
-      "both": 69,
+      "valor": 0.029760970762069145,
+      "total_pickings": 19119,
+      "on_time": 569,
+      "on_time_pct": 0.029760970762069145,
+      "in_full": 19115,
+      "in_full_pct": 0.999790784036822,
+      "both": 569,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.03582089552238806,
-      "total_pickings": 670,
-      "on_time": 26,
-      "on_time_pct": 0.03880597014925373,
-      "in_full": 666,
-      "in_full_pct": 0.9940298507462687,
-      "both": 24,
+      "valor": 0.03268945022288262,
+      "total_pickings": 673,
+      "on_time": 24,
+      "on_time_pct": 0.03566121842496285,
+      "in_full": 670,
+      "in_full_pct": 0.9955423476968797,
+      "both": 22,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998827667057444,
-      "ok": 25587,
-      "total": 25590,
-      "errores": 3,
+      "valor": 0.9999217833398514,
+      "ok": 25568,
+      "total": 25570,
+      "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.010440647482014,
-      "n_recepciones": 278,
+      "valor": 6.935585211546065,
+      "n_recepciones": 281,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/01003",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:28",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01004",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:29",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01002",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:27",
+          "done": "2026-06-11 19:27"
+        },
+        {
+          "picking": "CA1/RET/01001",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:26",
+          "done": "2026-06-11 19:26"
+        },
+        {
+          "picking": "CA1/RET/00999",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:14",
+          "done": "2026-06-11 19:16"
+        },
         {
           "picking": "CA1/IN/00882",
           "proveedor": "",
@@ -139,200 +174,165 @@
           "horas": 0.0,
           "scheduled": "2026-06-01 15:52",
           "done": "2026-06-01 15:54"
-        },
-        {
-          "picking": "CA1/IN/00863",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-31 17:50",
-          "done": "2026-05-31 17:51"
-        },
-        {
-          "picking": "CA1/IN/00836",
-          "proveedor": "Celiv Spa",
-          "horas": 44.3,
-          "scheduled": "2026-05-27 21:30",
-          "done": "2026-05-29 17:47"
-        },
-        {
-          "picking": "CA1/IN/00837",
-          "proveedor": "BRAIN TOYS SPA",
-          "horas": 11.9,
-          "scheduled": "2026-05-29 04:00",
-          "done": "2026-05-29 15:55"
-        },
-        {
-          "picking": "CA1/IN/00860",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-29 14:06",
-          "done": "2026-05-29 14:09"
-        },
-        {
-          "picking": "CA1/IN/00858",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-29 13:37",
-          "done": "2026-05-29 13:38"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9106979579396526,
+      "valor": 0.9153746123837151,
       "total_so": 20000,
-      "total_con_pickings": 19686,
-      "cumplidos": 17928,
-      "parciales": 19,
-      "sin_iniciar": 1739,
+      "total_con_pickings": 19994,
+      "cumplidos": 18302,
+      "parciales": 20,
+      "sin_iniciar": 1672,
       "error": null
     },
     "oct_30d": {
-      "valor": 43.30728043835988,
-      "n_orders": 19649,
+      "valor": 47.78544825079121,
+      "n_orders": 19485,
       "min_h": 0.025,
-      "max_h": 597.8994444444445,
-      "mediana_h": 27.113333333333333,
+      "max_h": 699.7586111111111,
+      "mediana_h": 28.034444444444443,
       "detalle": [
         {
-          "so": "CIERRE MES DE MARZO 2026",
-          "cliente": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 597.9,
-          "fecha_orden": "2026-04-17 14:44",
-          "fecha_despacho": "2026-05-12 12:37"
+          "so": "S234962",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S218613",
-          "cliente": "Cliente Mercado Libre, Claudio Andrés Marín Cancino",
-          "horas": 547.4,
-          "fecha_orden": "2026-04-22 18:28",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234963",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S218619",
-          "cliente": "Cliente Mercado Libre, Loreto Eliana Campos Paglia",
-          "horas": 547.2,
-          "fecha_orden": "2026-04-22 18:41",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234965",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S218455",
-          "cliente": "Cliente Falabella Fcom, hugo abarca",
-          "horas": 508.7,
-          "fecha_orden": "2026-04-22 10:47",
-          "fecha_despacho": "2026-05-13 15:31"
+          "so": "S234964",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S219506",
-          "cliente": "Cliente Mercado Libre, Mariela Acuña",
-          "horas": 500.9,
-          "fecha_orden": "2026-04-24 16:59",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234967",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S224748",
-          "cliente": "Cliente Ripley, Nicols Toro",
-          "horas": 462.9,
-          "fecha_orden": "2026-05-08 05:30",
-          "fecha_despacho": "2026-05-27 12:21"
+          "so": "S234966",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S219971",
-          "cliente": "Cliente Mercado Libre, Julian bermar",
-          "horas": 429.3,
-          "fecha_orden": "2026-04-26 15:44",
-          "fecha_despacho": "2026-05-14 13:05"
+          "so": "S234968",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S219973",
-          "cliente": "Cliente Mercado Libre, Julian bermar",
-          "horas": 429.3,
-          "fecha_orden": "2026-04-26 15:48",
-          "fecha_despacho": "2026-05-14 13:05"
+          "so": "S234969",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S220389",
-          "cliente": "Cliente Mercado Libre, Maria Silvia Pulgar Cortes",
-          "horas": 426.6,
-          "fecha_orden": "2026-04-27 19:16",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234970",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S220399",
-          "cliente": "Cliente Mercado Libre, María Ignacia Poblete",
-          "horas": 426.0,
-          "fecha_orden": "2026-04-27 19:52",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234972",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S220661",
-          "cliente": "Cliente Mercado Libre, Javier Saldivia",
-          "horas": 407.1,
-          "fecha_orden": "2026-04-28 14:50",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234971",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S220731",
-          "cliente": "Cliente Mercado Libre, Lia Klarmann",
-          "horas": 404.2,
-          "fecha_orden": "2026-04-28 17:42",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234973",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S220411",
-          "cliente": "Cliente Falabella Fcom,",
-          "horas": 379.1,
-          "fecha_orden": "2026-04-27 20:24",
-          "fecha_despacho": "2026-05-13 15:31"
+          "so": "S234974",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S221132",
-          "cliente": "Cliente Mercado Libre, Marcos Ezequiel Moena Rossi",
-          "horas": 377.8,
-          "fecha_orden": "2026-04-29 20:04",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234975",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 627.8,
+          "fecha_orden": "2026-05-16 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S220533",
-          "cliente": "Cliente Falabella Fcom, Gabriela Del pino abarca",
-          "horas": 373.1,
-          "fecha_orden": "2026-04-28 02:01",
-          "fecha_despacho": "2026-05-13 15:08"
+          "so": "S234977",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S221225",
-          "cliente": "Cliente Mercado Libre, Miguel Angel Ruiz Álvarez",
-          "horas": 358.0,
-          "fecha_orden": "2026-04-30 15:52",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234976",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S221309",
-          "cliente": "Cliente Mercado Libre, Gary Monasterio",
-          "horas": 357.9,
-          "fecha_orden": "2026-04-30 16:02",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234978",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S221325",
-          "cliente": "Cliente Mercado Libre, Cristian soto",
-          "horas": 357.8,
-          "fecha_orden": "2026-04-30 16:03",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234979",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S221445",
-          "cliente": "Cliente Mercado Libre, Yaritza Andrea Ramírez Torres",
-          "horas": 355.9,
-          "fecha_orden": "2026-04-30 18:01",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234981",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 579.8,
+          "fecha_orden": "2026-05-18 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S221534",
-          "cliente": "Cliente Mercado Libre, eduardo Enrique bustos toro",
-          "horas": 350.7,
-          "fecha_orden": "2026-04-30 23:09",
-          "fecha_despacho": "2026-05-15 13:54"
+          "so": "S234980",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 579.8,
+          "fecha_orden": "2026-05-18 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 16463,
+      "lineas": 17338,
       "mes": "2026-06",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 228,
-      "outgoing": 29781,
-      "internal": 19991,
+      "incoming": 226,
+      "outgoing": 29715,
+      "internal": 20059,
       "total": 50000,
       "error": null
     },
@@ -361,32 +361,14 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 321,
-          "tarde": 321,
+          "total": 322,
+          "tarde": 322,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 78,
-          "tarde": 78,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Comercializadora SP Digital SPA",
-          "total": 24,
-          "tarde": 24,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Comercializadora Rigan SpA",
-          "total": 3,
-          "tarde": 3,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 9,
-          "tarde": 9,
+          "total": 82,
+          "tarde": 82,
           "on_time_pct": 0.0
         },
         {
@@ -402,10 +384,28 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 8,
+          "tarde": 8,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Comercializadora SP Digital SPA",
+          "total": 21,
+          "tarde": 21,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Sawa SPA",
-          "total": 124,
-          "tarde": 122,
-          "on_time_pct": 0.016129032258064516
+          "total": 126,
+          "tarde": 124,
+          "on_time_pct": 0.015873015873015872
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
@@ -414,16 +414,16 @@
           "on_time_pct": 0.06818181818181818
         },
         {
+          "cliente": "Cliente Mercado Libre",
+          "total": 8,
+          "tarde": 3,
+          "on_time_pct": 0.625
+        },
+        {
           "cliente": "Cencosud Retail S.A",
           "total": 3,
           "tarde": 1,
           "on_time_pct": 0.6666666666666666
-        },
-        {
-          "cliente": "Cliente Mercado Libre",
-          "total": 10,
-          "tarde": 3,
-          "on_time_pct": 0.7
         },
         {
           "cliente": "Falabella Retail",
@@ -6726,42 +6726,77 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0036123763153761584,
-      "total_pickings": 19101,
-      "on_time": 69,
-      "on_time_pct": 0.0036123763153761584,
-      "in_full": 19097,
-      "in_full_pct": 0.999790586880268,
-      "both": 69,
+      "valor": 0.029760970762069145,
+      "total_pickings": 19119,
+      "on_time": 569,
+      "on_time_pct": 0.029760970762069145,
+      "in_full": 19115,
+      "in_full_pct": 0.999790784036822,
+      "both": 569,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.03582089552238806,
-      "total_pickings": 670,
-      "on_time": 26,
-      "on_time_pct": 0.03880597014925373,
-      "in_full": 666,
-      "in_full_pct": 0.9940298507462687,
-      "both": 24,
+      "valor": 0.03268945022288262,
+      "total_pickings": 673,
+      "on_time": 24,
+      "on_time_pct": 0.03566121842496285,
+      "in_full": 670,
+      "in_full_pct": 0.9955423476968797,
+      "both": 22,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998827667057444,
-      "ok": 25587,
-      "total": 25590,
-      "errores": 3,
+      "valor": 0.9999217833398514,
+      "ok": 25568,
+      "total": 25570,
+      "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.010440647482014,
-      "n_recepciones": 278,
+      "valor": 6.935585211546065,
+      "n_recepciones": 281,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/RET/01003",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:28",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01004",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:29",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01002",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:27",
+          "done": "2026-06-11 19:27"
+        },
+        {
+          "picking": "CA1/RET/01001",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:26",
+          "done": "2026-06-11 19:26"
+        },
+        {
+          "picking": "CA1/RET/00999",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:14",
+          "done": "2026-06-11 19:16"
+        },
         {
           "picking": "CA1/IN/00882",
           "proveedor": "",
@@ -6866,41 +6901,6 @@
           "horas": 0.0,
           "scheduled": "2026-06-01 15:52",
           "done": "2026-06-01 15:54"
-        },
-        {
-          "picking": "CA1/IN/00863",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-31 17:50",
-          "done": "2026-05-31 17:51"
-        },
-        {
-          "picking": "CA1/IN/00836",
-          "proveedor": "Celiv Spa",
-          "horas": 44.3,
-          "scheduled": "2026-05-27 21:30",
-          "done": "2026-05-29 17:47"
-        },
-        {
-          "picking": "CA1/IN/00837",
-          "proveedor": "BRAIN TOYS SPA",
-          "horas": 11.9,
-          "scheduled": "2026-05-29 04:00",
-          "done": "2026-05-29 15:55"
-        },
-        {
-          "picking": "CA1/IN/00860",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-05-29 14:06",
-          "done": "2026-05-29 14:09"
-        },
-        {
-          "picking": "CA1/IN/00858",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-05-29 13:37",
-          "done": "2026-05-29 13:38"
         }
       ],
       "error": null
