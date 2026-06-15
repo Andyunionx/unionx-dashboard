@@ -1,7 +1,8 @@
 """Clasificacion canonica de marca propia + normalizacion de estado_sku (IN/OUT).
 
 Fuente de verdad de la regla de negocio (confirmada por Andres 15-jun-2026):
-  MARCA PROPIA = Lhotse, Simplit, Levo, Xroad, Dynamo (TL), Bandu, T-Care, UMA.
+  MARCA PROPIA (13) = Lhotse, Simplit, Levo, Xroad, Dynamo (TL), Bandu, T-Care,
+  UMA, Goya, ITEK, Bluecare, Klip Klap, Melollevo (incl. MelollevoMed).
   Todo el resto = "Otras marcas" (proveedores nacionales).
 
 Antes tipo_marca se copiaba del campo "Estado marca" de la Matriz (In/Out),
@@ -10,18 +11,19 @@ fuente confiable.
 """
 import unicodedata
 
-# 8 marcas propias, normalizadas (lowercase, sin acentos, sin guiones)
-MARCAS_PROPIAS = {'lhotse', 'simplit', 'levo', 'xroad', 'dynamo', 'bandu', 'tcare', 'uma'}
+# 13 marcas propias, normalizadas (lowercase, sin acentos, sin guiones ni espacios)
+MARCAS_PROPIAS = {'lhotse', 'simplit', 'levo', 'xroad', 'dynamo', 'bandu', 'tcare',
+                  'uma', 'goya', 'itek', 'bluecare', 'klipklap', 'melollevo'}
 
 
 def _norm(s) -> str:
-    s = str(s).lower().strip().replace('-', '')
+    s = str(s).lower().strip().replace('-', '').replace(' ', '')
     return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
 
 
 def es_marca_propia(marca) -> bool:
-    """True si la marca pertenece a las 8 marcas propias. Tolera variantes
-    de capitalizacion/acento y sufijos cortos (ej. 'Dynamo TL')."""
+    """True si la marca pertenece a las 13 marcas propias. Tolera variantes
+    de capitalizacion/acento y sufijos cortos (ej. 'Dynamo TL', 'MelollevoMed')."""
     nm = _norm(marca)
     if not nm or nm in ('0', 'nan', 'none'):
         return False
