@@ -4,6 +4,7 @@ Se autentica como andres@unionx.cl. Su quota se usa para guardar el archivo.
 Token persistente: drive_oauth_token.json (local) o secret DRIVE_OAUTH_TOKEN_JSON
 (GH Actions). El refresh_token nunca expira (a menos que el usuario revoque).
 """
+import io
 import json
 import os
 from pathlib import Path
@@ -48,6 +49,28 @@ def _service():
     return googleapiclient.discovery.build(
         'drive', 'v3', credentials=_credentials(), cache_discovery=False
     )
+
+
+def descargar_archivo(file_id: str, destino: Path) -> Path:
+    """Baja un archivo de Drive (por file_id) a una ruta local. OAuth user.
+
+    Usado en GitHub Actions para traer la plantilla de 172 MB que no esta
+    en el repo (gitignored). En local no se usa: la plantilla ya existe.
+    """
+    svc = _service()
+    destino = Path(destino)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    req = svc.files().get_media(fileId=file_id, supportsAllDrives=True)
+    buf = io.FileIO(str(destino), 'wb')
+    downloader = googleapiclient.http.MediaIoBaseDownload(buf, req, chunksize=20 * 1024 * 1024)
+    done = False
+    while not done:
+        status, done = downloader.next_chunk()
+        if status:
+            print(f'   [drive_user] descarga {int(status.progress() * 100)}%', flush=True)
+    buf.close()
+    print(f'[drive_user] descargado {destino.name} ({destino.stat().st_size/1024/1024:.0f} MB)', flush=True)
+    return destino
 
 
 def subir_o_actualizar(local_path: Path, carpeta_id: str,

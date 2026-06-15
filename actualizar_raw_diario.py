@@ -31,6 +31,9 @@ ORIGINAL = PROJECT_ROOT / 'data' / 'planillas' / 'Reporte Ventas Empresa 2026 VS
 # Carpeta Drive "Reporte Automático RAW" (id fijo, compartida con OAuth user)
 DRIVE_CARPETA_ID = '18RKgdGwWGM8tEGqltcrruCPB-LaTwZxx'
 NOMBRE_LIVE = 'Reporte Ventas Empresa LIVE.xlsx'
+# Plantilla original (172 MB) en Drive. Gitignored por tamano -> en GitHub
+# Actions no existe en el checkout, se baja de aca. file_id permanente.
+PLANTILLA_DRIVE_ID = '1txNWM21b2czKGhWL-FD6VigXk-QyqZ_D'
 ANIO_TY = 2026  # Ano TY (This Year). LY = ANIO_TY - 1.
 # Output local: en GH Actions usa /tmp, local usa data/outputs/
 if os.environ.get('GITHUB_ACTIONS') == 'true':
@@ -201,8 +204,20 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     raise RuntimeError('no se encontro sheet en archivo temporal')
 
 
+def _asegurar_plantilla():
+    """Si la plantilla original no existe (caso GitHub Actions, porque pesa
+    172 MB y esta gitignored), la baja de Drive por su file_id. En local no
+    hace nada (la plantilla ya esta en disco)."""
+    if ORIGINAL.exists():
+        return
+    print(f'[plantilla] no existe local -> bajando de Drive ({PLANTILLA_DRIVE_ID})...', flush=True)
+    from drive_user_helpers import descargar_archivo
+    descargar_archivo(PLANTILLA_DRIVE_ID, ORIGINAL)
+
+
 def construir_live():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    _asegurar_plantilla()
 
     print('[1/5] Cargando datos del parquet...')
     df_raw = cargar_raw_parquet()
