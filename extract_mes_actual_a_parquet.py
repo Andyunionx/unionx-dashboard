@@ -411,6 +411,19 @@ def main():
                 lambda v: '' if v is None or (isinstance(v, float) and pd.isna(v)) else str(v)
             )
 
+    # Normalizacion canonica (regla de negocio, ver clasificar_marca.py):
+    #  - tipo_marca se DERIVA de la marca (8 marcas propias), no del crudo de la Matriz.
+    #  - estado_sku (IN/OUT catalogo) a minuscula limpia.
+    try:
+        from clasificar_marca import clasificar_tipo_marca, normalizar_estado_sku
+        if 'marca' in df.columns:
+            df['tipo_marca'] = df['marca'].apply(clasificar_tipo_marca)
+        if 'estado_sku' in df.columns:
+            df['estado_sku'] = df['estado_sku'].apply(normalizar_estado_sku)
+        print("   [clasif] tipo_marca derivado de marca (8 propias) + estado_sku normalizado")
+    except Exception as e:
+        print(f"   [WARN] clasificacion marca no aplicada: {type(e).__name__}: {str(e)[:80]}")
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")
