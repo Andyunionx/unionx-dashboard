@@ -116,6 +116,14 @@ def fmt_pesos_M(v, decimales=1):
     return f"${v/1e6:,.{decimales}f}M"
 
 
+def fmt_pesos(v):
+    """Monto completo formato chileno: $48.155.075 (sin aproximar al millon).
+    Pedido por el equipo (Trinidad 15-jun) para revisar el detalle real."""
+    if v is None or pd.isna(v):
+        return "—"
+    return f"${int(round(v)):,.0f}".replace(",", ".")
+
+
 def fmt_pesos_K(v, decimales=0):
     if v is None or pd.isna(v):
         return "—"

@@ -112,18 +112,27 @@ def render():
         return
 
     # ============================================================
-    # 1) P&L comparativo con % sobre venta
+    # 1) P&L comparativo con $ NOMINAL y % sobre venta
     # ============================================================
-    st.markdown("### P&L comparativo — $ y % sobre venta")
+    st.markdown("### P&L comparativo — $ nominal y % sobre venta")
+    st.caption("Columnas en $ nominal (KAM y Contable) como entregaba Gabi, más el % sobre venta y Δ.")
     df_pyl = _tabla_pyl(df_f)
 
-    df_show = df_pyl.copy()
-    for c in ['KAM $', 'Contable $', 'Δ $ (K-C)']:
-        df_show[c] = df_show[c].apply(fmt_pesos_M)
-    df_show['KAM %Vta'] = df_show['KAM %Vta'].apply(_fmt_pct)
-    df_show['Contable %Vta'] = df_show['Contable %Vta'].apply(_fmt_pct)
-    df_show['Δ pp'] = df_show['Δ pp'].apply(lambda v: f"{v:+.1f}" if v is not None else "—")
-    st.dataframe(df_show, width='stretch', hide_index=True)
+    # Numeros reales + column_config: se ven formateados y el CSV descargado
+    # trae el monto completo (pedido P3/P4 Trinidad).
+    df_disp = df_pyl.copy()
+    df_disp['KAM %Vta'] = df_disp['KAM %Vta'] * 100
+    df_disp['Contable %Vta'] = df_disp['Contable %Vta'] * 100
+    money = st.column_config.NumberColumn(format="$%d")
+    pct = st.column_config.NumberColumn(format="%.1f%%")
+    st.dataframe(
+        df_disp, width='stretch', hide_index=True,
+        column_config={
+            'KAM $': money, 'Contable $': money, 'Δ $ (K-C)': money,
+            'KAM %Vta': pct, 'Contable %Vta': pct,
+            'Δ pp': st.column_config.NumberColumn(format="%+.1f"),
+        },
+    )
 
     # ============================================================
     # 2) ¿Qué explica la diferencia? — Δpp por línea
@@ -217,35 +226,28 @@ def render():
     # 4) Detalle por canal — % comisiones y Δpp
     # ============================================================
     st.divider()
-    st.markdown("### Detalle por canal — % sobre venta y diferencias")
-    st.caption("Ordenado por |Δ Contribución $|. Δpp = KAM − Contable sobre la venta de cada visión.")
+    st.markdown("### Detalle por canal — montos nominales KAM vs Contable")
+    st.caption("Columnas nominales separadas ($ completo) para cada línea, KAM y Contable. "
+               "Ordenado por |Δ Contribución|. Descargable con montos completos.")
 
-    agg_canal = df_f.groupby('Canal').agg(
-        venta_k=('Venta REAL KAM', 'sum'), venta_c=('Venta Real Contable', 'sum'),
-        cv_k=('Comisión Venta KAM', 'sum'), cv_c=('Comisión Venta Contable', 'sum'),
-        ce_k=('Comisión Envío KAM', 'sum'), ce_c=('Comisión Logística Contable', 'sum'),
-        mk_k=('Marketing KAM', 'sum'), mk_c=('Marketing Contable', 'sum'),
-        ct_k=('Resultado Contribución KAM', 'sum'), ct_c=('Total Contribución Contable', 'sum'),
+    agg = df_f.groupby('Canal').agg(
+        **{
+            'Venta KAM': ('Venta REAL KAM', 'sum'), 'Venta Cont': ('Venta Real Contable', 'sum'),
+            'Costo KAM': ('Costo Venta KAM', 'sum'), 'Costo Cont': ('Costo Venta Contable', 'sum'),
+            'Com.Venta KAM': ('Comisión Venta KAM', 'sum'), 'Com.Venta Cont': ('Comisión Venta Contable', 'sum'),
+            'Com.Envío KAM': ('Comisión Envío KAM', 'sum'), 'Com.Envío Cont': ('Comisión Logística Contable', 'sum'),
+            'Mkt KAM': ('Marketing KAM', 'sum'), 'Mkt Cont': ('Marketing Contable', 'sum'),
+            'Contrib KAM': ('Resultado Contribución KAM', 'sum'), 'Contrib Cont': ('Total Contribución Contable', 'sum'),
+        }
     ).reset_index()
-    agg_canal = agg_canal[(agg_canal['venta_k'] != 0) | (agg_canal['venta_c'] != 0)]
-    agg_canal['delta_ct'] = agg_canal['ct_k'] - agg_canal['ct_c']
-    agg_canal = agg_canal.sort_values('delta_ct', key=abs, ascending=False).head(20)
+    agg = agg[(agg['Venta KAM'] != 0) | (agg['Venta Cont'] != 0)]
+    agg['Δ Contrib'] = agg['Contrib KAM'] - agg['Contrib Cont']
+    agg = agg.sort_values('Δ Contrib', key=abs, ascending=False)
 
-    rows_c = []
-    for _, r in agg_canal.iterrows():
-        def pp(col_k, col_c):
-            pk = _pct(r[col_k], r['venta_k'])
-            pc = _pct(r[col_c], r['venta_c'])
-            if pk is None or pc is None:
-                return "—"
-            return f"{pk:.1f}% / {pc:.1f}% ({pk-pc:+.1f})"
-        rows_c.append({
-            'Canal': r['Canal'],
-            'Venta K/C': f"{fmt_pesos_M(r['venta_k'])} / {fmt_pesos_M(r['venta_c'])}",
-            'Com Venta K/C (Δpp)': pp('cv_k', 'cv_c'),
-            'Com Envío K/C (Δpp)': pp('ce_k', 'ce_c'),
-            'Marketing K/C (Δpp)': pp('mk_k', 'mk_c'),
-            'Contrib K/C (Δpp)': pp('ct_k', 'ct_c'),
-            'Δ Contrib $': fmt_pesos_M(r['delta_ct']),
-        })
-    st.dataframe(pd.DataFrame(rows_c), width='stretch', hide_index=True, height=420)
+    money = st.column_config.NumberColumn(format="$%d")
+    money_cols = [c for c in agg.columns if c != 'Canal']
+    st.dataframe(
+        agg, width='stretch', hide_index=True, height=420,
+        column_config={c: money for c in money_cols},
+    )
+    st.caption("💡 El botón de descarga de la tabla exporta todos los montos completos en CSV.")

@@ -1,68 +1,40 @@
 {
-  "generado_en": "2026-06-15T19:05:04.162705",
+  "generado_en": "2026-06-15T09:26:00.347185",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.02957841659302386,
-      "total_pickings": 19237,
-      "on_time": 569,
-      "on_time_pct": 0.02957841659302386,
-      "in_full": 19234,
-      "in_full_pct": 0.999844050527629,
-      "both": 569,
+      "valor": 0.030296495956873316,
+      "total_pickings": 18550,
+      "on_time": 562,
+      "on_time_pct": 0.030296495956873316,
+      "in_full": 18547,
+      "in_full_pct": 0.9998382749326146,
+      "both": 562,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.034161490683229816,
-      "total_pickings": 644,
-      "on_time": 22,
-      "on_time_pct": 0.034161490683229816,
-      "in_full": 643,
-      "in_full_pct": 0.9984472049689441,
-      "both": 22,
+      "valor": 0.03271028037383177,
+      "total_pickings": 642,
+      "on_time": 21,
+      "on_time_pct": 0.03271028037383177,
+      "in_full": 641,
+      "in_full_pct": 0.9984423676012462,
+      "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999215747784488,
-      "ok": 25500,
-      "total": 25502,
+      "valor": 0.9999190840312335,
+      "ok": 24715,
+      "total": 24717,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.431164122137404,
-      "n_recepciones": 262,
+      "valor": 7.546244616709733,
+      "n_recepciones": 258,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
-        {
-          "picking": "CA1/RET/01005",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 16:03",
-          "done": "2026-06-15 16:04"
-        },
-        {
-          "picking": "CA1/IN/00893",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:30",
-          "done": "2026-06-15 14:31"
-        },
-        {
-          "picking": "CA1/IN/00892",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:22",
-          "done": "2026-06-15 14:23"
-        },
-        {
-          "picking": "CA1/IN/00891",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:20",
-          "done": "2026-06-15 14:20"
-        },
         {
           "picking": "CA1/IN/00889",
           "proveedor": "",
@@ -174,25 +146,53 @@
           "horas": 0.0,
           "scheduled": "2026-06-09 21:23",
           "done": "2026-06-09 21:25"
+        },
+        {
+          "picking": "CA1/IN/00876",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-09 20:36",
+          "done": "2026-06-09 20:37"
+        },
+        {
+          "picking": "CA1/IN/00875",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-09 19:11",
+          "done": "2026-06-09 19:11"
+        },
+        {
+          "picking": "CA1/IN/00874",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-06-09 19:01",
+          "done": "2026-06-09 19:04"
+        },
+        {
+          "picking": "CA1/IN/00872",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-09 18:49",
+          "done": "2026-06-09 18:49"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9089544772386193,
+      "valor": 0.8903951975987994,
       "total_so": 20000,
       "total_con_pickings": 19990,
-      "cumplidos": 18170,
+      "cumplidos": 17799,
       "parciales": 18,
-      "sin_iniciar": 1802,
+      "sin_iniciar": 2173,
       "error": null
     },
     "oct_30d": {
-      "valor": 50.304589362112594,
-      "n_orders": 19582,
-      "min_h": 0.05361111111111111,
+      "valor": 49.51352519560987,
+      "n_orders": 18901,
+      "min_h": 0.06861111111111111,
       "max_h": 699.7586111111111,
-      "mediana_h": 29.905833333333334,
+      "mediana_h": 28.915555555555557,
       "detalle": [
         {
           "so": "S234962",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 18605,
+      "lineas": 17820,
       "mes": "2026-06",
       "error": null
     },
@@ -373,8 +373,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 76,
-          "tarde": 76,
+          "total": 75,
+          "tarde": 75,
           "on_time_pct": 0.0
         },
         {
@@ -421,7 +421,7 @@
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
-          "total": 4,
+          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -6720,70 +6720,42 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.02957841659302386,
-      "total_pickings": 19237,
-      "on_time": 569,
-      "on_time_pct": 0.02957841659302386,
-      "in_full": 19234,
-      "in_full_pct": 0.999844050527629,
-      "both": 569,
+      "valor": 0.030296495956873316,
+      "total_pickings": 18550,
+      "on_time": 562,
+      "on_time_pct": 0.030296495956873316,
+      "in_full": 18547,
+      "in_full_pct": 0.9998382749326146,
+      "both": 562,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.034161490683229816,
-      "total_pickings": 644,
-      "on_time": 22,
-      "on_time_pct": 0.034161490683229816,
-      "in_full": 643,
-      "in_full_pct": 0.9984472049689441,
-      "both": 22,
+      "valor": 0.03271028037383177,
+      "total_pickings": 642,
+      "on_time": 21,
+      "on_time_pct": 0.03271028037383177,
+      "in_full": 641,
+      "in_full_pct": 0.9984423676012462,
+      "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999215747784488,
-      "ok": 25500,
-      "total": 25502,
+      "valor": 0.9999190840312335,
+      "ok": 24715,
+      "total": 24717,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.431164122137404,
-      "n_recepciones": 262,
+      "valor": 7.546244616709733,
+      "n_recepciones": 258,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
-        {
-          "picking": "CA1/RET/01005",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 16:03",
-          "done": "2026-06-15 16:04"
-        },
-        {
-          "picking": "CA1/IN/00893",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:30",
-          "done": "2026-06-15 14:31"
-        },
-        {
-          "picking": "CA1/IN/00892",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:22",
-          "done": "2026-06-15 14:23"
-        },
-        {
-          "picking": "CA1/IN/00891",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:20",
-          "done": "2026-06-15 14:20"
-        },
         {
           "picking": "CA1/IN/00889",
           "proveedor": "",
@@ -6895,6 +6867,34 @@
           "horas": 0.0,
           "scheduled": "2026-06-09 21:23",
           "done": "2026-06-09 21:25"
+        },
+        {
+          "picking": "CA1/IN/00876",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-09 20:36",
+          "done": "2026-06-09 20:37"
+        },
+        {
+          "picking": "CA1/IN/00875",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-09 19:11",
+          "done": "2026-06-09 19:11"
+        },
+        {
+          "picking": "CA1/IN/00874",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-06-09 19:01",
+          "done": "2026-06-09 19:04"
+        },
+        {
+          "picking": "CA1/IN/00872",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-09 18:49",
+          "done": "2026-06-09 18:49"
         }
       ],
       "error": null

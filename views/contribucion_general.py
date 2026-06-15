@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from views.contribucion_loader import (
-    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pct,
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos, fmt_pct,
     render_contrib_filters, aplicar_filtros,
 )
 
@@ -124,6 +124,46 @@ def render():
 
     st.divider()
 
+    # ===== P&L DESGLOSADO (incluye comision venta / logistico / marketing) =====
+    st.markdown("### P&L desglosado — $ y % sobre venta")
+    st.caption("Desglose completo de comisiones (venta, logístico, marketing). 2026 vs 2025.")
+
+    LINEAS_PYL = [
+        ('Venta', 'Venta REAL KAM'),
+        ('Costo Venta', 'Costo Venta KAM'),
+        ('Margen Directo', 'Margen Directo KAM'),
+        ('Comisión Venta', 'Comisión Venta KAM'),
+        ('Comisión Logístico (Envío)', 'Comisión Envío KAM'),
+        ('Marketing', 'Marketing KAM'),
+        ('Total Comisiones', 'Total Comisiones KAM'),
+        ('Contribución', 'Resultado Contribución KAM'),
+    ]
+    v26 = df_2026['Venta REAL KAM'].sum() if 'Venta REAL KAM' in df_2026.columns else 0
+    v25 = df_2025['Venta REAL KAM'].sum() if 'Venta REAL KAM' in df_2025.columns else 0
+    pyl_rows = []
+    for label, col in LINEAS_PYL:
+        m26 = df_2026[col].sum() if col in df_2026.columns else 0
+        m25 = df_2025[col].sum() if col in df_2025.columns else 0
+        pyl_rows.append({
+            'Línea': label,
+            '2026 $': m26, '2026 %Vta': (m26 / v26 if v26 else None),
+            '2025 $': m25, '2025 %Vta': (m25 / v25 if v25 else None),
+        })
+    df_pyl = pd.DataFrame(pyl_rows)
+    money = st.column_config.NumberColumn(format="$%d")
+    pct = st.column_config.NumberColumn(format="%.1f%%")
+    # %Vta como fraccion*100 para el format
+    df_pyl_disp = df_pyl.copy()
+    df_pyl_disp['2026 %Vta'] = df_pyl_disp['2026 %Vta'] * 100
+    df_pyl_disp['2025 %Vta'] = df_pyl_disp['2025 %Vta'] * 100
+    st.dataframe(
+        df_pyl_disp, width='stretch', hide_index=True,
+        column_config={'2026 $': money, '2025 $': money,
+                       '2026 %Vta': pct, '2025 %Vta': pct},
+    )
+
+    st.divider()
+
     # ===== SELECTOR MÉTRICA + EVOLUCIÓN MENSUAL =====
     st.markdown("### Evolución Mensual YoY")
 
@@ -223,13 +263,15 @@ def render():
 
     # ===== TABLA DETALLE =====
     with st.expander("📋 Detalle filas (datos crudos filtrados)", expanded=False):
+        cols_money = ['Venta REAL KAM', 'Costo Venta KAM', 'Margen Directo KAM',
+                      'Comisión Venta KAM', 'Comisión Envío KAM', 'Marketing KAM',
+                      'Total Comisiones KAM', 'Resultado Contribución KAM']
         cols_show = [c for c in [
-            'AÑO', 'Mes', 'Trimestre', 'Negocio', 'Canal', 'KAM',
-            'Venta REAL KAM', 'Costo Venta KAM', 'Margen Directo KAM',
-            'Total Comisiones KAM', 'Resultado Contribución KAM',
+            'AÑO', 'Mes', 'Trimestre', 'Negocio', 'Canal', 'KAM', *cols_money,
         ] if c in df_f.columns]
-        df_show = df_f[cols_show].copy()
-        for c in ['Venta REAL KAM', 'Costo Venta KAM', 'Margen Directo KAM', 'Total Comisiones KAM', 'Resultado Contribución KAM']:
-            if c in df_show.columns:
-                df_show[c] = df_show[c].apply(fmt_pesos_M)
-        st.dataframe(df_show, width='stretch', hide_index=True, height=400)
+        # Numeros reales + column_config -> el CSV descargado trae montos completos (P4).
+        money = st.column_config.NumberColumn(format="$%d")
+        st.dataframe(
+            df_f[cols_show], width='stretch', hide_index=True, height=400,
+            column_config={c: money for c in cols_money if c in cols_show},
+        )
