@@ -208,6 +208,20 @@ def main():
         except Exception as e:
             print(f"[WARN] enriquecimiento parquet falló: {type(e).__name__}: {e}")
 
+        try:
+            print(f"\n[5] Regenerando data/comex/maestra_sabana.parquet (Maestra + Seimex API)...")
+            r = subprocess.run([sys.executable, str(PROJECT_ROOT / 'generar_maestra_sabana.py')],
+                               capture_output=True, text=True, encoding='utf-8',
+                               cwd=str(PROJECT_ROOT), timeout=60)
+            if r.returncode == 0:
+                last = [l for l in (r.stdout or '').splitlines() if 'Embarques incluidos' in l]
+                if last: print(f"    {last[0].strip()}")
+                else: print("    Sábana regenerada OK")
+            else:
+                print(f"[WARN] sábana falló rc={r.returncode}: {(r.stderr or '')[:200]}")
+        except Exception as e:
+            print(f"[WARN] sábana falló: {type(e).__name__}: {e}")
+
     print(f"\n{'='*70}\n  26TP{emb} PROCESADO\n{'='*70}")
     print(f"  Outputs en: {out_dir}")
     return 0

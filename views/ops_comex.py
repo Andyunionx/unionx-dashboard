@@ -23,6 +23,8 @@ DIMENSIONES_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_skus.parque
 DIMENSIONES_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'dimensiones_resumen.json'
 STOCK_LIVE = PROJECT_ROOT / 'data' / 'stock' / 'skus.parquet'
 FC_SKUS_ANCHORED = PROJECT_ROOT / 'data' / 'forecast' / 'forecast_skus_anchored.parquet'
+SABANA_PARQUET = PROJECT_ROOT / 'data' / 'comex' / 'maestra_sabana.parquet'
+SABANA_RESUMEN = PROJECT_ROOT / 'data' / 'comex' / 'maestra_sabana_resumen.json'
 
 
 @st.cache_data(ttl=900)
@@ -87,6 +89,107 @@ def _cargar_stock_live():
     if not STOCK_LIVE.exists():
         return pd.DataFrame()
     return pd.read_parquet(STOCK_LIVE)
+
+
+@st.cache_data(ttl=900)
+def _cargar_sabana() -> tuple[pd.DataFrame, dict]:
+    """Sábana SKU x embarque de los embarques 'por llegar' (Maestra + Seimex)."""
+    if not SABANA_PARQUET.exists():
+        return pd.DataFrame(), {}
+    try:
+        df = pd.read_parquet(SABANA_PARQUET)
+    except Exception:
+        return pd.DataFrame(), {}
+    resumen = {}
+    if SABANA_RESUMEN.exists():
+        try:
+            resumen = json.loads(SABANA_RESUMEN.read_text(encoding='utf-8'))
+        except Exception:
+            pass
+    return df, resumen
+
+
+def _tab_sabana(df_sabana: pd.DataFrame, resumen: dict):
+    """Tab: Sábana SKU x embarque (por llegar) — replica formato Drive Maestra."""
+    if df_sabana.empty:
+        st.warning("⏳ Sin data de sábana. Correr `python generar_maestra_sabana.py` "
+                   "para generarla.")
+        return
+
+    # Header con metadata
+    ts = resumen.get('generado_en', '')[:19] if resumen else ''
+    embs_inc = resumen.get('embarques', [])
+    n_emb = resumen.get('embarques_unicos', 0)
+    n_filas = len(df_sabana)
+    n_skus = df_sabana['SKU'].nunique() if 'SKU' in df_sabana.columns else 0
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Embarques", n_emb)
+    c2.metric("SKUs únicos", n_skus)
+    c3.metric("Líneas", n_filas)
+    if 'Total CLP' in df_sabana.columns:
+        total = pd.to_numeric(df_sabana['Total CLP'], errors='coerce').sum()
+        c4.metric("Total CLP", f"${total/1e6:,.0f} MM")
+
+    if ts: st.caption(f"🕒 Generada: {ts} · Fuente: Maestra Importaciones + Seimex API")
+
+    # Filtros
+    st.markdown("#### Filtros")
+    fc1, fc2, fc3 = st.columns(3)
+    embs_opts = sorted(df_sabana['N° Embarque'].dropna().unique().tolist())
+    sel_emb = fc1.multiselect("Embarque", embs_opts, default=embs_opts)
+    estados_opts = sorted(df_sabana['Estado_Seimex'].dropna().unique().tolist()) if 'Estado_Seimex' in df_sabana.columns else []
+    sel_est = fc2.multiselect("Estado Seimex", estados_opts, default=estados_opts) if estados_opts else []
+    txt = fc3.text_input("Buscar SKU / Model / Producto", value="")
+
+    df_f = df_sabana[df_sabana['N° Embarque'].isin(sel_emb)].copy()
+    if sel_est and 'Estado_Seimex' in df_f.columns:
+        df_f = df_f[df_f['Estado_Seimex'].isin(sel_est)]
+    if txt:
+        t = txt.lower()
+        mask = (df_f['SKU'].astype(str).str.lower().str.contains(t, na=False) |
+                df_f['Model'].astype(str).str.lower().str.contains(t, na=False) |
+                df_f['NOMBRE'].astype(str).str.lower().str.contains(t, na=False))
+        df_f = df_f[mask]
+
+    # Botón descarga Excel
+    from io import BytesIO
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as xw:
+        df_f.to_excel(xw, sheet_name='Sabana_Por_Llegar', index=False)
+    st.download_button(
+        "📥 Descargar Excel (formato Maestra)",
+        data=buf.getvalue(),
+        file_name=f"Sabana_Por_Llegar_{datetime.now():%Y%m%d}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type="primary",
+    )
+
+    # Tabla
+    st.markdown(f"#### Detalle ({len(df_f)} líneas)")
+    cols_default = ['N° Embarque', 'Estado_Seimex', 'ETA', 'Puerto', 'Model', 'SKU',
+                    'NOMBRE', 'QTY', 'Cost Unit', 'Costo Maestra', 'Total CLP',
+                    'Ref_Seimex', 'PO']
+    cols_show = [c for c in cols_default if c in df_f.columns]
+    st.dataframe(
+        df_f[cols_show],
+        width='stretch', hide_index=True, height=500,
+        column_config={
+            'Cost Unit': st.column_config.NumberColumn('Cost Unit (USD)', format='%.2f'),
+            'Costo Maestra': st.column_config.NumberColumn('Costo Maestra (CLP)', format='%.0f'),
+            'Total CLP': st.column_config.NumberColumn('Total CLP', format='%.0f'),
+            'QTY': st.column_config.NumberColumn('Qty', format='%d'),
+            'ETA': st.column_config.DateColumn('ETA'),
+        },
+    )
+
+    # Embarques pendientes de cargar (Seimex tiene pero Maestra no)
+    todos_seimex = set()
+    for o in resumen.get('embarques', []):
+        todos_seimex.add(o)
+    # Detectar si hay códigos en Seimex que NO aparecen en la Maestra filtrada
+    if resumen:
+        st.caption(f"Embarques incluidos (Maestra ∩ Seimex 'Por Llegar'): {', '.join(embs_inc)}")
 
 
 @st.cache_data(ttl=900)
@@ -654,8 +757,11 @@ def render():
             st.warning(f"📦 **{len(recibidos)} PI(s) ya recibidos según Odoo** ({pis}) pero Martín "
                        "los mantiene en tránsito en su Sheet. Sugerir mover a 'EN BODEGA'.")
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    df_sabana, sabana_resumen = _cargar_sabana()
+
+    tab1, tab2, tab3, tab_sab, tab4, tab5 = st.tabs([
         "📊 Resumen", "📋 Por PI / embarque", "📦 Detalle SKUs",
+        "🧾 Sábana por llegar",
         "📐 Volumen / Pallets", "🚨 Alertas Sheet vs Odoo"
     ])
     with tab1:
@@ -664,6 +770,8 @@ def render():
         _tab_por_pi(df, val_resumen)
     with tab3:
         _tab_detalle_skus(df)
+    with tab_sab:
+        _tab_sabana(df_sabana, sabana_resumen)
     with tab4:
         _tab_volumen_pallets(df_dim, resumen_dim)
     with tab5:
