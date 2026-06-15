@@ -10,7 +10,12 @@ on:
   # workflow_dispatch via API. El cron de GHA free tier disparaba con delay
   # de hasta 3.5h y duplicaba el mail (incidente 11-jun-2026: pulso 07:30
   # via Cloudflare + pulso 11:03 via cron GHA atrasado).
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      solo_live:
+        description: "Solo refrescar parquet + LIVE en Drive, SIN enviar el mail del pulso"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -69,6 +74,7 @@ jobs:
         continue-on-error: true
 
       - name: Enviar Pulso Diario
+        if: ${{ github.event.inputs.solo_live != 'true' }}
         env:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
           EMAIL_TO: ${{ vars.PULSO_DIARIO_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl,sguzman@grupoeter.cl,trinidad@unionx.cl,claudia@unionx.cl,ignacia@unionx.cl,michela@unionx.cl,felipe@unionx.cl,maximiliano@unionx.cl,gabriela@grupoeter.cl' }}
