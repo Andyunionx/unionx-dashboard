@@ -78,22 +78,45 @@ def construir_html() -> tuple[str, str]:
     det = pd.read_parquet(DETALLE)
     sku = pd.read_parquet(SKUS).drop_duplicates("SKU")
     tot_val = det["Valor"].sum(); tot_uds = det["Disponible"].sum()
-    sem = sku["Semaforo"].value_counts().to_dict()
-    SEM = {"CRITICO": ("🔴", "críticos"), "BAJO": ("🟡", "bajos"),
-           "OPTIMO": ("🟢", "óptimos"), "SOBRESTOCK": ("🔵", "sobrestock"),
-           "SIN VENTA": ("⚪", "sin venta 90d")}
-    alerta = " · ".join(f'{SEM[k][0]} {sem.get(k,0)} {SEM[k][1]}'
-                        for k in ["CRITICO", "BAJO", "SOBRESTOCK", "SIN VENTA"])
-    sobre_sv = (sku[sku["Semaforo"].isin(["SOBRESTOCK", "SIN VENTA"])]["Valor"].sum())
+    n_sku = sku["SKU"].nunique()
+
+    # Categorías (sobrias, sin conflación):
+    cri = sku[sku["Semaforo"] == "CRITICO"]
+    sob = sku[sku["Semaforo"] == "SOBRESTOCK"]
+    # "Sin venta 90d" REAL = clasificado sin venta Y efectivamente 0 ventas en 90d
+    # (filtra el ruido: SKUs marcados 'sin venta' que sí vendieron).
+    sv = sku[(sku["Semaforo"] == "SIN VENTA") & (sku["Vta 90d Qty"].fillna(0) == 0)]
+
     html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:680px;line-height:1.5;">
 <h2 style="color:{AZ};margin-bottom:2px;">📦 Pulso Stock UnionX</h2>
 <div style="color:#64748b;font-size:12px;">Foto al {{HOY}}</div>
-<div style="font-size:14px;margin:12px 0;"><b>Inventario:</b> {clp(tot_val)} ·
-{miles(tot_uds)} uds · {miles(sku['SKU'].nunique())} SKUs</div>
-<div style="font-size:13px;margin:6px 0;">⚠️ <b>Alerta:</b> {alerta}</div>
-<div style="background:{GR};border-left:4px solid {AZ};padding:10px 14px;margin:12px 0;font-size:13px;">
-<b>{clp(sobre_sv)}</b> ({sobre_sv/tot_val*100:.0f}% del inventario) en sobrestock o sin venta 90d.</div>
-<div style="font-size:13px;margin:12px 0;">📎 <b>Excel adjunto:</b> hoja <b>Resumen</b> con
+<div style="font-size:14px;margin:12px 0;"><b>Inventario total:</b> {clp(tot_val)} ·
+{miles(tot_uds)} uds · {miles(n_sku)} SKUs</div>
+
+<table style="border-collapse:collapse;font-size:13px;margin:8px 0;">
+<tr style="background:{AZ};color:#fff;">
+  <th style="padding:6px 12px;text-align:left;">Foco</th>
+  <th style="padding:6px 12px;text-align:right;">SKUs</th>
+  <th style="padding:6px 12px;text-align:right;">Valor</th>
+  <th style="padding:6px 12px;text-align:left;">Lectura</th></tr>
+<tr style="background:{GR};">
+  <td style="padding:6px 12px;">🔴 Quiebre crítico</td>
+  <td style="padding:6px 12px;text-align:right;">{miles(len(cri))}</td>
+  <td style="padding:6px 12px;text-align:right;">{clp(cri['Valor'].sum())}</td>
+  <td style="padding:6px 12px;">Reponer: alta venta, stock bajo</td></tr>
+<tr>
+  <td style="padding:6px 12px;">🔵 Sobrestock</td>
+  <td style="padding:6px 12px;text-align:right;">{miles(len(sob))}</td>
+  <td style="padding:6px 12px;text-align:right;">{clp(sob['Valor'].sum())}</td>
+  <td style="padding:6px 12px;">Lento, pero rotó {clp(sob['Vta 90d $'].sum())} en 90d</td></tr>
+<tr style="background:{GR};">
+  <td style="padding:6px 12px;">⚪ Sin venta 90d</td>
+  <td style="padding:6px 12px;text-align:right;">{miles(len(sv))}</td>
+  <td style="padding:6px 12px;text-align:right;">{clp(sv['Valor'].sum())}</td>
+  <td style="padding:6px 12px;">Capital sin rotación — revisar liquidación</td></tr>
+</table>
+
+<div style="font-size:13px;margin:12px 0;">📎 <b>Excel adjunto (Pulso Stock LIVE):</b> hoja <b>Resumen</b> con
 <b>tabla dinámica interactiva por bodega</b> (arrastrá Marca/Categoría/SKU/Bodega; se refresca
 sola al abrir) + hoja <b>Stock por Bodega</b> con la sábana completa para planificación.</div>
 <div style="margin-top:16px;font-size:12px;color:#475569;">
