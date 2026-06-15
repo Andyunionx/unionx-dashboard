@@ -107,7 +107,7 @@ def main():
     xlsx = construir_excel()
     html, monto = construir_html()
     html = html.replace("{HOY}", hoy)
-    fname = f"Pulso_Stock_por_Bodega_{datetime.datetime.now():%Y-%m-%d}.xlsx"
+    fname = "Pulso Stock LIVE.xlsx"
     asunto = f"📦 Pulso Stock UnionX · {monto} · {hoy}"
     print(f"Enviando a {len(EMAIL_TO)} destinatarios: {EMAIL_TO}", flush=True)
     msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO)
