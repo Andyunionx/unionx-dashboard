@@ -38,8 +38,11 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 OUT_PARQUET = OUT_DIR / "volumen_inventario_hist.parquet"
 OUT_RESUMEN = OUT_DIR / "volumen_inventario_hist_resumen.json"
 
-# Hasta hace N días — la última semana va en vivo desde la vista
-DIAS_BUFFER_VIVO = 7
+# Hasta hace N días de buffer. Bajado de 7→2 (16-jun-2026) para que el Pulso
+# KPI semanal tenga la semana anterior fresca. state="done" ya garantiza
+# pickings cerrados; 2 días cubre ajustes/devoluciones en vuelo sin perder
+# frescura. (Antes 7 días era muy conservador y dejaba el WMS ~1 semana atrás.)
+DIAS_BUFFER_VIVO = 2
 
 
 def _get_odoo():
