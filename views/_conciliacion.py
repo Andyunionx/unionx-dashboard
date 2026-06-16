@@ -230,6 +230,68 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
     }
 
 
+# ------------------------------------------------------------------ Bloque B2B (Distribución / Nicolás)
+NEG_IX = 1  # columna Negocio en 'Análisis de Resultados'
+
+
+def construir_b2b(df_ar, df_meta):
+    """Distribución (B2B): resultado contable (= comercial) por mes×canal + meta total.
+    El presupuesto de Distribución no viene abierto por canal: es el total (cargado
+    bajo 'Paris tienda'); se compara el total Distribución vs ese total."""
+    df = df_ar.copy()
+    df.columns = range(df.shape[1])
+    for i in (IX["ano"], IX["mes"], 18, 19, 21, 22, 23, 25):
+        df[i] = df[i].apply(num)
+    df["_neg"] = df[NEG_IX].apply(_norm)
+    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= 5) & (df["_neg"] == "distribucion")]
+    rows = []
+    for (m, canal), g in d.groupby([IX["mes"], IX["canal"]]):
+        rows.append({"Mes": MES_NOM[int(m)], "Canal": str(canal).strip(),
+                     "Venta": float(g[18].sum()), "Costo": float(g[19].sum()),
+                     "Comisión Venta": float(g[21].sum()), "Comisión Envío": float(g[22].sum()),
+                     "Marketing": float(g[23].sum()), "Contribución": float(g[25].sum())})
+    cols = ["Mes", "Canal", "Venta", "Costo", "Comisión Venta", "Comisión Envío", "Marketing", "Contribución"]
+    datos_b2b = pd.DataFrame(rows) if rows else pd.DataFrame(columns=cols)
+
+    meta_rows = []
+    if df_meta is not None and len(df_meta):
+        def col(name):
+            for c in df_meta.columns:
+                if str(c).strip().lower() == name.lower():
+                    return c
+            return None
+        cA, cM, cN, cMV, cMC = (col("AÑO"), col("Mes"), col("Negocio"), col("Meta Venta"), col("Meta Contribución"))
+        for _, r in df_meta.iterrows():
+            try:
+                if int(num(r[cA])) == 2026 and 1 <= int(num(r[cM])) <= 5 and _norm(r[cN]) == "distribucion":
+                    meta_rows.append({"Mes": MES_NOM[int(num(r[cM]))],
+                                      "MetaVenta": num(r[cMV]), "MetaContrib": num(r[cMC])})
+            except (TypeError, ValueError):
+                pass
+    meta_b2b = (pd.DataFrame(meta_rows).groupby("Mes", as_index=False).sum() if meta_rows
+                else pd.DataFrame(columns=["Mes", "MetaVenta", "MetaContrib"]))
+    return {"datos_b2b": datos_b2b, "meta_b2b": meta_b2b}
+
+
+def calcular_b2b(b2b, mes="YTD"):
+    d, mt = b2b["datos_b2b"], b2b["meta_b2b"]
+    if mes != "YTD":
+        d = d[d["Mes"] == mes]
+        mt = mt[mt["Mes"] == mes]
+    money_cols = ["Venta", "Costo", "Comisión Venta", "Comisión Envío", "Marketing", "Contribución"]
+    pl_canal = (d.groupby("Canal", as_index=False)[money_cols].sum().sort_values("Venta", ascending=False)
+                if len(d) else pd.DataFrame(columns=["Canal"] + money_cols))
+    if len(pl_canal):
+        pl_canal.insert(2, "Margen", pl_canal["Venta"] - pl_canal["Costo"])
+    tot = {k: float(d[k].sum()) if len(d) else 0.0 for k in money_cols}
+    tot["Margen"] = tot["Venta"] - tot["Costo"]
+    meta_v = float(mt["MetaVenta"].sum()) if len(mt) else 0.0
+    meta_c = float(mt["MetaContrib"].sum()) if len(mt) else 0.0
+    return {"pl_canal": pl_canal, "tot": tot, "meta_venta": meta_v, "meta_contrib": meta_c,
+            "cumpl_venta": (tot["Venta"] / meta_v) if meta_v else None,
+            "cumpl_contrib": (tot["Contribución"] / meta_c) if meta_c else None}
+
+
 # ------------------------------------------------------------------ Excel con fórmulas
 def construir_workbook(bundle):
     """Workbook openpyxl con selectores Mes/Canal/KAM y todo por fórmula (idéntico al

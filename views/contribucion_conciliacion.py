@@ -17,7 +17,8 @@ import pandas as pd
 import streamlit as st
 
 from views.contribucion_loader import cargar_hoja, fmt_pesos
-from views._conciliacion import construir_dataframes, calcular, construir_workbook, MESES_OPT
+from views._conciliacion import (construir_dataframes, calcular, construir_workbook, MESES_OPT,
+                                 construir_b2b, calcular_b2b)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
@@ -31,6 +32,10 @@ def _bundle():
         df_gl = cargar_hoja("Detalle Glosas 2026")
     except Exception:
         df_gl = pd.DataFrame()
+    try:
+        df_meta = cargar_hoja("Analisis Meta vs Resultados")
+    except Exception:
+        df_meta = pd.DataFrame()
     nc = pd.read_parquet(NC_DET) if NC_DET.exists() else None
     nc2c = {}
     if nc is not None and PARQUET.exists():
@@ -40,7 +45,38 @@ def _bundle():
             QUALIFY row_number() OVER (PARTITION BY documento ORDER BY SUM(abs(venta_bruta)) DESC)=1
         """).fetchall()
         nc2c = {d: c for d, c in rows}
-    return construir_dataframes(df_ar, df_gl, nc, nc2c)
+    b = construir_dataframes(df_ar, df_gl, nc, nc2c)
+    b.update(construir_b2b(df_ar, df_meta))
+    return b
+
+
+def _render_b2b(b):
+    """Bloque Distribución / B2B (Nicolás): P&L (comercial=contable) + vs Presupuesto total."""
+    st.info("**Distribución (B2B) — responsable Nicolás.** No tiene visión comercial separada, "
+            "así que **resultado comercial = contable**. El presupuesto no viene abierto por canal: "
+            "es el **total de Distribución** (cargado bajo Paris tienda); se compara el total vs ese total.")
+    mes = st.selectbox("Mes", MESES_OPT, index=0, key="b2b_mes")
+    R = calcular_b2b(b, mes)
+    tot = R["tot"]
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Venta (resultado)", fmt_pesos(tot["Venta"]))
+    c2.metric("Meta Venta", fmt_pesos(R["meta_venta"]),
+              delta=f"{R['cumpl_venta']*100:.0f}% cumpl." if R["cumpl_venta"] else None)
+    c3.metric("Contribución (resultado)", fmt_pesos(tot["Contribución"]))
+    c4.metric("Meta Contribución", fmt_pesos(R["meta_contrib"]),
+              delta=f"{R['cumpl_contrib']*100:.0f}% cumpl." if R["cumpl_contrib"] else None)
+    st.markdown("### P&L Distribución (resultado = comercial = contable)")
+    money = st.column_config.NumberColumn(format="$%d")
+    pl = R["pl_canal"]
+    if len(pl):
+        tot_row = {"Canal": "TOTAL", **{k: tot.get(k, tot["Venta"] - tot["Costo"] if k == "Margen" else tot.get(k)) for k in
+                                        ["Venta", "Margen", "Costo", "Comisión Venta", "Comisión Envío", "Marketing", "Contribución"]}}
+        pl = pd.concat([pl, pd.DataFrame([tot_row])], ignore_index=True)
+    st.dataframe(pl, width="stretch", hide_index=True,
+                 column_config={c: money for c in ["Venta", "Costo", "Margen", "Comisión Venta",
+                                                    "Comisión Envío", "Marketing", "Contribución"]})
+    st.caption("Canales B2B = negocio Distribución (Paris/Walmart/Falabella tienda, Dimarsa, Lokal, "
+               "Casa Mila, Ferretería, Amar, etc.). Comparación de presupuesto a nivel total.")
 
 
 def render():
@@ -65,7 +101,14 @@ def render():
         st.warning("Sin datos.")
         return
 
-    # ---- filtros ----
+    vista = st.radio("Vista", ["⚖️ Comercial (KAM)", "🏭 Distribución B2B (Nicolás)"],
+                     horizontal=True, key="ccon_vista")
+    st.markdown("---")
+    if vista.startswith("🏭"):
+        _render_b2b(b)
+        return
+
+    # ---- filtros (comercial) ----
     c1, c2, c3 = st.columns(3)
     mes = c1.selectbox("Mes", MESES_OPT, index=0, key="ccon_mes")
     canal = c2.selectbox("Canal", ["TODOS"] + b["canales"], index=0, key="ccon_canal")
