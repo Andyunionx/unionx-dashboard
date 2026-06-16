@@ -88,6 +88,22 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     df["es_despacho"] = marca_l.str.contains(pat, regex=True, na=False) | prod_l.str.contains(pat, regex=True, na=False)
     log(f"  [P5] es_despacho: {int(df['es_despacho'].sum()):,} filas")
 
+    # P5b — sanity de costo: filas con cruce de campo (cantidad≈venta → costo_total absurdo).
+    # Se corrige a cantidad=1 y costo_total=costo_unitario (evita margen −billones).
+    try:
+        vn = pd.to_numeric(df["venta_neta"], errors="coerce")
+        ct = pd.to_numeric(df["costo_total"], errors="coerce")
+        cu = pd.to_numeric(df["costo_unitario"], errors="coerce")
+        absurd = ct > (10 * vn.abs() + 100000)
+        if absurd.any():
+            df.loc[absurd, "cantidad"] = 1
+            df.loc[absurd, "costo_total"] = cu[absurd]
+            df.loc[absurd, "margen_front"] = vn[absurd] - cu[absurd]
+            df.loc[absurd, "margen_final"] = vn[absurd] - cu[absurd]
+            log(f"  [P5b] {int(absurd.sum())} filas con costo absurdo corregidas (cantidad=1)")
+    except Exception as e:
+        log(f"  [P5b] omitido: {e}")
+
     # P3 — backfill fecha_venta NC desde el cruce Odoo (solo histórico)
     if con_nc_backfill and NC_DET.exists() and "tipo_movimiento" in df.columns:
         nc = pd.read_parquet(NC_DET)
