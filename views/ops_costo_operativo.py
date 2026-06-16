@@ -2352,6 +2352,100 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 # ============================================================
 # RENDER
 # ============================================================
+def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: int):
+    """Resumen visual tipo portal: tarjetas KPI + gráficos Plotly de tendencia.
+    Da una mirada ejecutiva (COP/pedido, COP/unidad, % venta, composición)
+    antes del detalle de las otras pestañas."""
+    import plotly.graph_objects as go
+
+    def _clp(n): return "$" + "{:,.0f}".format(n).replace(",", ".")
+
+    # Serie mensual del año: costo (area OPERACIONES, FCST=real) + volumen ventas
+    serie = []
+    for m in sorted(df_costo[df_costo["year"] == year]["month"].dropna().unique().astype(int)):
+        c = abs(df_costo[(df_costo["year"] == year) & (df_costo["month"] == m)
+                         & (df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]["valor"].sum()) * 1000
+        v = df_venta[(df_venta["year"] == year) & (df_venta["month"] == m)]
+        if c <= 0 or v.empty:
+            continue
+        ped = float(v["n_pedidos"].iloc[0]); uds = float(v["n_unidades"].iloc[0]); vn = float(v["venta_neta"].iloc[0])
+        if ped <= 0 or vn <= 0:
+            continue
+        serie.append(dict(mes=m, lbl=MESES_SHORT.get(m, str(m)), costo=c, ped=ped, uds=uds, vn=vn,
+                          cop_ped=c / ped, cop_uds=c / uds, pct=c / vn * 100))
+    if len(serie) < 1:
+        st.info("Sin serie suficiente para el resumen visual.")
+        return
+    s = pd.DataFrame(serie)
+    act = s.iloc[-1]; prev = s.iloc[-2] if len(s) > 1 else s.iloc[-1]
+
+    st.markdown("""<style>
+    .kc{background:#fff;border:1px solid #E2E8F0;border-left:4px solid #1E3A5F;border-radius:12px;
+        padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+    .kc .l{font-size:.70rem;color:#64748B;text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+    .kc .v{font-size:1.55rem;font-weight:700;color:#1E293B;line-height:1.1;}
+    .kc .d{font-size:.78rem;margin-top:5px;font-weight:600;}</style>""", unsafe_allow_html=True)
+
+    def _dlt(cur, pr):  # costo: subir = malo (rojo)
+        if pr == 0: return ""
+        d = (cur - pr) / pr * 100
+        col = "#dc2626" if d > 0 else "#16a34a"
+        return f'<span style="color:{col};">{"▲" if d>0 else "▼"} {abs(d):.1f}% vs {prev.lbl}</span>'
+
+    cards = [("Costo Operativo", _clp(act.costo), _dlt(act.costo, prev.costo)),
+             ("COP / Pedido", _clp(act.cop_ped), _dlt(act.cop_ped, prev.cop_ped)),
+             ("COP / Unidad", _clp(act.cop_uds), _dlt(act.cop_uds, prev.cop_uds)),
+             ("% sobre Venta", f"{act.pct:.1f}%", _dlt(act.pct, prev.pct))]
+    for col, (l, v, d) in zip(st.columns(4), cards):
+        col.markdown(f'<div class="kc"><div class="l">{l}</div><div class="v">{v}</div><div class="d">{d}</div></div>',
+                     unsafe_allow_html=True)
+    st.write("")
+
+    c1, c2 = st.columns([3, 2])
+    with c1:
+        st.markdown("##### Tendencia COP por mes")
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=s.lbl, y=s.cop_ped, name="COP/pedido", mode="lines+markers+text",
+                                 text=[_clp(x) for x in s.cop_ped], textposition="top center",
+                                 line=dict(color="#1E3A5F", width=3)))
+        fig.add_trace(go.Scatter(x=s.lbl, y=s.cop_uds, name="COP/unidad", mode="lines+markers",
+                                 line=dict(color="#d97706", width=3, dash="dot")))
+        fig.add_hrect(y0=1500, y1=3000, fillcolor="#16a34a", opacity=0.07, line_width=0,
+                      annotation_text="banda 3PL óptima", annotation_position="top left")
+        fig.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=10), legend=dict(orientation="h", y=1.12),
+                          plot_bgcolor="white", yaxis=dict(gridcolor="#EBF0F8", tickformat="$,.0f"))
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        st.markdown(f"##### Composición del costo ({act.lbl})")
+        cc = (df_costo[(df_costo["year"] == year) & (df_costo["month"] == int(act.mes))
+                       & (df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]
+              .groupby("centro_costo")["valor"].sum() * 1000).abs().sort_values()
+        fig2 = go.Figure(go.Bar(x=cc.values, y=[c.title() for c in cc.index], orientation="h",
+                                marker_color="#2C5F8D", text=[_clp(x) for x in cc.values], textposition="auto"))
+        fig2.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="white",
+                           xaxis=dict(gridcolor="#EBF0F8", tickformat="$,.0f"))
+        st.plotly_chart(fig2, use_container_width=True)
+
+    c3, c4 = st.columns([2, 3])
+    with c3:
+        st.markdown("##### % Costo / Venta por mes")
+        fig3 = go.Figure(go.Bar(x=s.lbl, y=s.pct, text=[f"{p:.1f}%" for p in s.pct], textposition="outside",
+                                marker_color=["#dc2626" if p > 12 else ("#d97706" if p > 10 else "#16a34a") for p in s.pct]))
+        fig3.update_layout(height=260, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="white",
+                           yaxis=dict(gridcolor="#EBF0F8", ticksuffix="%"))
+        st.plotly_chart(fig3, use_container_width=True)
+    with c4:
+        st.markdown("##### Lectura")
+        if len(s) > 1:
+            dped = (act.ped - prev.ped) / prev.ped * 100
+            duds = (act.uds - prev.uds) / prev.uds * 100
+            st.info(f"**{act.lbl}: {_clp(act.cop_uds)}/unidad · {_clp(act.cop_ped)}/pedido.** "
+                    f"vs {prev.lbl}: {dped:+.0f}% pedidos, {duds:+.0f}% unidades. "
+                    f"COP/pedido sube cuando hay menos órdenes (más grandes, mix B2B); "
+                    f"COP/unidad es la métrica estable de eficiencia.")
+        st.caption("Métrica primaria: **COP/unidad** (no se distorsiona con el mix B2B/B2C).")
+
+
 def render():
     with st.sidebar:
         st.markdown("### 💰 **Costo Operativo**")
@@ -2439,13 +2533,16 @@ def render():
 
     st.divider()
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📊 P&L Operaciones",
+    tab0, tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 Resumen Visual",
+        "📋 P&L Operaciones",
         "🔎 Detalle por Centro de Costo",
-        "📋 Informe de Gestión",
+        "📑 Informe de Gestión",
         "📈 Comparativo YoY",
         "🔮 Proyección & Equilibrio",
     ])
+    with tab0:
+        _tab_resumen_visual(df_costo, df_venta, year_sel)
     with tab1:
         _tab_pnl(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab2:
