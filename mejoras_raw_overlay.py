@@ -58,29 +58,34 @@ def _cargar_matriz():
 
 
 def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
-    """Aplica P1 (atributos por SKU), P5 (es_despacho) y opcional P3 (backfill NC)."""
-    df = df.copy()
+    """Aplica P1 (atributos por SKU), P5 (es_despacho) y opcional P3 (backfill NC).
+    Vectorizado y sin copia para soportar el histórico (~414k filas)."""
     log = print if verbose else (lambda *a, **k: None)
 
-    # P1 — pisar atributos por SKU
+    # P1 — pisar atributos por SKU (merge vectorizado, 1 join en vez de 9 .map)
     try:
-        matriz = _cargar_matriz()
-        sk = df["sku"].apply(_norm)
+        matriz = _cargar_matriz()  # {sku_norm: {pcol: val}}
+        mrows = [{"_sk": k, **{p: v for p, v in rec.items()}} for k, rec in matriz.items()]
+        mdf = pd.DataFrame(mrows).rename(columns={c: f"_m_{c}" for c in set(MATRIZ_MAP.values())})
+        df["_sk"] = df["sku"].astype(str).str.strip().str.lower()
+        df = df.merge(mdf, on="_sk", how="left")
+        n_match = int(df["_m_producto"].notna().sum()) if "_m_producto" in df.columns else 0
         for pcol in set(MATRIZ_MAP.values()):
-            if pcol not in df.columns:
-                continue
-            vals = sk.map(lambda s: matriz.get(s, {}).get(pcol))
-            mask = vals.notna()
-            df.loc[mask, pcol] = vals[mask].values
-            df[pcol] = df[pcol].map(lambda v: "" if v is None or (isinstance(v, float) and pd.isna(v)) else str(v))
-        log(f"  [P1] atributos pisados desde Matriz ({int(sk.isin(matriz).sum()):,} filas con SKU en Matriz)")
+            mc = f"_m_{pcol}"
+            if mc in df.columns and pcol in df.columns:
+                df[pcol] = df[mc].where(df[mc].notna(), df[pcol])
+                df[pcol] = df[pcol].astype(str).replace({"None": "", "nan": ""})
+        df = df.drop(columns=[c for c in df.columns if c.startswith("_m_")] + ["_sk"])
+        log(f"  [P1] atributos pisados desde Matriz ({n_match:,} filas con SKU en Matriz)")
     except Exception as e:
-        log(f"  [P1] omitido: {e}")
+        log(f"  [P1] omitido: {type(e).__name__}: {e}")
+        df = df.drop(columns=[c for c in df.columns if c.startswith("_m_") or c == "_sk"], errors="ignore")
 
-    # P5 — flag es_despacho
-    txt = (df.get("marca", "").astype(str) + " " + df.get("producto", "").astype(str)
-           + " " + df.get("sku", "").astype(str)).apply(_norm)
-    df["es_despacho"] = txt.apply(lambda t: any(k in t for k in DESPACHO_KEYS))
+    # P5 — flag es_despacho (vectorizado, sin concatenar todo)
+    pat = "despacho|flete|env[ií]o|shipping"
+    marca_l = df["marca"].astype(str).str.lower()
+    prod_l = df["producto"].astype(str).str.lower()
+    df["es_despacho"] = marca_l.str.contains(pat, regex=True, na=False) | prod_l.str.contains(pat, regex=True, na=False)
     log(f"  [P5] es_despacho: {int(df['es_despacho'].sum()):,} filas")
 
     # P3 — backfill fecha_venta NC desde el cruce Odoo (solo histórico)
