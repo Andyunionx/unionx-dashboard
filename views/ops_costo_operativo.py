@@ -2380,7 +2380,7 @@ def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: in
     act = s.iloc[-1]; prev = s.iloc[-2] if len(s) > 1 else s.iloc[-1]
 
     st.markdown("""<style>
-    .kc{background:#fff;border:1px solid #E2E8F0;border-left:4px solid #1E3A5F;border-radius:12px;
+    .kc{background:#fff;border:1px solid #E2E8F0;border-left:4px solid #4884FC;border-radius:12px;
         padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
     .kc .l{font-size:.70rem;color:#64748B;text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
     .kc .v{font-size:1.55rem;font-weight:700;color:#1E293B;line-height:1.1;}
@@ -2407,7 +2407,7 @@ def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: in
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=s.lbl, y=s.cop_ped, name="COP/pedido", mode="lines+markers+text",
                                  text=[_clp(x) for x in s.cop_ped], textposition="top center",
-                                 line=dict(color="#1E3A5F", width=3)))
+                                 line=dict(color="#4884FC", width=3)))
         fig.add_trace(go.Scatter(x=s.lbl, y=s.cop_uds, name="COP/unidad", mode="lines+markers",
                                  line=dict(color="#d97706", width=3, dash="dot")))
         fig.add_hrect(y0=1500, y1=3000, fillcolor="#16a34a", opacity=0.07, line_width=0,
@@ -2421,7 +2421,7 @@ def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: in
                        & (df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]
               .groupby("centro_costo")["valor"].sum() * 1000).abs().sort_values()
         fig2 = go.Figure(go.Bar(x=cc.values, y=[c.title() for c in cc.index], orientation="h",
-                                marker_color="#2C5F8D", text=[_clp(x) for x in cc.values], textposition="auto"))
+                                marker_color="#4884FC", text=[_clp(x) for x in cc.values], textposition="auto"))
         fig2.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="white",
                            xaxis=dict(gridcolor="#EBF0F8", tickformat="$,.0f"))
         st.plotly_chart(fig2, use_container_width=True)
