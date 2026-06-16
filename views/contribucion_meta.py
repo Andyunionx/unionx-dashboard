@@ -8,7 +8,7 @@ import plotly.express as px
 import streamlit as st
 
 from views.contribucion_loader import (
-    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M,
+    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos,
     render_contrib_filters, aplicar_filtros,
 )
 
@@ -96,15 +96,20 @@ def render():
 
     st.divider()
 
-    # Tabla detalle
+    # Tabla detalle — montos completos (numeros reales + column_config), descargable con cifra real
     st.markdown("### Detalle")
-    cols_show = [c for c in ['AÑO', 'Trimestre', 'Mes', 'Negocio', 'Canal', 'KAM',
-                              'Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
+    money_cols = ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
+    cols_show = [c for c in ['AÑO', 'Trimestre', 'Mes', 'Negocio', 'Canal', 'KAM', *money_cols]
                  if c in df_f.columns]
     df_show = df_f[cols_show].copy()
     if 'Meta Venta' in df_show.columns:
-        df_show['% Cumpl V'] = (df_show['Resultado Venta'] / df_show['Meta Venta'].replace(0, 1) * 100).round(1).astype(str) + '%'
-        df_show['% Cumpl C'] = (df_show['Resultado Contribución'] / df_show['Meta Contribución'].replace(0, 1) * 100).round(1).astype(str) + '%'
-        for c in ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']:
-            df_show[c] = df_show[c].apply(fmt_pesos_M)
-    st.dataframe(df_show, width='stretch', hide_index=True, height=500)
+        df_show['% Cumpl V'] = (df_show['Resultado Venta'] / df_show['Meta Venta'].replace(0, 1) * 100).round(1)
+        df_show['% Cumpl C'] = (df_show['Resultado Contribución'] / df_show['Meta Contribución'].replace(0, 1) * 100).round(1)
+    money = st.column_config.NumberColumn(format="$%d")
+    pct = st.column_config.NumberColumn(format="%.1f%%")
+    st.dataframe(
+        df_show, width='stretch', hide_index=True, height=500,
+        column_config={**{c: money for c in money_cols if c in df_show.columns},
+                       '% Cumpl V': pct, '% Cumpl C': pct},
+    )
+    st.caption("💡 Descarga (esquina sup. der. de la tabla) → CSV con montos completos.")
