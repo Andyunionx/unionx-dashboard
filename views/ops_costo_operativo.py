@@ -1458,6 +1458,22 @@ def _tab_yoy(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
                     "Mejorando" if delta_t < -0.5 else
                     "Empeorando" if delta_t > 0.5 else "Estable")
 
+    # Gráfico YoY por sub-área (UnionX)
+    import plotly.graph_objects as _go
+    _yd = [r for r in yoy_data if abs(r["real_act"]) > 0 or abs(r["real_ant"]) > 0]
+    if _yd:
+        _lbls = [SUB_AREA_LABEL.get(r["sa"], r["sa"]) for r in _yd]
+        _fig = _go.Figure()
+        _fig.add_trace(_go.Bar(name=str(year_ant), x=_lbls,
+                               y=[abs(r["real_ant"]) * 1000 for r in _yd], marker_color="#94A3B8"))
+        _fig.add_trace(_go.Bar(name=str(year), x=_lbls,
+                               y=[abs(r["real_act"]) * 1000 for r in _yd], marker_color="#4884FC"))
+        _fig.update_layout(barmode="group", height=300, margin=dict(l=10, r=10, t=10, b=10),
+                           plot_bgcolor="white", legend=dict(orientation="h", y=1.12),
+                           yaxis=dict(gridcolor="#EBF0F8", tickformat="$,.0f"))
+        st.markdown("##### Costo por sub-área — YoY")
+        st.plotly_chart(_fig, use_container_width=True)
+
     st.divider()
 
     # Detalle por CC YoY
@@ -1924,7 +1940,7 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     with cB:
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=venta, y=costo_t, mode="markers",
-                                    name="Histórico", marker=dict(size=14, color="#1F4E79")))
+                                    name="Histórico", marker=dict(size=14, color="#4884FC")))
         # Línea: aplicar modelo a rango de venta
         xx = np.linspace(venta.min() * 0.5, venta.max() * 2.5, 50)
         yy = np.array([
