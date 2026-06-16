@@ -926,6 +926,11 @@ class VentasService(BaseOdooService):
             costo_unitario = linea.get('purchase_price', 0)
             costo_total = costo_unitario * cantidad
 
+            # P4 (Nicole 16-jun): estado de despacho desde qty_delivered de la línea
+            qty_del = linea.get('qty_delivered', 0) or 0
+            estado_despacho = ('Despachado' if (cantidad and qty_del >= cantidad)
+                               else ('Parcial' if qty_del > 0 else 'Pendiente'))
+
             # Márgenes (basados en venta bruta, sin NC)
             margen_front = venta_bruta - costo_total
             comision = linea.get('comision', 0)  # si existe en el modelo
@@ -1047,7 +1052,7 @@ class VentasService(BaseOdooService):
                     'Pedido Marketplace': orden.get('channel_order_reference', '') or '',
                     'Ref Cliente': orden.get('client_order_ref', '') or '',
                     'Estado Pedido': orden.get('state', ''),
-                    'Tipo Despacho': '',
+                    'Tipo Despacho': estado_despacho,
                     'SKU': sku,
                     'Canal': canal_raw,
                     'Fecha Venta': fecha_venta_local,
@@ -1279,11 +1284,17 @@ class VentasService(BaseOdooService):
                         bodega_nc = orden_orig.get('warehouse_id', [None, ''])[1] if orden_orig.get('warehouse_id') else ''
                         pedido_nc = orden_orig.get('name', '')
                         estado_ped_nc = orden_orig.get('state', '')
-                        anio_nc = fecha_dt.year if pd.notna(fecha_dt) else ''
-                        mes_nc = fecha_dt.month if pd.notna(fecha_dt) else ''
-                        sem_nc = fecha_dt.isocalendar()[1] if pd.notna(fecha_dt) else ''
-                        dia_nc = fecha_dt.dayofweek if pd.notna(fecha_dt) else ''
-                        fecha_v_nc = fecha_dt.strftime('%Y-%m-%d') if pd.notna(fecha_dt) else ''
+                        # P3 (Nicole 16-jun): Fecha Venta de la NC = fecha de la ORDEN ORIGINAL
+                        # (no la de la NC). 'Fecha Documento' conserva la fecha de la NC.
+                        _do = (orden_orig or {}).get('date_order')
+                        _fv_dt = _utc_to_chile(pd.to_datetime(_do)) if _do else fecha_dt
+                        if pd.isna(_fv_dt):
+                            _fv_dt = fecha_dt
+                        anio_nc = _fv_dt.year if pd.notna(_fv_dt) else ''
+                        mes_nc = _fv_dt.month if pd.notna(_fv_dt) else ''
+                        sem_nc = _fv_dt.isocalendar()[1] if pd.notna(_fv_dt) else ''
+                        dia_nc = _fv_dt.dayofweek if pd.notna(_fv_dt) else ''
+                        fecha_v_nc = _fv_dt.strftime('%Y-%m-%d') if pd.notna(_fv_dt) else ''
 
                         lineas_nc = nc_lineas_by_move.get(nc_id, []) if nc_id else []
 

@@ -29,6 +29,7 @@ OUT_PATH = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
 
 COLS_DB = [
     'tipo_movimiento', 'bodega', 'documento', 'fecha_documento', 'pedido',
+    'pedido_marketplace',
     'estado_pedido', 'tipo_despacho', 'sku', 'canal', 'fecha_venta',
     'hora_venta', 'producto', 'categoria_macro', 'categoria_padre',
     'categoria_hijo', 'categoria_comercial', 'estado_sku', 'pack', 'marca',
@@ -42,7 +43,8 @@ COLS_DB = [
 # Mapeo RAW Odoo → DB (igual que actualizar_raw_historico.py)
 RAW_TO_DB = {
     'Tipo Movimiento': 'tipo_movimiento', 'Bodega': 'bodega', 'Documento': 'documento',
-    'Fecha Documento': 'fecha_documento', 'Pedido': 'pedido', 'Estado Pedido': 'estado_pedido',
+    'Fecha Documento': 'fecha_documento', 'Pedido': 'pedido',
+    'Pedido Marketplace': 'pedido_marketplace', 'Estado Pedido': 'estado_pedido',
     'Tipo Despacho': 'tipo_despacho', 'SKU': 'sku', 'Canal': 'canal',
     'Fecha Venta': 'fecha_venta', 'Hora Venta': 'hora_venta', 'Producto': 'producto',
     'Categoría macro': 'categoria_macro', 'Categoría padre': 'categoria_padre',
@@ -410,6 +412,15 @@ def main():
             df[c] = df[c].apply(
                 lambda v: '' if v is None or (isinstance(v, float) and pd.isna(v)) else str(v)
             )
+
+    # Mejoras RAW (Nicole 16-jun): pisar producto/atributos por SKU desde la Matriz
+    # (1 descripción por SKU) + flag es_despacho. NC ya trae fecha original desde
+    # ventas_service, por eso con_nc_backfill=False.
+    try:
+        from mejoras_raw_overlay import aplicar_mejoras
+        df = aplicar_mejoras(df, con_nc_backfill=False, verbose=True)
+    except Exception as e:
+        print(f"   [WARN] mejoras RAW no aplicadas: {type(e).__name__}: {str(e)[:80]}")
 
     # Normalizacion canonica (regla de negocio, ver clasificar_marca.py):
     #  - tipo_marca se DERIVA de la marca (8 marcas propias), no del crudo de la Matriz.
