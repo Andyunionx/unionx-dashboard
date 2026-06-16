@@ -188,6 +188,7 @@ from views.contribucion_general import render as render_contrib_general
 from views.contribucion_meta import render as render_contrib_meta
 from views.contribucion_kam import render as render_contrib_kam
 from views.contribucion_comercial_contable import render as render_contrib_comercial_contable
+from views.contribucion_conciliacion import render as render_contrib_conciliacion
 from views.contribucion_oportunidades import render as render_contrib_oportunidades
 from views.contribucion_administracion import render as render_contrib_administracion
 from views.sistema_alertas import render as render_sistema_alertas
@@ -212,6 +213,7 @@ pages = {
         st.Page(render_contrib_general, title="Resultados Generales", icon="📊", url_path="contrib-general"),
         st.Page(render_contrib_meta, title="vs Presupuesto", icon="🎯", url_path="contrib-meta"),
         st.Page(render_contrib_comercial_contable, title="Comercial vs Contable", icon="⚖️", url_path="contrib-comercial-contable"),
+        st.Page(render_contrib_conciliacion, title="Conciliación", icon="🌉", url_path="contrib-conciliacion"),
         st.Page(render_contrib_kam, title="Vista KAM", icon="👤", url_path="contrib-kam"),
         st.Page(render_contrib_oportunidades, title="Oportunidades", icon="💡", url_path="contrib-oportunidades"),
         st.Page(render_contrib_administracion, title="Administración", icon="🛠️", url_path="contrib-admin"),
