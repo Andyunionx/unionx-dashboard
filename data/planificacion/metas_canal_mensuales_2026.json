@@ -1,86 +1,32 @@
 {
-  "fuente": "Analisis_Contribucion_2026_V06.xlsx pestaña \"Análisis Metas vs Resultados\"",
-  "extraido": "2026-06-05",
+  "fuente": "Analisis_Contribucion_2026_V06.xlsx pestaña \"Resultado vs Presupuesto\" (meta NETA; pulso la lleva a bruta x1.19 IVA)",
+  "extraido": "2026-06-16",
+  "base": "neta",
+  "factor_bruta_iva": 1.19,
   "metas": [
     {
       "ano": 2026,
       "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Falabella",
-      "meta_venta": 59839374.0,
-      "meta_contribucion": 14959844.0
+      "negocio": "Corporativo",
+      "canal": "Corporativo",
+      "meta_venta": 19748280.68,
+      "meta_contribucion": 7899312.27
     },
     {
       "ano": 2026,
       "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "El Volcan",
-      "meta_venta": 3642397.0,
-      "meta_contribucion": 983447.0
+      "negocio": "Distribución",
+      "canal": "Paris tienda",
+      "meta_venta": 62765484.5,
+      "meta_contribucion": 19457300.2
     },
     {
       "ano": 2026,
       "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Hites",
-      "meta_venta": 3642397.0,
-      "meta_contribucion": 1038083.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Kitchen Center",
-      "meta_venta": 24976434.0,
-      "meta_contribucion": 6868519.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Abc",
-      "meta_venta": 5203424.0,
-      "meta_contribucion": 1482976.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Mercado Libre",
-      "meta_venta": 122280460.0,
-      "meta_contribucion": 30570115.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Paris",
-      "meta_venta": 20813695.0,
-      "meta_contribucion": 5140983.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Ripley",
-      "meta_venta": 7805136.0,
-      "meta_contribucion": 1927869.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Walmart",
-      "meta_venta": 10406848.0,
-      "meta_contribucion": 2913917.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Marketplace",
-      "canal": "Cada cosa en su lugar",
-      "meta_venta": 1561027.0,
-      "meta_contribucion": 460503.0
+      "negocio": "Distribución",
+      "canal": "UnionX b2b",
+      "meta_venta": 13000000.0,
+      "meta_contribucion": 4030000.0
     },
     {
       "ano": 2026,
@@ -133,26 +79,82 @@
     {
       "ano": 2026,
       "mes": 1,
-      "negocio": "Corporativo",
-      "canal": "Corporativo",
-      "meta_venta": 19748281.0,
-      "meta_contribucion": 7899312.0
+      "negocio": "Marketplace",
+      "canal": "Abc",
+      "meta_venta": 5203423.84,
+      "meta_contribucion": 1482975.8
     },
     {
       "ano": 2026,
       "mes": 1,
-      "negocio": "Distribución",
-      "canal": "UnionX b2b",
-      "meta_venta": 13000000.0,
-      "meta_contribucion": 4030000.0
+      "negocio": "Marketplace",
+      "canal": "Cada cosa en su lugar",
+      "meta_venta": 1561027.15,
+      "meta_contribucion": 460503.01
     },
     {
       "ano": 2026,
       "mes": 1,
-      "negocio": "Distribución",
-      "canal": "Paris tienda",
-      "meta_venta": 62765484.0,
-      "meta_contribucion": 19457300.0
+      "negocio": "Marketplace",
+      "canal": "El Volcan",
+      "meta_venta": 3642396.69,
+      "meta_contribucion": 983447.11
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Falabella",
+      "meta_venta": 59839374.21,
+      "meta_contribucion": 14959843.55
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Hites",
+      "meta_venta": 3642396.69,
+      "meta_contribucion": 1038083.06
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Kitchen Center",
+      "meta_venta": 24976434.45,
+      "meta_contribucion": 6868519.47
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Mercado Libre",
+      "meta_venta": 122280460.33,
+      "meta_contribucion": 30570115.08
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Paris",
+      "meta_venta": 20813695.38,
+      "meta_contribucion": 5140982.76
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Ripley",
+      "meta_venta": 7805135.77,
+      "meta_contribucion": 1927868.53
+    },
+    {
+      "ano": 2026,
+      "mes": 1,
+      "negocio": "Marketplace",
+      "canal": "Walmart",
+      "meta_venta": 10406847.69,
+      "meta_contribucion": 2913917.35
     },
     {
       "ano": 2026,
@@ -166,97 +168,41 @@
       "ano": 2026,
       "mes": 1,
       "negocio": "Páginas Propias",
-      "canal": "UnionX web",
-      "meta_venta": 13211405.0,
-      "meta_contribucion": 3434965.0
-    },
-    {
-      "ano": 2026,
-      "mes": 1,
-      "negocio": "Páginas Propias",
       "canal": "Simplit web",
       "meta_venta": 11340884.0,
       "meta_contribucion": 3062039.0
     },
     {
       "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Falabella",
-      "meta_venta": 61249800.0,
-      "meta_contribucion": 15562138.0
+      "mes": 1,
+      "negocio": "Páginas Propias",
+      "canal": "UnionX web",
+      "meta_venta": 13211405.0,
+      "meta_contribucion": 3434965.0
     },
     {
       "ano": 2026,
       "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "El Volcan",
-      "meta_venta": 3728249.0,
-      "meta_contribucion": 1021826.0
+      "negocio": "Corporativo",
+      "canal": "Corporativo",
+      "meta_venta": 19748281.0,
+      "meta_contribucion": 7899312.0
     },
     {
       "ano": 2026,
       "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Hites",
-      "meta_venta": 3728249.0,
-      "meta_contribucion": 1077749.0
+      "negocio": "Distribución",
+      "canal": "Paris tienda",
+      "meta_venta": 74202814.0,
+      "meta_contribucion": 23188000.0
     },
     {
       "ano": 2026,
       "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Kitchen Center",
-      "meta_venta": 25565134.0,
-      "meta_contribucion": 7134630.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Abc",
-      "meta_venta": 5326070.0,
-      "meta_contribucion": 1539642.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Mercado Libre",
-      "meta_venta": 125162635.0,
-      "meta_contribucion": 31800891.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Paris",
-      "meta_venta": 21304278.0,
-      "meta_contribucion": 5349005.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Ripley",
-      "meta_venta": 7989104.0,
-      "meta_contribucion": 2005877.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Walmart",
-      "meta_venta": 10652139.0,
-      "meta_contribucion": 3026023.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Marketplace",
-      "canal": "Cada cosa en su lugar",
-      "meta_venta": 1597821.0,
-      "meta_contribucion": 477871.0
+      "negocio": "Distribución",
+      "canal": "UnionX b2b",
+      "meta_venta": 20000000.0,
+      "meta_contribucion": 6200000.0
     },
     {
       "ano": 2026,
@@ -309,26 +255,82 @@
     {
       "ano": 2026,
       "mes": 2,
-      "negocio": "Corporativo",
-      "canal": "Corporativo",
-      "meta_venta": 19748281.0,
-      "meta_contribucion": 7899312.0
+      "negocio": "Marketplace",
+      "canal": "Abc",
+      "meta_venta": 5326069.57,
+      "meta_contribucion": 1539641.86
     },
     {
       "ano": 2026,
       "mes": 2,
-      "negocio": "Distribución",
-      "canal": "UnionX b2b",
-      "meta_venta": 20000000.0,
-      "meta_contribucion": 6200000.0
+      "negocio": "Marketplace",
+      "canal": "Cada cosa en su lugar",
+      "meta_venta": 1597820.87,
+      "meta_contribucion": 477870.77
     },
     {
       "ano": 2026,
       "mes": 2,
-      "negocio": "Distribución",
-      "canal": "Paris tienda",
-      "meta_venta": 74202814.0,
-      "meta_contribucion": 23188000.0
+      "negocio": "Marketplace",
+      "canal": "El Volcan",
+      "meta_venta": 3728248.7,
+      "meta_contribucion": 1021825.57
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Falabella",
+      "meta_venta": 61249800.01,
+      "meta_contribucion": 15562138.37
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Hites",
+      "meta_venta": 3728248.7,
+      "meta_contribucion": 1077749.3
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Kitchen Center",
+      "meta_venta": 25565133.92,
+      "meta_contribucion": 7134629.58
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Mercado Libre",
+      "meta_venta": 125162634.79,
+      "meta_contribucion": 31800891.46
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Paris",
+      "meta_venta": 21304278.26,
+      "meta_contribucion": 5349004.86
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Ripley",
+      "meta_venta": 7989104.35,
+      "meta_contribucion": 2005876.82
+    },
+    {
+      "ano": 2026,
+      "mes": 2,
+      "negocio": "Marketplace",
+      "canal": "Walmart",
+      "meta_venta": 10652139.13,
+      "meta_contribucion": 3026023.02
     },
     {
       "ano": 2026,
@@ -342,97 +344,25 @@
       "ano": 2026,
       "mes": 2,
       "negocio": "Páginas Propias",
-      "canal": "UnionX web",
-      "meta_venta": 10585931.0,
-      "meta_contribucion": 2805272.0
-    },
-    {
-      "ano": 2026,
-      "mes": 2,
-      "negocio": "Páginas Propias",
       "canal": "Simplit web",
       "meta_venta": 11172634.0,
       "meta_contribucion": 3038956.0
     },
     {
       "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Falabella",
-      "meta_venta": 70528171.0,
-      "meta_contribucion": 17984684.0
+      "mes": 2,
+      "negocio": "Páginas Propias",
+      "canal": "UnionX web",
+      "meta_venta": 10585931.0,
+      "meta_contribucion": 2805272.0
     },
     {
       "ano": 2026,
       "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "El Volcan",
-      "meta_venta": 4293019.0,
-      "meta_contribucion": 1180580.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Hites",
-      "meta_venta": 4293019.0,
-      "meta_contribucion": 1244976.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Kitchen Center",
-      "meta_venta": 29437845.0,
-      "meta_contribucion": 8242597.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Abc",
-      "meta_venta": 6132884.0,
-      "meta_contribucion": 1778536.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Mercado Libre",
-      "meta_venta": 144122784.0,
-      "meta_contribucion": 36751310.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Paris",
-      "meta_venta": 24531538.0,
-      "meta_contribucion": 6181948.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Ripley",
-      "meta_venta": 9199327.0,
-      "meta_contribucion": 2318230.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Walmart",
-      "meta_venta": 12265769.0,
-      "meta_contribucion": 3495744.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Marketplace",
-      "canal": "Cada cosa en su lugar",
-      "meta_venta": 1839865.0,
-      "meta_contribucion": 551960.0
+      "negocio": "Distribución",
+      "canal": "Paris tienda",
+      "meta_venta": 120219371.0,
+      "meta_contribucion": 43116826.0
     },
     {
       "ano": 2026,
@@ -485,10 +415,82 @@
     {
       "ano": 2026,
       "mes": 3,
-      "negocio": "Distribución",
-      "canal": "Paris tienda",
-      "meta_venta": 120219371.0,
-      "meta_contribucion": 43116826.0
+      "negocio": "Marketplace",
+      "canal": "Abc",
+      "meta_venta": 6132884.45,
+      "meta_contribucion": 1778536.49
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Cada cosa en su lugar",
+      "meta_venta": 1839865.33,
+      "meta_contribucion": 551959.6
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "El Volcan",
+      "meta_venta": 4293019.11,
+      "meta_contribucion": 1180580.26
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Falabella",
+      "meta_venta": 70528171.12,
+      "meta_contribucion": 17984683.63
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Hites",
+      "meta_venta": 4293019.11,
+      "meta_contribucion": 1244975.54
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Kitchen Center",
+      "meta_venta": 29437845.34,
+      "meta_contribucion": 8242596.69
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Mercado Libre",
+      "meta_venta": 144122784.46,
+      "meta_contribucion": 36751310.04
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Paris",
+      "meta_venta": 24531537.78,
+      "meta_contribucion": 6181947.52
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Ripley",
+      "meta_venta": 9199326.67,
+      "meta_contribucion": 2318230.32
+    },
+    {
+      "ano": 2026,
+      "mes": 3,
+      "negocio": "Marketplace",
+      "canal": "Walmart",
+      "meta_venta": 12265768.89,
+      "meta_contribucion": 3495744.13
     },
     {
       "ano": 2026,
@@ -502,89 +504,33 @@
       "ano": 2026,
       "mes": 3,
       "negocio": "Páginas Propias",
-      "canal": "UnionX web",
-      "meta_venta": 18749263.0,
-      "meta_contribucion": 5062301.0
-    },
-    {
-      "ano": 2026,
-      "mes": 3,
-      "negocio": "Páginas Propias",
       "canal": "Simplit web",
       "meta_venta": 21993094.0,
       "meta_contribucion": 6048101.0
     },
     {
       "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Falabella",
-      "meta_venta": 67132901.0,
-      "meta_contribucion": 17516973.0
+      "mes": 3,
+      "negocio": "Páginas Propias",
+      "canal": "UnionX web",
+      "meta_venta": 18749263.0,
+      "meta_contribucion": 5062301.0
     },
     {
       "ano": 2026,
       "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "El Volcan",
-      "meta_venta": 3274776.0,
-      "meta_contribucion": 903608.0
+      "negocio": "Corporativo",
+      "canal": "Concesionarios autos",
+      "meta_venta": 14000000.0,
+      "meta_contribucion": 6860000.0
     },
     {
       "ano": 2026,
       "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Hites",
-      "meta_venta": 1910286.0,
-      "meta_contribucion": 536656.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Kitchen Center",
-      "meta_venta": 30018777.0,
-      "meta_contribucion": 8373131.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Abc",
-      "meta_venta": 1910286.0,
-      "meta_contribucion": 555759.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Mercado Libre",
-      "meta_venta": 135084496.0,
-      "meta_contribucion": 34572145.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Paris",
-      "meta_venta": 15009388.0,
-      "meta_contribucion": 3796321.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Ripley",
-      "meta_venta": 9278531.0,
-      "meta_contribucion": 2374652.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Marketplace",
-      "canal": "Walmart",
-      "meta_venta": 8186939.0,
-      "meta_contribucion": 2259020.0
+      "negocio": "Distribución",
+      "canal": "Paris tienda",
+      "meta_venta": 47000000.0,
+      "meta_contribucion": 16358000.0
     },
     {
       "ano": 2026,
@@ -629,18 +575,74 @@
     {
       "ano": 2026,
       "mes": 4,
-      "negocio": "Corporativo",
-      "canal": "Concesionarios autos",
-      "meta_venta": 14000000.0,
-      "meta_contribucion": 6860000.0
+      "negocio": "Marketplace",
+      "canal": "Abc",
+      "meta_venta": 1910285.81,
+      "meta_contribucion": 555759.02
     },
     {
       "ano": 2026,
       "mes": 4,
-      "negocio": "Distribución",
-      "canal": "Paris tienda",
-      "meta_venta": 47000000.0,
-      "meta_contribucion": 16358000.0
+      "negocio": "Marketplace",
+      "canal": "El Volcan",
+      "meta_venta": 3274775.67,
+      "meta_contribucion": 903608.12
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Falabella",
+      "meta_venta": 67132901.18,
+      "meta_contribucion": 17516972.91
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Hites",
+      "meta_venta": 1910285.81,
+      "meta_contribucion": 536656.16
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Kitchen Center",
+      "meta_venta": 30018776.95,
+      "meta_contribucion": 8373130.75
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Mercado Libre",
+      "meta_venta": 135084496.28,
+      "meta_contribucion": 34572144.96
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Paris",
+      "meta_venta": 15009388.48,
+      "meta_contribucion": 3796321.27
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Ripley",
+      "meta_venta": 9278531.06,
+      "meta_contribucion": 2374652.38
+    },
+    {
+      "ano": 2026,
+      "mes": 4,
+      "negocio": "Marketplace",
+      "canal": "Walmart",
+      "meta_venta": 8186939.17,
+      "meta_contribucion": 2259020.3
     },
     {
       "ano": 2026,
@@ -654,89 +656,25 @@
       "ano": 2026,
       "mes": 4,
       "negocio": "Páginas Propias",
-      "canal": "UnionX web",
-      "meta_venta": 10289964.0,
-      "meta_contribucion": 3643825.0
-    },
-    {
-      "ano": 2026,
-      "mes": 4,
-      "negocio": "Páginas Propias",
       "canal": "Simplit web",
       "meta_venta": 17161054.0,
       "meta_contribucion": 4736307.0
     },
     {
       "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Falabella",
-      "meta_venta": 67788904.0,
-      "meta_contribucion": 17749952.0
+      "mes": 4,
+      "negocio": "Páginas Propias",
+      "canal": "UnionX web",
+      "meta_venta": 10289964.0,
+      "meta_contribucion": 3643825.0
     },
     {
       "ano": 2026,
       "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "El Volcan",
-      "meta_venta": 3306776.0,
-      "meta_contribucion": 915453.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Hites",
-      "meta_venta": 1928953.0,
-      "meta_contribucion": 543659.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Kitchen Center",
-      "meta_venta": 30312111.0,
-      "meta_contribucion": 8482588.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Abc",
-      "meta_venta": 1928953.0,
-      "meta_contribucion": 562949.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Mercado Libre",
-      "meta_venta": 136404501.0,
-      "meta_contribucion": 35034345.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Paris",
-      "meta_venta": 15156056.0,
-      "meta_contribucion": 3847237.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Ripley",
-      "meta_venta": 9369198.0,
-      "meta_contribucion": 2406399.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Marketplace",
-      "canal": "Walmart",
-      "meta_venta": 8266939.0,
-      "meta_contribucion": 2288632.0
+      "negocio": "Distribución",
+      "canal": "Paris tienda",
+      "meta_venta": 57000000.0,
+      "meta_contribucion": 19998000.0
     },
     {
       "ano": 2026,
@@ -781,10 +719,74 @@
     {
       "ano": 2026,
       "mes": 5,
-      "negocio": "Distribución",
-      "canal": "Paris tienda",
-      "meta_venta": 57000000.0,
-      "meta_contribucion": 19998000.0
+      "negocio": "Marketplace",
+      "canal": "Abc",
+      "meta_venta": 1928952.55,
+      "meta_contribucion": 562948.52
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "El Volcan",
+      "meta_venta": 3306775.79,
+      "meta_contribucion": 915452.96
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Falabella",
+      "meta_venta": 67788903.73,
+      "meta_contribucion": 17749952.17
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Hites",
+      "meta_venta": 1928952.55,
+      "meta_contribucion": 543658.99
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Kitchen Center",
+      "meta_venta": 30312111.42,
+      "meta_contribucion": 8482588.49
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Mercado Libre",
+      "meta_venta": 136404501.4,
+      "meta_contribucion": 35034344.67
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Paris",
+      "meta_venta": 15156055.71,
+      "meta_contribucion": 3847236.8
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Ripley",
+      "meta_venta": 9369198.08,
+      "meta_contribucion": 2406399.43
+    },
+    {
+      "ano": 2026,
+      "mes": 5,
+      "negocio": "Marketplace",
+      "canal": "Walmart",
+      "meta_venta": 8266939.48,
+      "meta_contribucion": 2288632.41
     },
     {
       "ano": 2026,
@@ -798,89 +800,41 @@
       "ano": 2026,
       "mes": 5,
       "negocio": "Páginas Propias",
-      "canal": "UnionX web",
-      "meta_venta": 8171327.0,
-      "meta_contribucion": 2837906.0
-    },
-    {
-      "ano": 2026,
-      "mes": 5,
-      "negocio": "Páginas Propias",
       "canal": "Simplit web",
       "meta_venta": 19392527.0,
       "meta_contribucion": 4735494.0
     },
     {
       "ano": 2026,
-      "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Falabella",
-      "meta_venta": 129466848.0,
-      "meta_contribucion": 30031371.0
+      "mes": 5,
+      "negocio": "Páginas Propias",
+      "canal": "UnionX web",
+      "meta_venta": 8171327.0,
+      "meta_contribucion": 2837906.0
     },
     {
       "ano": 2026,
       "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "El Volcan",
-      "meta_venta": 6315456.0,
-      "meta_contribucion": 1559677.0
+      "negocio": "Corporativo",
+      "canal": "Corporativo",
+      "meta_venta": 19748281.0,
+      "meta_contribucion": 7899312.0
     },
     {
       "ano": 2026,
       "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Hites",
-      "meta_venta": 3684016.0,
-      "meta_contribucion": 928232.0
+      "negocio": "Distribución",
+      "canal": "Paris tienda",
+      "meta_venta": 60000000.0,
+      "meta_contribucion": 21000000.0
     },
     {
       "ano": 2026,
       "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Kitchen Center",
-      "meta_venta": 57891680.0,
-      "meta_contribucion": 14470712.0
-    },
-    {
-      "ano": 2026,
-      "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Abc",
-      "meta_venta": 3684016.0,
-      "meta_contribucion": 965072.0
-    },
-    {
-      "ano": 2026,
-      "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Mercado Libre",
-      "meta_venta": 260512560.0,
-      "meta_contribucion": 59126414.0
-    },
-    {
-      "ano": 2026,
-      "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Paris",
-      "meta_venta": 28945840.0,
-      "meta_contribucion": 6482764.0
-    },
-    {
-      "ano": 2026,
-      "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Ripley",
-      "meta_venta": 17893792.0,
-      "meta_contribucion": 4061208.0
-    },
-    {
-      "ano": 2026,
-      "mes": 6,
-      "negocio": "Marketplace",
-      "canal": "Walmart",
-      "meta_venta": 15788640.0,
-      "meta_contribucion": 3899192.0
+      "negocio": "Distribución",
+      "canal": "UnionX b2b",
+      "meta_venta": 23000000.0,
+      "meta_contribucion": 6900000.0
     },
     {
       "ano": 2026,
@@ -925,10 +879,74 @@
     {
       "ano": 2026,
       "mes": 6,
-      "negocio": "Distribución",
-      "canal": "Paris tienda",
-      "meta_venta": 48000000.0,
-      "meta_contribucion": 16722000.0
+      "negocio": "Marketplace",
+      "canal": "Abc",
+      "meta_venta": 3684016.0,
+      "meta_contribucion": 965071.67
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "El Volcan",
+      "meta_venta": 6315456.0,
+      "meta_contribucion": 1559676.74
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Falabella",
+      "meta_venta": 129466847.92,
+      "meta_contribucion": 30031370.51
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Hites",
+      "meta_venta": 3684016.0,
+      "meta_contribucion": 928231.51
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Kitchen Center",
+      "meta_venta": 57891679.96,
+      "meta_contribucion": 14470711.85
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Mercado Libre",
+      "meta_venta": 260512559.83,
+      "meta_contribucion": 59126414.44
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Paris",
+      "meta_venta": 28945839.98,
+      "meta_contribucion": 6482764.08
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Ripley",
+      "meta_venta": 17893791.99,
+      "meta_contribucion": 4061208.26
+    },
+    {
+      "ano": 2026,
+      "mes": 6,
+      "negocio": "Marketplace",
+      "canal": "Walmart",
+      "meta_venta": 15788639.99,
+      "meta_contribucion": 3899191.86
     },
     {
       "ano": 2026,
@@ -942,17 +960,17 @@
       "ano": 2026,
       "mes": 6,
       "negocio": "Páginas Propias",
-      "canal": "UnionX web",
-      "meta_venta": 23593340.0,
-      "meta_contribucion": 6127360.0
+      "canal": "Simplit web",
+      "meta_venta": 46508211.0,
+      "meta_contribucion": 10811047.0
     },
     {
       "ano": 2026,
       "mes": 6,
       "negocio": "Páginas Propias",
-      "canal": "Simplit web",
-      "meta_venta": 46508211.0,
-      "meta_contribucion": 10811047.0
+      "canal": "UnionX web",
+      "meta_venta": 23593340.0,
+      "meta_contribucion": 6127360.0
     }
   ]
 }

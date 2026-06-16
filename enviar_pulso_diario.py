@@ -28,9 +28,18 @@ EMAIL_TO = [e.strip() for e in os.environ.get('EMAIL_TO','andres@unionx.cl').spl
 EMAIL_FROM = os.environ.get('EMAIL_FROM','onboarding@resend.dev')
 
 
+# La meta de la base (V06 "Resultado vs Presupuesto") está en venta NETA.
+# El pulso muestra venta BRUTA, así que la meta se lleva a bruta con el IVA
+# (en los datos la bruta es exactamente neta × 1.19). Así el %Meta y el gap
+# quedan bruta vs bruta. Si cambia el régimen de IVA, ajustar acá.
+FACTOR_IVA_BRUTA = 1.19
+
+
 def cargar_metas_v06():
     """Lee metas canal × mes desde data/planificacion/metas_canal_mensuales_2026.json
-    (extraído de Análisis Contribución V06). Devuelve dict {(año, mes, canal): meta_venta}.
+    (extraído de Análisis Contribución V06, pestaña 'Resultado vs Presupuesto').
+    La meta del JSON está en NETA y se devuelve en BRUTA (× FACTOR_IVA_BRUTA)
+    para comparar contra la venta bruta del pulso. Devuelve {(año, mes, canal): meta_bruta}.
     Refrescar JSON cuando Gabriela actualice V06."""
     import json
     path = PROJECT_ROOT / 'data' / 'planificacion' / 'metas_canal_mensuales_2026.json'
@@ -40,7 +49,7 @@ def cargar_metas_v06():
     metas = {}
     for r in data.get('metas', []):
         k = (int(r['ano']), int(r['mes']), str(r['canal']).strip())
-        metas[k] = metas.get(k, 0) + float(r.get('meta_venta', 0))
+        metas[k] = metas.get(k, 0) + float(r.get('meta_venta', 0)) * FACTOR_IVA_BRUTA
     return metas
 
 
