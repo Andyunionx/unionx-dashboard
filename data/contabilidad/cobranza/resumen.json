@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-17T14:48:39.387172",
+  "generado_en": "2026-06-17T19:57:14.958894",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10981,
-  "total_monto_pendiente_clp": 653729654.0,
+  "total_documentos_pendientes": 11063,
+  "total_monto_pendiente_clp": 673506974.0,
   "monto_por_aging": {
     "+90 días": 36407484.0,
-    "1-30 días": 415391197.0,
-    "31-60 días": 64120923.0,
+    "1-30 días": 419691014.0,
+    "31-60 días": 64014953.0,
     "61-90 días": 18462905.0,
-    "Vigente": 119347145.0
+    "Vigente": 134930618.0
   },
   "monto_por_tipo": {
-    "BOLETA": 537518940.0,
+    "BOLETA": 557296260.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 97792365.0
+      "monto": 98567145.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 60611953.0
+      "monto": 62295125.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 45741303.0
+      "monto": 46125173.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -42,15 +42,15 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 33737707.0
+      "monto": 33707727.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 31945910.0
+      "monto": 31963890.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 27269029.0
+      "monto": 27585111.0
     },
     {
       "partner": "abc S.A.",
@@ -67,6 +67,10 @@
     {
       "partner": "Celmedia Fidelizacion SPA",
       "monto": 18835631.0
+    },
+    {
+      "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
+      "monto": 17066879.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -91,12 +95,8 @@
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 5032041.0
-    },
-    {
-      "partner": "Walmart Serv. Generales Ltda.",
-      "monto": 3392680.0
     }
   ],
-  "notas_credito_count": 545,
+  "notas_credito_count": 552,
   "pedidos_venta_count": 10000
 }
