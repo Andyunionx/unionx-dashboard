@@ -92,3 +92,20 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_stock.py
         continue-on-error: true
+
+      - name: Enviar Pulso KPI Semanal (solo lunes)
+        # PAUSADO hasta OK formal de Andrés: solo corre si
+        # vars.PULSO_KPI_ENABLED == 'true' Y es lunes. KPIs WMS + COP inferido,
+        # comparando semana vs semana vs Mayo. WMS fresco: buffer 2 días.
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_KPI_ENABLED == 'true' }}
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          EMAIL_TO: ${{ vars.PULSO_KPI_EMAIL_TO || 'andres@unionx.cl' }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ "$(date +%u)" = "1" ]; then
+            SEND=1 python pulso_kpi_semanal.py
+          else
+            echo "No es lunes — Pulso KPI semanal omitido."
+          fi
+        continue-on-error: true

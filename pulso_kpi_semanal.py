@@ -40,18 +40,29 @@ def filt(df, k):
     if k == "ent":  return df[df["picking_type_name"].str.contains("Delivery Orders", na=False)
                               & df["picking_type_name"].str.contains("Carrascal", na=False)]
     if k == "rec":  return df[df["picking_type_name"].str.contains("Almacenamiento", na=False)]
-wsorted = sorted(wms["sem"].dropna().unique())
-W_ACT, W_PREV = wsorted[-1], wsorted[-2]
+_wms_max = wms["fecha_done"].max()
+# Solo semanas COMPLETAS (terminan en o antes del último dato disponible)
+_completas = [s for s in sorted(wms["sem"].dropna().unique()) if s.end_time <= _wms_max]
+W_ACT, W_PREV = _completas[-1], _completas[-2]
 def wms_sem(sem):
     d = wms[wms["sem"] == sem]
     return dict(ped=len(filt(d, "ent")), uds=filt(d, "ent")["n_unidades"].sum(),
                 upick=filt(d, "pick")["n_unidades"].sum(), rec=len(filt(d, "rec")))
 wa, wp = wms_sem(W_ACT), wms_sem(W_PREV)
+
+# Productividad (uds pickeadas / hora). Sin registro de horas semanales:
+# run-rate = horas mensuales / 4,33. Mayo confirmado 798h (5 pers × 159,6h).
+HORAS_MES = 798.0
+HORAS_SEM = HORAS_MES / 4.33
+BENCH_PROD = 40.1  # uds/h benchmark histórico
+prod_a = wa["upick"] / HORAS_SEM
+prod_p = wp["upick"] / HORAS_SEM
 # Mayo: promedio semanal WMS
 wmay = wms[(wms["fecha_done"].dt.year == 2026) & (wms["fecha_done"].dt.month == MES_CERRADO)]
 n_sem_may = wmay["sem"].nunique() or 1
 wmay_v = dict(ped=len(filt(wmay, "ent")) / n_sem_may, uds=filt(wmay, "ent")["n_unidades"].sum() / n_sem_may,
               upick=filt(wmay, "pick")["n_unidades"].sum() / n_sem_may, rec=len(filt(wmay, "rec")) / n_sem_may)
+prod_may = wmay_v["upick"] / HORAS_SEM  # productividad semanal promedio de mayo
 
 # ── Volumen TOTAL EMPRESA por semana (para COP) ─────────────────────────────
 # June desde mes_actual (fresco), mayo desde historico. Evita doble conteo 1-jun.
@@ -106,11 +117,13 @@ def r3(i, lbl, act, prev, may, fmt=miles, mejor_arriba=True):
 lbl_act = str(W_ACT).split("/")[1]; lbl_prev = str(W_PREV).split("/")[1]
 HEAD = f'<tr style="background:{AZ};">{th("KPI","left")}{th("Sem act ("+lbl_act[5:]+")")}{th("Sem ant")}{th("Mayo (sem)")}{th("vs Mayo")}</tr>'
 
+_p1 = (lambda x: f"{x:.1f}")
 op_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEAD}' + \
     r3(0, "Pedidos despachados", wa["ped"], wp["ped"], wmay_v["ped"]) + \
     r3(1, "Uds despachadas", wa["uds"], wp["uds"], wmay_v["uds"]) + \
     r3(0, "Uds pickeadas", wa["upick"], wp["upick"], wmay_v["upick"]) + \
-    r3(1, "Recepciones", wa["rec"], wp["rec"], wmay_v["rec"]) + "</table>"
+    r3(1, "Productividad (uds pick/h)", prod_a, prod_p, prod_may, fmt=_p1, mejor_arriba=True) + \
+    r3(0, "Recepciones", wa["rec"], wp["rec"], wmay_v["rec"]) + "</table>"
 
 HEADc = f'<tr style="background:{AZ};">{th("COP","left")}{th("Sem act")}{th("Sem ant")}{th("Mayo (mes)")}{th("vs Mayo")}</tr>'
 cop_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEADc}' + \
@@ -126,7 +139,9 @@ html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:720px;l
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Operación (CA1)</h3>
 {op_tbl}
-<div style="font-size:11px;color:{GR2};">Mayo (sem) = promedio semanal del mes. Tendencia = semana actual vs ese promedio.</div>
+<div style="font-size:11px;color:{GR2};">Mayo (sem) = promedio semanal del mes · Tendencia = semana actual vs ese promedio ·
+Productividad sem act <b>{prod_a:.1f} uds/h</b> vs benchmark {BENCH_PROD} uds/h
+{'✅' if prod_a >= BENCH_PROD else '⚠️'} · horas estimadas run-rate ({HORAS_SEM:.0f}h/sem, no hay registro semanal).</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio</h3>
 <div style="font-size:13px;">OTIF mensual: {otif_txt} <b>{otif_dir}</b> · OFR {ofr:.1f}%{' ⚠️' if ofr<90 else ''} · OCT med {oct_med:.0f}h · Pick accuracy {pacc:.2f}%</div>
@@ -147,13 +162,26 @@ if __name__ == "__main__":
     print(f"Semana actual: {W_ACT} | anterior: {W_PREV} | WMS max: {wms['fecha_done'].max():%d-%b} | ventas max: {mesact['fecha_venta'].max():%d-%b}")
     print(f"COP sem act: /uds {clp(copu_a)} /ped {clp(copp_a)} (vol {pa} ped, {ua:.0f} uds)")
     if os.environ.get("SEND") == "1":
-        from src.gmail_client import GmailClient
+        # Gmail API con GMAIL_TOKEN_JSON (CI) o token local. HTML-only.
+        import json as _json
         from email.mime.text import MIMEText
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build
+        cj = os.environ.get("GMAIL_TOKEN_JSON", "")
+        if not cj:
+            _tp = ROOT / "agente-comex" / "config" / "token.json"
+            cj = _tp.read_text() if _tp.exists() else ""
+        cd = _json.loads(cj)
+        creds = Credentials.from_authorized_user_info(cd, cd.get("scopes"))
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        svc = build("gmail", "v1", credentials=creds)
         to = [e.strip() for e in os.environ.get("EMAIL_TO", "andres@unionx.cl").split(",") if e.strip()]
         m = MIMEText(html, "html", "utf-8"); m["to"] = ",".join(to); m["from"] = "andres@unionx.cl"
         m["subject"] = f"📈 Pulso KPI Semanal — {lbl_act}"
         raw = base64.urlsafe_b64encode(m.as_bytes()).decode()
-        print("Enviado:", GmailClient().service.users().messages().send(userId="me", body={"raw": raw}).execute().get("id"))
+        print("Enviado:", svc.users().messages().send(userId="me", body={"raw": raw}).execute().get("id"))
     else:
         t = re.sub("<[^>]+>", " ", html); t = re.sub("[ \t]+", " ", t); t = re.sub(" *\n+", "\n", t)
         sys.stdout.buffer.write(t.strip().encode("utf-8"))
