@@ -53,6 +53,27 @@ def cargar_metas_v06():
     return metas
 
 
+def _norm_neg(s):
+    import unicodedata
+    s = str(s or '').strip().lower()
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+
+def cargar_metas_negocio():
+    """Meta de venta por (año, mes, línea de negocio) en BRUTA (× IVA), normalizada.
+    Devuelve {(año, mes, negocio_norm): meta_bruta}."""
+    import json
+    path = PROJECT_ROOT / 'data' / 'planificacion' / 'metas_canal_mensuales_2026.json'
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text(encoding='utf-8'))
+    metas = {}
+    for r in data.get('metas', []):
+        k = (int(r['ano']), int(r['mes']), _norm_neg(r.get('negocio', '')))
+        metas[k] = metas.get(k, 0) + float(r.get('meta_venta', 0)) * FACTOR_IVA_BRUTA
+    return metas
+
+
 def cargar_data():
     """Histórico (foto fija hasta 2026-06-01) + mes_actual (2-jun en adelante).
     Para evitar duplicados, mes_actual se filtra a >= CUTOFF_HISTORICO."""
@@ -85,6 +106,7 @@ def cargar_data():
 
 def render_html(df):
     metas = cargar_metas_v06()
+    metas_neg = cargar_metas_negocio()
     ahora_clt = datetime.now(CHILE_TZ)
     hoy = ahora_clt.date()
     ayer = hoy - timedelta(days=1)
@@ -149,6 +171,36 @@ def render_html(df):
         color = '#16A34A' if pmeta >= 80 else ('#EA580C' if pmeta >= 40 else '#DC2626')
         can_rows += f'<tr><td>{r["canal"][:24]}</td><td align="right">{int(r["sos"]):,}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_c) if meta_c else "—"}</td><td align="right" style="color:{color}">{pmeta:.1f}%</td></tr>'
 
+    # Por línea de negocio (vs Meta V06)
+    df_mes = df_mes.copy()
+    df_mes['_neg'] = df_mes['tipo_negocio'].apply(_norm_neg)
+    g_neg = df_mes.groupby('tipo_negocio').agg(
+        _neg=('_neg', 'first'),
+        sos=('pedido', 'nunique'),
+        bruta=('venta_bruta', 'sum'),
+        neta=('venta_neta', 'sum'),
+        margen=('margen_front', 'sum'),
+    ).reset_index().sort_values('bruta', ascending=False)
+    neg_rows = ''
+    meta_neg_tot = 0
+    for _, r in g_neg.iterrows():
+        meta_n = metas_neg.get((ano_actual, mes_actual, r['_neg']), 0)
+        meta_neg_tot += meta_n
+        pm = r['margen'] / r['neta'] * 100 if r['neta'] else 0
+        pmeta = r['bruta'] / meta_n * 100 if meta_n else 0
+        color = '#16A34A' if pmeta >= 80 else ('#EA580C' if pmeta >= 40 else '#DC2626')
+        neg = str(r['tipo_negocio'] or '(s/neg)')[:24]
+        neg_rows += (f'<tr><td>{neg}</td><td align="right">{int(r["sos"]):,}</td>'
+                     f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td>'
+                     f'<td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_n) if meta_n else "—"}</td>'
+                     f'<td align="right" style="color:{color}">{pmeta:.1f}%</td></tr>')
+    # fila total
+    pmeta_t = b_ty / meta_neg_tot * 100 if meta_neg_tot else 0
+    neg_rows += (f'<tr style="font-weight:700;background:#F8FAFC"><td>TOTAL</td><td align="right">{s_ty:,}</td>'
+                 f'<td align="right">{fmt_m(b_ty)}</td><td align="right">{fmt_m(m_ty)}</td>'
+                 f'<td align="right">{pm_ty:.1f}%</td><td align="right">{fmt_m(meta_neg_tot)}</td>'
+                 f'<td align="right">{pmeta_t:.1f}%</td></tr>')
+
     # Top marcas
     g_mar = df_mes.groupby('marca').agg(
         bruta=('venta_bruta','sum'),
@@ -206,6 +258,11 @@ def render_html(df):
 <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Día</th><th align="right">SOs</th><th align="right">Uds</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th></tr></thead>
 <tbody>{dias_rows}</tbody></table>
+
+<h3 style="margin:24px 0 8px 0;font-size:1rem">🏢 Por línea de negocio (vs Meta V06)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Línea de negocio</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th></tr></thead>
+<tbody>{neg_rows}</tbody></table>
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">🏆 Top 15 canales acumulado mes (vs Meta V06)</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
