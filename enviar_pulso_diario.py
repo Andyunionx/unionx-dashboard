@@ -238,7 +238,7 @@ def render_html(df):
 
 <div style="background:#F1F5F9;border-left:4px solid #2563EB;padding:14px;border-radius:6px;margin:16px 0">
   <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">Acumulado mes (al {ayer.strftime("%d-%b")})</div>
-  <div style="font-size:1.7rem;font-weight:700;color:#1E40AF;margin:2px 0">{fmt_m(b_ty)}</div>
+  <div style="font-size:1.7rem;font-weight:700;color:#1E40AF;margin:2px 0">{fmt_m(b_ty)} <span style="font-size:0.95rem;font-weight:600;color:#64748B">bruta · {fmt_m(n_ty)} neta</span></div>
   <div style="font-size:0.88rem;color:#64748B">
     Meta {mes_nom}: {fmt_m(meta_mes)} · <b style="color:{color_av}">{pct_meta:.1f}%</b> · gap {fmt_m(gap_meta)} ·
     Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) · {u_ty:,} uds · {s_ty:,} pedidos
