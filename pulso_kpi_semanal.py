@@ -1,74 +1,66 @@
 # -*- coding: utf-8 -*-
-"""Pulso KPI semanal (lunes). Compara SEMANA ACTUAL vs SEMANA ANTERIOR vs MAYO (ref).
+"""Pulso KPI Operacional semanal (lunes). Semana L-D estricta.
 
-KPIs WMS (operación CA1) + OTIF (mensual) + COP inferido (base TOTAL EMPRESA,
-run-rate mensual prorrateado). Lo importante: resultados y si estamos cayendo.
+Compara la ultima semana COMPLETA vs la semana anterior (week-over-week) y vs
+MAYO mes (referencia estable que cierra el sesgo de una semana alta/baja).
 
-Bases:
-  - Operación (despachos/picks/recep): WMS CA1, por semana W-MON.
-  - COP: costo run-rate (mes cerrado / 4,33) ÷ volumen TOTAL EMPRESA de la semana.
-         Ref Mayo = COP mensual real. Métrica primaria estable = COP/unidad.
-  - OTIF: mensual (no hay semanal confiable); se muestra tendencia.
-__main__ imprime (no envía). SEND=1 + EMAIL_TO para enviar.
+DRIVERS (reales, no run-rate ciego):
+  - Personas/horas: HORAS_SEMANA por semana (manual; default 5x42=210 h-pers).
+    No hay feed automatico de horas -> se cargan aca.
+  - Unidades/pedidos: Odoo WMS (pick/entrega) + ventas (total empresa).
+  - Costo operativo TOTAL: costo mensual P&L (area OPERACIONES, FCST=real)
+    prorrateado /4,33 (mayormente fijo). COP/unidad = costo / uds.
+  - OTIF mensual (no hay semanal confiable). Inventario: snapshot actual.
+
+Eventos extraordinarios (Cyber) se reportan en pulso aparte, no aca.
+__main__ imprime (no envia). SEND=1 + EMAIL_TO para enviar.
 """
-import os, sys, json, base64
+import os, sys, json, base64, datetime
 from pathlib import Path
 import pandas as pd
 
 ROOT = Path(r"g:\Mi unidad\TRABAJO\RESPALDO\OPERACIONES\UNION X - IA")
 sys.path.insert(0, str(ROOT / "agente-comex"))
-AZ = "#1F4E79"; UNX = "#4884FC"; GR = "#EBF0F8"; VE = "#16a34a"; NA = "#d97706"; RO = "#dc2626"; GR2 = "#64748B"
+AZ = "#1F4E79"; UNX = "#4884FC"; GR = "#EBF0F8"; VE = "#16a34a"; RO = "#dc2626"; GR2 = "#64748B"
 def clp(n): return "$" + "{:,.0f}".format(n).replace(",", ".")
 def miles(n): return "{:,.0f}".format(n).replace(",", ".")
-def trend(cur, ref, mejor_arriba=True):
-    if not ref: return ("—", GR2)
-    d = (cur - ref) / abs(ref) * 100
-    if abs(d) <= 1.5: return (f"➡️ {d:+.0f}%", GR2)
-    sube = d > 0
-    return (f"{'🔺' if sube else '🔻'} {d:+.0f}%", VE if (sube == mejor_arriba) else RO)
 
-MES_CERRADO = 5  # Mayo (último mes cerrado = baseline)
-B2B_TN = ["Corporativo", "Distribucion", "Distribución", "Fidelizacion", "Fidelización"]
+MES_REF = 5            # Mayo = mes de referencia (ultimo cerrado)
+HORAS_MES_REF = 798.0  # mayo: 5 pers x 159,6h (confirmado)
+PERS_DEFAULT, HRS_PERS_DEFAULT = 5, 42.0  # semana normal = 210 h-pers
+# Horas reales por semana (manual; no hay feed). Default 5x42=210.
+HORAS_SEMANA = {
+    "2026-06-01/2026-06-07": 419.0,  # Cyber: Lun-Jue 7x12 + Vie 7x9 + Sab 4x5
+    "2026-06-08/2026-06-14": 210.0,  # normal: 5 x 42
+}
+def horas_de(sem_str): return HORAS_SEMANA.get(sem_str, PERS_DEFAULT * HRS_PERS_DEFAULT)
 
-# ── WMS por semana (operación CA1) ──────────────────────────────────────────
+# -- Semanas (L-D, calendario) ----------------------------------------------
+_hoy = datetime.date.today()
+W_ACT = pd.Timestamp(_hoy).to_period("W-SUN") - 1   # ultima semana terminada
+W_PREV = W_ACT - 1
+def _key(p): return str(p)
+def _wlbl(p): return f"{p.start_time:%d}-{p.end_time:%d} {p.end_time:%b}"
+
+# -- WMS (Odoo) por semana ---------------------------------------------------
 wms = pd.read_parquet(ROOT / "data/operaciones/volumen_inventario_hist.parquet")
 wms["fecha_done"] = pd.to_datetime(wms["fecha_done"])
 wms["sem"] = wms["fecha_done"].dt.to_period("W-SUN")
 PICKS = ["Bodega Carrascal Nº9-10: Pick", "Bodega Carrascal N°9-10: Pick"]
-def filt(df, k):
+def _filt(df, k):
     if k == "pick": return df[df["picking_type_name"].isin(PICKS)]
-    if k == "ent":  return df[df["picking_type_name"].str.contains("Delivery Orders", na=False)
-                              & df["picking_type_name"].str.contains("Carrascal", na=False)]
-    if k == "rec":  return df[df["picking_type_name"].str.contains("Almacenamiento", na=False)]
-import datetime as _dt
-# Semana = lunes a domingo. Reporta la última semana CALENDARIO ya terminada
-# (la que cerró el domingo anterior a hoy) vs la previa. La estacionalidad
-# (ej. Cyber) se contextualiza con la comparación semana/semana/mes.
-_hoy = _dt.date.today()
-W_ACT = pd.Timestamp(_hoy).to_period("W-SUN") - 1
-W_PREV = W_ACT - 1
+    return df[df["picking_type_name"].str.contains("Delivery Orders", na=False)
+              & df["picking_type_name"].str.contains("Carrascal", na=False)]
 def wms_sem(sem):
     d = wms[wms["sem"] == sem]
-    return dict(ped=len(filt(d, "ent")), uds=filt(d, "ent")["n_unidades"].sum(),
-                upick=filt(d, "pick")["n_unidades"].sum(), rec=len(filt(d, "rec")))
+    return dict(upick=_filt(d, "pick")["n_unidades"].sum(), pent=len(_filt(d, "ent")),
+                uent=_filt(d, "ent")["n_unidades"].sum())
 wa, wp = wms_sem(W_ACT), wms_sem(W_PREV)
+wmay = wms[(wms["fecha_done"].dt.year == 2026) & (wms["fecha_done"].dt.month == MES_REF)]
+wmay_v = dict(upick=_filt(wmay, "pick")["n_unidades"].sum(), pent=len(_filt(wmay, "ent")),
+              uent=_filt(wmay, "ent")["n_unidades"].sum())
 
-# Productividad (uds pickeadas / hora). Sin registro de horas semanales:
-# run-rate = horas mensuales / 4,33. Mayo confirmado 798h (5 pers × 159,6h).
-HORAS_MES = 798.0
-HORAS_SEM = HORAS_MES / 4.33
-BENCH_PROD = 40.1  # uds/h benchmark histórico
-prod_a = wa["upick"] / HORAS_SEM
-prod_p = wp["upick"] / HORAS_SEM
-# Mayo: promedio semanal WMS
-wmay = wms[(wms["fecha_done"].dt.year == 2026) & (wms["fecha_done"].dt.month == MES_CERRADO)]
-n_sem_may = wmay["sem"].nunique() or 1
-wmay_v = dict(ped=len(filt(wmay, "ent")) / n_sem_may, uds=filt(wmay, "ent")["n_unidades"].sum() / n_sem_may,
-              upick=filt(wmay, "pick")["n_unidades"].sum() / n_sem_may, rec=len(filt(wmay, "rec")) / n_sem_may)
-prod_may = wmay_v["upick"] / HORAS_SEM  # productividad semanal promedio de mayo
-
-# ── Volumen TOTAL EMPRESA por semana (para COP) ─────────────────────────────
-# June desde mes_actual (fresco), mayo desde historico. Evita doble conteo 1-jun.
+# -- Ventas total empresa (para COP) ----------------------------------------
 mesact = pd.read_parquet(ROOT / "data/historico/ventas_mes_actual.parquet",
                          columns=["fecha_venta", "pedido", "cantidad", "venta_neta"])
 mesact["fecha_venta"] = pd.to_datetime(mesact["fecha_venta"], errors="coerce")
@@ -77,97 +69,114 @@ def vta_sem(sem):
     d = mesact[mesact["sem"] == sem]
     return d["pedido"].nunique(), d["cantidad"].sum(), d["venta_neta"].sum()
 pa, ua, vna = vta_sem(W_ACT); pp, up, vnp = vta_sem(W_PREV)
-
-# ── Costo / COP ─────────────────────────────────────────────────────────────
-cg = pd.read_parquet(ROOT / "data/finanzas/control_gestion.parquet")
-costo_may = abs(cg[(cg["year"] == 2026) & (cg["month"] == MES_CERRADO) & (cg["area"] == "OPERACIONES")
-                   & (cg["kpi"] == "GASTO") & (cg["escenario"] == "FCST")]["valor"].sum()) * 1000
-costo_sem = costo_may / 4.33
-# COP semanal (base total empresa)
-def cop(p, u): return (costo_sem / p if p else 0, costo_sem / u if u else 0)
-copp_a, copu_a = cop(pa, ua); copp_p, copu_p = cop(pp, up)
-# Mayo ref = COP mensual real (total empresa)
 hist = pd.read_parquet(ROOT / "data/historico/ventas_historico.parquet",
-                       columns=["anio_venta", "mes_venta", "pedido", "cantidad"])
-hmay = hist[(hist["anio_venta"] == 2026) & (hist["mes_venta"] == MES_CERRADO)]
-p_may, u_may = hmay["pedido"].nunique(), hmay["cantidad"].sum()
-copp_may, copu_may = costo_may / p_may, costo_may / u_may
+                       columns=["anio_venta", "mes_venta", "pedido", "cantidad", "venta_neta"])
+hmay = hist[(hist["anio_venta"] == 2026) & (hist["mes_venta"] == MES_REF)]
+p_may, u_may, vn_may = hmay["pedido"].nunique(), hmay["cantidad"].sum(), hmay["venta_neta"].sum()
 
-# ── OTIF mensual ────────────────────────────────────────────────────────────
+# -- Costo operativo TOTAL (P&L area OPERACIONES, FCST=real) -----------------
+cg = pd.read_parquet(ROOT / "data/finanzas/control_gestion.parquet")
+costo_mes = abs(cg[(cg["year"] == 2026) & (cg["month"] == MES_REF) & (cg["area"] == "OPERACIONES")
+                   & (cg["kpi"] == "GASTO") & (cg["escenario"] == "FCST")]["valor"].sum()) * 1000
+costo_sem = costo_mes / 4.33  # prorrateo run-rate (costo mayormente fijo)
+
+# -- Productividad y COP por columna -----------------------------------------
+h_act, h_prev = horas_de(_key(W_ACT)), horas_de(_key(W_PREV))
+def prod(upick, horas): return upick / horas if horas else 0
+prod_a, prod_p, prod_may = prod(wa["upick"], h_act), prod(wp["upick"], h_prev), prod(wmay_v["upick"], HORAS_MES_REF)
+def cu(uds): return costo_sem / uds if uds else 0
+def cp(ped): return costo_sem / ped if ped else 0
+copu_a, copu_p, copu_may = cu(ua), cu(up), (costo_mes / u_may if u_may else 0)
+copp_a, copp_p, copp_may = cp(pa), cp(pp), (costo_mes / p_may if p_may else 0)
+pctv_a = costo_sem / vna * 100 if vna else 0
+pctv_p = costo_sem / vnp * 100 if vnp else 0
+pctv_may = costo_mes / vn_may * 100 if vn_may else 0
+BENCH = 40.1
+
+# -- Servicio (snapshot) + Stock ---------------------------------------------
 snap = json.load(open(ROOT / "data/kpis_wms/snapshot.json", encoding="utf-8"))
 rpm = snap.get("otif_drive", {}).get("resumen_por_mes", {})
-otif_ser = [(m, rpm[m]["otif_total_pct"] * 100) for m in sorted(rpm.keys())[-4:]]
+otif_ser = [(m, rpm[m]["otif_total_pct"] * 100) for m in sorted(rpm.keys())[-4:]] if rpm else []
 K = snap.get("kpis", {})
 ofr = K.get("ofr_30d", {}).get("valor", 0) * 100
-oct_med = K.get("oct_30d", {}).get("mediana_h", 0)
 pacc = K.get("pick_accuracy_30d", {}).get("valor", 0) * 100
-
-# ── Stock ───────────────────────────────────────────────────────────────────
+oct_med = K.get("oct_30d", {}).get("mediana_h", 0)
 sku = pd.read_parquet(ROOT / "data/stock/skus.parquet").drop_duplicates("SKU")
 val_inv = sku["Valor"].sum(); n_crit = int((sku["Semaforo"] == "CRITICO").sum())
 sobre = sku[sku["Semaforo"] == "SOBRESTOCK"]["Valor"].sum()
 sinv = int(((sku["Semaforo"] == "SIN VENTA") & (sku["Vta 90d Qty"].fillna(0) == 0)).sum())
 
-# ── HTML ────────────────────────────────────────────────────────────────────
+# -- HTML --------------------------------------------------------------------
+UP, DN = "\U0001f53a", "\U0001f53b"  # triangulos arriba/abajo
 def th(t, a="right"): return f'<th style="padding:7px 9px;text-align:{a};color:#fff;font-size:11px;">{t}</th>'
 def td(t, a="right", c=""): return f'<td style="padding:6px 9px;text-align:{a};{c}">{t}</td>'
-def r3(i, lbl, act, prev, may, fmt=miles, mejor_arriba=True):
-    f, col = trend(act, may, mejor_arriba)  # tendencia vs MAYO (baseline)
-    bg = GR if i % 2 == 0 else "#fff"
-    return (f'<tr style="background:{bg};font-size:12px;">'
-            + td(lbl, "left") + td(fmt(act), c="font-weight:bold;") + td(fmt(prev), c="color:#94a3b8;")
-            + td(fmt(may)) + td(f, c=f"color:{col};") + "</tr>")
-def _wlbl(pp): return f"{pp.start_time:%d}-{pp.end_time:%d} {pp.end_time:%b}"
-lbl_act = _wlbl(W_ACT); lbl_prev = _wlbl(W_PREV)
-HEAD = f'<tr style="background:{AZ};">{th("KPI","left")}{th("Sem act ("+lbl_act+")")}{th("Sem ant")}{th("Mayo (sem)")}{th("vs Mayo")}</tr>'
+def tr(i, cells): return f'<tr style="background:{GR if i%2==0 else "#fff"};font-size:12px;">{"".join(cells)}</tr>'
+def flecha(cur, ref, mejor_arriba=True):
+    if not ref: return ("—", GR2)
+    d = (cur - ref) / abs(ref) * 100
+    if abs(d) <= 1.5: return (f"➡️ {d:+.0f}%", GR2)
+    sube = d > 0
+    return (f"{UP if sube else DN} {d:+.0f}%", VE if (sube == mejor_arriba) else RO)
 
-_p1 = (lambda x: f"{x:.1f}")
-op_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEAD}' + \
-    r3(0, "Pedidos despachados", wa["ped"], wp["ped"], wmay_v["ped"]) + \
-    r3(1, "Uds despachadas", wa["uds"], wp["uds"], wmay_v["uds"]) + \
-    r3(0, "Uds pickeadas", wa["upick"], wp["upick"], wmay_v["upick"]) + \
-    r3(1, "Productividad (uds pick/h)", prod_a, prod_p, prod_may, fmt=_p1, mejor_arriba=True) + \
-    r3(0, "Recepciones", wa["rec"], wp["rec"], wmay_v["rec"]) + "</table>"
+lbl_a, lbl_p = _wlbl(W_ACT), _wlbl(W_PREV)
+HOP = (f'<tr style="background:{AZ};">{th("Operación (CA1)","left")}{th("Sem "+lbl_a)}'
+       f'{th("Sem "+lbl_p)}{th("Δ sem ant")}{th("Mayo mes")}</tr>')
+def rop(i, lbl, a, p, may):
+    f, col = flecha(a, p)
+    return tr(i, [td(lbl, "left"), td(miles(a), c="font-weight:bold;"), td(miles(p), c="color:#94a3b8;"),
+                  td(f, c=f"color:{col};"), td(miles(may))])
+op_tbl = f'<table style="width:100%;border-collapse:collapse;">{HOP}' + \
+    rop(0, "Uds pickeadas", wa["upick"], wp["upick"], wmay_v["upick"]) + \
+    rop(1, "Uds entregadas", wa["uent"], wp["uent"], wmay_v["uent"]) + \
+    rop(0, "Pedidos despachados", wa["pent"], wp["pent"], wmay_v["pent"]) + \
+    rop(1, "Horas (h·pers)", h_act, h_prev, HORAS_MES_REF) + "</table>"
 
-HEADc = f'<tr style="background:{AZ};">{th("COP","left")}{th("Sem act")}{th("Sem ant")}{th("Mayo (mes)")}{th("vs Mayo")}</tr>'
-cop_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEADc}' + \
-    r3(0, "COP / unidad", copu_a, copu_p, copu_may, fmt=clp, mejor_arriba=False) + \
-    r3(1, "COP / pedido", copp_a, copp_p, copp_may, fmt=clp, mejor_arriba=False) + "</table>"
+HEF = (f'<tr style="background:{AZ};">{th("Eficiencia","left")}{th("Sem "+lbl_a)}'
+       f'{th("Sem "+lbl_p)}{th("Mayo mes")}{th("Δ vs Mayo")}</tr>')
+def reff(i, lbl, a, p, may, fmt, mejor_arriba):
+    f, col = flecha(a, may, mejor_arriba)
+    return tr(i, [td(lbl, "left"), td(fmt(a), c="font-weight:bold;"), td(fmt(p), c="color:#94a3b8;"),
+                  td(fmt(may)), td(f, c=f"color:{col};")])
+_p1 = lambda x: f"{x:.1f}"
+ef_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEF}' + \
+    reff(0, "Productividad (uds pick/h)", prod_a, prod_p, prod_may, _p1, True) + \
+    reff(1, "COP / unidad", copu_a, copu_p, copu_may, clp, False) + \
+    reff(0, "COP / pedido", copp_a, copp_p, copp_may, clp, False) + \
+    reff(1, "% Costo / venta", pctv_a, pctv_p, pctv_may, lambda x: f"{x:.1f}%", False) + "</table>"
 
-otif_txt = " → ".join(f"{m[-2:]} {v:.1f}%" for m, v in otif_ser)
-otif_dir = "🔻 cayendo" if otif_ser[-1][1] < otif_ser[0][1] else "➡️ estable"
+otif_txt = " → ".join(f"{m[-2:]} {v:.1f}%" for m, v in otif_ser) if otif_ser else "s/d"
+otif_dir = (f"{DN} cayendo" if (otif_ser and otif_ser[-1][1] < otif_ser[0][1]) else "➡️ estable")
 
-html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:720px;line-height:1.5;">
-<h2 style="color:{AZ};margin-bottom:2px;">📈 Pulso KPI Operacional — Semanal</h2>
-<div style="color:#64748b;font-size:12px;">Semana actual {lbl_act} · vs semana anterior {lbl_prev} · vs Mayo (baseline)</div>
+html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:740px;line-height:1.5;">
+<h2 style="color:{AZ};margin-bottom:2px;">\U0001f4c8 Pulso KPI Operacional — Semanal</h2>
+<div style="color:#64748b;font-size:12px;">Semana <b>{lbl_a}</b> · vs semana anterior {lbl_p} · vs Mayo (mes)</div>
 
-<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Operación (CA1)</h3>
+<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Operación</h3>
 {op_tbl}
-<div style="font-size:11px;color:{GR2};">Mayo (sem) = promedio semanal del mes · Tendencia = semana actual vs ese promedio ·
-Productividad sem act <b>{prod_a:.1f} uds/h</b> vs benchmark {BENCH_PROD} uds/h
-{'✅' if prod_a >= BENCH_PROD else '⚠️'} · horas estimadas run-rate ({HORAS_SEM:.0f}h/sem, no hay registro semanal).</div>
+<div style="font-size:11px;color:{GR2};">Volúmenes: comparación semana vs semana · Mayo mes = escala (total del mes).</div>
 
-<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio</h3>
-<div style="font-size:13px;">OTIF mensual: {otif_txt} <b>{otif_dir}</b> · OFR {ofr:.1f}%{' ⚠️' if ofr<90 else ''} · OCT med {oct_med:.0f}h · Pick accuracy {pacc:.2f}%</div>
-<div style="font-size:11px;color:{GR2};">OTIF es mensual (no hay semanal confiable aún).</div>
+<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Eficiencia (vs Mayo mes)</h3>
+{ef_tbl}
+<div style="font-size:11px;color:{GR2};">Productividad = uds pickeadas / horas reales de la semana (bench {BENCH} uds/h).
+COP = costo operativo total prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ volumen.
+COP/unidad = métrica primaria. Comparación vs Mayo mes (cierra el sesgo de una semana alta/baja).</div>
 
-<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">COP inferido (base total empresa)</h3>
-{cop_tbl}
-<div style="font-size:11px;color:{GR2};">Costo semanal estimado = {clp(costo_may)}/mes ÷ 4,33 = {clp(costo_sem)}. COP/unidad es la métrica primaria (estable ante el mix B2B/B2C). Ref Mayo = COP mensual real.</div>
-
-<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Stock</h3>
-<div style="font-size:13px;">{clp(val_inv)} · {miles(n_crit)} críticos · Sobrestock {clp(sobre)} · Sin venta 90d {miles(sinv)} SKUs</div>
-
-<div style="margin-top:14px;font-size:11px;color:#475569;">Data WMS al {wms['fecha_done'].max():%d-%b} · ventas al {mesact['fecha_venta'].max():%d-%b}</div>
+<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio &amp; Stock</h3>
+<div style="font-size:13px;">OTIF mensual: {otif_txt} <b>{otif_dir}</b> · OFR {ofr:.1f}% · OCT {oct_med:.0f}h · Pick {pacc:.2f}%</div>
+<div style="font-size:13px;margin-top:4px;">Inventario {clp(val_inv)} · {miles(n_crit)} críticos · Sobrestock {clp(sobre)} · Sin venta 90d {miles(sinv)} SKUs</div>
+<div style="font-size:11px;color:{GR2};margin-top:4px;">OTIF mensual (no hay semanal confiable). Inventario = foto actual.</div>
 </div>"""
 
 if __name__ == "__main__":
-    import re
-    print(f"Semana actual: {W_ACT} | anterior: {W_PREV} | WMS max: {wms['fecha_done'].max():%d-%b} | ventas max: {mesact['fecha_venta'].max():%d-%b}")
-    print(f"COP sem act: /uds {clp(copu_a)} /ped {clp(copp_a)} (vol {pa} ped, {ua:.0f} uds)")
+    print(f"Sem actual {lbl_a} ({_key(W_ACT)}) | anterior {lbl_p} | horas: act {h_act:.0f} prev {h_prev:.0f} mayo {HORAS_MES_REF:.0f}")
+    print(f"Uds pick: act {miles(wa['upick'])} | prev {miles(wp['upick'])} | mayo {miles(wmay_v['upick'])}")
+    print(f"Uds ent : act {miles(wa['uent'])} | prev {miles(wp['uent'])} | mayo {miles(wmay_v['uent'])}")
+    print(f"Prod    : act {prod_a:.1f} | prev {prod_p:.1f} | mayo {prod_may:.1f} uds/h")
+    print(f"Costo   : mes {clp(costo_mes)} | sem {clp(costo_sem)}")
+    print(f"COP/uds : act {clp(copu_a)} | prev {clp(copu_p)} | mayo {clp(copu_may)}")
+    print(f"COP/ped : act {clp(copp_a)} | prev {clp(copp_p)} | mayo {clp(copp_may)}")
+    print(f"%cto/vta: act {pctv_a:.1f}% | prev {pctv_p:.1f}% | mayo {pctv_may:.1f}%")
     if os.environ.get("SEND") == "1":
-        # Gmail API con GMAIL_TOKEN_JSON (CI) o token local. HTML-only.
-        import json as _json
         from email.mime.text import MIMEText
         from google.oauth2.credentials import Credentials
         from google.auth.transport.requests import Request
@@ -176,16 +185,15 @@ if __name__ == "__main__":
         if not cj:
             _tp = ROOT / "agente-comex" / "config" / "token.json"
             cj = _tp.read_text() if _tp.exists() else ""
-        cd = _json.loads(cj)
-        creds = Credentials.from_authorized_user_info(cd, cd.get("scopes"))
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+        cd = json.loads(cj); creds = Credentials.from_authorized_user_info(cd, cd.get("scopes"))
+        if creds.expired and creds.refresh_token: creds.refresh(Request())
         svc = build("gmail", "v1", credentials=creds)
         to = [e.strip() for e in os.environ.get("EMAIL_TO", "andres@unionx.cl").split(",") if e.strip()]
         m = MIMEText(html, "html", "utf-8"); m["to"] = ",".join(to); m["from"] = "andres@unionx.cl"
-        m["subject"] = f"📈 Pulso KPI Semanal — {lbl_act}"
+        m["subject"] = f"\U0001f4c8 Pulso KPI Semanal — {lbl_a}"
         raw = base64.urlsafe_b64encode(m.as_bytes()).decode()
         print("Enviado:", svc.users().messages().send(userId="me", body={"raw": raw}).execute().get("id"))
     else:
+        import re
         t = re.sub("<[^>]+>", " ", html); t = re.sub("[ \t]+", " ", t); t = re.sub(" *\n+", "\n", t)
         sys.stdout.buffer.write(t.strip().encode("utf-8"))
