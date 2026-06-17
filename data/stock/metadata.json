@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-06-17T20:13:12.334575",
-  "total_skus": 1892,
-  "total_quants": 4507,
+  "generado_en": "2026-06-17T22:46:19.210369",
+  "total_skus": 1893,
+  "total_quants": 4529,
   "total_locations": 1413,
   "kpis": {
-    "n_skus": 1892,
-    "valor_total": 1010952391.48,
-    "unidades_total": 170615.0,
-    "costo_promedio_sku": 534330.02,
-    "n_quiebre_critico": 112,
-    "n_bajo": 194,
-    "n_optimo": 139,
-    "n_sobrestock": 273,
-    "n_sin_venta": 1174,
-    "rot_30d_promedio": 0.93,
-    "rot_90d_promedio": 3.41
+    "n_skus": 1893,
+    "valor_total": 1054063755.35,
+    "unidades_total": 177267.0,
+    "costo_promedio_sku": 556821.85,
+    "n_quiebre_critico": 98,
+    "n_bajo": 197,
+    "n_optimo": 142,
+    "n_sobrestock": 281,
+    "n_sin_venta": 1175,
+    "rot_30d_promedio": 0.88,
+    "rot_90d_promedio": 3.31
   },
   "ocupacion": {
     "positions": [
@@ -8199,131 +8199,131 @@
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1174
+      "SKUs": 1175
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 273
+      "SKUs": 281
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 194
+      "SKUs": 197
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 139
+      "SKUs": 142
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 112
+      "SKUs": 98
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 805234035.37,
-      "Unidades": 149145.0,
+      "Valor": 804781095.37,
+      "Unidades": 149134.0,
       "SKUs": 1424
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 89258714.63,
+      "Valor": 89118353.63,
       "Unidades": 9287.0,
       "SKUs": 448
     },
     {
+      "Bodega": "CA1/Input",
+      "Valor": 49666856.0,
+      "Unidades": 6889.0,
+      "SKUs": 67
+    },
+    {
       "Bodega": "BFFa/Stock",
-      "Valor": 23459636.22,
+      "Valor": 23470431.22,
       "Unidades": 2162.0,
       "SKUs": 261
     },
     {
       "Bodega": "Bo/Stock",
-      "Valor": 21035197.0,
+      "Valor": 21061080.0,
       "Unidades": 1183.0,
       "SKUs": 332
     },
     {
       "Bodega": "BVO/Stock",
-      "Valor": 16563925.0,
+      "Valor": 16588013.0,
       "Unidades": 2347.0,
       "SKUs": 67
     },
     {
       "Bodega": "CA1/Output",
-      "Valor": 13692113.62,
-      "Unidades": 1198.0,
-      "SKUs": 287
+      "Valor": 12004990.49,
+      "Unidades": 1036.0,
+      "SKUs": 268
     },
     {
       "Bodega": "BNC/Stock",
-      "Valor": 8393229.0,
+      "Valor": 8394774.0,
       "Unidades": 665.0,
       "SKUs": 203
     },
     {
       "Bodega": "BPV/Stock",
-      "Valor": 6379247.0,
-      "Unidades": 2510.0,
-      "SKUs": 216
+      "Valor": 6584326.0,
+      "Unidades": 2511.0,
+      "SKUs": 218
     },
     {
       "Bodega": "MK/Stock",
-      "Valor": 5232673.0,
+      "Valor": 5300336.0,
       "Unidades": 394.0,
       "SKUs": 216
     },
     {
       "Bodega": "BRSt/Stock",
-      "Valor": 5198944.75,
+      "Valor": 5196949.75,
       "Unidades": 300.0,
       "SKUs": 12
     },
     {
-      "Bodega": "CA1/Input",
-      "Valor": 4596734.0,
-      "Unidades": 65.0,
-      "SKUs": 28
-    },
-    {
       "Bodega": "BFW/Stock",
-      "Valor": 4587309.0,
+      "Valor": 4595824.0,
       "Unidades": 287.0,
       "SKUs": 31
     },
     {
       "Bodega": "CMi/Stock",
-      "Valor": 3766289.9,
+      "Valor": 3748560.9,
       "Unidades": 657.0,
       "SKUs": 233
     },
     {
       "Bodega": "BFR/Stock",
-      "Valor": 1088314.0,
+      "Valor": 1088075.0,
       "Unidades": 106.0,
       "SKUs": 23
     },
     {
       "Bodega": "CHMS/Stock",
-      "Valor": 1034648.0,
+      "Valor": 1034455.0,
       "Unidades": 112.0,
       "SKUs": 92
     },
     {
       "Bodega": "Kh/Stock",
-      "Valor": 530387.0,
+      "Valor": 530024.0,
       "Unidades": 87.0,
       "SKUs": 19
     },
     {
       "Bodega": "DRR/Stock",
-      "Valor": 509711.0,
+      "Valor": 508602.0,
       "Unidades": 66.0,
       "SKUs": 14
     },
     {
       "Bodega": "Bo/Salida",
-      "Valor": 300526.0,
+      "Valor": 300252.0,
       "Unidades": 19.0,
       "SKUs": 16
     },
