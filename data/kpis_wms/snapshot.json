@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-16T18:55:45.879740",
+  "generado_en": "2026-06-17T08:30:59.854472",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
@@ -13,25 +13,25 @@
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.030428769017980636,
-      "total_pickings": 723,
+      "valor": 0.029891304347826088,
+      "total_pickings": 736,
       "on_time": 22,
-      "on_time_pct": 0.030428769017980636,
-      "in_full": 721,
-      "in_full_pct": 0.9972337482710927,
+      "on_time_pct": 0.029891304347826088,
+      "in_full": 734,
+      "in_full_pct": 0.9972826086956522,
       "both": 22,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999254399045631,
-      "ok": 26822,
-      "total": 26824,
+      "valor": 0.9999258737630184,
+      "ok": 26979,
+      "total": 26981,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 6.469635485287659,
-      "n_recepciones": 253,
+      "valor": 6.518357680389553,
+      "n_recepciones": 251,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
@@ -179,16 +179,16 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9428714357178589,
+      "valor": 0.9345172586293147,
       "total_so": 20000,
       "total_con_pickings": 19990,
-      "cumplidos": 18848,
+      "cumplidos": 18681,
       "parciales": 19,
-      "sin_iniciar": 1123,
+      "sin_iniciar": 1290,
       "error": null
     },
     "oct_30d": {
-      "valor": 54.02575478239876,
+      "valor": 54.05319442338898,
       "n_orders": 19789,
       "min_h": 0.06861111111111111,
       "max_h": 699.7586111111111,
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 19927,
+      "lineas": 20084,
       "mes": "2026-06",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 199,
-      "outgoing": 29684,
-      "internal": 20117,
+      "incoming": 197,
+      "outgoing": 29662,
+      "internal": 20141,
       "total": 50000,
       "error": null
     },
@@ -373,20 +373,20 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 8,
-          "tarde": 8,
+          "total": 10,
+          "tarde": 10,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 77,
-          "tarde": 77,
+          "total": 79,
+          "tarde": 79,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Sawa SPA",
-          "total": 116,
-          "tarde": 116,
+          "total": 122,
+          "tarde": 122,
           "on_time_pct": 0.0
         },
         {
@@ -409,9 +409,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 44,
-          "tarde": 41,
-          "on_time_pct": 0.06818181818181818
+          "total": 47,
+          "tarde": 44,
+          "on_time_pct": 0.06382978723404255
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -6730,29 +6730,29 @@
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.030428769017980636,
-      "total_pickings": 723,
+      "valor": 0.029891304347826088,
+      "total_pickings": 736,
       "on_time": 22,
-      "on_time_pct": 0.030428769017980636,
-      "in_full": 721,
-      "in_full_pct": 0.9972337482710927,
+      "on_time_pct": 0.029891304347826088,
+      "in_full": 734,
+      "in_full_pct": 0.9972826086956522,
       "both": 22,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999254399045631,
-      "ok": 26822,
-      "total": 26824,
+      "valor": 0.9999258737630184,
+      "ok": 26979,
+      "total": 26981,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 6.469635485287659,
-      "n_recepciones": 253,
+      "valor": 6.518357680389553,
+      "n_recepciones": 251,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
