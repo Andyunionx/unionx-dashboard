@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-17T08:30:59.854472",
+  "generado_en": "2026-06-17T17:51:06.922631",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
@@ -13,28 +13,35 @@
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.029891304347826088,
-      "total_pickings": 736,
+      "valor": 0.029850746268656716,
+      "total_pickings": 737,
       "on_time": 22,
-      "on_time_pct": 0.029891304347826088,
-      "in_full": 734,
-      "in_full_pct": 0.9972826086956522,
+      "on_time_pct": 0.029850746268656716,
+      "in_full": 735,
+      "in_full_pct": 0.9972862957937585,
       "both": 22,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999258737630184,
-      "ok": 26979,
-      "total": 26981,
+      "valor": 0.9999271296363769,
+      "ok": 27444,
+      "total": 27446,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 6.518357680389553,
-      "n_recepciones": 251,
+      "valor": 7.003385141093474,
+      "n_recepciones": 252,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00873",
+          "proveedor": "Urban Products SpA",
+          "horas": 128.7,
+          "scheduled": "2026-06-12 04:00",
+          "done": "2026-06-17 12:44"
+        },
         {
           "picking": "CA1/RET/01005",
           "proveedor": "Cencosud Retail S.A",
@@ -167,28 +174,21 @@
           "horas": 0.0,
           "scheduled": "2026-06-09 21:26",
           "done": "2026-06-09 21:26"
-        },
-        {
-          "picking": "CA1/IN/00877",
-          "proveedor": "Cliente Interno",
-          "horas": 0.0,
-          "scheduled": "2026-06-09 21:23",
-          "done": "2026-06-09 21:25"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9345172586293147,
+      "valor": 0.9473736868434217,
       "total_so": 20000,
       "total_con_pickings": 19990,
-      "cumplidos": 18681,
-      "parciales": 19,
-      "sin_iniciar": 1290,
+      "cumplidos": 18938,
+      "parciales": 17,
+      "sin_iniciar": 1035,
       "error": null
     },
     "oct_30d": {
-      "valor": 54.05319442338898,
+      "valor": 55.17341872027669,
       "n_orders": 19789,
       "min_h": 0.06861111111111111,
       "max_h": 699.7586111111111,
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 20084,
+      "lineas": 20559,
       "mes": "2026-06",
       "error": null
     },
@@ -403,8 +403,8 @@
         },
         {
           "cliente": "Lokal SpA",
-          "total": 8,
-          "tarde": 8,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -6730,32 +6730,39 @@
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.029891304347826088,
-      "total_pickings": 736,
+      "valor": 0.029850746268656716,
+      "total_pickings": 737,
       "on_time": 22,
-      "on_time_pct": 0.029891304347826088,
-      "in_full": 734,
-      "in_full_pct": 0.9972826086956522,
+      "on_time_pct": 0.029850746268656716,
+      "in_full": 735,
+      "in_full_pct": 0.9972862957937585,
       "both": 22,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999258737630184,
-      "ok": 26979,
-      "total": 26981,
+      "valor": 0.9999271296363769,
+      "ok": 27444,
+      "total": 27446,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 6.518357680389553,
-      "n_recepciones": 251,
+      "valor": 7.003385141093474,
+      "n_recepciones": 252,
       "min": -12.351944444444445,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00873",
+          "proveedor": "Urban Products SpA",
+          "horas": 128.7,
+          "scheduled": "2026-06-12 04:00",
+          "done": "2026-06-17 12:44"
+        },
         {
           "picking": "CA1/RET/01005",
           "proveedor": "Cencosud Retail S.A",
@@ -6888,13 +6895,6 @@
           "horas": 0.0,
           "scheduled": "2026-06-09 21:26",
           "done": "2026-06-09 21:26"
-        },
-        {
-          "picking": "CA1/IN/00877",
-          "proveedor": "Cliente Interno",
-          "horas": 0.0,
-          "scheduled": "2026-06-09 21:23",
-          "done": "2026-06-09 21:25"
         }
       ],
       "error": null
