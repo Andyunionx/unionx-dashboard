@@ -33,17 +33,20 @@ B2B_TN = ["Corporativo", "Distribucion", "Distribución", "Fidelizacion", "Fidel
 # ── WMS por semana (operación CA1) ──────────────────────────────────────────
 wms = pd.read_parquet(ROOT / "data/operaciones/volumen_inventario_hist.parquet")
 wms["fecha_done"] = pd.to_datetime(wms["fecha_done"])
-wms["sem"] = wms["fecha_done"].dt.to_period("W-MON")
+wms["sem"] = wms["fecha_done"].dt.to_period("W-SUN")
 PICKS = ["Bodega Carrascal Nº9-10: Pick", "Bodega Carrascal N°9-10: Pick"]
 def filt(df, k):
     if k == "pick": return df[df["picking_type_name"].isin(PICKS)]
     if k == "ent":  return df[df["picking_type_name"].str.contains("Delivery Orders", na=False)
                               & df["picking_type_name"].str.contains("Carrascal", na=False)]
     if k == "rec":  return df[df["picking_type_name"].str.contains("Almacenamiento", na=False)]
-_wms_max = wms["fecha_done"].max()
-# Solo semanas COMPLETAS (terminan en o antes del último dato disponible)
-_completas = [s for s in sorted(wms["sem"].dropna().unique()) if s.end_time <= _wms_max]
-W_ACT, W_PREV = _completas[-1], _completas[-2]
+import datetime as _dt
+# Semana = lunes a domingo. Reporta la última semana CALENDARIO ya terminada
+# (la que cerró el domingo anterior a hoy) vs la previa. La estacionalidad
+# (ej. Cyber) se contextualiza con la comparación semana/semana/mes.
+_hoy = _dt.date.today()
+W_ACT = pd.Timestamp(_hoy).to_period("W-SUN") - 1
+W_PREV = W_ACT - 1
 def wms_sem(sem):
     d = wms[wms["sem"] == sem]
     return dict(ped=len(filt(d, "ent")), uds=filt(d, "ent")["n_unidades"].sum(),
@@ -69,7 +72,7 @@ prod_may = wmay_v["upick"] / HORAS_SEM  # productividad semanal promedio de mayo
 mesact = pd.read_parquet(ROOT / "data/historico/ventas_mes_actual.parquet",
                          columns=["fecha_venta", "pedido", "cantidad", "venta_neta"])
 mesact["fecha_venta"] = pd.to_datetime(mesact["fecha_venta"], errors="coerce")
-mesact["sem"] = mesact["fecha_venta"].dt.to_period("W-MON")
+mesact["sem"] = mesact["fecha_venta"].dt.to_period("W-SUN")
 def vta_sem(sem):
     d = mesact[mesact["sem"] == sem]
     return d["pedido"].nunique(), d["cantidad"].sum(), d["venta_neta"].sum()
@@ -114,8 +117,9 @@ def r3(i, lbl, act, prev, may, fmt=miles, mejor_arriba=True):
     return (f'<tr style="background:{bg};font-size:12px;">'
             + td(lbl, "left") + td(fmt(act), c="font-weight:bold;") + td(fmt(prev), c="color:#94a3b8;")
             + td(fmt(may)) + td(f, c=f"color:{col};") + "</tr>")
-lbl_act = str(W_ACT).split("/")[1]; lbl_prev = str(W_PREV).split("/")[1]
-HEAD = f'<tr style="background:{AZ};">{th("KPI","left")}{th("Sem act ("+lbl_act[5:]+")")}{th("Sem ant")}{th("Mayo (sem)")}{th("vs Mayo")}</tr>'
+def _wlbl(pp): return f"{pp.start_time:%d}-{pp.end_time:%d} {pp.end_time:%b}"
+lbl_act = _wlbl(W_ACT); lbl_prev = _wlbl(W_PREV)
+HEAD = f'<tr style="background:{AZ};">{th("KPI","left")}{th("Sem act ("+lbl_act+")")}{th("Sem ant")}{th("Mayo (sem)")}{th("vs Mayo")}</tr>'
 
 _p1 = (lambda x: f"{x:.1f}")
 op_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEAD}' + \
