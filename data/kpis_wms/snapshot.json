@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-06-18T08:10:24.768659",
+  "generado_en": "2026-06-18T18:06:53.222626",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.029033721457734765,
-      "total_pickings": 19839,
-      "on_time": 576,
-      "on_time_pct": 0.029033721457734765,
-      "in_full": 19836,
-      "in_full_pct": 0.999848782700741,
-      "both": 576,
+      "valor": 0.029080297846649224,
+      "total_pickings": 19876,
+      "on_time": 578,
+      "on_time_pct": 0.029080297846649224,
+      "in_full": 19873,
+      "in_full_pct": 0.9998490641980278,
+      "both": 578,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.02880658436213992,
-      "total_pickings": 729,
+      "valor": 0.02861035422343324,
+      "total_pickings": 734,
       "on_time": 21,
-      "on_time_pct": 0.02880658436213992,
-      "in_full": 727,
-      "in_full_pct": 0.9972565157750343,
+      "on_time_pct": 0.02861035422343324,
+      "in_full": 732,
+      "in_full_pct": 0.997275204359673,
       "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999243341404358,
-      "ok": 26430,
-      "total": 26432,
+      "valor": 0.999924485557863,
+      "ok": 26483,
+      "total": 26485,
       "errores": 2,
       "error": null
     },
@@ -179,12 +179,12 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9519259629814908,
+      "valor": 0.9461730865432716,
       "total_so": 20000,
       "total_con_pickings": 19990,
-      "cumplidos": 19029,
+      "cumplidos": 18914,
       "parciales": 17,
-      "sin_iniciar": 944,
+      "sin_iniciar": 1059,
       "error": null
     },
     "oct_30d": {
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 20980,
+      "lineas": 21033,
       "mes": "2026-06",
       "error": null
     },
@@ -363,6 +363,12 @@
           "cliente": "abc S.A.",
           "total": 386,
           "tarde": 386,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+          "total": 5,
+          "tarde": 5,
           "on_time_pct": 0.0
         },
         {
@@ -6720,31 +6726,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.029033721457734765,
-      "total_pickings": 19839,
-      "on_time": 576,
-      "on_time_pct": 0.029033721457734765,
-      "in_full": 19836,
-      "in_full_pct": 0.999848782700741,
-      "both": 576,
+      "valor": 0.029080297846649224,
+      "total_pickings": 19876,
+      "on_time": 578,
+      "on_time_pct": 0.029080297846649224,
+      "in_full": 19873,
+      "in_full_pct": 0.9998490641980278,
+      "both": 578,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.02880658436213992,
-      "total_pickings": 729,
+      "valor": 0.02861035422343324,
+      "total_pickings": 734,
       "on_time": 21,
-      "on_time_pct": 0.02880658436213992,
-      "in_full": 727,
-      "in_full_pct": 0.9972565157750343,
+      "on_time_pct": 0.02861035422343324,
+      "in_full": 732,
+      "in_full_pct": 0.997275204359673,
       "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999243341404358,
-      "ok": 26430,
-      "total": 26432,
+      "valor": 0.999924485557863,
+      "ok": 26483,
+      "total": 26485,
       "errores": 2,
       "error": null
     }
