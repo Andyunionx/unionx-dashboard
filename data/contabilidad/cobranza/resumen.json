@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-18T14:43:04.263214",
+  "generado_en": "2026-06-18T20:08:51.952933",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11238,
-  "total_monto_pendiente_clp": 681160523.0,
+  "total_documentos_pendientes": 10566,
+  "total_monto_pendiente_clp": 663318203.0,
   "monto_por_aging": {
-    "+90 días": 36406484.0,
-    "1-30 días": 424467346.0,
-    "31-60 días": 68080913.0,
+    "+90 días": 36396494.0,
+    "1-30 días": 405210172.0,
+    "31-60 días": 68071923.0,
     "61-90 días": 18675825.0,
-    "Vigente": 133529955.0
+    "Vigente": 134963789.0
   },
   "monto_por_tipo": {
-    "BOLETA": 564949809.0,
+    "BOLETA": 547107489.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 100107475.0
+      "monto": 100768615.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,15 +26,11 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 59124966.0
+      "monto": 60893181.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
       "monto": 49771354.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 46596023.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -42,19 +38,27 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 33879347.0
+      "monto": 34044217.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 32223780.0
+      "monto": 32244750.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28012510.0
+      "monto": 28463699.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 23075811.0
     },
     {
       "partner": "abc S.A.",
       "monto": 20499534.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 20253868.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -63,10 +67,6 @@
     {
       "partner": "FALABELLA.COM",
       "monto": 19556704.0
-    },
-    {
-      "partner": "Duty Free T C S A",
-      "monto": 18916027.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -97,6 +97,6 @@
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 552,
+  "notas_credito_count": 553,
   "pedidos_venta_count": 10000
 }
