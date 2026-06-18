@@ -1,40 +1,68 @@
 {
-  "generado_en": "2026-06-17T17:51:06.922631",
+  "generado_en": "2026-06-18T08:10:24.768659",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0281,
-      "total_pickings": 20000,
-      "on_time": 562,
-      "on_time_pct": 0.0281,
-      "in_full": 19997,
-      "in_full_pct": 0.99985,
-      "both": 562,
+      "valor": 0.029033721457734765,
+      "total_pickings": 19839,
+      "on_time": 576,
+      "on_time_pct": 0.029033721457734765,
+      "in_full": 19836,
+      "in_full_pct": 0.999848782700741,
+      "both": 576,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.029850746268656716,
-      "total_pickings": 737,
-      "on_time": 22,
-      "on_time_pct": 0.029850746268656716,
-      "in_full": 735,
-      "in_full_pct": 0.9972862957937585,
-      "both": 22,
+      "valor": 0.02880658436213992,
+      "total_pickings": 729,
+      "on_time": 21,
+      "on_time_pct": 0.02880658436213992,
+      "in_full": 727,
+      "in_full_pct": 0.9972565157750343,
+      "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999271296363769,
-      "ok": 27444,
-      "total": 27446,
+      "valor": 0.9999243341404358,
+      "ok": 26430,
+      "total": 26432,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.003385141093474,
-      "n_recepciones": 252,
-      "min": -12.351944444444445,
+      "valor": 6.812489063867017,
+      "n_recepciones": 254,
+      "min": -37.570277777777775,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00883",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": -37.6,
+          "scheduled": "2026-06-19 12:00",
+          "done": "2026-06-17 22:25"
+        },
+        {
+          "picking": "CA1/IN/00896",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-06-17 20:06",
+          "done": "2026-06-17 20:51"
+        },
+        {
+          "picking": "CA1/IN/00895",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-06-17 18:56",
+          "done": "2026-06-17 19:25"
+        },
+        {
+          "picking": "CA1/IN/00894",
+          "proveedor": "",
+          "horas": 2.1,
+          "scheduled": "2026-06-17 16:21",
+          "done": "2026-06-17 18:27"
+        },
         {
           "picking": "CA1/IN/00873",
           "proveedor": "Urban Products SpA",
@@ -146,53 +174,25 @@
           "horas": 15.2,
           "scheduled": "2026-06-10 21:48",
           "done": "2026-06-11 12:58"
-        },
-        {
-          "picking": "CA1/RET/00997",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-06-10 16:02",
-          "done": "2026-06-10 16:03"
-        },
-        {
-          "picking": "CA1/RET/00998",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-06-10 16:03",
-          "done": "2026-06-10 16:03"
-        },
-        {
-          "picking": "CA1/IN/00881",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-10 13:20",
-          "done": "2026-06-10 13:21"
-        },
-        {
-          "picking": "CA1/IN/00879",
-          "proveedor": "Cliente Interno",
-          "horas": 0.0,
-          "scheduled": "2026-06-09 21:26",
-          "done": "2026-06-09 21:26"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9473736868434217,
+      "valor": 0.9519259629814908,
       "total_so": 20000,
       "total_con_pickings": 19990,
-      "cumplidos": 18938,
+      "cumplidos": 19029,
       "parciales": 17,
-      "sin_iniciar": 1035,
+      "sin_iniciar": 944,
       "error": null
     },
     "oct_30d": {
-      "valor": 55.17341872027669,
+      "valor": 54.71664079651434,
       "n_orders": 19789,
-      "min_h": 0.06861111111111111,
+      "min_h": 0.05361111111111111,
       "max_h": 699.7586111111111,
-      "mediana_h": 31.311944444444446,
+      "mediana_h": 30.679444444444446,
       "detalle": [
         {
           "so": "S234962",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 20559,
+      "lineas": 20980,
       "mes": "2026-06",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 197,
-      "outgoing": 29662,
-      "internal": 20141,
+      "incoming": 195,
+      "outgoing": 29719,
+      "internal": 20086,
       "total": 50000,
       "error": null
     },
@@ -378,21 +378,9 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "Global Reward Solutions",
-          "total": 79,
-          "tarde": 79,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Sawa SPA",
-          "total": 122,
-          "tarde": 122,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Comercializadora SP Digital SPA",
-          "total": 21,
-          "tarde": 21,
+          "total": 20,
+          "tarde": 20,
           "on_time_pct": 0.0
         },
         {
@@ -402,16 +390,28 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Sawa SPA",
+          "total": 124,
+          "tarde": 124,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Lokal SpA",
           "total": 9,
           "tarde": 9,
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Global Reward Solutions",
+          "total": 74,
+          "tarde": 74,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 47,
-          "tarde": 44,
-          "on_time_pct": 0.06382978723404255
+          "total": 45,
+          "tarde": 42,
+          "on_time_pct": 0.06666666666666667
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -6720,42 +6720,70 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0281,
-      "total_pickings": 20000,
-      "on_time": 562,
-      "on_time_pct": 0.0281,
-      "in_full": 19997,
-      "in_full_pct": 0.99985,
-      "both": 562,
+      "valor": 0.029033721457734765,
+      "total_pickings": 19839,
+      "on_time": 576,
+      "on_time_pct": 0.029033721457734765,
+      "in_full": 19836,
+      "in_full_pct": 0.999848782700741,
+      "both": 576,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.029850746268656716,
-      "total_pickings": 737,
-      "on_time": 22,
-      "on_time_pct": 0.029850746268656716,
-      "in_full": 735,
-      "in_full_pct": 0.9972862957937585,
-      "both": 22,
+      "valor": 0.02880658436213992,
+      "total_pickings": 729,
+      "on_time": 21,
+      "on_time_pct": 0.02880658436213992,
+      "in_full": 727,
+      "in_full_pct": 0.9972565157750343,
+      "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999271296363769,
-      "ok": 27444,
-      "total": 27446,
+      "valor": 0.9999243341404358,
+      "ok": 26430,
+      "total": 26432,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.003385141093474,
-      "n_recepciones": 252,
-      "min": -12.351944444444445,
+      "valor": 6.812489063867017,
+      "n_recepciones": 254,
+      "min": -37.570277777777775,
       "max": 361.9194444444444,
       "detalle": [
+        {
+          "picking": "CA1/IN/00883",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": -37.6,
+          "scheduled": "2026-06-19 12:00",
+          "done": "2026-06-17 22:25"
+        },
+        {
+          "picking": "CA1/IN/00896",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-06-17 20:06",
+          "done": "2026-06-17 20:51"
+        },
+        {
+          "picking": "CA1/IN/00895",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-06-17 18:56",
+          "done": "2026-06-17 19:25"
+        },
+        {
+          "picking": "CA1/IN/00894",
+          "proveedor": "",
+          "horas": 2.1,
+          "scheduled": "2026-06-17 16:21",
+          "done": "2026-06-17 18:27"
+        },
         {
           "picking": "CA1/IN/00873",
           "proveedor": "Urban Products SpA",
@@ -6867,34 +6895,6 @@
           "horas": 15.2,
           "scheduled": "2026-06-10 21:48",
           "done": "2026-06-11 12:58"
-        },
-        {
-          "picking": "CA1/RET/00997",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-06-10 16:02",
-          "done": "2026-06-10 16:03"
-        },
-        {
-          "picking": "CA1/RET/00998",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-06-10 16:03",
-          "done": "2026-06-10 16:03"
-        },
-        {
-          "picking": "CA1/IN/00881",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-10 13:20",
-          "done": "2026-06-10 13:21"
-        },
-        {
-          "picking": "CA1/IN/00879",
-          "proveedor": "Cliente Interno",
-          "horas": 0.0,
-          "scheduled": "2026-06-09 21:26",
-          "done": "2026-06-09 21:26"
         }
       ],
       "error": null
