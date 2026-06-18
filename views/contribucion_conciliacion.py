@@ -66,15 +66,16 @@ def _render_b2b(b):
     c4.metric("Meta Contribución", fmt_pesos(R["meta_contrib"]),
               delta=f"{R['cumpl_contrib']*100:.0f}% cumpl." if R["cumpl_contrib"] else None)
     st.markdown("### P&L Distribución (resultado = comercial = contable)")
-    money = st.column_config.NumberColumn(format="$%d")
     pl = R["pl_canal"]
     if len(pl):
         tot_row = {"Canal": "TOTAL", **{k: tot.get(k, tot["Venta"] - tot["Costo"] if k == "Margen" else tot.get(k)) for k in
                                         ["Venta", "Margen", "Costo", "Comisión Venta", "Comisión Envío", "Marketing", "Contribución"]}}
         pl = pd.concat([pl, pd.DataFrame([tot_row])], ignore_index=True)
-    st.dataframe(pl, width="stretch", hide_index=True,
-                 column_config={c: money for c in ["Venta", "Costo", "Margen", "Comisión Venta",
-                                                    "Comisión Envío", "Marketing", "Contribución"]})
+    pl_d = pl.copy()
+    for c in ["Venta", "Costo", "Margen", "Comisión Venta", "Comisión Envío", "Marketing", "Contribución"]:
+        if c in pl_d.columns:
+            pl_d[c] = pl_d[c].map(fmt_pesos)
+    st.dataframe(pl_d, width="stretch", hide_index=True)
     st.caption("Canales B2B = negocio Distribución (Paris/Walmart/Falabella tienda, Dimarsa, Lokal, "
                "Casa Mila, Ferretería, Amar, etc.). Comparación de presupuesto a nivel total.")
 
@@ -125,15 +126,16 @@ def render():
 
     # ---- P&L ----
     st.markdown("### P&L")
-    money = st.column_config.NumberColumn(format="$%d")
-    pct = st.column_config.NumberColumn(format="%.1f%%")
     pyl = R["pyl"].copy()
-    pyl["Δ %"] = pyl["Δ %"] * 100
-    st.dataframe(pyl, width="stretch", hide_index=True,
-                 column_config={"Comercial": money, "Contable": money, "Δ $ (Com−Cont)": money, "Δ %": pct})
+    disp = pyl.copy()
+    for c in ["Comercial", "Contable", "Δ $ (Com−Cont)"]:
+        disp[c] = disp[c].map(fmt_pesos)
+    disp["Δ %"] = pyl["Δ %"].map(lambda v: f"{v*100:.1f}%" if v is not None and pd.notna(v) else "—")
+    st.dataframe(disp, width="stretch", hide_index=True)
 
     # ---- Reconciliación paso a paso ----
     st.markdown("### 🔎 Explicación de la diferencia (reconciliación paso a paso)")
+    _ap = -R.get("aporte_canal", 0.0)  # aporte baja la comisión contable → explica parte de la brecha (positivo)
     filas = [
         ("Δ Contribución (Comercial − Contable)", R["delta_contrib"], "head"),
         ("① Venta comercial", R["venta_com"], ""),
@@ -146,6 +148,8 @@ def render():
         ("       (comparar) Margen Directo Contable real", R["margen_cont_real"], "memo"),
         ("③ Comisiones de otro período (glosas, incl. 2025)", R["com_otro"], "sub"),
         ("   Comisiones por caer (no caída)", R["no_caida"], "sub"),
+        ("       del cual: aporte del canal (Oportunidades Únicas, etc.)", _ap, "memo"),
+        ("       del cual: provisión / aún por caer (resto)", R["no_caida"] - _ap, "memo"),
         ("④ Contribución ajustada (margen aj. − comisiones comerciales)", R["contrib_aj"], "bold"),
         ("   Contribución contable (real)", R["contrib_cont"], ""),
         ("   = Diferencia por EXPLICAR (ajustada − contable)", R["por_explicar"], "head"),
@@ -188,8 +192,12 @@ def render():
     # ---- detalle (expanders) ----
     with st.expander("Detalle: NC por período de origen / Comisiones por estado"):
         st.markdown("**NC (devoluciones)** — neto por canal × origen")
-        st.dataframe(b["nc_tab"], width="stretch", hide_index=True,
-                     column_config={"Neto": money})
+        nc_d = b["nc_tab"].copy()
+        if "Neto" in nc_d.columns:
+            nc_d["Neto"] = nc_d["Neto"].map(fmt_pesos)
+        st.dataframe(nc_d, width="stretch", hide_index=True)
         st.markdown("**Comisiones (glosas)** — monto por canal × período de origen")
-        st.dataframe(b["com_tab"], width="stretch", hide_index=True,
-                     column_config={"Monto": money})
+        com_d = b["com_tab"].copy()
+        if "Monto" in com_d.columns:
+            com_d["Monto"] = com_d["Monto"].map(fmt_pesos)
+        st.dataframe(com_d, width="stretch", hide_index=True)

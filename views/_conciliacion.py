@@ -130,8 +130,10 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
     if len(nc_tab):
         nc_tab = nc_tab.groupby(["Mes", "Canal", "KAM", "OrigenAnio", "OrigenMes"], as_index=False)["Neto"].sum()
 
-    # Comisiones detalle (glosas)
-    crows = []
+    # Comisiones detalle (glosas) + aporte del canal (reclasificación venta→menor comisión)
+    # Aporte por glosa: Falabella "Oportunidades Únicas", Ripley "Opex" (Paris no se ve por glosa).
+    crows, arows = [], []
+    APORTE_PAT = ("oportunidad", "opex")
     if df_glosas is not None and len(df_glosas):
         for _, r in df_glosas.iterrows():
             cat = _norm(r.get("Categoría Analítica", ""))
@@ -141,16 +143,26 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
             if not es_conkam.get(ck, False):
                 continue
             m = _mes_num(r.get("Mes", ""))
+            gl = _norm(r.get("Glosa", ""))
             oa, om = _origen_glosa(r.get("Glosa", ""), m)
-            crows.append({"Mes": MES_NOM[m] if m else "?", "Canal": nombre.get(ck, str(r.get("Canal", "")).strip()),
-                          "KAM": str(kam_dom.get(ck, "")).strip(), "OrigenAnio": oa,
-                          "OrigenMes": MES_NOM[om] if om and 1 <= om <= 12 else "", "Monto": num(r.get("Monto ($)", ""))})
+            mes_n = MES_NOM[m] if m else "?"
+            canal_n = nombre.get(ck, str(r.get("Canal", "")).strip())
+            kam_n = str(kam_dom.get(ck, "")).strip()
+            monto = num(r.get("Monto ($)", ""))
+            crows.append({"Mes": mes_n, "Canal": canal_n, "KAM": kam_n, "OrigenAnio": oa,
+                          "OrigenMes": MES_NOM[om] if om and 1 <= om <= 12 else "", "Monto": monto})
+            if any(p in gl for p in APORTE_PAT):
+                arows.append({"Mes": mes_n, "Canal": canal_n, "KAM": kam_n, "Monto": monto})
     com_tab = (pd.DataFrame(crows) if crows else
                pd.DataFrame(columns=["Mes", "Canal", "KAM", "OrigenAnio", "OrigenMes", "Monto"]))
     if len(com_tab):
         com_tab = com_tab.groupby(["Mes", "Canal", "KAM", "OrigenAnio", "OrigenMes"], as_index=False)["Monto"].sum()
+    aporte_tab = (pd.DataFrame(arows) if arows else pd.DataFrame(columns=["Mes", "Canal", "KAM", "Monto"]))
+    if len(aporte_tab):
+        aporte_tab = aporte_tab.groupby(["Mes", "Canal", "KAM"], as_index=False)["Monto"].sum()
 
-    return {"datos": datos, "nc_tab": nc_tab, "com_tab": com_tab, "canales": canales, "kams": kams}
+    return {"datos": datos, "nc_tab": nc_tab, "com_tab": com_tab, "aporte_tab": aporte_tab,
+            "canales": canales, "kams": kams}
 
 
 # ------------------------------------------------------------------ cálculo (display)
@@ -209,6 +221,14 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
         return not (oa == 2026 and om == mes)
     com_otro = float(com_tab[com_tab.apply(_cflag, axis=1)]["Monto"].sum()) if len(com_tab) else 0.0
 
+    aporte_tab = bundle.get("aporte_tab")
+    if aporte_tab is not None and len(aporte_tab):
+        am = aporte_tab[aporte_tab.apply(lambda r: _match(r["Mes"], mes, "YTD")
+                        and _match(r["Canal"], canal, "TODOS") and _match(r["KAM"], kam, "TODOS"), axis=1)]
+        aporte_canal = float(am["Monto"].sum())
+    else:
+        aporte_canal = 0.0
+
     # reconciliación
     venta_aj = venta_c - nc_otro
     m_com = (margen_c / venta_c) if venta_c else 0.0
@@ -225,7 +245,7 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
         "contrib_com": contrib_c, "contrib_cont": contrib_k, "delta_contrib": contrib_c - contrib_k,
         "venta_com": venta_c, "nc_otro": nc_otro, "nc_del": nc_del, "venta_aj": venta_aj,
         "margen_aj_com": margen_aj_com, "costeo": costeo, "margen_aj": margen_aj, "margen_cont_real": margen_k,
-        "com_otro": com_otro, "no_caida": no_caida,
+        "com_otro": com_otro, "no_caida": no_caida, "aporte_canal": aporte_canal,
         "contrib_aj": contrib_aj, "por_explicar": contrib_aj - contrib_k,
     }
 
