@@ -356,6 +356,15 @@ def construir_workbook(bundle):
     wsn = wb.create_sheet("NC_detalle"); nN = _detalle(wsn, nc_tab, "Neto")
     wsc = wb.create_sheet("Comisiones_detalle"); nC = _detalle(wsc, com_tab, "Monto")
 
+    # Aporte del canal (reclasificación venta→menor comisión) por glosa
+    wsa = wb.create_sheet("Aporte_detalle")
+    wsa.append(["Mes", "Canal", "KAM", "Monto"])
+    aporte_tab = bundle.get("aporte_tab")
+    nA = 0
+    if aporte_tab is not None and len(aporte_tab):
+        for _, r in aporte_tab.iterrows():
+            wsa.append([r["Mes"], r["Canal"], r["KAM"], r["Monto"]]); nA += 1
+
     wsl = wb.create_sheet("Listas")
     wsl.append(["Meses", "Canales", "KAMs"])
     canal_opt = ["TODOS"] + canales; kam_opt = ["TODOS"] + kams
@@ -426,6 +435,8 @@ def construir_workbook(bundle):
     nc_del = f'=SUMIFS({ncG("G")},{ncG("B")},$G$4,{ncG("C")},$G$5)'
     nc_otro = f'=SUMIFS({ncG("H")},{ncG("B")},$G$4,{ncG("C")},$G$5)'
     com_otro = f'=SUMIFS({coG("H")},{coG("B")},$G$4,{coG("C")},$G$5)'
+    apG = lambda c: f"Aporte_detalle!${c}$2:${c}${nA+1}"
+    aporte_body = (f'SUMIFS({apG("D")},{apG("A")},$G$3,{apG("B")},$G$4,{apG("C")},$G$5)' if nA else "0")
     mcom = f"IF(B{rV}=0,0,B{rM}/B{rV})"; mcont = f"IF(C{rV}=0,0,C{rM}/C{rV})"
 
     er = rK + 2
@@ -464,7 +475,9 @@ def construir_workbook(bundle):
     line("(comparar) Margen Directo Contable real del P&L", f"=C{rM}", italic=True)
     line("③ COMISIONES (timing)", bold=True)
     line("Comisiones de otro período (glosas, incl. 2025)", com_otro, sub=True)
-    line("Comisiones por caer (no caída: comercial esperada − contable)", f"=B{rCV}-C{rCV}", sub=True)
+    r_noc = line("Comisiones por caer (no caída: comercial esperada − contable)", f"=B{rCV}-C{rCV}", sub=True)
+    r_ap = line("del cual: aporte del canal (Oportunidades Únicas/Falabella, Opex/Ripley)", f"=-({aporte_body})", italic=True)
+    line("del cual: provisión / aún por caer (resto)", f"=D{r_noc}-D{r_ap}", italic=True)
     line("④ CONTRIBUCIÓN", bold=True)
     r_caj = line("Contribución ajustada (margen ajustado − comisiones comerciales)",
                  f"=D{r_maj}-(B{rCV}+B{rCE}+B{rMK})", bold=True)
@@ -477,7 +490,7 @@ def construir_workbook(bundle):
     ws.column_dimensions["E"].width = 9
     ws.column_dimensions["F"].width = 9
     ws.column_dimensions["G"].width = 10
-    for wsx in (wsd, wsn, wsc):
+    for wsx in (wsd, wsn, wsc, wsa):
         wsx.freeze_panes = "A2"; wsx.auto_filter.ref = wsx.dimensions
         for cell in wsx[1]:
             cell.font = Font(bold=True, color="FFFFFF"); cell.fill = AZUL
