@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-06-19T14:39:59.239851",
+  "generado_en": "2026-06-19T19:23:33.610498",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10736,
-  "total_monto_pendiente_clp": 670514610.0,
+  "total_documentos_pendientes": 10690,
+  "total_monto_pendiente_clp": 645119674.0,
   "monto_por_aging": {
-    "+90 días": 36411484.0,
-    "1-30 días": 424753928.0,
-    "31-60 días": 70965143.0,
+    "+90 días": 36400545.0,
+    "1-30 días": 416860359.0,
+    "31-60 días": 69311673.0,
     "61-90 días": 18848707.0,
-    "Vigente": 119535348.0
+    "Vigente": 103698390.0
   },
   "monto_por_tipo": {
-    "BOLETA": 554303896.0,
+    "BOLETA": 528908960.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 101917465.0
+      "monto": 102352305.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 75567626.0
+      "monto": 75692576.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 63280889.0
+      "monto": 64078602.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -38,39 +38,39 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 34478975.0
+      "monto": 34529865.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 32427130.0
+      "monto": 32568120.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 29282909.0
+      "monto": 29962436.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23486731.0
+      "monto": 21665239.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 21503171.0
     },
     {
       "partner": "abc S.A.",
       "monto": 20499534.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 20357860.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20233167.0
-    },
-    {
       "partner": "FALABELLA.COM",
       "monto": 19556704.0
     },
     {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 18975505.0
+    },
+    {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
-      "monto": 17163376.0
+      "monto": 16408250.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -81,22 +81,22 @@
       "monto": 12132082.0
     },
     {
-      "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
-      "monto": 9505128.0
-    },
-    {
-      "partner": "Showtime SpA",
-      "monto": 6108025.0
-    },
-    {
       "partner": "Comercial ECCSA S A",
       "monto": 5874003.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
+    },
+    {
+      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+      "monto": 5032041.0
+    },
+    {
+      "partner": "Walmart Serv. Generales Ltda.",
+      "monto": 3392680.0
     }
   ],
-  "notas_credito_count": 548,
+  "notas_credito_count": 555,
   "pedidos_venta_count": 10000
 }
