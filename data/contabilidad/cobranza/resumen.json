@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-19T10:10:21.393921",
+  "generado_en": "2026-06-19T14:39:59.239851",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10706,
-  "total_monto_pendiente_clp": 668644841.0,
+  "total_documentos_pendientes": 10736,
+  "total_monto_pendiente_clp": 670514610.0,
   "monto_por_aging": {
     "+90 días": 36411484.0,
-    "1-30 días": 423807671.0,
+    "1-30 días": 424753928.0,
     "31-60 días": 70965143.0,
     "61-90 días": 18848707.0,
-    "Vigente": 118611836.0
+    "Vigente": 119535348.0
   },
   "monto_por_tipo": {
-    "BOLETA": 552434127.0,
+    "BOLETA": 554303896.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 101745095.0
+      "monto": 101917465.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 62770476.0
+      "monto": 63280889.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 29222919.0
+      "monto": 29282909.0
     },
     {
       "partner": "Cliente Paris",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19744033.0
+      "monto": 20233167.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -78,7 +78,7 @@
     },
     {
       "partner": "Comercializadora SP Digital SPA",
-      "monto": 12097090.0
+      "monto": 12132082.0
     },
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
@@ -97,6 +97,6 @@
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 547,
+  "notas_credito_count": 548,
   "pedidos_venta_count": 10000
 }
