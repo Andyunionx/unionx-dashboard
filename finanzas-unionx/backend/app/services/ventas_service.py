@@ -1045,6 +1045,7 @@ class VentasService(BaseOdooService):
 
                 data.append({
                     'Tipo Movimiento': 'Venta',
+                    'Linea ID': linea.get('id'),  # id único de sale.order.line → dedup correcto (canjes legítimos vs duplicados-fantasma del JOIN)
                     'Bodega': bodega_nombre,
                     'Documento': factura.get('name', '') if factura else '',
                     'Fecha Documento': factura.get('invoice_date', '') if factura else '',
@@ -1431,7 +1432,7 @@ class VentasService(BaseOdooService):
             'Año venta', 'Mes venta', 'Semana venta', 'Día semana', 'Hora venta',
             'Cantidad', 'Venta bruta', 'Venta Neta', 'Costo Unitario', 'Costo Total', 'Margen Front',
             'Comision %', 'Comisión', 'Logística', 'Marketing', 'Mg final',
-            'Pedido Marketplace', 'Ref Cliente'
+            'Pedido Marketplace', 'Ref Cliente', 'Linea ID'
         ]
 
         # Asegurar que todas las columnas existan

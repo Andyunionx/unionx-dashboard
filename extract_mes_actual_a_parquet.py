@@ -42,6 +42,7 @@ COLS_DB = [
 
 # Mapeo RAW Odoo → DB (igual que actualizar_raw_historico.py)
 RAW_TO_DB = {
+    'Linea ID': '_line_id',
     'Tipo Movimiento': 'tipo_movimiento', 'Bodega': 'bodega', 'Documento': 'documento',
     'Fecha Documento': 'fecha_documento', 'Pedido': 'pedido',
     'Pedido Marketplace': 'pedido_marketplace', 'Estado Pedido': 'estado_pedido',
@@ -162,8 +163,12 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
 
     # Renombrar columnas RAW (Odoo) → DB
     df = df_raw.rename(columns=RAW_TO_DB).copy()
-    # Quedarse solo con COLS_DB (descarta pedido_marketplace, client_order_ref)
-    df = df[[c for c in COLS_DB if c in df.columns]]
+    # Quedarse solo con COLS_DB (descarta pedido_marketplace, client_order_ref).
+    # Preservamos _line_id (transitorio) para el dedup; se elimina antes de guardar.
+    keep = [c for c in COLS_DB if c in df.columns]
+    if '_line_id' in df.columns:
+        keep.append('_line_id')
+    df = df[keep]
 
     # Aplicar costo_override si tabla existe localmente (refleja fixes manuales)
     override_csv = PROJECT_ROOT / 'data' / 'costo_override.csv'
@@ -256,7 +261,16 @@ def main():
     parser.add_argument('--mes', default=None, help='YYYY-MM (default: mes actual)')
     parser.add_argument('--source', choices=['odoo', 'turso'], default='odoo',
                        help='Fuente: "odoo" (default, bypass Turso) o "turso" (legacy)')
+    parser.add_argument('--out', default=None,
+                       help='Ruta de salida alternativa (default: ventas_mes_actual.parquet). '
+                            'Útil para re-extraer un mes histórico sin pisar el mes vivo.')
+    parser.add_argument('--skip-gate', action='store_true',
+                       help='Salta el GATE 1 anti-stale (para re-extracción histórica intencional).')
     args = parser.parse_args()
+
+    global OUT_PATH
+    if args.out:
+        OUT_PATH = Path(args.out)
 
     _load_env()
 
@@ -303,9 +317,11 @@ def main():
     marker.write_text(_json.dumps({
         'ts': _dt.now().isoformat(timespec='seconds'), 'ok': ok, 'problemas': problemas, 'stats': stats,
     }, default=str, ensure_ascii=False), encoding='utf-8')
-    if not ok:
+    if not ok and not args.skip_gate:
         print("\n[GATE 1] NO se publica el parquet — se conserva el último bueno.", flush=True)
         sys.exit(0)  # salida limpia: el commit posterior no verá cambios
+    if not ok and args.skip_gate:
+        print("\n[GATE 1] FALLÓ pero --skip-gate activo (re-extracción histórica) → se continúa.", flush=True)
 
     # Overlay correcciones fecha_venta (cuando Yuju/integrador cargó tarde a Odoo)
     overlay_path = PROJECT_ROOT / 'data' / 'correcciones' / 'fix_fechas_yuju.json'
@@ -379,8 +395,12 @@ def main():
                 except Exception as e:
                     print(f"   [WARN] manual {mf.name} no aplicado: {type(e).__name__}: {str(e)[:80]}")
 
-    # DEDUP literal: el extract de Odoo trae duplicados de origen (algun JOIN
-    # multiplica filas). Limpia filas 100% identicas en columnas clave.
+    # DEDUP: el extract de Odoo trae duplicados de origen (algun JOIN multiplica filas).
+    # Las filas Venta con _line_id (id de sale.order.line) se deduplican por ESE id:
+    # los duplicados-fantasma comparten id (se eliminan); los canjes legitimos (mismo
+    # SKU/precio repetido en una orden, ej. Celmedia/Fidelizacion) tienen ids distintos
+    # (se conservan). El resto (NC, manuales, ventas sin id) mantiene el dedup por
+    # contenido previo. Asi se corrige el under-count sin alterar NC/manuales.
     n_pre = len(df)
     df_dedup = df.copy()
     for c in df_dedup.columns:
@@ -389,13 +409,20 @@ def main():
     df_dedup['_fv_str'] = pd.to_datetime(df_dedup['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
     df_dedup['_vb_r'] = pd.to_numeric(df_dedup['venta_bruta'], errors='coerce').fillna(0).round(2)
     df_dedup['_qty'] = pd.to_numeric(df_dedup['cantidad'], errors='coerce').fillna(0)
-    df_dedup = df_dedup.drop_duplicates(
-        subset=['pedido', 'sku', '_fv_str', 'documento', 'tipo_movimiento', '_vb_r', '_qty'],
-        keep='first',
-    ).drop(columns=['_fv_str', '_vb_r', '_qty'])
+    if '_line_id' in df_dedup.columns:
+        lid = df_dedup['_line_id'].astype('string')
+        tiene_id = (df_dedup['tipo_movimiento'] == 'Venta') & lid.notna() \
+            & ~lid.str.strip().str.lower().isin(['', 'nan', 'none', '<na>'])
+    else:
+        tiene_id = pd.Series(False, index=df_dedup.index)
+    content_key = ['pedido', 'sku', '_fv_str', 'documento', 'tipo_movimiento', '_vb_r', '_qty']
+    parte_id = df_dedup[tiene_id].drop_duplicates(subset=['_line_id'], keep='first')
+    parte_cont = df_dedup[~tiene_id].drop_duplicates(subset=content_key, keep='first')
+    df_dedup = (pd.concat([parte_id, parte_cont], ignore_index=True)
+                .drop(columns=['_fv_str', '_vb_r', '_qty']))
     n_post = len(df_dedup)
     if n_post < n_pre:
-        print(f"   [dedup] {n_pre:,} -> {n_post:,} filas (-{n_pre-n_post} duplicados literales)")
+        print(f"   [dedup] {n_pre:,} -> {n_post:,} filas (-{n_pre-n_post}; por line_id en Venta, contenido en resto)")
     df = df_dedup
 
     # Forzar columnas object/texto a string. Los archivos manuales pueden traer
@@ -434,6 +461,9 @@ def main():
         print("   [clasif] tipo_marca derivado de marca (8 propias) + estado_sku normalizado")
     except Exception as e:
         print(f"   [WARN] clasificacion marca no aplicada: {type(e).__name__}: {str(e)[:80]}")
+
+    # _line_id era transitorio (solo para dedup) → no va al parquet (mantiene schema).
+    df = df.drop(columns=['_line_id'], errors='ignore')
 
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
