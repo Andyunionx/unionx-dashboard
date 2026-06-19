@@ -17,15 +17,13 @@ import requests
 
 REPO = 'Andyunionx/unionx-dashboard'
 TOKEN = os.environ.get('GH_TOKEN', '')
-EMAIL_TO = [e.strip() for e in os.environ.get('EMAIL_TO','andres@unionx.cl').split(',') if e.strip()]
+EMAIL_TO = [e.strip() for e in os.environ.get('EMAIL_TO','martin@unionx.cl').split(',') if e.strip()]
 EMAIL_FROM = os.environ.get('EMAIL_FROM','onboarding@resend.dev')
 
 # Workflows críticos y máximo de días sin éxito antes de alertar
 WORKFLOWS = {
     'email_diario.yml':   {'nombre':'Pulso Diario', 'max_dias':2, 'frecuencia':'Lun-Vie 08:00 CLT'},
     'cyber_pulso.yml':    {'nombre':'Cyber Pulso',  'max_dias':30, 'frecuencia':'Solo durante Cyber'},
-    'sync_mes_actual.yml':{'nombre':'Sync Mes',     'max_dias':1, 'frecuencia':'15min'},
-    'sync_diario.yml':    {'nombre':'Sync Ventas',  'max_dias':2, 'frecuencia':'Horario'},
 }
 
 
