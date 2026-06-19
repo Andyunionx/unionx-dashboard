@@ -369,6 +369,7 @@ def cmd_leer_respuestas(args):
                 continue
 
             tmp_path = DIR_DISTRIBUCION / f"aprobado_{adjunto['nombre']}"
+            tmp_path.parent.mkdir(parents=True, exist_ok=True)
             tmp_path.write_bytes(adjunto["contenido_bytes"])
             print(f"  Procesando: {adjunto['nombre']}...")
 
