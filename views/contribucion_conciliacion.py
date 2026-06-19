@@ -124,14 +124,33 @@ def render():
     k2.metric("Contribución Contable", fmt_pesos(R["contrib_cont"]))
     k3.metric("Δ Contribución (Com − Cont)", fmt_pesos(R["delta_contrib"]))
 
-    # ---- P&L ----
-    st.markdown("### P&L")
+    # ---- P&L + % sobre venta (al lado) ----
     pyl = R["pyl"].copy()
     disp = pyl.copy()
     for c in ["Comercial", "Contable", "Δ $ (Com−Cont)"]:
         disp[c] = disp[c].map(fmt_pesos)
     disp["Δ %"] = pyl["Δ %"].map(lambda v: f"{v*100:.1f}%" if v is not None and pd.notna(v) else "—")
-    st.dataframe(disp, width="stretch", hide_index=True)
+
+    # estructura % sobre venta (margen, comisiones c/u, marketing, margen contribución)
+    pv = pyl.set_index("Línea")
+    vc = float(pv.loc["Venta", "Comercial"]); vk = float(pv.loc["Venta", "Contable"])
+    fpct = lambda x, base: (f"{x/base*100:.1f}%" if base else "—")
+    pct_rows = []
+    for ln, etiqueta in [("Margen Directo", "Margen Directo"), ("Comisión Venta", "Comisión Venta"),
+                         ("Comisión Envío", "Comisión Envío"), ("Marketing", "Marketing"),
+                         ("Contribución", "Margen Contribución")]:
+        pct_rows.append({"Línea": etiqueta,
+                         "% Comercial": fpct(float(pv.loc[ln, "Comercial"]), vc),
+                         "% Contable": fpct(float(pv.loc[ln, "Contable"]), vk)})
+    pct_df = pd.DataFrame(pct_rows)
+
+    col_pl, col_pct = st.columns([3, 2])
+    with col_pl:
+        st.markdown("### P&L")
+        st.dataframe(disp, width="stretch", hide_index=True)
+    with col_pct:
+        st.markdown("### % sobre venta")
+        st.dataframe(pct_df, width="stretch", hide_index=True)
 
     # ---- Reconciliación paso a paso ----
     st.markdown("### 🔎 Explicación de la diferencia (reconciliación paso a paso)")
