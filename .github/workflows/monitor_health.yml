@@ -29,7 +29,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT_READ_ACTIONS || secrets.GITHUB_TOKEN }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          EMAIL_TO: ${{ vars.MONITOR_EMAIL_TO || 'andres@unionx.cl' }}
+          EMAIL_TO: ${{ vars.MONITOR_EMAIL_TO || 'martin@unionx.cl' }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
           PYTHONIOENCODING: utf-8
         run: python monitor_workflows.py
