@@ -1,64 +1,443 @@
 {
-  "generado_en": "2026-06-19T17:20:58.511008",
+  "generado_en": "2026-06-20T07:02:58.536089",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.029411764705882353,
+      "total_pickings": 19618,
+      "on_time": 577,
+      "on_time_pct": 0.029411764705882353,
+      "in_full": 19615,
+      "in_full_pct": 0.9998470792129677,
+      "both": 577,
+      "error": null
     },
     "otif_b2b_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.028011204481792718,
+      "total_pickings": 714,
+      "on_time": 20,
+      "on_time_pct": 0.028011204481792718,
+      "in_full": 712,
+      "in_full_pct": 0.9971988795518207,
+      "both": 20,
+      "error": null
     },
     "pick_accuracy_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.9999229227686142,
+      "ok": 25946,
+      "total": 25948,
+      "errores": 2,
+      "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 10.973396860986547,
+      "n_recepciones": 223,
+      "min": -37.570277777777775,
+      "max": 717.2755555555556,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00898",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 717.3,
+          "scheduled": "2026-05-20 16:48",
+          "done": "2026-06-19 14:04"
+        },
+        {
+          "picking": "CA1/IN/00883",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": -37.6,
+          "scheduled": "2026-06-19 12:00",
+          "done": "2026-06-17 22:25"
+        },
+        {
+          "picking": "CA1/IN/00896",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-06-17 20:06",
+          "done": "2026-06-17 20:51"
+        },
+        {
+          "picking": "CA1/IN/00895",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-06-17 18:56",
+          "done": "2026-06-17 19:25"
+        },
+        {
+          "picking": "CA1/IN/00894",
+          "proveedor": "",
+          "horas": 2.1,
+          "scheduled": "2026-06-17 16:21",
+          "done": "2026-06-17 18:27"
+        },
+        {
+          "picking": "CA1/IN/00873",
+          "proveedor": "Urban Products SpA",
+          "horas": 128.7,
+          "scheduled": "2026-06-12 04:00",
+          "done": "2026-06-17 12:44"
+        },
+        {
+          "picking": "CA1/RET/01005",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 16:03",
+          "done": "2026-06-15 16:04"
+        },
+        {
+          "picking": "CA1/IN/00893",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 14:30",
+          "done": "2026-06-15 14:31"
+        },
+        {
+          "picking": "CA1/IN/00892",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 14:22",
+          "done": "2026-06-15 14:23"
+        },
+        {
+          "picking": "CA1/IN/00891",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 14:20",
+          "done": "2026-06-15 14:20"
+        },
+        {
+          "picking": "CA1/IN/00889",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 16:17",
+          "done": "2026-06-12 16:17"
+        },
+        {
+          "picking": "CA1/IN/00888",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 16:15",
+          "done": "2026-06-12 16:16"
+        },
+        {
+          "picking": "CA1/IN/00887",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 15:43",
+          "done": "2026-06-12 15:43"
+        },
+        {
+          "picking": "CA1/IN/00886",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 15:42",
+          "done": "2026-06-12 15:42"
+        },
+        {
+          "picking": "CA1/IN/00885",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 14:19",
+          "done": "2026-06-12 14:20"
+        },
+        {
+          "picking": "CA1/RET/01003",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:28",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01004",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:29",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01002",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:27",
+          "done": "2026-06-11 19:27"
+        },
+        {
+          "picking": "CA1/RET/01001",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:26",
+          "done": "2026-06-11 19:26"
+        },
+        {
+          "picking": "CA1/RET/00999",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:14",
+          "done": "2026-06-11 19:16"
+        }
+      ],
+      "error": null
     },
     "ofr_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.9438747436346356,
+      "total_so": 20000,
+      "total_con_pickings": 19991,
+      "cumplidos": 18869,
+      "parciales": 17,
+      "sin_iniciar": 1105,
+      "error": null
     },
     "oct_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 54.6814244848689,
+      "n_orders": 19790,
+      "min_h": 0.05361111111111111,
+      "max_h": 699.7586111111111,
+      "mediana_h": 30.831666666666667,
+      "detalle": [
+        {
+          "so": "S234962",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234963",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234965",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234964",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 699.8,
+          "fecha_orden": "2026-05-13 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234967",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234966",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234968",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234969",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 675.8,
+          "fecha_orden": "2026-05-14 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234970",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234972",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234971",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234973",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234974",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 651.8,
+          "fecha_orden": "2026-05-15 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234975",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 627.8,
+          "fecha_orden": "2026-05-16 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234977",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234976",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234978",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234979",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 603.8,
+          "fecha_orden": "2026-05-17 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234981",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 579.8,
+          "fecha_orden": "2026-05-18 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S234980",
+          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
+          "horas": 579.8,
+          "fecha_orden": "2026-05-18 16:00",
+          "fecha_despacho": "2026-06-11 19:45"
+        }
+      ],
+      "error": null
     },
     "merma_odoo_90d": {
       "valor": null,
-      "error": "Odoo no disponible"
+      "error": "RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od"
     },
     "ajustes_inventario": {
       "n_ajustes": 0,
-      "error": "Odoo no disponible"
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 0,
-      "error": "Odoo no disponible"
+      "lineas": 21735,
+      "mes": "2026-06",
+      "error": null
     },
     "volumen_movs_90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "incoming": 167,
+      "outgoing": 29728,
+      "internal": 20105,
+      "total": 50000,
+      "error": null
     },
     "top_clientes_otif_30d": {
-      "valor": [],
-      "error": "Odoo no disponible"
+      "valor": [
+        {
+          "cliente": "abc S.A.",
+          "total": 374,
+          "tarde": 374,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Comercializadora SP Digital SPA",
+          "total": 18,
+          "tarde": 18,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Lokal SpA",
+          "total": 9,
+          "tarde": 9,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Global Reward Solutions",
+          "total": 83,
+          "tarde": 83,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Sawa SPA",
+          "total": 118,
+          "tarde": 118,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 8,
+          "tarde": 8,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 45,
+          "tarde": 42,
+          "on_time_pct": 0.06666666666666667
+        },
+        {
+          "cliente": "Cliente Mercado Libre",
+          "total": 7,
+          "tarde": 3,
+          "on_time_pct": 0.5714285714285714
+        },
+        {
+          "cliente": "WALMART CHILE COM. LTDA",
+          "total": 4,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 4,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        }
+      ],
+      "error": null
     }
   },
   "errores": [
-    "otif_b2c_30d: Odoo no disponible",
-    "otif_b2b_30d: Odoo no disponible",
-    "pick_accuracy_30d: Odoo no disponible",
-    "tiempo_recepcion_90d: Odoo no disponible",
-    "ofr_30d: Odoo no disponible",
-    "oct_30d: Odoo no disponible",
-    "merma_odoo_90d: Odoo no disponible",
-    "ajustes_inventario: Odoo no disponible",
-    "lineas_mes_actual: Odoo no disponible",
-    "volumen_movs_90d: Odoo no disponible",
-    "top_clientes_otif_30d: Odoo no disponible"
+    "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od",
+    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
   ],
   "otif_drive": {
     "meses_disponibles": [
@@ -6341,24 +6720,184 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.029411764705882353,
+      "total_pickings": 19618,
+      "on_time": 577,
+      "on_time_pct": 0.029411764705882353,
+      "in_full": 19615,
+      "in_full_pct": 0.9998470792129677,
+      "both": 577,
+      "error": null
     },
     "b2b_30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.028011204481792718,
+      "total_pickings": 714,
+      "on_time": 20,
+      "on_time_pct": 0.028011204481792718,
+      "in_full": 712,
+      "in_full_pct": 0.9971988795518207,
+      "both": 20,
+      "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 0.9999229227686142,
+      "ok": 25946,
+      "total": 25948,
+      "errores": 2,
+      "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": null,
-      "error": "Odoo no disponible"
+      "valor": 10.973396860986547,
+      "n_recepciones": 223,
+      "min": -37.570277777777775,
+      "max": 717.2755555555556,
+      "detalle": [
+        {
+          "picking": "CA1/IN/00898",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 717.3,
+          "scheduled": "2026-05-20 16:48",
+          "done": "2026-06-19 14:04"
+        },
+        {
+          "picking": "CA1/IN/00883",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": -37.6,
+          "scheduled": "2026-06-19 12:00",
+          "done": "2026-06-17 22:25"
+        },
+        {
+          "picking": "CA1/IN/00896",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-06-17 20:06",
+          "done": "2026-06-17 20:51"
+        },
+        {
+          "picking": "CA1/IN/00895",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-06-17 18:56",
+          "done": "2026-06-17 19:25"
+        },
+        {
+          "picking": "CA1/IN/00894",
+          "proveedor": "",
+          "horas": 2.1,
+          "scheduled": "2026-06-17 16:21",
+          "done": "2026-06-17 18:27"
+        },
+        {
+          "picking": "CA1/IN/00873",
+          "proveedor": "Urban Products SpA",
+          "horas": 128.7,
+          "scheduled": "2026-06-12 04:00",
+          "done": "2026-06-17 12:44"
+        },
+        {
+          "picking": "CA1/RET/01005",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 16:03",
+          "done": "2026-06-15 16:04"
+        },
+        {
+          "picking": "CA1/IN/00893",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 14:30",
+          "done": "2026-06-15 14:31"
+        },
+        {
+          "picking": "CA1/IN/00892",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 14:22",
+          "done": "2026-06-15 14:23"
+        },
+        {
+          "picking": "CA1/IN/00891",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-15 14:20",
+          "done": "2026-06-15 14:20"
+        },
+        {
+          "picking": "CA1/IN/00889",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 16:17",
+          "done": "2026-06-12 16:17"
+        },
+        {
+          "picking": "CA1/IN/00888",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 16:15",
+          "done": "2026-06-12 16:16"
+        },
+        {
+          "picking": "CA1/IN/00887",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 15:43",
+          "done": "2026-06-12 15:43"
+        },
+        {
+          "picking": "CA1/IN/00886",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 15:42",
+          "done": "2026-06-12 15:42"
+        },
+        {
+          "picking": "CA1/IN/00885",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-12 14:19",
+          "done": "2026-06-12 14:20"
+        },
+        {
+          "picking": "CA1/RET/01003",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:28",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01004",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:29",
+          "done": "2026-06-11 19:29"
+        },
+        {
+          "picking": "CA1/RET/01002",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:27",
+          "done": "2026-06-11 19:27"
+        },
+        {
+          "picking": "CA1/RET/01001",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:26",
+          "done": "2026-06-11 19:26"
+        },
+        {
+          "picking": "CA1/RET/00999",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-06-11 19:14",
+          "done": "2026-06-11 19:16"
+        }
+      ],
+      "error": null
     }
   }
 }
