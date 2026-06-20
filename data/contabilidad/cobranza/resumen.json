@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-19T19:23:33.610498",
+  "generado_en": "2026-06-20T02:09:42.578905",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10690,
-  "total_monto_pendiente_clp": 645119674.0,
+  "total_documentos_pendientes": 10578,
+  "total_monto_pendiente_clp": 640204549.0,
   "monto_por_aging": {
-    "+90 días": 36400545.0,
-    "1-30 días": 416860359.0,
-    "31-60 días": 69311673.0,
-    "61-90 días": 18848707.0,
-    "Vigente": 103698390.0
+    "+90 días": 36519495.0,
+    "1-30 días": 410657511.0,
+    "31-60 días": 70693820.0,
+    "61-90 días": 19556004.0,
+    "Vigente": 102777719.0
   },
   "monto_por_tipo": {
-    "BOLETA": 528908960.0,
+    "BOLETA": 523993835.0,
     "FACTURA": 116210714.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 102352305.0
+      "monto": 103099005.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 64078602.0
+      "monto": 64645436.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -38,19 +38,15 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 34529865.0
+      "monto": 34536855.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 32568120.0
+      "monto": 32771570.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 29962436.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 21665239.0
+      "monto": 29083737.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -67,6 +63,10 @@
     {
       "partner": "Celmedia Fidelizacion SPA",
       "monto": 18975505.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 16798245.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -97,6 +97,6 @@
       "monto": 3392680.0
     }
   ],
-  "notas_credito_count": 555,
+  "notas_credito_count": 556,
   "pedidos_venta_count": 10000
 }
