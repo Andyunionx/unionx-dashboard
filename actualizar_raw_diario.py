@@ -191,10 +191,13 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     # Datos en chunks para no consumir tanta RAM
     n = len(df)
     print(f'   [generar_raw_xml] {n:,} filas a serializar...')
-    rows = df.values.tolist()
-    for r in rows:
+    # Generador (no df.values.tolist()) para no duplicar 440k filas en RAM.
+    for r in df.itertuples(index=False, name=None):
         # Agregar None para la columna 56
-        ws.append(r + [None])
+        ws.append(list(r) + [None])
+    del df
+    import gc
+    gc.collect()
     wb.save(tmp_xlsx)
     # Extraer sheet3.xml (que ahora se llama sheet1.xml en este wb chico)
     with zipfile.ZipFile(tmp_xlsx) as z:
@@ -220,16 +223,46 @@ def construir_live():
     _asegurar_plantilla()
 
     print('[1/5] Cargando datos del parquet...')
-    df_raw = cargar_raw_parquet()
-    print(f'      {len(df_raw):,} filas (2025-2026)')
-
     print('[2/5] Generando XML de la nueva Raw...')
+    # No retener el df fuera de generar_raw_xml: asi su unica referencia es el
+    # parametro y se libera (del+gc) antes del zip-surgery, evitando OOM.
     with tempfile.TemporaryDirectory() as tmp:
-        tmp_dir = Path(tmp)
-        new_raw_xml = generar_raw_xml(df_raw, tmp_dir)
+        new_raw_xml = generar_raw_xml(cargar_raw_parquet(), Path(tmp))
     print(f'      Raw XML: {len(new_raw_xml)/1024/1024:.1f} MB')
 
     print('[3/5] Construyendo archivo LIVE...')
+
+    # Reorden de FILAS de la TD: Mes > Week > Tipo Negocio > Canal > Marca >
+    # Cat.padre > Cat.hijo > Producto > SKU. "Fecha Compara" (idx 52) pasa de
+    # FILA a FILTRO (page), junto a Proveedor/Tipo Marca/etc (pedido Nicolás).
+    # Idx = posicion del campo en la cache. Ver Reporte Ventas Empresa New.xlsx.
+    _TD_ROWFIELDS = ('<rowFields count="9"><field x="50"/><field x="53"/><field x="23"/>'
+                     '<field x="9"/><field x="19"/><field x="14"/><field x="15"/>'
+                     '<field x="12"/><field x="8"/></rowFields>')
+
+    def _patch_td_rowfields(xml):
+        # Fecha Compara (idx 52): de FILA a FILTRO -> axisRow pasa a axisPage
+        pf = list(re.finditer(r'<pivotField\b[^>]*?/>|<pivotField\b[^>]*?>.*?</pivotField>', xml, re.S))
+        if len(pf) > 52 and 'axis="axisRow"' in pf[52].group(0):
+            s, e = pf[52].span()
+            xml = xml[:s] + pf[52].group(0).replace('axis="axisRow"', 'axis="axisPage"', 1) + xml[e:]
+        # filas: nuevo orden (sin Fecha Compara)
+        xml = re.sub(r'<rowFields[^>]*>.*?</rowFields>', _TD_ROWFIELDS, xml, count=1, flags=re.S)
+        # filtros (page): agregar Fecha Compara (fld 52) si no esta
+        m = re.search(r'<pageFields count="(\d+)">(.*?)</pageFields>', xml, re.S)
+        if m and 'fld="52"' not in m.group(2):
+            n = int(m.group(1)) + 1
+            xml = (xml[:m.start()] + f'<pageFields count="{n}">{m.group(2)}'
+                   '<pageField fld="52" hier="-1"/></pageFields>' + xml[m.end():])
+        return xml
+
+    def _limpiar_resumen_td(xml):
+        # Quita filas 1-2 de "Resumen TD": datos sueltos (fechas/%) de scratch que
+        # quedaron en la plantilla, ARRIBA del pivot (B8:Y22). No tocan el pivot.
+        for r in ('1', '2'):
+            xml = re.sub(rf'<row r="{r}"[^>]*?/>', '', xml, count=1)
+            xml = re.sub(rf'<row r="{r}"[^>]*?>.*?</row>', '', xml, count=1, flags=re.S)
+        return xml
 
     # Archivos a CONSERVAR del original (NO incluimos pivotCacheRecords3.xml:
     # lo reemplazamos por uno vacio para forzar refresh desde Raw al abrir)
@@ -261,9 +294,14 @@ def construir_live():
     with zipfile.ZipFile(ORIGINAL, 'r') as src, \
          zipfile.ZipFile(OUTPUT, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as dst:
 
-        # 1) Copy archivos KEEP_EXACT (streaming)
+        # 1) Copy archivos KEEP_EXACT (streaming). pivotTable1.xml se parcha
+        #    para reordenar las FILAS de la TD (orden pedido por Nicolás/Andrés).
         for name in sorted(src.namelist()):
-            if name in KEEP_EXACT:
+            if name == 'xl/pivotTables/pivotTable1.xml':
+                dst.writestr(name, _patch_td_rowfields(src.read(name).decode('utf-8')))
+            elif name == 'xl/worksheets/sheet1.xml':
+                dst.writestr(name, _limpiar_resumen_td(src.read(name).decode('utf-8')))
+            elif name in KEEP_EXACT:
                 with src.open(name) as fin, dst.open(name, 'w', force_zip64=True) as fout:
                     while True:
                         chunk = fin.read(1024 * 1024)

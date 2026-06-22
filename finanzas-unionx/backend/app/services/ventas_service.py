@@ -876,7 +876,14 @@ class VentasService(BaseOdooService):
                 if ref.startswith('SH'):
                     return 'Simplit web'
                 return 'UnionX web'
-            return _normalizar_canal_chile(canal)
+            canal = _normalizar_canal_chile(canal)
+            # Fallback: orden sin canal (channel vacío + cliente no mapeado, típico
+            # de ventas manuales del equipo Website) -> "UnionX web" si el cliente es
+            # "Cliente X" (dropship), si no -> "UnionX B2B". Evita ventas sin canal.
+            if not canal and partner_name:
+                pn = str(partner_name).strip().lower()
+                canal = 'UnionX web' if pn.startswith('cliente ') else 'UnionX B2B'
+            return canal
 
         for linea in lineas:
             orden_id = linea['order_id'][0] if linea['order_id'] else None
@@ -997,6 +1004,10 @@ class VentasService(BaseOdooService):
                 w = orden['website_id']
                 website_name = w[1] if isinstance(w, (list, tuple)) and len(w) > 1 else str(w)
             canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name)
+
+            # Excluir clientes duplicados marcados en Odoo ("ZZ-DUPLICADO NO USAR (usar id N)")
+            if partner_name and ('zz-duplicado' in partner_name.lower() or 'no usar' in partner_name.lower()):
+                continue
 
             # Fusión de canales con variantes de capitalización (Drive y Odoo difieren)
             CANAL_CANONICO = {
