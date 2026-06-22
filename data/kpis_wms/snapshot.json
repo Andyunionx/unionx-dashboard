@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-06-22T09:12:37.698003",
+  "generado_en": "2026-06-22T18:47:54.297196",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.029758214507129573,
-      "total_pickings": 19356,
-      "on_time": 576,
-      "on_time_pct": 0.029758214507129573,
-      "in_full": 19353,
-      "in_full_pct": 0.999845009299442,
-      "both": 576,
+      "valor": 0.029961969369924967,
+      "total_pickings": 19458,
+      "on_time": 583,
+      "on_time_pct": 0.029961969369924967,
+      "in_full": 19455,
+      "in_full_pct": 0.9998458217699661,
+      "both": 583,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.026912181303116147,
-      "total_pickings": 706,
-      "on_time": 19,
-      "on_time_pct": 0.026912181303116147,
-      "in_full": 704,
-      "in_full_pct": 0.9971671388101983,
-      "both": 19,
+      "valor": 0.029661016949152543,
+      "total_pickings": 708,
+      "on_time": 21,
+      "on_time_pct": 0.029661016949152543,
+      "in_full": 706,
+      "in_full_pct": 0.9971751412429378,
+      "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999219207495608,
-      "ok": 25613,
-      "total": 25615,
+      "valor": 0.9999225676565101,
+      "ok": 25827,
+      "total": 25829,
       "errores": 2,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9165124305937672,
+      "valor": 0.9113601120504227,
       "total_so": 20000,
       "total_con_pickings": 19991,
-      "cumplidos": 18322,
-      "parciales": 16,
-      "sin_iniciar": 1653,
+      "cumplidos": 18219,
+      "parciales": 17,
+      "sin_iniciar": 1755,
       "error": null
     },
     "oct_30d": {
-      "valor": 54.56756746232569,
-      "n_orders": 19760,
+      "valor": 54.59422031328955,
+      "n_orders": 19790,
       "min_h": 0.05361111111111111,
       "max_h": 699.7586111111111,
-      "mediana_h": 30.360833333333332,
+      "mediana_h": 30.453055555555554,
       "detalle": [
         {
           "so": "S234962",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 21735,
+      "lineas": 21949,
       "mes": "2026-06",
       "error": null
     },
@@ -415,9 +415,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 6,
+          "total": 7,
           "tarde": 3,
-          "on_time_pct": 0.5
+          "on_time_pct": 0.5714285714285714
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
@@ -6720,31 +6720,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.029758214507129573,
-      "total_pickings": 19356,
-      "on_time": 576,
-      "on_time_pct": 0.029758214507129573,
-      "in_full": 19353,
-      "in_full_pct": 0.999845009299442,
-      "both": 576,
+      "valor": 0.029961969369924967,
+      "total_pickings": 19458,
+      "on_time": 583,
+      "on_time_pct": 0.029961969369924967,
+      "in_full": 19455,
+      "in_full_pct": 0.9998458217699661,
+      "both": 583,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.026912181303116147,
-      "total_pickings": 706,
-      "on_time": 19,
-      "on_time_pct": 0.026912181303116147,
-      "in_full": 704,
-      "in_full_pct": 0.9971671388101983,
-      "both": 19,
+      "valor": 0.029661016949152543,
+      "total_pickings": 708,
+      "on_time": 21,
+      "on_time_pct": 0.029661016949152543,
+      "in_full": 706,
+      "in_full_pct": 0.9971751412429378,
+      "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999219207495608,
-      "ok": 25613,
-      "total": 25615,
+      "valor": 0.9999225676565101,
+      "ok": 25827,
+      "total": 25829,
       "errores": 2,
       "error": null
     }
