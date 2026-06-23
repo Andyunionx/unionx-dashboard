@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-06-23T09:39:10.088563",
+  "generado_en": "2026-06-23T14:49:01.403983",
   "total_skus": 1889,
-  "total_quants": 4627,
+  "total_quants": 4636,
   "total_locations": 1414,
   "kpis": {
     "n_skus": 1889,
-    "valor_total": 1120861769.43,
-    "unidades_total": 185765.0,
-    "costo_promedio_sku": 593362.5,
-    "n_quiebre_critico": 88,
-    "n_bajo": 182,
-    "n_optimo": 159,
+    "valor_total": 1128869254.43,
+    "unidades_total": 186030.0,
+    "costo_promedio_sku": 597601.51,
+    "n_quiebre_critico": 91,
+    "n_bajo": 178,
+    "n_optimo": 161,
     "n_sobrestock": 300,
-    "n_sin_venta": 1160,
-    "rot_30d_promedio": 0.77,
-    "rot_90d_promedio": 2.99
+    "n_sin_venta": 1159,
+    "rot_30d_promedio": 0.81,
+    "rot_90d_promedio": 3.06
   },
   "ocupacion": {
     "positions": [
@@ -633,8 +633,8 @@
       {
         "Posicion": "101D22",
         "Ubicacion": "CA1/Stock/101D22",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "101D23",
@@ -664,7 +664,7 @@
         "Posicion": "101E01",
         "Ubicacion": "CA1/Stock/101E01",
         "Estado": "Ocupada",
-        "SKUs": 2
+        "SKUs": 1
       },
       {
         "Posicion": "101E02",
@@ -903,8 +903,8 @@
       {
         "Posicion": "101F15",
         "Ubicacion": "CA1/Stock/101F15",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "101F16",
@@ -1155,8 +1155,8 @@
       {
         "Posicion": "101H05",
         "Ubicacion": "CA1/Stock/101H05",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "101H06",
@@ -1695,8 +1695,8 @@
       {
         "Posicion": "1L0750",
         "Ubicacion": "CA1/Stock/1L0750",
-        "Estado": "Vacia",
-        "SKUs": 0
+        "Estado": "Ocupada",
+        "SKUs": 1
       },
       {
         "Posicion": "1L0810",
@@ -1810,7 +1810,7 @@
         "Posicion": "1L1140",
         "Ubicacion": "CA1/Stock/1L1140",
         "Estado": "Ocupada",
-        "SKUs": 2
+        "SKUs": 1
       },
       {
         "Posicion": "1L1150",
@@ -2595,8 +2595,8 @@
       {
         "Posicion": "1N0130",
         "Ubicacion": "CA1/Stock/1N0130",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "1N0140",
@@ -2973,8 +2973,8 @@
       {
         "Posicion": "1N1430",
         "Ubicacion": "CA1/Stock/1N1430",
-        "Estado": "Vacia",
-        "SKUs": 0
+        "Estado": "Ocupada",
+        "SKUs": 1
       },
       {
         "Posicion": "1N1440",
@@ -3363,14 +3363,14 @@
       {
         "Posicion": "1P0140",
         "Ubicacion": "CA1/Stock/1P0140",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "1P0150",
         "Ubicacion": "CA1/Stock/1P0150",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "1P0210",
@@ -4383,8 +4383,8 @@
       {
         "Posicion": "201E01",
         "Ubicacion": "CA1/Stock/201E01",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "201E02",
@@ -7197,8 +7197,8 @@
       {
         "Posicion": "401C15",
         "Ubicacion": "CA1/Stock/401C15",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "401C16",
@@ -8198,14 +8198,14 @@
       }
     ],
     "total": 1363,
-    "occupied": 919,
-    "empty": 444,
-    "pct": 67.4
+    "occupied": 913,
+    "empty": 450,
+    "pct": 67.0
   },
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1160
+      "SKUs": 1159
     },
     {
       "Categoria": "SOBRESTOCK",
@@ -8213,63 +8213,63 @@
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 182
+      "SKUs": 178
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 159
+      "SKUs": 161
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 88
+      "SKUs": 91
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 917609129.24,
-      "Unidades": 164466.0,
-      "SKUs": 1439
+      "Valor": 916434701.24,
+      "Unidades": 163956.0,
+      "SKUs": 1438
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 91139489.63,
+      "Valor": 91139486.63,
       "Unidades": 9541.0,
       "SKUs": 449
     },
     {
       "Bodega": "BFFa/Stock",
-      "Valor": 23468377.22,
+      "Valor": 23468587.22,
       "Unidades": 2162.0,
       "SKUs": 261
     },
     {
       "Bodega": "Bo/Stock",
-      "Valor": 21451872.0,
+      "Valor": 21456184.0,
       "Unidades": 1210.0,
       "SKUs": 338
     },
     {
       "Bodega": "BVO/Stock",
-      "Valor": 16537417.0,
+      "Valor": 16537418.0,
       "Unidades": 2347.0,
       "SKUs": 67
     },
     {
       "Bodega": "CA1/Output",
-      "Valor": 9680108.69,
-      "Unidades": 880.0,
-      "SKUs": 305
+      "Valor": 16131067.69,
+      "Unidades": 1530.0,
+      "SKUs": 320
     },
     {
       "Bodega": "BNC/Stock",
-      "Valor": 8393670.0,
+      "Valor": 8394925.0,
       "Unidades": 665.0,
       "SKUs": 203
     },
     {
       "Bodega": "BPV/Stock",
-      "Valor": 6188841.0,
+      "Valor": 6191513.0,
       "Unidades": 2482.0,
       "SKUs": 212
     },
@@ -8304,6 +8304,12 @@
       "SKUs": 233
     },
     {
+      "Bodega": "BRS/Stock",
+      "Valor": 2722088.0,
+      "Unidades": 125.0,
+      "SKUs": 3
+    },
+    {
       "Bodega": "BFR/Stock",
       "Valor": 1088937.0,
       "Unidades": 106.0,
@@ -8323,7 +8329,7 @@
     },
     {
       "Bodega": "DRR/Stock",
-      "Valor": 508602.0,
+      "Valor": 509021.0,
       "Unidades": 66.0,
       "SKUs": 14
     },
