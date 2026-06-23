@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-23T14:23:38.871445",
+  "generado_en": "2026-06-23T19:48:44.922784",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10493,
-  "total_monto_pendiente_clp": 597456547.0,
+  "total_documentos_pendientes": 10592,
+  "total_monto_pendiente_clp": 601150325.0,
   "monto_por_aging": {
     "+90 días": 36844900.0,
-    "1-30 días": 383803277.0,
+    "1-30 días": 387038386.0,
     "31-60 días": 54439241.0,
     "61-90 días": 17851922.0,
-    "Vigente": 104517207.0
+    "Vigente": 104975876.0
   },
   "monto_por_tipo": {
-    "BOLETA": 522434787.0,
+    "BOLETA": 526128565.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 90611505.0
+      "monto": 91427606.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 74577622.0
+      "monto": 75514975.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,11 +34,11 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 33528700.0
+      "monto": 33595120.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 31365957.0
+      "monto": 31363171.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,23 +46,23 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 22747816.0
+      "monto": 23043726.0
+    },
+    {
+      "partner": "abc S.A.",
+      "monto": 20923484.0
     },
     {
       "partner": "Falabella.com SPA",
       "monto": 20915985.0
     },
     {
-      "partner": "abc S.A.",
-      "monto": 20747493.0
-    },
-    {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20359148.0
+      "monto": 20576756.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18804405.0
+      "monto": 19210265.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -97,6 +97,6 @@
       "monto": 3279035.0
     }
   ],
-  "notas_credito_count": 558,
-  "pedidos_venta_count": 9907
+  "notas_credito_count": 552,
+  "pedidos_venta_count": 10000
 }
