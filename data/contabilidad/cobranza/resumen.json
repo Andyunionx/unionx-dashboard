@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-06-23T08:56:17.422035",
+  "generado_en": "2026-06-23T14:23:38.871445",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10421,
-  "total_monto_pendiente_clp": 593532762.0,
+  "total_documentos_pendientes": 10493,
+  "total_monto_pendiente_clp": 597456547.0,
   "monto_por_aging": {
     "+90 días": 36844900.0,
-    "1-30 días": 382294890.0,
+    "1-30 días": 383803277.0,
     "31-60 días": 54439241.0,
     "61-90 días": 17851922.0,
-    "Vigente": 102101809.0
+    "Vigente": 104517207.0
   },
   "monto_por_tipo": {
-    "BOLETA": 518511002.0,
+    "BOLETA": 522434787.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 90457545.0
+      "monto": 90611505.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 76475306.0
+      "monto": 77330006.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 74165325.0
+      "monto": 74577622.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 33487230.0
+      "monto": 33528700.0
     },
     {
       "partner": "Cliente Shopify",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 23462752.0
+      "monto": 24533537.0
     },
     {
       "partner": "Cliente Ripley",
@@ -54,15 +54,15 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 20499534.0
+      "monto": 20747493.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19262494.0
+      "monto": 20359148.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18758445.0
+      "monto": 18804405.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 558,
-  "pedidos_venta_count": 9930
+  "pedidos_venta_count": 9907
 }
