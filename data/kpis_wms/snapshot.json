@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-23T17:19:12.289186",
+  "generado_en": "2026-06-24T06:51:09.617877",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
@@ -13,28 +13,63 @@
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.03087248322147651,
-      "total_pickings": 745,
-      "on_time": 23,
-      "on_time_pct": 0.03087248322147651,
-      "in_full": 742,
-      "in_full_pct": 0.9959731543624161,
-      "both": 23,
+      "valor": 0.032679738562091505,
+      "total_pickings": 765,
+      "on_time": 25,
+      "on_time_pct": 0.032679738562091505,
+      "in_full": 761,
+      "in_full_pct": 0.9947712418300654,
+      "both": 25,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999888455103179,
-      "ok": 26892,
-      "total": 26895,
+      "valor": 0.9998922452498115,
+      "ok": 27838,
+      "total": 27841,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.014907828282828,
-      "n_recepciones": 220,
+      "valor": 11.747996296296296,
+      "n_recepciones": 225,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01020",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:50",
+          "done": "2026-06-23 19:51"
+        },
+        {
+          "picking": "CA1/RET/01019",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:50",
+          "done": "2026-06-23 19:50"
+        },
+        {
+          "picking": "CA1/RET/01018",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:04",
+          "done": "2026-06-23 19:05"
+        },
+        {
+          "picking": "CA1/RET/01017",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:04",
+          "done": "2026-06-23 19:04"
+        },
+        {
+          "picking": "CA1/RET/01016",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:02",
+          "done": "2026-06-23 19:03"
+        },
         {
           "picking": "CA1/IN/00901",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -139,61 +174,33 @@
           "horas": 0.0,
           "scheduled": "2026-06-12 16:17",
           "done": "2026-06-12 16:17"
-        },
-        {
-          "picking": "CA1/IN/00888",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 16:15",
-          "done": "2026-06-12 16:16"
-        },
-        {
-          "picking": "CA1/IN/00887",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 15:43",
-          "done": "2026-06-12 15:43"
-        },
-        {
-          "picking": "CA1/IN/00886",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 15:42",
-          "done": "2026-06-12 15:42"
-        },
-        {
-          "picking": "CA1/IN/00885",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 14:19",
-          "done": "2026-06-12 14:20"
-        },
-        {
-          "picking": "CA1/RET/01003",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-06-11 19:28",
-          "done": "2026-06-11 19:29"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9330732292917167,
+      "valor": 0.9577330932372949,
       "total_so": 20000,
       "total_con_pickings": 19992,
-      "cumplidos": 18654,
-      "parciales": 19,
-      "sin_iniciar": 1319,
+      "cumplidos": 19147,
+      "parciales": 20,
+      "sin_iniciar": 825,
       "error": null
     },
     "oct_30d": {
-      "valor": 54.87962318230307,
-      "n_orders": 19790,
+      "valor": 56.82870980197241,
+      "n_orders": 19784,
       "min_h": 0.05361111111111111,
-      "max_h": 699.7586111111111,
-      "mediana_h": 30.54111111111111,
+      "max_h": 709.6244444444444,
+      "mediana_h": 31.503333333333334,
       "detalle": [
+        {
+          "so": "S235636",
+          "cliente": "Cliente Falabella Fcom, ignacio morales marquez",
+          "horas": 709.6,
+          "fecha_orden": "2026-05-25 05:28",
+          "fecha_despacho": "2026-06-23 19:05"
+        },
         {
           "so": "S234962",
           "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
@@ -223,6 +230,20 @@
           "fecha_despacho": "2026-06-11 19:45"
         },
         {
+          "so": "CIERRE MES ABRIL 2026 LHOTSE",
+          "cliente": "Casa Mila SpA",
+          "horas": 699.2,
+          "fecha_orden": "2026-05-25 16:42",
+          "fecha_despacho": "2026-06-23 19:52"
+        },
+        {
+          "so": "CIERRE MES ABRIL 2026 SIMPLIT",
+          "cliente": "Casa Mila SpA",
+          "horas": 698.7,
+          "fecha_orden": "2026-05-25 17:09",
+          "fecha_despacho": "2026-06-23 19:52"
+        },
+        {
           "so": "S234967",
           "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
           "horas": 675.8,
@@ -249,6 +270,13 @@
           "horas": 675.8,
           "fecha_orden": "2026-05-14 16:00",
           "fecha_despacho": "2026-06-11 19:45"
+        },
+        {
+          "so": "S236148",
+          "cliente": "Cliente Falabella Fcom, Juan Lizana molina",
+          "horas": 670.0,
+          "fecha_orden": "2026-05-26 21:06",
+          "fecha_despacho": "2026-06-23 19:05"
         },
         {
           "so": "S234970",
@@ -286,6 +314,13 @@
           "fecha_despacho": "2026-06-11 19:45"
         },
         {
+          "so": "S236543",
+          "cliente": "Cliente Falabella Fcom, Francisca Velasquez Velasquez",
+          "horas": 641.6,
+          "fecha_orden": "2026-05-28 01:31",
+          "fecha_despacho": "2026-06-23 19:05"
+        },
+        {
           "so": "S234975",
           "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
           "horas": 627.8,
@@ -293,46 +328,11 @@
           "fecha_despacho": "2026-06-11 19:45"
         },
         {
-          "so": "S234977",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 603.8,
-          "fecha_orden": "2026-05-17 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234976",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 603.8,
-          "fecha_orden": "2026-05-17 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234978",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 603.8,
-          "fecha_orden": "2026-05-17 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234979",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 603.8,
-          "fecha_orden": "2026-05-17 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234981",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 579.8,
-          "fecha_orden": "2026-05-18 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234980",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 579.8,
-          "fecha_orden": "2026-05-18 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
+          "so": "S236953",
+          "cliente": "Cliente Falabella Fcom, Katharine Paredes Maurel",
+          "horas": 604.9,
+          "fecha_orden": "2026-05-29 14:14",
+          "fecha_despacho": "2026-06-23 19:05"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 23015,
+      "lineas": 23961,
       "mes": "2026-06",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 181,
-      "outgoing": 29566,
-      "internal": 20253,
+      "outgoing": 29675,
+      "internal": 20144,
       "total": 50000,
       "error": null
     },
@@ -361,8 +361,14 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 379,
-          "tarde": 379,
+          "total": 380,
+          "tarde": 380,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Casa Mila SpA",
+          "total": 6,
+          "tarde": 6,
           "on_time_pct": 0.0
         },
         {
@@ -391,14 +397,14 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 123,
-          "tarde": 123,
+          "total": 124,
+          "tarde": 124,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 79,
-          "tarde": 79,
+          "total": 86,
+          "tarde": 86,
           "on_time_pct": 0.0
         },
         {
@@ -421,9 +427,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 48,
-          "tarde": 45,
-          "on_time_pct": 0.0625
+          "total": 51,
+          "tarde": 48,
+          "on_time_pct": 0.058823529411764705
         },
         {
           "cliente": "COMERCIAL DITEN LIMITADA",
@@ -439,12 +445,6 @@
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
-          "total": 4,
-          "tarde": 0,
-          "on_time_pct": 1.0
-        },
-        {
-          "cliente": "Cencosud Retail S.A",
           "total": 4,
           "tarde": 0,
           "on_time_pct": 1.0
@@ -6748,32 +6748,67 @@
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.03087248322147651,
-      "total_pickings": 745,
-      "on_time": 23,
-      "on_time_pct": 0.03087248322147651,
-      "in_full": 742,
-      "in_full_pct": 0.9959731543624161,
-      "both": 23,
+      "valor": 0.032679738562091505,
+      "total_pickings": 765,
+      "on_time": 25,
+      "on_time_pct": 0.032679738562091505,
+      "in_full": 761,
+      "in_full_pct": 0.9947712418300654,
+      "both": 25,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999888455103179,
-      "ok": 26892,
-      "total": 26895,
+      "valor": 0.9998922452498115,
+      "ok": 27838,
+      "total": 27841,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.014907828282828,
-      "n_recepciones": 220,
+      "valor": 11.747996296296296,
+      "n_recepciones": 225,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01020",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:50",
+          "done": "2026-06-23 19:51"
+        },
+        {
+          "picking": "CA1/RET/01019",
+          "proveedor": "Casa Mila SpA",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:50",
+          "done": "2026-06-23 19:50"
+        },
+        {
+          "picking": "CA1/RET/01018",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:04",
+          "done": "2026-06-23 19:05"
+        },
+        {
+          "picking": "CA1/RET/01017",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:04",
+          "done": "2026-06-23 19:04"
+        },
+        {
+          "picking": "CA1/RET/01016",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-23 19:02",
+          "done": "2026-06-23 19:03"
+        },
         {
           "picking": "CA1/IN/00901",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -6878,41 +6913,6 @@
           "horas": 0.0,
           "scheduled": "2026-06-12 16:17",
           "done": "2026-06-12 16:17"
-        },
-        {
-          "picking": "CA1/IN/00888",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 16:15",
-          "done": "2026-06-12 16:16"
-        },
-        {
-          "picking": "CA1/IN/00887",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 15:43",
-          "done": "2026-06-12 15:43"
-        },
-        {
-          "picking": "CA1/IN/00886",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 15:42",
-          "done": "2026-06-12 15:42"
-        },
-        {
-          "picking": "CA1/IN/00885",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 14:19",
-          "done": "2026-06-12 14:20"
-        },
-        {
-          "picking": "CA1/RET/01003",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-06-11 19:28",
-          "done": "2026-06-11 19:29"
         }
       ],
       "error": null
