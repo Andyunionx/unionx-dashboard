@@ -1,52 +1,52 @@
 {
-  "generado_en": "2026-06-24T14:03:40.441473",
+  "generado_en": "2026-06-24T19:25:29.224616",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10774,
-  "total_monto_pendiente_clp": 607964733.0,
+  "total_documentos_pendientes": 10748,
+  "total_monto_pendiente_clp": 606624850.0,
   "monto_por_aging": {
     "+90 días": 36713920.0,
-    "1-30 días": 393736619.0,
-    "31-60 días": 56427106.0,
-    "61-90 días": 18610111.0,
-    "Vigente": 102476977.0
+    "1-30 días": 398842666.0,
+    "31-60 días": 50906494.0,
+    "61-90 días": 16371021.0,
+    "Vigente": 103790749.0
   },
   "monto_por_tipo": {
-    "BOLETA": 532942973.0,
+    "BOLETA": 531603090.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 92853136.0
+      "monto": 94040846.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 78110399.0
+      "monto": 80580409.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 77587875.0
+      "monto": 77491894.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
       "monto": 49771354.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 33848490.0
+      "partner": "Cliente Shopify",
+      "monto": 32827128.0
     },
     {
-      "partner": "Cliente Shopify",
-      "monto": 32414931.0
+      "partner": "Cliente Walmart",
+      "monto": 26195768.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 24533537.0
+      "monto": 25377377.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 23305556.0
+      "monto": 23505446.0
     },
     {
       "partner": "abc S.A.",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 19660005.0
+      "monto": 20014415.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -93,10 +93,10 @@
       "monto": 3392680.0
     },
     {
-      "partner": "Sawa SPA",
-      "monto": 3279035.0
+      "partner": "Global Reward Solutions",
+      "monto": 3327423.0
     }
   ],
-  "notas_credito_count": 554,
+  "notas_credito_count": 555,
   "pedidos_venta_count": 10000
 }
