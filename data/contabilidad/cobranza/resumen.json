@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-06-24T08:51:39.592923",
+  "generado_en": "2026-06-24T14:03:40.441473",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10716,
-  "total_monto_pendiente_clp": 605409363.0,
+  "total_documentos_pendientes": 10774,
+  "total_monto_pendiente_clp": 607964733.0,
   "monto_por_aging": {
     "+90 días": 36713920.0,
-    "1-30 días": 391614150.0,
+    "1-30 días": 393736619.0,
     "31-60 días": 56427106.0,
     "61-90 días": 18610111.0,
-    "Vigente": 102044076.0
+    "Vigente": 102476977.0
   },
   "monto_por_tipo": {
-    "BOLETA": 530387603.0,
+    "BOLETA": 532942973.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 92444226.0
+      "monto": 92853136.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 77599959.0
+      "monto": 78110399.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 77330006.0
+      "monto": 77587875.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,11 +34,11 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 33740530.0
+      "monto": 33848490.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 31853054.0
+      "monto": 32414931.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,11 +46,11 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 23292566.0
+      "monto": 23305556.0
     },
     {
       "partner": "abc S.A.",
-      "monto": 20923484.0
+      "monto": 21356385.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 19472075.0
+      "monto": 19660005.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -97,6 +97,6 @@
       "monto": 3279035.0
     }
   ],
-  "notas_credito_count": 552,
+  "notas_credito_count": 554,
   "pedidos_venta_count": 10000
 }
