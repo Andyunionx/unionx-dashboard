@@ -250,6 +250,80 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
     }
 
 
+# ------------------------------------------------------------------ Detalle P&L (RAW + glosas)
+def _mes_a_int(mes):
+    """'Ene'..'May' -> 1..5; 'YTD' -> None."""
+    return None if mes == "YTD" else (MES_NOM.index(mes) if mes in MES_NOM else None)
+
+
+def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS"):
+    """P&L comercial detallado desde el RAW (+ glosas), por mes/canal/kam.
+
+    raw_comp: filas {Canal, KAM, Tipo('ing_prod'|'ing_envio'|'nc'), Mes(int),
+              OrigenAnio, OrigenMes, Venta, Costo}.
+    glosas_comp: filas {Canal, KAM, Mes(int), Cat('venta'|'envio'|'mkt'|'otro'),
+                 OrigenAnio, OrigenMes, Monto}.
+    Regla período (intrínseca a cada fila): origen 2026 y OrigenMes == Mes de registro.
+    NC otro 2026 = origen 2026 pero otro mes; NC otro 2025 = origen <= 2025.
+    """
+    mi = _mes_a_int(mes)
+
+    def _flt(df):
+        if df is None or not len(df):
+            return df if df is not None else pd.DataFrame()
+        m = df
+        if canal != "TODOS":
+            m = m[m["Canal"] == canal]
+        if kam != "TODOS":
+            m = m[m["KAM"] == kam]
+        if mi is not None:
+            m = m[m["Mes"] == mi]
+        return m
+
+    rc = _flt(raw_comp)
+    s = lambda d, col: float(d[col].sum()) if len(d) else 0.0
+
+    prod = rc[rc["Tipo"] == "ing_prod"] if len(rc) else rc
+    env = rc[rc["Tipo"] == "ing_envio"] if len(rc) else rc
+    nc = rc[rc["Tipo"] == "nc"] if len(rc) else rc
+    ing_prod, costo_prod = s(prod, "Venta"), s(prod, "Costo")
+    ing_env, costo_env = s(env, "Venta"), s(env, "Costo")
+    if len(nc):
+        per = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] == nc["Mes"])]
+        o26 = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] != nc["Mes"])]
+        o25 = nc[nc["OrigenAnio"] <= 2025]
+    else:
+        per = o26 = o25 = nc
+    nc_per_v, nc_per_c = s(per, "Venta"), s(per, "Costo")
+    nc_o26_v, nc_o26_c = s(o26, "Venta"), s(o26, "Costo")
+    nc_o25_v, nc_o25_c = s(o25, "Venta"), s(o25, "Costo")
+
+    costo = costo_prod + costo_env + nc_per_c + nc_o26_c + nc_o25_c
+    venta_neta = ing_prod + ing_env + nc_per_v + nc_o26_v + nc_o25_v
+    margen_directo = venta_neta - costo
+
+    gc = _flt(glosas_comp)
+    if len(gc):
+        es_per = (gc["OrigenAnio"] == 2026) & (gc["OrigenMes"] == gc["Mes"])
+        per_g = gc[es_per]
+        com_v = float(per_g[per_g["Cat"] == "venta"]["Monto"].sum())
+        com_e = float(per_g[per_g["Cat"] == "envio"]["Monto"].sum())
+        com_m = float(per_g[per_g["Cat"] == "mkt"]["Monto"].sum())
+        glosa_otro = float(gc[~es_per]["Monto"].sum())
+    else:
+        com_v = com_e = com_m = glosa_otro = 0.0
+
+    margen_contrib = margen_directo - com_v - com_e - com_m - glosa_otro
+    return {
+        "ing_prod": ing_prod, "ing_env": ing_env,
+        "nc_per": nc_per_v, "nc_o2026": nc_o26_v, "nc_o2025": nc_o25_v,
+        "costo": costo, "costo_ing": costo_prod + costo_env, "costo_nc": nc_per_c + nc_o26_c + nc_o25_c,
+        "margen_directo": margen_directo,
+        "com_venta": com_v, "com_envio": com_e, "com_mkt": com_m, "glosa_otro": glosa_otro,
+        "margen_contrib": margen_contrib, "venta_neta": venta_neta,
+    }
+
+
 # ------------------------------------------------------------------ Bloque B2B (Distribución / Nicolás)
 NEG_IX = 1  # columna Negocio en 'Análisis de Resultados'
 
