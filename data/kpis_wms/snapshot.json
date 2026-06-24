@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-24T06:51:09.617877",
+  "generado_en": "2026-06-24T17:07:25.514450",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
@@ -23,18 +23,39 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998922452498115,
-      "ok": 27838,
-      "total": 27841,
+      "valor": 0.999892322601486,
+      "ok": 27858,
+      "total": 27861,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.747996296296296,
-      "n_recepciones": 225,
+      "valor": 11.593534356725145,
+      "n_recepciones": 228,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01025",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-24 13:44",
+          "done": "2026-06-24 13:44"
+        },
+        {
+          "picking": "CA1/RET/01022",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-24 13:42",
+          "done": "2026-06-24 13:43"
+        },
+        {
+          "picking": "CA1/RET/01021",
+          "proveedor": "EasyWays Chile SpA",
+          "horas": 0.0,
+          "scheduled": "2026-06-24 13:35",
+          "done": "2026-06-24 13:35"
+        },
         {
           "picking": "CA1/RET/01020",
           "proveedor": "Casa Mila SpA",
@@ -153,38 +174,17 @@
           "horas": 0.0,
           "scheduled": "2026-06-15 14:30",
           "done": "2026-06-15 14:31"
-        },
-        {
-          "picking": "CA1/IN/00892",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:22",
-          "done": "2026-06-15 14:23"
-        },
-        {
-          "picking": "CA1/IN/00891",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:20",
-          "done": "2026-06-15 14:20"
-        },
-        {
-          "picking": "CA1/IN/00889",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 16:17",
-          "done": "2026-06-12 16:17"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9577330932372949,
+      "valor": 0.9494898979795959,
       "total_so": 20000,
-      "total_con_pickings": 19992,
-      "cumplidos": 19147,
+      "total_con_pickings": 19996,
+      "cumplidos": 18986,
       "parciales": 20,
-      "sin_iniciar": 825,
+      "sin_iniciar": 990,
       "error": null
     },
     "oct_30d": {
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 23961,
+      "lineas": 23981,
       "mes": "2026-06",
       "error": null
     },
@@ -6760,20 +6760,41 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998922452498115,
-      "ok": 27838,
-      "total": 27841,
+      "valor": 0.999892322601486,
+      "ok": 27858,
+      "total": 27861,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.747996296296296,
-      "n_recepciones": 225,
+      "valor": 11.593534356725145,
+      "n_recepciones": 228,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01025",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-24 13:44",
+          "done": "2026-06-24 13:44"
+        },
+        {
+          "picking": "CA1/RET/01022",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-06-24 13:42",
+          "done": "2026-06-24 13:43"
+        },
+        {
+          "picking": "CA1/RET/01021",
+          "proveedor": "EasyWays Chile SpA",
+          "horas": 0.0,
+          "scheduled": "2026-06-24 13:35",
+          "done": "2026-06-24 13:35"
+        },
         {
           "picking": "CA1/RET/01020",
           "proveedor": "Casa Mila SpA",
@@ -6892,27 +6913,6 @@
           "horas": 0.0,
           "scheduled": "2026-06-15 14:30",
           "done": "2026-06-15 14:31"
-        },
-        {
-          "picking": "CA1/IN/00892",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:22",
-          "done": "2026-06-15 14:23"
-        },
-        {
-          "picking": "CA1/IN/00891",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-15 14:20",
-          "done": "2026-06-15 14:20"
-        },
-        {
-          "picking": "CA1/IN/00889",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-12 16:17",
-          "done": "2026-06-12 16:17"
         }
       ],
       "error": null
