@@ -289,9 +289,14 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
     ing_prod, costo_prod = s(prod, "Venta"), s(prod, "Costo")
     ing_env, costo_env = s(env, "Venta"), s(env, "Costo")
     if len(nc):
-        per = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] == nc["Mes"])]
-        o26 = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] != nc["Mes"])]
-        o25 = nc[nc["OrigenAnio"] <= 2025]
+        if mi is None:        # YTD: del período = todo 2026; otro período 2026 vacío; otro = 2025
+            per = nc[nc["OrigenAnio"] == 2026]
+            o26 = nc.iloc[0:0]
+            o25 = nc[nc["OrigenAnio"] <= 2025]
+        else:                 # mes: del período = origen ese mes; otro 2026 = otro mes 2026; otro = 2025
+            per = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] == mi)]
+            o26 = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] != mi)]
+            o25 = nc[nc["OrigenAnio"] <= 2025]
     else:
         per = o26 = o25 = nc
     nc_per_v, nc_per_c = s(per, "Venta"), s(per, "Costo")
@@ -304,7 +309,8 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
 
     gc = _flt(glosas_comp)
     if len(gc):
-        es_per = (gc["OrigenAnio"] == 2026) & (gc["OrigenMes"] == gc["Mes"])
+        es_per = ((gc["OrigenAnio"] == 2026) if mi is None
+                  else ((gc["OrigenAnio"] == 2026) & (gc["OrigenMes"] == mi)))
         per_g = gc[es_per]
         com_v = float(per_g[per_g["Cat"] == "venta"]["Monto"].sum())
         com_e = float(per_g[per_g["Cat"] == "envio"]["Monto"].sum())

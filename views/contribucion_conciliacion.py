@@ -194,12 +194,12 @@ def render():
     pyl = R["pyl"].copy()
     pv = pyl.set_index("Línea")
     gl = lambda ln, col: float(pv.loc[ln, col])
-    # (Línea, comercial, contable, tipo). Ingresos → comercial (venta bruta);
-    # NC y glosa de otro período → CONTABLE (la contable está neta de devoluciones y refleja el timing).
+    # (Línea, comercial, contable, tipo). Todo el desglose del RAW (Odoo) es base CONTABLE:
+    # la contable ≈ RAW neto (ingreso bruto − NC). El comercial sale de la hoja (KAM), no se desglosa.
     pl = [
         ("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row"),
-        ("    · Ingreso por producto", D["ing_prod"], None, "memo"),
-        ("    · Ingreso por envío", D["ing_env"], None, "memo"),
+        ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
+        ("    · Ingreso por envío", None, D["ing_env"], "memo"),
         ("    · NC del período", None, D["nc_per"], "memo"),
         ("    · NC otro período 2026", None, D["nc_o2026"], "memo"),
         ("    · NC otro período 2025", None, D["nc_o2025"], "memo"),
@@ -241,9 +241,10 @@ def render():
     with col_pl:
         st.markdown("### P&L (Comercial vs Contable)")
         st.dataframe(disp.style.apply(_sty_pl, axis=1), width="stretch", hide_index=True, height=500)
-        st.caption("Filas en gris (·) = desglose del RAW (Odoo + glosas) que complementa: el **ingreso "
-                   "producto/envío** abre la venta comercial (bruta); las **NC** y la **glosa de otro período** "
-                   "van del lado **contable**, porque la contable está neta de devoluciones y refleja el timing.")
+        st.caption("Filas en gris (·) = desglose del RAW (Odoo + glosas), que es **base contable**: "
+                   "ingreso producto/envío (bruto) − NC ≈ Venta Contable. El **Comercial** sale de la hoja "
+                   "(KAM) y no se desglosa. 'NC otro período 2026' solo se llena al elegir un mes (en YTD "
+                   "todo 2026 es 'del período').")
     with col_pct:
         st.markdown("### % sobre venta")
         st.dataframe(pct_df, width="stretch", hide_index=True)
