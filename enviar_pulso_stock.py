@@ -120,7 +120,7 @@ def construir_html() -> tuple[str, str]:
 <b>tabla dinámica interactiva por bodega</b> (arrastrá Marca/Categoría/SKU/Bodega; se refresca
 sola al abrir) + hoja <b>Stock por Bodega</b> con la sábana completa para planificación.</div>
 <div style="margin-top:16px;font-size:12px;color:#475569;">
-🔗 Dashboard Stock LIVE: <a href="https://unionx-ventas.streamlit.app/ops_stock_live">unionx-ventas.streamlit.app/ops_stock_live</a></div>
+🔗 Dashboard Stock LIVE: <a href="https://unionx-ventas.streamlit.app/stock-live">unionx-ventas.streamlit.app/stock-live</a></div>
 </div>"""
     return html, clp(tot_val)
 
