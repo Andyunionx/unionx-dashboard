@@ -126,6 +126,29 @@ def generar_excel_aprobacion(
             ws.row_dimensions[fila_actual].height = 26
             total_global += linea.monto_neto; fila_actual += 1
 
+        # Líneas ya asignadas a su cuenta correcta — informativas (sin acción).
+        # Col A vacía + APROBADO vacía → el aplicador las ignora (no las toca).
+        ids_catchall = {l.line_id for l in lineas_catchall}
+        GRIS_TXT = "78909C"
+        for linea in factura.lineas:
+            if linea.line_id in ids_catchall:
+                continue
+            _cell(ws, fila_actual, 1, fondo=GRIS_CLARO)
+            _cell(ws, fila_actual, 2, linea.line_id, align="center", fondo=GRIS_CLARO, color_txt=GRIS_TXT, size=9)
+            _cell(ws, fila_actual, 3, linea.glosa, fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 4, linea.cuenta_actual_codigo, align="center", fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 5, linea.cuenta_actual_nombre, fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 6, "—", align="center", fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 7, "Ya asignada — sin acción", fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 8, linea.monto_neto, num_fmt="#,##0", align="right", fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 9, "—", align="center", fondo=GRIS_CLARO, color_txt=GRIS_TXT)
+            _cell(ws, fila_actual, 10, fondo=GRIS_CLARO)
+            _cell(ws, fila_actual, 11, fondo=GRIS_CLARO)
+            _cell(ws, fila_actual, 12, fondo=GRIS_CLARO)
+            _cell(ws, fila_actual, 13, fondo=GRIS_CLARO)
+            ws.row_dimensions[fila_actual].height = 22
+            fila_actual += 1
+
         fila_actual += 1
 
     ws.merge_cells(f"A{fila_actual}:G{fila_actual}")
@@ -147,6 +170,8 @@ def generar_excel_aprobacion(
         ("2. Columna APROBADO (L)","SI = de acuerdo con la cuenta propuesta."),
         ("   Si NO","Escribe NO y completa columna M con el código correcto."),
         ("3. Guarda y responde","Responde este correo con el archivo adjunto."),
+        ("Filas grises","Líneas YA asignadas a su cuenta correcta (ENVÍOS/MARKETING). "
+                        "Son informativas para que el total de la factura cuadre — no requieren acción."),
         ("",""),("CUENTAS VÁLIDAS:",""),
     ]
     for i, (lbl, val) in enumerate(instrucciones, start=1):
