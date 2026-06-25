@@ -60,6 +60,20 @@ wmay = wms[(wms["fecha_done"].dt.year == 2026) & (wms["fecha_done"].dt.month == 
 wmay_v = dict(upick=_filt(wmay, "pick")["n_unidades"].sum(), pent=len(_filt(wmay, "ent")),
               uent=_filt(wmay, "ent")["n_unidades"].sum())
 
+# -- Mes en curso: acumulado por SEMANAS CERRADAS (alinea uds + horas) --------
+MES_ACT, YEAR_ACT = _hoy.month, _hoy.year
+MESES = {1: "ene", 2: "feb", 3: "mar", 4: "abr", 5: "may", 6: "jun",
+         7: "jul", 8: "ago", 9: "sep", 10: "oct", 11: "nov", 12: "dic"}
+MES_ACT_LBL = MESES.get(MES_ACT, str(MES_ACT)).capitalize()
+# semanas L-D completas (<= W_ACT) cuyo fin cae en el mes en curso
+SEM_MES = [p for p in sorted(set(wms["sem"].dropna().unique()))
+           if p <= W_ACT and p.end_time.month == MES_ACT and p.end_time.year == YEAR_ACT]
+wmes = wms[wms["sem"].isin(SEM_MES)]
+wmes_v = dict(upick=_filt(wmes, "pick")["n_unidades"].sum(), pent=len(_filt(wmes, "ent")),
+              uent=_filt(wmes, "ent")["n_unidades"].sum())
+h_mes = sum(horas_de(_key(p)) for p in SEM_MES)
+n_sem_mes = len(SEM_MES)
+
 # -- Ventas total empresa (para COP) ----------------------------------------
 mesact = pd.read_parquet(ROOT / "data/historico/ventas_mes_actual.parquet",
                          columns=["fecha_venta", "pedido", "cantidad", "venta_neta"])
@@ -73,12 +87,16 @@ hist = pd.read_parquet(ROOT / "data/historico/ventas_historico.parquet",
                        columns=["anio_venta", "mes_venta", "pedido", "cantidad", "venta_neta"])
 hmay = hist[(hist["anio_venta"] == 2026) & (hist["mes_venta"] == MES_REF)]
 p_may, u_may, vn_may = hmay["pedido"].nunique(), hmay["cantidad"].sum(), hmay["venta_neta"].sum()
+# ventas del mes en curso, mismas semanas cerradas (para COP / %costo·venta)
+vmes = mesact[mesact["sem"].isin(SEM_MES)]
+p_mes, u_mes, vn_mes = vmes["pedido"].nunique(), vmes["cantidad"].sum(), vmes["venta_neta"].sum()
 
 # -- Costo operativo TOTAL (P&L area OPERACIONES, FCST=real) -----------------
 cg = pd.read_parquet(ROOT / "data/finanzas/control_gestion.parquet")
 costo_mes = abs(cg[(cg["year"] == 2026) & (cg["month"] == MES_REF) & (cg["area"] == "OPERACIONES")
                    & (cg["kpi"] == "GASTO") & (cg["escenario"] == "FCST")]["valor"].sum()) * 1000
 costo_sem = costo_mes / 4.33  # prorrateo run-rate (costo mayormente fijo)
+costo_mes_acum = costo_sem * n_sem_mes  # run-rate mayo x semanas cerradas del mes en curso
 
 # -- Productividad y COP por columna -----------------------------------------
 h_act, h_prev = horas_de(_key(W_ACT)), horas_de(_key(W_PREV))
@@ -91,6 +109,11 @@ copp_a, copp_p, copp_may = cp(pa), cp(pp), (costo_mes / p_may if p_may else 0)
 pctv_a = costo_sem / vna * 100 if vna else 0
 pctv_p = costo_sem / vnp * 100 if vnp else 0
 pctv_may = costo_mes / vn_may * 100 if vn_may else 0
+# eficiencia del mes en curso (acumulado de semanas cerradas)
+prod_mes = prod(wmes_v["upick"], h_mes)
+copu_mes = (costo_mes_acum / u_mes) if u_mes else 0
+copp_mes = (costo_mes_acum / p_mes) if p_mes else 0
+pctv_mes = (costo_mes_acum / vn_mes * 100) if vn_mes else 0
 BENCH = 40.1
 
 # -- Servicio (snapshot) + Stock ---------------------------------------------
@@ -120,29 +143,31 @@ def flecha(cur, ref, mejor_arriba=True):
 
 lbl_a, lbl_p = _wlbl(W_ACT), _wlbl(W_PREV)
 HOP = (f'<tr style="background:{AZ};">{th("Operación (CA1)","left")}{th("Sem "+lbl_a)}'
-       f'{th("Sem "+lbl_p)}{th("Δ sem ant")}{th("Mayo mes")}</tr>')
-def rop(i, lbl, a, p, may):
+       f'{th("Sem "+lbl_p)}{th("Δ sem ant")}{th(MES_ACT_LBL+" (acum)")}{th("Mayo mes")}</tr>')
+def rop(i, lbl, a, p, mes, may):
     f, col = flecha(a, p)
     return tr(i, [td(lbl, "left"), td(miles(a), c="font-weight:bold;"), td(miles(p), c="color:#94a3b8;"),
-                  td(f, c=f"color:{col};"), td(miles(may))])
+                  td(f, c=f"color:{col};"), td(miles(mes), c=f"font-weight:bold;color:{AZ};"), td(miles(may))])
 op_tbl = f'<table style="width:100%;border-collapse:collapse;">{HOP}' + \
-    rop(0, "Uds pickeadas", wa["upick"], wp["upick"], wmay_v["upick"]) + \
-    rop(1, "Uds entregadas", wa["uent"], wp["uent"], wmay_v["uent"]) + \
-    rop(0, "Pedidos despachados", wa["pent"], wp["pent"], wmay_v["pent"]) + \
-    rop(1, "Horas (h·pers)", h_act, h_prev, HORAS_MES_REF) + "</table>"
+    rop(0, "Uds pickeadas", wa["upick"], wp["upick"], wmes_v["upick"], wmay_v["upick"]) + \
+    rop(1, "Uds entregadas", wa["uent"], wp["uent"], wmes_v["uent"], wmay_v["uent"]) + \
+    rop(0, "Pedidos despachados", wa["pent"], wp["pent"], wmes_v["pent"], wmay_v["pent"]) + \
+    rop(1, "Horas (h·pers)", h_act, h_prev, h_mes, HORAS_MES_REF) + "</table>"
 
 HEF = (f'<tr style="background:{AZ};">{th("Eficiencia","left")}{th("Sem "+lbl_a)}'
-       f'{th("Sem "+lbl_p)}{th("Mayo mes")}{th("Δ vs Mayo")}</tr>')
-def reff(i, lbl, a, p, may, fmt, mejor_arriba):
+       f'{th("Sem "+lbl_p)}{th(MES_ACT_LBL+" (acum)")}{th("Mayo mes")}{th("Δ vs Mayo")}</tr>')
+def reff(i, lbl, a, p, mes, may, fmt, mejor_arriba):
     f, col = flecha(a, may, mejor_arriba)
+    # mes=None -> COP no se acumula (el Cyber distorsiona el costo del mes)
+    cmes = td(fmt(mes), c=f"font-weight:bold;color:{AZ};") if mes is not None else td("—", "center", c=f"color:{GR2};")
     return tr(i, [td(lbl, "left"), td(fmt(a), c="font-weight:bold;"), td(fmt(p), c="color:#94a3b8;"),
-                  td(fmt(may)), td(f, c=f"color:{col};")])
+                  cmes, td(fmt(may)), td(f, c=f"color:{col};")])
 _p1 = lambda x: f"{x:.1f}"
 ef_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEF}' + \
-    reff(0, "Productividad (uds pick/h)", prod_a, prod_p, prod_may, _p1, True) + \
-    reff(1, "COP / unidad", copu_a, copu_p, copu_may, clp, False) + \
-    reff(0, "COP / pedido", copp_a, copp_p, copp_may, clp, False) + \
-    reff(1, "% Costo / venta", pctv_a, pctv_p, pctv_may, lambda x: f"{x:.1f}%", False) + "</table>"
+    reff(0, "Productividad (uds pick/h)", prod_a, prod_p, prod_mes, prod_may, _p1, True) + \
+    reff(1, "COP / unidad", copu_a, copu_p, None, copu_may, clp, False) + \
+    reff(0, "COP / pedido", copp_a, copp_p, None, copp_may, clp, False) + \
+    reff(1, "% Costo / venta", pctv_a, pctv_p, None, pctv_may, lambda x: f"{x:.1f}%", False) + "</table>"
 
 otif_txt = " → ".join(f"{m[-2:]} {v:.1f}%" for m, v in otif_ser) if otif_ser else "s/d"
 otif_dir = (f"{DN} cayendo" if (otif_ser and otif_ser[-1][1] < otif_ser[0][1]) else "➡️ estable")
@@ -153,13 +178,13 @@ html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:740px;l
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Operación</h3>
 {op_tbl}
-<div style="font-size:11px;color:{GR2};">Volúmenes: comparación semana vs semana · Mayo mes = escala (total del mes).</div>
+<div style="font-size:11px;color:{GR2};">Volúmenes: semana vs semana · <b>{MES_ACT_LBL} (acum)</b> = suma de las {n_sem_mes} semanas L-D cerradas del mes en curso · Mayo mes = escala (total del mes).</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Eficiencia (vs Mayo mes)</h3>
 {ef_tbl}
 <div style="font-size:11px;color:{GR2};">Productividad = uds pickeadas / horas reales de la semana (bench {BENCH} uds/h).
 COP = costo operativo total prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ volumen.
-COP/unidad = métrica primaria. Comparación vs Mayo mes (cierra el sesgo de una semana alta/baja).</div>
+COP/unidad = métrica primaria. {MES_ACT_LBL} (acum) muestra solo productividad del mes ({n_sem_mes} semanas cerradas); el COP no se acumula porque el Cyber lo distorsiona (se reporta aparte). Δ vs Mayo mes (cierra el sesgo de una semana alta/baja).</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio &amp; Stock</h3>
 <div style="font-size:13px;">OTIF mensual: {otif_txt} <b>{otif_dir}</b> · OFR {ofr:.1f}% · OCT {oct_med:.0f}h · Pick {pacc:.2f}%</div>
@@ -172,6 +197,8 @@ if __name__ == "__main__":
     print(f"Uds pick: act {miles(wa['upick'])} | prev {miles(wp['upick'])} | mayo {miles(wmay_v['upick'])}")
     print(f"Uds ent : act {miles(wa['uent'])} | prev {miles(wp['uent'])} | mayo {miles(wmay_v['uent'])}")
     print(f"Prod    : act {prod_a:.1f} | prev {prod_p:.1f} | mayo {prod_may:.1f} uds/h")
+    print(f"MES {MES_ACT_LBL} acum ({n_sem_mes} sem cerradas {[_key(p) for p in SEM_MES]}):")
+    print(f"  pick {miles(wmes_v['upick'])} | ent {miles(wmes_v['uent'])} | ped {miles(wmes_v['pent'])} | horas {h_mes:.0f} | prod {prod_mes:.1f} uds/h | COP/uds {clp(copu_mes)} | %cto/vta {pctv_mes:.1f}%")
     print(f"Costo   : mes {clp(costo_mes)} | sem {clp(costo_sem)}")
     print(f"COP/uds : act {clp(copu_a)} | prev {clp(copu_p)} | mayo {clp(copu_may)}")
     print(f"COP/ped : act {clp(copp_a)} | prev {clp(copp_p)} | mayo {clp(copp_may)}")
