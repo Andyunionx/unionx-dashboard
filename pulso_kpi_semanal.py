@@ -19,7 +19,7 @@ import os, sys, json, base64, datetime
 from pathlib import Path
 import pandas as pd
 
-ROOT = Path(r"g:\Mi unidad\TRABAJO\RESPALDO\OPERACIONES\UNION X - IA")
+ROOT = Path(__file__).resolve().parent  # repo root (funciona local y en CI)
 sys.path.insert(0, str(ROOT / "agente-comex"))
 AZ = "#1F4E79"; UNX = "#4884FC"; GR = "#EBF0F8"; VE = "#16a34a"; RO = "#dc2626"; GR2 = "#64748B"
 def clp(n): return "$" + "{:,.0f}".format(n).replace(",", ".")

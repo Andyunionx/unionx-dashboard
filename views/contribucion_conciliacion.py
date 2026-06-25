@@ -18,7 +18,8 @@ import streamlit as st
 
 from views.contribucion_loader import cargar_hoja, fmt_pesos
 from views._conciliacion import (construir_dataframes, calcular, construir_workbook, MESES_OPT,
-                                 construir_b2b, calcular_b2b)
+                                 construir_b2b, calcular_b2b, calcular_detalle,
+                                 _norm, _mes_num, _origen_glosa, num)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
@@ -80,6 +81,66 @@ def _render_b2b(b):
                "Casa Mila, Ferretería, Amar, etc.). Comparación de presupuesto a nivel total.")
 
 
+@st.cache_data(ttl=3600, show_spinner="Cargando detalle RAW…")
+def _detalle_components(canales, canal_kam_items):
+    """Componentes del P&L detallado desde el RAW (ingresos/NC) + glosas (comisiones).
+    Solo canales con KAM comercial. Devuelve (raw_comp, glosas_comp)."""
+    conkam = {_norm(c): c for c in canales}          # norm -> nombre display
+    canal_kam = dict(canal_kam_items)
+    con = duckdb.connect()
+    P = PARQUET.as_posix()
+    ing = con.execute(f"""
+        SELECT mes_venta mes, canal,
+               CASE WHEN es_despacho THEN 'ing_envio' ELSE 'ing_prod' END tipo,
+               sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
+        FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND 5 AND tipo_movimiento='Venta'
+        GROUP BY 1,2,3""").fetchdf()
+    nc = con.execute(f"""
+        SELECT CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) mes, canal,
+               anio_venta oa, mes_venta om,
+               sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
+        FROM '{P}' WHERE tipo_movimiento='Devolución'
+          AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
+          AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
+        GROUP BY 1,2,3,4""").fetchdf()
+    rows = []
+    for _, r in ing.iterrows():
+        d = conkam.get(_norm(r.canal))
+        if not d:
+            continue
+        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Tipo": r.tipo, "Mes": int(r.mes),
+                     "OrigenAnio": 0, "OrigenMes": 0, "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
+    for _, r in nc.iterrows():
+        d = conkam.get(_norm(r.canal))
+        if not d:
+            continue
+        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Tipo": "nc", "Mes": int(r.mes),
+                     "OrigenAnio": int(r.oa or 0), "OrigenMes": int(r.om or 0),
+                     "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
+    raw_comp = pd.DataFrame(rows)
+
+    try:
+        df_gl = cargar_hoja("Detalle Glosas 2026")
+    except Exception:
+        df_gl = pd.DataFrame()
+    CATMAP = [("comision venta", "venta"), ("comision envio", "envio"), ("marketing", "mkt")]
+    grows = []
+    for _, r in df_gl.iterrows():
+        d = conkam.get(_norm(r.get("Canal", "")))
+        if not d:
+            continue
+        m = _mes_num(r.get("Mes", ""))
+        if not m:
+            continue
+        oa, om = _origen_glosa(r.get("Glosa", ""), m)
+        cn = _norm(r.get("Categoría Analítica", ""))
+        cat = next((v for k, v in CATMAP if k in cn), "otro")
+        grows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Mes": int(m), "Cat": cat,
+                      "OrigenAnio": int(oa), "OrigenMes": int(om), "Monto": num(r.get("Monto ($)", ""))})
+    glosas_comp = pd.DataFrame(grows)
+    return raw_comp, glosas_comp
+
+
 def render():
     with st.sidebar:
         st.markdown("### ⚖️ **Conciliación**")
@@ -124,30 +185,66 @@ def render():
     k2.metric("Contribución Contable", fmt_pesos(R["contrib_cont"]))
     k3.metric("Δ Contribución (Com − Cont)", fmt_pesos(R["delta_contrib"]))
 
-    # ---- P&L + % sobre venta (al lado) ----
+    # ---- detalle RAW para complementar Venta y Comisiones ----
+    canal_kam = dict(zip(b["datos"]["Canal"], b["datos"]["KAM"]))
+    raw_comp, glosas_comp = _detalle_components(tuple(b["canales"]), tuple(sorted(canal_kam.items())))
+    D = calcular_detalle(raw_comp, glosas_comp, mes, canal, kam)
+
+    # ---- P&L Comercial vs Contable + sub-filas de desglose (RAW) ----
     pyl = R["pyl"].copy()
-    disp = pyl.copy()
-    for c in ["Comercial", "Contable", "Δ $ (Com−Cont)"]:
-        disp[c] = disp[c].map(fmt_pesos)
-    disp["Δ %"] = pyl["Δ %"].map(lambda v: f"{v*100:.1f}%" if v is not None and pd.notna(v) else "—")
+    pv = pyl.set_index("Línea")
+    gl = lambda ln, col: float(pv.loc[ln, col])
+    # (Línea, comercial, contable, tipo). Todo el desglose del RAW (Odoo) es base CONTABLE:
+    # la contable ≈ RAW neto (ingreso bruto − NC). El comercial sale de la hoja (KAM), no se desglosa.
+    pl = [
+        ("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row"),
+        ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
+        ("    · Ingreso por envío", None, D["ing_env"], "memo"),
+        ("    · NC del período", None, D["nc_per"], "memo"),
+        ("    · NC otro período 2026", None, D["nc_o2026"], "memo"),
+        ("    · NC otro período 2025", None, D["nc_o2025"], "memo"),
+        ("Costo de Venta", gl("Costo de Venta", "Comercial"), gl("Costo de Venta", "Contable"), "row"),
+        ("= Margen Directo", gl("Margen Directo", "Comercial"), gl("Margen Directo", "Contable"), "bold"),
+        ("Comisión Venta", gl("Comisión Venta", "Comercial"), gl("Comisión Venta", "Contable"), "row"),
+        ("Comisión Envío", gl("Comisión Envío", "Comercial"), gl("Comisión Envío", "Contable"), "row"),
+        ("Marketing", gl("Marketing", "Comercial"), gl("Marketing", "Contable"), "row"),
+        ("    · Glosa otro período (timing)", None, -D["glosa_otro"], "memo"),
+        ("= Contribución", gl("Contribución", "Comercial"), gl("Contribución", "Contable"), "head"),
+    ]
+    _f = lambda v: fmt_pesos(v) if v is not None else ""
+    disp = pd.DataFrame([{
+        "Línea": n, "Comercial": _f(com), "Contable": _f(cont),
+        "Δ $ (Com−Cont)": _f(com - cont) if (com is not None and cont is not None) else "",
+        "Δ %": (f"{(com - cont) / abs(cont) * 100:.1f}%" if (com is not None and cont not in (None, 0)) else ""),
+    } for n, com, cont, _ in pl])
+
+    def _sty_pl(row):
+        t = pl[row.name][3]
+        if t == "head":
+            return ["background-color:#DCFCE7;font-weight:700"] * 5
+        if t == "bold":
+            return ["font-weight:700;background-color:#F1F5F9"] * 5
+        if t == "memo":
+            return ["color:#94A3B8;font-style:italic;font-size:0.92em"] * 5
+        return [""] * 5
 
     # estructura % sobre venta (margen, comisiones c/u, marketing, margen contribución)
-    pv = pyl.set_index("Línea")
-    vc = float(pv.loc["Venta", "Comercial"]); vk = float(pv.loc["Venta", "Contable"])
+    vc = gl("Venta", "Comercial"); vk = gl("Venta", "Contable")
     fpct = lambda x, base: (f"{x/base*100:.1f}%" if base else "—")
-    pct_rows = []
-    for ln, etiqueta in [("Margen Directo", "Margen Directo"), ("Comisión Venta", "Comisión Venta"),
-                         ("Comisión Envío", "Comisión Envío"), ("Marketing", "Marketing"),
-                         ("Contribución", "Margen Contribución")]:
-        pct_rows.append({"Línea": etiqueta,
-                         "% Comercial": fpct(float(pv.loc[ln, "Comercial"]), vc),
-                         "% Contable": fpct(float(pv.loc[ln, "Contable"]), vk)})
-    pct_df = pd.DataFrame(pct_rows)
+    pct_df = pd.DataFrame([{"Línea": etq, "% Comercial": fpct(gl(ln, "Comercial"), vc),
+                            "% Contable": fpct(gl(ln, "Contable"), vk)}
+                           for ln, etq in [("Margen Directo", "Margen Directo"), ("Comisión Venta", "Comisión Venta"),
+                                           ("Comisión Envío", "Comisión Envío"), ("Marketing", "Marketing"),
+                                           ("Contribución", "Margen Contribución")]])
 
     col_pl, col_pct = st.columns([3, 2])
     with col_pl:
-        st.markdown("### P&L")
-        st.dataframe(disp, width="stretch", hide_index=True)
+        st.markdown("### P&L (Comercial vs Contable)")
+        st.dataframe(disp.style.apply(_sty_pl, axis=1), width="stretch", hide_index=True, height=500)
+        st.caption("Filas en gris (·) = desglose del RAW (Odoo + glosas), que es **base contable**: "
+                   "ingreso producto/envío (bruto) − NC ≈ Venta Contable. El **Comercial** sale de la hoja "
+                   "(KAM) y no se desglosa. 'NC otro período 2026' solo se llena al elegir un mes (en YTD "
+                   "todo 2026 es 'del período').")
     with col_pct:
         st.markdown("### % sobre venta")
         st.dataframe(pct_df, width="stretch", hide_index=True)
