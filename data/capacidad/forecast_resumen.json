@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-25T15:45:40.238327",
+  "generado_en": "2026-06-25T17:04:38.025207",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1364,
   "capacidad_bodega_m3": 2455.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 936,
     "posiciones_libres_hoy": 428,
     "pct_ocupacion_hoy": 68.6,
-    "m3_stock_calculado": 1237.5
+    "m3_stock_calculado": 1239.5
   },
   "pico_proyectado": {
     "fecha": "2026-06-25",
@@ -23,8 +23,8 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-08-24",
-    "posiciones_ocupadas": 747.5,
-    "pct_ocupacion": 54.8
+    "posiciones_ocupadas": 748.8,
+    "pct_ocupacion": 54.9
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -36,24 +36,24 @@
     },
     {
       "fecha": "2026-07-15",
-      "pallets": 38.3,
-      "m3": 46.0
+      "pallets": 39.5,
+      "m3": 47.4
     }
   ],
   "pis_entrantes": [
     {
       "pi": "26TP0423PI",
       "fecha_eta": "2026-05-20",
-      "pallets": 49.1,
-      "m3": 58.91,
+      "pallets": 54.6,
+      "m3": 65.57,
       "unidades": 7522.0,
       "transporte": ""
     },
     {
       "pi": "26TP0320PI",
       "fecha_eta": "2026-05-21",
-      "pallets": 41.9,
-      "m3": 50.25,
+      "pallets": 47.2,
+      "m3": 56.6,
       "unidades": 2183.0,
       "transporte": ""
     },
@@ -84,24 +84,24 @@
     {
       "pi": "26TP0430PI",
       "fecha_eta": "2026-07-15",
-      "pallets": 38.3,
-      "m3": 46.01,
+      "pallets": 39.5,
+      "m3": 47.35,
       "unidades": 8894.0,
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 240.8,
-  "pallets_total_salientes_horizonte": 264.0,
-  "m3_total_entrante_horizonte": 288.9,
-  "m3_total_saliente_horizonte": 316.8,
+  "pallets_total_entrantes_horizonte": 252.7,
+  "pallets_total_salientes_horizonte": 263.9,
+  "m3_total_entrante_horizonte": 303.3,
+  "m3_total_saliente_horizonte": 316.6,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 628,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 56477.0,
-    "demanda_cumplida_unidades": 17452.0,
-    "demanda_no_cubierta_unidades_total": 39025.0,
+    "demanda_cumplida_unidades": 17444.0,
+    "demanda_no_cubierta_unidades_total": 39033.0,
     "pct_demanda_cumplida": 30.9,
     "sku_sin_match_stock_count": 33,
     "top_no_cubiertos": [
@@ -127,7 +127,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 413.0,
+        "unid_no_cubiertas": 414.0,
         "sin_match_stock": true
       },
       {
@@ -142,7 +142,7 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 280.0,
+        "unid_no_cubiertas": 281.0,
         "sin_match_stock": true
       },
       {
@@ -152,7 +152,7 @@
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 273.0,
+        "unid_no_cubiertas": 274.0,
         "sin_match_stock": true
       },
       {
@@ -172,7 +172,7 @@
       },
       {
         "sku": "1660859171584",
-        "unid_no_cubiertas": 101.0,
+        "unid_no_cubiertas": 102.0,
         "sin_match_stock": true
       },
       {
@@ -187,7 +187,7 @@
       },
       {
         "sku": "1634845754276",
-        "unid_no_cubiertas": 80.0,
+        "unid_no_cubiertas": 81.0,
         "sin_match_stock": true
       },
       {
@@ -196,13 +196,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LHBOLDUFNV-60",
-        "unid_no_cubiertas": 66.0,
+        "sku": "1661872956577",
+        "unid_no_cubiertas": 67.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1661872956577",
-        "unid_no_cubiertas": 64.0,
+        "sku": "LHBOLDUFNV-60",
+        "unid_no_cubiertas": 66.0,
         "sin_match_stock": true
       }
     ],
