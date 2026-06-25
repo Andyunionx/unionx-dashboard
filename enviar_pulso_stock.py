@@ -25,8 +25,9 @@ COLS = ["Bodega", "Ubicacion", "Tipo", "SKU", "Producto", "Categoria",
 
 EMAIL_TO = [e.strip() for e in os.environ.get(
     "EMAIL_TO",
-    "nicolas@unionx.cl,felipe@unionx.cl,andres@unionx.cl,maximiliano@unionx.cl,"
-    "facturacion@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl,sguzman@grupoeter.cl"
+    "nicolas@unionx.cl,nicole@grupoeter.cl,felipe@unionx.cl,sguzman@grupoeter.cl,"
+    "martin@grupoeter.cl,gerardo@unionx.cl,facturacion@unionx.cl,trinidad@unionx.cl,"
+    "ignacia@unionx.cl,claudia@unionx.cl,gabriela@grupoeter.cl,maximiliano@unionx.cl"
 ).split(",") if e.strip()]
 
 AZ = "#1E3A5F"; GR = "#EBF0F8"
@@ -88,7 +89,7 @@ def construir_html() -> tuple[str, str]:
     sv = sku[(sku["Semaforo"] == "SIN VENTA") & (sku["Vta 90d Qty"].fillna(0) == 0)]
 
     html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:680px;line-height:1.5;">
-<h2 style="color:{AZ};margin-bottom:2px;">📦 Pulso Stock UnionX</h2>
+<h2 style="color:{AZ};margin-bottom:2px;">📦 Pulso Stock Live</h2>
 <div style="color:#64748b;font-size:12px;">Foto al {{HOY}}</div>
 <div style="font-size:14px;margin:12px 0;"><b>Inventario total:</b> {clp(tot_val)} ·
 {miles(tot_uds)} uds · {miles(n_sku)} SKUs</div>
@@ -131,7 +132,7 @@ def main():
     html, monto = construir_html()
     html = html.replace("{HOY}", hoy)
     fname = "Pulso Stock LIVE.xlsx"
-    asunto = f"📦 Pulso Stock UnionX · {monto} · {hoy}"
+    asunto = f"📦 Pulso Stock Live · {monto} · {hoy}"
     print(f"Enviando a {len(EMAIL_TO)} destinatarios: {EMAIL_TO}", flush=True)
     msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO)
     print("Enviado. msg_id:", msg_id, flush=True)
