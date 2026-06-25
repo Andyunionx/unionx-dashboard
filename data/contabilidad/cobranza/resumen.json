@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-06-25T14:00:28.733028",
+  "generado_en": "2026-06-25T19:44:41.913068",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10898,
-  "total_monto_pendiente_clp": 612601191.0,
+  "total_documentos_pendientes": 10312,
+  "total_monto_pendiente_clp": 584281416.0,
   "monto_por_aging": {
     "+90 días": 36715733.0,
-    "1-30 días": 404674192.0,
-    "31-60 días": 53773497.0,
+    "1-30 días": 378247746.0,
+    "31-60 días": 52464497.0,
     "61-90 días": 16412168.0,
-    "Vigente": 101025601.0
+    "Vigente": 100441272.0
   },
   "monto_por_tipo": {
-    "BOLETA": 537579431.0,
+    "BOLETA": 509259656.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 95631386.0
-    },
-    {
       "partner": "Cliente Mercado Libre",
-      "monto": 83389833.0
+      "monto": 84534288.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 77491894.0
+      "monto": 78079632.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 68745397.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,43 +34,43 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 33101042.0
+      "monto": 32692182.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 26261218.0
+      "monto": 26354188.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 25377377.0
+      "monto": 24804762.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 23857346.0
+      "monto": 23937266.0
     },
     {
       "partner": "abc S.A.",
       "monto": 21356385.0
     },
     {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 21136999.0
+    },
+    {
       "partner": "Falabella.com SPA",
       "monto": 20915985.0
     },
     {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20576756.0
-    },
-    {
       "partner": "Cliente Paris",
-      "monto": 20554215.0
-    },
-    {
-      "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
-      "monto": 16408250.0
+      "monto": 20786125.0
     },
     {
       "partner": "AUTOBAHN S A",
       "monto": 16301453.0
+    },
+    {
+      "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
+      "monto": 15679970.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 554,
-  "pedidos_venta_count": 10000
+  "pedidos_venta_count": 9723
 }
