@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-26T16:56:00.250383",
+  "generado_en": "2026-06-26T22:02:27.231142",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1364,
   "capacidad_bodega_m3": 2455.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 939,
     "posiciones_libres_hoy": 425,
     "pct_ocupacion_hoy": 68.8,
-    "m3_stock_calculado": 1232.1
+    "m3_stock_calculado": 1175.4
   },
   "pico_proyectado": {
     "fecha": "2026-06-26",
@@ -23,16 +23,16 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-08-25",
-    "posiciones_ocupadas": 747.0,
-    "pct_ocupacion": 54.8
+    "posiciones_ocupadas": 753.5,
+    "pct_ocupacion": 55.2
   },
   "primer_critico": null,
   "primer_atencion": null,
   "dias_con_entrada_transito": [
     {
       "fecha": "2026-07-10",
-      "pallets": 37.2,
-      "m3": 44.6
+      "pallets": 43.7,
+      "m3": 52.5
     },
     {
       "fecha": "2026-07-15",
@@ -44,8 +44,8 @@
     {
       "pi": "26TP0423PI",
       "fecha_eta": "2026-05-20",
-      "pallets": 54.6,
-      "m3": 65.57,
+      "pallets": 55.2,
+      "m3": 66.24,
       "unidades": 7522.0,
       "transporte": ""
     },
@@ -76,8 +76,8 @@
     {
       "pi": "26TP0429PI",
       "fecha_eta": "2026-07-10",
-      "pallets": 37.2,
-      "m3": 44.59,
+      "pallets": 43.7,
+      "m3": 52.46,
       "unidades": 3096.0,
       "transporte": ""
     },
@@ -90,15 +90,15 @@
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 252.7,
+  "pallets_total_entrantes_horizonte": 259.9,
   "pallets_total_salientes_horizonte": 268.7,
-  "m3_total_entrante_horizonte": 303.3,
+  "m3_total_entrante_horizonte": 311.8,
   "m3_total_saliente_horizonte": 322.4,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 628,
-    "sku_fallback": 1,
-    "fallback_vol_m3": 0.00575,
+    "sku_con_vol_odoo": 874,
+    "sku_fallback": 0,
+    "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 55217.0,
     "demanda_cumplida_unidades": 17801.0,
     "demanda_no_cubierta_unidades_total": 37416.0,
@@ -210,7 +210,7 @@
       "Delivery_007"
     ]
   },
-  "stock_anomalies_count": 49,
+  "stock_anomalies_count": 51,
   "top_stock_anomalies": [
     {
       "sku": "6902221386601",
