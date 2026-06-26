@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-06-25T17:13:19.139935",
+  "generado_en": "2026-06-26T06:57:27.045581",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.02905,
+      "valor": 0.02945,
       "total_pickings": 20000,
-      "on_time": 581,
-      "on_time_pct": 0.02905,
+      "on_time": 589,
+      "on_time_pct": 0.02945,
       "in_full": 19997,
       "in_full_pct": 0.99985,
-      "both": 581,
+      "both": 589,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.028985507246376812,
-      "total_pickings": 759,
-      "on_time": 22,
-      "on_time_pct": 0.028985507246376812,
-      "in_full": 755,
-      "in_full_pct": 0.994729907773386,
-      "both": 22,
+      "valor": 0.02807486631016043,
+      "total_pickings": 748,
+      "on_time": 21,
+      "on_time_pct": 0.02807486631016043,
+      "in_full": 744,
+      "in_full_pct": 0.9946524064171123,
+      "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999628942486085,
-      "ok": 26949,
-      "total": 26950,
+      "valor": 0.9999624849939976,
+      "ok": 26655,
+      "total": 26656,
       "errores": 1,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 15.518504464285714,
-      "n_recepciones": 224,
+      "valor": 15.276998525073745,
+      "n_recepciones": 226,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00911",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-25 17:39",
+          "done": "2026-06-25 17:40"
+        },
+        {
+          "picking": "CA1/IN/00909",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-25 17:32",
+          "done": "2026-06-25 17:32"
+        },
+        {
+          "picking": "CA1/IN/00910",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-25 17:32",
+          "done": "2026-06-25 17:32"
+        },
         {
           "picking": "CA1/IN/00908",
           "proveedor": "",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-06-23 14:44",
           "done": "2026-06-23 14:44"
-        },
-        {
-          "picking": "CA1/IN/00897",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 98.6,
-          "scheduled": "2026-06-19 12:00",
-          "done": "2026-06-23 14:34"
-        },
-        {
-          "picking": "CA1/IN/00900",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-23 12:40",
-          "done": "2026-06-23 12:41"
-        },
-        {
-          "picking": "CA1/IN/00898",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 717.3,
-          "scheduled": "2026-05-20 16:48",
-          "done": "2026-06-19 14:04"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9521009248090069,
+      "valor": 0.9399879372738239,
       "total_so": 20000,
       "total_con_pickings": 19896,
-      "cumplidos": 18943,
-      "parciales": 18,
-      "sin_iniciar": 935,
+      "cumplidos": 18702,
+      "parciales": 17,
+      "sin_iniciar": 1177,
       "error": null
     },
     "oct_30d": {
-      "valor": 57.29229913558418,
+      "valor": 56.96831688698043,
       "n_orders": 19795,
       "min_h": 0.05361111111111111,
       "max_h": 709.6244444444444,
-      "mediana_h": 31.865,
+      "mediana_h": 31.656388888888888,
       "detalle": [
         {
           "so": "S235636",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 24518,
+      "lineas": 24560,
       "mes": "2026-06",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 171,
-      "outgoing": 29770,
-      "internal": 20059,
+      "incoming": 170,
+      "outgoing": 29873,
+      "internal": 19957,
       "total": 50000,
       "error": null
     },
@@ -361,20 +361,14 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 378,
-          "tarde": 378,
+          "total": 371,
+          "tarde": 371,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Casa Mila SpA",
           "total": 6,
           "tarde": 6,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
-          "total": 3,
-          "tarde": 3,
           "on_time_pct": 0.0
         },
         {
@@ -433,9 +427,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 45,
-          "tarde": 44,
-          "on_time_pct": 0.022222222222222223
+          "total": 44,
+          "tarde": 43,
+          "on_time_pct": 0.022727272727272728
         },
         {
           "cliente": "COMERCIAL DITEN LIMITADA",
@@ -448,6 +442,12 @@
           "total": 9,
           "tarde": 3,
           "on_time_pct": 0.6666666666666666
+        },
+        {
+          "cliente": "Falabella Retail",
+          "total": 4,
+          "tarde": 0,
+          "on_time_pct": 1.0
         }
       ],
       "error": null
@@ -6738,42 +6738,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.02905,
+      "valor": 0.02945,
       "total_pickings": 20000,
-      "on_time": 581,
-      "on_time_pct": 0.02905,
+      "on_time": 589,
+      "on_time_pct": 0.02945,
       "in_full": 19997,
       "in_full_pct": 0.99985,
-      "both": 581,
+      "both": 589,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.028985507246376812,
-      "total_pickings": 759,
-      "on_time": 22,
-      "on_time_pct": 0.028985507246376812,
-      "in_full": 755,
-      "in_full_pct": 0.994729907773386,
-      "both": 22,
+      "valor": 0.02807486631016043,
+      "total_pickings": 748,
+      "on_time": 21,
+      "on_time_pct": 0.02807486631016043,
+      "in_full": 744,
+      "in_full_pct": 0.9946524064171123,
+      "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999628942486085,
-      "ok": 26949,
-      "total": 26950,
+      "valor": 0.9999624849939976,
+      "ok": 26655,
+      "total": 26656,
       "errores": 1,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 15.518504464285714,
-      "n_recepciones": 224,
+      "valor": 15.276998525073745,
+      "n_recepciones": 226,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00911",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-25 17:39",
+          "done": "2026-06-25 17:40"
+        },
+        {
+          "picking": "CA1/IN/00909",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-25 17:32",
+          "done": "2026-06-25 17:32"
+        },
+        {
+          "picking": "CA1/IN/00910",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-06-25 17:32",
+          "done": "2026-06-25 17:32"
+        },
         {
           "picking": "CA1/IN/00908",
           "proveedor": "",
@@ -6892,27 +6913,6 @@
           "horas": 0.0,
           "scheduled": "2026-06-23 14:44",
           "done": "2026-06-23 14:44"
-        },
-        {
-          "picking": "CA1/IN/00897",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 98.6,
-          "scheduled": "2026-06-19 12:00",
-          "done": "2026-06-23 14:34"
-        },
-        {
-          "picking": "CA1/IN/00900",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-06-23 12:40",
-          "done": "2026-06-23 12:41"
-        },
-        {
-          "picking": "CA1/IN/00898",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 717.3,
-          "scheduled": "2026-05-20 16:48",
-          "done": "2026-06-19 14:04"
         }
       ],
       "error": null
