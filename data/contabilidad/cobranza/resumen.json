@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-26T02:07:56.945826",
+  "generado_en": "2026-06-26T08:48:12.005816",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 9714,
-  "total_monto_pendiente_clp": 561266258.0,
+  "total_documentos_pendientes": 9764,
+  "total_monto_pendiente_clp": 563240477.0,
   "monto_por_aging": {
     "+90 días": 37011465.0,
-    "1-30 días": 355715244.0,
+    "1-30 días": 357689463.0,
     "31-60 días": 53974479.0,
     "61-90 días": 16520934.0,
     "Vigente": 98044136.0
   },
   "monto_por_tipo": {
-    "BOLETA": 486244498.0,
+    "BOLETA": 488218717.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 85913436.0
+      "monto": 87195528.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,15 +30,15 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 48906649.0
+      "monto": 49033599.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 32900138.0
+      "monto": 33128495.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 26428138.0
+      "monto": 26529098.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 24142116.0
+      "monto": 24217066.0
     },
     {
       "partner": "abc S.A.",
@@ -65,12 +65,12 @@
       "monto": 16301453.0
     },
     {
-      "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
-      "monto": 15679970.0
+      "partner": "Cliente Paris",
+      "monto": 15749067.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 15588157.0
+      "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
+      "monto": 15679970.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 558,
-  "pedidos_venta_count": 9121
+  "pedidos_venta_count": 9171
 }
