@@ -1,44 +1,44 @@
 {
-  "generado_en": "2026-06-26T19:27:24.180227",
+  "generado_en": "2026-06-27T02:02:40.826753",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 9627,
-  "total_monto_pendiente_clp": 554942507.0,
+  "total_documentos_pendientes": 9667,
+  "total_monto_pendiente_clp": 557509258.0,
   "monto_por_aging": {
-    "+90 días": 36400002.0,
-    "1-30 días": 349285063.0,
-    "31-60 días": 53817367.0,
-    "61-90 días": 16520934.0,
-    "Vigente": 98919141.0
+    "+90 días": 36413982.0,
+    "1-30 días": 350382487.0,
+    "31-60 días": 56090595.0,
+    "61-90 días": 17051496.0,
+    "Vigente": 97570698.0
   },
   "monto_por_tipo": {
-    "BOLETA": 479920747.0,
+    "BOLETA": 482487498.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 88396527.0
+      "monto": 88943697.0
     },
     {
       "partner": "Cliente Kitchen Center",
       "monto": 78235552.0
     },
     {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 49999779.0
+    },
+    {
       "partner": "Mercadolibre Chile Limitada",
       "monto": 49771354.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 49341939.0
-    },
-    {
       "partner": "Cliente Shopify",
-      "monto": 33046787.0
+      "monto": 33506680.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 26584088.0
+      "monto": 26947018.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -58,7 +58,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 17167091.0
+      "monto": 17280031.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -66,7 +66,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 15861017.0
+      "monto": 16006977.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 558,
-  "pedidos_venta_count": 9034
+  "pedidos_venta_count": 9074
 }
