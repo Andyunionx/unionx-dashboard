@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-06-27T08:25:02.708385",
+  "generado_en": "2026-06-27T13:05:45.465755",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 9692,
-  "total_monto_pendiente_clp": 559300591.0,
+  "total_documentos_pendientes": 9694,
+  "total_monto_pendiente_clp": 559341380.0,
   "monto_por_aging": {
     "+90 días": 36413982.0,
-    "1-30 días": 352173820.0,
+    "1-30 días": 352214609.0,
     "31-60 días": 56090595.0,
     "61-90 días": 17051496.0,
     "Vigente": 97570698.0
   },
   "monto_por_tipo": {
-    "BOLETA": 484278831.0,
+    "BOLETA": 484319620.0,
     "FACTURA": 75021760.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 89230607.0
+      "monto": 89271396.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 558,
-  "pedidos_venta_count": 9099
+  "pedidos_venta_count": 9101
 }
