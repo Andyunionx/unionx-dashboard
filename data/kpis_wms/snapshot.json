@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-06-27T16:07:21.437840",
+  "generado_en": "2026-06-28T07:04:22.925595",
   "mes_actual": "2026-06",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0295,
-      "total_pickings": 20000,
-      "on_time": 590,
-      "on_time_pct": 0.0295,
-      "in_full": 19997,
-      "in_full_pct": 0.99985,
-      "both": 590,
+      "valor": 0.03085427135678392,
+      "total_pickings": 19900,
+      "on_time": 614,
+      "on_time_pct": 0.03085427135678392,
+      "in_full": 19897,
+      "in_full_pct": 0.9998492462311558,
+      "both": 614,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.021709633649932156,
-      "total_pickings": 737,
-      "on_time": 16,
-      "on_time_pct": 0.021709633649932156,
-      "in_full": 733,
-      "in_full_pct": 0.994572591587517,
-      "both": 16,
+      "valor": 0.020833333333333332,
+      "total_pickings": 720,
+      "on_time": 15,
+      "on_time_pct": 0.020833333333333332,
+      "in_full": 716,
+      "in_full_pct": 0.9944444444444445,
+      "both": 15,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999624652803843,
-      "ok": 26641,
-      "total": 26642,
+      "valor": 0.9999620435739771,
+      "ok": 26345,
+      "total": 26346,
       "errores": 1,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9454664254121431,
+      "valor": 0.9362183353437877,
       "total_so": 20000,
       "total_con_pickings": 19896,
-      "cumplidos": 18811,
+      "cumplidos": 18627,
       "parciales": 32,
-      "sin_iniciar": 1053,
+      "sin_iniciar": 1237,
       "error": null
     },
     "oct_30d": {
-      "valor": 57.228257629345194,
-      "n_orders": 19792,
+      "valor": 57.334740006175956,
+      "n_orders": 19790,
       "min_h": 0.006944444444444444,
       "max_h": 709.6244444444444,
-      "mediana_h": 31.981666666666666,
+      "mediana_h": 32.3975,
       "detalle": [
         {
           "so": "S235636",
@@ -352,8 +352,8 @@
     },
     "volumen_movs_90d": {
       "incoming": 171,
-      "outgoing": 29808,
-      "internal": 20021,
+      "outgoing": 29908,
+      "internal": 19921,
       "total": 50000,
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 371,
-          "tarde": 371,
+          "total": 363,
+          "tarde": 363,
           "on_time_pct": 0.0
         },
         {
@@ -372,27 +372,9 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "Comercializadora SP Digital SPA",
-          "total": 11,
-          "tarde": 11,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
           "total": 4,
           "tarde": 4,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Lokal SpA",
-          "total": 7,
-          "tarde": 7,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Comercial ST INvest Ltda.",
-          "total": 3,
-          "tarde": 3,
           "on_time_pct": 0.0
         },
         {
@@ -420,6 +402,18 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Comercializadora SP Digital SPA",
+          "total": 10,
+          "tarde": 10,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Lokal SpA",
+          "total": 5,
+          "tarde": 5,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
           "total": 6,
           "tarde": 6,
@@ -433,9 +427,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 46,
-          "tarde": 45,
-          "on_time_pct": 0.021739130434782608
+          "total": 45,
+          "tarde": 44,
+          "on_time_pct": 0.022222222222222223
         },
         {
           "cliente": "COMERCIAL DITEN LIMITADA",
@@ -448,6 +442,12 @@
           "total": 9,
           "tarde": 3,
           "on_time_pct": 0.6666666666666666
+        },
+        {
+          "cliente": "Falabella Retail",
+          "total": 3,
+          "tarde": 0,
+          "on_time_pct": 1.0
         }
       ],
       "error": null
@@ -6738,31 +6738,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0295,
-      "total_pickings": 20000,
-      "on_time": 590,
-      "on_time_pct": 0.0295,
-      "in_full": 19997,
-      "in_full_pct": 0.99985,
-      "both": 590,
+      "valor": 0.03085427135678392,
+      "total_pickings": 19900,
+      "on_time": 614,
+      "on_time_pct": 0.03085427135678392,
+      "in_full": 19897,
+      "in_full_pct": 0.9998492462311558,
+      "both": 614,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.021709633649932156,
-      "total_pickings": 737,
-      "on_time": 16,
-      "on_time_pct": 0.021709633649932156,
-      "in_full": 733,
-      "in_full_pct": 0.994572591587517,
-      "both": 16,
+      "valor": 0.020833333333333332,
+      "total_pickings": 720,
+      "on_time": 15,
+      "on_time_pct": 0.020833333333333332,
+      "in_full": 716,
+      "in_full_pct": 0.9944444444444445,
+      "both": 15,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999624652803843,
-      "ok": 26641,
-      "total": 26642,
+      "valor": 0.9999620435739771,
+      "ok": 26345,
+      "total": 26346,
       "errores": 1,
       "error": null
     }
