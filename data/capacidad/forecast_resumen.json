@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-06-30T15:31:12.307429",
+  "generado_en": "2026-06-30T17:00:43.585258",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1364,
   "capacidad_bodega_m3": 2455.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1364,
-    "posiciones_ocupadas_hoy": 940,
-    "posiciones_libres_hoy": 424,
-    "pct_ocupacion_hoy": 68.9,
-    "m3_stock_calculado": 1169.4
+    "posiciones_ocupadas_hoy": 941,
+    "posiciones_libres_hoy": 423,
+    "pct_ocupacion_hoy": 69.0,
+    "m3_stock_calculado": 1168.8
   },
   "pico_proyectado": {
     "fecha": "2026-06-30",
-    "posiciones_ocupadas": 940.0,
-    "pct_ocupacion": 68.9
+    "posiciones_ocupadas": 941.0,
+    "pct_ocupacion": 69.0
   },
   "minimo_proyectado": {
     "fecha": "2026-08-29",
-    "posiciones_ocupadas": 768.4,
-    "pct_ocupacion": 56.3
+    "posiciones_ocupadas": 769.5,
+    "pct_ocupacion": 56.4
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -91,18 +91,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 259.9,
-  "pallets_total_salientes_horizonte": 254.8,
+  "pallets_total_salientes_horizonte": 254.7,
   "m3_total_entrante_horizonte": 311.8,
-  "m3_total_saliente_horizonte": 305.8,
+  "m3_total_saliente_horizonte": 305.6,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 874,
     "sku_fallback": 0,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 48699.0,
-    "demanda_cumplida_unidades": 17366.0,
-    "demanda_no_cubierta_unidades_total": 31333.0,
-    "pct_demanda_cumplida": 35.7,
+    "demanda_cumplida_unidades": 17359.0,
+    "demanda_no_cubierta_unidades_total": 31340.0,
+    "pct_demanda_cumplida": 35.6,
     "sku_sin_match_stock_count": 32,
     "top_no_cubiertos": [
       {
@@ -127,7 +127,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 392.0,
+        "unid_no_cubiertas": 393.0,
         "sin_match_stock": true
       },
       {
@@ -172,7 +172,7 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 138.0,
+        "unid_no_cubiertas": 141.0,
         "sin_match_stock": true
       },
       {
@@ -182,7 +182,7 @@
       },
       {
         "sku": "1660859171584",
-        "unid_no_cubiertas": 95.0,
+        "unid_no_cubiertas": 98.0,
         "sin_match_stock": true
       },
       {
