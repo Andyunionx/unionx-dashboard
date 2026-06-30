@@ -37,6 +37,11 @@ RESUMEN = PROJECT_ROOT / "data" / "finanzas" / "control_gestion_resumen.json"
 PARQUET_LEGACY = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
 RESUMEN_LEGACY = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo_resumen.json"
 VENTAS_HIST = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
+# Proyección de costo op CON AJUSTES (Excel Detalle_Gasto_CC_Analitica) para
+# jun-dic. Overlay defensivo: si existe, reemplaza el FCST GASTO crudo de
+# control_gestion en las sub-áreas núcleo. Generado por extract_costo_op_proyeccion.py
+PROYECCION = PROJECT_ROOT / "data" / "finanzas" / "costo_op_proyeccion.parquet"
+PROYECCION_NUCLEO = ["LOGISTICA", "POSTVENTA", "OPERACIONES"]
 
 MESES_ES = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO",
             6: "JUNIO", 7: "JULIO", 8: "AGOSTO", 9: "SEPTIEMBRE",
@@ -168,6 +173,14 @@ def _mtime_resumen() -> float:
         return 0.0
 
 
+def _mtime_proyeccion() -> float:
+    """Mtime del parquet de proyección de costo op (0.0 si no existe)."""
+    try:
+        return PROYECCION.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        return 0.0
+
+
 def _cargar() -> tuple[pd.DataFrame, dict]:
     """Carga datos de costos del P&L Control de Gestión filtrado a sub-áreas
     operativas. Si el parquet nuevo no existe, cae al legacy.
@@ -175,11 +188,11 @@ def _cargar() -> tuple[pd.DataFrame, dict]:
     Wrapper publico: delega a la version cacheada pasando el mtime para
     invalidar cache cuando el cron actualiza el archivo.
     """
-    return _cargar_cached(_mtime_parquet(), _mtime_resumen())
+    return _cargar_cached(_mtime_parquet(), _mtime_resumen(), _mtime_proyeccion())
 
 
 @st.cache_data(ttl=300, show_spinner=False)
-def _cargar_cached(_mtime_pq: float, _mtime_rs: float) -> tuple[pd.DataFrame, dict]:
+def _cargar_cached(_mtime_pq: float, _mtime_rs: float, _mtime_proy: float = 0.0) -> tuple[pd.DataFrame, dict]:
     """Cached: invalidado cuando control_gestion.parquet o su resumen cambian."""
     df = pd.DataFrame()
     res = {}
@@ -215,6 +228,30 @@ def _cargar_cached(_mtime_pq: float, _mtime_rs: float) -> tuple[pd.DataFrame, di
             res["fuente_real"] += "sub-áreas operativas)"
         except Exception:
             pass
+
+    # 1b. OVERLAY proyección con ajustes (Excel) para jun-dic en sub-áreas
+    # núcleo. Reemplaza el FCST GASTO crudo de control_gestion por la base
+    # ajustada que mantiene Andrés. Defensivo: si falla, se queda con el crudo.
+    if not df.empty and PROYECCION.exists():
+        try:
+            proy = pd.read_parquet(PROYECCION)
+            req = {"year", "month", "escenario", "kpi", "sub_area", "valor"}
+            if req.issubset(proy.columns) and not proy.empty:
+                mask = (
+                    (df["escenario"] == "FCST") & (df["kpi"] == "GASTO")
+                    & (df["month"].between(6, 12))
+                    & (df["sub_area"].isin(PROYECCION_NUCLEO))
+                )
+                df = pd.concat([df[~mask], proy[df.columns.intersection(proy.columns)]],
+                               ignore_index=True)
+                df["fecha"] = pd.to_datetime(
+                    df["year"].astype(str) + "-" + df["month"].astype(str) + "-01",
+                    errors="coerce",
+                )
+                res["fuente_proy"] = ("Costo op jun-dic: base Excel ajustado "
+                                      "(núcleo Logística+Postventa+Operaciones)")
+        except Exception:
+            pass  # fallback silencioso a control_gestion crudo
 
     # 2. Fallback al parquet legacy si el nuevo no existe
     if df.empty and PARQUET_LEGACY.exists():
