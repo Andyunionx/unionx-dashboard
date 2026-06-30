@@ -93,12 +93,17 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         vt = d.groupby(d[IX["kam"]].apply(lambda x: str(x).strip()))[IX["VentaC"]].sum()
         cand = [(kam, v) for kam, v in vt.items() if _norm(kam) in EQUIPO]
         kam_dom[ck] = (max(cand, key=lambda x: x[1])[0] if cand else (vt.idxmax() if len(vt) else ""))
+    negocio_dom = {}  # ck -> línea de negocio (col 1 = Negocio)
+    for ck, d in df.groupby("_ck"):
+        negs = d[1].astype(str).str.strip()
+        negocio_dom[ck] = (negs.mode().iat[0] if len(negs.mode()) else (negs.iloc[0] if len(negs) else ""))
     df["_conkam"] = df["_ck"].map(es_conkam).fillna(False)
     dk = df[df["_conkam"]].copy()
 
     datos = []
     for (m, ck), d in dk.groupby([IX["mes"], "_ck"]):
-        row = {"Mes": MES_NOM[int(m)], "Canal": nombre.get(ck, ck), "KAM": str(kam_dom.get(ck, "")).strip()}
+        row = {"Mes": MES_NOM[int(m)], "Canal": nombre.get(ck, ck), "KAM": str(kam_dom.get(ck, "")).strip(),
+               "Negocio": str(negocio_dom.get(ck, "")).strip()}
         for comp in COMP:
             row[f"{comp}_Com"] = float(d[IX[comp + "C"]].sum())
             row[f"{comp}_Cont"] = float(d[IX[comp + "K"]].sum())
@@ -106,6 +111,8 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
     datos = pd.DataFrame(datos).sort_values(["Canal", "Mes"]).reset_index(drop=True)
     canales = sorted(datos["Canal"].unique())
     kams = sorted(k for k in datos["KAM"].unique() if k)
+    canal2negocio = dict(zip(datos["Canal"], datos["Negocio"]))
+    negocios = sorted(set(n for n in canal2negocio.values() if n))
 
     # NC detalle
     def _orig_fecha(fv):
@@ -162,7 +169,7 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         aporte_tab = aporte_tab.groupby(["Mes", "Canal", "KAM"], as_index=False)["Monto"].sum()
 
     return {"datos": datos, "nc_tab": nc_tab, "com_tab": com_tab, "aporte_tab": aporte_tab,
-            "canales": canales, "kams": kams}
+            "canales": canales, "kams": kams, "canal2negocio": canal2negocio, "negocios": negocios}
 
 
 # ------------------------------------------------------------------ cálculo (display)
@@ -170,9 +177,12 @@ def _match(v, sel, todos):
     return True if sel == todos else str(v) == str(sel)
 
 
-def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
+def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS", negocio="TODOS"):
     datos, nc_tab, com_tab = bundle["datos"], bundle["nc_tab"], bundle["com_tab"]
-    f = datos[datos.apply(lambda r: _match(r["Mes"], mes, "YTD") and _match(r["Canal"], canal, "TODOS")
+    c2n = bundle.get("canal2negocio", {})
+    _cset = None if negocio == "TODOS" else {c for c, n in c2n.items() if n == negocio}
+    _okc = lambda v: _match(v, canal, "TODOS") and (_cset is None or v in _cset)
+    f = datos[datos.apply(lambda r: _match(r["Mes"], mes, "YTD") and _okc(r["Canal"])
                           and _match(r["KAM"], kam, "TODOS"), axis=1)]
     g = lambda c: float(f[c].sum()) if len(f) else 0.0
 
@@ -198,7 +208,7 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
 
     # NC del/otro relativo al filtro
     def _flag(row, kind):
-        if not (_match(row["Canal"], canal, "TODOS") and _match(row["KAM"], kam, "TODOS")):
+        if not (_okc(row["Canal"]) and _match(row["KAM"], kam, "TODOS")):
             return False
         oa, om = row["OrigenAnio"], row["OrigenMes"]
         if mes == "YTD":
@@ -211,7 +221,7 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
     nc_otro = float(nc_tab[nc_tab.apply(lambda r: _flag(r, "otro"), axis=1)]["Neto"].sum()) if len(nc_tab) else 0.0
 
     def _cflag(row):
-        if not (_match(row["Canal"], canal, "TODOS") and _match(row["KAM"], kam, "TODOS")):
+        if not (_okc(row["Canal"]) and _match(row["KAM"], kam, "TODOS")):
             return False
         oa, om = row["OrigenAnio"], row["OrigenMes"]
         if mes == "YTD":
@@ -224,7 +234,7 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS"):
     aporte_tab = bundle.get("aporte_tab")
     if aporte_tab is not None and len(aporte_tab):
         am = aporte_tab[aporte_tab.apply(lambda r: _match(r["Mes"], mes, "YTD")
-                        and _match(r["Canal"], canal, "TODOS") and _match(r["KAM"], kam, "TODOS"), axis=1)]
+                        and _okc(r["Canal"]) and _match(r["KAM"], kam, "TODOS"), axis=1)]
         aporte_canal = float(am["Monto"].sum())
     else:
         aporte_canal = 0.0
@@ -256,7 +266,7 @@ def _mes_a_int(mes):
     return None if mes == "YTD" else (MES_NOM.index(mes) if mes in MES_NOM else None)
 
 
-def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS"):
+def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS", negocio="TODOS"):
     """P&L comercial detallado desde el RAW (+ glosas), por mes/canal/kam.
 
     raw_comp: filas {Canal, KAM, Tipo('ing_prod'|'ing_envio'|'nc'), Mes(int),
@@ -276,6 +286,8 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
             m = m[m["Canal"] == canal]
         if kam != "TODOS":
             m = m[m["KAM"] == kam]
+        if negocio != "TODOS" and "Negocio" in m.columns:
+            m = m[m["Negocio"] == negocio]
         if mi is not None:
             m = m[m["Mes"] == mi]
         return m

@@ -112,11 +112,12 @@ def _render_b2b(b):
 
 
 @st.cache_data(ttl=3600, show_spinner="Cargando detalle RAW…")
-def _detalle_components(canales, canal_kam_items):
+def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     """Componentes del P&L detallado desde el RAW (ingresos/NC) + glosas (comisiones).
     Solo canales con KAM comercial. Devuelve (raw_comp, glosas_comp)."""
     conkam = {_norm(c): c for c in canales}          # norm -> nombre display
     canal_kam = dict(canal_kam_items)
+    canal_neg = dict(canal_negocio_items)
     con = duckdb.connect()
     P = PARQUET.as_posix()
     ing = con.execute(f"""
@@ -138,13 +139,13 @@ def _detalle_components(canales, canal_kam_items):
         d = conkam.get(_norm(r.canal))
         if not d:
             continue
-        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Tipo": r.tipo, "Mes": int(r.mes),
+        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": r.tipo, "Mes": int(r.mes),
                      "OrigenAnio": 0, "OrigenMes": 0, "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
     for _, r in nc.iterrows():
         d = conkam.get(_norm(r.canal))
         if not d:
             continue
-        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Tipo": "nc", "Mes": int(r.mes),
+        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": "nc", "Mes": int(r.mes),
                      "OrigenAnio": int(r.oa or 0), "OrigenMes": int(r.om or 0),
                      "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
     raw_comp = pd.DataFrame(rows)
@@ -165,7 +166,7 @@ def _detalle_components(canales, canal_kam_items):
         oa, om = _origen_glosa(r.get("Glosa", ""), m)
         cn = _norm(r.get("Categoría Analítica", ""))
         cat = next((v for k, v in CATMAP if k in cn), "otro")
-        grows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Mes": int(m), "Cat": cat,
+        grows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Mes": int(m), "Cat": cat,
                       "OrigenAnio": int(oa), "OrigenMes": int(om), "Monto": num(r.get("Monto ($)", ""))})
     glosas_comp = pd.DataFrame(grows)
     return raw_comp, glosas_comp
@@ -201,12 +202,13 @@ def render():
         return
 
     # ---- filtros (comercial) ----
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     mes = c1.selectbox("Mes", MESES_OPT, index=0, key="ccon_mes")
-    canal = c2.selectbox("Canal", ["TODOS"] + b["canales"], index=0, key="ccon_canal")
-    kam = c3.selectbox("KAM", ["TODOS"] + b["kams"], index=0, key="ccon_kam")
+    negocio = c2.selectbox("Línea de Negocio", ["TODOS"] + b.get("negocios", []), index=0, key="ccon_neg")
+    canal = c3.selectbox("Canal", ["TODOS"] + b["canales"], index=0, key="ccon_canal")
+    kam = c4.selectbox("KAM", ["TODOS"] + b["kams"], index=0, key="ccon_kam")
 
-    R = calcular(b, mes, canal, kam)
+    R = calcular(b, mes, canal, kam, negocio)
     st.markdown("---")
 
     # ---- KPIs ----
@@ -217,8 +219,10 @@ def render():
 
     # ---- detalle RAW para complementar Venta y Comisiones ----
     canal_kam = dict(zip(b["datos"]["Canal"], b["datos"]["KAM"]))
-    raw_comp, glosas_comp = _detalle_components(tuple(b["canales"]), tuple(sorted(canal_kam.items())))
-    D = calcular_detalle(raw_comp, glosas_comp, mes, canal, kam)
+    canal_neg = b.get("canal2negocio", {})
+    raw_comp, glosas_comp = _detalle_components(tuple(b["canales"]), tuple(sorted(canal_kam.items())),
+                                               tuple(sorted(canal_neg.items())))
+    D = calcular_detalle(raw_comp, glosas_comp, mes, canal, kam, negocio)
 
     # ---- P&L Comercial vs Contable + sub-filas de desglose (RAW) ----
     pyl = R["pyl"].copy()
