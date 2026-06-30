@@ -19,7 +19,7 @@ import streamlit as st
 from views.contribucion_loader import cargar_hoja, fmt_pesos
 from views._conciliacion import (construir_dataframes, calcular, construir_workbook, MESES_OPT,
                                  construir_b2b, calcular_b2b, calcular_detalle,
-                                 _norm, _mes_num, _origen_glosa, num)
+                                 _norm, _mes_num, _origen_glosa, num, MES_NOM)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
@@ -47,6 +47,36 @@ def _bundle():
         """).fetchall()
         nc2c = {d: c for d, c in rows}
     b = construir_dataframes(df_ar, df_gl, nc, nc2c)
+    # NC desde el RAW (fuente de verdad = devoluciones Odoo), reemplaza nc_detalle_h1
+    # en la reconciliación para que calce con el desglose. Devoluciones registradas en
+    # 2026, por canal × origen (mismo criterio que calcular_detalle).
+    if PARQUET.exists():
+        ncraw = duckdb.connect().execute(f"""
+            SELECT canal,
+                   CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) reg_mes,
+                   anio_venta oa, mes_venta om,
+                   -sum(TRY_CAST(venta_neta AS DOUBLE)) neto
+            FROM '{PARQUET.as_posix()}'
+            WHERE tipo_movimiento='Devolución'
+              AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
+              AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
+            GROUP BY 1,2,3,4
+        """).fetchdf()
+        conkam = {_norm(c): c for c in b["canales"]}
+        canal_kam = dict(zip(b["datos"]["Canal"], b["datos"]["KAM"]))
+        filas = []
+        for _, r in ncraw.iterrows():
+            d = conkam.get(_norm(r.canal))
+            if not d:
+                continue
+            om = int(r.om or 0)
+            filas.append({"Mes": MES_NOM[int(r.reg_mes)], "Canal": d, "KAM": canal_kam.get(d, ""),
+                          "OrigenAnio": int(r.oa or 0),
+                          "OrigenMes": MES_NOM[om] if 1 <= om <= 12 else "",
+                          "Neto": float(r.neto or 0)})
+        if filas:
+            b["nc_tab"] = (pd.DataFrame(filas)
+                           .groupby(["Mes", "Canal", "KAM", "OrigenAnio", "OrigenMes"], as_index=False)["Neto"].sum())
     b.update(construir_b2b(df_ar, df_meta))
     return b
 
@@ -196,19 +226,22 @@ def render():
     gl = lambda ln, col: float(pv.loc[ln, col])
     # (Línea, comercial, contable, tipo). Todo el desglose del RAW (Odoo) es base CONTABLE:
     # la contable ≈ RAW neto (ingreso bruto − NC). El comercial sale de la hoja (KAM), no se desglosa.
+    com_tot_c = gl("Comisión Venta", "Comercial") + gl("Comisión Envío", "Comercial") + gl("Marketing", "Comercial")
+    com_tot_k = gl("Comisión Venta", "Contable") + gl("Comisión Envío", "Contable") + gl("Marketing", "Contable")
     pl = [
         ("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row"),
         ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
         ("    · Ingreso por envío", None, D["ing_env"], "memo"),
-        ("    · NC del período", None, D["nc_per"], "memo"),
-        ("    · NC otro período 2026", None, D["nc_o2026"], "memo"),
-        ("    · NC otro período 2025", None, D["nc_o2025"], "memo"),
+        ("    · Devoluciones del período", None, D["nc_per"], "memo"),
+        ("    · Devoluciones otro período 2026", None, D["nc_o2026"], "memo"),
+        ("    · Devoluciones 2025", None, D["nc_o2025"], "memo"),
         ("Costo de Venta", gl("Costo de Venta", "Comercial"), gl("Costo de Venta", "Contable"), "row"),
         ("= Margen Directo", gl("Margen Directo", "Comercial"), gl("Margen Directo", "Contable"), "bold"),
         ("Comisión Venta", gl("Comisión Venta", "Comercial"), gl("Comisión Venta", "Contable"), "row"),
         ("Comisión Envío", gl("Comisión Envío", "Comercial"), gl("Comisión Envío", "Contable"), "row"),
         ("Marketing", gl("Marketing", "Comercial"), gl("Marketing", "Contable"), "row"),
         ("    · Glosa otro período (timing)", None, -D["glosa_otro"], "memo"),
+        ("= Total Comisiones", com_tot_c, com_tot_k, "bold"),
         ("= Contribución", gl("Contribución", "Comercial"), gl("Contribución", "Contable"), "head"),
     ]
     _f = lambda v: fmt_pesos(v) if v is not None else ""
