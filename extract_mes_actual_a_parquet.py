@@ -29,7 +29,7 @@ OUT_PATH = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
 
 COLS_DB = [
     'tipo_movimiento', 'bodega', 'documento', 'fecha_documento', 'pedido',
-    'pedido_marketplace',
+    'pedido_marketplace', 'yuju_pack_id',
     'estado_pedido', 'tipo_despacho', 'sku', 'canal', 'fecha_venta',
     'hora_venta', 'producto', 'categoria_macro', 'categoria_padre',
     'categoria_hijo', 'categoria_comercial', 'estado_sku', 'pack', 'marca',
@@ -45,7 +45,8 @@ RAW_TO_DB = {
     'Linea ID': '_line_id',
     'Tipo Movimiento': 'tipo_movimiento', 'Bodega': 'bodega', 'Documento': 'documento',
     'Fecha Documento': 'fecha_documento', 'Pedido': 'pedido',
-    'Pedido Marketplace': 'pedido_marketplace', 'Estado Pedido': 'estado_pedido',
+    'Pedido Marketplace': 'pedido_marketplace', 'Yuju Pack Id': 'yuju_pack_id',
+    'Estado Pedido': 'estado_pedido',
     'Tipo Despacho': 'tipo_despacho', 'SKU': 'sku', 'Canal': 'canal',
     'Fecha Venta': 'fecha_venta', 'Hora Venta': 'hora_venta', 'Producto': 'producto',
     'Categoría macro': 'categoria_macro', 'Categoría padre': 'categoria_padre',

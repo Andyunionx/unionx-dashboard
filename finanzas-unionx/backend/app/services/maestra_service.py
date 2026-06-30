@@ -914,7 +914,9 @@ class MaestraService:
         import pandas as pd
         DB_TO_RAW = {
             'tipo_movimiento': 'Tipo Movimiento', 'bodega': 'Bodega', 'documento': 'Documento',
-            'fecha_documento': 'Fecha Documento', 'pedido': 'Pedido', 'estado_pedido': 'Estado Pedido',
+            'fecha_documento': 'Fecha Documento', 'pedido': 'Pedido',
+            'pedido_marketplace': 'Marketplace Reference', 'yuju_pack_id': 'Yuju Pack Id',
+            'estado_pedido': 'Estado Pedido',
             'tipo_despacho': 'Tipo Despacho', 'sku': 'SKU', 'canal': 'Canal',
             'fecha_venta': 'Fecha Venta', 'hora_venta': 'Hora Venta', 'producto': 'Producto',
             'categoria_macro': 'Categoría macro', 'categoria_padre': 'Categoría padre',
@@ -932,12 +934,24 @@ class MaestraService:
             'marketing': 'Marketing', 'margen_final': 'Mg final',
         }
         conn = self._conn()
-        sql = (f"SELECT {','.join(DB_TO_RAW.keys())} FROM ventas "
+        # Columnas presentes en 'ventas' (yuju_pack_id puede no existir hasta el
+        # próximo extract diario; UNION ALL BY NAME lo deja NULL para el histórico).
+        if hasattr(conn, 'read_df'):
+            existentes = set(conn.read_df("SELECT * FROM ventas LIMIT 0").columns)
+        else:
+            existentes = set(pd.read_sql_query("SELECT * FROM ventas LIMIT 0", conn).columns)
+        sel = [c for c in DB_TO_RAW if c in existentes]
+        sql = (f"SELECT {','.join(sel)} FROM ventas "
                "WHERE fecha_venta BETWEEN ? AND ? ORDER BY fecha_venta")
         if hasattr(conn, 'read_df'):   # motor DuckDB → .df() nativo (robusto)
             df = conn.read_df(sql, [fecha_desde, fecha_hasta])
         else:                           # SQLite → pandas read_sql (soportado)
             df = pd.read_sql_query(sql, conn, params=[fecha_desde, fecha_hasta])
         conn.close()
-        df = df.rename(columns=DB_TO_RAW)
+        # Rellenar columnas faltantes (vacías) y fijar orden = DB_TO_RAW (Marketplace
+        # Reference + Yuju Pack Id quedan al lado del Pedido).
+        for c in DB_TO_RAW:
+            if c not in df.columns:
+                df[c] = ''
+        df = df[list(DB_TO_RAW.keys())].rename(columns=DB_TO_RAW)
         return df

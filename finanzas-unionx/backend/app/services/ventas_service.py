@@ -1062,6 +1062,7 @@ class VentasService(BaseOdooService):
                     'Fecha Documento': factura.get('invoice_date', '') if factura else '',
                     'Pedido': orden.get('name', ''),
                     'Pedido Marketplace': orden.get('channel_order_reference', '') or '',
+                    'Yuju Pack Id': orden.get('yuju_pack_id', '') or '',
                     'Ref Cliente': orden.get('client_order_ref', '') or '',
                     'Estado Pedido': orden.get('state', ''),
                     'Tipo Despacho': estado_despacho,
@@ -1342,6 +1343,7 @@ class VentasService(BaseOdooService):
                                     'Fecha Documento': fecha_nc,
                                     'Pedido': pedido_nc,
                                     'Pedido Marketplace': orden_orig.get('channel_order_reference', '') or '',
+                                    'Yuju Pack Id': orden_orig.get('yuju_pack_id', '') or '',
                                     'Ref Cliente': orden_orig.get('client_order_ref', '') or '',
                                     'Estado Pedido': estado_ped_nc,
                                     'Tipo Despacho': '',
@@ -1389,6 +1391,7 @@ class VentasService(BaseOdooService):
                                 'Fecha Documento': fecha_nc,
                                 'Pedido': pedido_nc,
                                 'Pedido Marketplace': orden_orig.get('channel_order_reference', '') or '',
+                                'Yuju Pack Id': orden_orig.get('yuju_pack_id', '') or '',
                                 'Ref Cliente': orden_orig.get('client_order_ref', '') or '',
                                 'Estado Pedido': estado_ped_nc,
                                 'Tipo Despacho': '',
@@ -1443,7 +1446,7 @@ class VentasService(BaseOdooService):
             'Año venta', 'Mes venta', 'Semana venta', 'Día semana', 'Hora venta',
             'Cantidad', 'Venta bruta', 'Venta Neta', 'Costo Unitario', 'Costo Total', 'Margen Front',
             'Comision %', 'Comisión', 'Logística', 'Marketing', 'Mg final',
-            'Pedido Marketplace', 'Ref Cliente', 'Linea ID'
+            'Pedido Marketplace', 'Yuju Pack Id', 'Ref Cliente', 'Linea ID'
         ]
 
         # Asegurar que todas las columnas existan
