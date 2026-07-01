@@ -217,12 +217,18 @@ def render():
     k2.metric("Contribución Contable", fmt_pesos(R["contrib_cont"]))
     k3.metric("Δ Contribución (Com − Cont)", fmt_pesos(R["delta_contrib"]))
 
-    # ---- detalle RAW para complementar Venta y Comisiones ----
-    canal_kam = dict(zip(b["datos"]["Canal"], b["datos"]["KAM"]))
-    canal_neg = b.get("canal2negocio", {})
-    raw_comp, glosas_comp = _detalle_components(tuple(b["canales"]), tuple(sorted(canal_kam.items())),
-                                               tuple(sorted(canal_neg.items())))
-    D = calcular_detalle(raw_comp, glosas_comp, mes, canal, kam, negocio)
+    # ---- detalle RAW para complementar Venta y Comisiones (SECUNDARIO) ----
+    # Si falla (p.ej. quirk de DuckDB en Cloud), la vista sigue mostrando el P&L de la
+    # hoja + la reconciliación; solo se omite el desglose en gris.
+    D = None
+    try:
+        canal_kam = dict(zip(b["datos"]["Canal"], b["datos"]["KAM"]))
+        canal_neg = b.get("canal2negocio", {})
+        raw_comp, glosas_comp = _detalle_components(tuple(b["canales"]), tuple(sorted(canal_kam.items())),
+                                                    tuple(sorted(canal_neg.items())))
+        D = calcular_detalle(raw_comp, glosas_comp, mes, canal, kam, negocio)
+    except Exception as e:
+        st.warning(f"Desglose del RAW no disponible ({type(e).__name__}) — muestro el P&L de la hoja. {str(e)[:100]}")
 
     # ---- P&L Comercial vs Contable + sub-filas de desglose (RAW) ----
     pyl = R["pyl"].copy()
@@ -232,19 +238,25 @@ def render():
     # la contable ≈ RAW neto (ingreso bruto − NC). El comercial sale de la hoja (KAM), no se desglosa.
     com_tot_c = gl("Comisión Venta", "Comercial") + gl("Comisión Envío", "Comercial") + gl("Marketing", "Comercial")
     com_tot_k = gl("Comisión Venta", "Contable") + gl("Comisión Envío", "Contable") + gl("Marketing", "Contable")
-    pl = [
-        ("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row"),
-        ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
-        ("    · Ingreso por envío", None, D["ing_env"], "memo"),
-        ("    · Devoluciones del período", None, D["nc_per"], "memo"),
-        ("    · Devoluciones otro período 2026", None, D["nc_o2026"], "memo"),
-        ("    · Devoluciones 2025", None, D["nc_o2025"], "memo"),
+    pl = [("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row")]
+    if D is not None:  # sub-filas de desglose del RAW (solo si el detalle cargó)
+        pl += [
+            ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
+            ("    · Ingreso por envío", None, D["ing_env"], "memo"),
+            ("    · Devoluciones del período", None, D["nc_per"], "memo"),
+            ("    · Devoluciones otro período 2026", None, D["nc_o2026"], "memo"),
+            ("    · Devoluciones 2025", None, D["nc_o2025"], "memo"),
+        ]
+    pl += [
         ("Costo de Venta", gl("Costo de Venta", "Comercial"), gl("Costo de Venta", "Contable"), "row"),
         ("= Margen Directo", gl("Margen Directo", "Comercial"), gl("Margen Directo", "Contable"), "bold"),
         ("Comisión Venta", gl("Comisión Venta", "Comercial"), gl("Comisión Venta", "Contable"), "row"),
         ("Comisión Envío", gl("Comisión Envío", "Comercial"), gl("Comisión Envío", "Contable"), "row"),
         ("Marketing", gl("Marketing", "Comercial"), gl("Marketing", "Contable"), "row"),
-        ("    · Glosa otro período (timing)", None, -D["glosa_otro"], "memo"),
+    ]
+    if D is not None:
+        pl.append(("    · Glosa otro período (timing)", None, -D["glosa_otro"], "memo"))
+    pl += [
         ("= Total Comisiones", com_tot_c, com_tot_k, "bold"),
         ("= Contribución", gl("Contribución", "Comercial"), gl("Contribución", "Contable"), "head"),
     ]
