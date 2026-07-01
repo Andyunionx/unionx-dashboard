@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-01T02:12:35.490385",
+  "generado_en": "2026-07-01T09:26:43.270009",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10377,
-  "total_monto_pendiente_clp": 725888815.0,
+  "total_documentos_pendientes": 10436,
+  "total_monto_pendiente_clp": 728278201.0,
   "monto_por_aging": {
     "+90 días": 37427234.0,
-    "1-30 días": 495789748.0,
+    "1-30 días": 498179134.0,
     "31-60 días": 75677392.0,
     "61-90 días": 22970600.0,
     "Vigente": 94023841.0
   },
   "monto_por_tipo": {
-    "BOLETA": 512592102.0,
+    "BOLETA": 514981488.0,
     "FACTURA": 213296713.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 102078493.0
+      "monto": 102852648.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,15 +30,15 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 51595139.0
+      "monto": 52544869.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 36036599.0
+      "monto": 36241080.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 28004358.0
+      "monto": 28102698.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -58,11 +58,11 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 19220403.0
+      "monto": 19349353.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18167127.0
+      "monto": 18288997.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 557,
-  "pedidos_venta_count": 9783
+  "pedidos_venta_count": 9842
 }
