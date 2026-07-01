@@ -128,6 +128,9 @@ def render_html(df):
     m_ty = df_mes['margen_front'].sum(); u_ty = int(df_mes['cantidad'].sum())
     s_ty = df_mes['pedido'].nunique()
     pm_ty = m_ty/n_ty*100 if n_ty else 0
+    # Devoluciones (NC) del mes: venta_bruta negativa. b_ty ya es NETO de ellas.
+    dev_ty = df_mes.loc[df_mes['tipo_movimiento'] == 'Devolución', 'venta_bruta'].sum()
+    venta_gross_ty = b_ty - dev_ty  # venta bruta ANTES de devoluciones
 
     b_ly = df_ly['venta_bruta'].sum(); m_ly = df_ly['margen_front'].sum()
     n_ly = df_ly['venta_neta'].sum()
@@ -230,18 +233,22 @@ def render_html(df):
     mes_nom = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][mes_actual]
     color_av = '#16A34A' if pct_meta >= 80 else ('#EA580C' if pct_meta >= 40 else '#DC2626')
 
+    _bc = os.environ.get('PULSO_CORRECCION', '').strip()
+    _banner_correccion = (f'<div style="background:#FEF3C7;border-left:4px solid #D97706;padding:12px;border-radius:6px;margin:12px 0;font-size:0.9rem;color:#92400E"><b>⚠️ Corrección:</b> {_bc}</div>' if _bc else '')
     html = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"></head><body style="font-family:-apple-system,Segoe UI,sans-serif;max-width:900px;margin:auto;color:#1E293B">
 
 <h2 style="margin:0 0 4px 0">📊 Pulso Diario UnionX · {mes_nom} {ano_actual}</h2>
 <p style="color:#64748B;margin:0 0 16px 0;font-size:0.9rem">Acumulado al cierre {ayer.strftime("%d-%b-%Y")} ({dias_acum} días)</p>
+{_banner_correccion}
 
 <div style="background:#F1F5F9;border-left:4px solid #2563EB;padding:14px;border-radius:6px;margin:16px 0">
   <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">Acumulado mes (al {ayer.strftime("%d-%b")})</div>
   <div style="font-size:1.7rem;font-weight:700;color:#1E40AF;margin:2px 0">{fmt_m(b_ty)} <span style="font-size:0.95rem;font-weight:600;color:#64748B">bruta · {fmt_m(n_ty)} neta</span></div>
   <div style="font-size:0.88rem;color:#64748B">
     Meta {mes_nom}: {fmt_m(meta_mes)} · <b style="color:{color_av}">{pct_meta:.1f}%</b> · gap {fmt_m(gap_meta)} ·
-    Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) · {u_ty:,} uds · {s_ty:,} pedidos
+    Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) · {u_ty:,} uds · {s_ty:,} pedidos<br>
+    Venta bruta {fmt_m(venta_gross_ty)} · Devoluciones {fmt_m(dev_ty)} · = <b>{fmt_m(b_ty)}</b> neto de devoluciones
   </div>
 </div>
 
