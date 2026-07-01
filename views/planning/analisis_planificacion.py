@@ -56,23 +56,28 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
     Lee historico (meses cerrados) + mes_actual (mes corriente desde Turso sync).
     """
     need = ['fecha_venta', 'marca', 'tipo_negocio', 'venta_neta', 'margen_front']
-    paths = [
-        DATA_DIR / 'historico' / 'ventas_historico.parquet',
-        DATA_DIR / 'historico' / 'ventas_mes_actual.parquet',
-    ]
-    dfs = []
-    for p in paths:
-        if not p.exists():
-            continue
+    path_hist = DATA_DIR / 'historico' / 'ventas_historico.parquet'
+    path_mes  = DATA_DIR / 'historico' / 'ventas_mes_actual.parquet'
+
+    def _safe_read(p):
         try:
-            d = pd.read_parquet(p, columns=need)
-            dfs.append(d)
+            return pd.read_parquet(p, columns=need)
         except Exception:
             try:
                 d = pd.read_parquet(p)
-                dfs.append(d[[c for c in need if c in d.columns]])
+                return d[[c for c in need if c in d.columns]]
             except Exception:
-                pass
+                return None
+
+    df_mes  = _safe_read(path_mes)  if path_mes.exists()  else None
+    df_hist = _safe_read(path_hist) if path_hist.exists() else None
+
+    # Evitar solapamiento: si mes_actual existe, cortar historico antes de su fecha mínima
+    if df_mes is not None and not df_mes.empty and df_hist is not None:
+        mes_inicio = pd.to_datetime(df_mes['fecha_venta'], errors='coerce').min()
+        df_hist = df_hist[pd.to_datetime(df_hist['fecha_venta'], errors='coerce') < mes_inicio]
+
+    dfs = [d for d in (df_hist, df_mes) if d is not None and not d.empty]
     if not dfs:
         return pd.DataFrame()
     try:

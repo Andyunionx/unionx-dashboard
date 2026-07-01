@@ -87,7 +87,7 @@ def _turso_query(sql: str, retries: int = 5, timeout_s: int = 120) -> dict:
 
 
 def _descargar_ventas(desde: str, hasta: str, chunk: int = 5000) -> pd.DataFrame:
-    print(f"[1] Descargando ventas Turso: {desde} → {hasta}")
+    print(f"[1] Descargando ventas Turso: {desde} - {hasta}")
     cols_csv = ','.join(COLS)
     last_rowid = 0
     chunks = []
@@ -144,7 +144,7 @@ def main():
     desde = args.desde or _leer_cutoff()
     hasta  = args.hasta  or date.today().strftime('%Y-%m-%d')
 
-    print(f"Rango: {desde} → {hasta}")
+    print(f"Rango: {desde} - {hasta}")
 
     df = _descargar_ventas(desde, hasta)
 
