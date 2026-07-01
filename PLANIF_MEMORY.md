@@ -44,23 +44,49 @@
 ## 🔲 Pendientes Felipe
 
 - [x] **Sobrestock por Categoria Padre** ← COMPLETADO 2026-07-01
-- [ ] PR merge → app oficial (Andrés) — branch: `feat/fc-planif-onboarding`, último commit: `afa26a5`
-- [ ] Actualizar `ventas_historico.parquet` con Mayo+Junio 2026
+- [x] **Página Análisis Planificación (7 tabs)** ← COMPLETADO 2026-07-01
+- [ ] PR merge → app oficial (Andrés) — branch: `feat/fc-planif-onboarding`
+- [ ] Actualizar `ventas_historico.parquet` con Mayo+Junio 2026 (tabs comerciales necesitan datos completos)
 - [ ] FCST desde Google Drive (cuando Andrés suba el link)
+
+---
+
+## ✅ Página Análisis Planificación (commit pendiente de push)
+
+**Archivo**: `views/planning/analisis_planificacion.py`  
+**Registrado en**: `dashboard_planificacion.py` → "🎯 Planificación" → url_path=`pln-analisis`
+
+**7 tabs implementados**:
+1. 📊 Cómo Vamos — Real vs Meta del mes actual (Marca + Canal)
+2. 📈 Comp. Marcas — YTD META|REAL|VAR% (Venta Neta + Contribución Frontal)
+3. 📈 Comp. Canales — YTD META|REAL|VAR%
+4. 💰 CST x Marca — Proyección mensual a costo ($M) por Marca (6 meses)
+5. 🔴 Detalle Crítico — SKUs con cobertura fc3m < 1m + llegadas próximas
+6. 🚢 Tránsitos — Embarques agrupados por PI con USD/ETA
+7. 🆕 Nuevos en Tránsito — SKUs con stock=0 con llegadas próximas
+
+**Fuentes de datos**:
+- PPTO: `data/planificacion/snapshots/planif_ppto_canal.parquet` + `planif_ppto_marca.parquet`
+- Script extracción: `extract_ppto_snapshot.py` (leer desde desktop PPTO 2026 Excel)
+- Ventas real: `data/historico/ventas_historico.parquet` (canal via `tipo_negocio`)
+- Supply chain: `_preparar_datos()` de triada_cobertura + transit pivot
+
+**Nota importante**: ventas_historico.parquet tiene datos INCOMPLETOS para 2026 (solo ~15% del total real). Los tabs Cómo Vamos/Comp.Marcas/Canales mostrarán cifras reales bajas hasta actualizar el parquet.
 
 ---
 
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `afa26a5`
+**Último commit**: pendiente push (ver abajo)
 
 **Incluye:**
 1. Tab Jerárquico completo ✅
 2. Tab A Costo ($M) completo ✅ (aggregación + orden correcto)
-3. Tab Sobrestock ✅ (capital inmovilizado por SKU > 4m cobertura) — NUEVO
-4. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
-5. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
+3. Tab Sobrestock ✅ (capital inmovilizado por SKU > 4m cobertura)
+4. **Página Análisis Planificación (7 tabs)** ✅ — NUEVO
+5. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
+6. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
 6. Fix pantuflas Lhotse (23 SKUs)
 
 ---
