@@ -613,61 +613,85 @@ def render():
     # ════════════════════════════════════════════════════════════════
     with tab_nv:
         st.subheader("🆕 Nuevos Productos en Tránsito")
-        st.caption("SKUs con stock actual = 0 que tienen llegadas confirmadas próximas.")
+        st.caption("SKUs con **Categoria Comercial = Nuevo** con llegadas en los próximos meses (FCST + COMEX).")
 
-        if df_base.empty or df_tr_raw.empty:
-            st.info("Sin datos suficientes.")
+        if df_base.empty:
+            st.info("Sin datos de planificación disponibles.")
         else:
-            _skus_0 = set(df_base[df_base['stock_actual'] == 0]['sku'].astype(str).unique())
-
-            _df_nv = df_tr_raw.copy()
-            _df_nv['sku']              = _df_nv['sku'].astype(str)
-            _df_nv['fecha_eta_bodega'] = pd.to_datetime(_df_nv['fecha_eta_bodega'], errors='coerce')
-            _df_nv['cantidad']         = pd.to_numeric(_df_nv['cantidad'], errors='coerce').fillna(0)
-            _df_nv = _df_nv[_df_nv['sku'].isin(_skus_0) & (_df_nv['fecha_eta_bodega'] >= _TODAY)].copy()
-
-            if _df_nv.empty:
-                st.success("✅ No hay nuevos productos sin stock con llegadas próximas.")
+            # ── Identify Nuevo SKUs via categoria_producto (= Categoria Comercial en FCST Excel) ──
+            if 'categoria_producto' in df_base.columns:
+                _df_nuevos_master = df_base[
+                    df_base['categoria_producto'].str.strip().str.lower() == 'nuevo'
+                ][['sku', 'producto', 'marca', 'categoria_padre', 'categoria_hijo',
+                   'categoria_producto', 'stock_actual']].drop_duplicates('sku').copy()
             else:
-                # Enrich with master info
-                _master_nv = df_base[['sku', 'producto', 'marca', 'categoria_padre']].drop_duplicates('sku').copy()
-                _master_nv['sku'] = _master_nv['sku'].astype(str)
-                _df_nv = _df_nv.merge(_master_nv, on='sku', how='left')
+                _df_nuevos_master = df_base[df_base['stock_actual'] == 0][
+                    ['sku', 'producto', 'marca', 'categoria_padre', 'categoria_hijo', 'stock_actual']
+                ].drop_duplicates('sku').copy()
 
-                def _mes_arr(fecha):
-                    if pd.isna(fecha): return None
-                    return (fecha if fecha.day <= 5 else fecha + pd.DateOffset(months=1)).strftime('%Y-%m')
+            _df_nuevos_master['sku'] = _df_nuevos_master['sku'].astype(str)
+            _nuevos_skus_set = set(_df_nuevos_master['sku'].unique())
 
-                _df_nv['Mes Llegada'] = _df_nv['fecha_eta_bodega'].apply(_mes_arr)
+            n_nuevos_master = len(_df_nuevos_master)
+            st.metric("SKUs Nuevo (Categoria Comercial)", n_nuevos_master)
 
-                show_nv = ['Mes Llegada', 'sku', 'producto', 'marca', 'categoria_padre', 'cantidad']
-                if 'pi' in _df_nv.columns:            show_nv.insert(2, 'pi')
-                if 'costo_total_usd' in _df_nv.columns: show_nv.append('costo_total_usd')
-                if 'status' in _df_nv.columns:         show_nv.append('status')
+            if _tr_piv.empty and df_tr_raw.empty:
+                st.info("Sin datos de tránsito disponibles.")
+            else:
+                # ── Build monthly arrivals from the combined transit pivot ──
+                meses_futuros = [ms for ms in meses_plan if ms >= _TODAY.strftime('%Y-%m')]
+                _tr_piv_nuevos = pd.DataFrame()
+                if not _tr_piv.empty:
+                    _tr_piv_nuevos = _tr_piv.loc[
+                        _tr_piv.index.isin(_nuevos_skus_set),
+                        [ms for ms in meses_futuros if ms in _tr_piv.columns]
+                    ].copy()
+                    # Keep only SKUs with at least 1 unit incoming
+                    _tr_piv_nuevos = _tr_piv_nuevos[_tr_piv_nuevos.sum(axis=1) > 0]
 
-                _df_nv_show = (
-                    _df_nv[[c for c in show_nv if c in _df_nv.columns]]
-                    .rename(columns={
-                        'sku': 'SKU', 'pi': 'PI', 'producto': 'Descripción',
-                        'marca': 'Marca', 'categoria_padre': 'Categoría',
-                        'cantidad': 'Unidades', 'costo_total_usd': 'USD', 'status': 'Estado',
-                    })
-                    .sort_values(['Mes Llegada', 'Marca'])
-                )
+                if _tr_piv_nuevos.empty:
+                    st.info("✅ No hay nuevos SKUs con llegadas en el FCST o COMEX para los próximos meses.")
+                else:
+                    _tr_piv_nuevos.index.name = 'sku'
+                    _df_nv_grid = _tr_piv_nuevos.reset_index().merge(
+                        _df_nuevos_master, on='sku', how='left'
+                    )
 
-                n_nv = _df_nv_show['SKU'].nunique() if 'SKU' in _df_nv_show.columns else len(_df_nv_show)
-                st.metric("Nuevos SKUs con llegadas próximas", n_nv)
+                    # Friendly column names for month arrivals
+                    mes_rename_nv = {ms: pd.Timestamp(ms + '-01').strftime('%b %y') for ms in meses_futuros if ms in _df_nv_grid.columns}
+                    _df_nv_grid = _df_nv_grid.rename(columns=mes_rename_nv)
+                    _arrival_cols = list(mes_rename_nv.values())
 
-                for mes_nv, grp_nv in _df_nv_show.groupby('Mes Llegada'):
-                    lbl_nv = pd.Timestamp(mes_nv + '-01').strftime('%B %Y')
-                    n_sku_nv = grp_nv['SKU'].nunique() if 'SKU' in grp_nv.columns else len(grp_nv)
-                    with st.expander(f"📦 {lbl_nv} — {n_sku_nv} SKUs únicos"):
-                        fmt_nv = {}
-                        if 'USD' in grp_nv.columns:
-                            fmt_nv['USD'] = lambda v: f"${v:,.0f}" if pd.notna(v) else "—"
-                        st.dataframe(
-                            grp_nv.style.format(fmt_nv) if fmt_nv else grp_nv,
-                            use_container_width=True, hide_index=True
-                        )
+                    # Total col
+                    _df_nv_grid['Total (u)'] = _df_nv_grid[_arrival_cols].sum(axis=1)
 
-                _dl(_df_nv_show, f"nuevos_transito_{_TODAY.strftime('%Y-%m')}.csv")
+                    # Ordered columns
+                    base_cols = ['sku', 'producto', 'marca', 'categoria_padre', 'categoria_hijo']
+                    if 'categoria_producto' in _df_nv_grid.columns:
+                        base_cols.insert(3, 'categoria_producto')
+                    base_cols += ['stock_actual']
+                    rename_base = {
+                        'sku': 'SKU', 'producto': 'Descripción', 'marca': 'Marca',
+                        'categoria_padre': 'Cat. Padre', 'categoria_hijo': 'Cat. Hijo',
+                        'categoria_producto': 'Cat. Comercial', 'stock_actual': 'Stock Hoy',
+                    }
+                    _df_nv_show = (
+                        _df_nv_grid[[c for c in base_cols if c in _df_nv_grid.columns] + _arrival_cols + ['Total (u)']]
+                        .rename(columns=rename_base)
+                        .sort_values(['Marca', 'Total (u)'], ascending=[True, False])
+                        .reset_index(drop=True)
+                    )
+
+                    n_con_llegada = len(_df_nv_show)
+                    c1n, c2n, c3n = st.columns(3)
+                    c1n.metric("Nuevos con llegadas", n_con_llegada)
+                    c2n.metric("Total unidades", f"{int(_df_nv_show['Total (u)'].sum()):,}")
+                    c3n.metric("Marcas", _df_nv_show['Marca'].nunique() if 'Marca' in _df_nv_show.columns else "—")
+
+                    # Int format for arrival cols
+                    fmt_nv_show = {c: lambda v: f"{int(v):,}" if pd.notna(v) and v > 0 else "—" for c in _arrival_cols + ['Total (u)']}
+                    st.dataframe(
+                        _df_nv_show.style.format(fmt_nv_show),
+                        use_container_width=True, hide_index=True
+                    )
+                    _dl(_df_nv_show, f"nuevos_transito_{_TODAY.strftime('%Y-%m')}.csv")
