@@ -105,6 +105,15 @@ def main():
     if nu_mes.empty:
         print(f"[ERROR] La re-extracción no trajo filas de {mes}. Abortando (no piso el histórico)."); sys.exit(1)
 
+    # CMR: reconstruir desde el Drive (fuente de verdad) para el mes ya cerrado.
+    # Mueve venta/costo del pedido web al canal CMR (sin duplicar). El enriquecimiento
+    # por match del extract queda aproximado; esto lo deja exacto al Drive.
+    try:
+        from extract_cmr_ventas import reconstruir_cmr_desde_drive
+        nu_mes = reconstruir_cmr_desde_drive(nu_mes)
+    except Exception as e:
+        print(f"   [WARN] rebuild CMR omitido: {type(e).__name__}: {str(e)[:80]}")
+
     h_new = pd.concat([h[fuera_mask], nu_mes], ignore_index=True)
     print(f"[2/4] Mes {mes}: {int((~fuera_mask).sum()):,} filas viejas → {len(nu_mes):,} frescas")
 

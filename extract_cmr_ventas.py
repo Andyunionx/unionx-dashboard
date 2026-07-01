@@ -244,6 +244,84 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# Columnas de atributo que se heredan del pedido web original al reconstruir CMR.
+_CMR_ATTR = ['bodega', 'categoria_macro', 'categoria_padre', 'categoria_hijo', 'categoria_comercial',
+             'estado_sku', 'pack', 'marca', 'proveedor', 'tipo_marca', 'tipo_compra', 'kam',
+             'estado_canal', 'producto']
+
+
+def reconstruir_cmr_desde_drive(df_mes):
+    """Reconstruye CMR usando el Drive como FUENTE DE VERDAD, para meses CERRADOS.
+
+    MUEVE la venta/costo del pedido UnionX web al canal CMR (sin duplicar ingresos
+    ni costos, sin dejar residuo en web): saca las filas de órdenes CMR (canal CMR o
+    pedido_marketplace == Name #20xxx del Drive) y las reemplaza por 1 fila por línea
+    del Drive, con costo/categoría/marca heredados del pedido web original.
+
+    Idempotente. Solo para meses CERRADOS (el Drive debe estar completo) — NO usar en
+    el mes vivo. Si no hay credenciales o el sheet falla, devuelve df_mes sin cambios.
+    """
+    if df_mes is None or df_mes.empty or not CREDENTIALS.exists():
+        return df_mes
+    cols = list(df_mes.columns)
+    fv = df_mes['fecha_venta'].astype(str)
+    meses = set(x[:7] for x in fv if len(x) >= 7)
+    try:
+        cmr = cargar_cmr_sheet()
+    except Exception as e:
+        print(f"   [CMR-rebuild] sheet falló ({type(e).__name__}: {str(e)[:60]}) — se omite", flush=True)
+        return df_mes
+    cmr = cmr[cmr['fecha'].apply(lambda d: d is not None and d.strftime('%Y-%m') in meses)].copy()
+    if cmr.empty:
+        return df_mes
+    names = set(cmr['cmr_name'].astype(str).str.strip())
+    pm = (df_mes['pedido_marketplace'].astype(str).str.strip()
+          if 'pedido_marketplace' in df_mes.columns else pd.Series('', index=df_mes.index))
+    es_cmr = (df_mes['canal'] == 'CMR') | pm.isin(names)
+    removed = df_mes[es_cmr]
+    keep = df_mes[~es_cmr]
+    attr = {}
+    for _, r in removed.iterrows():
+        attr.setdefault((str(r.get('pedido_marketplace', '')).strip(), str(r['sku']).strip()), r)
+    NUM = set(c for c in cols if pd.api.types.is_numeric_dtype(df_mes[c]))
+    filas = []
+    for _, c in cmr.iterrows():
+        f = c['fecha']; name = str(c['cmr_name']).strip(); sku = str(c['sku']).strip()
+        a = attr.get((name, sku))
+        neta = float(c['venta_neta'] or 0); bruta = float(c['venta_bruta'] or 0)
+        costo = float(pd.to_numeric(a['costo_total'], errors='coerce') or 0) if a is not None else 0.0
+        row = {col: (0 if col in NUM else '') for col in cols}
+        row.update({
+            'tipo_movimiento': 'Venta', 'canal': 'CMR', 'tipo_negocio': 'Fidelización',
+            'pedido': (str(a['pedido']) if a is not None else name), 'pedido_marketplace': name,
+            'sku': sku, 'fecha_venta': f.isoformat(), 'fecha_documento': f.isoformat(),
+            'anio_venta': f.year, 'mes_venta': f.month, 'semana_venta': f.isocalendar()[1],
+            'dia_semana': f.weekday(), 'estado_pedido': 'sale',
+            'cantidad': float(c.get('cantidad') or 1), 'venta_bruta': bruta, 'venta_neta': neta,
+            'costo_unitario': (float(pd.to_numeric(a['costo_unitario'], errors='coerce') or 0) if a is not None else 0),
+            'costo_total': costo, 'margen_front': neta - costo, 'margen_final': neta - costo,
+            'comision': float(c.get('comision') or 0), 'comision_pct': float(c.get('comision_pct') or 0),
+            'logistica': float(c.get('envio_cmr') or 0), 'marketing': 0,
+        })
+        if a is not None:
+            for col in _CMR_ATTR:
+                if col in cols:
+                    row[col] = a[col]
+        filas.append(row)
+    cmr_new = pd.DataFrame(filas).reindex(columns=cols)
+    for col in cols:
+        try:
+            cmr_new[col] = cmr_new[col].astype(df_mes[col].dtype)
+        except (ValueError, TypeError):
+            if pd.api.types.is_numeric_dtype(df_mes[col]):
+                cmr_new[col] = pd.to_numeric(cmr_new[col], errors='coerce').fillna(0).astype(df_mes[col].dtype)
+    out = pd.concat([keep, cmr_new], ignore_index=True)
+    vb = pd.to_numeric(cmr_new['venta_bruta'], errors='coerce').sum()
+    print(f"   [CMR-rebuild] {len(removed)} filas de órdenes CMR → {len(cmr_new)} del Drive "
+          f"(canal CMR, venta bruta ${vb:,.0f})", flush=True)
+    return out
+
+
 def main():
     """Standalone: aplica CMR directo al ventas_mes_actual.parquet (sin Turso)."""
     if not CREDENTIALS.exists():
