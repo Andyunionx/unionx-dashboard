@@ -595,13 +595,28 @@ def couriers_por_corte(corte_key: str) -> List[Dict]:
               "otif_total_pct"]].to_dict("records")
 
 
-def kpi_otif_ytd(anio: int = None) -> Dict:
+def _aplica_filtros_otif(f: pd.DataFrame, courier: str = None,
+                         cliente: str = None) -> pd.DataFrame:
+    """Filtra por courier (nombre consolidado vía alias) y/o canal/cliente."""
+    if courier and str(courier).strip().lower() not in ("", "todos"):
+        f = f[_norm_courier(f["CURIER"]) == str(courier).strip().upper()]
+    if cliente and str(cliente).strip().lower() not in ("", "todos"):
+        f = f[f["CLIENTE"].astype(str).str.strip().str.upper() == str(cliente).strip().upper()]
+    return f
+
+
+def kpi_otif_ytd(anio: int = None, courier: str = None,
+                 cliente: str = None) -> Dict:
     """OTIF acumulado del año (YTD) sobre base de cortes 26-25 cerrados.
+
+    Filtros opcionales por courier (nombre consolidado) y/o canal (cliente).
 
     Returns:
       - resumen YTD (NS empresa / NS courier / OTIF total E2E, ponderado por órdenes)
       - trend: métricas por corte (para la curva mensual)
       - por_courier: ranking YTD por courier (NS courier %, OTIF E2E %, volumen)
+      - opciones: {couriers, clientes} para poblar los filtros (sobre la
+        ventana completa, independiente del filtro activo)
     """
     df = cargar_otif_drive()
     if df.empty:
@@ -615,18 +630,42 @@ def kpi_otif_ytd(anio: int = None) -> Dict:
 
     d0 = min(pd.Timestamp(c["desde"]) for c in cortes)
     d1 = max(pd.Timestamp(c["hasta"]) for c in cortes)
-    f = df[(df["FECHA"] >= d0) & (df["FECHA"] <= d1)].copy()
+    f_win = df[(df["FECHA"] >= d0) & (df["FECHA"] <= d1)].copy()
+
+    # Opciones de filtro (sobre ventana COMPLETA, no la filtrada)
+    cou_all = _norm_courier(f_win["CURIER"])
+    opc_couriers = sorted([c for c in cou_all[cou_all != ""].value_counts()
+                           [lambda s: s >= _COU_MIN_PEDIDOS].index.tolist() if c])
+    cli_series = f_win["CLIENTE"].astype(str).str.strip().str.upper()
+    opc_clientes = sorted([c for c in cli_series[cli_series != ""].value_counts()
+                           [lambda s: s >= _COU_MIN_PEDIDOS].index.tolist()
+                           if c and c != "NAN"])
+    opciones = {"couriers": ["Todos"] + opc_couriers,
+                "clientes": ["Todos"] + opc_clientes}
+
+    # Aplicar filtros
+    f = _aplica_filtros_otif(f_win, courier, cliente)
 
     n = len(f)
+    if n == 0:
+        return {
+            "anio": anio, "cortes": [c["key"] for c in cortes],
+            "ventana": {"desde": d0.strftime("%Y-%m-%d"), "hasta": d1.strftime("%Y-%m-%d")},
+            "n_ordenes": 0, "n_empresa_ok": 0, "n_courier_ok": 0, "n_otif_ok": 0,
+            "ns_empresa_pct": None, "ns_courier_pct": None, "otif_total_pct": None,
+            "trend": [], "por_courier": [], "opciones": opciones,
+            "filtros": {"courier": courier or "Todos", "cliente": cliente or "Todos"},
+            "error": None,
+        }
     n_emp = int(f["empresa_a_tiempo"].sum())
     n_cou = int(f["courier_a_tiempo"].sum())
     n_tot = int(f["otif_total"].sum())
 
-    # Tendencia por corte
+    # Tendencia por corte (respeta filtros)
     trend = []
     for c in cortes:
-        fc = df[(df["FECHA"] >= pd.Timestamp(c["desde"])) &
-                (df["FECHA"] <= pd.Timestamp(c["hasta"]))]
+        fc = f[(f["FECHA"] >= pd.Timestamp(c["desde"])) &
+               (f["FECHA"] <= pd.Timestamp(c["hasta"]))]
         nc = len(fc)
         if nc == 0:
             continue
@@ -639,7 +678,7 @@ def kpi_otif_ytd(anio: int = None) -> Dict:
             "otif_total_pct": round(fc["otif_total"].mean() * 100, 1),
         })
 
-    # Ranking YTD por courier
+    # Ranking por courier (dentro del filtro; útil p.ej. al filtrar por canal)
     gc = f.copy()
     gc["CURIER"] = _norm_courier(gc["CURIER"])
     gc = gc[gc["CURIER"] != ""]
@@ -650,13 +689,16 @@ def kpi_otif_ytd(anio: int = None) -> Dict:
         empresa_ok=("empresa_a_tiempo", "sum"),
     ).reset_index()
     g = g[g["n_pedidos"] >= _COU_MIN_PEDIDOS]
-    g["ns_courier_pct"] = (g["courier_ok"] / g["n_pedidos"] * 100).round(1)
-    g["otif_total_pct"] = (g["otif_ok"] / g["n_pedidos"] * 100).round(1)
-    g["ns_empresa_pct"] = (g["empresa_ok"] / g["n_pedidos"] * 100).round(1)
-    g["pct_volumen"] = (g["n_pedidos"] / g["n_pedidos"].sum() * 100).round(1)
-    g = g.sort_values("n_pedidos", ascending=False)
-    por_courier = g[["CURIER", "n_pedidos", "pct_volumen", "ns_courier_pct",
-                     "otif_total_pct", "ns_empresa_pct"]].to_dict("records")
+    if not g.empty:
+        g["ns_courier_pct"] = (g["courier_ok"] / g["n_pedidos"] * 100).round(1)
+        g["otif_total_pct"] = (g["otif_ok"] / g["n_pedidos"] * 100).round(1)
+        g["ns_empresa_pct"] = (g["empresa_ok"] / g["n_pedidos"] * 100).round(1)
+        g["pct_volumen"] = (g["n_pedidos"] / g["n_pedidos"].sum() * 100).round(1)
+        g = g.sort_values("n_pedidos", ascending=False)
+        por_courier = g[["CURIER", "n_pedidos", "pct_volumen", "ns_courier_pct",
+                         "otif_total_pct", "ns_empresa_pct"]].to_dict("records")
+    else:
+        por_courier = []
 
     return {
         "anio": anio,
@@ -669,6 +711,8 @@ def kpi_otif_ytd(anio: int = None) -> Dict:
         "otif_total_pct": round(n_tot / n * 100, 1) if n else None,
         "trend": trend,
         "por_courier": por_courier,
+        "opciones": opciones,
+        "filtros": {"courier": courier or "Todos", "cliente": cliente or "Todos"},
         "error": None,
     }
 

@@ -111,25 +111,56 @@ def _render_otif_ytd(snap: dict):
         st.warning("Sin años con cortes cerrados.")
         return
 
-    c_sel, _ = st.columns([1, 3])
-    with c_sel:
+    cA, cB, cC = st.columns([1, 1.4, 1.4])
+    with cA:
         anio_sel = st.selectbox("Año", anios, index=0, key="otif_ytd_anio")
-    y = ytd_map.get(str(anio_sel), {})
+    # Base (sin filtro) desde snapshot → provee las opciones de filtro.
+    y_base = ytd_map.get(str(anio_sel), {})
+    if not y_base or y_base.get("error"):
+        st.warning(f"⚠️ {y_base.get('error', 'Sin datos YTD para este año')}")
+        return
+    opc = y_base.get("opciones", {"couriers": ["Todos"], "clientes": ["Todos"]})
+    with cB:
+        f_cli = st.selectbox("Canal / marketplace", opc.get("clientes", ["Todos"]),
+                             index=0, key="otif_ytd_cli")
+    with cC:
+        f_cou = st.selectbox("Courier", opc.get("couriers", ["Todos"]),
+                             index=0, key="otif_ytd_cou")
+
+    # Si hay filtro activo, recomputar en vivo (Sheet). Si no, usar snapshot.
+    filtro_activo = (f_cli != "Todos") or (f_cou != "Todos")
+    if filtro_activo:
+        try:
+            from views._ops_otif_drive import kpi_otif_ytd as _ytd_fn
+            y = _ytd_fn(anio_sel, courier=(None if f_cou == "Todos" else f_cou),
+                        cliente=(None if f_cli == "Todos" else f_cli))
+        except Exception as e:
+            st.info(f"No se pudo aplicar el filtro sin acceso al Sheet OTIF "
+                    f"({type(e).__name__}). Mostrando acumulado sin filtrar.")
+            y = y_base
+    else:
+        y = y_base
     if not y or y.get("error"):
-        st.warning(f"⚠️ {y.get('error', 'Sin datos YTD para este año')}")
+        st.warning(f"⚠️ {y.get('error', 'Sin datos YTD')}")
+        return
+    if y.get("n_ordenes", 0) == 0:
+        st.warning("Sin órdenes para el filtro seleccionado en la ventana YTD.")
         return
 
     vent = y.get("ventana", {})
     n_cortes = len(y.get("cortes", []))
     ult = y.get("trend", [])[-1] if y.get("trend") else None
     ult_lbl = f"{_MESES_ABBR.get(ult['mes'], '')} {ult['anio']}" if ult else "—"
-    st.markdown(
-        f"#### 📈 OTIF acumulado {anio_sel} — YTD"
-    )
+    filtro_txt = ""
+    if f_cli != "Todos":
+        filtro_txt += f" · Canal: **{f_cli}**"
+    if f_cou != "Todos":
+        filtro_txt += f" · Courier: **{f_cou}**"
+    st.markdown(f"#### 📈 OTIF acumulado {anio_sel} — YTD")
     st.caption(
         f"Ventana: **{vent.get('desde', '?')} → {vent.get('hasta', '?')}** · "
         f"{n_cortes} cortes cerrados (último: **{ult_lbl}**) · "
-        f"{y.get('n_ordenes', 0):,} órdenes acumuladas · base corte 26-25"
+        f"{y.get('n_ordenes', 0):,} órdenes · base corte 26-25{filtro_txt}"
     )
 
     # KPI cards YTD

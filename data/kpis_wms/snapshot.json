@@ -7607,6 +7607,38 @@
             "ns_empresa_pct": 100.0
           }
         ],
+        "opciones": {
+          "couriers": [
+            "Todos",
+            "99MINUTOS",
+            "BLUEXPRESS",
+            "COLECTA",
+            "HOME DELIVERY CORP",
+            "RECIBELO",
+            "RETIRO EN BODEGA",
+            "RIPLEY",
+            "STARKEN",
+            "WELIVERY"
+          ],
+          "clientes": [
+            "Todos",
+            "BICE",
+            "BLUEXPRESS",
+            "DUTY TRAVEL",
+            "FALABELLA F",
+            "FALABELLA HDC",
+            "KITCHEN CENTER",
+            "MERCADO LIBRE C",
+            "MERCADO LIBRE F",
+            "PAGINAS",
+            "RIPLEY",
+            "WALMART"
+          ]
+        },
+        "filtros": {
+          "courier": "Todos",
+          "cliente": "Todos"
+        },
         "error": null
       },
       "2025": {
@@ -7849,6 +7881,47 @@
             "ns_empresa_pct": 96.7
           }
         ],
+        "opciones": {
+          "couriers": [
+            "Todos",
+            "BLUEXPRESS",
+            "BLUEXPRESSXPRESS",
+            "COLECTA",
+            "COLECTA 1",
+            "COLECTA1",
+            "COLECTA2",
+            "FALAFLEX",
+            "FLEX",
+            "FLEX1",
+            "FLEX2",
+            "HOME DELIVERY CORP",
+            "KUBI LOKERS",
+            "RECIBELO",
+            "RETIRO EN BODEGA",
+            "RIPLEY",
+            "SAMEDAY",
+            "STARKEN",
+            "WELIVERY"
+          ],
+          "clientes": [
+            "Todos",
+            "APPRECIO",
+            "BICE",
+            "DUTY TRAVEL",
+            "FALABELLA",
+            "KITCHEN CENTER",
+            "ML",
+            "PAGINAS",
+            "PARIS",
+            "RIPLEY",
+            "WALMART",
+            "YOUMARKET"
+          ]
+        },
+        "filtros": {
+          "courier": "Todos",
+          "cliente": "Todos"
+        },
         "error": null
       }
     }
