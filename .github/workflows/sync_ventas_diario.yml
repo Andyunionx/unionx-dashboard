@@ -20,7 +20,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: main          # siempre actualiza main; la rama de feature hereda en el PR
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
