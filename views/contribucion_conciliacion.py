@@ -111,7 +111,7 @@ def _render_b2b(b):
                "Casa Mila, Ferretería, Amar, etc.). Comparación de presupuesto a nivel total.")
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando detalle RAW…")
+@st.cache_data(ttl=300, show_spinner="Cargando detalle RAW…")
 def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     """Componentes del P&L detallado desde el RAW (ingresos/NC) + glosas (comisiones).
     Solo canales con KAM comercial. Devuelve (raw_comp, glosas_comp)."""
