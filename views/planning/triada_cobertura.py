@@ -674,8 +674,8 @@ def render():
             # Stock + Pedido = Stock Inicio + Llegadas
             _sp = _stock_v + _tr
 
-            # Cobertura = (Stock + Llegadas) / promedio 3m PPTO
-            _cob = np.where(_avg_ppto > 0, np.round(_sp / _avg_ppto, 1), np.nan)
+            # Cobertura = (Stock + Llegadas) / promedio 3m PPTO (0 cuando no hay PPTO)
+            _cob = np.where(_avg_ppto > 0, np.round(_sp / _avg_ppto, 1), 0.0)
 
             df_jer[f"si_{ms}"] = np.round(_stock_v).astype(int)  # Stock Inicial
             df_jer[f"tr_{ms}"] = np.round(_tr).astype(int)       # Llegadas/Tránsito
@@ -737,11 +737,12 @@ def render():
             grid_options = gb.build()
 
             # Agregar grupos de columnas por mes directamente en columnDefs
-            cob_formatter = JsCode("function(p){return p.value!=null?parseFloat(p.value).toFixed(1):''}")
+            cob_formatter = JsCode("function(p){var v=parseFloat(p.value);return(p.value!=null&&!isNaN(v))?v.toFixed(1):''}")
             cob_style = JsCode("""
             function(p){
               if(p.value==null)return{};
               const v=parseFloat(p.value);
+              if(isNaN(v))return{};
               if(v<1)  return{background:'#FF4B4B',color:'white'};
               if(v<2)  return{background:'#FFD700',color:'#333'};
               if(v<4)  return{background:'#52C41A',color:'white'};
