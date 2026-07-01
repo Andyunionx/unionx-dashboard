@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-01T15:44:15.959995",
+  "generado_en": "2026-07-01T17:06:13.101215",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1365,
   "capacidad_bodega_m3": 2456.9999999999995,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1365,
-    "posiciones_ocupadas_hoy": 933,
-    "posiciones_libres_hoy": 432,
-    "pct_ocupacion_hoy": 68.4,
-    "m3_stock_calculado": 1156.8
+    "posiciones_ocupadas_hoy": 937,
+    "posiciones_libres_hoy": 428,
+    "pct_ocupacion_hoy": 68.6,
+    "m3_stock_calculado": 1151.1
   },
   "pico_proyectado": {
     "fecha": "2026-07-15",
-    "posiciones_ocupadas": 947.3,
-    "pct_ocupacion": 69.4
+    "posiciones_ocupadas": 951.2,
+    "pct_ocupacion": 69.7
   },
   "minimo_proyectado": {
     "fecha": "2026-08-30",
-    "posiciones_ocupadas": 783.1,
-    "pct_ocupacion": 57.4
+    "posiciones_ocupadas": 787.3,
+    "pct_ocupacion": 57.7
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -91,23 +91,23 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 259.9,
-  "pallets_total_salientes_horizonte": 233.1,
+  "pallets_total_salientes_horizonte": 232.9,
   "m3_total_entrante_horizonte": 311.8,
-  "m3_total_saliente_horizonte": 279.7,
+  "m3_total_saliente_horizonte": 279.4,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 872,
     "sku_fallback": 0,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 45773.0,
-    "demanda_cumplida_unidades": 16205.0,
-    "demanda_no_cubierta_unidades_total": 29568.0,
+    "demanda_cumplida_unidades": 16193.0,
+    "demanda_no_cubierta_unidades_total": 29580.0,
     "pct_demanda_cumplida": 35.4,
     "sku_sin_match_stock_count": 31,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
-        "unid_no_cubiertas": 22811.0,
+        "unid_no_cubiertas": 22812.0,
         "sin_match_stock": true
       },
       {
@@ -117,22 +117,22 @@
       },
       {
         "sku": "LVSPTVUN",
-        "unid_no_cubiertas": 474.0,
+        "unid_no_cubiertas": 427.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 348.0,
+        "unid_no_cubiertas": 350.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVAUDGM-BK",
-        "unid_no_cubiertas": 266.0,
+        "unid_no_cubiertas": 278.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 261.0,
+        "unid_no_cubiertas": 264.0,
         "sin_match_stock": true
       },
       {
@@ -157,7 +157,7 @@
       },
       {
         "sku": "1660859171584",
-        "unid_no_cubiertas": 143.0,
+        "unid_no_cubiertas": 153.0,
         "sin_match_stock": true
       },
       {
@@ -166,27 +166,32 @@
         "sin_match_stock": true
       },
       {
+        "sku": "LVPRONOV",
+        "unid_no_cubiertas": 86.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVPROORI",
+        "unid_no_cubiertas": 84.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "1634845754276",
         "unid_no_cubiertas": 82.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LVPRONOV",
-        "unid_no_cubiertas": 81.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "LVPROORI",
-        "unid_no_cubiertas": 80.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "LHMALEXPBK-70",
-        "unid_no_cubiertas": 77.0,
+        "unid_no_cubiertas": 78.0,
         "sin_match_stock": true
       },
       {
         "sku": "Pack366",
+        "unid_no_cubiertas": 74.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVTECOFSL-GR",
         "unid_no_cubiertas": 74.0,
         "sin_match_stock": true
       },
@@ -198,11 +203,6 @@
       {
         "sku": "1661872956577",
         "unid_no_cubiertas": 70.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "LVTECOFSL-GR",
-        "unid_no_cubiertas": 67.0,
         "sin_match_stock": true
       }
     ],
