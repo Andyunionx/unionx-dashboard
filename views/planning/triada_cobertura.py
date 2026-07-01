@@ -559,9 +559,10 @@ def render():
     st.divider()
 
     # ── Tabs ──────────────────────────────────────────────────────────
-    tab_jer, tab_cst, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
+    tab_jer, tab_cst, tab_sob, tab_sku, tab_marca, tab_cat, tab_mx = st.tabs([
         "🌳 Jerárquico",
         "💰 A Costo ($M)",
+        "📉 Sobrestock",
         "🔍 Por SKU",
         "🏷️ Por Marca",
         "📂 Por Categoría",
@@ -989,7 +990,170 @@ def render():
                 st.info("streamlit-aggrid no disponible.")
                 st.dataframe(_df_grid_cst[["sku", "producto", "marca", "stock_cst_m"]])
 
-    # ── TAB 2 — Por SKU ───────────────────────────────────────────────
+    # ── TAB 2 — Sobrestock ────────────────────────────────────────────
+    with tab_sob:
+        try:
+            from st_aggrid import AgGrid, GridOptionsBuilder, JsCode as JsCodeSob
+            _aggrid_sob_ok = True
+        except ImportError:
+            _aggrid_sob_ok = False
+
+        try:
+            _df_sob_src = df_jer.copy()
+        except NameError:
+            _df_sob_src = pd.DataFrame()
+
+        if not _df_sob_src.empty:
+            _costo_map_sob = cargar_costo_unit_sku()
+
+            # Cobertura fc3m desde columnas ya calculadas en df_jer
+            _df_sob_src['_cob_fc3m'] = np.where(
+                _df_sob_src['venta_prom_3m'] > 0,
+                _df_sob_src['stock_actual'] / _df_sob_src['venta_prom_3m'],
+                np.nan
+            )
+            _df_sob = _df_sob_src[_df_sob_src['_cob_fc3m'].fillna(0) > 4].copy()
+
+            if _df_sob.empty:
+                st.info("✅ No hay SKUs con sobrestock (cobertura > 4 meses) en la selección actual.")
+            else:
+                _cu_s    = _df_sob['sku'].map(_costo_map_sob).fillna(0).values
+                _stock_s = _df_sob['stock_actual'].values.astype(float)
+                _vta_s   = _df_sob['venta_prom_3m'].values.astype(float)
+                _cob_s   = _df_sob['_cob_fc3m'].values
+
+                # Llegadas futuras: suma tr_ meses 1-5 (excluye mes actual)
+                _llegadas_s = np.zeros(len(_df_sob))
+                for _ms_ll in mes_strs_j[1:]:
+                    if f'tr_{_ms_ll}' in _df_sob.columns:
+                        _llegadas_s += _df_sob[f'tr_{_ms_ll}'].values.astype(float)
+
+                _stock_cst_s    = np.round(_stock_s * _cu_s)
+                _venta_cst_s    = np.round(_vta_s   * _cu_s)
+                _stock_optimo_s = np.round(4 * _venta_cst_s)
+                _cap_inmovil_s  = np.round(_stock_cst_s - _stock_optimo_s)
+                _meses_exc_s    = np.round(np.maximum(0.0, _cob_s - 4), 1)
+
+                _df_grid_sob = pd.DataFrame({
+                    'marca':           _df_sob['marca'].values,
+                    'categoria_padre': _df_sob['categoria_padre'].values,
+                    'categoria_hijo':  _df_sob['categoria_hijo'].values,
+                    'sku':             _df_sob['sku'].values,
+                    'produto':         _df_sob['produto'].values,
+                    'cobertura_act':   np.round(_cob_s, 1),
+                    'meses_exceso':    _meses_exc_s,
+                    'stock_cst':       _stock_cst_s.astype(float),
+                    'venta_prom_cst':  _venta_cst_s.astype(float),
+                    'stock_optimo':    _stock_optimo_s.astype(float),
+                    'capital_inmovil': _cap_inmovil_s.astype(float),
+                    'llegadas_u':      np.round(_llegadas_s).astype(int),
+                })
+                _df_grid_sob = _df_grid_sob.sort_values('capital_inmovil', ascending=False)
+
+                _n_sob     = len(_df_grid_sob)
+                _cap_total_sob = float(_df_grid_sob['capital_inmovil'].sum())
+                st.caption(
+                    f"💰 **Capital inmovilizado en sobrestock: ${_cap_total_sob:,.0f}**"
+                    f"  |  {_n_sob} SKUs con cobertura > 4m  |  "
+                    f"Stock óptimo = 4 meses de Vta PPTO"
+                )
+
+                if _aggrid_sob_ok:
+                    _clp_fmt_s  = "x!=null?'$'+Math.round(x).toLocaleString('es-CL'):''"
+                    _cob_fmt_sb = "x!=null?parseFloat(x).toFixed(1)+'m':''"
+
+                    gbs = GridOptionsBuilder.from_dataframe(_df_grid_sob)
+                    gbs.configure_default_column(resizable=True, sortable=True, filter=True)
+                    gbs.configure_column("marca",           header_name="Marca / Categoría", rowGroup=True, hide=True)
+                    gbs.configure_column("categoria_padre", header_name="Cat. Padre",         rowGroup=True, hide=True)
+                    gbs.configure_column("categoria_hijo",  header_name="Cat. Hijo",          rowGroup=True, hide=True)
+                    gbs.configure_column("sku",     header_name="SKU",         width=150, minWidth=120, suppressSizeToFit=True)
+                    gbs.configure_column("produto", header_name="Descripción", width=220, minWidth=160, suppressSizeToFit=True)
+                    gbs.configure_column(
+                        "cobertura_act",   header_name="Cob. ACT (m)",        width=100, minWidth=85,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="avg",
+                        valueFormatter=_cob_fmt_sb)
+                    gbs.configure_column(
+                        "meses_exceso",    header_name="Meses Exceso",         width=100, minWidth=85,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="avg",
+                        valueFormatter=_cob_fmt_sb)
+                    gbs.configure_column(
+                        "stock_cst",       header_name="Stock CST ($)",        width=130, minWidth=110,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="sum",
+                        valueFormatter=_clp_fmt_s)
+                    gbs.configure_column(
+                        "venta_prom_cst",  header_name="Vta CST Prom/Mes ($)", width=155, minWidth=120,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="sum",
+                        valueFormatter=_clp_fmt_s)
+                    gbs.configure_column(
+                        "stock_optimo",    header_name="Stk Óptimo ($)",       width=130, minWidth=110,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="sum",
+                        valueFormatter=_clp_fmt_s)
+                    gbs.configure_column(
+                        "capital_inmovil", header_name="Capital Inmov. ($)",   width=140, minWidth=120,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="sum",
+                        valueFormatter=_clp_fmt_s)
+                    gbs.configure_column(
+                        "llegadas_u",      header_name="Llegadas (u)",          width=100, minWidth=85,
+                        suppressSizeToFit=True, type=["numericColumn"], enableValue=True, aggFunc="sum",
+                        valueFormatter="x!=null?Math.round(x).toLocaleString():''")
+
+                    _gos = gbs.build()
+                    _gos["autoGroupColumnDef"]      = {"pinned": "left", "minWidth": 160, "cellRendererParams": {"suppressCount": False}}
+                    _gos["groupDisplayType"]        = "multipleColumns"
+                    _gos["groupDefaultExpanded"]    = 0
+                    _gos["suppressAggFuncInHeader"] = True
+                    _gos["rowHeight"]               = 28
+                    _gos["headerHeight"]            = 32
+                    _gos["groupHeaderHeight"]       = 28
+
+                    _n_top_sob  = _df_grid_sob['marca'].dropna().nunique()
+                    _height_sob = min(max(_n_top_sob * 28 + 60 + 28 + 20, 300), 700)
+
+                    _tot_sob = {
+                        "marca": "", "categoria_padre": "", "categoria_hijo": "",
+                        "sku": "TOTAL GENERAL", "produto": "TOTAL GENERAL",
+                        "cobertura_act":   None,
+                        "meses_exceso":    None,
+                        "stock_cst":       float(_df_grid_sob["stock_cst"].sum()),
+                        "venta_prom_cst":  float(_df_grid_sob["venta_prom_cst"].sum()),
+                        "stock_optimo":    float(_df_grid_sob["stock_optimo"].sum()),
+                        "capital_inmovil": float(_df_grid_sob["capital_inmovil"].sum()),
+                        "llegadas_u":      int(_df_grid_sob["llegadas_u"].sum()),
+                    }
+                    _gos["pinnedBottomRowData"] = [_tot_sob]
+                    _gos["getRowStyle"] = JsCodeSob("""
+                    function(params){
+                        if(params.node && params.node.rowPinned==='bottom')
+                            return{fontWeight:'bold',background:'#f0f0f0'};
+                        return{};
+                    }""")
+
+                    AgGrid(
+                        _df_grid_sob,
+                        gridOptions=_gos,
+                        height=_height_sob,
+                        fit_columns_on_grid_load=False,
+                        allow_unsafe_jscode=True,
+                        theme="streamlit",
+                        key="aggrid_sobrestock",
+                    )
+
+                    _csv_sob = _df_grid_sob.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        "⬇️ Descargar CSV",
+                        data=_csv_sob,
+                        file_name=f"sobrestock_{pd.Timestamp.today().strftime('%Y%m%d')}.csv",
+                        mime="text/csv",
+                        key="dl_sobrestock",
+                    )
+                else:
+                    st.info("streamlit-aggrid no disponible.")
+                    st.dataframe(_df_grid_sob)
+        else:
+            st.warning("No hay datos disponibles. El tab Jerárquico debe cargarse primero.")
+
+    # ── TAB 3 — Por SKU ───────────────────────────────────────────────
     with tab_sku:
         col_tr = f"transito_{horizonte}d"
         cols_show = [
