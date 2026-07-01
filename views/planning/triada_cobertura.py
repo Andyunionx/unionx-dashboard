@@ -1073,7 +1073,7 @@ def render():
                     'categoria_padre': _df_sob['categoria_padre'].values,
                     'categoria_hijo':  _df_sob['categoria_hijo'].values,
                     'sku':             _df_sob['sku'].values,
-                    'produto':         _df_sob['produto'].values,
+                    'produto':         (_df_sob['produto'] if 'produto' in _df_sob.columns else _df_sob['producto']).values,
                     'cobertura_act':   np.round(_cob_s, 1),
                     'meses_exceso':    _meses_exc_s,
                     'stock_cst':       _stock_cst_s.astype(float),
