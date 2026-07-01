@@ -412,7 +412,10 @@ def main():
     df_dedup['_qty'] = pd.to_numeric(df_dedup['cantidad'], errors='coerce').fillna(0)
     if '_line_id' in df_dedup.columns:
         lid = df_dedup['_line_id'].astype('string')
-        tiene_id = (df_dedup['tipo_movimiento'] == 'Venta') & lid.notna() \
+        # Venta (id sale.order.line) y Devolución (id account.move.line, prefijo 'N')
+        # deduplican por su id → conservan líneas idénticas legítimas (12 unidades
+        # devueltas en una NC, canjes repetidos) y eliminan solo los duplicados-fantasma.
+        tiene_id = df_dedup['tipo_movimiento'].isin(['Venta', 'Devolución']) & lid.notna() \
             & ~lid.str.strip().str.lower().isin(['', 'nan', 'none', '<na>'])
     else:
         tiene_id = pd.Series(False, index=df_dedup.index)

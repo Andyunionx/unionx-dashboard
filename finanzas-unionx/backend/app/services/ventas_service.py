@@ -1345,6 +1345,7 @@ class VentasService(BaseOdooService):
                                     'Pedido Marketplace': orden_orig.get('channel_order_reference', '') or '',
                                     'Yuju Pack Id': orden_orig.get('yuju_pack_id', '') or '',
                                     'Ref Cliente': orden_orig.get('client_order_ref', '') or '',
+                                    'Linea ID': f"N{nl.get('id')}",  # id de account.move.line (prefijo N: no colisiona con sale.order.line de Venta)
                                     'Estado Pedido': estado_ped_nc,
                                     'Tipo Despacho': '',
                                     'SKU': sku_nc,
