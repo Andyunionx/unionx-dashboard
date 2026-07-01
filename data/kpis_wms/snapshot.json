@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-01T07:14:10.007297",
+  "generado_en": "2026-07-01T17:18:10.699683",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
@@ -13,28 +13,42 @@
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.02188782489740082,
-      "total_pickings": 731,
+      "valor": 0.021534320323014805,
+      "total_pickings": 743,
       "on_time": 16,
-      "on_time_pct": 0.02188782489740082,
-      "in_full": 727,
-      "in_full_pct": 0.9945280437756497,
+      "on_time_pct": 0.021534320323014805,
+      "in_full": 739,
+      "in_full_pct": 0.9946164199192463,
       "both": 16,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9999625916504564,
-      "ok": 26731,
-      "total": 26732,
+      "valor": 0.9999638793570526,
+      "ok": 27684,
+      "total": 27685,
       "errores": 1,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 15.357483950617283,
-      "n_recepciones": 225,
+      "valor": 15.222200195790503,
+      "n_recepciones": 227,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01032",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-07-01 17:00",
+          "done": "2026-07-01 17:00"
+        },
+        {
+          "picking": "CA1/RET/01031",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-07-01 16:59",
+          "done": "2026-07-01 16:59"
+        },
         {
           "picking": "CA1/RET/01030",
           "proveedor": "Cliente Interno",
@@ -160,46 +174,60 @@
           "horas": 0.0,
           "scheduled": "2026-06-23 19:04",
           "done": "2026-06-23 19:05"
-        },
-        {
-          "picking": "CA1/RET/01017",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-06-23 19:04",
-          "done": "2026-06-23 19:04"
-        },
-        {
-          "picking": "CA1/RET/01016",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-06-23 19:02",
-          "done": "2026-06-23 19:03"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9414425735109324,
+      "valor": 0.9670434086817363,
       "total_so": 20000,
-      "total_con_pickings": 19895,
-      "cumplidos": 18730,
-      "parciales": 35,
-      "sin_iniciar": 1130,
+      "total_con_pickings": 19996,
+      "cumplidos": 19337,
+      "parciales": 31,
+      "sin_iniciar": 628,
       "error": null
     },
     "oct_30d": {
-      "valor": 58.8182747038347,
-      "n_orders": 19790,
+      "valor": 59.605467610902664,
+      "n_orders": 19722,
       "min_h": 0.006944444444444444,
-      "max_h": 709.6244444444444,
-      "mediana_h": 33.36222222222222,
+      "max_h": 713.9630555555556,
+      "mediana_h": 33.42583333333334,
       "detalle": [
+        {
+          "so": "S239877",
+          "cliente": "Cliente Ripley, Alfonso Velasquez",
+          "horas": 714.0,
+          "fecha_orden": "2026-06-01 22:31",
+          "fecha_despacho": "2026-07-01 16:29"
+        },
+        {
+          "so": "S240027",
+          "cliente": "Cliente Falabella Fcom, maria jose muñoz miranda",
+          "horas": 711.9,
+          "fecha_orden": "2026-06-01 23:34",
+          "fecha_despacho": "2026-07-01 15:29"
+        },
+        {
+          "so": "S240375",
+          "cliente": "Cliente Ripley, Nancy Raquel Quispe Aguilar",
+          "horas": 711.1,
+          "fecha_orden": "2026-06-02 01:23",
+          "fecha_despacho": "2026-07-01 16:29"
+        },
         {
           "so": "S235636",
           "cliente": "Cliente Falabella Fcom, ignacio morales marquez",
           "horas": 709.6,
           "fecha_orden": "2026-05-25 05:28",
           "fecha_despacho": "2026-06-23 19:05"
+        },
+        {
+          "so": "S240900",
+          "cliente": "Cliente Ripley, Maria Angelica Cubillos",
+          "horas": 709.0,
+          "fecha_orden": "2026-06-02 03:32",
+          "fecha_despacho": "2026-07-01 16:29"
         },
         {
           "so": "S234962",
@@ -244,6 +272,27 @@
           "fecha_despacho": "2026-06-23 19:52"
         },
         {
+          "so": "S242385",
+          "cliente": "Cliente Falabella Fcom, Tamara Sepulveda",
+          "horas": 689.9,
+          "fecha_orden": "2026-06-02 21:36",
+          "fecha_despacho": "2026-07-01 15:30"
+        },
+        {
+          "so": "S242441",
+          "cliente": "Cliente Falabella Fcom, francisco ruiz esquide torino",
+          "horas": 689.3,
+          "fecha_orden": "2026-06-02 22:13",
+          "fecha_despacho": "2026-07-01 15:31"
+        },
+        {
+          "so": "S242689",
+          "cliente": "Cliente Falabella Fcom, Stephania Romero Ardiles",
+          "horas": 687.5,
+          "fecha_orden": "2026-06-03 00:04",
+          "fecha_despacho": "2026-07-01 15:32"
+        },
+        {
           "so": "S234967",
           "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
           "horas": 675.8,
@@ -284,55 +333,6 @@
           "horas": 670.0,
           "fecha_orden": "2026-05-26 21:06",
           "fecha_despacho": "2026-06-23 19:05"
-        },
-        {
-          "so": "S234970",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 651.8,
-          "fecha_orden": "2026-05-15 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234972",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 651.8,
-          "fecha_orden": "2026-05-15 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234971",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 651.8,
-          "fecha_orden": "2026-05-15 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234973",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 651.8,
-          "fecha_orden": "2026-05-15 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S234974",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 651.8,
-          "fecha_orden": "2026-05-15 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
-        },
-        {
-          "so": "S236543",
-          "cliente": "Cliente Falabella Fcom, Francisca Velasquez Velasquez",
-          "horas": 641.6,
-          "fecha_orden": "2026-05-28 01:31",
-          "fecha_despacho": "2026-06-23 19:05"
-        },
-        {
-          "so": "S234975",
-          "cliente": "Cliente Walmart, ALMENDRA ASCENCIO FUENZALIDA",
-          "horas": 627.8,
-          "fecha_orden": "2026-05-16 16:00",
-          "fecha_despacho": "2026-06-11 19:45"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 0,
+      "lineas": 962,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 170,
-      "outgoing": 29762,
-      "internal": 20068,
+      "outgoing": 29792,
+      "internal": 20038,
       "total": 50000,
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 363,
-          "tarde": 363,
+          "total": 372,
+          "tarde": 372,
           "on_time_pct": 0.0
         },
         {
@@ -385,8 +385,8 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 7,
-          "tarde": 7,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -5775,32 +5775,46 @@
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.02188782489740082,
-      "total_pickings": 731,
+      "valor": 0.021534320323014805,
+      "total_pickings": 743,
       "on_time": 16,
-      "on_time_pct": 0.02188782489740082,
-      "in_full": 727,
-      "in_full_pct": 0.9945280437756497,
+      "on_time_pct": 0.021534320323014805,
+      "in_full": 739,
+      "in_full_pct": 0.9946164199192463,
       "both": 16,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9999625916504564,
-      "ok": 26731,
-      "total": 26732,
+      "valor": 0.9999638793570526,
+      "ok": 27684,
+      "total": 27685,
       "errores": 1,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 15.357483950617283,
-      "n_recepciones": 225,
+      "valor": 15.222200195790503,
+      "n_recepciones": 227,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01032",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-07-01 17:00",
+          "done": "2026-07-01 17:00"
+        },
+        {
+          "picking": "CA1/RET/01031",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-07-01 16:59",
+          "done": "2026-07-01 16:59"
+        },
         {
           "picking": "CA1/RET/01030",
           "proveedor": "Cliente Interno",
@@ -5926,20 +5940,6 @@
           "horas": 0.0,
           "scheduled": "2026-06-23 19:04",
           "done": "2026-06-23 19:05"
-        },
-        {
-          "picking": "CA1/RET/01017",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-06-23 19:04",
-          "done": "2026-06-23 19:04"
-        },
-        {
-          "picking": "CA1/RET/01016",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-06-23 19:02",
-          "done": "2026-06-23 19:03"
         }
       ],
       "error": null
