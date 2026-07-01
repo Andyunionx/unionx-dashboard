@@ -17,6 +17,9 @@ from collections import defaultdict
 import pandas as pd
 
 EQUIPO = {"trinidad", "ignacia", "claudia", "nicole"}
+# Corrección de línea de negocio: el sheet mete "Marketing" en Páginas Propias;
+# en el RAW contable (fuente única) su tipo_negocio es "Marketing". Clave = _norm(canal).
+NEGOCIO_FIX = {"marketing": "Marketing"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 MESES_OPT = ["YTD", "Ene", "Feb", "Mar", "Abr", "May"]
 MESES_ES = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
@@ -97,6 +100,9 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
     for ck, d in df.groupby("_ck"):
         negs = d[1].astype(str).str.strip()
         negocio_dom[ck] = (negs.mode().iat[0] if len(negs.mode()) else (negs.iloc[0] if len(negs) else ""))
+        # El sheet clasifica "Marketing" como Páginas Propias; en el RAW (fuente) es "Marketing".
+        if ck in NEGOCIO_FIX:
+            negocio_dom[ck] = NEGOCIO_FIX[ck]
     df["_conkam"] = df["_ck"].map(es_conkam).fillna(False)
     dk = df[df["_conkam"]].copy()
 
@@ -335,6 +341,7 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
     return {
         "ing_prod": ing_prod, "ing_env": ing_env,
         "nc_per": nc_per_v, "nc_o2026": nc_o26_v, "nc_o2025": nc_o25_v,
+        "nc_per_c": nc_per_c, "nc_o2026_c": nc_o26_c, "nc_o2025_c": nc_o25_c,
         "costo": costo, "costo_ing": costo_prod + costo_env, "costo_nc": nc_per_c + nc_o26_c + nc_o25_c,
         "margen_directo": margen_directo,
         "com_venta": com_v, "com_envio": com_e, "com_mkt": com_m, "glosa_otro": glosa_otro,

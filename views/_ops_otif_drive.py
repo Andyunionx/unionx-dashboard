@@ -509,3 +509,170 @@ def dashboard_otif_corte(corte_key: str, courier: str = None,
         },
         "error": None,
     }
+
+
+# ============================================================
+# YTD ACUMULADO + COMPARACIÓN DE COURIERS (base corte 26-25)
+# ============================================================
+_COU_MIN_PEDIDOS = 20   # umbral para descartar couriers marginales/ruido
+_CORTE_MIN_ORDENES = 50  # umbral para descartar cortes ruido (fechas mal digitadas)
+
+# Alias de couriers: consolida el mismo courier que aparece con nombres
+# distintos en el Sheet (renombres, variantes). Se aplica ANTES del groupby
+# para que el volumen y el NS% queden unificados. Editable a mano.
+_COURIER_ALIAS = {
+    "HDC": "HOME DELIVERY CORP",
+    "HOME DELIVERY": "HOME DELIVERY CORP",
+    "COLECTA 2": "COLECTA",
+}
+
+
+def _norm_courier(serie: pd.Series) -> pd.Series:
+    """Normaliza nombre de courier: trim + mayúsculas + alias de consolidación."""
+    s = serie.astype(str).str.strip().str.upper()
+    return s.replace(_COURIER_ALIAS)
+
+
+def cortes_validos(df: pd.DataFrame = None) -> List[Dict]:
+    """Todos los cortes 26-25 CERRADOS (hasta <= hoy) y con volumen real.
+
+    Descarta el corte en curso (mes actual sin cerrar) y los cortes ruido
+    (meses mal digitados en el Sheet). Orden descendente por clave.
+    """
+    if df is None:
+        df = cargar_otif_drive()
+    if df.empty:
+        return []
+    hoy = pd.Timestamp(datetime.now().date())
+    out = []
+    for c in cortes_otif_disponibles():
+        if pd.Timestamp(c["hasta"]) > hoy:
+            continue  # corte aún no cierra
+        f = df[(df["FECHA"] >= pd.Timestamp(c["desde"])) &
+               (df["FECHA"] <= pd.Timestamp(c["hasta"]))]
+        if len(f) >= _CORTE_MIN_ORDENES:
+            out.append(c)
+    return sorted(out, key=lambda x: x["key"], reverse=True)
+
+
+def _cortes_cerrados(anio: int, df: pd.DataFrame) -> List[Dict]:
+    """Cortes cerrados del año, ascendente (para acumular YTD)."""
+    return sorted([c for c in cortes_validos(df) if c["anio"] == anio],
+                  key=lambda x: x["key"])
+
+
+def couriers_por_corte(corte_key: str) -> List[Dict]:
+    """Desglose por courier DENTRO de un corte 26-25.
+
+    Devuelve NS courier %, NS empresa %, OTIF total E2E % y volumen por courier.
+    """
+    df = cargar_otif_drive()
+    if df.empty:
+        return []
+    corte = next((c for c in cortes_otif_disponibles() if c["key"] == corte_key), None)
+    if not corte:
+        return []
+    f = df[(df["FECHA"] >= pd.Timestamp(corte["desde"])) &
+           (df["FECHA"] <= pd.Timestamp(corte["hasta"]))].copy()
+    if f.empty:
+        return []
+    f["CURIER"] = _norm_courier(f["CURIER"])
+    f = f[f["CURIER"] != ""]
+    g = f.groupby("CURIER").agg(
+        n_pedidos=("ORDEN", "count"),
+        empresa_ok=("empresa_a_tiempo", "sum"),
+        courier_ok=("courier_a_tiempo", "sum"),
+        otif_ok=("otif_total", "sum"),
+    ).reset_index()
+    g = g[g["n_pedidos"] >= _COU_MIN_PEDIDOS]
+    if g.empty:
+        return []
+    g["ns_courier_pct"] = (g["courier_ok"] / g["n_pedidos"] * 100).round(1)
+    g["ns_empresa_pct"] = (g["empresa_ok"] / g["n_pedidos"] * 100).round(1)
+    g["otif_total_pct"] = (g["otif_ok"] / g["n_pedidos"] * 100).round(1)
+    g = g.sort_values("n_pedidos", ascending=False)
+    return g[["CURIER", "n_pedidos", "ns_courier_pct", "ns_empresa_pct",
+              "otif_total_pct"]].to_dict("records")
+
+
+def kpi_otif_ytd(anio: int = None) -> Dict:
+    """OTIF acumulado del año (YTD) sobre base de cortes 26-25 cerrados.
+
+    Returns:
+      - resumen YTD (NS empresa / NS courier / OTIF total E2E, ponderado por órdenes)
+      - trend: métricas por corte (para la curva mensual)
+      - por_courier: ranking YTD por courier (NS courier %, OTIF E2E %, volumen)
+    """
+    df = cargar_otif_drive()
+    if df.empty:
+        return {"error": "Sin datos del Sheet OTIF"}
+    if anio is None:
+        anios = {c["anio"] for c in cortes_otif_disponibles()}
+        anio = max(anios) if anios else datetime.now().year
+    cortes = _cortes_cerrados(anio, df)
+    if not cortes:
+        return {"error": f"Sin cortes cerrados con datos para {anio}", "anio": anio}
+
+    d0 = min(pd.Timestamp(c["desde"]) for c in cortes)
+    d1 = max(pd.Timestamp(c["hasta"]) for c in cortes)
+    f = df[(df["FECHA"] >= d0) & (df["FECHA"] <= d1)].copy()
+
+    n = len(f)
+    n_emp = int(f["empresa_a_tiempo"].sum())
+    n_cou = int(f["courier_a_tiempo"].sum())
+    n_tot = int(f["otif_total"].sum())
+
+    # Tendencia por corte
+    trend = []
+    for c in cortes:
+        fc = df[(df["FECHA"] >= pd.Timestamp(c["desde"])) &
+                (df["FECHA"] <= pd.Timestamp(c["hasta"]))]
+        nc = len(fc)
+        if nc == 0:
+            continue
+        trend.append({
+            "key": c["key"], "mes": c["mes"], "anio": c["anio"],
+            "label_corto": f"{c['mes']:02d}/{str(c['anio'])[2:]}",
+            "n_ordenes": nc,
+            "ns_empresa_pct": round(fc["empresa_a_tiempo"].mean() * 100, 1),
+            "ns_courier_pct": round(fc["courier_a_tiempo"].mean() * 100, 1),
+            "otif_total_pct": round(fc["otif_total"].mean() * 100, 1),
+        })
+
+    # Ranking YTD por courier
+    gc = f.copy()
+    gc["CURIER"] = _norm_courier(gc["CURIER"])
+    gc = gc[gc["CURIER"] != ""]
+    g = gc.groupby("CURIER").agg(
+        n_pedidos=("ORDEN", "count"),
+        courier_ok=("courier_a_tiempo", "sum"),
+        otif_ok=("otif_total", "sum"),
+        empresa_ok=("empresa_a_tiempo", "sum"),
+    ).reset_index()
+    g = g[g["n_pedidos"] >= _COU_MIN_PEDIDOS]
+    g["ns_courier_pct"] = (g["courier_ok"] / g["n_pedidos"] * 100).round(1)
+    g["otif_total_pct"] = (g["otif_ok"] / g["n_pedidos"] * 100).round(1)
+    g["ns_empresa_pct"] = (g["empresa_ok"] / g["n_pedidos"] * 100).round(1)
+    g["pct_volumen"] = (g["n_pedidos"] / g["n_pedidos"].sum() * 100).round(1)
+    g = g.sort_values("n_pedidos", ascending=False)
+    por_courier = g[["CURIER", "n_pedidos", "pct_volumen", "ns_courier_pct",
+                     "otif_total_pct", "ns_empresa_pct"]].to_dict("records")
+
+    return {
+        "anio": anio,
+        "cortes": [c["key"] for c in cortes],
+        "ventana": {"desde": d0.strftime("%Y-%m-%d"), "hasta": d1.strftime("%Y-%m-%d")},
+        "n_ordenes": n,
+        "n_empresa_ok": n_emp, "n_courier_ok": n_cou, "n_otif_ok": n_tot,
+        "ns_empresa_pct": round(n_emp / n * 100, 1) if n else None,
+        "ns_courier_pct": round(n_cou / n * 100, 1) if n else None,
+        "otif_total_pct": round(n_tot / n * 100, 1) if n else None,
+        "trend": trend,
+        "por_courier": por_courier,
+        "error": None,
+    }
+
+
+def anios_otif_disponibles() -> List[int]:
+    """Años con cortes en el Sheet, descendente."""
+    return sorted({c["anio"] for c in cortes_otif_disponibles()}, reverse=True)

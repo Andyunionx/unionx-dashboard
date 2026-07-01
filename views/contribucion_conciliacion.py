@@ -26,7 +26,7 @@ PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 NC_DET = PROJECT_ROOT / "data" / "contabilidad" / "nc_detalle_h1.parquet"
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando conciliación…")
+@st.cache_data(ttl=300, show_spinner="Cargando conciliación…")
 def _bundle():
     df_ar = cargar_hoja("Análisis de Resultados")
     try:
@@ -50,6 +50,7 @@ def _bundle():
     # NC desde el RAW (fuente de verdad = devoluciones Odoo), reemplaza nc_detalle_h1
     # en la reconciliación para que calce con el desglose. Devoluciones registradas en
     # 2026, por canal × origen (mismo criterio que calcular_detalle).
+    # NC = Devolución del RAW (misma fuente que la venta), por canal × mes registro × origen.
     if PARQUET.exists():
         ncraw = duckdb.connect().execute(f"""
             SELECT canal,
@@ -111,7 +112,7 @@ def _render_b2b(b):
                "Casa Mila, Ferretería, Amar, etc.). Comparación de presupuesto a nivel total.")
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando detalle RAW…")
+@st.cache_data(ttl=300, show_spinner="Cargando detalle RAW…")
 def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     """Componentes del P&L detallado desde el RAW (ingresos/NC) + glosas (comisiones).
     Solo canales con KAM comercial. Devuelve (raw_comp, glosas_comp)."""
@@ -129,6 +130,8 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND 5 AND tipo_movimiento='Venta'
         GROUP BY 1,2,3""").fetchdf()
+    # NC = Devolución del RAW (misma fuente que la venta): venta bruta − NC = neto contable.
+    # NO usar crossover: excluye las NC de anulación boleta→factura que compensan la venta bruta.
     nc = con.execute(f"""
         SELECT CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) mes, canal,
                anio_venta oa, mes_venta om,
@@ -243,12 +246,13 @@ def render():
     com_tot_k = gl("Comisión Venta", "Contable") + gl("Comisión Envío", "Contable") + gl("Marketing", "Contable")
     pl = [("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row")]
     if D is not None:  # sub-filas de desglose del RAW (solo si el detalle cargó)
+        # Ingreso bruto = base CONTABLE; Devoluciones (NC) = lado COMERCIAL (impacto en la venta KAM).
         pl += [
             ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
             ("    · Ingreso por envío", None, D["ing_env"], "memo"),
-            ("    · Devoluciones del período", None, D["nc_per"], "memo"),
-            ("    · Devoluciones otro período 2026", None, D["nc_o2026"], "memo"),
-            ("    · Devoluciones 2025", None, D["nc_o2025"], "memo"),
+            ("    · Devoluciones del período", D["nc_per"], None, "memo"),
+            ("    · Devoluciones otro período 2026", D["nc_o2026"], None, "memo"),
+            ("    · Devoluciones 2025", D["nc_o2025"], None, "memo"),
         ]
     pl += [
         ("Costo de Venta", gl("Costo de Venta", "Comercial"), gl("Costo de Venta", "Contable"), "row"),
@@ -293,13 +297,37 @@ def render():
     with col_pl:
         st.markdown("### P&L (Comercial vs Contable)")
         st.dataframe(disp.style.apply(_sty_pl, axis=1), width="stretch", hide_index=True, height=500)
-        st.caption("Filas en gris (·) = desglose del RAW (Odoo + glosas), que es **base contable**: "
-                   "ingreso producto/envío (bruto) − NC ≈ Venta Contable. El **Comercial** sale de la hoja "
-                   "(KAM) y no se desglosa. 'NC otro período 2026' solo se llena al elegir un mes (en YTD "
-                   "todo 2026 es 'del período').")
+        st.caption("Filas en gris (·): **Ingreso producto/envío** (bruto) y **Devoluciones (NC)**, todo del "
+                   "**RAW contable** (misma fuente que Vista General y los pulsos): venta bruta − NC = venta neta. "
+                   "Devoluciones en la columna **Comercial** (impacto en la venta KAM), abiertas por período de "
+                   "origen. 'NC otro período 2026' solo se llena al elegir un mes (en YTD todo 2026 es 'del período').")
     with col_pct:
         st.markdown("### % sobre venta")
         st.dataframe(pct_df, width="stretch", hide_index=True)
+
+    # ---- Devoluciones (NC) por origen: impacto en margen (lado comercial) ----
+    if D is not None:
+        st.markdown("#### 🔻 Devoluciones (NC) por período de origen — impacto en margen comercial")
+        dev_rows = [
+            ("Del período (origen 2026)", D["nc_per"], D["nc_per_c"]),
+            ("Otro período 2026", D["nc_o2026"], D["nc_o2026_c"]),
+            ("2025", D["nc_o2025"], D["nc_o2025_c"]),
+        ]
+        tot_v = sum(v for _, v, _ in dev_rows)
+        tot_c = sum(c for _, _, c in dev_rows)
+        dev_rows.append(("= Total devoluciones", tot_v, tot_c))
+        dev_df = pd.DataFrame([{
+            "Período de origen": n, "Venta (neto)": fmt_pesos(v), "Costo": fmt_pesos(c),
+            "Margen Directo": fmt_pesos(v - c),
+        } for n, v, c in dev_rows])
+        _last = len(dev_rows) - 1
+        dev_sty = dev_df.style.apply(
+            lambda r: (["font-weight:700;background-color:#F1F5F9"] * 4 if r.name == _last else [""] * 4), axis=1)
+        st.dataframe(dev_sty, width="stretch", hide_index=True)
+        st.caption("Fuente: Devolución del **RAW contable** (misma fuente que la venta; incluye anulaciones "
+                   "boleta→factura que compensan la venta bruta). Margen Directo = Venta − Costo (ambos negativos: "
+                   "la NC revierte la venta y su costo). 'Del período' = NC de ventas del mismo período; "
+                   "'Otro período 2026' se llena al elegir un mes; '2025' = NC de ventas del año anterior.")
 
     # ---- Reconciliación paso a paso ----
     st.markdown("### 🔎 Explicación de la diferencia (reconciliación paso a paso)")
