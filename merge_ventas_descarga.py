@@ -35,6 +35,66 @@ PARQUET_COLS = [
 ]
 
 
+# Mapping Excel -> snake_case (mismo que reemplazar_historico_desde_drive.py)
+_EXCEL_TO_DB = {
+    'Tipo Movimiento': 'tipo_movimiento', 'Bodega': 'bodega', 'Documento': 'documento',
+    'Fecha Documento': 'fecha_documento', 'Pedido': 'pedido', 'Estado Pedido': 'estado_pedido',
+    'Tipo Despacho': 'tipo_despacho', 'SKU': 'sku', 'Canal': 'canal',
+    'Fecha Venta': 'fecha_venta', 'Hora Venta': 'hora_venta', 'Producto': 'producto',
+    'Tipo Negocio': 'tipo_negocio', 'KAM': 'kam', 'Estado Canal': 'estado_canal',
+    'Pack': 'pack', 'Marca': 'marca', 'Proveedor': 'proveedor',
+    'Tipo Marca': 'tipo_marca', 'Tipo Compra': 'tipo_compra',
+    'Cantidad': 'cantidad', 'Venta bruta': 'venta_bruta',
+    'Costo Unitario': 'costo_unitario', 'Costo Total': 'costo_total',
+    'Margen Front': 'margen_front', 'Comision %': 'comision_pct',
+    'Mg final': 'margen_final', 'Marketing': 'marketing',
+}
+# Columnas con tildes — normalizar por contenido en vez de nombre exacto
+_EXCEL_TO_DB_FUZZY = {
+    'categoria_macro': ['macro'],
+    'categoria_padre': ['padre'],
+    'categoria_hijo': ['hijo'],
+    'categoria_comercial': ['comercial'],
+    'estado_sku': ['estado sku', 'estado_sku'],
+    'anio_venta': ['venta', 'a'],       # 'Año venta'
+    'mes_venta': ['mes venta'],
+    'semana_venta': ['semana venta'],
+    'dia_semana': ['semana', 'd'],      # 'Día semana'
+    'hora_venta_num': ['hora venta'],   # segunda col con ese nombre
+    'comision': ['comisi'],             # 'Comisión'
+    'logistica': ['log'],               # 'Logística'
+}
+
+
+def _normalizar_columnas(df: pd.DataFrame) -> pd.DataFrame:
+    """Si el parquet viene con nombres Excel-style, los convierte a snake_case."""
+    if 'fecha_venta' in df.columns:
+        return df  # ya es snake_case
+
+    # Renombrar por mapeo exacto primero
+    rename = {}
+    for col in df.columns:
+        if col in _EXCEL_TO_DB:
+            rename[col] = _EXCEL_TO_DB[col]
+
+    df = df.rename(columns=rename)
+
+    # Columnas con tildes o encoding: renombrar por posición relativa al nombre esperado
+    remaining = {c for c in df.columns if c not in PARQUET_COLS}
+    for col in list(remaining):
+        col_lower = col.lower()
+        for target, hints in _EXCEL_TO_DB_FUZZY.items():
+            if target not in df.columns and any(h in col_lower for h in hints):
+                df = df.rename(columns={col: target})
+                break
+
+    # Calcular venta_neta si no existe
+    if 'venta_neta' not in df.columns and 'venta_bruta' in df.columns:
+        df['venta_neta'] = (df['venta_bruta'] / 1.19).round(2)
+
+    return df
+
+
 def main():
     if len(sys.argv) < 2:
         print("Uso: python merge_ventas_descarga.py <ruta_parquet_descargado>")
@@ -51,9 +111,10 @@ def main():
     # 1. Cargar el parquet descargado
     print(f"[1] Leyendo parquet descargado: {input_path.name}")
     df_new = pd.read_parquet(input_path)
+    df_new = _normalizar_columnas(df_new)
     df_new['fecha_venta'] = pd.to_datetime(df_new['fecha_venta'], errors='coerce')
     df_new = df_new.dropna(subset=['fecha_venta'])
-    print(f"    {len(df_new):,} filas | rango: {df_new['fecha_venta'].min().date()} → {df_new['fecha_venta'].max().date()}")
+    print(f"    {len(df_new):,} filas | rango: {df_new['fecha_venta'].min().date()} - {df_new['fecha_venta'].max().date()}")
 
     if len(df_new) == 0:
         print("[ERROR] El parquet descargado está vacío.")
@@ -71,7 +132,7 @@ def main():
     print(f"\n[2] Leyendo ventas_historico.parquet...")
     df_hist = pd.read_parquet(PARQUET_PATH)
     df_hist['fecha_venta'] = pd.to_datetime(df_hist['fecha_venta'], errors='coerce')
-    print(f"    {len(df_hist):,} filas | rango: {df_hist['fecha_venta'].min().date()} → {df_hist['fecha_venta'].max().date()}")
+    print(f"    {len(df_hist):,} filas | rango: {df_hist['fecha_venta'].min().date()} -{df_hist['fecha_venta'].max().date()}")
 
     # Stats por mes antes del merge
     df_hist['_mes'] = df_hist['fecha_venta'].dt.to_period('M').astype(str)
@@ -85,7 +146,7 @@ def main():
     mascara_fuera = (df_hist['fecha_venta'] < fecha_min) | (df_hist['fecha_venta'] > fecha_max)
     df_hist_reducido = df_hist[mascara_fuera].copy()
     removidas = len(df_hist) - len(df_hist_reducido)
-    print(f"\n[3] Removidas {removidas:,} filas del rango {fecha_min.date()} → {fecha_max.date()}")
+    print(f"\n[3] Removidas {removidas:,} filas del rango {fecha_min.date()} -{fecha_max.date()}")
 
     # 4. Alinear columnas
     cols_comunes = [c for c in PARQUET_COLS if c in df_new.columns and c in df_hist_reducido.columns]
@@ -119,6 +180,18 @@ def main():
 
     # 6. Guardar (fecha como string, igual que el parquet original)
     df_final['fecha_venta'] = df_final['fecha_venta'].dt.strftime('%Y-%m-%d')
+
+    # Forzar tipos numéricos correctos (evita ArrowInvalid por columnas object con '')
+    _INT_COLS = {'anio_venta', 'mes_venta', 'semana_venta', 'hora_venta_num', 'cantidad'}
+    _FLOAT_COLS = {'venta_bruta', 'costo_unitario', 'costo_total', 'margen_front',
+                   'comision_pct', 'comision', 'logistica', 'marketing', 'margen_final', 'venta_neta'}
+    for c in _INT_COLS:
+        if c in df_final.columns:
+            df_final[c] = pd.to_numeric(df_final[c], errors='coerce').fillna(0).astype('int64')
+    for c in _FLOAT_COLS:
+        if c in df_final.columns:
+            df_final[c] = pd.to_numeric(df_final[c], errors='coerce').fillna(0.0).astype('float64')
+
     df_final[cols_comunes].to_parquet(PARQUET_PATH, index=False)
 
     size_mb = PARQUET_PATH.stat().st_size / 1e6
