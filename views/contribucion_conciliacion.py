@@ -24,6 +24,11 @@ from views._conciliacion import (construir_dataframes, calcular, construir_workb
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 NC_DET = PROJECT_ROOT / "data" / "contabilidad" / "nc_detalle_h1.parquet"
+# Devoluciones = LENTE CONTABLE (NC posteadas account.move out_refund, linkeadas a su
+# factura original). Snapshot del crossover validado; regenerar con build_nc_crossover
+# desde Devoluciones_Crossover_por_partida_2026.xlsx. NO usar la Devolución del RAW
+# operacional (cuenta anulaciones B2B gigantes + devoluciones sin NC posteada).
+NC_CROSS = PROJECT_ROOT / "data" / "contabilidad" / "nc_crossover_h1.parquet"
 
 
 @st.cache_data(ttl=3600, show_spinner="Cargando conciliación…")
@@ -50,30 +55,21 @@ def _bundle():
     # NC desde el RAW (fuente de verdad = devoluciones Odoo), reemplaza nc_detalle_h1
     # en la reconciliación para que calce con el desglose. Devoluciones registradas en
     # 2026, por canal × origen (mismo criterio que calcular_detalle).
-    if PARQUET.exists():
-        ncraw = duckdb.connect().execute(f"""
-            SELECT canal,
-                   CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) reg_mes,
-                   anio_venta oa, mes_venta om,
-                   -sum(TRY_CAST(venta_neta AS DOUBLE)) neto
-            FROM '{PARQUET.as_posix()}'
-            WHERE tipo_movimiento='Devolución'
-              AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
-              AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
-            GROUP BY 1,2,3,4
-        """).fetchdf()
+    # NC = lente CONTABLE (crossover: account.move out_refund por canal × mes × origen).
+    if NC_CROSS.exists():
+        ncx = pd.read_parquet(NC_CROSS)
         conkam = {_norm(c): c for c in b["canales"]}
         canal_kam = dict(zip(b["datos"]["Canal"], b["datos"]["KAM"]))
         filas = []
-        for _, r in ncraw.iterrows():
-            d = conkam.get(_norm(r.canal))
+        for _, r in ncx.iterrows():
+            d = conkam.get(_norm(r["Canal"]))
             if not d:
                 continue
-            om = int(r.om or 0)
-            filas.append({"Mes": MES_NOM[int(r.reg_mes)], "Canal": d, "KAM": canal_kam.get(d, ""),
-                          "OrigenAnio": int(r.oa or 0),
+            om = int(r["OrigenMes"])
+            filas.append({"Mes": MES_NOM[int(r["reg_mes"])], "Canal": d, "KAM": canal_kam.get(d, ""),
+                          "OrigenAnio": int(r["OrigenAnio"]),
                           "OrigenMes": MES_NOM[om] if 1 <= om <= 12 else "",
-                          "Neto": float(r.neto or 0)})
+                          "Neto": -float(r["venta"])})  # venta negativa → Neto positivo
         if filas:
             b["nc_tab"] = (pd.DataFrame(filas)
                            .groupby(["Mes", "Canal", "KAM", "OrigenAnio", "OrigenMes"], as_index=False)["Neto"].sum())
@@ -129,14 +125,6 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND 5 AND tipo_movimiento='Venta'
         GROUP BY 1,2,3""").fetchdf()
-    nc = con.execute(f"""
-        SELECT CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) mes, canal,
-               anio_venta oa, mes_venta om,
-               sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
-        FROM '{P}' WHERE tipo_movimiento='Devolución'
-          AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
-          AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
-        GROUP BY 1,2,3,4""").fetchdf()
     rows = []
     for _, r in ing.iterrows():
         d = conkam.get(_norm(r.canal))
@@ -144,13 +132,17 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
             continue
         rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": r.tipo, "Mes": int(r.mes),
                      "OrigenAnio": 0, "OrigenMes": 0, "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
-    for _, r in nc.iterrows():
-        d = conkam.get(_norm(r.canal))
-        if not d:
-            continue
-        rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": "nc", "Mes": int(r.mes),
-                     "OrigenAnio": int(r.oa or 0), "OrigenMes": int(r.om or 0),
-                     "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
+    # NC: lente CONTABLE (crossover), NO la Devolución operacional del RAW.
+    if NC_CROSS.exists():
+        ncx = pd.read_parquet(NC_CROSS)
+        for _, r in ncx.iterrows():
+            d = conkam.get(_norm(r["Canal"]))
+            if not d:
+                continue
+            rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""),
+                         "Tipo": "nc", "Mes": int(r["reg_mes"]),
+                         "OrigenAnio": int(r["OrigenAnio"]), "OrigenMes": int(r["OrigenMes"]),
+                         "Venta": float(r["venta"]), "Costo": float(r["costo"])})
     raw_comp = pd.DataFrame(rows)
 
     try:
@@ -294,10 +286,11 @@ def render():
     with col_pl:
         st.markdown("### P&L (Comercial vs Contable)")
         st.dataframe(disp.style.apply(_sty_pl, axis=1), width="stretch", hide_index=True, height=500)
-        st.caption("Filas en gris (·): **Ingreso producto/envío** (bruto) = base **contable**. "
-                   "**Devoluciones (NC)** van en la columna **Comercial** (impacto en la venta KAM), abiertas "
-                   "por período de origen. 'NC otro período 2026' solo se llena al elegir un mes (en YTD todo "
-                   "2026 es 'del período').")
+        st.caption("Filas en gris (·): **Ingreso producto/envío** (bruto) del RAW. "
+                   "**Devoluciones (NC)** = lente **contable** (notas de crédito posteadas, crossover linkeado "
+                   "a la factura original), en la columna **Comercial** (impacto en la venta KAM), abiertas por "
+                   "período de origen. 'NC otro período 2026' solo se llena al elegir un mes (en YTD todo 2026 "
+                   "es 'del período').")
     with col_pct:
         st.markdown("### % sobre venta")
         st.dataframe(pct_df, width="stretch", hide_index=True)
@@ -321,7 +314,8 @@ def render():
         dev_sty = dev_df.style.apply(
             lambda r: (["font-weight:700;background-color:#F1F5F9"] * 4 if r.name == _last else [""] * 4), axis=1)
         st.dataframe(dev_sty, width="stretch", hide_index=True)
-        st.caption("Margen Directo = Venta − Costo (ambos negativos: la NC revierte la venta y su costo). "
+        st.caption("Fuente: NC **contables** posteadas (crossover, linkeadas a factura original). "
+                   "Margen Directo = Venta − Costo (ambos negativos: la NC revierte la venta y su costo). "
                    "'Del período' = NC de ventas del mismo período; 'Otro período 2026' se llena al elegir un mes "
                    "(NC de otro mes de 2026); '2025' = NC de ventas del año anterior.")
 
