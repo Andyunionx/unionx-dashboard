@@ -52,13 +52,31 @@ _MARCA_TO_PPTO: dict[str, str] = {
 # ── Cached loaders ────────────────────────────────────────────────────
 @st.cache_data(ttl=1800, show_spinner=False)
 def _cargar_ventas_ytd() -> pd.DataFrame:
-    """Ventas del año actual con columnas normalizadas para comparativo PPTO."""
-    path = DATA_DIR / 'historico' / 'ventas_historico.parquet'
-    if not path.exists():
+    """Ventas del año actual con columnas normalizadas para comparativo PPTO.
+    Lee historico (meses cerrados) + mes_actual (mes corriente desde Turso sync).
+    """
+    need = ['fecha_venta', 'marca', 'tipo_negocio', 'venta_neta', 'margen_front']
+    paths = [
+        DATA_DIR / 'historico' / 'ventas_historico.parquet',
+        DATA_DIR / 'historico' / 'ventas_mes_actual.parquet',
+    ]
+    dfs = []
+    for p in paths:
+        if not p.exists():
+            continue
+        try:
+            d = pd.read_parquet(p, columns=need)
+            dfs.append(d)
+        except Exception:
+            try:
+                d = pd.read_parquet(p)
+                dfs.append(d[[c for c in need if c in d.columns]])
+            except Exception:
+                pass
+    if not dfs:
         return pd.DataFrame()
     try:
-        need = ['fecha_venta', 'marca', 'tipo_negocio', 'venta_neta', 'margen_front']
-        df = pd.read_parquet(path, columns=need)
+        df = pd.concat(dfs, ignore_index=True)
         df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce')
         df = df[df['fecha_venta'].dt.year == _TODAY.year].copy()
         df['mes']        = df['fecha_venta'].dt.to_period('M').astype(str)
@@ -68,7 +86,7 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
         df['margen_front'] = pd.to_numeric(df['margen_front'], errors='coerce').fillna(0).astype('float64')
         return df[['mes', 'marca_ppto', 'canal_ppto', 'venta_neta', 'margen_front']]
     except Exception as e:
-        st.toast(f"ventas_historico: {e}", icon="⚠️")
+        st.toast(f"ventas YTD: {e}", icon="⚠️")
         return pd.DataFrame()
 
 
