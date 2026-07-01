@@ -692,7 +692,40 @@ def render():
             ascending=[True, True, True], na_position="last"
         )
 
-        if _aggrid_ok:
+        # ── Filtros del Jerárquico ────────────────────────────────────
+        with st.expander("🔍 Filtrar jerárquico", expanded=False):
+            _jf1, _jf2, _jf3, _jf4 = st.columns(4)
+            with _jf1:
+                _jf_marca = st.multiselect(
+                    "Marca", sorted(df_jer["marca"].dropna().unique()),
+                    key="jer_f_marca", placeholder="Todas las marcas")
+            with _jf2:
+                _jf_cat = st.multiselect(
+                    "Categoría", sorted(df_jer["categoria_padre"].dropna().unique()),
+                    key="jer_f_cat", placeholder="Todas las categorías")
+            with _jf3:
+                _jf_sku = st.text_input("SKU", placeholder="Ej: 12345", key="jer_f_sku")
+            with _jf4:
+                _jf_prod = st.text_input("Producto", placeholder="Buscar nombre...", key="jer_f_prod")
+
+        _mask_j = pd.Series(True, index=df_jer.index)
+        if _jf_marca:
+            _mask_j &= df_jer["marca"].isin(_jf_marca)
+        if _jf_cat:
+            _mask_j &= df_jer["categoria_padre"].isin(_jf_cat)
+        if _jf_sku.strip():
+            _mask_j &= df_jer["sku"].astype(str).str.contains(_jf_sku.strip(), case=False, na=False)
+        if _jf_prod.strip():
+            _mask_j &= df_jer["producto"].astype(str).str.contains(_jf_prod.strip(), case=False, na=False)
+        _n_total_j = len(df_jer)
+        df_jer = df_jer[_mask_j].copy()
+        _hay_filtro_j = _jf_marca or _jf_cat or _jf_sku.strip() or _jf_prod.strip()
+        if _hay_filtro_j:
+            st.caption(f"Mostrando **{len(df_jer):,}** de {_n_total_j:,} SKUs")
+        if df_jer.empty:
+            st.info("Sin resultados para los filtros aplicados.")
+
+        if _aggrid_ok and not df_jer.empty:
             gb = GridOptionsBuilder.from_dataframe(df_jer)
             gb.configure_column("marca",           rowGroup=True, hide=True)
             gb.configure_column("categoria_padre", rowGroup=True, hide=True)
