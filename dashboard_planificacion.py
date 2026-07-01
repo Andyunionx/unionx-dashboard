@@ -37,7 +37,7 @@ for _key in ("LIBSQL_URL", "LIBSQL_AUTH_TOKEN", "ANDRES_ODOO_PASSWORD"):
         os.environ[_key] = str(st.secrets[_key])
 
 st.set_page_config(
-    page_title="UnionX Planificación v2",
+    page_title="UnionX Planificación",
     page_icon="📦",
     layout="wide",
     initial_sidebar_state="expanded",
