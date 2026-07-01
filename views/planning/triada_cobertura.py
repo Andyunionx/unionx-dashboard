@@ -325,9 +325,10 @@ def _calcular_cobertura(df: pd.DataFrame, horizonte: int) -> pd.DataFrame:
 def _agrupar(df: pd.DataFrame, by: list) -> pd.DataFrame:
     """Agrega métricas por dimensión(es) y recalcula cobertura grupal."""
     agg_dict = {
-        "skus":              ("sku",            "nunique"),
-        "stock_actual":      ("stock_actual",   "sum"),
-        "demanda_diaria":    ("demanda_diaria", "sum"),
+        "skus":          ("sku",           "nunique"),
+        "stock_actual":  ("stock_actual",  "sum"),
+        "venta_prom_3m": ("venta_prom_3m", "sum"),
+        "demanda_diaria": ("demanda_diaria", "sum"),
     }
     for h in _HORIZONTES:
         if f"transito_{h}d" in df.columns:
@@ -337,17 +338,14 @@ def _agrupar(df: pd.DataFrame, by: list) -> pd.DataFrame:
 
     agg = df.groupby(by, as_index=False).agg(**agg_dict)
 
-    # Cobertura a 30 días por defecto (se sobreescribe en render con horizonte)
-    col_tr = "transito_30d" if "transito_30d" in agg.columns else "stock_actual"
-    agg["cobertura_dias"] = np.where(
-        agg["demanda_diaria"] > 0,
-        (agg["stock_actual"] + agg[col_tr]) / agg["demanda_diaria"],
+    # Cobertura PPTO: stock / venta_prom_3m — igual al Excel CST x Marca
+    agg["cobertura_meses"] = np.where(
+        agg["venta_prom_3m"] > 0,
+        (agg["stock_actual"] / agg["venta_prom_3m"]).round(1),
         np.nan,
     )
-    agg["cobertura_meses"] = (agg["cobertura_dias"] / 30).round(1)
-    agg["estado"] = agg["cobertura_dias"].apply(
-        lambda x: _clasificar(x) if pd.notna(x) else "SIN DEMANDA"
-    )
+    agg["cobertura_dias"] = agg["cobertura_meses"] * 30
+    agg["estado"] = agg["cobertura_meses"].apply(_clasificar_meses)
 
     # Conteo de SKUs por estado
     conteo = (
@@ -381,38 +379,34 @@ def _render_tabla_agg(
     key_suffix: str = "",
 ):
     """Renderiza tabla de agregación con colores de estado y botón de descarga."""
-    # Recalcular cobertura con horizonte seleccionado
+    # Cobertura PPTO: stock / venta_prom_3m — igual al Excel CST x Marca
     col_tr = f"transito_{horizonte}d" if f"transito_{horizonte}d" in agg.columns else "transito_30d"
     agg = agg.copy()
-    agg["cobertura_dias"] = np.where(
-        agg["demanda_diaria"] > 0,
-        (agg["stock_actual"] + agg[col_tr]) / agg["demanda_diaria"],
+    agg["cobertura_meses"] = np.where(
+        agg["venta_prom_3m"] > 0,
+        (agg["stock_actual"] / agg["venta_prom_3m"]).round(1),
         np.nan,
     )
-    agg["cobertura_meses"] = (agg["cobertura_dias"] / 30).round(1)
-    agg["estado"] = agg["cobertura_dias"].apply(
-        lambda x: _clasificar(x) if pd.notna(x) else "SIN DEMANDA"
-    )
-    agg = agg.sort_values("cobertura_dias", ascending=True, na_position="last")
+    agg["cobertura_dias"] = agg["cobertura_meses"] * 30
+    agg["estado"] = agg["cobertura_meses"].apply(_clasificar_meses)
+    agg = agg.sort_values("cobertura_meses", ascending=True, na_position="last")
 
     base = [dim_col] + (extra_cols or [])
     metric = [
         "skus", "stock_actual", col_tr,
-        f"demanda_{horizonte}d", "cobertura_dias", "cobertura_meses", "estado",
+        "venta_prom_3m", "cobertura_meses", "estado",
     ]
-    estado_cnt = [e for e in _ESTADO_ORDEN if e in agg.columns]
+    estado_cnt = [e for e in _ESTADO_ORDEN_4SEM if e in agg.columns]
     show_cols = base + [c for c in metric if c in agg.columns] + estado_cnt
     df_show = agg[show_cols].copy()
-    df_show["cobertura_dias"] = df_show["cobertura_dias"].round(0)
 
     col_cfg = {
-        "skus":              st.column_config.NumberColumn("SKUs",            format="%d"),
-        "stock_actual":      st.column_config.NumberColumn("Stock (u)",       format="%d"),
-        col_tr:              st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
-        f"demanda_{horizonte}d": st.column_config.NumberColumn(f"Demanda {horizonte}d", format="%.0f"),
-        "cobertura_dias":    st.column_config.NumberColumn("Cob. Días",       format="%.0f"),
-        "cobertura_meses":   st.column_config.NumberColumn("Cob. Meses",      format="%.1f"),
-        "estado":            st.column_config.TextColumn("Estado"),
+        "skus":            st.column_config.NumberColumn("SKUs",             format="%d"),
+        "stock_actual":    st.column_config.NumberColumn("Stock (u)",        format="%d"),
+        col_tr:            st.column_config.NumberColumn(f"Tránsito ≤{horizonte}d", format="%d"),
+        "venta_prom_3m":   st.column_config.NumberColumn("Vta/Mes PPTO (u)", format="%.0f"),
+        "cobertura_meses": st.column_config.NumberColumn("Cob. Meses",       format="%.1f"),
+        "estado":          st.column_config.TextColumn("Estado"),
     }
     for e in estado_cnt:
         col_cfg[e] = st.column_config.NumberColumn(e, format="%d", width="small")
@@ -1253,7 +1247,7 @@ def render():
 
     # ── TAB 2 — Por Marca ─────────────────────────────────────────────
     with tab_marca:
-        st.caption(f"Cobertura agregada por marca · horizonte tránsito: **{horizonte} días**")
+        st.caption(f"Cobertura por marca · Vta/Mes PPTO 3m (igual al Excel CST x Marca) · tránsito ≤{horizonte}d")
         agg_marca = _agrupar(dff, ["marca"])
         _render_tabla_agg(agg_marca, "marca", horizonte, key_suffix="marca")
 
