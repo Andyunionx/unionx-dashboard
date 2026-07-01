@@ -87,7 +87,7 @@ if st.session_state.get('authentication_status') is False:
     st.error('Usuario o contraseña incorrectos')
     st.stop()
 elif st.session_state.get('authentication_status') is None:
-    st.warning('Ingresá tu usuario y contraseña para acceder a Planificación — v2026-07-01')
+    st.warning('Ingresá tu usuario y contraseña para acceder a Planificación')
     st.stop()
 
 # Autenticado
