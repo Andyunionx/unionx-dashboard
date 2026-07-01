@@ -5,7 +5,7 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-12 (tarde)
+## 🗓️ Última sesión: 2026-07-01
 
 ### ✅ Tab "🌳 Jerárquico" — Completamente funcional
 - Mes actual: **Stock Hoy** | Llegadas | Stk+Ped | Vta PPTO | Cobert.
@@ -24,15 +24,27 @@
 #### Clave del fix de aggregación:
 `_go2["autoGroupColumnDef"] = {"pinned": "left", ...}` → fuerza las columnas jerárquicas a la izquierda Y activa la aggregación en filas de grupo. Commit: `c26fcf1`
 
+### ✅ Tab "📉 Sobrestock" — NUEVO (commit afa26a5)
+- Jerarquía: Marca → Cat. Padre → Cat. Hijo → SKU (misma estructura AG-Grid)
+- Filtro: `cobertura_fc3m (stock/venta_prom_3m) > 4 meses`
+- Ordenado por Capital Inmovilizado DESC (mayor problema primero)
+- Columnas:
+  - **Cob. ACT (m)** — cobertura actual en meses
+  - **Meses Exceso** — cobertura - 4
+  - **Stock CST ($)** — stock × Costo Unit (CLP full, no $M)
+  - **Vta CST Prom/Mes ($)** — venta_prom_3m × Costo Unit
+  - **Stk Óptimo ($)** — 4 × Vta CST Prom/Mes
+  - **Capital Inmov. ($)** — Stock CST - Stk Óptimo
+  - **Llegadas (u)** — transit meses 1-5 (excluye mes actual)
+- Caption: Total capital inmovilizado + conteo SKUs
+- Referencia Excel: hoja "Sobrestock x SKU Padre" en analisis_planificacion_JUN26.xlsx
+
 ---
 
 ## 🔲 Pendientes Felipe
 
-- [ ] **Sobrestock por Categoria Padre** (estaba en stand by)
-  - Tab nuevo dentro de Cobertura por Producto
-  - Productos con cobertura > 4m, agrupados por Cat. Padre
-  - Referencia: hoja "Detalle Critico" del Excel analisis_planificacion_JUN26.xlsx
-- [ ] PR merge → app oficial (Andrés)
+- [x] **Sobrestock por Categoria Padre** ← COMPLETADO 2026-07-01
+- [ ] PR merge → app oficial (Andrés) — branch: `feat/fc-planif-onboarding`, último commit: `afa26a5`
 - [ ] Actualizar `ventas_historico.parquet` con Mayo+Junio 2026
 - [ ] FCST desde Google Drive (cuando Andrés suba el link)
 
@@ -41,14 +53,15 @@
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `f3aba16`
+**Último commit**: `afa26a5`
 
 **Incluye:**
 1. Tab Jerárquico completo ✅
 2. Tab A Costo ($M) completo ✅ (aggregación + orden correcto)
-3. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
-4. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
-5. Fix pantuflas Lhotse (23 SKUs)
+3. Tab Sobrestock ✅ (capital inmovilizado por SKU > 4m cobertura) — NUEVO
+4. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
+5. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
+6. Fix pantuflas Lhotse (23 SKUs)
 
 ---
 
@@ -57,13 +70,14 @@
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `f3aba16` |
+| Último commit | `afa26a5` |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
 | Stock LIVE | `data/stock/skus.parquet` — cols: SKU, Qty, Costo Unit, Valor |
 | PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
 | Tránsito FCST | `data/planificacion/snapshots/planif_forecast_transito.parquet` |
 | Master SKU | `data/planificacion/snapshots/planif_master_sku.parquet` |
 | FCST Excel local | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\FORECAST FINAL SKU 26-27 V2.xlsx` |
+| Ref. Excel Sobrestock | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\Analisis Planificacion\analisis_planificacion_JUN26.xlsx` → hoja "Sobrestock x SKU Padre" |
 
 ### 🔁 Forzar full redeploy Streamlit Cloud
 1. Cambiar versión en `requirements.txt` (rich 13.9.3 ↔ 13.9.4)
@@ -72,11 +86,20 @@
 
 ### 📌 Estructura A Costo (_df_grid_cst)
 DataFrame mínimo con solo columnas necesarias (igual que df_jer en Jerárquico):
-- `marca, categoria_padre, categoria_hijo, sku, producto, _is_total`
+- `marca, categoria_padre, categoria_hijo, sku, produto, _is_total`
 - `stock_cst_m, venta_prom_cst_m`
 - `csi_{ms}, ctr_{ms}, csp_{ms}, cvt_{ms}, cb_{ms}` × 6 meses
 - Fórmula: `col_cst = col_unidades × Costo_Unit / 1_000_000`
 - Grid: `_go2["autoGroupColumnDef"] = {"pinned": "left", ...}` — CRÍTICO para aggregación
+- **OJO**: columna producto en df_jer se llama `"produto"` (no `"producto"`)
+
+### 📌 Estructura Sobrestock (_df_grid_sob)
+- Fuente: `df_jer` (copia post-proyección)
+- Filtro: `stock_actual / venta_prom_3m > 4`
+- Costo Unit: `cargar_costo_unit_sku()` (igual que A Costo)
+- Llegadas = sum(`tr_{ms}` para meses 1-5, excluye mes actual)
+- CLP full (no $M): `'$'+Math.round(x).toLocaleString('es-CL')`
+- Grid: mismo patrón `autoGroupColumnDef: {pinned: "left"}` + `groupDisplayType: "multipleColumns"`
 
 ### 📊 Valores A Costo confirmados (Jun 26)
 | Marca | Stock Hoy ($M) | Vta/Mes ($M) |
@@ -89,4 +112,4 @@ DataFrame mínimo con solo columnas necesarias (igual que df_jer en Jerárquico)
 
 ---
 
-*Actualizado: 2026-06-12*
+*Actualizado: 2026-07-01*
