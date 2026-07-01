@@ -26,7 +26,7 @@ PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 NC_DET = PROJECT_ROOT / "data" / "contabilidad" / "nc_detalle_h1.parquet"
 
 
-@st.cache_data(ttl=3600, show_spinner="Cargando conciliación…")
+@st.cache_data(ttl=300, show_spinner="Cargando conciliación…")
 def _bundle():
     df_ar = cargar_hoja("Análisis de Resultados")
     try:
