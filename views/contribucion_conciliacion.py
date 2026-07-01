@@ -120,9 +120,12 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     canal_neg = dict(canal_negocio_items)
     con = duckdb.connect()
     P = PARQUET.as_posix()
+    # es_despacho puede no existir en el histórico deployado → usar FALSE (todo producto)
+    existentes = set(con.execute(f"SELECT * FROM '{P}' LIMIT 0").df().columns)
+    desp = "es_despacho" if "es_despacho" in existentes else "FALSE"
     ing = con.execute(f"""
         SELECT mes_venta mes, canal,
-               CASE WHEN es_despacho THEN 'ing_envio' ELSE 'ing_prod' END tipo,
+               CASE WHEN {desp} THEN 'ing_envio' ELSE 'ing_prod' END tipo,
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND 5 AND tipo_movimiento='Venta'
         GROUP BY 1,2,3""").fetchdf()
