@@ -205,31 +205,42 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
     tv = (df.get('tipo_movimiento') == 'Venta')
     cand_mask = web & (vb == 0) & tv
 
+    # Índices de candidatos. Llave PRIMARIA robusta: (pedido_marketplace, sku) — el
+    # 'Name' (#20xxx) del Sheet CMR == pedido_marketplace del pedido web espejo, y NO
+    # depende de la fecha (que en el Sheet suele venir corrida 1-2 días). Fallback:
+    # (fecha, sku) para filas sin pedido_marketplace.
+    tiene_pm = 'pedido_marketplace' in df.columns
+    cand_ref = defaultdict(list)
     cand_idx = defaultdict(list)
     for i in df.index[cand_mask]:
-        cand_idx[(fv[i], str(df.at[i, 'sku']).strip())].append(i)
+        sku_i = str(df.at[i, 'sku']).strip()
+        cand_idx[(fv[i], sku_i)].append(i)
+        if tiene_pm:
+            ref = str(df.at[i, 'pedido_marketplace']).strip()
+            if ref:
+                cand_ref[(ref, sku_i)].append(i)
 
-    asignados, n, total = set(), 0, 0.0
+    def _aplicar(i, cmr):
+        costo = float(pd.to_numeric(df.at[i, 'costo_total'], errors='coerce') or 0)
+        neta = float(cmr['venta_neta'] or 0); bruta = float(cmr['venta_bruta'] or 0)
+        df.at[i, 'canal'] = 'CMR'; df.at[i, 'tipo_negocio'] = 'Fidelización'
+        df.at[i, 'venta_bruta'] = bruta; df.at[i, 'venta_neta'] = neta
+        df.at[i, 'margen_front'] = neta - costo; df.at[i, 'margen_final'] = neta - costo
+        df.at[i, 'comision'] = 0; df.at[i, 'comision_pct'] = 0; df.at[i, 'logistica'] = 0
+        return bruta
+
+    asignados, n, total, n_ref, n_fs = set(), 0, 0.0, 0, 0
     for _, cmr in df_cmr.iterrows():
-        key = (cmr['fecha'].isoformat(), str(cmr['sku']).strip())
-        for i in cand_idx.get(key, []):
-            if i in asignados:
-                continue
-            costo = float(pd.to_numeric(df.at[i, 'costo_total'], errors='coerce') or 0)
-            neta = float(cmr['venta_neta'] or 0)
-            bruta = float(cmr['venta_bruta'] or 0)
-            df.at[i, 'canal'] = 'CMR'
-            df.at[i, 'tipo_negocio'] = 'Fidelización'
-            df.at[i, 'venta_bruta'] = bruta
-            df.at[i, 'venta_neta'] = neta
-            df.at[i, 'margen_front'] = neta - costo
-            df.at[i, 'margen_final'] = neta - costo
-            df.at[i, 'comision'] = 0
-            df.at[i, 'comision_pct'] = 0
-            df.at[i, 'logistica'] = 0
-            asignados.add(i); n += 1; total += bruta
+        sku = str(cmr['sku']).strip()
+        nombre = str(cmr.get('cmr_name', '')).strip()
+        cands = [(i, 'ref') for i in cand_ref.get((nombre, sku), []) if i not in asignados]
+        if not cands:  # fallback fecha+sku
+            cands = [(i, 'fs') for i in cand_idx.get((cmr['fecha'].isoformat(), sku), []) if i not in asignados]
+        for i, origen in cands:
+            total += _aplicar(i, cmr); asignados.add(i); n += 1
+            n_ref += origen == 'ref'; n_fs += origen == 'fs'
             break
-    print(f"   [CMR] {n} filas enriquecidas (Fidelización), venta bruta +${total:,.0f}", flush=True)
+    print(f"   [CMR] {n} filas enriquecidas (por ref #: {n_ref}, por fecha+sku: {n_fs}), venta bruta +${total:,.0f}", flush=True)
     return df
 
 
