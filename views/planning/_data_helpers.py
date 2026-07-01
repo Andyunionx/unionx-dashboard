@@ -186,6 +186,21 @@ def cargar_ventas_historicas(meses: int = 24) -> pd.DataFrame:
 
 
 @st.cache_data(ttl=900, show_spinner=False)
+def cargar_costo_unit_sku() -> dict:
+    """Costo unitario CIF internado por SKU desde data/stock/skus.parquet.
+    Devuelve dict {sku_str: costo_unit_float}.
+    Si hay múltiples filas por SKU (bodegas distintas) toma el máximo.
+    """
+    path = DATA_DIR / 'stock' / 'skus.parquet'
+    if not path.exists():
+        return {}
+    df = pd.read_parquet(path, columns=['SKU', 'Costo Unit'])
+    df['SKU'] = df['SKU'].astype(str)
+    df['Costo Unit'] = pd.to_numeric(df['Costo Unit'], errors='coerce').fillna(0).clip(lower=0)
+    return df.groupby('SKU')['Costo Unit'].max().to_dict()
+
+
+@st.cache_data(ttl=900, show_spinner=False)
 def cargar_stock_live_skus() -> pd.DataFrame:
     """Stock LIVE desde data/stock/skus.parquet (mismo que vista Stock LIVE de Andrés).
     Actualizado cada 3h vía sync_stock.yml. Devuelve [sku, stock_actual] agrupado por SKU.
@@ -576,6 +591,24 @@ def cargar_planif_transito_live() -> pd.DataFrame:
             if c in df.columns:
                 df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0)
     return df
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cargar_ppto_canal() -> pd.DataFrame:
+    """Meta venta neta por canal (PPTO 2026). cols: canal, mes (YYYY-MM), meta_venta_neta."""
+    path = SNAPSHOTS_DIR / 'planif_ppto_canal.parquet'
+    if not path.exists():
+        return pd.DataFrame(columns=['canal', 'mes', 'meta_venta_neta'])
+    return pd.read_parquet(path)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cargar_ppto_marca() -> pd.DataFrame:
+    """Meta venta neta por marca (PPTO 2026). cols: marca, mes (YYYY-MM), meta_venta_neta."""
+    path = SNAPSHOTS_DIR / 'planif_ppto_marca.parquet'
+    if not path.exists():
+        return pd.DataFrame(columns=['marca', 'mes', 'meta_venta_neta'])
+    return pd.read_parquet(path)
 
 
 def fuentes_status() -> dict:

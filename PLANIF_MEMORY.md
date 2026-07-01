@@ -5,73 +5,137 @@
 
 ---
 
-## 🗓️ Última sesión: 2026-06-04 (sesión final)
+## 🗓️ Última sesión: 2026-07-01
 
-### ✅ Estado actual — Vista Cobertura por Producto COMPLETA
+### ✅ Tab "🌳 Jerárquico" — Completamente funcional
+- Mes actual: **Stock Hoy** | Llegadas | Stk+Ped | Vta PPTO | Cobert.
+- Meses futuros: **Stock Ini** | Llegadas | Stk+Ped | Vta PPTO | Cobert.
+- Aggregación en filas de marca ✅
 
-#### Tab "🌳 Jerárquico" — funcionalidad completa
-- **Tabla dinámica AG-Grid** con desplegables Marca → Cat Padre → Cat Hijo → SKU
-- **Proyección 6 meses integrada** (Jun–Nov 2026):
-  - Columnas agrupadas por mes: Stock Ini | Venta | Tránsito | Cob. Meses
-  - Venta = PPTO del FCST (planif_forecast_manual) — si no hay PPTO, muestra 0
-  - Tránsito = planif_transito_baseline con regla día 5 (6+ = mes siguiente)
-  - Cobertura con colores: 🔴<1m | 🟡1-2m | 🟢2-4m | 🟣>4m
-- **TOTAL GENERAL** pinneado al fondo: sin ícono expandir, sin contadores
-- **Números**: separador de miles, sin decimales (excepto Cob. = 1 decimal)
-- **Totales aggregados** por nivel (sum stock/venta/tránsito, avg cob)
-- **Filtro "Solo SKUs marca propia"** (default ON) → excluye "Sin clasificar"
+### ✅ Tab "💰 A Costo ($M)" — FUNCIONANDO COMPLETO
+- Orden columnas: **Marca/Categoría | Cat. Padre | Cat. Hijo | SKU | Producto | Stock Hoy ($M) | Vta/Mes ($M) | [grupos mes]**
+- Aggregación en filas de marca ✅:
+  - Bandú: $15,0M | Dynamo: $10,3M | Lhotse: $322,6M | Simplit: $279,8M
+  - **TOTAL GENERAL: $925,3M** stock | $306,5M vta/mes
+- Mes actual: **Stock Hoy ($M)** | Llegadas ($M) | Stk+Ped ($M) | Vta PPTO ($M) | Cobert.
+- Meses futuros: **Stk Ini ($M)** | Llegadas ($M) | Stk+Ped ($M) | Vta PPTO ($M) | Cobert.
+- Colores cobertura: 🔴🟡🟢🟣 (mismos que Jerárquico)
 
-#### Fuentes de datos (alineadas a Triada Proyectada)
-- Base SKUs: `planif_master_sku` (3,006 SKUs)
-- Stock: `planif_stock_baseline` (IDs correctos, 3,797 SKUs)
-- Venta proyectada: `planif_forecast_manual` (PPTO FCST, 622 SKUs con Jun-Ago)
-- Tránsito: `planif_transito_baseline` (confirmados, sin RFQ)
-- Ventas 6sem: ventas_historico rolling 42d → tasa mensual
+#### Clave del fix de aggregación:
+`_go2["autoGroupColumnDef"] = {"pinned": "left", ...}` → fuerza las columnas jerárquicas a la izquierda Y activa la aggregación en filas de grupo. Commit: `c26fcf1`
 
-#### Números validados vs FCST
-- Lhotse junio: **14,587** ✅ | Simplit junio: **17,453** ✅
-- TOTAL GENERAL: **128,674** stock | **40,531** venta jun | **3.2** cob jun
+### ✅ Tab "📉 Sobrestock" — NUEVO (commit afa26a5)
+- Jerarquía: Marca → Cat. Padre → Cat. Hijo → SKU (misma estructura AG-Grid)
+- Filtro: `cobertura_fc3m (stock/venta_prom_3m) > 4 meses`
+- Ordenado por Capital Inmovilizado DESC (mayor problema primero)
+- Columnas:
+  - **Cob. ACT (m)** — cobertura actual en meses
+  - **Meses Exceso** — cobertura - 4
+  - **Stock CST ($)** — stock × Costo Unit (CLP full, no $M)
+  - **Vta CST Prom/Mes ($)** — venta_prom_3m × Costo Unit
+  - **Stk Óptimo ($)** — 4 × Vta CST Prom/Mes
+  - **Capital Inmov. ($)** — Stock CST - Stk Óptimo
+  - **Llegadas (u)** — transit meses 1-5 (excluye mes actual)
+- Caption: Total capital inmovilizado + conteo SKUs
+- Referencia Excel: hoja "Sobrestock x SKU Padre" en analisis_planificacion_JUN26.xlsx
 
 ---
 
-## 🔲 Pendientes Felipe (próxima sesión)
+## 🔲 Pendientes Felipe
 
-- [ ] Verificar visualmente la tabla después del merge de Andrés
-- [ ] Cuando Turso tenga datos → verificar que `cargar_forecast_manual_mensual()` lo tome
-- [ ] Agregar tránsito proyectado FCST para Ago-Nov:
-  → Correr `python extract_forecast_transito.py` con el Excel FCST
-- [ ] Actualizar `ventas_historico.parquet` con datos de Mayo+Junio 2026
+- [x] **Sobrestock por Categoria Padre** ← COMPLETADO 2026-07-01
+- [x] **Página Análisis Planificación (7 tabs)** ← COMPLETADO 2026-07-01
+- [ ] PR merge → app oficial (Andrés) — branch: `feat/fc-planif-onboarding`
+- [ ] Actualizar `ventas_historico.parquet` con Mayo+Junio 2026 (tabs comerciales necesitan datos completos)
+- [ ] FCST desde Google Drive (cuando Andrés suba el link)
+
+---
+
+## ✅ Página Análisis Planificación (commit pendiente de push)
+
+**Archivo**: `views/planning/analisis_planificacion.py`  
+**Registrado en**: `dashboard_planificacion.py` → "🎯 Planificación" → url_path=`pln-analisis`
+
+**7 tabs implementados**:
+1. 📊 Cómo Vamos — Real vs Meta del mes actual (Marca + Canal)
+2. 📈 Comp. Marcas — YTD META|REAL|VAR% (Venta Neta + Contribución Frontal)
+3. 📈 Comp. Canales — YTD META|REAL|VAR%
+4. 💰 CST x Marca — Proyección mensual a costo ($M) por Marca (6 meses)
+5. 🔴 Detalle Crítico — SKUs con cobertura fc3m < 1m + llegadas próximas
+6. 🚢 Tránsitos — Embarques agrupados por PI con USD/ETA
+7. 🆕 Nuevos en Tránsito — SKUs con stock=0 con llegadas próximas
+
+**Fuentes de datos**:
+- PPTO: `data/planificacion/snapshots/planif_ppto_canal.parquet` + `planif_ppto_marca.parquet`
+- Script extracción: `extract_ppto_snapshot.py` (leer desde desktop PPTO 2026 Excel)
+- Ventas real: `data/historico/ventas_historico.parquet` (canal via `tipo_negocio`)
+- Supply chain: `_preparar_datos()` de triada_cobertura + transit pivot
+
+**Nota importante**: ventas_historico.parquet tiene datos INCOMPLETOS para 2026 (solo ~15% del total real). Los tabs Cómo Vamos/Comp.Marcas/Canales mostrarán cifras reales bajas hasta actualizar el parquet.
 
 ---
 
 ## 🔔 Para Andrés — mergear a main
 
 **Branch**: `feat/fc-planif-onboarding`
-**Último commit**: `24336cc` — formato miles sin decimales
+**Último commit**: pendiente push (ver abajo)
 
-**Qué incluye este branch:**
-1. Vista completa "Cobertura por Producto" (`views/planning/triada_cobertura.py`)
-2. Nuevo script `extract_forecast_transito.py` — para tránsito FCST Aug-Nov
-3. Snapshots desde main: `planif_forecast_manual`, `planif_stock_live`, `planif_ventas_diarias_sku`
-4. `requirements.txt` con `streamlit-aggrid==1.0.5`
-
-**Impacto**: CERO impacto en vistas existentes. Solo agrega/mejora la vista Cobertura.
+**Incluye:**
+1. Tab Jerárquico completo ✅
+2. Tab A Costo ($M) completo ✅ (aggregación + orden correcto)
+3. Tab Sobrestock ✅ (capital inmovilizado por SKU > 4m cobertura)
+4. **Página Análisis Planificación (7 tabs)** ✅ — NUEVO
+5. `planif_forecast_transito.parquet` — tránsito FCST Jul-Nov 2026
+6. Stock desde `data/stock/skus.parquet` (Stock LIVE cada 3h)
+6. Fix pantuflas Lhotse (23 SKUs)
 
 ---
 
-## 🧠 Contexto técnico importante
+## 🧠 Contexto técnico
 
 | Item | Detalle |
 |------|---------|
 | Branch activo | `feat/fc-planif-onboarding` |
-| Último commit | `24336cc` — números con separador de miles |
+| Último commit | `afa26a5` |
 | App personal Felipe | `https://unionx-planificacion-planner.streamlit.app/` |
-| App oficial | `https://unionx-planificacion.streamlit.app/` |
-| Reboot | JS: Manage app → expand terminal → ⋮ → Reboot app |
+| Stock LIVE | `data/stock/skus.parquet` — cols: SKU, Qty, Costo Unit, Valor |
 | PPTO file | `data/planificacion/snapshots/planif_forecast_manual.parquet` |
-| Stock file | `data/planificacion/snapshots/planif_stock_baseline.parquet` |
-| Tránsito | `data/planificacion/snapshots/planif_transito_baseline.parquet` |
+| Tránsito FCST | `data/planificacion/snapshots/planif_forecast_transito.parquet` |
+| Master SKU | `data/planificacion/snapshots/planif_master_sku.parquet` |
+| FCST Excel local | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\FORECAST FINAL SKU 26-27 V2.xlsx` |
+| Ref. Excel Sobrestock | `C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\Analisis Planificacion\analisis_planificacion_JUN26.xlsx` → hoja "Sobrestock x SKU Padre" |
+
+### 🔁 Forzar full redeploy Streamlit Cloud
+1. Cambiar versión en `requirements.txt` (rich 13.9.3 ↔ 13.9.4)
+2. Push
+3. Manage app → ⋮ → Reboot app → Reboot
+
+### 📌 Estructura A Costo (_df_grid_cst)
+DataFrame mínimo con solo columnas necesarias (igual que df_jer en Jerárquico):
+- `marca, categoria_padre, categoria_hijo, sku, produto, _is_total`
+- `stock_cst_m, venta_prom_cst_m`
+- `csi_{ms}, ctr_{ms}, csp_{ms}, cvt_{ms}, cb_{ms}` × 6 meses
+- Fórmula: `col_cst = col_unidades × Costo_Unit / 1_000_000`
+- Grid: `_go2["autoGroupColumnDef"] = {"pinned": "left", ...}` — CRÍTICO para aggregación
+- **OJO**: columna producto en df_jer se llama `"produto"` (no `"producto"`)
+
+### 📌 Estructura Sobrestock (_df_grid_sob)
+- Fuente: `df_jer` (copia post-proyección)
+- Filtro: `stock_actual / venta_prom_3m > 4`
+- Costo Unit: `cargar_costo_unit_sku()` (igual que A Costo)
+- Llegadas = sum(`tr_{ms}` para meses 1-5, excluye mes actual)
+- CLP full (no $M): `'$'+Math.round(x).toLocaleString('es-CL')`
+- Grid: mismo patrón `autoGroupColumnDef: {pinned: "left"}` + `groupDisplayType: "multipleColumns"`
+
+### 📊 Valores A Costo confirmados (Jun 26)
+| Marca | Stock Hoy ($M) | Vta/Mes ($M) |
+|-------|---------------|-------------|
+| Bandú | $15,0M | $11,1M |
+| Dynamo | $10,3M | $5,9M |
+| Lhotse | $322,6M | $83,1M |
+| Simplit | $279,8M | $117,0M |
+| **TOTAL** | **$925,3M** | **$306,5M** |
 
 ---
 
-*Actualizado automáticamente por Claude al cierre de sesión.*
+*Actualizado: 2026-07-01*

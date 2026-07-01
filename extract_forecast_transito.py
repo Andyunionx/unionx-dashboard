@@ -84,7 +84,7 @@ def extract_transito() -> pd.DataFrame:
 
     print(f"[2] Detectadas {len(tr_cols)} columnas de tránsito:", flush=True)
     for _, mes_iso, lbl in tr_cols:
-        print(f"      {mes_iso}  ←  '{lbl}'", flush=True)
+        print(f"      {mes_iso}  <-  '{lbl}'", flush=True)
 
     long_rows = []
     n_filas   = 0
