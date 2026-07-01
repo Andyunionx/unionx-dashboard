@@ -335,6 +335,7 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
     return {
         "ing_prod": ing_prod, "ing_env": ing_env,
         "nc_per": nc_per_v, "nc_o2026": nc_o26_v, "nc_o2025": nc_o25_v,
+        "nc_per_c": nc_per_c, "nc_o2026_c": nc_o26_c, "nc_o2025_c": nc_o25_c,
         "costo": costo, "costo_ing": costo_prod + costo_env, "costo_nc": nc_per_c + nc_o26_c + nc_o25_c,
         "margen_directo": margen_directo,
         "com_venta": com_v, "com_envio": com_e, "com_mkt": com_m, "glosa_otro": glosa_otro,
