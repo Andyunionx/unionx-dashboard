@@ -37,6 +37,9 @@ RESUMEN = PROJECT_ROOT / "data" / "finanzas" / "control_gestion_resumen.json"
 PARQUET_LEGACY = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo.parquet"
 RESUMEN_LEGACY = PROJECT_ROOT / "data" / "operaciones" / "costo_operativo_resumen.json"
 VENTAS_HIST = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
+# Venta OFICIAL proyectada (fcst_eerr, neto). Se usa como denominador del COP
+# para los meses NO cerrados (real para meses cerrados + fcst_eerr para el resto).
+FCST_EERR = PROJECT_ROOT / "data" / "finanzas" / "fcst_eerr.parquet"
 # Proyección de costo op CON AJUSTES (Excel Detalle_Gasto_CC_Analitica) para
 # jun-dic. Overlay defensivo: si existe, reemplaza el FCST GASTO crudo de
 # control_gestion en las sub-áreas núcleo. Generado por extract_costo_op_proyeccion.py
@@ -258,13 +261,23 @@ def _mtime_ventas() -> float:
         return 0.0
 
 
+def _mtime_fcst_eerr() -> float:
+    try:
+        return FCST_EERR.stat().st_mtime
+    except (FileNotFoundError, OSError):
+        return 0.0
+
+
 def _cargar_ventas_mensual() -> pd.DataFrame:
-    """Wrapper publico que invalida cache cuando el parquet de ventas cambia."""
-    return _cargar_ventas_mensual_cached(_mtime_ventas())
+    """Wrapper publico que invalida cache cuando cambia venta real o fcst_eerr."""
+    return _cargar_ventas_mensual_cached(_mtime_ventas(), _mtime_fcst_eerr())
 
 
 @st.cache_data(ttl=600, show_spinner=False)
-def _cargar_ventas_mensual_cached(_mtime_key: float) -> pd.DataFrame:
+def _cargar_ventas_mensual_cached(_mtime_key: float, _mtime_fe: float = 0.0) -> pd.DataFrame:
+    """Venta mensual = REAL para meses cerrados + fcst_eerr (venta OFICIAL) para
+    los meses proyectados. Marca es_proyectada; los meses fcst no tienen
+    pedidos/unidades (no se calcula COP/pedido ni COP/unidad para ellos)."""
     if not VENTAS_HIST.exists():
         return pd.DataFrame()
     try:
@@ -283,7 +296,28 @@ def _cargar_ventas_mensual_cached(_mtime_key: float) -> pd.DataFrame:
             n_unidades=("cantidad", "sum"),
         )
         for c in ["venta_bruta", "venta_neta", "margen_front", "margen_final"]:
-            agg[c + "_m"] = agg[c] / 1000  # CLP → M CLP
+            agg[c + "_m"] = agg[c] / 1000  # CLP → miles CLP
+        agg["es_proyectada"] = False
+
+        # Overlay venta OFICIAL (fcst_eerr) para meses NO cubiertos por el real.
+        if FCST_EERR.exists():
+            fe = pd.read_parquet(FCST_EERR)
+            ing = fe[fe["linea"].astype(str).str.contains("Ingreso de Explot", na=False)]
+            ing = (ing.groupby(["year", "month"], as_index=False)["valor_fcst"].sum()
+                   .rename(columns={"valor_fcst": "venta_neta"}))
+            reales = set(zip(agg["year"], agg["month"]))
+            proy = ing[~ing.apply(lambda r: (r["year"], r["month"]) in reales, axis=1)].copy()
+            if not proy.empty:
+                proy["venta_neta_m"] = proy["venta_neta"] / 1000
+                proy["venta_bruta"] = proy["venta_neta"] * 1.19
+                proy["venta_bruta_m"] = proy["venta_bruta"] / 1000
+                # NaN numérico (no pd.NA) para no romper comparaciones/divisiones
+                for c in ["margen_front", "margen_final", "margen_front_m",
+                          "margen_final_m", "n_lineas", "n_pedidos", "n_unidades"]:
+                    proy[c] = float("nan")
+                proy["es_proyectada"] = True
+                agg = pd.concat([agg, proy[agg.columns.intersection(proy.columns)]],
+                                ignore_index=True)
         return agg
     except Exception:
         return pd.DataFrame()
@@ -431,7 +465,8 @@ def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
               year: int, meses: list[int], periodo_label: str):
     hay_proy = any(_mes_proyectado(year, m) for m in meses)
     nota_proy = (" · <span style='color:#7C5CBF;font-weight:600;'>🔮 meses "
-                 "proyectados (FCST P&L, sin cierre real)</span>" if hay_proy else "")
+                 "proyectados (costo: FCST P&L · venta: fcst_eerr oficial)</span>"
+                 if hay_proy else "")
     st.markdown(
         f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
         f"P&L OPERACIONES — CIERRE {periodo_label} {year}</h3>"
@@ -2438,7 +2473,8 @@ def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: in
         if c <= 0 or v.empty:
             continue
         ped = float(v["n_pedidos"].iloc[0]); uds = float(v["n_unidades"].iloc[0]); vn = float(v["venta_neta"].iloc[0])
-        if ped <= 0 or vn <= 0:
+        # Meses proyectados (fcst_eerr) no tienen pedidos/unidades → sin COP/ped ni COP/uds
+        if pd.isna(ped) or pd.isna(uds) or ped <= 0 or uds <= 0 or vn <= 0:
             continue
         serie.append(dict(mes=m, lbl=MESES_SHORT.get(m, str(m)), costo=c, ped=ped, uds=uds, vn=vn,
                           cop_ped=c / ped, cop_uds=c / uds, pct=c / vn * 100))
