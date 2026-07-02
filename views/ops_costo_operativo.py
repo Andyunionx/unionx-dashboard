@@ -2405,17 +2405,28 @@ def _tab_proyeccion(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
 # ============================================================
 # RENDER
 # ============================================================
-def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: int):
+def _tab_resumen_visual(df_costo: pd.DataFrame, df_venta: pd.DataFrame, year: int,
+                        meses_sel: list[int] | None = None, periodo_label: str = ""):
     """Resumen visual tipo portal: tarjetas KPI + gráficos Plotly de tendencia.
     Da una mirada ejecutiva (COP/pedido, COP/unidad, % venta, composición)
-    antes del detalle de las otras pestañas."""
+    antes del detalle de las otras pestañas.
+
+    Respeta el período seleccionado (meses_sel). La serie exige venta REAL,
+    así que los meses proyectados sin venta (p.ej. jul-dic) no aparecen."""
     import plotly.graph_objects as go
 
     def _clp(n): return "$" + "{:,.0f}".format(n).replace(",", ".")
 
-    # Serie mensual del año: costo (area OPERACIONES, FCST=real) + volumen ventas
+    meses_periodo = set(meses_sel) if meses_sel else None
+    if periodo_label:
+        st.caption(f"📅 Período: **{periodo_label} {year}** · solo meses con venta real "
+                   f"(los meses proyectados sin cierre de venta no se grafican)")
+
+    # Serie mensual del período: costo (area OPERACIONES, FCST=real) + volumen ventas
     serie = []
     for m in sorted(df_costo[df_costo["year"] == year]["month"].dropna().unique().astype(int)):
+        if meses_periodo is not None and m not in meses_periodo:
+            continue
         c = abs(df_costo[(df_costo["year"] == year) & (df_costo["month"] == m)
                          & (df_costo["escenario"] == "FCST") & (df_costo["kpi"] == "GASTO")]["valor"].sum()) * 1000
         v = df_venta[(df_venta["year"] == year) & (df_venta["month"] == m)]
@@ -2595,7 +2606,7 @@ def render():
         "🔮 Proyección & Equilibrio",
     ])
     with tab0:
-        _tab_resumen_visual(df_costo, df_venta, year_sel)
+        _tab_resumen_visual(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab1:
         _tab_pnl(df_costo, df_venta, year_sel, meses_sel, periodo_label)
     with tab2:
