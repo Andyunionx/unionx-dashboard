@@ -256,6 +256,27 @@ def construir_live():
                    '<pageField fld="52" hier="-1"/></pageFields>' + xml[m.end():])
         return xml
 
+    def _patch_td_datafields(xml):
+        # Agrega Comisión/Logística/Marketing TY como campos de Valores ($, suma).
+        # fld 37/38/39 = cacheFields Comisión/Logística/Marketing TY. Idempotente.
+        nuevos = ('<dataField name=" Comisión $ TY" fld="37" baseField="23" baseItem="1" numFmtId="3"/>'
+                  '<dataField name=" Logística $ TY" fld="38" baseField="23" baseItem="1" numFmtId="3"/>'
+                  '<dataField name=" Marketing $ TY" fld="39" baseField="23" baseItem="1" numFmtId="3"/>')
+        m = re.search(r'<dataFields count="(\d+)">(.*?)</dataFields>', xml, re.S)
+        if m and 'fld="37"' not in m.group(2):
+            n = int(m.group(1)) + 3
+            xml = xml[:m.start()] + f'<dataFields count="{n}">{m.group(2)}{nuevos}</dataFields>' + xml[m.end():]
+        # marcar los pivotField 37/38/39 como dataField (mismo patrón que fld 31/32)
+        for idx in (39, 38, 37):   # alto->bajo para no invalidar spans
+            pf = list(re.finditer(r'<pivotField\b[^>]*?/>|<pivotField\b[^>]*?>.*?</pivotField>', xml, re.S))
+            g = pf[idx].group(0)
+            if 'dataField=' not in g:
+                s, e = pf[idx].span()
+                xml = xml[:s] + g.replace('<pivotField ', '<pivotField dataField="1" ', 1) + xml[e:]
+        # extender 3 columnas el rango del pivot (Excel lo recalcula al refrescar igual)
+        xml = xml.replace('ref="B8:Y22"', 'ref="B8:AB22"', 1)
+        return xml
+
     def _limpiar_resumen_td(xml):
         # Quita filas 1-2 de "Resumen TD": datos sueltos (fechas/%) de scratch que
         # quedaron en la plantilla, ARRIBA del pivot (B8:Y22). No tocan el pivot.
@@ -298,7 +319,7 @@ def construir_live():
         #    para reordenar las FILAS de la TD (orden pedido por Nicolás/Andrés).
         for name in sorted(src.namelist()):
             if name == 'xl/pivotTables/pivotTable1.xml':
-                dst.writestr(name, _patch_td_rowfields(src.read(name).decode('utf-8')))
+                dst.writestr(name, _patch_td_datafields(_patch_td_rowfields(src.read(name).decode('utf-8'))))
             elif name == 'xl/worksheets/sheet1.xml':
                 dst.writestr(name, _limpiar_resumen_td(src.read(name).decode('utf-8')))
             elif name in KEEP_EXACT:
