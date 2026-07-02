@@ -229,29 +229,13 @@ def _cargar_cached(_mtime_pq: float, _mtime_rs: float, _mtime_proy: float = 0.0)
         except Exception:
             pass
 
-    # 1b. OVERLAY proyección con ajustes (Excel) para jun-dic en sub-áreas
-    # núcleo. Reemplaza el FCST GASTO crudo de control_gestion por la base
-    # ajustada que mantiene Andrés. Defensivo: si falla, se queda con el crudo.
-    if not df.empty and PROYECCION.exists():
-        try:
-            proy = pd.read_parquet(PROYECCION)
-            req = {"year", "month", "escenario", "kpi", "sub_area", "valor"}
-            if req.issubset(proy.columns) and not proy.empty:
-                mask = (
-                    (df["escenario"] == "FCST") & (df["kpi"] == "GASTO")
-                    & (df["month"].between(6, 12))
-                    & (df["sub_area"].isin(PROYECCION_NUCLEO))
-                )
-                df = pd.concat([df[~mask], proy[df.columns.intersection(proy.columns)]],
-                               ignore_index=True)
-                df["fecha"] = pd.to_datetime(
-                    df["year"].astype(str) + "-" + df["month"].astype(str) + "-01",
-                    errors="coerce",
-                )
-                res["fuente_proy"] = ("Costo op jun-dic: base Excel ajustado "
-                                      "(núcleo Logística+Postventa+Operaciones)")
-        except Exception:
-            pass  # fallback silencioso a control_gestion crudo
+    # 1b. OVERLAY de proyección DESACTIVADO (jul-2026, decisión Andrés):
+    # los meses futuros usan el FCST crudo del P&L Control de Gestión, que es
+    # el forecast oficial mantenido en el Sheet (se actualiza vía cron). El
+    # overlay del Excel Detalle_Gasto_CC_Analitica era un ajuste puntual de
+    # etapa 1. Los meses no cerrados se marcan como "proyectado" en la vista.
+    # (El parquet costo_op_proyeccion.parquet queda para uso de análisis, no
+    # se inyecta en el P&L.)
 
     # 2. Fallback al parquet legacy si el nuevo no existe
     if df.empty and PARQUET_LEGACY.exists():
@@ -428,13 +412,31 @@ def _tipo_costo_predominante(df: pd.DataFrame, year: int, meses: list[int],
 # ============================================================
 # TAB 1: P&L OPERACIONES (HTML)
 # ============================================================
+def _mes_proyectado(year: int, month: int) -> bool:
+    """True si el mes aún no cierra (se muestra como forecast, no cierre real).
+
+    Regla: en el año en curso, el mes anterior al actual en adelante se
+    consideran proyectados (el P&L Drive consolida el cierre con desfase de
+    ~1 mes). Años anteriores: todo cerrado/real. El marcador avanza solo:
+    p.ej. en julio jun-dic son proyectados; en agosto jun ya es real.
+    """
+    from datetime import datetime as _dt
+    hoy = _dt.now()
+    if year != hoy.year:
+        return False
+    return month >= max(1, hoy.month - 1)
+
+
 def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
               year: int, meses: list[int], periodo_label: str):
+    hay_proy = any(_mes_proyectado(year, m) for m in meses)
+    nota_proy = (" · <span style='color:#7C5CBF;font-weight:600;'>🔮 meses "
+                 "proyectados (FCST P&L, sin cierre real)</span>" if hay_proy else "")
     st.markdown(
         f"<h3 style='color:#1F4E79;margin:0 0 4px 0;'>"
         f"P&L OPERACIONES — CIERRE {periodo_label} {year}</h3>"
         f"<p style='color:#64748B;font-size:12px;margin:0 0 16px 0;'>"
-        f"Fuente: Data_Gastos | Fcst = Real</p>",
+        f"Fuente: Data_Gastos | Fcst = Real (meses cerrados){nota_proy}</p>",
         unsafe_allow_html=True,
     )
 
@@ -496,7 +498,10 @@ def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,
     header_row1.append(_th("CONCEPTO", bg="#1F4E79", padding="10px 12px",
                             align="left"))
     for m in meses:
-        header_row1.append(_th(MESES_ES[m], colspan=4, bg="#1F4E79",
+        _proy = _mes_proyectado(year, m)
+        _lbl = MESES_ES[m] + (" 🔮" if _proy else "")
+        _bg_m = "#7C5CBF" if _proy else "#1F4E79"  # morado = proyectado
+        header_row1.append(_th(_lbl, colspan=4, bg=_bg_m,
                                  border_l="2px solid #FFFFFF"))
     header_row1.append(_th(f"ACUMULADO {periodo_label}", colspan=4,
                              bg="#0D3A5F", border_l="2px solid #FFFFFF"))
