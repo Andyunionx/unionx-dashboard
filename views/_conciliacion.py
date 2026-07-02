@@ -20,6 +20,10 @@ EQUIPO = {"trinidad", "ignacia", "claudia", "nicole"}
 # Corrección de línea de negocio: el sheet mete "Marketing" en Páginas Propias;
 # en el RAW contable (fuente única) su tipo_negocio es "Marketing". Clave = _norm(canal).
 NEGOCIO_FIX = {"marketing": "Marketing"}
+# Scope de la conciliación (alineado con el crossover de devoluciones que analiza Gabriela):
+# líneas de negocio + canal explícito. Reemplaza el viejo "canales con KAM".
+SCOPE_NEG = {"marketplace", "fidelizacion", "paginas propias"}
+SCOPE_CANAL = {"unionx b2b"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 MESES_OPT = ["YTD", "Ene", "Feb", "Mar", "Abr", "May"]
 MESES_ES = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
@@ -103,7 +107,10 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         # El sheet clasifica "Marketing" como Páginas Propias; en el RAW (fuente) es "Marketing".
         if ck in NEGOCIO_FIX:
             negocio_dom[ck] = NEGOCIO_FIX[ck]
-    df["_conkam"] = df["_ck"].map(es_conkam).fillna(False)
+    # Scope = líneas de negocio del crossover + canal UnionX B2B (ya NO "canal con KAM").
+    es_scope = {ck: (_norm(negocio_dom.get(ck, "")) in SCOPE_NEG) or (ck in SCOPE_CANAL)
+                for ck in negocio_dom}
+    df["_conkam"] = df["_ck"].map(es_scope).fillna(False)
     dk = df[df["_conkam"]].copy()
 
     datos = []
@@ -131,7 +138,7 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         ncd = nc_detalle.copy()
         ncd["Canal"] = ncd["NC"].map(nc2canal).fillna("(no id)")
         ncd["_ck"] = ncd["Canal"].apply(_norm)
-        ncd = ncd[ncd["_ck"].map(lambda c: es_conkam.get(c, False))]
+        ncd = ncd[ncd["_ck"].map(lambda c: es_scope.get(c, False))]
         for _, r in ncd.iterrows():
             oa, om = _orig_fecha(r.get("Fecha venta original", ""))
             nc_rows.append({"Mes": MES_NOM[int(r["Mes NC"])], "Canal": nombre.get(r["_ck"], r["Canal"]),
@@ -153,7 +160,7 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
             if "comis" not in cat and cat != "envio":
                 continue
             ck = _norm(r.get("Canal", ""))
-            if not es_conkam.get(ck, False):
+            if not es_scope.get(ck, False):
                 continue
             m = _mes_num(r.get("Mes", ""))
             gl = _norm(r.get("Glosa", ""))
@@ -474,7 +481,7 @@ def construir_workbook(bundle):
 
     ws = wb.create_sheet("P&L", 0)
     ws.sheet_view.showGridLines = False
-    ws["A1"] = "P&L Comercial vs Contable — UnionX H1 2026 (canales con KAM)"
+    ws["A1"] = "P&L Comercial vs Contable — UnionX H1 2026 (MP/Fidelización/Páginas Propias + UnionX B2B)"
     ws["A1"].font = Font(bold=True, size=14, color="1E40AF")
     ws.merge_cells("A1:E1")
     ws["A3"], ws["A4"], ws["A5"] = "Mes:", "Canal:", "KAM:"

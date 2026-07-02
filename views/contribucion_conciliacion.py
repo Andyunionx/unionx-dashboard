@@ -7,7 +7,8 @@ margen ajustado / costeo → comisiones de otro período y por caer →
 contribución ajustada → diferencia por explicar). Botón para bajar el Excel
 con fórmulas (mismos cálculos, recalcula con los filtros en Excel).
 
-Solo canales con KAM comercial (Trinidad/Ignacia/Claudia/Nicole).
+Scope = líneas de negocio Marketplace / Fidelización / Páginas Propias + canal
+UnionX B2B (alineado con el crossover de devoluciones).
 """
 from io import BytesIO
 from pathlib import Path
@@ -115,7 +116,7 @@ def _render_b2b(b):
 @st.cache_data(ttl=300, show_spinner="Cargando detalle RAW…")
 def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     """Componentes del P&L detallado desde el RAW (ingresos/NC) + glosas (comisiones).
-    Solo canales con KAM comercial. Devuelve (raw_comp, glosas_comp)."""
+    Scope = líneas Marketplace/Fidelización/Páginas Propias + canal UnionX B2B. Devuelve (raw_comp, glosas_comp)."""
     conkam = {_norm(c): c for c in canales}          # norm -> nombre display
     canal_kam = dict(canal_kam_items)
     canal_neg = dict(canal_negocio_items)
@@ -124,14 +125,18 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     # es_despacho puede no existir en el histórico deployado → usar FALSE (todo producto)
     existentes = set(con.execute(f"SELECT * FROM '{P}' LIMIT 0").df().columns)
     desp = "es_despacho" if "es_despacho" in existentes else "FALSE"
+    # Scope = mismo del crossover (nivel LÍNEA del RAW): líneas de negocio + canal UnionX B2B.
+    # Así ingreso y devoluciones calzan 1:1 con el archivo que analiza Gabriela.
+    SCOPE_SQL = ("(tipo_negocio IN ('Marketplace','Fidelización','Páginas propias') "
+                 "OR canal='UnionX B2B')")
     ing = con.execute(f"""
         SELECT mes_venta mes, canal,
                CASE WHEN {desp} THEN 'ing_envio' ELSE 'ing_prod' END tipo,
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND 5 AND tipo_movimiento='Venta'
+          AND {SCOPE_SQL}
         GROUP BY 1,2,3""").fetchdf()
     # NC = Devolución del RAW (misma fuente que la venta): venta bruta − NC = neto contable.
-    # NO usar crossover: excluye las NC de anulación boleta→factura que compensan la venta bruta.
     nc = con.execute(f"""
         SELECT CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) mes, canal,
                anio_venta oa, mes_venta om,
@@ -139,18 +144,15 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
         FROM '{P}' WHERE tipo_movimiento='Devolución'
           AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
           AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
+          AND {SCOPE_SQL}
         GROUP BY 1,2,3,4""").fetchdf()
     rows = []
     for _, r in ing.iterrows():
-        d = conkam.get(_norm(r.canal))
-        if not d:
-            continue
+        d = conkam.get(_norm(r.canal)) or str(r.canal)   # display sheet, fallback al canal RAW
         rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": r.tipo, "Mes": int(r.mes),
                      "OrigenAnio": 0, "OrigenMes": 0, "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
     for _, r in nc.iterrows():
-        d = conkam.get(_norm(r.canal))
-        if not d:
-            continue
+        d = conkam.get(_norm(r.canal)) or str(r.canal)
         rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": "nc", "Mes": int(r.mes),
                      "OrigenAnio": int(r.oa or 0), "OrigenMes": int(r.om or 0),
                      "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
@@ -189,7 +191,8 @@ def render():
 
     st.title("⚖️ Conciliación Comercial vs Contable")
     st.caption("P&L dinámico + explicación de la diferencia (devoluciones, costeo, comisiones). "
-               "Solo canales con KAM comercial.")
+               "Scope: Marketplace, Fidelización, Páginas Propias + canal UnionX B2B "
+               "(mismo del crossover de devoluciones).")
 
     try:
         b = _bundle()
