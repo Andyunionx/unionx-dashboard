@@ -9,6 +9,7 @@ venir parciales → su contribución queda subestimada (el Margen Front sí es c
 """
 import calendar
 from datetime import datetime
+from io import BytesIO
 
 import pandas as pd
 import streamlit as st
@@ -74,6 +75,34 @@ def _rentabilidad(desde, hasta, canales, negocios, dim_col, _v):
     return con.execute(q).fetchdf()
 
 
+@st.cache_data(ttl=300, show_spinner="Preparando descarga…")
+def _export_bytes(desde, hasta, canales, negocios, _v):
+    """Excel detallado (una fila por Año×Mes×LíneaNegocio×Canal×Cat×Marca×SKU) para pivotear."""
+    con = _get_duck_conn(_v)
+    where = (f"fecha_venta >= '{desde}' AND fecha_venta <= '{hasta}'"
+             + _sql_in("canal", canales) + _sql_in("tipo_negocio", negocios))
+    q = f"""
+        SELECT anio_venta "Año", mes_venta "Mes", tipo_negocio "Línea Negocio", canal "Canal",
+               categoria_macro "Cat macro", categoria_padre "Cat padre", categoria_comercial "Cat comercial",
+               marca "Marca", sku "SKU", any_value(producto) "Producto",
+               sum(TRY_CAST(venta_neta AS DOUBLE))  "Venta neta",
+               sum(TRY_CAST(costo_total AS DOUBLE)) "Costo",
+               sum(TRY_CAST(margen_front AS DOUBLE)) "Margen Front",
+               sum(TRY_CAST(comision AS DOUBLE))    "Comisión",
+               sum(TRY_CAST(logistica AS DOUBLE))   "Logística",
+               sum(TRY_CAST(marketing AS DOUBLE))   "Marketing",
+               sum(TRY_CAST(margen_final AS DOUBLE)) "Contribución",
+               sum(TRY_CAST(cantidad AS DOUBLE))    "Unidades"
+        FROM ventas WHERE {where}
+        GROUP BY 1,2,3,4,5,6,7,8,9 ORDER BY "Venta neta" DESC
+    """
+    det = con.execute(q).fetchdf()
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as xw:
+        det.to_excel(xw, sheet_name="Detalle", index=False)
+    return buf.getvalue(), len(det)
+
+
 @st.cache_data(ttl=300)
 def _opciones(_v):
     con = _get_duck_conn(_v)
@@ -103,6 +132,16 @@ def render():
         dim_lbl = st.selectbox("Abrir por", list(DIMS.keys()), index=0, key="rent_dim")
     desde, hasta = periodos[per]
     dim_col = DIMS[dim_lbl]
+
+    # Descarga: tabla detallada (pivotable) con toda la info del filtro actual
+    try:
+        xls_bytes, n_export = _export_bytes(desde, hasta, tuple(canales), tuple(negocios), v)
+        st.download_button(
+            f"⬇️ Descargar tabla detallada para pivote ({n_export:,} filas)".replace(",", "."),
+            data=xls_bytes, file_name=f"Rentabilidad_{per.split(' ')[0]}_{YEAR}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="rent_dl")
+    except Exception as e:
+        st.caption(f"(descarga no disponible: {type(e).__name__}: {str(e)[:80]})")
 
     try:
         df = _rentabilidad(desde, hasta, tuple(canales), tuple(negocios), dim_col, v)
