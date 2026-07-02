@@ -178,6 +178,7 @@ from views.ventas_general import render as render_ventas_general
 from views.ventas_semanal import render as render_ventas_semanal
 from views.ventas_carga import render as render_ventas_carga
 from views.ventas_descarga import render as render_ventas_descarga
+from views.ventas_rentabilidad import render as render_ventas_rentabilidad
 from views.stock_live import render as render_stock_live
 from views.cruce_bestsellers import render as render_cruce_bestsellers
 from views.cruce_quiebres import render as render_cruce_quiebres
@@ -202,6 +203,7 @@ pages = {
         st.Page(render_ventas_general, title="Vista General", icon="📈", url_path="ventas-general", default=True),
         st.Page(render_ventas_semanal, title="Vista Semanal", icon="📅", url_path="ventas-semanal"),
         st.Page(render_ventas_cyber, title="Cyber 2026", icon="🛍️", url_path="ventas-cyber"),
+        st.Page(render_ventas_rentabilidad, title="Rentabilidad", icon="💰", url_path="ventas-rentabilidad"),
         st.Page(render_ventas_descarga, title="Descargar RAW", icon="⬇️", url_path="ventas-descarga"),
         st.Page(render_ventas_carga, title="Cargar offline", icon="📤", url_path="ventas-carga"),
     ],
