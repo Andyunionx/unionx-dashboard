@@ -202,6 +202,54 @@ def _render_otif_ytd(snap: dict):
                          "OTIF E2E %": st.column_config.NumberColumn(format="%.1f%%"),
                      })
 
+    # ── Desglose YTD: por courier (resultado general) y por canal ──
+    st.markdown("##### Desglose YTD")
+    st.caption("Ambos desgloses respetan el filtro de arriba. Filtra por un "
+               "courier para ver su resultado en cada canal (multicanal), o por "
+               "un canal para ver qué couriers lo sirven.")
+    col_cou, col_cli = st.columns(2)
+    por_courier = y.get("por_courier", [])
+    por_canal = y.get("por_canal", [])
+    with col_cou:
+        st.markdown("**🚚 Por courier** — resultado general")
+        if por_courier:
+            df_pc = pd.DataFrame(por_courier).rename(columns={
+                "CURIER": "Courier", "n_pedidos": "Pedidos", "pct_volumen": "% Vol",
+                "ns_courier_pct": "NS Cou %", "otif_total_pct": "OTIF E2E %"})
+            st.dataframe(
+                df_pc[["Courier", "Pedidos", "% Vol", "NS Cou %", "OTIF E2E %"]],
+                hide_index=True, width='stretch',
+                column_config={
+                    "Pedidos": st.column_config.NumberColumn(format="%d"),
+                    "% Vol": st.column_config.ProgressColumn(
+                        format="%.1f%%", min_value=0,
+                        max_value=float(df_pc["% Vol"].max()) if len(df_pc) else 100),
+                    "NS Cou %": st.column_config.NumberColumn(format="%.1f%%"),
+                    "OTIF E2E %": st.column_config.NumberColumn(format="%.1f%%"),
+                })
+        else:
+            st.caption("Sin couriers sobre el umbral para este filtro.")
+    with col_cli:
+        st.markdown("**🛒 Por canal / marketplace**")
+        if por_canal:
+            df_pk = pd.DataFrame(por_canal).rename(columns={
+                "CANAL": "Canal", "n_pedidos": "Pedidos", "pct_volumen": "% Vol",
+                "ns_empresa_pct": "NS Emp %", "ns_courier_pct": "NS Cou %",
+                "otif_total_pct": "OTIF E2E %"})
+            st.dataframe(
+                df_pk[["Canal", "Pedidos", "% Vol", "NS Cou %", "OTIF E2E %"]],
+                hide_index=True, width='stretch',
+                column_config={
+                    "Pedidos": st.column_config.NumberColumn(format="%d"),
+                    "% Vol": st.column_config.ProgressColumn(
+                        format="%.1f%%", min_value=0,
+                        max_value=float(df_pk["% Vol"].max()) if len(df_pk) else 100),
+                    "NS Cou %": st.column_config.NumberColumn(format="%.1f%%"),
+                    "OTIF E2E %": st.column_config.NumberColumn(format="%.1f%%"),
+                })
+        else:
+            st.caption("Sin canales sobre el umbral para este filtro.")
+
 
 def _render_otif_couriers(snap: dict):
     """Comparación entre couriers (base corte 26-25): matriz, ranking YTD, curvas."""

@@ -7607,6 +7607,104 @@
             "ns_empresa_pct": 100.0
           }
         ],
+        "por_canal": [
+          {
+            "CANAL": "MERCADO LIBRE F",
+            "n_pedidos": 7724,
+            "pct_volumen": 23.1,
+            "ns_empresa_pct": 97.3,
+            "ns_courier_pct": 94.9,
+            "otif_total_pct": 94.6
+          },
+          {
+            "CANAL": "FALABELLA HDC",
+            "n_pedidos": 6141,
+            "pct_volumen": 18.4,
+            "ns_empresa_pct": 97.2,
+            "ns_courier_pct": 97.2,
+            "otif_total_pct": 97.2
+          },
+          {
+            "CANAL": "PAGINAS",
+            "n_pedidos": 4105,
+            "pct_volumen": 12.3,
+            "ns_empresa_pct": 97.5,
+            "ns_courier_pct": 90.8,
+            "otif_total_pct": 88.8
+          },
+          {
+            "CANAL": "MERCADO LIBRE C",
+            "n_pedidos": 3575,
+            "pct_volumen": 10.7,
+            "ns_empresa_pct": 96.8,
+            "ns_courier_pct": 96.8,
+            "otif_total_pct": 96.8
+          },
+          {
+            "CANAL": "KITCHEN CENTER",
+            "n_pedidos": 2473,
+            "pct_volumen": 7.4,
+            "ns_empresa_pct": 97.1,
+            "ns_courier_pct": 96.1,
+            "otif_total_pct": 94.1
+          },
+          {
+            "CANAL": "FALABELLA F",
+            "n_pedidos": 2300,
+            "pct_volumen": 6.9,
+            "ns_empresa_pct": 97.0,
+            "ns_courier_pct": 95.0,
+            "otif_total_pct": 93.7
+          },
+          {
+            "CANAL": "DUTY TRAVEL",
+            "n_pedidos": 1827,
+            "pct_volumen": 5.5,
+            "ns_empresa_pct": 98.7,
+            "ns_courier_pct": 99.7,
+            "otif_total_pct": 98.7
+          },
+          {
+            "CANAL": "BLUEXPRESS",
+            "n_pedidos": 1781,
+            "pct_volumen": 5.3,
+            "ns_empresa_pct": 96.4,
+            "ns_courier_pct": 88.6,
+            "otif_total_pct": 87.2
+          },
+          {
+            "CANAL": "RIPLEY",
+            "n_pedidos": 1560,
+            "pct_volumen": 4.7,
+            "ns_empresa_pct": 93.8,
+            "ns_courier_pct": 55.3,
+            "otif_total_pct": 53.7
+          },
+          {
+            "CANAL": "WALMART",
+            "n_pedidos": 1535,
+            "pct_volumen": 4.6,
+            "ns_empresa_pct": 97.4,
+            "ns_courier_pct": 91.7,
+            "otif_total_pct": 90.1
+          },
+          {
+            "CANAL": "PARIS",
+            "n_pedidos": 253,
+            "pct_volumen": 0.8,
+            "ns_empresa_pct": 95.7,
+            "ns_courier_pct": 80.6,
+            "otif_total_pct": 80.2
+          },
+          {
+            "CANAL": "BICE",
+            "n_pedidos": 143,
+            "pct_volumen": 0.4,
+            "ns_empresa_pct": 95.1,
+            "ns_courier_pct": 94.4,
+            "otif_total_pct": 90.2
+          }
+        ],
         "opciones": {
           "couriers": [
             "Todos",
@@ -7631,6 +7729,7 @@
             "MERCADO LIBRE C",
             "MERCADO LIBRE F",
             "PAGINAS",
+            "PARIS",
             "RIPLEY",
             "WALMART"
           ]
@@ -7879,6 +7978,96 @@
             "ns_courier_pct": 29.5,
             "otif_total_pct": 29.5,
             "ns_empresa_pct": 96.7
+          }
+        ],
+        "por_canal": [
+          {
+            "CANAL": "FALABELLA",
+            "n_pedidos": 15007,
+            "pct_volumen": 27.3,
+            "ns_empresa_pct": 94.0,
+            "ns_courier_pct": 90.5,
+            "otif_total_pct": 90.1
+          },
+          {
+            "CANAL": "ML",
+            "n_pedidos": 12853,
+            "pct_volumen": 23.4,
+            "ns_empresa_pct": 96.1,
+            "ns_courier_pct": 92.3,
+            "otif_total_pct": 91.7
+          },
+          {
+            "CANAL": "KITCHEN CENTER",
+            "n_pedidos": 7443,
+            "pct_volumen": 13.6,
+            "ns_empresa_pct": 68.8,
+            "ns_courier_pct": 91.5,
+            "otif_total_pct": 63.1
+          },
+          {
+            "CANAL": "PAGINAS",
+            "n_pedidos": 7154,
+            "pct_volumen": 13.0,
+            "ns_empresa_pct": 88.4,
+            "ns_courier_pct": 79.9,
+            "otif_total_pct": 70.3
+          },
+          {
+            "CANAL": "DUTY TRAVEL",
+            "n_pedidos": 3537,
+            "pct_volumen": 6.4,
+            "ns_empresa_pct": 98.7,
+            "ns_courier_pct": 98.7,
+            "otif_total_pct": 98.7
+          },
+          {
+            "CANAL": "WALMART",
+            "n_pedidos": 3023,
+            "pct_volumen": 5.5,
+            "ns_empresa_pct": 96.5,
+            "ns_courier_pct": 89.5,
+            "otif_total_pct": 87.9
+          },
+          {
+            "CANAL": "PARIS",
+            "n_pedidos": 2777,
+            "pct_volumen": 5.1,
+            "ns_empresa_pct": 94.1,
+            "ns_courier_pct": 73.9,
+            "otif_total_pct": 71.4
+          },
+          {
+            "CANAL": "RIPLEY",
+            "n_pedidos": 2395,
+            "pct_volumen": 4.4,
+            "ns_empresa_pct": 84.6,
+            "ns_courier_pct": 63.6,
+            "otif_total_pct": 60.0
+          },
+          {
+            "CANAL": "YOUMARKET",
+            "n_pedidos": 493,
+            "pct_volumen": 0.9,
+            "ns_empresa_pct": 66.5,
+            "ns_courier_pct": 72.2,
+            "otif_total_pct": 60.9
+          },
+          {
+            "CANAL": "BICE",
+            "n_pedidos": 150,
+            "pct_volumen": 0.3,
+            "ns_empresa_pct": 86.0,
+            "ns_courier_pct": 95.3,
+            "otif_total_pct": 83.3
+          },
+          {
+            "CANAL": "APPRECIO",
+            "n_pedidos": 62,
+            "pct_volumen": 0.1,
+            "ns_empresa_pct": 79.0,
+            "ns_courier_pct": 90.3,
+            "otif_total_pct": 74.2
           }
         ],
         "opciones": {

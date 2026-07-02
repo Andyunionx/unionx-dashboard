@@ -700,6 +700,30 @@ def kpi_otif_ytd(anio: int = None, courier: str = None,
     else:
         por_courier = []
 
+    # Ranking YTD por canal/cliente (dentro del filtro; útil al filtrar por
+    # courier para ver su desempeño multicanal)
+    gk = f.copy()
+    gk["CANAL"] = gk["CLIENTE"].astype(str).str.strip().str.upper()
+    gk = gk[gk["CANAL"] != ""]
+    gk = gk[gk["CANAL"] != "NAN"]
+    gk2 = gk.groupby("CANAL").agg(
+        n_pedidos=("ORDEN", "count"),
+        courier_ok=("courier_a_tiempo", "sum"),
+        otif_ok=("otif_total", "sum"),
+        empresa_ok=("empresa_a_tiempo", "sum"),
+    ).reset_index()
+    gk2 = gk2[gk2["n_pedidos"] >= _COU_MIN_PEDIDOS]
+    if not gk2.empty:
+        gk2["ns_courier_pct"] = (gk2["courier_ok"] / gk2["n_pedidos"] * 100).round(1)
+        gk2["otif_total_pct"] = (gk2["otif_ok"] / gk2["n_pedidos"] * 100).round(1)
+        gk2["ns_empresa_pct"] = (gk2["empresa_ok"] / gk2["n_pedidos"] * 100).round(1)
+        gk2["pct_volumen"] = (gk2["n_pedidos"] / gk2["n_pedidos"].sum() * 100).round(1)
+        gk2 = gk2.sort_values("n_pedidos", ascending=False)
+        por_canal = gk2[["CANAL", "n_pedidos", "pct_volumen", "ns_empresa_pct",
+                         "ns_courier_pct", "otif_total_pct"]].to_dict("records")
+    else:
+        por_canal = []
+
     return {
         "anio": anio,
         "cortes": [c["key"] for c in cortes],
@@ -711,6 +735,7 @@ def kpi_otif_ytd(anio: int = None, courier: str = None,
         "otif_total_pct": round(n_tot / n * 100, 1) if n else None,
         "trend": trend,
         "por_courier": por_courier,
+        "por_canal": por_canal,
         "opciones": opciones,
         "filtros": {"courier": courier or "Todos", "cliente": cliente or "Todos"},
         "error": None,
