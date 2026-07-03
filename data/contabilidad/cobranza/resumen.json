@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-03T13:31:33.420949",
+  "generado_en": "2026-07-03T18:59:31.256286",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11165,
-  "total_monto_pendiente_clp": 757785087.0,
+  "total_documentos_pendientes": 11074,
+  "total_monto_pendiente_clp": 755308553.0,
   "monto_por_aging": {
     "+90 días": 36014264.0,
-    "1-30 días": 507681306.0,
-    "31-60 días": 100258981.0,
+    "1-30 días": 503729071.0,
+    "31-60 días": 100163071.0,
     "61-90 días": 23011121.0,
-    "Vigente": 90819415.0
+    "Vigente": 92391026.0
   },
   "monto_por_tipo": {
-    "BOLETA": 544488374.0,
+    "BOLETA": 542011840.0,
     "FACTURA": 213296713.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 114746558.0
+      "monto": 115645316.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,27 +30,27 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 59373149.0
+      "monto": 59906949.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 37949007.0
+      "monto": 37195424.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 30305200.0
+      "monto": 31313039.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 28694378.0
+      "monto": 28840298.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 22622179.0
     },
     {
       "partner": "abc S.A.",
       "monto": 22110596.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 22098007.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -58,11 +58,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 20764828.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 19464557.0
+      "monto": 20879718.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -71,6 +67,10 @@
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
       "monto": 15679970.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 15263355.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
@@ -97,6 +97,6 @@
       "monto": 3279035.0
     }
   ],
-  "notas_credito_count": 558,
+  "notas_credito_count": 552,
   "pedidos_venta_count": 10000
 }
