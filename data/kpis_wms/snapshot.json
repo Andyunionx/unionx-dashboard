@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-07-03T06:35:13.695973",
+  "generado_en": "2026-07-03T16:26:44.048272",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.038530090165653175,
-      "total_pickings": 19076,
-      "on_time": 738,
-      "on_time_pct": 0.0386873558397987,
-      "in_full": 19064,
-      "in_full_pct": 0.9993709373034179,
-      "both": 735,
+      "valor": 0.038146574064476,
+      "total_pickings": 19294,
+      "on_time": 739,
+      "on_time_pct": 0.038302062817456205,
+      "in_full": 19282,
+      "in_full_pct": 0.9993780449880793,
+      "both": 736,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,18 +23,25 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997986063559834,
-      "ok": 24822,
-      "total": 24827,
+      "valor": 0.9998005663914483,
+      "ok": 25066,
+      "total": 25071,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 14.282726757369616,
-      "n_recepciones": 245,
+      "valor": 14.224700767841012,
+      "n_recepciones": 246,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01042",
+          "proveedor": "Distribuidora y Comercializadora Ipasari Spa, Rossana Osorio",
+          "horas": 0.0,
+          "scheduled": "2026-07-03 15:16",
+          "done": "2026-07-03 15:16"
+        },
         {
           "picking": "CA1/IN/00923",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-01 18:03",
           "done": "2026-07-01 18:03"
-        },
-        {
-          "picking": "CA1/RET/01032",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 17:00",
-          "done": "2026-07-01 17:00"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9659983089745138,
-      "total_so": 16563,
-      "total_con_pickings": 16558,
-      "cumplidos": 15995,
+      "valor": 0.9708668025416617,
+      "total_so": 16687,
+      "total_con_pickings": 16682,
+      "cumplidos": 16196,
       "parciales": 22,
-      "sin_iniciar": 541,
+      "sin_iniciar": 464,
       "error": null
     },
     "oct_30d": {
-      "valor": 74.81722381967586,
-      "n_orders": 18606,
-      "min_h": 0.006944444444444444,
+      "valor": 74.19966890388237,
+      "n_orders": 18823,
+      "min_h": 0.006666666666666667,
       "max_h": 719.81,
-      "mediana_h": 41.159166666666664,
+      "mediana_h": 40.45166666666667,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 2906,
+      "lineas": 3150,
       "mes": "2026-07",
       "error": null
     },
@@ -7370,13 +7370,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.038530090165653175,
-      "total_pickings": 19076,
-      "on_time": 738,
-      "on_time_pct": 0.0386873558397987,
-      "in_full": 19064,
-      "in_full_pct": 0.9993709373034179,
-      "both": 735,
+      "valor": 0.038146574064476,
+      "total_pickings": 19294,
+      "on_time": 739,
+      "on_time_pct": 0.038302062817456205,
+      "in_full": 19282,
+      "in_full_pct": 0.9993780449880793,
+      "both": 736,
       "error": null
     },
     "b2b_30d": {
@@ -7392,20 +7392,27 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997986063559834,
-      "ok": 24822,
-      "total": 24827,
+      "valor": 0.9998005663914483,
+      "ok": 25066,
+      "total": 25071,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 14.282726757369616,
-      "n_recepciones": 245,
+      "valor": 14.224700767841012,
+      "n_recepciones": 246,
       "min": -37.570277777777775,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01042",
+          "proveedor": "Distribuidora y Comercializadora Ipasari Spa, Rossana Osorio",
+          "horas": 0.0,
+          "scheduled": "2026-07-03 15:16",
+          "done": "2026-07-03 15:16"
+        },
         {
           "picking": "CA1/IN/00923",
           "proveedor": "",
@@ -7538,13 +7545,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-01 18:03",
           "done": "2026-07-01 18:03"
-        },
-        {
-          "picking": "CA1/RET/01032",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 17:00",
-          "done": "2026-07-01 17:00"
         }
       ],
       "error": null
