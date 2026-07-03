@@ -189,8 +189,8 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     # Headers
     ws.append([c if c is not None else '' for c in RAW_COLUMNS])
     # Datos en chunks para no consumir tanta RAM
-    n = len(df)
-    print(f'   [generar_raw_xml] {n:,} filas a serializar...')
+    n_rows = len(df)
+    print(f'   [generar_raw_xml] {n_rows:,} filas a serializar...')
     # Generador (no df.values.tolist()) para no duplicar 440k filas en RAM.
     for r in df.itertuples(index=False, name=None):
         # Agregar None para la columna 56
@@ -201,9 +201,9 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     wb.save(tmp_xlsx)
     # Extraer sheet3.xml (que ahora se llama sheet1.xml en este wb chico)
     with zipfile.ZipFile(tmp_xlsx) as z:
-        for n in z.namelist():
-            if n.startswith('xl/worksheets/sheet'):
-                return z.read(n)
+        for nm in z.namelist():
+            if nm.startswith('xl/worksheets/sheet'):
+                return z.read(nm), n_rows
     raise RuntimeError('no se encontro sheet en archivo temporal')
 
 
@@ -227,8 +227,8 @@ def construir_live():
     # No retener el df fuera de generar_raw_xml: asi su unica referencia es el
     # parametro y se libera (del+gc) antes del zip-surgery, evitando OOM.
     with tempfile.TemporaryDirectory() as tmp:
-        new_raw_xml = generar_raw_xml(cargar_raw_parquet(), Path(tmp))
-    print(f'      Raw XML: {len(new_raw_xml)/1024/1024:.1f} MB')
+        new_raw_xml, n_raw = generar_raw_xml(cargar_raw_parquet(), Path(tmp))
+    print(f'      Raw XML: {len(new_raw_xml)/1024/1024:.1f} MB ({n_raw:,} filas)')
 
     print('[3/5] Construyendo archivo LIVE...')
 
@@ -283,6 +283,10 @@ def construir_live():
         for r in ('1', '2'):
             xml = re.sub(rf'<row r="{r}"[^>]*?/>', '', xml, count=1)
             xml = re.sub(rf'<row r="{r}"[^>]*?>.*?</row>', '', xml, count=1, flags=re.S)
+        # Quita la grilla de scratch M3:T4 (420M.../13.860...: fórmulas $M$3*N2 sueltas
+        # arriba del pivot). Deja B/C (filtros del pivot) intactas.
+        for rr in ('3', '4'):
+            xml = re.sub(rf'<c r="[MNOPQRST]{rr}"[^>]*?/>|<c r="[MNOPQRST]{rr}"[^>]*?>.*?</c>', '', xml)
         return xml
 
     # Archivos a CONSERVAR del original (NO incluimos pivotCacheRecords3.xml:
@@ -322,6 +326,12 @@ def construir_live():
                 dst.writestr(name, _patch_td_datafields(_patch_td_rowfields(src.read(name).decode('utf-8'))))
             elif name == 'xl/worksheets/sheet1.xml':
                 dst.writestr(name, _limpiar_resumen_td(src.read(name).decode('utf-8')))
+            elif name == 'xl/pivotCache/pivotCacheDefinition3.xml':
+                # El ref de la caché estaba hardcodeado (A1:BC448288) y no cubría las
+                # filas nuevas (Nicole) → ene-abr no aparecían. Ajustar al total real.
+                cd = src.read(name).decode('utf-8')
+                cd = re.sub(r'(<worksheetSource ref="A1:[A-Z]+)\d+"', rf'\g<1>{n_raw + 1}"', cd, count=1)
+                dst.writestr(name, cd)
             elif name in KEEP_EXACT:
                 with src.open(name) as fin, dst.open(name, 'w', force_zip64=True) as fout:
                     while True:
