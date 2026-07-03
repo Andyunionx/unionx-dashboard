@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-07-03T11:32:56.608144",
+  "generado_en": "2026-07-03T14:03:56.900489",
   "total_skus": 1887,
-  "total_quants": 4696,
+  "total_quants": 4714,
   "total_locations": 1416,
   "kpis": {
     "n_skus": 1887,
-    "valor_total": 1087195701.31,
-    "unidades_total": 181227.0,
-    "costo_promedio_sku": 576150.35,
+    "valor_total": 1087182556.31,
+    "unidades_total": 181226.0,
+    "costo_promedio_sku": 576143.38,
     "n_quiebre_critico": 90,
     "n_bajo": 147,
     "n_optimo": 135,
     "n_sobrestock": 343,
     "n_sin_venta": 1172,
     "rot_30d_promedio": 0.69,
-    "rot_90d_promedio": 3.03
+    "rot_90d_promedio": 3.04
   },
   "ocupacion": {
     "positions": [
@@ -8239,8 +8239,8 @@
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 896443705.27,
-      "Unidades": 161848.0,
+      "Valor": 895850618.27,
+      "Unidades": 161796.0,
       "SKUs": 1452
     },
     {
@@ -8263,9 +8263,9 @@
     },
     {
       "Bodega": "CA1/Output",
-      "Valor": 11706416.71,
-      "Unidades": 1166.0,
-      "SKUs": 307
+      "Valor": 12286358.71,
+      "Unidades": 1217.0,
+      "SKUs": 325
     },
     {
       "Bodega": "BVO/Stock",
