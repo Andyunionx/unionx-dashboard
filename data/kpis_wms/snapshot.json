@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-07-02T16:51:42.161694",
+  "generado_en": "2026-07-03T06:35:13.695973",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0303,
-      "total_pickings": 20000,
-      "on_time": 606,
-      "on_time_pct": 0.0303,
-      "in_full": 19992,
-      "in_full_pct": 0.9996,
-      "both": 606,
+      "valor": 0.038530090165653175,
+      "total_pickings": 19076,
+      "on_time": 738,
+      "on_time_pct": 0.0386873558397987,
+      "in_full": 19064,
+      "in_full_pct": 0.9993709373034179,
+      "both": 735,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.02467343976777939,
-      "total_pickings": 689,
+      "valor": 0.0265625,
+      "total_pickings": 640,
       "on_time": 17,
-      "on_time_pct": 0.02467343976777939,
-      "in_full": 685,
-      "in_full_pct": 0.9941944847605225,
+      "on_time_pct": 0.0265625,
+      "in_full": 636,
+      "in_full_pct": 0.99375,
       "both": 17,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998185776487664,
-      "ok": 27555,
-      "total": 27560,
+      "valor": 0.9997986063559834,
+      "ok": 24822,
+      "total": 24827,
       "errores": 5,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.969545286896043,
-      "total_so": 18983,
-      "total_con_pickings": 18979,
-      "cumplidos": 18401,
-      "parciales": 26,
-      "sin_iniciar": 552,
+      "valor": 0.9659983089745138,
+      "total_so": 16563,
+      "total_con_pickings": 16558,
+      "cumplidos": 15995,
+      "parciales": 22,
+      "sin_iniciar": 541,
       "error": null
     },
     "oct_30d": {
-      "valor": 71.79760190102296,
-      "n_orders": 19019,
+      "valor": 74.81722381967586,
+      "n_orders": 18606,
       "min_h": 0.006944444444444444,
       "max_h": 719.81,
-      "mediana_h": 38.05972222222222,
+      "mediana_h": 41.159166666666664,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 2528,
+      "lineas": 2906,
       "mes": "2026-07",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 324,
-          "tarde": 324,
+          "total": 293,
+          "tarde": 293,
           "on_time_pct": 0.0
         },
         {
@@ -372,15 +372,9 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
-          "total": 4,
-          "tarde": 4,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Global Reward Solutions",
-          "total": 126,
-          "tarde": 126,
+          "total": 130,
+          "tarde": 130,
           "on_time_pct": 0.0
         },
         {
@@ -391,14 +385,8 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 102,
-          "tarde": 102,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Lokal SpA",
-          "total": 4,
-          "tarde": 4,
+          "total": 86,
+          "tarde": 86,
           "on_time_pct": 0.0
         },
         {
@@ -408,9 +396,15 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "ASTORGA SPA",
-          "total": 5,
-          "tarde": 5,
+          "total": 6,
+          "tarde": 6,
           "on_time_pct": 0.0
         },
         {
@@ -421,9 +415,9 @@
         },
         {
           "cliente": "Comercializadora SP Digital SPA",
-          "total": 11,
-          "tarde": 10,
-          "on_time_pct": 0.09090909090909091
+          "total": 9,
+          "tarde": 8,
+          "on_time_pct": 0.1111111111111111
         },
         {
           "cliente": "COMERCIAL DITEN LIMITADA",
@@ -7376,31 +7370,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0303,
-      "total_pickings": 20000,
-      "on_time": 606,
-      "on_time_pct": 0.0303,
-      "in_full": 19992,
-      "in_full_pct": 0.9996,
-      "both": 606,
+      "valor": 0.038530090165653175,
+      "total_pickings": 19076,
+      "on_time": 738,
+      "on_time_pct": 0.0386873558397987,
+      "in_full": 19064,
+      "in_full_pct": 0.9993709373034179,
+      "both": 735,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.02467343976777939,
-      "total_pickings": 689,
+      "valor": 0.0265625,
+      "total_pickings": 640,
       "on_time": 17,
-      "on_time_pct": 0.02467343976777939,
-      "in_full": 685,
-      "in_full_pct": 0.9941944847605225,
+      "on_time_pct": 0.0265625,
+      "in_full": 636,
+      "in_full_pct": 0.99375,
       "both": 17,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998185776487664,
-      "ok": 27555,
-      "total": 27560,
+      "valor": 0.9997986063559834,
+      "ok": 24822,
+      "total": 24827,
       "errores": 5,
       "error": null
     }
