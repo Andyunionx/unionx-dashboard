@@ -31,6 +31,10 @@ MATRIZ_MAP = {
 }
 DESPACHO_KEYS = ("despacho", "flete", "envio", "envío", "shipping")
 
+# Marca inferible por prefijo de SKU cuando no hay marca en ningún lado ni en la Matriz.
+# Solo se aplica a filas con marca vacía (nunca pisa una marca existente).
+PREFIJO_MARCA = {"LH": "Lhotse", "DN": "Dinasty"}
+
 
 def _norm(s):
     s = str(s or "").strip().lower()
@@ -57,6 +61,45 @@ def _cargar_matriz():
     return m
 
 
+def heal_marca(df, verbose=True):
+    """P1b — rellena marca vacía sin re-extraer: (1) self-heal con la marca conocida
+    del mismo SKU (moda), (2) inferencia por prefijo de SKU (PREFIJO_MARCA).
+    Nunca pisa una marca ya existente. Solo toca la columna `marca`."""
+    log = print if verbose else (lambda *a, **k: None)
+    if "marca" not in df.columns or "sku" not in df.columns:
+        return df
+    marca = df["marca"].astype(str).str.strip()
+    marca = marca.mask(marca.str.lower().isin({"none", "nan", "false", "0", "-", "sin marca"}), "")
+    sku = df["sku"].astype(str).str.strip()
+    sku_valido = sku.ne("") & sku.str.lower().ne("false")
+    vacia = marca.eq("") & sku_valido
+    n0 = int(vacia.sum())
+    if n0 == 0:
+        df["marca"] = marca
+        log("  [P1b] marca: nada que rellenar")
+        return df
+    # 1) self-heal — moda de la marca conocida por SKU
+    conocida = marca.ne("")
+    if conocida.any():
+        moda = marca[conocida].groupby(sku[conocida]).agg(
+            lambda s: s.mode().iat[0] if len(s.mode()) else s.iloc[0])
+        fill = sku.map(moda)
+        heal = vacia & fill.notna()
+        marca = marca.where(~heal, fill)
+        n1 = int(heal.sum())
+    else:
+        n1 = 0
+    # 2) prefijo de SKU (solo lo que sigue vacío)
+    resta = marca.eq("") & sku_valido
+    pref = sku.str.upper().str[:2].map(PREFIJO_MARCA)
+    pmask = resta & pref.notna()
+    marca = marca.where(~pmask, pref)
+    n2 = int(pmask.sum())
+    df["marca"] = marca
+    log(f"  [P1b] marca: {n1} filas por SKU + {n2} por prefijo (quedan {n0 - n1 - n2} sin marca)")
+    return df
+
+
 def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     """Aplica P1 (atributos por SKU), P5 (es_despacho) y opcional P3 (backfill NC).
     Vectorizado y sin copia para soportar el histórico (~414k filas)."""
@@ -80,6 +123,9 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     except Exception as e:
         log(f"  [P1] omitido: {type(e).__name__}: {e}")
         df = df.drop(columns=[c for c in df.columns if c.startswith("_m_") or c == "_sk"], errors="ignore")
+
+    # P1b — self-heal de marca vacía (mismo SKU + prefijo)
+    df = heal_marca(df, verbose=verbose)
 
     # P5 — flag es_despacho (vectorizado, sin concatenar todo)
     pat = "despacho|flete|env[ií]o|shipping"
