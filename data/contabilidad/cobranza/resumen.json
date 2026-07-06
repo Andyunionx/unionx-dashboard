@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-06T14:54:52.898487",
+  "generado_en": "2026-07-06T19:36:24.328679",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11814,
-  "total_monto_pendiente_clp": 786550590.0,
+  "total_documentos_pendientes": 11915,
+  "total_monto_pendiente_clp": 775599039.0,
   "monto_por_aging": {
     "+90 días": 45289436.0,
-    "1-30 días": 447469797.0,
-    "31-60 días": 184968736.0,
+    "1-30 días": 434856423.0,
+    "31-60 días": 180937200.0,
     "61-90 días": 20272945.0,
-    "Vigente": 88549676.0
+    "Vigente": 94243035.0
   },
   "monto_por_tipo": {
-    "BOLETA": 573253877.0,
+    "BOLETA": 562302326.0,
     "FACTURA": 213296713.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 127196700.0
+      "monto": 128626043.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,11 +30,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 68339791.0
+      "monto": 69362131.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 39724350.0
+      "monto": 40082542.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -42,15 +42,15 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 29258368.0
-    },
-    {
-      "partner": "Cliente Ripley",
-      "monto": 22664988.0
+      "monto": 29445768.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 22622179.0
+      "monto": 23317575.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 22739968.0
     },
     {
       "partner": "abc S.A.",
@@ -62,23 +62,23 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18391266.0
-    },
-    {
-      "partner": "AUTOBAHN S A",
-      "monto": 16301453.0
+      "monto": 18440226.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
       "monto": 15679970.0
     },
     {
-      "partner": "Comercializadora SP Digital SPA",
-      "monto": 12132082.0
-    },
-    {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 10146934.0
+    },
+    {
+      "partner": "Comercializadora SP Digital SPA",
+      "monto": 8100546.0
+    },
+    {
+      "partner": "Sawa SPA",
+      "monto": 7383835.0
     },
     {
       "partner": "Comercial ECCSA S A",
@@ -90,13 +90,13 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 4168389.0
+      "monto": 4555604.0
     },
     {
-      "partner": "Sawa SPA",
-      "monto": 3279035.0
+      "partner": "Comercializadora Mercado Local Spa.",
+      "monto": 3244328.0
     }
   ],
-  "notas_credito_count": 552,
+  "notas_credito_count": 554,
   "pedidos_venta_count": 10000
 }
