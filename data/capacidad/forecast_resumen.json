@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-06T16:21:10.765821",
+  "generado_en": "2026-07-06T17:35:12.634732",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1365,
   "capacidad_bodega_m3": 2456.9999999999995,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 941,
     "posiciones_libres_hoy": 424,
     "pct_ocupacion_hoy": 68.9,
-    "m3_stock_calculado": 1133.0
+    "m3_stock_calculado": 1179.7
   },
   "pico_proyectado": {
     "fecha": "2026-07-15",
@@ -91,7 +91,7 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 259.9,
-  "pallets_total_salientes_horizonte": 222.2,
+  "pallets_total_salientes_horizonte": 222.1,
   "m3_total_entrante_horizonte": 311.8,
   "m3_total_saliente_horizonte": 266.6,
   "salidas_debug": {
@@ -100,8 +100,8 @@
     "sku_fallback": 0,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 38019.0,
-    "demanda_cumplida_unidades": 15790.0,
-    "demanda_no_cubierta_unidades_total": 22229.0,
+    "demanda_cumplida_unidades": 15787.0,
+    "demanda_no_cubierta_unidades_total": 22232.0,
     "pct_demanda_cumplida": 41.5,
     "sku_sin_match_stock_count": 32,
     "top_no_cubiertos": [
@@ -122,7 +122,7 @@
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 362.0,
+        "unid_no_cubiertas": 363.0,
         "sin_match_stock": true
       },
       {
@@ -152,7 +152,7 @@
       },
       {
         "sku": "1660859171584",
-        "unid_no_cubiertas": 177.0,
+        "unid_no_cubiertas": 178.0,
         "sin_match_stock": true
       },
       {
