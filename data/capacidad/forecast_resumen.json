@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-05T14:35:21.646684",
+  "generado_en": "2026-07-06T12:37:23.617647",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1365,
   "capacidad_bodega_m3": 2456.9999999999995,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 945,
     "posiciones_libres_hoy": 420,
     "pct_ocupacion_hoy": 69.2,
-    "m3_stock_calculado": 1134.6
+    "m3_stock_calculado": 1134.4
   },
   "pico_proyectado": {
     "fecha": "2026-07-15",
@@ -93,15 +93,15 @@
   "pallets_total_entrantes_horizonte": 259.9,
   "pallets_total_salientes_horizonte": 217.5,
   "m3_total_entrante_horizonte": 311.8,
-  "m3_total_saliente_horizonte": 261.0,
+  "m3_total_saliente_horizonte": 260.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 871,
     "sku_fallback": 0,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 38911.0,
-    "demanda_cumplida_unidades": 15289.0,
-    "demanda_no_cubierta_unidades_total": 23622.0,
+    "demanda_cumplida_unidades": 15288.0,
+    "demanda_no_cubierta_unidades_total": 23623.0,
     "pct_demanda_cumplida": 39.3,
     "sku_sin_match_stock_count": 33,
     "top_no_cubiertos": [
@@ -182,7 +182,7 @@
       },
       {
         "sku": "LVPROORI",
-        "unid_no_cubiertas": 88.0,
+        "unid_no_cubiertas": 89.0,
         "sin_match_stock": true
       },
       {
