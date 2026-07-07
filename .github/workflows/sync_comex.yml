@@ -38,6 +38,12 @@ jobs:
           fi
           echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
 
+      - name: Extraer transito desde Odoo (fuente principal de la vista COMEX)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_comex_desde_odoo.py
+
       - name: Ejecutar extraccion COMEX
         env:
           PYTHONIOENCODING: utf-8
@@ -68,6 +74,19 @@ jobs:
         env:
           PYTHONIOENCODING: utf-8
         run: python extract_volumen_operacional.py
+        continue-on-error: true
+
+      - name: Regenerar Sabana por llegar (Maestra x Seimex API)
+        env:
+          SEIMEX_EMAIL: ${{ secrets.SEIMEX_EMAIL }}
+          SEIMEX_PASSWORD: ${{ secrets.SEIMEX_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -z "$SEIMEX_EMAIL" ]; then
+            echo "[SKIP] SEIMEX_EMAIL/SEIMEX_PASSWORD no configurados como secrets — sabana no regenerada"
+          else
+            python generar_maestra_sabana.py
+          fi
         continue-on-error: true
 
       - name: Commit parquet COMEX si cambio
