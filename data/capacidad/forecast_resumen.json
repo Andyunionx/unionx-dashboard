@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-07T11:37:31.025532",
+  "generado_en": "2026-07-07T14:05:53.366016",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1365,
   "capacidad_bodega_m3": 2456.9999999999995,
@@ -11,19 +11,19 @@
   },
   "estado_actual": {
     "posiciones_total": 1365,
-    "posiciones_ocupadas_hoy": 977,
-    "posiciones_libres_hoy": 388,
-    "pct_ocupacion_hoy": 71.6,
-    "m3_stock_calculado": 1171.9
+    "posiciones_ocupadas_hoy": 976,
+    "posiciones_libres_hoy": 389,
+    "pct_ocupacion_hoy": 71.5,
+    "m3_stock_calculado": 1170.9
   },
   "pico_proyectado": {
     "fecha": "2026-07-15",
-    "posiciones_ocupadas": 1016.2,
+    "posiciones_ocupadas": 1015.2,
     "pct_ocupacion": 74.4
   },
   "minimo_proyectado": {
     "fecha": "2026-09-04",
-    "posiciones_ocupadas": 838.6,
+    "posiciones_ocupadas": 837.7,
     "pct_ocupacion": 61.4
   },
   "primer_critico": null,
@@ -91,17 +91,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 259.9,
-  "pallets_total_salientes_horizonte": 221.6,
+  "pallets_total_salientes_horizonte": 221.5,
   "m3_total_entrante_horizonte": 311.8,
-  "m3_total_saliente_horizonte": 265.9,
+  "m3_total_saliente_horizonte": 265.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 868,
     "sku_fallback": 0,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 38019.0,
-    "demanda_cumplida_unidades": 15719.0,
-    "demanda_no_cubierta_unidades_total": 22300.0,
+    "demanda_cumplida_unidades": 15716.0,
+    "demanda_no_cubierta_unidades_total": 22303.0,
     "pct_demanda_cumplida": 41.3,
     "sku_sin_match_stock_count": 32,
     "top_no_cubiertos": [
@@ -182,12 +182,12 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 99.0,
+        "unid_no_cubiertas": 100.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVPROORI",
-        "unid_no_cubiertas": 93.0,
+        "unid_no_cubiertas": 94.0,
         "sin_match_stock": true
       },
       {
