@@ -1,0 +1,62 @@
+name: Resumen Normativo SII (semanal)
+
+# Pedido de Víctor (25-jun-2026): revisar cada lunes si el SII publicó
+# circulares/resoluciones nuevas y enviar resumen solo de las nuevas.
+# Solo lee páginas públicas del SII y envía Gmail — no toca Odoo.
+
+on:
+  workflow_dispatch:
+    inputs:
+      inicial:
+        description: 'Enviar resumen completo del año (línea base)'
+        type: boolean
+        default: false
+  schedule:
+    # Lunes 8 AM Chile (12:00 UTC)
+    - cron: "0 12 * * 1"
+
+concurrency:
+  group: resumen-normativo-sii
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # commit del estado normativa_vistas.json
+
+jobs:
+  resumen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias (mínimas)
+        run: pip install requests google-api-python-client google-auth google-auth-oauthlib
+
+      - name: Escribir token Gmail
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+        run: |
+          mkdir -p agente-comex/config
+          echo "$GMAIL_TOKEN_JSON" > agente-comex/config/token.json
+
+      - name: Ejecutar resumen normativo
+        env:
+          PYTHONIOENCODING: utf-8
+        run: |
+          FLAG=$([ "${{ github.event.inputs.inicial }}" = "true" ] && echo "--inicial" || echo "")
+          python -X utf8 agente-odoo/scripts/resumen_normativo_sii.py --send-mail $FLAG
+
+      - name: Commit estado
+        run: |
+          git config user.email "agente@unionx.cl"
+          git config user.name "Agente Normativa SII"
+          git add data/contabilidad/sii/normativa_vistas.json || true
+          git diff --cached --quiet || git commit -m "chore(normativa): estado SII $(date -u +%Y-%m-%d)"
+          git pull --rebase --autostash || true
+          git push || true
+        continue-on-error: true
