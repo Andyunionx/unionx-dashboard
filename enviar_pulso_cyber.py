@@ -865,14 +865,8 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list):
         part = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         part.set_payload(xlsx_bytes)
         encoders.encode_base64(part)
-        # hoy_str puede venir como nombre propio del reporte o como etiqueta/fecha.
-        # Normalizar: quitar ".xlsx" final si viene (evita doble extensión) y anteponer
-        # "Raw Cyber " SOLO al legacy (etiquetas de fecha del pulso Cyber). Los reportes
-        # con nombre propio (Reporte/Cierre/Mes/Stock) van tal cual.
-        base = str(hoy_str)
-        if base.lower().endswith('.xlsx'):
-            base = base[:-5]
-        fname = base if base.startswith(('Reporte', 'Cierre', 'Mes', 'Stock')) else f'Raw Cyber {base}'
+        # Si hoy_str empieza con "Reporte" lo usamos tal cual; sino el legacy "Raw Cyber".
+        fname = hoy_str if str(hoy_str).startswith(('Reporte', 'Cierre', 'Mes')) else f'Raw Cyber {hoy_str}'
         part.add_header('Content-Disposition', f'attachment; filename="{fname}.xlsx"')
         msg.attach(part)
 

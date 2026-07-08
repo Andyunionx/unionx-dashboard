@@ -117,7 +117,7 @@ def construir_html() -> tuple[str, str]:
   <td style="padding:6px 12px;">Capital sin rotación — revisar liquidación</td></tr>
 </table>
 
-<div style="font-size:13px;margin:12px 0;">📎 <b>Excel adjunto (Stock Live):</b> hoja <b>Resumen</b> con
+<div style="font-size:13px;margin:12px 0;">📎 <b>Excel adjunto (Pulso Stock LIVE):</b> hoja <b>Resumen</b> con
 <b>tabla dinámica interactiva por bodega</b> (arrastrá Marca/Categoría/SKU/Bodega; se refresca
 sola al abrir) + hoja <b>Stock por Bodega</b> con la sábana completa para planificación.</div>
 <div style="margin-top:16px;font-size:12px;color:#475569;">
@@ -131,7 +131,7 @@ def main():
     xlsx = construir_excel()
     html, monto = construir_html()
     html = html.replace("{HOY}", hoy)
-    fname = "Stock Live"  # el sender le agrega .xlsx (sin prefijo "Raw Cyber")
+    fname = "Pulso Stock LIVE.xlsx"
     asunto = f"📦 Pulso Stock Live · {monto} · {hoy}"
     print(f"Enviando a {len(EMAIL_TO)} destinatarios: {EMAIL_TO}", flush=True)
     msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO)

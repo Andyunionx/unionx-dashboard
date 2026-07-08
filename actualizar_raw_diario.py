@@ -1,20 +1,21 @@
-"""Genera 'Reporte Ventas Empresa LIVE.xlsx' actualizando la hoja Raw de la
-plantilla dinámica (diseño de Nicolás) con datos frescos del parquet.
+"""Genera 'Reporte Ventas Empresa LIVE.xlsx' actualizando la Raw del archivo
+original con datos frescos del parquet, manteniendo SOLO la pivot Resumen TD.
 
-La plantilla tiene 2 hojas — "Resumen TD" (la dinámica con apertura de gastos:
-jerarquía Mes>Week>Tipo Negocio>Canal>Marca>Cat.padre>Cat.hijo>Producto>SKU,
-20 medidas y 14 campos calculados en %) y "Raw" (la fuente). Todo el diseño
-del pivot vive en la propia plantilla, así que acá solo:
-  1. Cargamos la plantilla como solo-lectura (no se modifica).
-  2. Reemplazamos la hoja Raw (sheet2) con datos frescos del parquet (2025-2026).
-  3. Vaciamos pivotCacheRecords1 + refreshOnLoad=1 -> Excel refresca al abrir.
-  4. Ajustamos el ref del worksheetSource al total real de filas.
-El resto de las partes se copian byte-a-byte.
+Approach: manipulacion ZIP segura.
+  1. Carga el archivo original como solo-lectura (no se modifica).
+  2. Genera archivo nuevo conservando:
+     - sheet1 (Resumen TD) con su pivot
+     - sheet3 (Raw) con datos frescos del parquet (2025-2026)
+     - pivotTable1 + pivotCacheDefinition3 (la cache de Resumen TD)
+  3. Marca refreshOnLoad=1 para que Excel actualice la pivot al abrir.
+  4. Elimina: sheets 2, 4, 5, 6, 7 + caches 1 y 2 + calcChain.xml +
+     definedNames huerfanos.
 
 Salida: data/outputs/Reporte Ventas Empresa LIVE.xlsx
 """
 import os
 import re
+import shutil
 import sys
 import tempfile
 import zipfile
@@ -26,17 +27,13 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-# Plantilla = "dinámica con apertura de gastos" que diseñó Nicolás (jul-2026):
-# 2 hojas (Resumen TD + Raw), pivot con jerarquía Mes>..>SKU, 20 medidas y 14
-# campos calculados en % (Crec, Share, Marg Front/Final, Gasto Com/Log/Mkt).
-# Toda la personalización vive en el pivot; la fuente Raw es la que generamos.
-ORIGINAL = PROJECT_ROOT / 'data' / 'planillas' / 'Reporte Ventas Empresa DINAMICA.xlsx'
+ORIGINAL = PROJECT_ROOT / 'data' / 'planillas' / 'Reporte Ventas Empresa 2026 VS 2025 RAW.xlsx'
 # Carpeta Drive "Reporte Automático RAW" (id fijo, compartida con OAuth user)
 DRIVE_CARPETA_ID = '18RKgdGwWGM8tEGqltcrruCPB-LaTwZxx'
 NOMBRE_LIVE = 'Reporte Ventas Empresa LIVE.xlsx'
-# Plantilla dinámica en Drive. Gitignored por tamano (124 MB) -> en GitHub
+# Plantilla original (172 MB) en Drive. Gitignored por tamano -> en GitHub
 # Actions no existe en el checkout, se baja de aca. file_id permanente.
-PLANTILLA_DRIVE_ID = '1V7c-IFbqBqGmVHc4qkkmAbccqMQDpNqB'
+PLANTILLA_DRIVE_ID = '1txNWM21b2czKGhWL-FD6VigXk-QyqZ_D'
 ANIO_TY = 2026  # Ano TY (This Year). LY = ANIO_TY - 1.
 # Output local: en GH Actions usa /tmp, local usa data/outputs/
 if os.environ.get('GITHUB_ACTIONS') == 'true':
@@ -192,8 +189,8 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     # Headers
     ws.append([c if c is not None else '' for c in RAW_COLUMNS])
     # Datos en chunks para no consumir tanta RAM
-    n_rows = len(df)
-    print(f'   [generar_raw_xml] {n_rows:,} filas a serializar...')
+    n = len(df)
+    print(f'   [generar_raw_xml] {n:,} filas a serializar...')
     # Generador (no df.values.tolist()) para no duplicar 440k filas en RAM.
     for r in df.itertuples(index=False, name=None):
         # Agregar None para la columna 56
@@ -204,9 +201,9 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     wb.save(tmp_xlsx)
     # Extraer sheet3.xml (que ahora se llama sheet1.xml en este wb chico)
     with zipfile.ZipFile(tmp_xlsx) as z:
-        for nm in z.namelist():
-            if nm.startswith('xl/worksheets/sheet'):
-                return z.read(nm), n_rows
+        for n in z.namelist():
+            if n.startswith('xl/worksheets/sheet'):
+                return z.read(n)
     raise RuntimeError('no se encontro sheet en archivo temporal')
 
 
@@ -222,68 +219,89 @@ def _asegurar_plantilla():
 
 
 def construir_live():
-    """Genera el LIVE a partir de la plantilla dinámica de Nicolás.
-
-    La plantilla (2 hojas: Resumen TD + Raw) ya trae TODO el diseño del pivot
-    (jerarquía de filas, 20 medidas, campos calculados en %). Acá solo:
-      - reemplazamos la hoja Raw (sheet2) con datos frescos del parquet,
-      - vaciamos pivotCacheRecords1 + refreshOnLoad=1 → Excel refresca al abrir,
-      - ajustamos el ref del worksheetSource al total real de filas (si no, la
-        caché quedaría corta y no cargarían los primeros meses).
-    El resto de las partes se copian byte-a-byte.
-    """
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     _asegurar_plantilla()
 
-    print('[1/4] Cargando datos del parquet...')
-    print('[2/4] Generando XML de la nueva Raw...')
+    print('[1/5] Cargando datos del parquet...')
+    print('[2/5] Generando XML de la nueva Raw...')
     # No retener el df fuera de generar_raw_xml: asi su unica referencia es el
     # parametro y se libera (del+gc) antes del zip-surgery, evitando OOM.
     with tempfile.TemporaryDirectory() as tmp:
-        new_raw_xml, n_raw = generar_raw_xml(cargar_raw_parquet(), Path(tmp))
-    print(f'      Raw XML: {len(new_raw_xml)/1024/1024:.1f} MB ({n_raw:,} filas)')
+        new_raw_xml = generar_raw_xml(cargar_raw_parquet(), Path(tmp))
+    print(f'      Raw XML: {len(new_raw_xml)/1024/1024:.1f} MB')
 
-    print('[3/4] Construyendo archivo LIVE...')
+    print('[3/5] Construyendo archivo LIVE...')
 
-    # En la plantilla de Nicolás: sheet1 = "Resumen TD" (pivot), sheet2 = "Raw".
-    RAW_SHEET = 'xl/worksheets/sheet2.xml'
-    CACHE_DEF = 'xl/pivotCache/pivotCacheDefinition1.xml'
-    CACHE_REC = 'xl/pivotCache/pivotCacheRecords1.xml'
+    # Reorden de FILAS de la TD: Mes > Week > Tipo Negocio > Canal > Marca >
+    # Cat.padre > Cat.hijo > Producto > SKU. "Fecha Compara" (idx 52) pasa de
+    # FILA a FILTRO (page), junto a Proveedor/Tipo Marca/etc (pedido Nicolás).
+    # Idx = posicion del campo en la cache. Ver Reporte Ventas Empresa New.xlsx.
+    _TD_ROWFIELDS = ('<rowFields count="9"><field x="50"/><field x="53"/><field x="23"/>'
+                     '<field x="9"/><field x="19"/><field x="14"/><field x="15"/>'
+                     '<field x="12"/><field x="8"/></rowFields>')
 
-    empty_records = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-                     '<pivotCacheRecords xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
-                     'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
-                     'count="0"/>')
+    def _patch_td_rowfields(xml):
+        # Fecha Compara (idx 52): de FILA a FILTRO -> axisRow pasa a axisPage
+        pf = list(re.finditer(r'<pivotField\b[^>]*?/>|<pivotField\b[^>]*?>.*?</pivotField>', xml, re.S))
+        if len(pf) > 52 and 'axis="axisRow"' in pf[52].group(0):
+            s, e = pf[52].span()
+            xml = xml[:s] + pf[52].group(0).replace('axis="axisRow"', 'axis="axisPage"', 1) + xml[e:]
+        # filas: nuevo orden (sin Fecha Compara)
+        xml = re.sub(r'<rowFields[^>]*>.*?</rowFields>', _TD_ROWFIELDS, xml, count=1, flags=re.S)
+        # filtros (page): agregar Fecha Compara (fld 52) si no esta
+        m = re.search(r'<pageFields count="(\d+)">(.*?)</pageFields>', xml, re.S)
+        if m and 'fld="52"' not in m.group(2):
+            n = int(m.group(1)) + 1
+            xml = (xml[:m.start()] + f'<pageFields count="{n}">{m.group(2)}'
+                   '<pageField fld="52" hier="-1"/></pageFields>' + xml[m.end():])
+        return xml
+
+    def _limpiar_resumen_td(xml):
+        # Quita filas 1-2 de "Resumen TD": datos sueltos (fechas/%) de scratch que
+        # quedaron en la plantilla, ARRIBA del pivot (B8:Y22). No tocan el pivot.
+        for r in ('1', '2'):
+            xml = re.sub(rf'<row r="{r}"[^>]*?/>', '', xml, count=1)
+            xml = re.sub(rf'<row r="{r}"[^>]*?>.*?</row>', '', xml, count=1, flags=re.S)
+        return xml
+
+    # Archivos a CONSERVAR del original (NO incluimos pivotCacheRecords3.xml:
+    # lo reemplazamos por uno vacio para forzar refresh desde Raw al abrir)
+    KEEP_EXACT = {
+        'xl/worksheets/sheet1.xml',
+        'xl/worksheets/_rels/sheet1.xml.rels',
+        'xl/pivotTables/pivotTable1.xml',
+        'xl/pivotTables/_rels/pivotTable1.xml.rels',
+        'xl/pivotCache/pivotCacheDefinition3.xml',
+        'xl/pivotCache/_rels/pivotCacheDefinition3.xml.rels',
+        'xl/printerSettings/printerSettings1.bin',
+        'xl/sharedStrings.xml',
+        'xl/styles.xml',
+        'xl/theme/theme1.xml',
+        'docProps/core.xml',
+        'docProps/app.xml',
+        '_rels/.rels',
+    }
+    # Archivos a SOBRESCRIBIR / GENERAR
+    # - xl/worksheets/sheet3.xml: reemplazar con new_raw_xml
+    # - xl/workbook.xml: limpiar sheets y pivotCaches
+    # - xl/_rels/workbook.xml.rels: limpiar referencias
+    # - [Content_Types].xml: limpiar overrides
+    # - xl/calcChain.xml: NO INCLUIR (Excel lo regenera)
 
     if OUTPUT.exists():
         OUTPUT.unlink()
 
     with zipfile.ZipFile(ORIGINAL, 'r') as src, \
          zipfile.ZipFile(OUTPUT, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as dst:
-        for name in src.namelist():
-            if name == RAW_SHEET:
-                # Hoja Raw = datos frescos del parquet.
-                dst.writestr(name, new_raw_xml)
-            elif name == CACHE_REC:
-                # Records vacío -> con refreshOnLoad Excel regenera desde la Raw.
-                dst.writestr(name, empty_records)
-            elif name == CACHE_DEF:
-                cd = src.read(name).decode('utf-8')
-                # Ajustar el ref al total real de filas (la plantilla trae un ref
-                # hardcodeado A1:BC448288 que no cubre todas las filas → si no se
-                # arregla, no cargan los primeros meses).
-                cd = re.sub(r'(<worksheetSource ref="A1:[A-Z]+)\d+"', rf'\g<1>{n_raw + 1}"', cd, count=1)
-                # refreshOnLoad=1 (refresca al abrir) + recordCount=0 (cache stale).
-                if 'refreshOnLoad' in cd:
-                    cd = re.sub(r'refreshOnLoad="\d"', 'refreshOnLoad="1"', cd)
-                else:
-                    cd = cd.replace('<pivotCacheDefinition ',
-                                    '<pivotCacheDefinition refreshOnLoad="1" ', 1)
-                cd = re.sub(r'recordCount="\d+"', 'recordCount="0"', cd)
-                dst.writestr(name, cd)
-            else:
-                # Todo lo demás (Resumen TD, pivotTable1, styles, sharedStrings,
-                # workbook, rels, content-types) tal cual: es el diseño de Nicolás.
+
+        # 1) Copy archivos KEEP_EXACT (streaming). pivotTable1.xml se parcha
+        #    para reordenar las FILAS de la TD (orden pedido por Nicolás/Andrés).
+        for name in sorted(src.namelist()):
+            if name == 'xl/pivotTables/pivotTable1.xml':
+                dst.writestr(name, _patch_td_rowfields(src.read(name).decode('utf-8')))
+            elif name == 'xl/worksheets/sheet1.xml':
+                dst.writestr(name, _limpiar_resumen_td(src.read(name).decode('utf-8')))
+            elif name in KEEP_EXACT:
                 with src.open(name) as fin, dst.open(name, 'w', force_zip64=True) as fout:
                     while True:
                         chunk = fin.read(1024 * 1024)
@@ -291,7 +309,63 @@ def construir_live():
                             break
                         fout.write(chunk)
 
-    print('[4/4] Validando ZIP...')
+        # 2) sheet3.xml (Raw) = nueva version del parquet
+        dst.writestr('xl/worksheets/sheet3.xml', new_raw_xml)
+
+        # 2b) pivotCacheRecords3.xml VACIO (count=0). Excel detecta cache stale
+        # con refreshOnLoad=1 y la regenera desde la nueva Raw al abrir.
+        empty_records = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+                         '<pivotCacheRecords xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+                         'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+                         'count="0"/>')
+        dst.writestr('xl/pivotCache/pivotCacheRecords3.xml', empty_records)
+
+        # 3) workbook.xml: limpiar
+        wb = src.read('xl/workbook.xml').decode('utf-8')
+        # Eliminar sheets que no queremos
+        wb = re.sub(r'<sheet name="Resumen Contri Sku Canal"[^/]+/>', '', wb)
+        wb = re.sub(r'<sheet name="Resumen Ejecutivo Q1"[^/]+/>', '', wb)
+        wb = re.sub(r'<sheet name="Resumen Ejecutivo S18"[^/]+/>', '', wb)
+        wb = re.sub(r'<sheet name="Resumen Ejecutivo S16"[^/]+/>', '', wb)
+        wb = re.sub(r'<sheet name="Base Venta Claude"[^/]+/>', '', wb)
+        # Eliminar pivotCaches 1 y 2 (mantener cacheId 69 que es la de Resumen TD)
+        wb = re.sub(r'<pivotCache cacheId="1"[^/]+/>', '', wb)
+        wb = re.sub(r'<pivotCache cacheId="2"[^/]+/>', '', wb)
+        # FilterDatabase: el original lo tiene como localSheetId="2" (Raw index 2 en
+        # workbook original). Tras eliminar sheet2 (idx 1), Raw queda en idx 1.
+        wb = re.sub(
+            r'<definedName name="_xlnm\._FilterDatabase"[^>]*localSheetId="2"[^>]*>Raw![^<]+</definedName>',
+            '<definedName name="_xlnm._FilterDatabase" localSheetId="1" hidden="1">Raw!$A$1:$BD$1</definedName>',
+            wb,
+        )
+        dst.writestr('xl/workbook.xml', wb)
+
+        # 4) workbook.xml.rels: limpiar
+        rels = src.read('xl/_rels/workbook.xml.rels').decode('utf-8')
+        for rid in ['rId2', 'rId4', 'rId5', 'rId6', 'rId7']:
+            rels = re.sub(rf'<Relationship Id="{rid}"[^/]+/>', '', rels)
+        rels = re.sub(r'<Relationship[^>]*pivotCacheDefinition1\.xml[^/]*/>', '', rels)
+        rels = re.sub(r'<Relationship[^>]*pivotCacheDefinition2\.xml[^/]*/>', '', rels)
+        rels = re.sub(r'<Relationship[^>]*calcChain\.xml[^/]*/>', '', rels)
+        dst.writestr('xl/_rels/workbook.xml.rels', rels)
+
+        # 5) [Content_Types].xml: limpiar
+        ct = src.read('[Content_Types].xml').decode('utf-8')
+        for sn in ['sheet2', 'sheet4', 'sheet5', 'sheet6', 'sheet7']:
+            ct = re.sub(rf'<Override PartName="/xl/worksheets/{sn}\.xml"[^/]+/>', '', ct)
+        for n in ['1', '2']:
+            ct = re.sub(rf'<Override PartName="/xl/pivotCache/pivotCacheDefinition{n}\.xml"[^/]+/>', '', ct)
+            ct = re.sub(rf'<Override PartName="/xl/pivotCache/pivotCacheRecords{n}\.xml"[^/]+/>', '', ct)
+        ct = re.sub(r'<Override PartName="/xl/pivotTables/pivotTable2\.xml"[^/]+/>', '', ct)
+        ct = re.sub(r'<Override PartName="/xl/pivotTables/pivotTable3\.xml"[^/]+/>', '', ct)
+        ct = re.sub(r'<Override PartName="/xl/calcChain\.xml"[^/]+/>', '', ct)
+        dst.writestr('[Content_Types].xml', ct)
+
+    print('[4/5] Marcando pivot para refreshOnLoad=1...')
+    # Modificar pivotCacheDefinition3.xml para que tenga refreshOnLoad=1
+    _set_refresh_on_load(OUTPUT)
+
+    print('[5/5] Validando ZIP...')
     with zipfile.ZipFile(OUTPUT) as z:
         bad = z.testzip()
         if bad:
@@ -299,6 +373,36 @@ def construir_live():
 
     size_mb = OUTPUT.stat().st_size / (1024 * 1024)
     print(f'\n[OK] {OUTPUT.name}: {size_mb:.1f} MB')
+
+
+def _set_refresh_on_load(xlsx_path: Path):
+    """Marca refreshOnLoad=1 en pivotCacheDefinition3.xml dentro del xlsx."""
+    # Leer todo el zip, modificar el contenido, reescribir
+    tmp = xlsx_path.with_suffix('.tmp.xlsx')
+    with zipfile.ZipFile(xlsx_path, 'r') as src, \
+         zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as dst:
+        for name in src.namelist():
+            if name == 'xl/pivotCache/pivotCacheDefinition3.xml':
+                content = src.read(name).decode('utf-8')
+                # refreshOnLoad=1: Excel refresca al abrir
+                if 'refreshOnLoad' in content:
+                    content = re.sub(r'refreshOnLoad="\d"', 'refreshOnLoad="1"', content)
+                else:
+                    content = content.replace(
+                        '<pivotCacheDefinition ',
+                        '<pivotCacheDefinition refreshOnLoad="1" ', 1
+                    )
+                # recordCount=0: marca cache como vacia (combinado con records vacios fuerza rebuild)
+                content = re.sub(r'recordCount="\d+"', 'recordCount="0"', content)
+                dst.writestr(name, content)
+            else:
+                with src.open(name) as fin, dst.open(name, 'w', force_zip64=True) as fout:
+                    while True:
+                        chunk = fin.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        fout.write(chunk)
+    shutil.move(str(tmp), str(xlsx_path))
 
 
 def subir_a_drive():

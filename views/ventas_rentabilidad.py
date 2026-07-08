@@ -111,35 +111,6 @@ def _opciones(_v):
     return can, neg
 
 
-@st.cache_data(ttl=300)
-def _alarmas(desde, hasta, _v):
-    """Alarmas de baja rentabilidad por SKU x canal. Solo Falabella + ML (costos completos)."""
-    con = _get_duck_conn(_v)
-    excl = "NOT COALESCE(es_despacho, false) AND producto NOT LIKE 'Nota de Cr%' AND sku <> ''"
-    sk = con.execute(f"""
-        SELECT sku, canal, any_value(producto) prod, any_value(categoria_macro) cat,
-               sum(TRY_CAST(venta_neta AS DOUBLE)) venta,
-               sum(TRY_CAST(margen_final AS DOUBLE)) contrib,
-               sum(TRY_CAST(cantidad AS DOUBLE)) uds
-        FROM ventas WHERE canal IN ('Falabella','Mercado Libre')
-          AND fecha_venta BETWEEN '{desde}' AND '{hasta}' AND {excl}
-        GROUP BY sku, canal
-    """).fetchdf()
-    sk = sk[sk["venta"] > 0].copy()
-    sk["cpct"] = sk["contrib"] / sk["venta"] * 100
-    neg = sk[(sk["contrib"] < 0) & (sk["venta"] > 5e5)].sort_values("contrib")
-    delg = sk[(sk["cpct"] >= 0) & (sk["cpct"] < 10) & (sk["venta"] > 1e6)].sort_values("cpct")
-    f = sk[sk.canal == "Falabella"].set_index("sku")
-    m = sk[sk.canal == "Mercado Libre"].set_index("sku")
-    b = pd.DataFrame({"prod": f["prod"], "cp_fa": f["cpct"], "cp_ml": m["cpct"],
-                      "v_fa": f["venta"], "v_ml": m["venta"]}).dropna(subset=["cp_fa", "cp_ml"])
-    b["vtot"] = b["v_fa"] + b["v_ml"]
-    b["gap"] = b["cp_fa"] - b["cp_ml"]
-    brecha = b[(b["gap"].abs() > 15) & (b["vtot"] > 5e6)]
-    brecha = brecha.reindex(brecha["gap"].abs().sort_values(ascending=False).index)
-    return neg, delg, brecha
-
-
 def render():
     render_health_header("💰 Rentabilidad — Contribución por SKU / canal")
     render_dashboard_actions_sidebar(prefix="rent")
@@ -217,43 +188,6 @@ def render():
     cols = [dim_lbl, "Venta", "Costo", "Margen Front", "% MF", "Comisión", "Logística",
             "Marketing", "Contribución", "% Contrib", "Líneas"]
     st.dataframe(d[cols], width="stretch", hide_index=True, height=520)
-
-    # ---- Alarmas de rentabilidad (Fala+ML, período del filtro) ----
-    st.markdown("### 🚨 Alarmas de rentabilidad")
-    st.caption("Solo Falabella + Mercado Libre (costos completos). Período según el filtro de arriba.")
-    neg, delg, brecha = _alarmas(desde, hasta, v)
-    a1, a2, a3 = st.columns(3)
-    a1.metric("🔴 Contribución negativa", f"{len(neg)} SKU",
-              f"{fmt_money(neg['contrib'].sum())} destruidos" if len(neg) else "sin casos", delta_color="off")
-    a2.metric("🟠 Margen delgado (<10%)", f"{len(delg)} SKU",
-              f"{fmt_money(delg['venta'].sum())} en venta" if len(delg) else "sin casos", delta_color="off")
-    a3.metric("🔵 Brecha entre canales (>15pp)", f"{len(brecha)} SKU",
-              "vender en el canal rentable" if len(brecha) else "sin casos", delta_color="off")
-
-    def _tbl_sku(df, extra=None):
-        t = df.copy()
-        t["Venta"] = t["venta"].map(fmt_money)
-        t["Contribución"] = t["contrib"].map(fmt_money)
-        t["% Contrib"] = t["cpct"].map(lambda x: fmt_pct(x))
-        t = t.rename(columns={"canal": "Canal", "prod": "Producto", "cat": "Categoría"})
-        return t[["Canal", "Producto", "Categoría", "Venta", "Contribución", "% Contrib"]]
-
-    with st.expander(f"🔴 Contribución negativa — destruyen valor ({len(neg)})", expanded=len(neg) > 0):
-        st.dataframe(_tbl_sku(neg), width="stretch", hide_index=True) if len(neg) else st.caption("Sin casos.")
-    with st.expander(f"🟠 Margen delgado <10% con venta >$1M ({len(delg)})"):
-        st.dataframe(_tbl_sku(delg), width="stretch", hide_index=True) if len(delg) else st.caption("Sin casos.")
-    with st.expander(f"🔵 Misma SKU, brecha >15pp entre canales ({len(brecha)})"):
-        if len(brecha):
-            bb = brecha.copy()
-            bb["Mejor en"] = bb["gap"].map(lambda g: "Falabella" if g > 0 else "Mercado Libre")
-            bb["% Falabella"] = bb["cp_fa"].map(lambda x: fmt_pct(x))
-            bb["% Mercado Libre"] = bb["cp_ml"].map(lambda x: fmt_pct(x))
-            bb["Brecha (pp)"] = bb["gap"].map(lambda x: f"{abs(x):.0f}")
-            bb["Venta comb."] = bb["vtot"].map(fmt_money)
-            st.dataframe(bb.reset_index()[["prod", "% Falabella", "% Mercado Libre", "Brecha (pp)", "Mejor en", "Venta comb."]]
-                         .rename(columns={"prod": "Producto"}), width="stretch", hide_index=True)
-        else:
-            st.caption("Sin casos.")
 
     seleccion_incompleta = (not canales) or any(c not in CANALES_COMPLETOS for c in canales)
     if seleccion_incompleta:
