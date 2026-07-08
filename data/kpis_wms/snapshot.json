@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-07-07T17:17:37.270651",
+  "generado_en": "2026-07-08T05:54:32.220748",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0437129300118624,
-      "total_pickings": 16860,
-      "on_time": 740,
-      "on_time_pct": 0.04389086595492289,
-      "in_full": 16848,
-      "in_full_pct": 0.999288256227758,
-      "both": 737,
+      "valor": 0.043539739586401935,
+      "total_pickings": 16973,
+      "on_time": 742,
+      "on_time_pct": 0.04371649089730749,
+      "in_full": 16961,
+      "in_full_pct": 0.9992929947563778,
+      "both": 739,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.0288135593220339,
-      "total_pickings": 590,
+      "valor": 0.028380634390651086,
+      "total_pickings": 599,
       "on_time": 17,
-      "on_time_pct": 0.0288135593220339,
-      "in_full": 586,
-      "in_full_pct": 0.9932203389830508,
+      "on_time_pct": 0.028380634390651086,
+      "in_full": 595,
+      "in_full_pct": 0.993322203672788,
       "both": 17,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997689997689998,
-      "ok": 21640,
-      "total": 21645,
+      "valor": 0.9997708209194665,
+      "ok": 21812,
+      "total": 21817,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 13.349570162835247,
-      "n_recepciones": 232,
+      "valor": 12.33198378636147,
+      "n_recepciones": 233,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00932",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-07 21:32",
+          "done": "2026-07-07 21:32"
+        },
+        {
+          "picking": "CA1/IN/00931",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-07 21:29",
+          "done": "2026-07-07 21:30"
+        },
+        {
+          "picking": "CA1/IN/00929",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-07-07 20:57",
+          "done": "2026-07-07 21:26"
+        },
         {
           "picking": "CA1/IN/00927",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-01 18:06",
           "done": "2026-07-01 18:06"
-        },
-        {
-          "picking": "CA1/RET/01037",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 18:04",
-          "done": "2026-07-01 18:05"
-        },
-        {
-          "picking": "CA1/RET/01035",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 18:03",
-          "done": "2026-07-01 18:04"
-        },
-        {
-          "picking": "CA1/RET/01036",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 18:04",
-          "done": "2026-07-01 18:04"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9706947645702997,
-      "total_so": 12153,
-      "total_con_pickings": 12148,
-      "cumplidos": 11792,
-      "parciales": 16,
-      "sin_iniciar": 340,
+      "valor": 0.9542718608928273,
+      "total_so": 11967,
+      "total_con_pickings": 11962,
+      "cumplidos": 11415,
+      "parciales": 17,
+      "sin_iniciar": 530,
       "error": null
     },
     "oct_30d": {
-      "valor": 80.67543813363271,
-      "n_orders": 16330,
+      "valor": 80.21584368456602,
+      "n_orders": 16450,
       "min_h": 0.006666666666666667,
       "max_h": 719.81,
-      "mediana_h": 43.28388888888889,
+      "mediana_h": 42.85166666666667,
       "detalle": [
         {
           "so": "S239366",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 5504,
+      "lineas": 5676,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 153,
-      "outgoing": 30087,
-      "internal": 19760,
+      "incoming": 151,
+      "outgoing": 29748,
+      "internal": 20101,
       "total": 50000,
       "error": null
     },
@@ -373,8 +373,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 142,
-          "tarde": 142,
+          "total": 148,
+          "tarde": 148,
           "on_time_pct": 0.0
         },
         {
@@ -396,6 +396,12 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Lokal SpA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
           "total": 3,
           "tarde": 3,
@@ -409,9 +415,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 41,
-          "tarde": 40,
-          "on_time_pct": 0.024390243902439025
+          "total": 43,
+          "tarde": 42,
+          "on_time_pct": 0.023255813953488372
         },
         {
           "cliente": "Comercializadora SP Digital SPA",
@@ -7387,42 +7393,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0437129300118624,
-      "total_pickings": 16860,
-      "on_time": 740,
-      "on_time_pct": 0.04389086595492289,
-      "in_full": 16848,
-      "in_full_pct": 0.999288256227758,
-      "both": 737,
+      "valor": 0.043539739586401935,
+      "total_pickings": 16973,
+      "on_time": 742,
+      "on_time_pct": 0.04371649089730749,
+      "in_full": 16961,
+      "in_full_pct": 0.9992929947563778,
+      "both": 739,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.0288135593220339,
-      "total_pickings": 590,
+      "valor": 0.028380634390651086,
+      "total_pickings": 599,
       "on_time": 17,
-      "on_time_pct": 0.0288135593220339,
-      "in_full": 586,
-      "in_full_pct": 0.9932203389830508,
+      "on_time_pct": 0.028380634390651086,
+      "in_full": 595,
+      "in_full_pct": 0.993322203672788,
       "both": 17,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997689997689998,
-      "ok": 21640,
-      "total": 21645,
+      "valor": 0.9997708209194665,
+      "ok": 21812,
+      "total": 21817,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 13.349570162835247,
-      "n_recepciones": 232,
+      "valor": 12.33198378636147,
+      "n_recepciones": 233,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00932",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-07 21:32",
+          "done": "2026-07-07 21:32"
+        },
+        {
+          "picking": "CA1/IN/00931",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-07 21:29",
+          "done": "2026-07-07 21:30"
+        },
+        {
+          "picking": "CA1/IN/00929",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-07-07 20:57",
+          "done": "2026-07-07 21:26"
+        },
         {
           "picking": "CA1/IN/00927",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -7541,27 +7568,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-01 18:06",
           "done": "2026-07-01 18:06"
-        },
-        {
-          "picking": "CA1/RET/01037",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 18:04",
-          "done": "2026-07-01 18:05"
-        },
-        {
-          "picking": "CA1/RET/01035",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 18:03",
-          "done": "2026-07-01 18:04"
-        },
-        {
-          "picking": "CA1/RET/01036",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-01 18:04",
-          "done": "2026-07-01 18:04"
         }
       ],
       "error": null
