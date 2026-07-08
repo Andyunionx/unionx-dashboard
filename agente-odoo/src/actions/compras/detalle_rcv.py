@@ -39,8 +39,10 @@ def norm_folio(s) -> str:
 
 
 def norm_rut_sin_dv(v) -> str:
-    """'76.243.813-5' → '76243813' (sin puntos, guión ni DV)."""
+    """'CL76.243.813-5' → '76243813' (sin prefijo país, puntos, guión ni DV)."""
     v = str(v or "").replace(".", "").replace("-", "").strip().upper()
+    if v.startswith("CL"):
+        v = v[2:]
     return v[:-1] if len(v) > 1 else v
 
 
@@ -55,6 +57,13 @@ def _login_sii(page, rut: str, password: str):
     page.wait_for_timeout(8_000)
     if "IngresoRutClave" in page.url or "zeusr.sii.cl" in page.url:
         raise RuntimeError(f"Login SII fallido. URL: {page.url}")
+    # Confirmación POSITIVA: debemos aterrizar en el RCV (avisos intermedios
+    # del SII en www4 pasarían el check negativo de arriba)
+    if "consdcvinternetui" not in page.url:
+        try:
+            page.wait_for_url("**/consdcvinternetui/**", timeout=20_000)
+        except Exception:
+            raise RuntimeError(f"Login OK pero no llegó al RCV — página intermedia: {page.url[:90]}")
 
 
 def _fecha_iso(fecha_cl: str) -> str:
@@ -106,6 +115,7 @@ def obtener_detalle_compras_api(year: int, month: int, rut: str, password: str,
 
         page.on("response", on_response)
 
+        n_links = 0
         try:
             page.wait_for_timeout(2_000)
             selects = page.locator("select").all()
@@ -138,8 +148,17 @@ def obtener_detalle_compras_api(year: int, month: int, rut: str, password: str,
                         page.wait_for_timeout(2_500)
                 except Exception as e:
                     errores.append(f"click tipo {i} ({nombre}): {str(e)[:120]}")
+        except Exception as e:
+            errores.append(f"Navegación RCV: {str(e)[:150]}")
         finally:
             browser.close()
+
+    # Cobertura: si hubo menos capturas XHR que tipos de doc clickeados,
+    # la comparación es PARCIAL y debe reportarse como tal (no como completa)
+    tipos_capturados = {cod for cod, _ in capturas}
+    if n_links and len(tipos_capturados) < n_links:
+        errores.append(f"Cobertura parcial: {len(tipos_capturados)} de {n_links} "
+                       f"tipos de documento capturados")
 
     # ── Parsear capturas ─────────────────────────────────────────────────
     docs = []
@@ -147,6 +166,7 @@ def obtener_detalle_compras_api(year: int, month: int, rut: str, password: str,
     for cod_tipo, body in capturas:
         data = body.get("data")
         if not isinstance(data, list):
+            errores.append(f"Respuesta getDetalleCompra tipo {cod_tipo}: data no es lista")
             continue
         for d in data:
             folio = str(d.get("detNroDoc", "")).strip()
@@ -193,11 +213,24 @@ def claves_compras_odoo(client, year: int, month: int) -> set:
     prev_y, prev_m = (year - 1, 12) if month == 1 else (year, month - 1)
     ultimo_dia = calendar.monthrange(year, month)[1]
 
-    res = models.execute_kw(client.db, uid, client.password, "account.move", "search_read",
-        [[["move_type", "in", ["in_invoice", "in_refund"]],
-          ["invoice_date", ">=", f"{prev_y:04d}-{prev_m:02d}-01"],
-          ["invoice_date", "<=", f"{year:04d}-{month:02d}-{ultimo_dia}"]]],
-        {"fields": ["l10n_latam_document_number", "ref", "partner_id"], "limit": 1000})
+    # Paginado: con >1000 docs en la ventana, un limit fijo dejaba facturas
+    # fuera del set → falsos "faltantes en Odoo" silenciosos
+    domain = [["move_type", "in", ["in_invoice", "in_refund"]],
+              ["state", "!=", "cancel"],
+              ["invoice_date", ">=", f"{prev_y:04d}-{prev_m:02d}-01"],
+              ["invoice_date", "<=", f"{year:04d}-{month:02d}-{ultimo_dia}"]]
+    res = []
+    offset = 0
+    PAGE = 1000
+    while True:
+        pagina = models.execute_kw(client.db, uid, client.password,
+            "account.move", "search_read", [domain],
+            {"fields": ["l10n_latam_document_number", "ref", "partner_id"],
+             "limit": PAGE, "offset": offset, "order": "id asc"})
+        res.extend(pagina)
+        if len(pagina) < PAGE:
+            break
+        offset += PAGE
 
     pids = {r["partner_id"][0] for r in res if r.get("partner_id")}
     vat_por_pid = {}

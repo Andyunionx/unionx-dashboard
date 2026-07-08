@@ -1,16 +1,41 @@
 """Envío y lectura de mails para el módulo Distribución."""
 from __future__ import annotations
 import base64
+import json
 from datetime import datetime, timedelta
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import parseaddr
 from pathlib import Path
 from typing import Optional
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send",
           "https://www.googleapis.com/auth/gmail.readonly"]
 ASUNTO_PREFIJO = "[Distribución]"
+
+# Solo estas direcciones EXACTAS pueden gatillar escrituras en Odoo
+# (match por dirección real parseada, no substring — anti-spoofing)
+REMITENTES_AUTORIZADOS = {"camila@unionx.cl", "victor@unionx.cl"}
+
+
+def respuestas_procesadas(path: Path) -> set:
+    """message_ids de Gmail ya aplicados (evita re-procesar la misma respuesta)."""
+    try:
+        return set(json.loads(Path(path).read_text(encoding="utf-8")).get("ids", []))
+    except Exception:
+        return set()
+
+
+def registrar_procesada(path: Path, message_id: str):
+    path = Path(path)
+    ids = respuestas_procesadas(path)
+    ids.add(message_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(
+        {"actualizado": datetime.now().isoformat(timespec="minutes"),
+         "ids": sorted(ids)[-500:]},  # cap: 500 más recientes
+        indent=1), encoding="utf-8")
 
 
 def _get_service(token_path):
@@ -125,6 +150,12 @@ def _seccion_faltantes_manual(faltantes: list[dict]) -> str:
 def _seccion_sii(comparacion_sii) -> str:
     if comparacion_sii is None:
         return ""
+    aviso_parcial = ""
+    if getattr(comparacion_sii, "parcial", False):
+        aviso_parcial = ("<p style='font-size:12px;background:#FFEBEE;padding:8px 12px;"
+                         "border-radius:4px;border-left:3px solid #B71C1C'>"
+                         "⚠️ <strong>Comparación PARCIAL:</strong> el barrido del SII tuvo errores "
+                         "técnicos — puede haber faltantes adicionales no listados.</p>")
     faltantes = comparacion_sii.faltantes_en_odoo
     total_sii  = comparacion_sii.total_sii
     total_odoo = comparacion_sii.total_odoo
@@ -150,7 +181,7 @@ def _seccion_sii(comparacion_sii) -> str:
 
     # Con detalle completo y sin faltantes: sí es correcto decir "sin diferencias"
     if not faltantes:
-        return f"""
+        return aviso_parcial + f"""
 <h3 style="color:#1B5E20;margin-top:28px">✅ SII vs Odoo — sin diferencias</h3>
 <p style="font-size:13px">Todos los documentos del libro SII están ingresados en Odoo.
 ({total_sii} documentos SII · {total_odoo} en Odoo)</p>"""
@@ -166,7 +197,7 @@ def _seccion_sii(comparacion_sii) -> str:
         for f in faltantes[:20]
     )
     nota_truncado = f"<p style='font-size:11px;color:#666'>Se muestran los primeros 20 de {len(faltantes)} documentos.</p>" if len(faltantes) > 20 else ""
-    return f"""
+    return aviso_parcial + f"""
 <h3 style="color:#E65100;margin-top:28px">📋 SII vs Odoo — {len(faltantes)} documento(s) faltantes en Odoo</h3>
 <p style="font-size:13px">
   Libro SII: <strong>{comparacion_sii.total_sii}</strong> docs ·
@@ -312,7 +343,9 @@ def leer_respuestas(token_path, desde_horas: int = 48) -> list[dict]:
         msg = service.users().messages().get(userId="me", id=msg_ref["id"], format="full").execute()
         headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
         sender = headers.get("From", "")
-        if not any(x in sender for x in ["camila@", "victor@"]):
+        # Match EXACTO de la dirección real (anti-spoofing: un display name
+        # "camila@unionx.cl" <otro@dominio.com> no pasa)
+        if parseaddr(sender)[1].lower() not in REMITENTES_AUTORIZADOS:
             continue
         adjuntos = _extraer_adjuntos(service, msg)
         xlsx_adjuntos = [a for a in adjuntos if a["nombre"].endswith(".xlsx")]
@@ -339,7 +372,9 @@ def _extraer_adjuntos(service, msg: dict) -> list[dict]:
                     datos = base64.urlsafe_b64decode(att["data"])
                 else:
                     datos = base64.urlsafe_b64decode(body.get("data", ""))
-                adjuntos.append({"nombre": parte["filename"], "contenido_bytes": datos})
+                # Path().name: neutraliza traversal (../../x.xlsx) en el nombre
+                adjuntos.append({"nombre": Path(parte["filename"]).name,
+                                 "contenido_bytes": datos})
             if parte.get("parts"):
                 _procesar(parte["parts"])
     payload = msg.get("payload", {})

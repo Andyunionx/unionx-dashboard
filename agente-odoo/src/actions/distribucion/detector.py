@@ -49,10 +49,27 @@ def detectar_facturas_pendientes(
     folio_especifico: str = None,
 ) -> list[FacturaParaDistribuir]:
     estados = estados or ["draft"]
-    domain = [
-        ("move_type", "in", ["in_invoice", "in_refund"]),
-        ("state", "in", estados),
-    ]
+
+    # Buscar PRIMERO las líneas en la cuenta catchall y de ahí subir a los moves.
+    # (Antes se traían las primeras N facturas draft de TODAS y se filtraba
+    # después → con >N borradores, facturas con 42410104 se perdían en silencio.)
+    lineas_catchall = odoo_client.search_read(
+        "account.move.line",
+        [("account_id", "=", CUENTA_CATCHALL_ID),
+         ("parent_state", "in", estados),
+         ("display_type", "in", [False, "product"]),
+         ("move_id.move_type", "in", ["in_invoice", "in_refund"])],
+        ["id", "move_id"], limit=10000,
+    )
+    if not lineas_catchall:
+        return []
+    move_ids_catchall = sorted({l["move_id"][0] for l in lineas_catchall})
+    if len(move_ids_catchall) > limite:
+        print(f"  ⚠️  {len(move_ids_catchall)} facturas con 42410104 — procesando {limite} "
+              f"(las demás en la próxima corrida)")
+        move_ids_catchall = move_ids_catchall[:limite]
+
+    domain = [("id", "in", move_ids_catchall)]
     if folio_especifico:
         domain.append(("l10n_latam_document_number", "=", folio_especifico))
 
@@ -62,18 +79,6 @@ def detectar_facturas_pendientes(
          "l10n_latam_document_number", "invoice_line_ids"],
         limit=limite,
     )
-    if not movs:
-        return []
-
-    move_ids = [m["id"] for m in movs]
-    lineas_catchall = odoo_client.search_read(
-        "account.move.line",
-        [("move_id", "in", move_ids), ("account_id", "=", CUENTA_CATCHALL_ID),
-         ("display_type", "in", [False, "product"])],
-        ["id", "move_id"], limit=10000,
-    )
-    moves_con_catchall = {l["move_id"][0] for l in lineas_catchall}
-    movs = [m for m in movs if m["id"] in moves_con_catchall]
     if not movs:
         return []
 
@@ -108,7 +113,7 @@ def detectar_facturas_pendientes(
     resultado: list[FacturaParaDistribuir] = []
     for m in movs:
         # Filtro client-side por folio
-        folio_factura = m.get("l10n_latam_document_number", "")
+        folio_factura = m.get("l10n_latam_document_number") or ""  # xmlrpc devuelve False
         if folio_especifico and folio_factura != folio_especifico:
             continue
 
@@ -138,7 +143,7 @@ def detectar_facturas_pendientes(
             continue
 
         resultado.append(FacturaParaDistribuir(
-            move_id=m["id"], name=m.get("name", ""), folio=folio_factura,
+            move_id=m["id"], name=(m.get("name") or ""), folio=folio_factura,
             partner_id=m["partner_id"][0] if m.get("partner_id") else 0,
             partner_nombre=partner["name"] if partner else "",
             partner_rut=rut, fecha=m.get("invoice_date"),

@@ -154,6 +154,7 @@ def clasificar_factura(
         r["patron"]: r
         for r in memoria_proveedor.get("reglas", [])
         if r.get("aprobaciones", 0) >= 3
+        and r.get("cuenta_destino") in CUENTAS_DESTINO  # regla corrupta no auto-aplica
     }
 
     lineas_catchall = [l for l in factura.lineas if l.cuenta_actual_id == 1377]

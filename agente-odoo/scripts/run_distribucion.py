@@ -38,7 +38,8 @@ from src.actions.distribucion.template_excel import generar_excel_aprobacion
 from src.actions.distribucion.memoria import cargar_memoria, resumen_memoria
 from src.actions.distribucion.aplicador import aplicar_distribucion, aplicar_directo
 from src.actions.distribucion.gmail_distribucion import (
-    send_propuesta_completa, leer_respuestas, ya_enviado_hoy)
+    send_propuesta_completa, leer_respuestas, ya_enviado_hoy,
+    respuestas_procesadas, registrar_procesada)
 from src.actions.distribucion.analisis_ruts import detectar_ruts_sin_partner
 from datetime import date as _date
 
@@ -56,8 +57,9 @@ def _detectar_faltantes_ingreso_manual(client, year: int, month: int) -> list[di
     URL = client.url; DB = client.db; PWD = client.password
     uid = client.authenticate()
     models = xc.ServerProxy(f"{URL}/xmlrpc/2/object", allow_none=True)
+    import calendar
     mes_inicio = f"{year:04d}-{month:02d}-01"
-    mes_fin    = f"{year:04d}-{month:02d}-28"
+    mes_fin    = f"{year:04d}-{month:02d}-{calendar.monthrange(year, month)[1]}"
     faltantes = []
     for rut, meta in PROVEEDORES_INGRESO_MANUAL.items():
         este_mes = models.execute_kw(DB, uid, PWD, "account.move", "search_read",
@@ -212,6 +214,7 @@ def cmd_detectar_y_clasificar(args):
                     faltantes_en_odoo=faltantes,
                     total_sii=len(docs_sii),
                     total_odoo=len(docs_sii) - len(faltantes),
+                    parcial=bool(errs_api),
                 )
                 monto_faltante = sum(f.monto_total for f in faltantes)
                 print(f"  SII: {len(docs_sii)} docs | En Odoo: "
@@ -353,44 +356,69 @@ def cmd_leer_respuestas(args):
     print("► Buscando respuestas de Camila/Victor en Gmail (últimas 48h)...")
     respuestas = leer_respuestas(token_path=TOKEN_GMAIL, desde_horas=48)
 
-    if not respuestas:
+    procesadas_path = DIR_MEMORIA / "respuestas_procesadas.json"
+    ya_procesadas = respuestas_procesadas(procesadas_path)
+    nuevas = [r for r in respuestas if r["message_id"] not in ya_procesadas]
+    if len(respuestas) != len(nuevas):
+        print(f"  ({len(respuestas) - len(nuevas)} respuesta(s) ya procesadas — skip)")
+
+    if not nuevas:
         print("  Sin respuestas nuevas por el momento.")
         return
 
-    print(f"  {len(respuestas)} respuesta(s) encontrada(s)\n")
+    print(f"  {len(nuevas)} respuesta(s) por procesar\n")
     client = conectar_odoo()
+    hubo_errores = False
 
-    for resp in respuestas:
+    for resp in nuevas:
         print(f"► De: {resp['sender']} | Asunto: {resp['subject']}")
         print(f"  {len(resp['adjuntos'])} Excel(s) adjunto(s)")
+        resp_ok = True
 
         for adjunto in resp["adjuntos"]:
             if not adjunto["nombre"].endswith(".xlsx"):
                 continue
+            try:
+                tmp_path = DIR_DISTRIBUCION / f"aprobado_{adjunto['nombre']}"
+                tmp_path.parent.mkdir(parents=True, exist_ok=True)
+                tmp_path.write_bytes(adjunto["contenido_bytes"])
+                print(f"  Procesando: {adjunto['nombre']}...")
 
-            tmp_path = DIR_DISTRIBUCION / f"aprobado_{adjunto['nombre']}"
-            tmp_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp_path.write_bytes(adjunto["contenido_bytes"])
-            print(f"  Procesando: {adjunto['nombre']}...")
+                resultado = aplicar_distribucion(
+                    odoo_client=client,
+                    ruta_excel=tmp_path,
+                    aprobado_por=resp["sender"],
+                    dry_run=args.dry_run,
+                    directorio_memoria=str(DIR_MEMORIA),
+                )
 
-            resultado = aplicar_distribucion(
-                odoo_client=client,
-                ruta_excel=tmp_path,
-                aprobado_por=resp["sender"],
-                dry_run=args.dry_run,
-                directorio_memoria=str(DIR_MEMORIA),
-            )
+                if resultado.ok:
+                    confirmadas = sum(1 for f in resultado.facturas if f.confirmada)
+                    print(f"    ✓ {resultado.total_lineas} línea(s) "
+                          f"{'simuladas' if args.dry_run else 'aplicadas'} | "
+                          f"{confirmadas} factura(s) confirmadas")
+                    if resultado.partner_rut:
+                        print(f"    {resumen_memoria(resultado.partner_rut, DIR_MEMORIA)}")
+                else:
+                    resp_ok = False; hubo_errores = True
+                    if resultado.errores_globales:
+                        print(f"    ✗ Errores globales: {resultado.errores_globales}")
+                    for f in resultado.facturas:
+                        for e in f.errores:
+                            print(f"    ✗ [move {f.move_id}] {e}")
+            except Exception as e:
+                # Un adjunto malo (otro xlsx en el hilo, archivo corrupto) no
+                # debe botar el resto de las respuestas de la corrida
+                resp_ok = False; hubo_errores = True
+                print(f"    ✗ Adjunto '{adjunto['nombre']}' no procesable: {e}")
 
-            if resultado.ok:
-                confirmadas = sum(1 for f in resultado.facturas if f.confirmada)
-                print(f"    ✓ {resultado.total_lineas} línea(s) "
-                      f"{'simuladas' if args.dry_run else 'aplicadas'} | "
-                      f"{confirmadas} factura(s) confirmadas")
-                if resultado.partner_rut:
-                    print(f"    {resumen_memoria(resultado.partner_rut, DIR_MEMORIA)}")
-            else:
-                print(f"    ✗ Errores: {resultado.errores_globales}")
+        if resp_ok and not args.dry_run:
+            registrar_procesada(procesadas_path, resp["message_id"])
         print()
+
+    if hubo_errores:
+        print("⚠️  Corrida con errores — revisar log")
+        sys.exit(1)
 
 
 def cmd_aplicar(args):

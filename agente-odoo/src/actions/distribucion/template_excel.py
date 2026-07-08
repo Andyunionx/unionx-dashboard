@@ -98,7 +98,10 @@ def generar_excel_aprobacion(
         _cell(ws, fila_actual, 7,
               f"  FAC {factura.folio}  ·  {factura.fecha}  ·  ${factura.monto_total:,.0f} CLP",
               fondo=GRIS_SEP, color_txt="B0BEC5", size=10)
-        for col in [4,5,6,8,9,10,11,12,13]:
+        # RUT en col 13 (libre en esta fila): el aplicador lo lee para la memoria
+        _cell(ws, fila_actual, 13, factura.partner_rut, fondo=GRIS_SEP,
+              color_txt="B0BEC5", size=9, align="center")
+        for col in [12]:
             _cell(ws, fila_actual, col, fondo=GRIS_SEP)
         ws.row_dimensions[fila_actual].height = 22; fila_actual += 1
 
