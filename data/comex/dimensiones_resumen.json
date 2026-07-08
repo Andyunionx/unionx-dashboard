@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-07-08T10:54:24.021811",
+  "generado_en": "2026-07-08T13:29:02.022528",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 100,
-  "sku_match_odoo": 100,
-  "sku_con_peso": 95,
-  "sku_con_volumen": 95,
-  "sku_volumen_anomalo": 3,
+  "sku_input": 80,
+  "sku_match_odoo": 80,
+  "sku_con_peso": 76,
+  "sku_con_volumen": 76,
+  "sku_volumen_anomalo": 0,
   "sku_con_maestra_manual": 0,
   "cobertura_peso_pct": 95.0,
   "cobertura_volumen_pct": 95.0,
-  "cobertura_volumen_confiable_pct": 92.0,
-  "unidades_totales": 25692.0,
-  "peso_total_kg": 49750.0,
-  "volumen_total_m3": 202.55,
-  "volumen_total_m3_raw": 3193170.55,
-  "pallets_totales_estim": 168.8,
+  "cobertura_volumen_confiable_pct": 95.0,
+  "unidades_totales": 15938.0,
+  "peso_total_kg": 28802.8,
+  "volumen_total_m3": 155.14,
+  "volumen_total_m3_raw": 155.14,
+  "pallets_totales_estim": 129.3,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -41,26 +41,6 @@
       "skus_volumen_anomalo": 0,
       "cobertura_peso_pct": 100.0,
       "cobertura_volumen_pct": 100.0
-    },
-    {
-      "pi": "26TP0430PI",
-      "transporte": "",
-      "fecha_embarque": "2026-05-25",
-      "fecha_eta_bodega": "2026-07-07",
-      "skus_distintos": 28,
-      "unidades_totales": 9754.0,
-      "peso_total_kg": 20947.3,
-      "volumen_total_m3": 47.41,
-      "volumen_total_m3_raw": 3193015.41,
-      "pallets_estim": 39.5,
-      "containers_20_estim": 1.69,
-      "containers_40hc_estim": 0.71,
-      "skus_con_match_odoo": 29,
-      "skus_con_peso": 26,
-      "skus_con_volumen": 26,
-      "skus_volumen_anomalo": 3,
-      "cobertura_peso_pct": 92.9,
-      "cobertura_volumen_pct": 92.9
     },
     {
       "pi": "26TP0528PI",
@@ -124,21 +104,5 @@
     }
   ],
   "skus_sin_match": [],
-  "skus_volumen_anomalo_top": [
-    {
-      "sku": "XRCOBMOT-BS",
-      "producto": "Carpa funda Cubre Moto Impermeable Premium con Felpa XRoad",
-      "volumen_unit_m3": 7522.5
-    },
-    {
-      "sku": "SIM4FRHRDUB-WD",
-      "producto": "Set 4 Frascos Herméticos Vidrio Tapa Madera Dublín Simplit",
-      "volumen_unit_m3": 5234.5
-    },
-    {
-      "sku": "SMCONTCAFMI",
-      "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
-      "volumen_unit_m3": 2535.0
-    }
-  ]
+  "skus_volumen_anomalo_top": []
 }
