@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-07T22:05:20.791562",
+  "generado_en": "2026-07-08T01:43:18.745159",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1365,
   "capacidad_bodega_m3": 2456.9999999999995,
@@ -18,22 +18,17 @@
   },
   "pico_proyectado": {
     "fecha": "2026-08-01",
-    "posiciones_ocupadas": 1031.0,
-    "pct_ocupacion": 75.5
+    "posiciones_ocupadas": 1023.9,
+    "pct_ocupacion": 75.0
   },
   "minimo_proyectado": {
     "fecha": "2026-09-05",
-    "posiciones_ocupadas": 928.6,
-    "pct_ocupacion": 68.0
+    "posiciones_ocupadas": 921.5,
+    "pct_ocupacion": 67.5
   },
   "primer_critico": null,
   "primer_atencion": null,
   "dias_con_entrada_transito": [
-    {
-      "fecha": "2026-07-07",
-      "pallets": 7.1,
-      "m3": 8.5
-    },
     {
       "fecha": "2026-07-15",
       "pallets": 39.5,
