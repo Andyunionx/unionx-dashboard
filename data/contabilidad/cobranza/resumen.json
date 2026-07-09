@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-09T14:27:24.813503",
+  "generado_en": "2026-07-09T19:19:27.193229",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12773,
-  "total_monto_pendiente_clp": 859475356.0,
+  "total_documentos_pendientes": 12921,
+  "total_monto_pendiente_clp": 875887674.0,
   "monto_por_aging": {
     "+90 días": 45168637.0,
-    "1-30 días": 513935493.0,
+    "1-30 días": 518776851.0,
     "31-60 días": 186609388.0,
     "61-90 días": 21457886.0,
-    "Vigente": 92303952.0
+    "Vigente": 103874912.0
   },
   "monto_por_tipo": {
-    "BOLETA": 589635906.0,
+    "BOLETA": 606048224.0,
     "FACTURA": 269839450.0
   },
   "top_20_deudores": [
@@ -22,15 +22,15 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 143700862.0
+      "monto": 145306187.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 87105543.0
+      "monto": 87989287.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 80619800.0
+      "monto": 81734540.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -38,35 +38,35 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 41785437.0
+      "monto": 42092511.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 38235120.0
+      "monto": 39390856.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 30600818.0
+      "monto": 30974628.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 22545182.0
     },
     {
       "partner": "abc S.A.",
       "monto": 22472966.0
     },
     {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 22120581.0
+      "partner": "Cliente Paris",
+      "monto": 20916437.0
     },
     {
       "partner": "Falabella.com SPA",
       "monto": 20915985.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 20865487.0
-    },
-    {
       "partner": "Cliente Ripley",
-      "monto": 19955740.0
+      "monto": 20215040.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -77,26 +77,26 @@
       "monto": 13204551.0
     },
     {
+      "partner": "Cencosud Retail S.A",
+      "monto": 9567600.0
+    },
+    {
       "partner": "Comercializadora SP Digital SPA",
       "monto": 8100546.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 5428848.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
     },
     {
-      "partner": "Global Reward Solutions",
-      "monto": 5031826.0
-    },
-    {
       "partner": "Sawa SPA",
       "monto": 4104800.0
-    },
-    {
-      "partner": "Comercializadora Mercado Local Spa.",
-      "monto": 3244328.0
     }
   ],
-  "notas_credito_count": 551,
+  "notas_credito_count": 553,
   "pedidos_venta_count": 10000
 }
