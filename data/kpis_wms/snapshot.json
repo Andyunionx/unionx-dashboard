@@ -1,40 +1,110 @@
 {
-  "generado_en": "2026-07-09T06:47:37.344263",
+  "generado_en": "2026-07-09T17:23:25.091354",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0518138407811275,
-      "total_pickings": 14031,
+      "valor": 0.05126939351198872,
+      "total_pickings": 14180,
       "on_time": 730,
-      "on_time_pct": 0.05202765305395196,
-      "in_full": 14019,
-      "in_full_pct": 0.9991447509087021,
+      "on_time_pct": 0.05148095909732017,
+      "in_full": 14168,
+      "in_full_pct": 0.9991537376586742,
       "both": 727,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.02737226277372263,
-      "total_pickings": 548,
+      "valor": 0.027124773960216998,
+      "total_pickings": 553,
       "on_time": 15,
-      "on_time_pct": 0.02737226277372263,
-      "in_full": 544,
-      "in_full_pct": 0.9927007299270073,
+      "on_time_pct": 0.027124773960216998,
+      "in_full": 549,
+      "in_full_pct": 0.9927667269439421,
       "both": 15,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997265817247225,
-      "ok": 18282,
-      "total": 18287,
+      "valor": 0.9997293786533882,
+      "ok": 18471,
+      "total": 18476,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.497087616250612,
-      "n_recepciones": 227,
+      "valor": 10.152210501640882,
+      "n_recepciones": 237,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01055",
+          "proveedor": "Falabella Retail",
+          "horas": 0.4,
+          "scheduled": "2026-07-09 16:50",
+          "done": "2026-07-09 17:12"
+        },
+        {
+          "picking": "CA1/RET/01054",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 16:34",
+          "done": "2026-07-09 16:34"
+        },
+        {
+          "picking": "CA1/IN/00937",
+          "proveedor": "Celiv Spa",
+          "horas": 0.5,
+          "scheduled": "2026-07-09 14:30",
+          "done": "2026-07-09 14:57"
+        },
+        {
+          "picking": "CA1/RET/01053",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 14:28",
+          "done": "2026-07-09 14:28"
+        },
+        {
+          "picking": "CA1/RET/01052",
+          "proveedor": "Falabella Retail",
+          "horas": 0.3,
+          "scheduled": "2026-07-09 13:52",
+          "done": "2026-07-09 14:12"
+        },
+        {
+          "picking": "CA1/RET/01051",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 13:49",
+          "done": "2026-07-09 13:49"
+        },
+        {
+          "picking": "CA1/RET/01049",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 13:38",
+          "done": "2026-07-09 13:38"
+        },
+        {
+          "picking": "CA1/RET/01048",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 13:21",
+          "done": "2026-07-09 13:23"
+        },
+        {
+          "picking": "CA1/RET/01047",
+          "proveedor": "Falabella Retail",
+          "horas": 0.2,
+          "scheduled": "2026-07-09 12:49",
+          "done": "2026-07-09 13:02"
+        },
+        {
+          "picking": "CA1/RET/01045",
+          "proveedor": "Falabella Retail",
+          "horas": 21.8,
+          "scheduled": "2026-07-08 14:58",
+          "done": "2026-07-09 12:48"
+        },
         {
           "picking": "CA1/IN/00936",
           "proveedor": "",
@@ -104,95 +174,25 @@
           "horas": 0.5,
           "scheduled": "2026-07-06 21:27",
           "done": "2026-07-06 22:00"
-        },
-        {
-          "picking": "CA1/IN/00925",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": -210.6,
-          "scheduled": "2026-07-15 12:00",
-          "done": "2026-07-06 17:23"
-        },
-        {
-          "picking": "CA1/RET/01042",
-          "proveedor": "Distribuidora y Comercializadora Ipasari Spa, Rossana Osorio",
-          "horas": 0.0,
-          "scheduled": "2026-07-03 15:16",
-          "done": "2026-07-03 15:16"
-        },
-        {
-          "picking": "CA1/IN/00923",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-02 16:45",
-          "done": "2026-07-02 16:50"
-        },
-        {
-          "picking": "CA1/IN/00922",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 16:28",
-          "done": "2026-07-02 16:28"
-        },
-        {
-          "picking": "CA1/IN/00921",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 16:27",
-          "done": "2026-07-02 16:27"
-        },
-        {
-          "picking": "CA1/IN/00920",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 16:11",
-          "done": "2026-07-02 16:12"
-        },
-        {
-          "picking": "CA1/IN/00919",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 15:07",
-          "done": "2026-07-02 15:08"
-        },
-        {
-          "picking": "CA1/IN/00917",
-          "proveedor": "",
-          "horas": 15.7,
-          "scheduled": "2026-07-01 21:30",
-          "done": "2026-07-02 13:15"
-        },
-        {
-          "picking": "CA1/IN/00916",
-          "proveedor": "",
-          "horas": 16.3,
-          "scheduled": "2026-07-01 20:46",
-          "done": "2026-07-02 13:06"
-        },
-        {
-          "picking": "CA1/IN/00915",
-          "proveedor": "",
-          "horas": 16.7,
-          "scheduled": "2026-07-01 20:15",
-          "done": "2026-07-02 12:54"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9458065607034156,
-      "total_so": 11903,
-      "total_con_pickings": 11828,
-      "cumplidos": 11187,
+      "valor": 0.9426740993427074,
+      "total_so": 12094,
+      "total_con_pickings": 12019,
+      "cumplidos": 11330,
       "parciales": 17,
-      "sin_iniciar": 624,
+      "sin_iniciar": 672,
       "error": null
     },
     "oct_30d": {
-      "valor": 78.3360355166242,
-      "n_orders": 13471,
+      "valor": 77.7899208562691,
+      "n_orders": 13625,
       "min_h": 0.006666666666666667,
       "max_h": 719.81,
-      "mediana_h": 29.354166666666668,
+      "mediana_h": 28.876666666666665,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 6271,
+      "lineas": 6460,
       "mes": "2026-07",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 213,
-          "tarde": 213,
+          "total": 218,
+          "tarde": 218,
           "on_time_pct": 0.0
         },
         {
@@ -591,10 +591,10 @@
           "quiebre_clp": 743079.766333,
           "n_canceladas": 362,
           "n_quiebres": 26,
-          "ns_empresa_pct": 0.9128564136221105,
+          "ns_empresa_pct": 0.9130022606286006,
           "ns_courier_pct": 0.8877707285057974,
           "otif_total_pct": 0.8389849048348282,
-          "n_empresa_ok": 12518,
+          "n_empresa_ok": 12520,
           "n_courier_ok": 12174,
           "n_otif_ok": 11505
         },
@@ -642,10 +642,10 @@
           {
             "CLIENTE": "KITCHEN CENTER",
             "ORDENES": 1241,
-            "A_TPO_EMP": 1235,
+            "A_TPO_EMP": 1237,
             "A_TPO_COU": 1207,
             "OTIF": 1204,
-            "NS_EMP_PCT": 0.9952,
+            "NS_EMP_PCT": 0.9968,
             "NS_COU_PCT": 0.9726,
             "OTIF_PCT": 0.9702
           },
@@ -712,8 +712,8 @@
           {
             "CLIENTE": "TOTAL",
             "ORDENES": 13713,
-            "A_TPO_EMP": 12518,
-            "NS_EMP_PCT": 0.9128564136221105,
+            "A_TPO_EMP": 12520,
+            "NS_EMP_PCT": 0.9130022606286006,
             "A_TPO_COU": 12174,
             "NS_COU_PCT": 0.8877707285057974,
             "OTIF": 11505,
@@ -2439,7 +2439,7 @@
           "CURIER": "WELIVERY",
           "n_pedidos": 826,
           "ns_courier_pct": 96.5,
-          "ns_empresa_pct": 99.4,
+          "ns_empresa_pct": 99.6,
           "otif_total_pct": 96.2
         },
         {
@@ -3133,7 +3133,7 @@
           "hasta": "2026-06-25"
         },
         "n_ordenes": 47130,
-        "n_empresa_ok": 44959,
+        "n_empresa_ok": 44961,
         "n_courier_ok": 43230,
         "n_otif_ok": 42280,
         "ns_empresa_pct": 95.4,
@@ -3240,7 +3240,7 @@
             "pct_volumen": 5.1,
             "ns_courier_pct": 96.4,
             "otif_total_pct": 95.0,
-            "ns_empresa_pct": 97.8
+            "ns_empresa_pct": 97.9
           },
           {
             "CURIER": "STARKEN",
@@ -3312,7 +3312,7 @@
             "CANAL": "KITCHEN CENTER",
             "n_pedidos": 3714,
             "pct_volumen": 7.9,
-            "ns_empresa_pct": 97.9,
+            "ns_empresa_pct": 98.0,
             "ns_courier_pct": 96.5,
             "otif_total_pct": 95.1
           },
@@ -3907,7 +3907,7 @@
       {
         "MES": "2026-06",
         "n_pedidos": 12320,
-        "otif_empresa": 0.907224025974026,
+        "otif_empresa": 0.9073863636363636,
         "otif_courier": 0.8832792207792208,
         "otif_total": 0.8292207792207792,
         "otif_empresa_pct": 90.7,
@@ -3961,13 +3961,13 @@
       },
       "2026-06": {
         "n_pedidos": 12320,
-        "otif_empresa_pct": 0.907224025974026,
+        "otif_empresa_pct": 0.9073863636363636,
         "otif_courier_pct": 0.8832792207792208,
         "otif_total_pct": 0.8292207792207792,
-        "n_empresa_ok": 11177,
+        "n_empresa_ok": 11179,
         "n_courier_ok": 10882,
         "n_otif_ok": 10216,
-        "dias_empresa_promedio": -27.136974860101898,
+        "dias_empresa_promedio": -19.422032907374927,
         "dias_courier_promedio": -253.76246554748184,
         "mes": "2026-06",
         "error": null
@@ -4102,10 +4102,10 @@
         {
           "CLIENTE": "KITCHEN CENTER",
           "n_pedidos": 948,
-          "otif_empresa": 0.9936708860759493,
+          "otif_empresa": 0.9957805907172996,
           "otif_courier": 0.9662447257383966,
           "otif_total": 0.9630801687763713,
-          "otif_empresa_pct": 99.4,
+          "otif_empresa_pct": 99.6,
           "otif_courier_pct": 96.6,
           "otif_total_pct": 96.3
         },
@@ -7392,42 +7392,112 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0518138407811275,
-      "total_pickings": 14031,
+      "valor": 0.05126939351198872,
+      "total_pickings": 14180,
       "on_time": 730,
-      "on_time_pct": 0.05202765305395196,
-      "in_full": 14019,
-      "in_full_pct": 0.9991447509087021,
+      "on_time_pct": 0.05148095909732017,
+      "in_full": 14168,
+      "in_full_pct": 0.9991537376586742,
       "both": 727,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.02737226277372263,
-      "total_pickings": 548,
+      "valor": 0.027124773960216998,
+      "total_pickings": 553,
       "on_time": 15,
-      "on_time_pct": 0.02737226277372263,
-      "in_full": 544,
-      "in_full_pct": 0.9927007299270073,
+      "on_time_pct": 0.027124773960216998,
+      "in_full": 549,
+      "in_full_pct": 0.9927667269439421,
       "both": 15,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997265817247225,
-      "ok": 18282,
-      "total": 18287,
+      "valor": 0.9997293786533882,
+      "ok": 18471,
+      "total": 18476,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.497087616250612,
-      "n_recepciones": 227,
+      "valor": 10.152210501640882,
+      "n_recepciones": 237,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01055",
+          "proveedor": "Falabella Retail",
+          "horas": 0.4,
+          "scheduled": "2026-07-09 16:50",
+          "done": "2026-07-09 17:12"
+        },
+        {
+          "picking": "CA1/RET/01054",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 16:34",
+          "done": "2026-07-09 16:34"
+        },
+        {
+          "picking": "CA1/IN/00937",
+          "proveedor": "Celiv Spa",
+          "horas": 0.5,
+          "scheduled": "2026-07-09 14:30",
+          "done": "2026-07-09 14:57"
+        },
+        {
+          "picking": "CA1/RET/01053",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 14:28",
+          "done": "2026-07-09 14:28"
+        },
+        {
+          "picking": "CA1/RET/01052",
+          "proveedor": "Falabella Retail",
+          "horas": 0.3,
+          "scheduled": "2026-07-09 13:52",
+          "done": "2026-07-09 14:12"
+        },
+        {
+          "picking": "CA1/RET/01051",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 13:49",
+          "done": "2026-07-09 13:49"
+        },
+        {
+          "picking": "CA1/RET/01049",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 13:38",
+          "done": "2026-07-09 13:38"
+        },
+        {
+          "picking": "CA1/RET/01048",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-09 13:21",
+          "done": "2026-07-09 13:23"
+        },
+        {
+          "picking": "CA1/RET/01047",
+          "proveedor": "Falabella Retail",
+          "horas": 0.2,
+          "scheduled": "2026-07-09 12:49",
+          "done": "2026-07-09 13:02"
+        },
+        {
+          "picking": "CA1/RET/01045",
+          "proveedor": "Falabella Retail",
+          "horas": 21.8,
+          "scheduled": "2026-07-08 14:58",
+          "done": "2026-07-09 12:48"
+        },
         {
           "picking": "CA1/IN/00936",
           "proveedor": "",
@@ -7497,76 +7567,6 @@
           "horas": 0.5,
           "scheduled": "2026-07-06 21:27",
           "done": "2026-07-06 22:00"
-        },
-        {
-          "picking": "CA1/IN/00925",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": -210.6,
-          "scheduled": "2026-07-15 12:00",
-          "done": "2026-07-06 17:23"
-        },
-        {
-          "picking": "CA1/RET/01042",
-          "proveedor": "Distribuidora y Comercializadora Ipasari Spa, Rossana Osorio",
-          "horas": 0.0,
-          "scheduled": "2026-07-03 15:16",
-          "done": "2026-07-03 15:16"
-        },
-        {
-          "picking": "CA1/IN/00923",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-02 16:45",
-          "done": "2026-07-02 16:50"
-        },
-        {
-          "picking": "CA1/IN/00922",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 16:28",
-          "done": "2026-07-02 16:28"
-        },
-        {
-          "picking": "CA1/IN/00921",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 16:27",
-          "done": "2026-07-02 16:27"
-        },
-        {
-          "picking": "CA1/IN/00920",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 16:11",
-          "done": "2026-07-02 16:12"
-        },
-        {
-          "picking": "CA1/IN/00919",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-02 15:07",
-          "done": "2026-07-02 15:08"
-        },
-        {
-          "picking": "CA1/IN/00917",
-          "proveedor": "",
-          "horas": 15.7,
-          "scheduled": "2026-07-01 21:30",
-          "done": "2026-07-02 13:15"
-        },
-        {
-          "picking": "CA1/IN/00916",
-          "proveedor": "",
-          "horas": 16.3,
-          "scheduled": "2026-07-01 20:46",
-          "done": "2026-07-02 13:06"
-        },
-        {
-          "picking": "CA1/IN/00915",
-          "proveedor": "",
-          "horas": 16.7,
-          "scheduled": "2026-07-01 20:15",
-          "done": "2026-07-02 12:54"
         }
       ],
       "error": null
