@@ -1,70 +1,83 @@
 # Auditoría Inventario Contable vs Valorización Física — Julio 2026
 
-**Estado:** diagnóstico cerrado 9-jul-2026 · reunión con Víctor pendiente (semana del 13-jul)
-**Respaldos (Drive, `data/outputs/`):** `AUDITORIA_Inventario_Diagnostico_Final.xlsx` (9 hojas) · `MEMO_Auditoria_Inventario_v2.docx` · `PI_recepcionadas_2025_2026.xlsx`
-**Comunicaciones:** memo v1 enviado 8-jul (OBSOLETO, tesis corregidas) · respuesta completa con diagnóstico v2 enviada 9-jul en el hilo (ID Gmail 19f4470fdec37403). Reunión comprometida "próxima semana sin falta".
+**Estado:** diagnóstico cerrado 9-jul-2026 (v3: circuito importaciones mapeado completo) · reunión con Víctor pendiente (semana del 13-jul)
+**Respaldos (Drive, `data/outputs/`):** `AUDITORIA_Inventario_Diagnostico_Final.xlsx` · `MEMO_Auditoria_Inventario_v2.docx` · `PI_recepcionadas_2025_2026.xlsx` · `CONCILIACION_PI_transito.xlsx` (estructura; llaves pendientes)
+**Comunicaciones:** memo v1 (8-jul, OBSOLETO) · diagnóstico v2 enviado 9-jul en el hilo (Gmail 19f4470fdec37403) · Victor pidió corte al 31-may → hecho, ver §Corte.
 
 ---
 
 ## El problema
 
-Al 31-jul-2026, familia inventario contable vs realidad física:
+| Cuenta | Saldo (31-may cerrado) | Respaldo físico | Miga atrapada |
+|--------|----------------------:|----------------:|--------------:|
+| 111001 Mercadería Nacional | $1.488,4M | $1.213,0M (capas AVCO) | +$275,4M |
+| 111008 Inventario Reservado | $293,8M | $0 (cuenta muerta desde 7-abr) | +$293,8M |
+| 111006 Importación en Tránsito | $267,7M | ~$0 (cero OC pendientes al 6-jul) | +$267,7M |
+| 210208 Steven (pasivo en DEUDOR) | +$251,4M | — | **explicado: anticipos legítimos** |
 
-| Cuenta | Saldo contable | Respaldo físico | Sobrante |
-|--------|---------------:|----------------:|---------:|
-| 111001 Mercadería Nacional | $1.372,9M | $1.092,9M (capas AVCO) | +$280M (neto*) |
-| 111008 Inventario Reservado | $294,9M | $0 | +$294,9M |
-| 111006 Importación en Tránsito | $274,9M | ~$0 (cero OC pendientes) | +$274,9M |
-| **Total** | **$1.942,7M** | **$1.092,9M** | **≈ +$850M bruto** |
+**GAP 111001+111008 = $569,2M al 31-may (mes cerrado, 210215=$0).** No esconde pérdida masiva: es valor **desubicado** entre cuentas de balance por un circuito manual triple, no valor destruido.
 
-\* El +$280M de 111001 es un neto que esconde dos des-reconocimientos (−$213,7M ganancias recuento barridas + −$74,5M fulfillment) que enmascaran un exceso real de ~$570M por el circuito compras/importaciones.
+## Corte al 31-may (pedido de Victor — validado)
 
-El gap 111001+111008 ($577M) nació en Odoo: mar-2024 partió en $14M y creció sostenido. **No esconde una pérdida masiva** — es desorden de ruteo contable de la transición de procesos. Correcciones con efecto EERR: ≈ +$22M a favor (recuentos) y máx −$28M (remanente fulfillment).
+Victor objetó usar jun/jul (facturas Topwill sin contabilizar). Rehecho al 31-may: **GAP $569,2M ≈ jul $577M → el gap es estructural, NO timing de cierre**. Esto invalidó la estimación previa "residual ~$45M post-cierres": al 31-may las barridas están hechas, 210215=$0, y el exceso de 111001 igual es $275,4M. Los cierres de jun/jul NO van a arreglar el gap.
 
-## Diagnóstico por componente (todo verificado a nivel de asiento)
+## El circuito real de una importación (mapeado 9-jul)
 
-### 1. 111001 — exceso +$301,6M (visible) sobre físico
-- **Facturas de compra debitan 111001/111006 directo** en vez de limpiar la provisión 210215: +$338,9M histórico solo diario Compras Nacionales. Las facturas que limpian 210215 correctamente colapsaron: 2024 $421M → 2025 $295M → 2026 **$25M**.
-- Víctor compensa con **barrida mensual** de 210215 contra 111001 (deja la provisión en $0 cada cierre — verificado: cero todos los meses hasta may-26). Mayormente timing; cierres may/jun pendientes.
-- Ajustes de módulo sin capa: +$35,2M.
+El valor CIF entra a contabilidad por **TRES vías** por cada embarque:
 
-### 2. 111008 — $294,9M, formado 100% en 2026, cuenta MUERTA desde 7-abr
-Las 2 categorías que apuntaban a ella (All/Saleable, All/Expenses) fueron migradas en abril: 0 productos, 0 movimientos desde 8-abr. Nada la limpia automáticamente. Tres orígenes:
+```
+1. DIN Tesorería:          D:111006 (base CIF)  +  D:111302 (IVA ✓ bien separado)  / H:210201-TGR
+2. Reconocimiento manual:  D:111006                                                 / H:210208 Steven
+3. Recepción del módulo:   D:111001                                                 / H:210215 Provisión  (+capa física)
+```
 
-**a) Ajustes de recuento $191,9M — NO es merma.** Recuentos ene-feb (toma anual 8-9 ene: Danilo, Gerardo, Andrés) bajaron stock D:111008/H:111001. La pata POSITIVA de los mismos recuentos (+$213,7M) entró H:210215 **y fue barrida hacia 111001 dentro de las barridas mensuales ene-may** → 111001 quedó des-reconocido $213,7M de mercadería que sí existe. Neto real recuentos: **+$21,8M a favor**. Patrón = corrección de mezcla de SKU (ej. familia GOYA completa el 21-ene en ambas direcciones).
-Asiento pareado corregido (ya NO toca 210215):
-`D:111001 $213,7M / H:111008 $191,9M / H:4443116 $21,8M`
+Topwill NO factura por Odoo (invoice_ids de las OC = vacío; pasivo manual vía 210208). Luego **cuatro cancelaciones manuales**: traspasos (D:111001/H:111006), barridas (D:210215/H:111001), cancelación del pasivo fantasma DIN (210201-TGR: $4.679M debitados vía Misc/bancos/anticipos, saldo TGR hoy −$43M ✓), y pagos reales a Steven. El mismo peso se anota y desanota ~3 veces a mano cada mes → las migas netas de ese churn son el gap.
 
-**b) Costo fulfillment $74,5M ya reconocido pero descargado de cuenta equivocada** (hipótesis de Andrés, confirmada). Circuito: pedidos fbc quedan "a facturar" (marketplace liquida después); OUT descuenta stock (debitaba 111008); costo se reconoce con asiento manual mensual (D:41410109). Evolución del asiento de Víctor: ene-feb contra **111001** (estilo antiguo; MISCE/2026/01/0012 $35,1M + MISCE/2026/02/0051 $39,4M) → mar contra 111008 (correcto) → abr-jun reclasif. desde 41410101. En ene-feb el OUT ya había llevado ese costo a 111008 → doble descuento de 111001.
-Corrección: `D:111001 / H:111008 $74,5M` — **EERR $0**. Remanente ~$28,5M por conciliar vs liquidaciones (solo lo no calzado va a costo).
-Backlog asociado: 17.180 pedidos ene-abr "a facturar", $446M venta neta, 96% fbc (ML $318,5M / Falabella $85,2M / Paris $21,6M). Persona del circuito: **Gerardo**.
+- DIN → 111006: 2024 $862,6M / 2025 $1.667,1M / 2026 $1.170,1M (total $3.699,8M)
+- Reconocimientos Steven → 111006: $2.338,7M (2025-26)
+- Módulo → 111001: $2.914,1M (86 PI, 2025-26)
+- Hipótesis IVA capitalizado: **DESCARTADA** (DIN separa 19% a 111302 correctamente; ej. DIN 2400370871: $85,3M base + $16,2M IVA)
+- 210208 Steven deudor $251,4M: **EXPLICADO** — anticipos may-jun 2026 (OPP/FCI/COMEX USD 344k venc. nov-dic + Ebury $58M) para el plan de embarque septiembre. Cuenta cicla en ~0 históricamente.
 
-**c) Limpiezas ya aplicadas −$76,5M + evento ZZ-DUPLICADO enero (refacturación $2.780M, neto −$3,9M, neutro).**
+## Diagnóstico por componente
 
-### 3. 210215 Facturas por Recibir — composición saldo −$256,7M
-= junio −$175,1M (exacto al número de Víctor) + julio −$81,6M. **Puro timing** de cierres pendientes; las ganancias de recuento ya no están (barridas). La barrida de mayo fue $224.422.695 = el número que Víctor cita como "importaciones de mayo" — su método estima ingresos mensuales con el saldo de 210215, que mezclaba ganancias de recuento (explica su descuadre de "$30M").
+### 1. 111001 — exceso +$275,4M (al 31-may)
+Facturas/DIN debitando inventario directo + traspasos/barridas descalzados. Fix estructural: proceso (facturas→210215 vinculadas a OC) + conciliación por PI del legado. Módulo sin capa: +$35,4M.
 
-### 4. 111006 Tránsito — $274,9M HUÉRFANO (hallazgo 9-jul)
-Las **110 OC de importación desde 2025 están TODAS recepcionadas — cero pendientes**. No hay mercadería en el agua (en Odoo) que respalde el saldo. Venía de $490,8M (dic-25), Víctor lo bajó a $274,9M, pero es un piso sin respaldo. Causa probable: facturas DTE codificadas a mano a 111006 sin vínculo a OC + traspasos que no emparejan 1:1. **Punto más grande pendiente**: o hay documentación de embarques fuera de Odoo, o se reversa contra el circuito de compras.
+### 2. 111008 — $293,8M, muerta desde 7-abr. Tres orígenes (sin cambios):
+- **a) Recuentos $191,9M — NO es merma**: pata positiva $213,7M fue a 210215 y las barridas ene-may la absorbieron hacia 111001 → 111001 quedó des-reconocido. Neto recuentos **+$21,8M A FAVOR**. Asiento pareado (NO toca 210215): `D:111001 $213,7M / H:111008 $191,9M / H:4443116 $21,8M`.
+- **b) Fulfillment $74,5M ya reconocido contra 111001** (MISCE/2026/01/0012 + 02/0051; hipótesis de Andrés confirmada): `D:111001 / H:111008 $74,5M`, EERR $0. Remanente ~$28,5M conciliar vs liquidaciones. Circuito: pedidos fbc quedan "a facturar", marketplace liquida después; persona: **Gerardo**. Backlog 17.180 pedidos ene-abr, 96% fbc (ML $318M/Fala $85M).
+- **c)** Limpiezas ya hechas −$76,5M + evento ZZ enero neutro.
 
-### Cross-checks clave
-- Recepciones importación (módulo, por PI): 2025 $1.796,9M / 2026 $1.117,2M — 86 PI, listado en `PI_recepcionadas_2025_2026.xlsx` (Víctor lo pidió; se lo enviamos). Cotejo correcto es **por PI, no por mes** (documento vs recepción física).
-- Traspasos manuales tránsito→inventario desde 2025: $2.927,8M ≈ costo internado $2.914,1M (calza 0,5%).
-- Barridas 2026 ene-may $1.635,9M: contrapartidas H:111001 $1.424,1M + **H:210208 Steven $113,0M + H:1101016 Pago ML $98,8M (revisar en reunión)**.
+### 3. 111006 — $274,9M huérfano (jul)
+Cero OC de importación pendientes. Débitos: DIN base CIF + reconocimientos Steven + agencias/fletes (~$150M legítimos). Se empareja contra las entradas dobles por embarque (conciliación por PI).
+
+### 4. 210215 — composición saldo jul −$256,7M
+= jun −$175,1M (número exacto de Victor ✓) + jul −$81,6M. Puro timing. Barridas 2026: ene $362M/feb $440M/mar $293M/abr $316M/may $224,4M (=el número que Victor cita de "importaciones mayo" — su método de estimación ES la barrida, y mezclaba las ganancias de recuento → su descuadre de $30M). Facturas que limpian 210215 correctamente colapsaron: 2024 $421M → 2026 $25M.
+
+## La solución (3 capas)
+
+**A. Cortar la fuente:** facturas de compra → 210215 vinculadas a OC/recepción (muere barrida+traspaso); fletes/DIN base vía landed costs; regla de oro: cero asientos manuales contra 111001/111006/111008.
+**B. Limpiar el legado:** (1) asientos 111008 ya diseñados → cuenta a 0 y desactivar, EERR ≈ neutro; (2) **conciliación por PI** (86 embarques: DIN + reconocimiento Steven + módulo + traspaso) → asigna el residuo de 111001/111006 a: capas subvaloradas (se corrige módulo), anticipos (balance), o resultado (residuo del residuo); (3) inventario físico → asiento de rebase final.
+**C. Blindaje:** monitor mensual contable-vs-capas automático + checklist de cierre (210215=0, gap≤umbral).
+
+**Nada se concilia contra patrimonio** — las contrapartidas viven dentro del circuito (111001↔111006↔210208↔210215↔111008). EERR conocido: +$21,8M a favor, máx −$28,5M.
+
+**Conciliación por PI — estado:** estructura construida (`CONCILIACION_PI_transito.xlsx`); bloqueo = las llaves no están en Odoo (DIN sin código PI, traspasos por bulto, Steven sin factura). Llaves disponibles: data COMEX (Seimex referencia por PI, OHNSO) + planilla de traspasos de Victor.
 
 ## Agenda reunión con Víctor (semana 13-jul)
 
-1. **Secuencia del paquete de asientos** — todo en el mismo cierre para que el gap baje de una vez y no haya peak intermedio (la reclasif. fulfillment sola SUBE el gap visible de 111001 de $301,6M a $376,1M):
-   pareado recuentos + reclasif. fulfillment $74,5M + remanente ~$28M + barridas jun/jul normales.
-2. Mostrar composición de sus barridas ene-may (arrastraron las ganancias de recuento).
-3. **Tránsito 111006**: respaldo documental de los $274,9M o plan de reversa. Dato duro: 0 OC pendientes.
-4. Contrapartidas raras de barridas (Steven $113M / Pago ML $98,8M).
-5. Fix estructural: facturas → 210215 (vincular factura↔OC/recepción); elimina barrida manual y doble conteo.
-6. Post-limpieza: cerrar y desactivar 111008; inventario físico como árbitro del residual.
+1. **Pregunta quirúrgica #1: ¿contra qué se cancela la base CIF de la DIN?** (los ~$60-85M/mes que entran a 111006 vía DIN además del reconocimiento Steven). Si la cancelación no cubre 100%, ahí se fabrica el gap.
+2. **Confirmar anticipos Steven** $251,4M (pre-validado como legítimo: OPP/FCI/COMEX + Ebury para plan sept).
+3. Pedir su **planilla de traspasos** (mapping PI↔asiento) → destranca la conciliación por embarque.
+4. Secuencia del **paquete de asientos** en un solo cierre (pareado + fulfillment + remanente + barridas jun/jul) para que el gap baje de una vez (la reclasif. fulfillment sola SUBE el gap visible de 111001 — mala óptica si va aislada).
+5. Mostrar composición de barridas ene-may (arrastraron las ganancias de recuento).
+6. Fix estructural Capa A + cerrar/desactivar 111008 + inventario físico como árbitro.
 
 ## Pendientes
-- [ ] Actualizar planilla + memo con hallazgos 9-jul (210215/asiento pareado corregido + tránsito huérfano)
-- [ ] Cruzar 111006 vs data COMEX (`data/comex/transito_sheet.parquet`) para descartar embarques en el agua sin OC
+- [ ] Conciliación por PI con llaves COMEX + planilla Victor (post-reunión)
+- [ ] Actualizar planilla Excel con hoja "Circuito importaciones" y corte 31-may
 - [ ] Reunión Víctor → paquete de asientos (NADA se postea sin aprobación de Andrés)
-- [ ] Validación Gerardo/Danilo: familias grandes de recuentos (GOYA, proyectores LV, espumador) — SKU-mix vs merma real
-- [ ] Victor cierra EERR esta semana; único punto candidato pre-cierre: remanente ~$28M fulfillment
+- [ ] Validación Gerardo/Danilo: familias grandes de recuentos (GOYA, proyectores LV, espumador)
+- [ ] Único candidato pre-cierre EERR: remanente ~$28,5M fulfillment
+- [ ] Monitor mensual contable-vs-capas (Capa C) — script existe, falta agendar
