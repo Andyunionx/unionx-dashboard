@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-07-10T09:35:08.798236",
+  "generado_en": "2026-07-10T14:26:22.721184",
   "total_skus": 1881,
-  "total_quants": 4701,
+  "total_quants": 4743,
   "total_locations": 1417,
   "kpis": {
     "n_skus": 1881,
-    "valor_total": 1107459298.6,
-    "unidades_total": 184878.0,
-    "costo_promedio_sku": 588760.92,
-    "n_quiebre_critico": 66,
-    "n_bajo": 129,
+    "valor_total": 1106324117.6,
+    "unidades_total": 184531.0,
+    "costo_promedio_sku": 588157.43,
+    "n_quiebre_critico": 67,
+    "n_bajo": 130,
     "n_optimo": 136,
-    "n_sobrestock": 373,
+    "n_sobrestock": 371,
     "n_sin_venta": 1177,
     "rot_30d_promedio": 0.62,
-    "rot_90d_promedio": 3.05
+    "rot_90d_promedio": 3.06
   },
   "ocupacion": {
     "positions": [
@@ -3346,7 +3346,7 @@
         "Posicion": "1P0110",
         "Ubicacion": "CA1/Stock/1P0110",
         "Estado": "Ocupada",
-        "SKUs": 3
+        "SKUs": 2
       },
       {
         "Posicion": "1P0120",
@@ -8221,7 +8221,7 @@
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 373
+      "SKUs": 371
     },
     {
       "Categoria": "OPTIMO",
@@ -8229,19 +8229,19 @@
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 129
+      "SKUs": 130
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 66
+      "SKUs": 67
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 924459397.58,
-      "Unidades": 165714.0,
-      "SKUs": 1434
+      "Valor": 920705622.76,
+      "Unidades": 165508.0,
+      "SKUs": 1431
     },
     {
       "Bodega": "BFML/Stock",
@@ -8257,9 +8257,9 @@
     },
     {
       "Bodega": "CA1/Output",
-      "Valor": 15496843.71,
-      "Unidades": 1850.0,
-      "SKUs": 343
+      "Valor": 18115437.53,
+      "Unidades": 1709.0,
+      "SKUs": 388
     },
     {
       "Bodega": "BVO/Stock",
