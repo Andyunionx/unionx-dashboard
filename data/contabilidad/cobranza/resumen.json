@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-09T19:19:27.193229",
+  "generado_en": "2026-07-10T01:46:34.905381",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12921,
-  "total_monto_pendiente_clp": 875887674.0,
+  "total_documentos_pendientes": 13016,
+  "total_monto_pendiente_clp": 883626439.0,
   "monto_por_aging": {
-    "+90 días": 45168637.0,
-    "1-30 días": 518776851.0,
-    "31-60 días": 186609388.0,
-    "61-90 días": 21457886.0,
-    "Vigente": 103874912.0
+    "+90 días": 45140638.0,
+    "1-30 días": 526689095.0,
+    "31-60 días": 187436275.0,
+    "61-90 días": 21420916.0,
+    "Vigente": 102939515.0
   },
   "monto_por_tipo": {
-    "BOLETA": 606048224.0,
+    "BOLETA": 613786989.0,
     "FACTURA": 269839450.0
   },
   "top_20_deudores": [
@@ -22,15 +22,15 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 145306187.0
+      "monto": 148389069.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 87989287.0
+      "monto": 88005777.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 81734540.0
+      "monto": 82830170.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -38,15 +38,15 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 42092511.0
+      "monto": 42429961.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 39390856.0
+      "monto": 39470848.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 30974628.0
+      "monto": 31080578.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -58,7 +58,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 20916437.0
+      "monto": 21376258.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -66,7 +66,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 20215040.0
+      "monto": 20419980.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -97,6 +97,6 @@
       "monto": 4104800.0
     }
   ],
-  "notas_credito_count": 553,
+  "notas_credito_count": 555,
   "pedidos_venta_count": 10000
 }
