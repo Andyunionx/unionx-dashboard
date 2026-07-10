@@ -1,40 +1,54 @@
 {
-  "generado_en": "2026-07-10T06:48:20.265431",
+  "generado_en": "2026-07-10T16:58:09.525360",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.051351737948791304,
-      "total_pickings": 13982,
+      "valor": 0.05130037153472421,
+      "total_pickings": 13996,
       "on_time": 721,
-      "on_time_pct": 0.05156629952796453,
-      "in_full": 13970,
-      "in_full_pct": 0.9991417536833072,
+      "on_time_pct": 0.05151471849099743,
+      "in_full": 13984,
+      "in_full_pct": 0.9991426121749071,
       "both": 718,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.031446540880503145,
-      "total_pickings": 477,
-      "on_time": 15,
-      "on_time_pct": 0.031446540880503145,
-      "in_full": 474,
-      "in_full_pct": 0.9937106918238994,
-      "both": 15,
+      "valor": 0.03333333333333333,
+      "total_pickings": 480,
+      "on_time": 16,
+      "on_time_pct": 0.03333333333333333,
+      "in_full": 477,
+      "in_full_pct": 0.99375,
+      "both": 16,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997229763421797,
-      "ok": 18044,
-      "total": 18049,
+      "valor": 0.9997236653034155,
+      "ok": 18089,
+      "total": 18094,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.287763532763533,
-      "n_recepciones": 234,
+      "valor": 10.920389595103577,
+      "n_recepciones": 236,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00924",
+          "proveedor": "",
+          "horas": 169.8,
+          "scheduled": "2026-07-03 14:08",
+          "done": "2026-07-10 15:55"
+        },
+        {
+          "picking": "CA1/IN/00939",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-10 15:05",
+          "done": "2026-07-10 15:11"
+        },
         {
           "picking": "CA1/IN/00938",
           "proveedor": "",
@@ -160,39 +174,25 @@
           "horas": 19.5,
           "scheduled": "2026-07-07 16:44",
           "done": "2026-07-08 12:11"
-        },
-        {
-          "picking": "CA1/IN/00932",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-07 21:32",
-          "done": "2026-07-07 21:32"
-        },
-        {
-          "picking": "CA1/IN/00931",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-07 21:29",
-          "done": "2026-07-07 21:30"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9471634208298052,
-      "total_so": 11885,
-      "total_con_pickings": 11810,
-      "cumplidos": 11186,
+      "valor": 0.9321059646784405,
+      "total_so": 12079,
+      "total_con_pickings": 12004,
+      "cumplidos": 11189,
       "parciales": 16,
-      "sin_iniciar": 608,
+      "sin_iniciar": 799,
       "error": null
     },
     "oct_30d": {
-      "valor": 78.01519050827159,
-      "n_orders": 13359,
+      "valor": 77.93482683281412,
+      "n_orders": 13375,
       "min_h": 0.006666666666666667,
       "max_h": 719.81,
-      "mediana_h": 29.284444444444443,
+      "mediana_h": 29.089166666666667,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 6876,
+      "lineas": 6928,
       "mes": "2026-07",
       "error": null
     },
@@ -373,8 +373,8 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 42,
-          "tarde": 42,
+          "total": 44,
+          "tarde": 44,
           "on_time_pct": 0.0
         },
         {
@@ -427,9 +427,9 @@
         },
         {
           "cliente": "Cencosud Retail S.A",
-          "total": 3,
+          "total": 4,
           "tarde": 1,
-          "on_time_pct": 0.6666666666666666
+          "on_time_pct": 0.75
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -7385,42 +7385,56 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.051351737948791304,
-      "total_pickings": 13982,
+      "valor": 0.05130037153472421,
+      "total_pickings": 13996,
       "on_time": 721,
-      "on_time_pct": 0.05156629952796453,
-      "in_full": 13970,
-      "in_full_pct": 0.9991417536833072,
+      "on_time_pct": 0.05151471849099743,
+      "in_full": 13984,
+      "in_full_pct": 0.9991426121749071,
       "both": 718,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.031446540880503145,
-      "total_pickings": 477,
-      "on_time": 15,
-      "on_time_pct": 0.031446540880503145,
-      "in_full": 474,
-      "in_full_pct": 0.9937106918238994,
-      "both": 15,
+      "valor": 0.03333333333333333,
+      "total_pickings": 480,
+      "on_time": 16,
+      "on_time_pct": 0.03333333333333333,
+      "in_full": 477,
+      "in_full_pct": 0.99375,
+      "both": 16,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997229763421797,
-      "ok": 18044,
-      "total": 18049,
+      "valor": 0.9997236653034155,
+      "ok": 18089,
+      "total": 18094,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.287763532763533,
-      "n_recepciones": 234,
+      "valor": 10.920389595103577,
+      "n_recepciones": 236,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00924",
+          "proveedor": "",
+          "horas": 169.8,
+          "scheduled": "2026-07-03 14:08",
+          "done": "2026-07-10 15:55"
+        },
+        {
+          "picking": "CA1/IN/00939",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-10 15:05",
+          "done": "2026-07-10 15:11"
+        },
         {
           "picking": "CA1/IN/00938",
           "proveedor": "",
@@ -7546,20 +7560,6 @@
           "horas": 19.5,
           "scheduled": "2026-07-07 16:44",
           "done": "2026-07-08 12:11"
-        },
-        {
-          "picking": "CA1/IN/00932",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-07 21:32",
-          "done": "2026-07-07 21:32"
-        },
-        {
-          "picking": "CA1/IN/00931",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-07 21:29",
-          "done": "2026-07-07 21:30"
         }
       ],
       "error": null
