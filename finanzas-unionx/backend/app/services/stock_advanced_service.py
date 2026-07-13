@@ -10,6 +10,7 @@ Calcula:
 
 Reusa OdooClient del backend.
 """
+import re
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, Callable, Optional, List
@@ -55,7 +56,7 @@ class StockAdvancedService:
         prods = self.odoo.search_read(
             'product.product',
             [('is_storable', '=', True), ('active', '=', True)],
-            ['id', 'name', 'default_code', 'categ_id', 'brand_id', 'avg_cost',
+            ['id', 'name', 'default_code', 'barcode', 'categ_id', 'brand_id', 'avg_cost',
              'standard_price', 'list_price', 'qty_available', 'free_qty', 'uom_id'],
             limit=20000,
         )
@@ -193,9 +194,19 @@ class StockAdvancedService:
             if qty > 0 and val == 0:
                 val = qty * cu
 
+            # SKU con fallback SOLO para productos activos (los que están en el
+            # maestro; los inactivos quedan con SKU vacío = fuera del detalle por SKU).
+            # default_code -> código [entre corchetes] en el nombre -> barcode -> nombre.
+            sku = (prod.get("default_code") or "").strip()
+            if prod and not sku:
+                _m = re.search(r"\[([^\]]+)\]", prod.get("name", "") or "")
+                sku = (_m.group(1).strip() if _m
+                       else (prod.get("barcode") or "").strip()
+                       or (prod.get("name") or "").strip())
+
             rows.append({
                 "product_id": pid,
-                "SKU": prod.get("default_code", "") or "",
+                "SKU": sku,
                 "Producto": prod.get("name", q["product_id"][1] if q.get("product_id") else "?"),
                 "Categoria": (prod.get("categ_id") or [0, ""])[1],
                 "Marca": (prod.get("brand_id") or [0, ""])[1] if isinstance(prod.get("brand_id"), (list, tuple)) else "",
