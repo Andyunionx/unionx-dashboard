@@ -1,102 +1,102 @@
 {
-  "generado_en": "2026-07-02T08:40:02.005225",
+  "generado_en": "2026-07-13T14:00:14.633789",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10803,
-  "total_monto_pendiente_clp": 742480348.0,
+  "total_documentos_pendientes": 11277,
+  "total_monto_pendiente_clp": 808440194.0,
   "monto_por_aging": {
-    "+90 días": 37740433.0,
-    "1-30 días": 502357813.0,
-    "31-60 días": 87852597.0,
-    "61-90 días": 23001121.0,
-    "Vigente": 91528384.0
+    "+90 días": 45645275.0,
+    "1-30 días": 474207515.0,
+    "31-60 días": 153205468.0,
+    "61-90 días": 30903946.0,
+    "Vigente": 104477990.0
   },
   "monto_por_tipo": {
-    "BOLETA": 529183635.0,
-    "FACTURA": 213296713.0
+    "BOLETA": 538600744.0,
+    "FACTURA": 269839450.0
   },
   "top_20_deudores": [
     {
       "partner": "Mercadolibre Chile Limitada",
-      "monto": 181350014.0
+      "monto": 188862979.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 108058278.0
-    },
-    {
-      "partner": "Cliente Kitchen Center",
-      "monto": 80803659.0
+      "monto": 97849459.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 55926619.0
+      "monto": 91716970.0
     },
     {
-      "partner": "Cliente Shopify",
-      "monto": 37048691.0
+      "partner": "Cliente Kitchen Center",
+      "monto": 88548618.0
+    },
+    {
+      "partner": "FALABELLA.COM",
+      "monto": 45972155.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 30261231.0
+      "monto": 29412254.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 28537968.0
+      "partner": "Cliente Shopify",
+      "monto": 28968799.0
     },
     {
-      "partner": "abc S.A.",
-      "monto": 21629808.0
+      "partner": "Cliente Paris",
+      "monto": 24045087.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 21516791.0
+      "monto": 23081411.0
+    },
+    {
+      "partner": "abc S.A.",
+      "monto": 22472966.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 22194110.0
     },
     {
       "partner": "Falabella.com SPA",
       "monto": 20915985.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 19988118.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 18716817.0
-    },
-    {
-      "partner": "AUTOBAHN S A",
-      "monto": 16301453.0
+      "partner": "Cliente Walmart",
+      "monto": 15938613.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
       "monto": 15679970.0
     },
     {
-      "partner": "Comercializadora SP Digital SPA",
-      "monto": 12132082.0
-    },
-    {
       "partner": "Walmart Serv. Generales Ltda.",
-      "monto": 10146934.0
+      "monto": 13204551.0
     },
     {
-      "partner": "Comercial ECCSA S A",
-      "monto": 7039452.0
+      "partner": "Cencosud Retail S.A",
+      "monto": 9567600.0
+    },
+    {
+      "partner": "Comercializadora SP Digital SPA",
+      "monto": 8100546.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 6460120.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
     },
     {
-      "partner": "Global Reward Solutions",
-      "monto": 3945144.0
-    },
-    {
       "partner": "Sawa SPA",
-      "monto": 3279035.0
+      "monto": 4104800.0
     }
   ],
-  "notas_credito_count": 558,
+  "notas_credito_count": 555,
   "pedidos_venta_count": 10000
 }
