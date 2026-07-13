@@ -102,6 +102,7 @@ with st.sidebar:
 # NAVEGACIÓN
 # ============================================================
 from views.planning.analisis_planificacion import render as render_analisis_planif
+from views.planning.descarga_reporte import render as render_descarga_reporte
 from views.planning.triada import render as render_triada
 from views.planning.triada_proyectada import render as render_triada_proyectada
 from views.planning.triada_cobertura import render as render_triada_cobertura
@@ -197,6 +198,10 @@ pages = {
     "🔍 Auditoría": [
         st.Page(render_audit_stock, title="Stock inicio mes (planif vs Odoo)",
                 icon="🔍", url_path="pln-audit-stock"),
+    ],
+    "📁 Reportes": [
+        st.Page(render_descarga_reporte, title="Descarga Reporte Planificación",
+                icon="📁", url_path="pln-descarga-reporte"),
     ],
 }
 
