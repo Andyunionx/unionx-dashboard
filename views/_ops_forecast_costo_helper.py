@@ -29,6 +29,27 @@ VOLUMEN_HIST = PROJECT_ROOT / "data" / "operaciones" / "volumen_inventario_hist.
 PYL_PARQUET = PROJECT_ROOT / "data" / "finanzas" / "control_gestion.parquet"
 PYL_MENSUAL = PROJECT_ROOT / "data" / "finanzas" / "pyl_mensual.parquet"
 
+# Fix WMS (13-jul-2026): el volumen "real" del equipo debe excluir los
+# despachos que ejecuta el marketplace desde sus bodegas de fulfillment y
+# acreditar las reposiciones + BRSt que el equipo sí prepara. Rige SOLO desde
+# jul-2026 (meses previos con criterio antiguo = todo outgoing, para no
+# alterar el COP histórico ya reportado).
+FIX_WMS_DESDE = pd.Timestamp("2026-07-01")
+_ENT_EQUIPO_CATS = ["entrega_ca1", "reposicion_fulfillment", "entrega_reserva"]
+
+
+def _filtrar_volumen_equipo(df: pd.DataFrame) -> pd.DataFrame:
+    """Aplica el criterio de volumen del equipo con corte por fecha.
+
+    Antes de FIX_WMS_DESDE: todo outgoing (histórico). Desde: entregas equipo
+    por categoria_wms. Fallback a outgoing si el parquet no trae categoria_wms.
+    """
+    if "categoria_wms" not in df.columns:
+        return df[df["picking_type_code"] == "outgoing"].copy()
+    antiguo = (df["fecha_done"] < FIX_WMS_DESDE) & (df["picking_type_code"] == "outgoing")
+    nuevo = (df["fecha_done"] >= FIX_WMS_DESDE) & (df["categoria_wms"].isin(_ENT_EQUIPO_CATS))
+    return df[antiguo | nuevo].copy()
+
 
 # ============================================================
 # CACHE INVALIDATION POR MTIME
@@ -166,7 +187,7 @@ def _calcular_ratios_historicos_cached(meses_atras: int,
 
     df_op = pd.read_parquet(VOLUMEN_HIST)
     df_op["fecha_done"] = pd.to_datetime(df_op["fecha_done"], errors="coerce")
-    df_op = df_op[df_op["picking_type_code"] == "outgoing"].copy()
+    df_op = _filtrar_volumen_equipo(df_op)
     df_op["mes_str"] = df_op["fecha_done"].dt.to_period("M").astype(str)
 
     df_fcst = pd.read_parquet(FCST_EERR)
@@ -333,7 +354,7 @@ def _cargar_volumen_real_mensual_cached(year: int,
         return pd.DataFrame()
     df = pd.read_parquet(p)
     df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
-    df = df[df["picking_type_code"] == "outgoing"].copy()
+    df = _filtrar_volumen_equipo(df)
     df = df[df["fecha_done"].dt.year == year].copy()
     if df.empty:
         return pd.DataFrame()

@@ -44,6 +44,57 @@ OUT_RESUMEN = OUT_DIR / "volumen_inventario_hist_resumen.json"
 # frescura. (Antes 7 días era muy conservador y dejaba el WMS ~1 semana atrás.)
 DIAS_BUFFER_VIVO = 2
 
+# Ubicaciones de las bodegas de fulfillment de marketplaces (ML, Falabella,
+# Paris, Ripley, Walmart, Entel). Los despachos DESDE estas bodegas los ejecuta
+# el marketplace, NO el equipo de bodega. Las reposiciones HACIA ellas sí las
+# prepara el equipo.
+_BF_LOCS = ("BFML", "BFFa", "BFP", "BFR", "BFW", "BFE")
+
+
+def _clasificar_wms(ptn, code, lo, ld):
+    """Clasifica un picking según el trabajo real del equipo de bodega.
+
+    Devuelve una de las categorías (ver taxonomía acordada 13-jul-2026):
+      pick_ca1 / pick_reserva          → numerador de PRODUCTIVIDAD
+      entrega_ca1 / reposicion_fulfillment / entrega_reserva → ENTREGAS equipo
+      reslotting / recepcion_putaway / interno_ca1_otro       → informativo
+      fulfillment_marketplace / otra_bodega                   → EXCLUIR
+    """
+    ptn = ptn or ""
+    lo = lo or ""
+    ld = ld or ""
+    car = "Carrascal" in ptn
+    res = "Reserva Stock" in ptn
+    ff = "Fulfillment" in ptn
+    dest_bf = any(b in ld for b in _BF_LOCS)
+    orig_bf = any(b in lo for b in _BF_LOCS)
+
+    if code == "outgoing":
+        if ff or orig_bf:                 # despacho desde bodega marketplace
+            return "fulfillment_marketplace"
+        if car:
+            return "entrega_ca1"
+        if res:
+            return "entrega_reserva"
+        return "otra_bodega"
+
+    if code == "internal":
+        if dest_bf:                       # reposición a fulfillment (la prepara el equipo)
+            return "reposicion_fulfillment"
+        if res:
+            return "pick_reserva"
+        if car:
+            if "Output" in ld:            # pick a zona de salida
+                return "pick_ca1"
+            if "Input" in lo:             # putaway de recepción
+                return "recepcion_putaway"
+            if "Stock" in lo and "Stock" in ld:
+                return "reslotting"
+            return "interno_ca1_otro"
+        return "otra_bodega"
+
+    return "otra_bodega"
+
 
 def _get_odoo():
     """Crea cliente Odoo desde env vars."""
@@ -127,46 +178,73 @@ def main():
     df_p["partner_name"] = df_p["partner_id"].apply(
         lambda x: x[1] if isinstance(x, list) and len(x) > 1 else "")
 
-    print(f"[4] Consultando stock.move agregados por picking (read_group)...",
+    print(f"[4] Consultando stock.move agregados por picking + ubicación (read_group)...",
           flush=True)
     pids = df_p["picking_id"].tolist()
     chunk_size = 1000
-    moves_agg = []
+    moves_rows = []
     for i in range(0, len(pids), chunk_size):
         chunk = pids[i:i + chunk_size]
         print(f"    chunk {i // chunk_size + 1}/{(len(pids) + chunk_size - 1) // chunk_size} "
               f"({len(chunk)} pickings)", flush=True)
         try:
+            # Agrupamos por (picking, origen, destino) para poder clasificar el
+            # flujo (pick / reposición fulfillment / reslotting / entrega). Un
+            # picking normal trae un solo par de ubicaciones → una fila.
             rg = odoo._execute_with_retry(
                 "read_group",
                 "stock.move",
                 [("picking_id", "in", chunk), ("state", "=", "done")],
                 {"fields": ["picking_id", "product_uom_qty:sum"],
-                 "groupby": ["picking_id"], "lazy": False},
+                 "groupby": ["picking_id", "location_id", "location_dest_id"],
+                 "lazy": False},
             )
             for r in rg:
                 pid_raw = r.get("picking_id")
                 pid_val = pid_raw[0] if isinstance(pid_raw, list) else pid_raw
-                moves_agg.append({
+                lo = r.get("location_id")
+                ld = r.get("location_dest_id")
+                moves_rows.append({
                     "picking_id": pid_val,
-                    "n_lineas": r.get("__count", r.get("picking_id_count", 0)),
+                    "location_orig": lo[1] if isinstance(lo, list) and len(lo) > 1 else "",
+                    "location_dest": ld[1] if isinstance(ld, list) and len(ld) > 1 else "",
+                    "n_lineas": r.get("__count", 0),
                     "n_unidades": r.get("product_uom_qty", 0) or 0,
                 })
         except Exception as e:
             print(f"    [ERR chunk] {type(e).__name__}: {e}", flush=True)
             continue
 
-    df_m = pd.DataFrame(moves_agg) if moves_agg else pd.DataFrame(
-        columns=["picking_id", "n_lineas", "n_unidades"])
+    cols_m = ["picking_id", "location_orig", "location_dest", "n_lineas", "n_unidades"]
+    df_mv = pd.DataFrame(moves_rows) if moves_rows else pd.DataFrame(columns=cols_m)
+
+    # Agregado a nivel picking: total uds/líneas + par de ubicaciones DOMINANTE
+    # (el de mayor volumen), que usamos para clasificar el flujo.
+    if len(df_mv):
+        tot = (df_mv.groupby("picking_id")
+               .agg(n_unidades=("n_unidades", "sum"),
+                    n_lineas=("n_lineas", "sum")).reset_index())
+        idx = df_mv.groupby("picking_id")["n_unidades"].idxmax()
+        dom = df_mv.loc[idx, ["picking_id", "location_orig", "location_dest"]]
+        df_m = tot.merge(dom, on="picking_id", how="left")
+    else:
+        df_m = pd.DataFrame(columns=["picking_id", "n_unidades", "n_lineas",
+                                     "location_orig", "location_dest"])
     print(f"    {len(df_m):,} pickings con moves agregados", flush=True)
 
-    print(f"\n[5] Merge + guardar parquet...", flush=True)
+    print(f"\n[5] Merge + clasificar + guardar parquet...", flush=True)
     df = df_p.merge(df_m, on="picking_id", how="left")
     df["n_lineas"] = df["n_lineas"].fillna(0).astype(int)
     df["n_unidades"] = df["n_unidades"].fillna(0)
+    df["location_orig"] = df["location_orig"].fillna("")
+    df["location_dest"] = df["location_dest"].fillna("")
+    df["categoria_wms"] = df.apply(
+        lambda r: _clasificar_wms(r["picking_type_name"], r["picking_type_code"],
+                                  r["location_orig"], r["location_dest"]), axis=1)
 
     df_out = df[["picking_id", "name", "fecha_done", "scheduled_date",
                  "picking_type_name", "partner_name", "picking_type_code",
+                 "location_orig", "location_dest", "categoria_wms",
                  "n_unidades", "n_lineas"]].copy()
     df_out.to_parquet(OUT_PARQUET, index=False)
     print(f"    {OUT_PARQUET.relative_to(PROJECT_ROOT)} "
@@ -184,6 +262,7 @@ def main():
         "n_unidades_total": float(df_out["n_unidades"].sum()),
         "n_lineas_total": int(df_out["n_lineas"].sum()),
         "top_picking_types": df_out["picking_type_name"].value_counts().head(10).to_dict(),
+        "uds_por_categoria": df_out.groupby("categoria_wms")["n_unidades"].sum().round(0).to_dict(),
     }
     with open(OUT_RESUMEN, "w", encoding="utf-8") as f:
         json.dump(resumen, f, indent=2, ensure_ascii=False, default=str)

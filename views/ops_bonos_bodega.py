@@ -104,15 +104,35 @@ def _dias_habiles(year: int, month: int) -> int:
 
 # ── Datos WMS ─────────────────────────────────────────────────────────────────
 
+# Fix WMS (13-jul-2026): a partir de este mes el bono cuenta ENTREGAS DEL EQUIPO
+# (entrega_ca1 + reposiciones a fulfillment + salidas BRSt), excluyendo los
+# despachos que ejecuta el marketplace desde sus bodegas de fulfillment. Meses
+# anteriores se dejan con el criterio antiguo (todo outgoing) porque sus bonos
+# ya se pagaron — el fix rige SOLO HACIA ADELANTE (decisión Andrés 13-jul).
+FIX_WMS_DESDE = pd.Timestamp("2026-07-01")
+ENT_EQUIPO_CATS = ["entrega_ca1", "reposicion_fulfillment", "entrega_reserva"]
+
+
 @st.cache_data(ttl=600, show_spinner=False)
 def _wms_mensual() -> pd.DataFrame:
-    """Unidades + líneas + pedidos outgoing por (year, month) desde parquet."""
+    """Unidades + líneas + pedidos por (year, month) desde parquet.
+
+    Hasta jun-2026: todo outgoing (criterio histórico, bonos ya pagados).
+    Desde jul-2026: entregas del equipo por categoria_wms (fix, excluye
+    fulfillment del marketplace, acredita reposiciones + BRSt).
+    """
     if not WMS_PARQUET.exists():
         return pd.DataFrame(columns=["year", "month", "unidades", "lineas", "pedidos"])
     try:
         df = pd.read_parquet(WMS_PARQUET)
         df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
-        df = df[df["picking_type_code"] == "outgoing"].dropna(subset=["fecha_done"])
+        df = df.dropna(subset=["fecha_done"])
+        if "categoria_wms" in df.columns:
+            antiguo = (df["fecha_done"] < FIX_WMS_DESDE) & (df["picking_type_code"] == "outgoing")
+            nuevo = (df["fecha_done"] >= FIX_WMS_DESDE) & (df["categoria_wms"].isin(ENT_EQUIPO_CATS))
+            df = df[antiguo | nuevo]
+        else:
+            df = df[df["picking_type_code"] == "outgoing"]  # fallback parquet antiguo
         df["year"] = df["fecha_done"].dt.year
         df["month"] = df["fecha_done"].dt.month
 

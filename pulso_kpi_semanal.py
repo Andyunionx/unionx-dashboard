@@ -25,13 +25,28 @@ AZ = "#1F4E79"; UNX = "#4884FC"; GR = "#EBF0F8"; VE = "#16a34a"; RO = "#dc2626";
 def clp(n): return "$" + "{:,.0f}".format(n).replace(",", ".")
 def miles(n): return "{:,.0f}".format(n).replace(",", ".")
 
-MES_REF = 5            # Mayo = mes de referencia (ultimo cerrado)
-HORAS_MES_REF = 798.0  # mayo: 5 pers x 159,6h (confirmado)
 PERS_DEFAULT, HRS_PERS_DEFAULT = 5, 42.0  # semana normal = 210 h-pers
+# Mes de referencia = mes anterior cerrado (regla: mes actual − 1). Dinámico.
+_REF = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
+MES_REF, YEAR_REF = _REF.month, _REF.year
+_MESES_N = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
+            7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
+MES_REF_LBL = f"{_MESES_N[MES_REF]} {str(YEAR_REF)[2:]}"
+# Horas reales por mes (5 pers, L-J 9h · V 6h). May confirmado 798; Jun estándar
+# 930 (22 días háб, sin feriados). Añadir meses a medida que cierran.
+HORAS_MES = {5: 798.0, 6: 930.0}
+HORAS_MES_REF = HORAS_MES.get(MES_REF, PERS_DEFAULT * HRS_PERS_DEFAULT * 4.33)
 # Horas reales por semana (manual; no hay feed). Default 5x42=210.
+# Dotación julio 2026 (def. Andrés 13-jul): S28 5 pers · S29-31 4 pers, feriado
+# jue 16. Horario L-J 9h · V 6h. Semanas W-SUN (Lun-Dom).
 HORAS_SEMANA = {
     "2026-06-01/2026-06-07": 419.0,  # Cyber: Lun-Jue 7x12 + Vie 7x9 + Sab 4x5
     "2026-06-08/2026-06-14": 210.0,  # normal: 5 x 42
+    "2026-06-29/2026-07-05": 210.0,  # 5 pers, 5 días (Jul 1-3 + Jun 29-30)
+    "2026-07-06/2026-07-12": 210.0,  # S28: 5 pers x 42
+    "2026-07-13/2026-07-19": 132.0,  # S29: 4 pers, feriado jue 16 → 4x(9+9+9+6)
+    "2026-07-20/2026-07-26": 168.0,  # S30: 4 pers x 42
+    "2026-07-27/2026-08-02": 168.0,  # S31: 4 pers x 42 (Jul 27-31)
 }
 def horas_de(sem_str): return HORAS_SEMANA.get(sem_str, PERS_DEFAULT * HRS_PERS_DEFAULT)
 
@@ -46,8 +61,18 @@ def _wlbl(p): return f"{p.start_time:%d}-{p.end_time:%d} {p.end_time:%b}"
 wms = pd.read_parquet(ROOT / "data/operaciones/volumen_inventario_hist.parquet")
 wms["fecha_done"] = pd.to_datetime(wms["fecha_done"])
 wms["sem"] = wms["fecha_done"].dt.to_period("W-SUN")
-PICKS = ["Bodega Carrascal Nº9-10: Pick", "Bodega Carrascal N°9-10: Pick"]
+# Clasificación por categoria_wms (extract_volumen_inventario.py, taxonomía
+# 13-jul-2026): pick equipo = pick_ca1 + pick_reserva; entregas equipo =
+# entrega_ca1 + reposicion_fulfillment (a bodegas marketplace, la PREPARA el
+# equipo) + entrega_reserva. Excluye fulfillment_marketplace (lo despacha el
+# marketplace) y otras bodegas.
+PICK_CATS = ["pick_ca1", "pick_reserva"]
+ENT_CATS = ["entrega_ca1", "reposicion_fulfillment", "entrega_reserva"]
+PICKS = ["Bodega Carrascal Nº9-10: Pick", "Bodega Carrascal N°9-10: Pick"]  # fallback
 def _filt(df, k):
+    if "categoria_wms" in df.columns:
+        return df[df["categoria_wms"].isin(PICK_CATS if k == "pick" else ENT_CATS)]
+    # fallback parquet antiguo sin categoria_wms
     if k == "pick": return df[df["picking_type_name"].isin(PICKS)]
     return df[df["picking_type_name"].str.contains("Delivery Orders", na=False)
               & df["picking_type_name"].str.contains("Carrascal", na=False)]
@@ -56,7 +81,7 @@ def wms_sem(sem):
     return dict(upick=_filt(d, "pick")["n_unidades"].sum(), pent=len(_filt(d, "ent")),
                 uent=_filt(d, "ent")["n_unidades"].sum())
 wa, wp = wms_sem(W_ACT), wms_sem(W_PREV)
-wmay = wms[(wms["fecha_done"].dt.year == 2026) & (wms["fecha_done"].dt.month == MES_REF)]
+wmay = wms[(wms["fecha_done"].dt.year == YEAR_REF) & (wms["fecha_done"].dt.month == MES_REF)]
 wmay_v = dict(upick=_filt(wmay, "pick")["n_unidades"].sum(), pent=len(_filt(wmay, "ent")),
               uent=_filt(wmay, "ent")["n_unidades"].sum())
 
@@ -85,7 +110,7 @@ def vta_sem(sem):
 pa, ua, vna = vta_sem(W_ACT); pp, up, vnp = vta_sem(W_PREV)
 hist = pd.read_parquet(ROOT / "data/historico/ventas_historico.parquet",
                        columns=["anio_venta", "mes_venta", "pedido", "cantidad", "venta_neta"])
-hmay = hist[(hist["anio_venta"] == 2026) & (hist["mes_venta"] == MES_REF)]
+hmay = hist[(hist["anio_venta"] == YEAR_REF) & (hist["mes_venta"] == MES_REF)]
 p_may, u_may, vn_may = hmay["pedido"].nunique(), hmay["cantidad"].sum(), hmay["venta_neta"].sum()
 # ventas del mes en curso, mismas semanas cerradas (para COP / %costo·venta)
 vmes = mesact[mesact["sem"].isin(SEM_MES)]
@@ -93,7 +118,7 @@ p_mes, u_mes, vn_mes = vmes["pedido"].nunique(), vmes["cantidad"].sum(), vmes["v
 
 # -- Costo operativo TOTAL (P&L area OPERACIONES, FCST=real) -----------------
 cg = pd.read_parquet(ROOT / "data/finanzas/control_gestion.parquet")
-costo_mes = abs(cg[(cg["year"] == 2026) & (cg["month"] == MES_REF) & (cg["area"] == "OPERACIONES")
+costo_mes = abs(cg[(cg["year"] == YEAR_REF) & (cg["month"] == MES_REF) & (cg["area"] == "OPERACIONES")
                    & (cg["kpi"] == "GASTO") & (cg["escenario"] == "FCST")]["valor"].sum()) * 1000
 costo_sem = costo_mes / 4.33  # prorrateo run-rate (costo mayormente fijo)
 costo_mes_acum = costo_sem * n_sem_mes  # run-rate mayo x semanas cerradas del mes en curso
@@ -143,7 +168,7 @@ def flecha(cur, ref, mejor_arriba=True):
 
 lbl_a, lbl_p = _wlbl(W_ACT), _wlbl(W_PREV)
 HOP = (f'<tr style="background:{AZ};">{th("Operación (CA1)","left")}{th("Sem "+lbl_a)}'
-       f'{th("Sem "+lbl_p)}{th("Δ sem ant")}{th(MES_ACT_LBL+" (acum)")}{th("Mayo mes")}</tr>')
+       f'{th("Sem "+lbl_p)}{th("Δ sem ant")}{th(MES_ACT_LBL+" (acum)")}{th(MES_REF_LBL+" mes")}</tr>')
 def rop(i, lbl, a, p, mes, may):
     f, col = flecha(a, p)
     return tr(i, [td(lbl, "left"), td(miles(a), c="font-weight:bold;"), td(miles(p), c="color:#94a3b8;"),
@@ -155,7 +180,7 @@ op_tbl = f'<table style="width:100%;border-collapse:collapse;">{HOP}' + \
     rop(1, "Horas (h·pers)", h_act, h_prev, h_mes, HORAS_MES_REF) + "</table>"
 
 HEF = (f'<tr style="background:{AZ};">{th("Eficiencia","left")}{th("Sem "+lbl_a)}'
-       f'{th("Sem "+lbl_p)}{th(MES_ACT_LBL+" (acum)")}{th("Mayo mes")}{th("Δ vs Mayo")}</tr>')
+       f'{th("Sem "+lbl_p)}{th(MES_ACT_LBL+" (acum)")}{th(MES_REF_LBL+" mes")}{th("Δ vs "+MES_REF_LBL)}</tr>')
 def reff(i, lbl, a, p, mes, may, fmt, mejor_arriba):
     f, col = flecha(a, may, mejor_arriba)
     # mes=None -> COP no se acumula (el Cyber distorsiona el costo del mes)
@@ -174,17 +199,17 @@ otif_dir = (f"{DN} cayendo" if (otif_ser and otif_ser[-1][1] < otif_ser[0][1]) e
 
 html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:740px;line-height:1.5;">
 <h2 style="color:{AZ};margin-bottom:2px;">\U0001f4c8 Pulso KPI Operacional — Semanal</h2>
-<div style="color:#64748b;font-size:12px;">Semana <b>{lbl_a}</b> · vs semana anterior {lbl_p} · vs Mayo (mes)</div>
+<div style="color:#64748b;font-size:12px;">Semana <b>{lbl_a}</b> · vs semana anterior {lbl_p} · vs {MES_REF_LBL} (mes)</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Operación</h3>
 {op_tbl}
-<div style="font-size:11px;color:{GR2};">Volúmenes: semana vs semana · <b>{MES_ACT_LBL} (acum)</b> = suma de las {n_sem_mes} semanas L-D cerradas del mes en curso · Mayo mes = escala (total del mes).</div>
+<div style="font-size:11px;color:{GR2};">Volúmenes: semana vs semana · <b>{MES_ACT_LBL} (acum)</b> = suma de las {n_sem_mes} semanas L-D cerradas del mes en curso · {MES_REF_LBL} mes = escala (total del mes).</div>
 
-<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Eficiencia (vs Mayo mes)</h3>
+<h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Eficiencia (vs {MES_REF_LBL} mes)</h3>
 {ef_tbl}
 <div style="font-size:11px;color:{GR2};">Productividad = uds pickeadas / horas reales de la semana (bench {BENCH} uds/h).
 COP = costo operativo total prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ volumen.
-COP/unidad = métrica primaria. {MES_ACT_LBL} (acum) muestra solo productividad del mes ({n_sem_mes} semanas cerradas); el COP no se acumula porque el Cyber lo distorsiona (se reporta aparte). Δ vs Mayo mes (cierra el sesgo de una semana alta/baja).</div>
+COP/unidad = métrica primaria. {MES_ACT_LBL} (acum) muestra solo productividad del mes ({n_sem_mes} semanas cerradas); el COP no se acumula porque el Cyber lo distorsiona (se reporta aparte). Δ vs {MES_REF_LBL} mes (cierra el sesgo de una semana alta/baja).</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio &amp; Stock</h3>
 <div style="font-size:13px;">OTIF mensual: {otif_txt} <b>{otif_dir}</b> · OFR {ofr:.1f}% · OCT {oct_med:.0f}h · Pick {pacc:.2f}%</div>
@@ -203,6 +228,10 @@ if __name__ == "__main__":
     print(f"COP/uds : act {clp(copu_a)} | prev {clp(copu_p)} | mayo {clp(copu_may)}")
     print(f"COP/ped : act {clp(copp_a)} | prev {clp(copp_p)} | mayo {clp(copp_may)}")
     print(f"%cto/vta: act {pctv_a:.1f}% | prev {pctv_p:.1f}% | mayo {pctv_may:.1f}%")
+    _outp = ROOT / "data" / "outputs" / f"pulso_kpi_{_key(W_ACT).replace('/', '_')}.html"
+    _outp.parent.mkdir(parents=True, exist_ok=True)
+    _outp.write_text(html, encoding="utf-8")
+    print(f"HTML guardado: {_outp}")
     if os.environ.get("SEND") == "1":
         from email.mime.text import MIMEText
         from google.oauth2.credentials import Credentials

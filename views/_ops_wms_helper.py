@@ -12,11 +12,163 @@ Cache 5 min en cada función.
 """
 from collections import defaultdict
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional
 
+import pandas as pd
 import streamlit as st
 
 from views._ops_odoo_helper import get_ops_odoo_client
+
+
+# ============================================================
+# Clasificación de trabajo del equipo de bodega (fix WMS 13-jul-2026)
+# Espeja extract_volumen_inventario._clasificar_wms. El informe/KPI WMS
+# cuenta ENTREGAS DEL EQUIPO (entrega_ca1 + reposiciones a fulfillment +
+# salidas BRSt) y EXCLUYE los despachos que ejecuta el marketplace desde
+# sus bodegas de fulfillment. VOLUMEN acá; el COSTO (COP) sale del P&L
+# (control_gestion), NO de este parquet.
+# ============================================================
+_PROOT = Path(__file__).resolve().parent.parent
+_VOLUMEN_HIST = _PROOT / "data" / "operaciones" / "volumen_inventario_hist.parquet"
+_BF_LOCS = ("BFML", "BFFa", "BFP", "BFR", "BFW", "BFE")
+_ENT_EQUIPO_CATS = ("entrega_ca1", "reposicion_fulfillment", "entrega_reserva")
+
+
+def _clasificar_wms(ptn, code, lo, ld):
+    """Mirror de extract_volumen_inventario._clasificar_wms (ver taxonomía)."""
+    ptn = ptn or ""; lo = lo or ""; ld = ld or ""
+    car = "Carrascal" in ptn
+    res = "Reserva Stock" in ptn
+    ff = "Fulfillment" in ptn
+    dest_bf = any(b in ld for b in _BF_LOCS)
+    orig_bf = any(b in lo for b in _BF_LOCS)
+    if code == "outgoing":
+        if ff or orig_bf:
+            return "fulfillment_marketplace"
+        if car:
+            return "entrega_ca1"
+        if res:
+            return "entrega_reserva"
+        return "otra_bodega"
+    if code == "internal":
+        if dest_bf:
+            return "reposicion_fulfillment"
+        if res:
+            return "pick_reserva"
+        if car:
+            if "Output" in ld:
+                return "pick_ca1"
+            if "Input" in lo:
+                return "recepcion_putaway"
+            if "Stock" in lo and "Stock" in ld:
+                return "reslotting"
+            return "interno_ca1_otro"
+        return "otra_bodega"
+    return "otra_bodega"
+
+
+def _gap_entregas_equipo(odoo, desde: str, hasta: str) -> dict:
+    """Entregas del equipo (clasificadas) para un rango que el snapshot aún no
+    cubre — consulta Odoo en vivo (tramo A). Rango chico (≤ buffer del extract).
+    """
+    out = {"n_pedidos": 0, "n_unidades": 0.0, "n_lineas": 0}
+    picks = odoo.search_read(
+        "stock.picking",
+        [("state", "=", "done"), ("date_done", ">=", desde), ("date_done", "<", hasta),
+         ("picking_type_code", "in", ["outgoing", "internal"])],
+        ["id", "picking_type_id", "picking_type_code"], limit=50000,
+    )
+    if not picks:
+        return out
+    ptn = {p["id"]: (p["picking_type_id"][1] if isinstance(p.get("picking_type_id"), list) else "")
+           for p in picks}
+    code = {p["id"]: p.get("picking_type_code", "") for p in picks}
+    pids = list(ptn.keys())
+    tot = defaultdict(lambda: [0.0, 0])         # pid -> [uds_total, lineas_total]
+    best = {}                                   # pid -> (uds_par, lo, ld) del par dominante
+    for i in range(0, len(pids), 500):
+        chunk = pids[i:i + 500]
+        rg = odoo._execute_with_retry(
+            "read_group", "stock.move",
+            [("picking_id", "in", chunk), ("state", "=", "done")],
+            {"fields": ["picking_id", "product_uom_qty:sum"],
+             "groupby": ["picking_id", "location_id", "location_dest_id"], "lazy": False},
+        )
+        for r in rg:
+            praw = r.get("picking_id"); pid = praw[0] if isinstance(praw, list) else praw
+            q = r.get("product_uom_qty", 0) or 0
+            lo = r.get("location_id"); ld = r.get("location_dest_id")
+            lo = lo[1] if isinstance(lo, list) and len(lo) > 1 else ""
+            ld = ld[1] if isinstance(ld, list) and len(ld) > 1 else ""
+            tot[pid][0] += q
+            tot[pid][1] += r.get("__count", 0)
+            if pid not in best or q > best[pid][0]:
+                best[pid] = (q, lo, ld)
+    for pid, (uds, lineas) in tot.items():
+        _, lo, ld = best.get(pid, (0, "", ""))
+        cat = _clasificar_wms(ptn.get(pid, ""), code.get(pid, ""), lo, ld)
+        if cat in _ENT_EQUIPO_CATS:
+            out["n_pedidos"] += 1
+            out["n_unidades"] += uds
+            out["n_lineas"] += lineas
+    return out
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def _load_vol_equipo():
+    """Snapshot parquet filtrado a ENTREGAS DEL EQUIPO (categoria_wms).
+    Devuelve (df, fecha_max). Fallback a outgoing si el parquet es viejo."""
+    if not _VOLUMEN_HIST.exists():
+        return None, None
+    try:
+        df = pd.read_parquet(_VOLUMEN_HIST)
+        df["fecha_done"] = pd.to_datetime(df["fecha_done"], errors="coerce")
+        if "categoria_wms" in df.columns:
+            df = df[df["categoria_wms"].isin(_ENT_EQUIPO_CATS)].dropna(subset=["fecha_done"])
+        else:
+            df = df[df["picking_type_code"] == "outgoing"].dropna(subset=["fecha_done"])
+        return df, df["fecha_done"].max()
+    except Exception:
+        return None, None
+
+
+def _entregas_equipo_rango(odoo, desde_d, hasta_d, label) -> Dict:
+    """Motor compartido (fix WMS 13-jul): entregas del equipo en [desde,hasta).
+    Snapshot parquet (B) + complemento Odoo en vivo para el tramo posterior (A).
+    Devuelve claves duplicadas (n_unidades / n_unidades_despachadas, etc.) para
+    servir a productividad_calendario y productividad_periodo por igual."""
+    from datetime import date as _date, timedelta as _td
+    df, pmax = _load_vol_equipo()
+    n_ped = n_lin = 0
+    n_uds = 0.0
+    if df is not None:
+        d = df[(df["fecha_done"] >= pd.Timestamp(desde_d))
+               & (df["fecha_done"] < pd.Timestamp(hasta_d))]
+        n_ped += int(d["picking_id"].nunique())
+        n_uds += float(d["n_unidades"].sum())
+        n_lin += int(d["n_lineas"].sum())
+    if odoo is not None and pmax is not None and hasta_d > pmax.date():
+        gap_desde = max(desde_d, (pmax + pd.Timedelta(days=1)).date())
+        gap_hasta = min(hasta_d, _date.today() + _td(days=1))
+        if gap_desde < gap_hasta:
+            try:
+                g = _gap_entregas_equipo(odoo, gap_desde.strftime("%Y-%m-%d"),
+                                         gap_hasta.strftime("%Y-%m-%d"))
+                n_ped += g["n_pedidos"]; n_uds += g["n_unidades"]; n_lin += g["n_lineas"]
+            except Exception:
+                pass
+    return {
+        "periodo": label,
+        "fecha_desde": desde_d.strftime("%Y-%m-%d"),
+        "n_pedidos": n_ped,
+        "n_lineas": n_lin,
+        "n_lineas_pickeadas": n_lin,
+        "n_unidades": int(n_uds),
+        "n_unidades_despachadas": int(n_uds),
+        "uds_por_pedido": (n_uds / n_ped) if n_ped else 0,
+        "lineas_por_pedido": (n_lin / n_ped) if n_ped else 0,
+    }
 
 
 # ============================================================
@@ -1089,9 +1241,12 @@ def productividad_calendario(tipo: str = "mes", anio: int = None, mes: int = Non
     """
     from datetime import date as _date, timedelta as _td
     import calendar
+    # El motor usa el snapshot parquet (categoria_wms); Odoo solo complementa el
+    # tramo posterior al snapshot. Si Odoo no está, igual servimos desde parquet.
     odoo = get_ops_odoo_client()
-    if odoo is None:
-        return {"items": [], "error": "Odoo no disponible"}
+    _df_chk, _ = _load_vol_equipo()
+    if odoo is None and _df_chk is None:
+        return {"items": [], "error": "Sin snapshot ni Odoo"}
 
     hoy = _date.today()
     anio = anio or hoy.year
@@ -1141,48 +1296,10 @@ def productividad_calendario(tipo: str = "mes", anio: int = None, mes: int = Non
 
 
 def _calc_productividad(odoo, desde, hasta, label) -> Dict:
-    """Helper: calcula productividad para un rango específico."""
-    desde_s = desde.strftime("%Y-%m-%d")
-    hasta_s = hasta.strftime("%Y-%m-%d")
+    """Productividad de un rango = ENTREGAS DEL EQUIPO (fix WMS 13-jul).
+    Delega al motor compartido (parquet categoria_wms + complemento vivo)."""
     try:
-        pickings = odoo.search_read(
-            "stock.picking",
-            [("state", "=", "done"),
-             ("date_done", ">=", desde_s),
-             ("date_done", "<", hasta_s),
-             ("picking_type_code", "=", "outgoing")],
-            ["id"], limit=20000,
-        )
-        n_pedidos = len(pickings)
-        n_lineas = 0
-        n_unidades = 0
-        if pickings:
-            pid_ids = [p["id"] for p in pickings]
-            # Paginar por chunks de 100 picking_ids
-            for i in range(0, len(pid_ids), 100):
-                chunk = pid_ids[i:i + 100]
-                try:
-                    moves = odoo.search_read(
-                        "stock.move",
-                        [("picking_id", "in", chunk),
-                         ("state", "=", "done")],
-                        ["product_uom_qty", "quantity"],
-                        limit=20000,
-                    )
-                    n_lineas += len(moves)
-                    n_unidades += sum(m.get("quantity", 0) or 0 for m in moves)
-                except Exception:
-                    continue
-        return {
-            "periodo": label,
-            "fecha_desde": desde_s,
-            "fecha_hasta": hasta_s,
-            "n_pedidos": n_pedidos,
-            "n_lineas": n_lineas,
-            "n_unidades": int(n_unidades),
-            "uds_por_pedido": (n_unidades / n_pedidos) if n_pedidos else 0,
-            "lineas_por_pedido": (n_lineas / n_pedidos) if n_pedidos else 0,
-        }
+        return _entregas_equipo_rango(odoo, desde, hasta, label)
     except Exception as e:
         return {"periodo": label, "error": str(e)[:100],
                 "n_pedidos": 0, "n_lineas": 0, "n_unidades": 0,
@@ -1191,19 +1308,24 @@ def _calc_productividad(odoo, desde, hasta, label) -> Dict:
 
 @st.cache_data(ttl=43200, show_spinner=False)
 def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
-    """Productividad operativa: pedidos despachados, unidades, líneas pickeadas.
+    """Productividad operativa: ENTREGAS DEL EQUIPO (unidades/pedidos/líneas).
+
+    Fix WMS 13-jul-2026: cuenta entregas del equipo (entrega_ca1 + reposiciones
+    a fulfillment + salidas BRSt) desde el snapshot parquet con categoria_wms
+    (B), corregido en toda la historia — excluye los despachos que ejecuta el
+    marketplace. El tramo posterior al snapshot se completa con Odoo en vivo
+    clasificado (A). Solo VOLUMEN; el COSTO (COP) sale del P&L, no de acá.
 
     Args:
         periodo: 'dia', 'semana', 'mes'
         n_periodos: cuántos períodos hacia atrás traer
-
-    Returns:
-        items: [{periodo, n_pedidos, n_unidades, n_lineas_pickeadas, ...}, ...]
     """
     from datetime import date as _date, timedelta as _td
+
     odoo = get_ops_odoo_client()
-    if odoo is None:
-        return {"items": [], "error": "Odoo no disponible"}
+    df, _ = _load_vol_equipo()
+    if df is None and odoo is None:
+        return {"items": [], "error": "Sin snapshot ni Odoo"}
 
     try:
         items = []
@@ -1214,7 +1336,6 @@ def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
                 hasta_d = desde_d + _td(days=1)
                 label = desde_d.strftime("%Y-%m-%d")
             elif periodo == "semana":
-                # Semana ISO (lunes a domingo)
                 desde_d = hoy - _td(days=hoy.weekday() + 7 * (i - 1) + 7)
                 hasta_d = desde_d + _td(days=7)
                 label = f"Sem {desde_d.isocalendar()[1]} ({desde_d.strftime('%d/%m')})"
@@ -1225,58 +1346,12 @@ def productividad_periodo(periodo: str = "mes", n_periodos: int = 6) -> Dict:
                     mes_n += 12
                     anio -= 1
                 desde_d = _date(anio, mes_n, 1)
-                if mes_n == 12:
-                    hasta_d = _date(anio + 1, 1, 1)
-                else:
-                    hasta_d = _date(anio, mes_n + 1, 1)
+                hasta_d = _date(anio + 1, 1, 1) if mes_n == 12 else _date(anio, mes_n + 1, 1)
                 label = f"{anio}-{mes_n:02d}"
 
-            desde = desde_d.strftime("%Y-%m-%d")
-            hasta = hasta_d.strftime("%Y-%m-%d")
+            items.append(_entregas_equipo_rango(odoo, desde_d, hasta_d, label))
 
-            # Pedidos despachados (pickings outgoing done)
-            pickings = odoo.search_read(
-                "stock.picking",
-                [("state", "=", "done"),
-                 ("date_done", ">=", desde),
-                 ("date_done", "<", hasta),
-                 ("picking_type_code", "=", "outgoing")],
-                ["id"],
-                limit=20000,
-            )
-            n_pedidos = len(pickings)
-
-            # Líneas y unidades de esos pickings
-            n_lineas = 0
-            n_unidades = 0
-            if pickings:
-                pid_ids = [p["id"] for p in pickings]
-                moves = odoo.search_read(
-                    "stock.move",
-                    [("picking_id", "in", pid_ids),
-                     ("state", "=", "done")],
-                    ["product_uom_qty", "quantity"],
-                    limit=200000,
-                )
-                n_lineas = len(moves)
-                n_unidades = sum(m.get("quantity", 0) or 0 for m in moves)
-
-            items.append({
-                "periodo": label,
-                "fecha_desde": desde,
-                "n_pedidos": n_pedidos,
-                "n_lineas_pickeadas": n_lineas,
-                "n_unidades_despachadas": int(n_unidades),
-                "uds_por_pedido": (n_unidades / n_pedidos) if n_pedidos else 0,
-                "lineas_por_pedido": (n_lineas / n_pedidos) if n_pedidos else 0,
-            })
-
-        return {
-            "items": items,
-            "periodo": periodo,
-            "n_periodos": n_periodos,
-            "error": None,
-        }
+        return {"items": items, "periodo": periodo, "n_periodos": n_periodos, "error": None}
     except Exception as e:
         return {"items": [], "error": f"{type(e).__name__}: {str(e)[:120]}"}
 
