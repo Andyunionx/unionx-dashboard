@@ -20,7 +20,7 @@ import streamlit as st
 from views.contribucion_loader import cargar_hoja, fmt_pesos
 from views._conciliacion import (construir_dataframes, calcular, construir_workbook, MESES_OPT,
                                  construir_b2b, calcular_b2b, calcular_detalle,
-                                 _norm, _mes_num, _origen_glosa, num, MES_NOM)
+                                 _norm, _mes_num, _origen_glosa, num, MES_NOM, MES_MAX)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
@@ -61,7 +61,7 @@ def _bundle():
             FROM '{PARQUET.as_posix()}'
             WHERE tipo_movimiento='Devolución'
               AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
-              AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
+              AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {MES_MAX}
             GROUP BY 1,2,3,4
         """).fetchdf()
         conkam = {_norm(c): c for c in b["canales"]}
@@ -133,7 +133,7 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
         SELECT mes_venta mes, canal,
                CASE WHEN {desp} THEN 'ing_envio' ELSE 'ing_prod' END tipo,
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
-        FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND 5 AND tipo_movimiento='Venta'
+        FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND {MES_MAX} AND tipo_movimiento='Venta'
           AND {SCOPE_SQL}
         GROUP BY 1,2,3""").fetchdf()
     # NC = Devolución del RAW (misma fuente que la venta): venta bruta − NC = neto contable.
@@ -143,7 +143,7 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE tipo_movimiento='Devolución'
           AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
-          AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND 5
+          AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {MES_MAX}
           AND {SCOPE_SQL}
         GROUP BY 1,2,3,4""").fetchdf()
     rows = []

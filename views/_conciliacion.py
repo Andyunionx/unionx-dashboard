@@ -25,7 +25,10 @@ NEGOCIO_FIX = {"marketing": "Marketing"}
 SCOPE_NEG = {"marketplace", "fidelizacion", "paginas propias"}
 SCOPE_CANAL = {"unionx b2b"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-MESES_OPT = ["YTD", "Ene", "Feb", "Mar", "Abr", "May"]
+# Último mes cerrado con datos comercial + contable en el Sheet. Subir a medida que
+# se cargan los meses (define el selector de Mes y el tope de las consultas al RAW).
+MES_MAX = 6  # jun-2026
+MESES_OPT = ["YTD"] + MES_NOM[1:MES_MAX + 1]
 MESES_ES = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
             "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
             "noviembre": 11, "diciembre": 12}
