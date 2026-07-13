@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-13T14:00:14.633789",
+  "generado_en": "2026-07-13T19:09:32.866907",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11277,
-  "total_monto_pendiente_clp": 808440194.0,
+  "total_documentos_pendientes": 11578,
+  "total_monto_pendiente_clp": 820852757.0,
   "monto_por_aging": {
     "+90 días": 45645275.0,
-    "1-30 días": 474207515.0,
+    "1-30 días": 478750104.0,
     "31-60 días": 153205468.0,
     "61-90 días": 30903946.0,
-    "Vigente": 104477990.0
+    "Vigente": 112347964.0
   },
   "monto_por_tipo": {
-    "BOLETA": 538600744.0,
+    "BOLETA": 551013307.0,
     "FACTURA": 269839450.0
   },
   "top_20_deudores": [
@@ -22,15 +22,15 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 97849459.0
+      "monto": 98132091.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 91716970.0
+      "monto": 92604030.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 88548618.0
+      "monto": 90099161.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -38,27 +38,27 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 29412254.0
+      "monto": 35439246.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28968799.0
+      "monto": 29371840.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 24045087.0
+      "monto": 24336987.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 23081411.0
+      "monto": 23895891.0
     },
     {
       "partner": "abc S.A.",
-      "monto": 22472966.0
+      "monto": 22609027.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 22194110.0
+      "monto": 22389370.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -66,7 +66,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 15938613.0
+      "monto": 16127563.0
     },
     {
       "partner": "IMPORTADORA Y EXPORTADORA ESTADO LIMITADA",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 6460120.0
+      "monto": 7167417.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
@@ -97,6 +97,6 @@
       "monto": 4104800.0
     }
   ],
-  "notas_credito_count": 555,
+  "notas_credito_count": 559,
   "pedidos_venta_count": 10000
 }
