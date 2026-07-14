@@ -189,12 +189,21 @@ cruce_html = (sec("Cruce operacional semanal — pedidos venta / pick / entrega"
 
 # ── OTIF mensual ────────────────────────────────────────────────────────────
 if otif_t > 0:
+    _otif_may = rpm.get(f"2026-{MES-1:02d}", {}).get("otif_total_pct", 0) * 100
+    _cae = _otif_may and otif_t < _otif_may - 2
+    _callout = ""
+    if _cae:
+        _callout = (f'<div style="background:#FEF2F2;border-left:4px solid {RO};padding:10px 14px;margin:8px 0;font-size:12px;line-height:1.5;">'
+                    f'⚠️ <b>OTIF cayó {_otif_may:.1f}% → {otif_t:.1f}%</b> ({otif_t-_otif_may:+.1f} pts). El OTIF Total exige on-time <b>Y</b> completo: '
+                    f'empresa {otif_e:.1f}% (preparación) y courier {otif_c:.1f}% (última milla) están sobre el total {otif_t:.1f}%, '
+                    f'lo que indica que el quiebre viene de pedidos que fallan en <b>ambas</b> dimensiones o de la combinación. '
+                    f'Revisar causa raíz (quiebres de stock que atrasan preparación + retrasos courier).</div>')
     otif_html = (sec(f"OTIF — {MES_NOMBRE}")
         + f'<table style="width:100%;border-collapse:collapse;margin:8px 0;"><tr>'
         + kpi("OTIF Total", otif_fmt(otif_t), f"{miles(n_ok)}/{miles(n_otp)} pedidos", c=pct_c(otif_t))
         + ksp() + kpi("OTIF Empresa", otif_fmt(otif_e), "preparación bodega", c=pct_c(otif_e))
         + ksp() + kpi("OTIF Courier", otif_fmt(otif_c), "última milla", c=pct_c(otif_c))
-        + '</tr></table>')
+        + '</tr></table>' + _callout)
 else:
     otif_html = (sec(f"OTIF — {MES_NOMBRE}")
         + f'<div style="background:#FEF3C7;border-left:4px solid {NA};padding:10px 14px;margin:8px 0;font-size:12px;">'
@@ -243,12 +252,38 @@ costo_html = (sec(f"Costo Operativo — {MES_NOMBRE} (vs {MES_PREV_NOMBRE} y YTD
               + f'<div style="font-size:11px;color:{GR2};margin:2px 0 8px;">Desglose {MES_NOMBRE.lower()}: {sub_txt}. '
               f'Base = total empresa. Fuente: P&amp;L 2025-2026 (FCST=Real).</div>')
 
+# ── Resumen ejecutivo (lectura del mes vs mayo) ─────────────────────────────
+otif_may = rpm.get(f"2026-{MES-1:02d}", {}).get("otif_total_pct", 0) * 100
+prod_may = 30705 / HORAS_MES.get(MES - 1, 798)
+copu_may = (c_may / u_may) if u_may else 0
+def _delta(act, prev, arriba=True, pct=True):
+    if not prev: return "", GR2
+    d = (act - prev) / prev * 100
+    col = VE if ((d >= 0) == arriba) else RO
+    return f" ({d:+.0f}% vs {MES_PREV_NOMBRE.lower()})", col
+def _li(txt, col):
+    return f'<li style="margin:4px 0;"><span style="color:{col};font-weight:bold;font-size:14px;">●</span> {txt}</li>'
+dpt, dpc = _delta(prod, prod_may, True)
+dot, doc = _delta(otif_t, otif_may, True)
+duc, dcc = _delta(c_jun/u_jun, copu_may, arriba=False)  # COP/uds: bajar es bueno
+resumen_html = (
+    f'<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:14px 18px;margin:14px 0;">'
+    f'<div style="font-size:11px;color:{GR2};text-transform:uppercase;letter-spacing:.5px;font-weight:bold;margin-bottom:6px;">Lectura del mes</div>'
+    f'<ul style="margin:0;padding-left:4px;list-style:none;font-size:13px;line-height:1.5;">'
+    + _li(f'<b>Venta</b> {clp(vta_neta)} · {miles(uds_vta)} uds · {miles(n_ped)} pedidos (total empresa).', AZ)
+    + _li(f'<b>Productividad {prod:.1f} uds/h</b>{dpt} — bajo el bench de 40,1. El equipo movió {miles(int(uds_pick))} uds en {HORAS:.0f}h.', dpc)
+    + _li(f'<b>OTIF {otif_t:.1f}%</b>{dot} — <b style="color:{RO};">ALERTA</b>: caída de servicio, el KPI más crítico del mes.', doc)
+    + _li(f'<b>COP/unidad {clp(c_jun/u_jun)}</b>{duc} — costo por unidad mejoró; el costo op total subió a {clp(c_jun)} (fijo).', dcc)
+    + _li(f'<b>Inventario</b> {clp(val_inv)} · {miles(n_crit)} SKUs en quiebre crítico · rotación 90d {rot90:.2f}x.', NA if n_crit > 60 else AZ)
+    + '</ul></div>'
+)
+
 # ── Ensamble ────────────────────────────────────────────────────────────────
 body = f"""<div style="font-family:Calibri,Arial,sans-serif;max-width:900px;color:#1a1a1a;">
 <h2 style="color:{AZ};border-bottom:3px solid {AZ};padding-bottom:8px;margin-bottom:4px;">Reporte KPI Operacional — {MES_NOMBRE} 2026</h2>
 <p style="font-size:12px;color:{GR2};margin-top:0;">Período 01 al 30 de {MES_NOMBRE.lower()} 2026 · {PERSONAS} personas × {HORAS:.0f}h ·
 Operacional = bodega CA1 + BRSt (incl. reposiciones a fulfillment) · Comercial = total empresa</p>
-{kpis_row}{h1_html}{b2b_html}{cruce_html}{otif_html}{canal_html}{costo_html}
+{resumen_html}{kpis_row}{h1_html}{b2b_html}{cruce_html}{otif_html}{canal_html}{costo_html}
 <hr style="border:1px solid {GR};margin-top:28px;">
 <p style="font-size:11px;color:#94A3B8;">Reporte automático · UnionX Operaciones · Entregas del equipo por categoria_wms (fix 13-jul: excluye despachos del marketplace, acredita reposiciones + BRSt). Fuente: Odoo WMS + parquet ventas + snapshot OTIF + P&amp;L control gestión.</p>
 </div>"""
