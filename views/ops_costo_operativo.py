@@ -60,12 +60,17 @@ AREA_PNL_OPS = "OPERACIONES"
 # Las sub-áreas que aparecen DENTRO de area=OPERACIONES (para el desglose
 # visual). Vienen del Sheet: LOGISTICA, OPERACIONES, POSTVENTA, GRUPO ETER,
 # UNIONX. Si el Sheet agrega más, simplemente se descubren al iterar.
+# FINANZAS Y ADMINISTRACIÓN: incluida (14-jul, decisión Andrés) porque dentro
+# de area=OPERACIONES contiene los SEGUROS de vehículos operacionales (Foton,
+# Ducato, Ram = camiones de reparto) + Multiriesgo bodega — son costo op. El
+# filtro anterior (que la omitía) sub-contaba ~$6,5M en H1.
 SUB_AREAS_PNL = ["LOGISTICA", "OPERACIONES", "POSTVENTA", "GRUPO ETER",
-                  "UNIONX", "UNION X"]
+                  "UNIONX", "UNION X", "FINANZAS Y ADMINISTRACIÓN"]
 SUB_AREA_LABEL = {
     "LOGISTICA": "Logística", "OPERACIONES": "Operaciones",
     "POSTVENTA": "Postventa", "GRUPO ETER": "Grupo Eter",
     "UNIONX": "UnionX", "UNION X": "UnionX",
+    "FINANZAS Y ADMINISTRACIÓN": "Seguros vehículos/bodega",
 }
 
 # ============================================================
@@ -458,7 +463,9 @@ def _mes_proyectado(year: int, month: int) -> bool:
     hoy = _dt.now()
     if year != hoy.year:
         return False
-    return month >= max(1, hoy.month - 1)
+    # Solo el mes en curso (y futuros) se muestra como proyectado. El mes
+    # anterior ya se considera cerrado (decisión Andrés 14-jul: junio cerrado).
+    return month >= hoy.month
 
 
 def _tab_pnl(df_costo: pd.DataFrame, df_venta: pd.DataFrame,

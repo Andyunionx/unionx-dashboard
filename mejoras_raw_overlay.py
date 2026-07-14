@@ -134,6 +134,15 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     df["es_despacho"] = marca_l.str.contains(pat, regex=True, na=False) | prod_l.str.contains(pat, regex=True, na=False)
     log(f"  [P5] es_despacho: {int(df['es_despacho'].sum()):,} filas")
 
+    # P5c — envíos NO son proveedores nacionales (no tienen proveedor). Se saca el
+    # despacho de tipo_compra='Compra' → 'Envío' para que no infle el margen directo
+    # de proveedores nacionales en el reporte de rentabilidad (Andrés 14-jul).
+    if "tipo_compra" in df.columns:
+        env = df["es_despacho"] & df["tipo_compra"].astype(str).str.strip().str.lower().ne("envío")
+        n_env = int(env.sum())
+        df.loc[env, "tipo_compra"] = "Envío"
+        log(f"  [P5c] tipo_compra='Envío' en {n_env:,} filas de despacho (fuera de proveedores nacionales)")
+
     # P5b — sanity de costo: filas con cruce de campo (cantidad≈venta → costo_total absurdo).
     # Se corrige a cantidad=1 y costo_total=costo_unitario (evita margen −billones).
     try:

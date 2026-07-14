@@ -226,6 +226,16 @@ def main():
     raw = ws.get_all_values()
     print(f"    {len(raw)} filas raw", flush=True)
 
+    # El Sheet tiene columnas AUXILIARES a la derecha de la tabla principal
+    # (un separador vacío + una mini-tabla MES/FCST agregada por el usuario).
+    # Eso duplica el header 'MES' y rompe el rename. Cortamos al primer header
+    # vacío para quedarnos SOLO con la tabla principal (AÑO..TIPO).
+    hdr0 = [str(c).strip() for c in raw[0]]
+    if "" in hdr0:
+        ncol = hdr0.index("")
+        raw = [fila[:ncol] for fila in raw]
+        print(f"    Recortado a {ncol} columnas (tabla principal; ignoradas auxiliares)", flush=True)
+
     # DataFrame
     df = pd.DataFrame(raw[1:], columns=raw[0])
     df.columns = [c.strip() for c in df.columns]
