@@ -184,6 +184,43 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
             df.loc[mask, 'margen_front'] = df.loc[mask, 'venta_neta'] - df.loc[mask, 'costo_total']
             df.loc[mask, 'margen_final'] = df.loc[mask, 'margen_front']
 
+    # Blindaje costo (Celiv 14-jul): ventas reales con costo 0 → fallback al
+    # standard_price LIVE del producto en Odoo. Causa: productos 'consu' (o nuevos)
+    # vendidos ANTES de cargar el costo → el purchase_price de la sale.order.line
+    # queda congelado en 0 y Odoo NO lo recalcula al cargar el std_price después.
+    # Auto-sana sin depender de mantener costo_override.csv al día. Se excluyen
+    # envíos/despachos (no llevan COGS). Corre después del override manual (CSV gana).
+    try:
+        sku_s = df['sku'].astype(str)
+        ct0 = pd.to_numeric(df['costo_total'], errors='coerce').fillna(0) == 0
+        vb0 = pd.to_numeric(df['venta_bruta'], errors='coerce').fillna(0) > 0
+        es_venta = df['tipo_movimiento'].astype(str).eq('Venta') if 'tipo_movimiento' in df.columns else pd.Series(True, index=df.index)
+        no_envio = ~sku_s.str.startswith('Delivery') & ~df['marca'].astype(str).str.lower().eq('despachos')
+        cand = ct0 & vb0 & es_venta & no_envio
+        skus_cero = sorted(s for s in sku_s[cand].unique().tolist() if s and s.lower() not in ('nan', 'none'))
+        if skus_cero:
+            recs = client.search_read('product.product',
+                                      [['default_code', 'in', skus_cero]],
+                                      ['default_code', 'standard_price'])
+            std = {}
+            for r in recs:
+                dc = str(r.get('default_code') or '').strip()
+                sp = float(r.get('standard_price') or 0)
+                if dc and sp > 0:
+                    std[dc] = max(sp, std.get(dc, 0))  # si hay duplicados, el mayor >0
+            fill = cand & sku_s.isin([k for k, v in std.items() if v > 0])
+            if fill.any():
+                df.loc[fill, 'costo_unitario'] = sku_s[fill].map(std)
+                qty = pd.to_numeric(df.loc[fill, 'cantidad'], errors='coerce').fillna(0)
+                df.loc[fill, 'costo_total'] = df.loc[fill, 'costo_unitario'] * qty
+                vn = pd.to_numeric(df.loc[fill, 'venta_neta'], errors='coerce').fillna(0)
+                df.loc[fill, 'margen_front'] = vn - df.loc[fill, 'costo_total']
+                df.loc[fill, 'margen_final'] = df.loc[fill, 'margen_front']
+                print(f"   [costo std_price] {int(fill.sum())} filas de venta con costo 0 rellenadas "
+                      f"desde standard_price Odoo ({len([v for v in std.values() if v>0])} SKUs con costo)")
+    except Exception as e:
+        print(f"   [WARN] fallback std_price no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     # NORMALIZAR fecha_venta y fecha_documento del extract Odoo a string YYYY-MM-DD
     # antes de cualquier concat. Odoo a veces devuelve timestamp completo,
     # otras solo fecha; mezclas causan ArrowTypeError al guardar parquet.
