@@ -1,0 +1,10 @@
+rut: 96539380-3
+nombre: EDICIONES FINANCIERAS S.A.
+reglas:
+- patron: comisiones junio 2026 bazared.cl
+  tipo_match: contains_lower
+  cuenta_destino: COMISION_GRANDES_CUENTAS
+  aprobaciones: 1
+  ultima_aprobacion: '2026-07-14'
+  aprobado_por: Camila Bustos <camila@unionx.cl>
+  auto: false
