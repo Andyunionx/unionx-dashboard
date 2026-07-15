@@ -31,14 +31,32 @@ EMAIL_TO = [e.strip() for e in os.environ.get(
 ).split(",") if e.strip()]
 
 AZ = "#1E3A5F"; GR = "#EBF0F8"
+# Gated: si FULFILLMENT_LIVE=1, el fulfillment del pulso viene del LIVE de Martín
+# (directo de cada marketplace, no Odoo); Walmart se mantiene desde Odoo. Mientras
+# el feed de Martín siga en PRUEBA queda apagado (ver fulfillment_live.py).
+FULFILLMENT_LIVE = os.environ.get("FULFILLMENT_LIVE", "0") == "1"
 def clp(n): return "$" + "{:,.0f}".format(n).replace(",", ".")
 def miles(n): return "{:,}".format(int(n)).replace(",", ".")
+
+
+def _cargar_detalle() -> pd.DataFrame:
+    """Sábana del pulso. Con FULFILLMENT_LIVE=1 reemplaza el fulfillment de Odoo
+    por el live de Martín (fulfillment_live.aplicar_live)."""
+    det = pd.read_parquet(DETALLE)[COLS].copy()
+    if FULFILLMENT_LIVE:
+        try:
+            from fulfillment_live import aplicar_live
+            det = aplicar_live(det)[COLS].copy()
+            print("[pulso] fulfillment LIVE de Martín aplicado (Walmart desde Odoo)", flush=True)
+        except Exception as e:
+            print(f"[pulso][WARN] fulfillment live no aplicado, se usa Odoo: {type(e).__name__}: {e}", flush=True)
+    return det
 
 
 def construir_excel() -> bytes:
     """Inyecta la sábana fresca en la plantilla y deja el pivot listo
     (rango actualizado, refreshOnLoad, todas las bodegas visibles)."""
-    det = pd.read_parquet(DETALLE)[COLS].copy()
+    det = _cargar_detalle()
     det = det.sort_values(["Bodega", "Valor"], ascending=[True, False]).reset_index(drop=True)
 
     wb = openpyxl.load_workbook(TEMPLATE)
@@ -76,7 +94,7 @@ def construir_excel() -> bytes:
 
 
 def construir_html() -> tuple[str, str]:
-    det = pd.read_parquet(DETALLE)
+    det = _cargar_detalle()
     sku = pd.read_parquet(SKUS).drop_duplicates("SKU")
     tot_val = det["Valor"].sum(); tot_uds = det["Disponible"].sum()
     n_sku = sku["SKU"].nunique()
@@ -131,10 +149,22 @@ def main():
     xlsx = construir_excel()
     html, monto = construir_html()
     html = html.replace("{HOY}", hoy)
-    fname = "Pulso Stock LIVE.xlsx"
+    fname = "Stock live"  # empieza con "Stock" → sin prefijo "Raw Cyber"
+
+    # 2º adjunto: comparativa Odoo vs live (solo cuando el live está activo)
+    extra = []
+    if FULFILLMENT_LIVE:
+        try:
+            from fulfillment_live import cruce_bytes, LIVE_PARQUET
+            if LIVE_PARQUET.exists():
+                extra = [(cruce_bytes(), "Comparación Stock Odoo vs live.xlsx")]
+                print("[pulso] adjuntando comparativa Odoo vs live", flush=True)
+        except Exception as e:
+            print(f"[pulso][WARN] comparativa no adjuntada: {type(e).__name__}: {e}", flush=True)
+
     asunto = f"📦 Pulso Stock Live · {monto} · {hoy}"
     print(f"Enviando a {len(EMAIL_TO)} destinatarios: {EMAIL_TO}", flush=True)
-    msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO)
+    msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO, extra_attachments=extra)
     print("Enviado. msg_id:", msg_id, flush=True)
     return 0 if msg_id else 1
 

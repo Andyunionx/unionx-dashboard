@@ -94,9 +94,10 @@ jobs:
         continue-on-error: true
 
       - name: Enviar Pulso KPI Semanal (solo lunes)
-        # PAUSADO hasta OK formal de Andrés: solo corre si
-        # vars.PULSO_KPI_ENABLED == 'true' Y es lunes. KPIs WMS + COP inferido,
-        # comparando semana vs semana vs Mayo. WMS fresco: buffer 2 días.
+        # ACTIVO (OK Andrés 15-jul-2026): corre si vars.PULSO_KPI_ENABLED=='true'
+        # Y es lunes. KPIs WMS + COP inferido, semana vs semana vs mes anterior
+        # (dinámico). Clasificación por categoria_wms: incluye reposiciones
+        # fulfillment + BRST, excluye despachos del marketplace. WMS buffer 2 días.
         if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_KPI_ENABLED == 'true' }}
         env:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
