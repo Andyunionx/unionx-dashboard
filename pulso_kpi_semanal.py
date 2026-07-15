@@ -129,15 +129,20 @@ def prod(upick, horas): return upick / horas if horas else 0
 prod_a, prod_p, prod_may = prod(wa["upick"], h_act), prod(wp["upick"], h_prev), prod(wmay_v["upick"], HORAS_MES_REF)
 def cu(uds): return costo_sem / uds if uds else 0
 def cp(ped): return costo_sem / ped if ped else 0
-copu_a, copu_p, copu_may = cu(ua), cu(up), (costo_mes / u_may if u_may else 0)
-copp_a, copp_p, copp_may = cp(pa), cp(pp), (costo_mes / p_may if p_may else 0)
+# COP sobre volumen OPERACIONAL (entregas equipo del WMS, fresco), NO sobre la
+# venta: ventas_mes_actual lagea en el mes en curso (la semana movió ~6K uds pero
+# aún no se facturaban) e inflaba el COP hasta 6×. Costo prorrateado (costo_sem) ÷
+# unidades/pedidos que MOVIÓ la bodega esa semana. Mensual usa el mismo denominador
+# operacional del mes de referencia → comparación consistente (COP/unidad movida).
+copu_a, copu_p, copu_may = cu(wa["uent"]), cu(wp["uent"]), (costo_mes / wmay_v["uent"] if wmay_v["uent"] else 0)
+copp_a, copp_p, copp_may = cp(wa["pent"]), cp(wp["pent"]), (costo_mes / wmay_v["pent"] if wmay_v["pent"] else 0)
 pctv_a = costo_sem / vna * 100 if vna else 0
 pctv_p = costo_sem / vnp * 100 if vnp else 0
 pctv_may = costo_mes / vn_may * 100 if vn_may else 0
 # eficiencia del mes en curso (acumulado de semanas cerradas)
 prod_mes = prod(wmes_v["upick"], h_mes)
-copu_mes = (costo_mes_acum / u_mes) if u_mes else 0
-copp_mes = (costo_mes_acum / p_mes) if p_mes else 0
+copu_mes = (costo_mes_acum / wmes_v["uent"]) if wmes_v["uent"] else 0
+copp_mes = (costo_mes_acum / wmes_v["pent"]) if wmes_v["pent"] else 0
 pctv_mes = (costo_mes_acum / vn_mes * 100) if vn_mes else 0
 BENCH = 40.1
 
@@ -160,7 +165,7 @@ def th(t, a="right"): return f'<th style="padding:7px 9px;text-align:{a};color:#
 def td(t, a="right", c=""): return f'<td style="padding:6px 9px;text-align:{a};{c}">{t}</td>'
 def tr(i, cells): return f'<tr style="background:{GR if i%2==0 else "#fff"};font-size:12px;">{"".join(cells)}</tr>'
 def flecha(cur, ref, mejor_arriba=True):
-    if not ref: return ("—", GR2)
+    if cur is None or not ref: return ("—", GR2)
     d = (cur - ref) / abs(ref) * 100
     if abs(d) <= 1.5: return (f"➡️ {d:+.0f}%", GR2)
     sube = d > 0
@@ -183,16 +188,18 @@ HEF = (f'<tr style="background:{AZ};">{th("Eficiencia","left")}{th("Sem "+lbl_a)
        f'{th("Sem "+lbl_p)}{th(MES_ACT_LBL+" (acum)")}{th(MES_REF_LBL+" mes")}{th("Δ vs "+MES_REF_LBL)}</tr>')
 def reff(i, lbl, a, p, mes, may, fmt, mejor_arriba):
     f, col = flecha(a, may, mejor_arriba)
-    # mes=None -> COP no se acumula (el Cyber distorsiona el costo del mes)
+    # None -> no aplica (COP acum no se acumula por Cyber; %cto/vta semanal no
+    # confiable porque la venta del mes en curso no cierra).
+    def _c(x, center=False): return td(fmt(x), c="font-weight:bold;") if x is not None else td("—", "center", c=f"color:{GR2};")
     cmes = td(fmt(mes), c=f"font-weight:bold;color:{AZ};") if mes is not None else td("—", "center", c=f"color:{GR2};")
-    return tr(i, [td(lbl, "left"), td(fmt(a), c="font-weight:bold;"), td(fmt(p), c="color:#94a3b8;"),
+    return tr(i, [td(lbl, "left"), _c(a), (td(fmt(p), c="color:#94a3b8;") if p is not None else td("—", "center", c=f"color:{GR2};")),
                   cmes, td(fmt(may)), td(f, c=f"color:{col};")])
 _p1 = lambda x: f"{x:.1f}"
 ef_tbl = f'<table style="width:100%;border-collapse:collapse;">{HEF}' + \
     reff(0, "Productividad (uds pick/h)", prod_a, prod_p, prod_mes, prod_may, _p1, True) + \
     reff(1, "COP / unidad", copu_a, copu_p, None, copu_may, clp, False) + \
     reff(0, "COP / pedido", copp_a, copp_p, None, copp_may, clp, False) + \
-    reff(1, "% Costo / venta", pctv_a, pctv_p, None, pctv_may, lambda x: f"{x:.1f}%", False) + "</table>"
+    reff(1, "% Costo / venta", None, None, None, pctv_may, lambda x: f"{x:.1f}%", False) + "</table>"
 
 otif_txt = " → ".join(f"{m[-2:]} {v:.1f}%" for m, v in otif_ser) if otif_ser else "s/d"
 otif_dir = (f"{DN} cayendo" if (otif_ser and otif_ser[-1][1] < otif_ser[0][1]) else "➡️ estable")
@@ -208,8 +215,8 @@ html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:740px;l
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Eficiencia (vs {MES_REF_LBL} mes)</h3>
 {ef_tbl}
 <div style="font-size:11px;color:{GR2};">Productividad = uds pickeadas / horas reales de la semana (bench {BENCH} uds/h).
-COP = costo operativo total prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ volumen.
-COP/unidad = métrica primaria. {MES_ACT_LBL} (acum) muestra solo productividad del mes ({n_sem_mes} semanas cerradas); el COP no se acumula porque el Cyber lo distorsiona (se reporta aparte). Δ vs {MES_REF_LBL} mes (cierra el sesgo de una semana alta/baja).</div>
+COP = costo op prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ <b>unidades MOVIDAS por la bodega</b> (WMS, no venta — la venta del mes en curso lagea). Comparación consistente vs {MES_REF_LBL} (mismo denominador operacional).
+% Costo/venta se reporta <b>solo mensual</b> ({MES_REF_LBL} {pctv_may:.1f}%): la venta del mes en curso no cierra, no es confiable semanal. COP acum no se muestra (Cyber lo distorsiona).</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio &amp; Stock</h3>
 <div style="font-size:13px;">OTIF mensual: {otif_txt} <b>{otif_dir}</b> · OFR {ofr:.1f}% · OCT {oct_med:.0f}h · Pick {pacc:.2f}%</div>
