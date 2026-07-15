@@ -1,40 +1,145 @@
 {
-  "generado_en": "2026-07-15T05:34:18.094082",
+  "generado_en": "2026-07-15T16:24:26.900316",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014939759036144579,
-      "total_pickings": 14525,
-      "on_time": 220,
-      "on_time_pct": 0.015146299483648882,
-      "in_full": 14512,
-      "in_full_pct": 0.999104991394148,
-      "both": 217,
+      "valor": 0.014931451065562644,
+      "total_pickings": 14734,
+      "on_time": 223,
+      "on_time_pct": 0.015135061761911225,
+      "in_full": 14720,
+      "in_full_pct": 0.9990498167503733,
+      "both": 220,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.040339702760084924,
-      "total_pickings": 471,
+      "valor": 0.03966597077244259,
+      "total_pickings": 479,
       "on_time": 20,
-      "on_time_pct": 0.04246284501061571,
-      "in_full": 467,
-      "in_full_pct": 0.9915074309978769,
+      "on_time_pct": 0.04175365344467641,
+      "in_full": 475,
+      "in_full_pct": 0.9916492693110647,
       "both": 19,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9993619057747527,
-      "ok": 18794,
-      "total": 18806,
+      "valor": 0.9993706733794839,
+      "ok": 19056,
+      "total": 19068,
       "errores": 12,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.887067510548524,
-      "n_recepciones": 237,
+      "valor": 10.239747574955908,
+      "n_recepciones": 252,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01068",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:51",
+          "done": "2026-07-15 15:52"
+        },
+        {
+          "picking": "CA1/IN/00947",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:48",
+          "done": "2026-07-15 15:49"
+        },
+        {
+          "picking": "CA1/RET/01067",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:47",
+          "done": "2026-07-15 15:47"
+        },
+        {
+          "picking": "CA1/RET/01066",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:45",
+          "done": "2026-07-15 15:45"
+        },
+        {
+          "picking": "CA1/RET/01065",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:41",
+          "done": "2026-07-15 15:42"
+        },
+        {
+          "picking": "CA1/IN/00946",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:38",
+          "done": "2026-07-15 15:39"
+        },
+        {
+          "picking": "CA1/RET/01064",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:36",
+          "done": "2026-07-15 15:36"
+        },
+        {
+          "picking": "CA1/RET/01063",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:35",
+          "done": "2026-07-15 15:35"
+        },
+        {
+          "picking": "CA1/RET/01062",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:33",
+          "done": "2026-07-15 15:34"
+        },
+        {
+          "picking": "CA1/RET/01061",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:33",
+          "done": "2026-07-15 15:33"
+        },
+        {
+          "picking": "CA1/RET/01060",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:25",
+          "done": "2026-07-15 15:25"
+        },
+        {
+          "picking": "CA1/RET/01059",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:24",
+          "done": "2026-07-15 15:24"
+        },
+        {
+          "picking": "CA1/RET/01058",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:23",
+          "done": "2026-07-15 15:23"
+        },
+        {
+          "picking": "CA1/RET/01057",
+          "proveedor": "Cliente Ripley, Ruth Lastra Barrientos",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 13:21",
+          "done": "2026-07-15 13:21"
+        },
+        {
+          "picking": "CA1/IN/00944",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-15 12:56",
+          "done": "2026-07-15 13:02"
+        },
         {
           "picking": "CA1/IN/00942",
           "proveedor": "",
@@ -69,130 +174,25 @@
           "horas": 0.1,
           "scheduled": "2026-07-10 15:05",
           "done": "2026-07-10 15:11"
-        },
-        {
-          "picking": "CA1/IN/00938",
-          "proveedor": "",
-          "horas": 1.9,
-          "scheduled": "2026-07-09 16:50",
-          "done": "2026-07-09 18:44"
-        },
-        {
-          "picking": "CA1/RET/01056",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 18:24",
-          "done": "2026-07-09 18:25"
-        },
-        {
-          "picking": "CA1/RET/01055",
-          "proveedor": "Falabella Retail",
-          "horas": 0.4,
-          "scheduled": "2026-07-09 16:50",
-          "done": "2026-07-09 17:12"
-        },
-        {
-          "picking": "CA1/RET/01054",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 16:34",
-          "done": "2026-07-09 16:34"
-        },
-        {
-          "picking": "CA1/IN/00937",
-          "proveedor": "Celiv Spa",
-          "horas": 0.5,
-          "scheduled": "2026-07-09 14:30",
-          "done": "2026-07-09 14:57"
-        },
-        {
-          "picking": "CA1/RET/01053",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 14:28",
-          "done": "2026-07-09 14:28"
-        },
-        {
-          "picking": "CA1/RET/01052",
-          "proveedor": "Falabella Retail",
-          "horas": 0.3,
-          "scheduled": "2026-07-09 13:52",
-          "done": "2026-07-09 14:12"
-        },
-        {
-          "picking": "CA1/RET/01051",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 13:49",
-          "done": "2026-07-09 13:49"
-        },
-        {
-          "picking": "CA1/RET/01049",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 13:38",
-          "done": "2026-07-09 13:38"
-        },
-        {
-          "picking": "CA1/RET/01048",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 13:21",
-          "done": "2026-07-09 13:23"
-        },
-        {
-          "picking": "CA1/RET/01047",
-          "proveedor": "Falabella Retail",
-          "horas": 0.2,
-          "scheduled": "2026-07-09 12:49",
-          "done": "2026-07-09 13:02"
-        },
-        {
-          "picking": "CA1/RET/01045",
-          "proveedor": "Falabella Retail",
-          "horas": 21.8,
-          "scheduled": "2026-07-08 14:58",
-          "done": "2026-07-09 12:48"
-        },
-        {
-          "picking": "CA1/IN/00936",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-08 21:36",
-          "done": "2026-07-08 21:49"
-        },
-        {
-          "picking": "CA1/IN/00935",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-07-08 16:13",
-          "done": "2026-07-08 16:29"
-        },
-        {
-          "picking": "CA1/IN/00934",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-08 16:00",
-          "done": "2026-07-08 16:04"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9374196658097687,
-      "total_so": 12524,
-      "total_con_pickings": 12448,
-      "cumplidos": 11669,
+      "valor": 0.9427029600825332,
+      "total_so": 12677,
+      "total_con_pickings": 12601,
+      "cumplidos": 11879,
       "parciales": 13,
-      "sin_iniciar": 766,
+      "sin_iniciar": 709,
       "error": null
     },
     "oct_30d": {
-      "valor": 68.85893162856867,
-      "n_orders": 13824,
+      "valor": 68.26515845878647,
+      "n_orders": 14038,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 29.413055555555555,
+      "mediana_h": 28.61722222222222,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9894,
+      "lineas": 10156,
       "mes": "2026-07",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "abc S.A.",
-          "total": 134,
-          "tarde": 134,
+          "total": 139,
+          "tarde": 139,
           "on_time_pct": 0.0
         },
         {
@@ -397,8 +397,8 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 48,
-          "tarde": 48,
+          "total": 51,
+          "tarde": 51,
           "on_time_pct": 0.0
         },
         {
@@ -7379,42 +7379,147 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014939759036144579,
-      "total_pickings": 14525,
-      "on_time": 220,
-      "on_time_pct": 0.015146299483648882,
-      "in_full": 14512,
-      "in_full_pct": 0.999104991394148,
-      "both": 217,
+      "valor": 0.014931451065562644,
+      "total_pickings": 14734,
+      "on_time": 223,
+      "on_time_pct": 0.015135061761911225,
+      "in_full": 14720,
+      "in_full_pct": 0.9990498167503733,
+      "both": 220,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.040339702760084924,
-      "total_pickings": 471,
+      "valor": 0.03966597077244259,
+      "total_pickings": 479,
       "on_time": 20,
-      "on_time_pct": 0.04246284501061571,
-      "in_full": 467,
-      "in_full_pct": 0.9915074309978769,
+      "on_time_pct": 0.04175365344467641,
+      "in_full": 475,
+      "in_full_pct": 0.9916492693110647,
       "both": 19,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9993619057747527,
-      "ok": 18794,
-      "total": 18806,
+      "valor": 0.9993706733794839,
+      "ok": 19056,
+      "total": 19068,
       "errores": 12,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.887067510548524,
-      "n_recepciones": 237,
+      "valor": 10.239747574955908,
+      "n_recepciones": 252,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01068",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:51",
+          "done": "2026-07-15 15:52"
+        },
+        {
+          "picking": "CA1/IN/00947",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:48",
+          "done": "2026-07-15 15:49"
+        },
+        {
+          "picking": "CA1/RET/01067",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:47",
+          "done": "2026-07-15 15:47"
+        },
+        {
+          "picking": "CA1/RET/01066",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:45",
+          "done": "2026-07-15 15:45"
+        },
+        {
+          "picking": "CA1/RET/01065",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:41",
+          "done": "2026-07-15 15:42"
+        },
+        {
+          "picking": "CA1/IN/00946",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:38",
+          "done": "2026-07-15 15:39"
+        },
+        {
+          "picking": "CA1/RET/01064",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:36",
+          "done": "2026-07-15 15:36"
+        },
+        {
+          "picking": "CA1/RET/01063",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:35",
+          "done": "2026-07-15 15:35"
+        },
+        {
+          "picking": "CA1/RET/01062",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:33",
+          "done": "2026-07-15 15:34"
+        },
+        {
+          "picking": "CA1/RET/01061",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:33",
+          "done": "2026-07-15 15:33"
+        },
+        {
+          "picking": "CA1/RET/01060",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:25",
+          "done": "2026-07-15 15:25"
+        },
+        {
+          "picking": "CA1/RET/01059",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:24",
+          "done": "2026-07-15 15:24"
+        },
+        {
+          "picking": "CA1/RET/01058",
+          "proveedor": "Comercial ECCSA S A",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 15:23",
+          "done": "2026-07-15 15:23"
+        },
+        {
+          "picking": "CA1/RET/01057",
+          "proveedor": "Cliente Ripley, Ruth Lastra Barrientos",
+          "horas": 0.0,
+          "scheduled": "2026-07-15 13:21",
+          "done": "2026-07-15 13:21"
+        },
+        {
+          "picking": "CA1/IN/00944",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-15 12:56",
+          "done": "2026-07-15 13:02"
+        },
         {
           "picking": "CA1/IN/00942",
           "proveedor": "",
@@ -7449,111 +7554,6 @@
           "horas": 0.1,
           "scheduled": "2026-07-10 15:05",
           "done": "2026-07-10 15:11"
-        },
-        {
-          "picking": "CA1/IN/00938",
-          "proveedor": "",
-          "horas": 1.9,
-          "scheduled": "2026-07-09 16:50",
-          "done": "2026-07-09 18:44"
-        },
-        {
-          "picking": "CA1/RET/01056",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 18:24",
-          "done": "2026-07-09 18:25"
-        },
-        {
-          "picking": "CA1/RET/01055",
-          "proveedor": "Falabella Retail",
-          "horas": 0.4,
-          "scheduled": "2026-07-09 16:50",
-          "done": "2026-07-09 17:12"
-        },
-        {
-          "picking": "CA1/RET/01054",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 16:34",
-          "done": "2026-07-09 16:34"
-        },
-        {
-          "picking": "CA1/IN/00937",
-          "proveedor": "Celiv Spa",
-          "horas": 0.5,
-          "scheduled": "2026-07-09 14:30",
-          "done": "2026-07-09 14:57"
-        },
-        {
-          "picking": "CA1/RET/01053",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 14:28",
-          "done": "2026-07-09 14:28"
-        },
-        {
-          "picking": "CA1/RET/01052",
-          "proveedor": "Falabella Retail",
-          "horas": 0.3,
-          "scheduled": "2026-07-09 13:52",
-          "done": "2026-07-09 14:12"
-        },
-        {
-          "picking": "CA1/RET/01051",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 13:49",
-          "done": "2026-07-09 13:49"
-        },
-        {
-          "picking": "CA1/RET/01049",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 13:38",
-          "done": "2026-07-09 13:38"
-        },
-        {
-          "picking": "CA1/RET/01048",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-09 13:21",
-          "done": "2026-07-09 13:23"
-        },
-        {
-          "picking": "CA1/RET/01047",
-          "proveedor": "Falabella Retail",
-          "horas": 0.2,
-          "scheduled": "2026-07-09 12:49",
-          "done": "2026-07-09 13:02"
-        },
-        {
-          "picking": "CA1/RET/01045",
-          "proveedor": "Falabella Retail",
-          "horas": 21.8,
-          "scheduled": "2026-07-08 14:58",
-          "done": "2026-07-09 12:48"
-        },
-        {
-          "picking": "CA1/IN/00936",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-08 21:36",
-          "done": "2026-07-08 21:49"
-        },
-        {
-          "picking": "CA1/IN/00935",
-          "proveedor": "",
-          "horas": 0.3,
-          "scheduled": "2026-07-08 16:13",
-          "done": "2026-07-08 16:29"
-        },
-        {
-          "picking": "CA1/IN/00934",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-08 16:00",
-          "done": "2026-07-08 16:04"
         }
       ],
       "error": null
