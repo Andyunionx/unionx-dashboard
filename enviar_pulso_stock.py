@@ -149,10 +149,22 @@ def main():
     xlsx = construir_excel()
     html, monto = construir_html()
     html = html.replace("{HOY}", hoy)
-    fname = "Pulso Stock LIVE.xlsx"
+    fname = "Stock live"  # empieza con "Stock" → sin prefijo "Raw Cyber"
+
+    # 2º adjunto: comparativa Odoo vs live (solo cuando el live está activo)
+    extra = []
+    if FULFILLMENT_LIVE:
+        try:
+            from fulfillment_live import cruce_bytes, LIVE_PARQUET
+            if LIVE_PARQUET.exists():
+                extra = [(cruce_bytes(), "Comparación Stock Odoo vs live.xlsx")]
+                print("[pulso] adjuntando comparativa Odoo vs live", flush=True)
+        except Exception as e:
+            print(f"[pulso][WARN] comparativa no adjuntada: {type(e).__name__}: {e}", flush=True)
+
     asunto = f"📦 Pulso Stock Live · {monto} · {hoy}"
     print(f"Enviando a {len(EMAIL_TO)} destinatarios: {EMAIL_TO}", flush=True)
-    msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO)
+    msg_id = _enviar_via_gmail(asunto, html, xlsx, fname, EMAIL_TO, extra_attachments=extra)
     print("Enviado. msg_id:", msg_id, flush=True)
     return 0 if msg_id else 1
 

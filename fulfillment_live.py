@@ -183,19 +183,31 @@ def generar_cruce(live: pd.DataFrame | None = None) -> dict:
     return {"resumen": resumen, "detalle": detalle.sort_values(["canal", "dif"])}
 
 
+def _escribir_cruce(w) -> None:
+    c = generar_cruce()
+    c["resumen"].rename(columns={"canal": "Canal", "odoo": "Odoo uds", "martin": "Martin uds",
+                                 "dif": "Dif", "skus_ambos": "SKUs ambos", "solo_odoo": "Solo Odoo",
+                                 "solo_martin": "Solo Martin"}).to_excel(w, sheet_name="Resumen", index=False)
+    d = c["detalle"].copy()
+    d.columns = ["Canal", "SKU", "Producto (Odoo)", "Producto (Martin)", "Odoo uds",
+                 "Martin uds", "Dif", "Estado", "Costo Unit"]
+    d.to_excel(w, sheet_name="Detalle SKU", index=False)
+
+
+def cruce_bytes() -> bytes:
+    """Comparativa Odoo vs live en memoria (para adjuntar al pulso)."""
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf) as w:
+        _escribir_cruce(w)
+    return buf.getvalue()
+
+
 def guardar_cruce_excel(path: Path | None = None) -> Path:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     hoy = os.environ.get("CRUCE_FECHA") or datetime.date.today().strftime("%Y%m%d")
     path = path or (OUT_DIR / f"Cruce_Fulfillment_Odoo_vs_Martin_{hoy}.xlsx")
-    c = generar_cruce()
     with pd.ExcelWriter(path) as w:
-        c["resumen"].rename(columns={"canal": "Canal", "odoo": "Odoo uds", "martin": "Martin uds",
-                                     "dif": "Dif", "skus_ambos": "SKUs ambos", "solo_odoo": "Solo Odoo",
-                                     "solo_martin": "Solo Martin"}).to_excel(w, sheet_name="Resumen", index=False)
-        d = c["detalle"].copy()
-        d.columns = ["Canal", "SKU", "Producto (Odoo)", "Producto (Martin)", "Odoo uds",
-                     "Martin uds", "Dif", "Estado", "Costo Unit"]
-        d.to_excel(w, sheet_name="Detalle SKU", index=False)
+        _escribir_cruce(w)
     return path
 
 

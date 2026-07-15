@@ -829,8 +829,10 @@ def descargar_excel_raw_hoy():
     return buf.getvalue(), len(df), hoy_str
 
 
-def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list):
-    """Envío vía Gmail API usando credentials del agente-comex."""
+def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachments=None):
+    """Envío vía Gmail API usando credentials del agente-comex.
+    extra_attachments: lista opcional de (bytes, nombre_exacto.xlsx) que se adjuntan
+    con su nombre tal cual (sin el prefijo 'Raw Cyber')."""
     import json as _json
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -875,6 +877,16 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list):
         fname = base if base.startswith(('Reporte', 'Cierre', 'Mes', 'Stock')) else f'Raw Cyber {base}'
         part.add_header('Content-Disposition', f'attachment; filename="{fname}.xlsx"')
         msg.attach(part)
+
+    for ebytes, ename in (extra_attachments or []):
+        if not ebytes:
+            continue
+        ep = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        ep.set_payload(ebytes)
+        encoders.encode_base64(ep)
+        en = ename if ename.lower().endswith('.xlsx') else f'{ename}.xlsx'
+        ep.add_header('Content-Disposition', f'attachment; filename="{en}"')
+        msg.attach(ep)
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
     sent = service.users().messages().send(userId='me', body={'raw': raw}).execute()
