@@ -875,7 +875,9 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachme
         if base.lower().endswith('.xlsx'):
             base = base[:-5]
         fname = base if base.startswith(('Reporte', 'Cierre', 'Mes', 'Stock')) else f'Raw Cyber {base}'
-        part.add_header('Content-Disposition', f'attachment; filename="{fname}.xlsx"')
+        # forma keyword: nombres con tilde/no-ASCII se codifican RFC2231 (Gmail los lee).
+        # La forma f'filename="..."' rompe con acentos → adjunto "noname".
+        part.add_header('Content-Disposition', 'attachment', filename=f'{fname}.xlsx')
         msg.attach(part)
 
     for ebytes, ename in (extra_attachments or []):
@@ -885,7 +887,7 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachme
         ep.set_payload(ebytes)
         encoders.encode_base64(ep)
         en = ename if ename.lower().endswith('.xlsx') else f'{ename}.xlsx'
-        ep.add_header('Content-Disposition', f'attachment; filename="{en}"')
+        ep.add_header('Content-Disposition', 'attachment', filename=en)
         msg.attach(ep)
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
