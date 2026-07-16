@@ -43,8 +43,13 @@ def _gmail():
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
-    tok = json.load(open(PROJECT_ROOT / "agente-comex/config/token.json"))
-    creds = Credentials.from_authorized_user_info(tok)
+    # CI: GMAIL_TOKEN_JSON (mismo secret del pulso); local: token.json del agente-comex
+    creds_json = os.environ.get("GMAIL_TOKEN_JSON", "")
+    if creds_json:
+        tok = json.loads(creds_json)
+    else:
+        tok = json.load(open(PROJECT_ROOT / "agente-comex/config/token.json"))
+    creds = Credentials.from_authorized_user_info(tok, tok.get("scopes"))
     if creds.expired and creds.refresh_token:
         creds.refresh(Request())
     return build("gmail", "v1", credentials=creds)

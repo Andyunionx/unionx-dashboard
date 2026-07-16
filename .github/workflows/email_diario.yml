@@ -84,13 +84,20 @@ jobs:
 
       - name: Enviar Pulso Stock Live (tabla dinámica por bodega)
         # ACTIVO desde 25-jun-2026: corre si vars.PULSO_STOCK_ENABLED == 'true'.
-        # Stock fresco: sync_stock c/3h.
+        # Stock fresco: sync_stock c/3h. Fulfillment LIVE de Martín (feed 6 AM,
+        # mail "Pulso Fulfillment Marketplaces" a andres@unionx.cl) desde 15-jul-2026:
+        # se baja antes del pulso; si falla, el pulso cae al fulfillment de Odoo.
         if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_STOCK_ENABLED == 'true' }}
         env:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
           EMAIL_TO: ${{ vars.PULSO_STOCK_EMAIL_TO || 'nicolas@unionx.cl,nicole@grupoeter.cl,felipe@unionx.cl,sguzman@grupoeter.cl,martin@grupoeter.cl,gerardo@unionx.cl,facturacion@unionx.cl,trinidad@unionx.cl,ignacia@unionx.cl,claudia@unionx.cl,gabriela@grupoeter.cl,maximiliano@unionx.cl' }}
+          FULFILLMENT_LIVE: ${{ vars.PULSO_STOCK_FULFILLMENT_LIVE || '1' }}
           PYTHONIOENCODING: utf-8
-        run: python enviar_pulso_stock.py
+        run: |
+          if [ "$FULFILLMENT_LIVE" = "1" ]; then
+            python fulfillment_live.py --no-cruce || echo "[warn] fetch fulfillment live falló → pulso usa Odoo"
+          fi
+          python enviar_pulso_stock.py
         continue-on-error: true
 
       - name: Enviar Pulso KPI Semanal (solo lunes)
