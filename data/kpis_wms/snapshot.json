@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-07-15T16:24:26.900316",
+  "generado_en": "2026-07-16T05:43:00.352961",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014931451065562644,
-      "total_pickings": 14734,
-      "on_time": 223,
-      "on_time_pct": 0.015135061761911225,
-      "in_full": 14720,
-      "in_full_pct": 0.9990498167503733,
-      "both": 220,
+      "valor": 0.014915922043199888,
+      "total_pickings": 14213,
+      "on_time": 215,
+      "on_time_pct": 0.015126996411735734,
+      "in_full": 14199,
+      "in_full_pct": 0.999014986280166,
+      "both": 212,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.03966597077244259,
-      "total_pickings": 479,
-      "on_time": 20,
-      "on_time_pct": 0.04175365344467641,
-      "in_full": 475,
-      "in_full_pct": 0.9916492693110647,
-      "both": 19,
+      "valor": 0.03571428571428571,
+      "total_pickings": 504,
+      "on_time": 19,
+      "on_time_pct": 0.037698412698412696,
+      "in_full": 500,
+      "in_full_pct": 0.9920634920634921,
+      "both": 18,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9993706733794839,
-      "ok": 19056,
-      "total": 19068,
+      "valor": 0.9993525412754937,
+      "ok": 18522,
+      "total": 18534,
       "errores": 12,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.239747574955908,
-      "n_recepciones": 252,
+      "valor": 10.458613360323888,
+      "n_recepciones": 247,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00945",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 3.0,
+          "scheduled": "2026-07-15 13:50",
+          "done": "2026-07-15 16:53"
+        },
         {
           "picking": "CA1/RET/01068",
           "proveedor": "Comercial ECCSA S A",
@@ -167,32 +174,25 @@
           "horas": 169.8,
           "scheduled": "2026-07-03 14:08",
           "done": "2026-07-10 15:55"
-        },
-        {
-          "picking": "CA1/IN/00939",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-10 15:05",
-          "done": "2026-07-10 15:11"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9427029600825332,
-      "total_so": 12677,
-      "total_con_pickings": 12601,
-      "cumplidos": 11879,
+      "valor": 0.939273229818714,
+      "total_so": 12378,
+      "total_con_pickings": 12301,
+      "cumplidos": 11554,
       "parciales": 13,
-      "sin_iniciar": 709,
+      "sin_iniciar": 734,
       "error": null
     },
     "oct_30d": {
-      "valor": 68.26515845878647,
-      "n_orders": 14038,
+      "valor": 67.21402856697742,
+      "n_orders": 13551,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 28.61722222222222,
+      "mediana_h": 26.575277777777778,
       "detalle": [
         {
           "so": "S239366",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 10156,
+      "lineas": 10434,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 135,
-      "outgoing": 29899,
-      "internal": 19966,
+      "incoming": 129,
+      "outgoing": 29780,
+      "internal": 20091,
       "total": 50000,
       "error": null
     },
@@ -373,14 +373,14 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 40,
-          "tarde": 40,
+          "total": 42,
+          "tarde": 42,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 158,
-          "tarde": 158,
+          "total": 181,
+          "tarde": 181,
           "on_time_pct": 0.0
         },
         {
@@ -7379,42 +7379,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014931451065562644,
-      "total_pickings": 14734,
-      "on_time": 223,
-      "on_time_pct": 0.015135061761911225,
-      "in_full": 14720,
-      "in_full_pct": 0.9990498167503733,
-      "both": 220,
+      "valor": 0.014915922043199888,
+      "total_pickings": 14213,
+      "on_time": 215,
+      "on_time_pct": 0.015126996411735734,
+      "in_full": 14199,
+      "in_full_pct": 0.999014986280166,
+      "both": 212,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.03966597077244259,
-      "total_pickings": 479,
-      "on_time": 20,
-      "on_time_pct": 0.04175365344467641,
-      "in_full": 475,
-      "in_full_pct": 0.9916492693110647,
-      "both": 19,
+      "valor": 0.03571428571428571,
+      "total_pickings": 504,
+      "on_time": 19,
+      "on_time_pct": 0.037698412698412696,
+      "in_full": 500,
+      "in_full_pct": 0.9920634920634921,
+      "both": 18,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9993706733794839,
-      "ok": 19056,
-      "total": 19068,
+      "valor": 0.9993525412754937,
+      "ok": 18522,
+      "total": 18534,
       "errores": 12,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.239747574955908,
-      "n_recepciones": 252,
+      "valor": 10.458613360323888,
+      "n_recepciones": 247,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00945",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 3.0,
+          "scheduled": "2026-07-15 13:50",
+          "done": "2026-07-15 16:53"
+        },
         {
           "picking": "CA1/RET/01068",
           "proveedor": "Comercial ECCSA S A",
@@ -7547,13 +7554,6 @@
           "horas": 169.8,
           "scheduled": "2026-07-03 14:08",
           "done": "2026-07-10 15:55"
-        },
-        {
-          "picking": "CA1/IN/00939",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-10 15:05",
-          "done": "2026-07-10 15:11"
         }
       ],
       "error": null
