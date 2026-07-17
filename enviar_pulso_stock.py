@@ -10,7 +10,6 @@ Destinatarios: env EMAIL_TO (default = equipo stock).
 """
 import os, sys, io, re, zipfile, datetime
 from pathlib import Path
-from xml.sax.saxutils import escape as _xesc
 import pandas as pd
 import openpyxl
 
@@ -51,88 +50,21 @@ def _cargar_detalle() -> pd.DataFrame:
             print("[pulso] fulfillment LIVE de Martín aplicado (Walmart desde Odoo)", flush=True)
         except Exception as e:
             print(f"[pulso][WARN] fulfillment live no aplicado, se usa Odoo: {type(e).__name__}: {e}", flush=True)
+    # SKU vacío pero con "[CODE]" en el nombre → recuperar el SKU (dato de origen:
+    # detalle.parquet trae algunos productos sin default_code; el código va en el nombre).
+    sku = det["SKU"].astype(str).str.strip()
+    vacio = sku.str.lower().isin(["", "nan", "none"])
+    if vacio.any():
+        rescatado = det.loc[vacio, "Producto"].astype(str).str.extract(r"^\s*\[([^\]]+)\]", expand=False)
+        det.loc[vacio, "SKU"] = rescatado.fillna("").values
+        n = int((rescatado.fillna("") != "").sum())
+        print(f"[pulso] SKU recuperado del nombre en {n} filas (de {int(vacio.sum())} sin SKU)", flush=True)
     return det
 
 
-# --- Rebuild del pivotCache para que el pivot muestre la data FRESCA sin depender
-# del refresh (Gmail preview / móvil / solo-lectura mostraban el cache viejo de la
-# plantilla → números equivocados). Se regeneran sharedItems + records + los <items>
-# del pivotTable, consistentes entre sí. Campos = COLS en ese orden.
-_SHARED_IDX = [0, 2, 3, 4, 5, 6]   # Bodega, Tipo, SKU, Producto, Categoria, Marca
-_INLINE_IDX = [1]                  # Ubicacion (inline <s>)
-_INT_IDX = [7, 8, 9]               # Qty, Reservada, Disponible
-def _xa(v):  # valor seguro para atributo XML
-    return _xesc(str(v), {'"': "&quot;"})
-def _sval(v):
-    s = "" if v is None else str(v)
-    return "" if s.strip().lower() in ("nan", "none", "nat") else s
-def _fnum(v):
-    try:
-        return float(v)
-    except Exception:
-        return 0.0
-
-
-def _rebuild_pivot_cache(det, cachedef, records_xml, pivottable):
-    """Regenera cacheDefinition (sharedItems) + records + items del pivotTable
-    a partir de `det` (mismas columnas COLS, mismo orden que la hoja)."""
-    det = det[COLS].reset_index(drop=True)
-    shared_vals, shared_pos = {}, {}
-    for i in _SHARED_IDX:
-        uniq = list(dict.fromkeys(det[COLS[i]].map(_sval).tolist()))
-        shared_vals[i] = uniq
-        shared_pos[i] = {v: k for k, v in enumerate(uniq)}
-    # records
-    recs = []
-    for row in det.itertuples(index=False):
-        cells = []
-        for i in range(len(COLS)):
-            v = row[i]
-            if i in _SHARED_IDX:
-                cells.append('<x v="%d"/>' % shared_pos[i][_sval(v)])
-            elif i in _INLINE_IDX:
-                cells.append('<s v="%s"/>' % _xa(_sval(v)))
-            elif i in _INT_IDX:
-                cells.append('<n v="%d"/>' % int(round(_fnum(v))))
-            else:
-                cells.append('<n v="%r"/>' % _fnum(v))
-        recs.append("<r>" + "".join(cells) + "</r>")
-    new_rec = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'
-               '<pivotCacheRecords xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
-               'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
-               'count="%d">' % len(recs) + "".join(recs) + "</pivotCacheRecords>")
-    # cacheDefinition sharedItems
-    SI_RE = r'<sharedItems\b(?:[^>]*?/>|[^>]*?>.*?</sharedItems>)'
-    cf = list(re.finditer(r'<cacheField\b.*?</cacheField>', cachedef, re.S))
-    assert len(cf) == len(COLS)
-    new_cd = cachedef
-    for i in _SHARED_IDX:
-        blk = cf[i].group(0)
-        si = '<sharedItems count="%d">%s</sharedItems>' % (
-            len(shared_vals[i]), "".join('<s v="%s"/>' % _xa(v) for v in shared_vals[i]))
-        new_cd = new_cd.replace(blk, re.sub(SI_RE, si, blk, count=1, flags=re.S))
-    new_cd = re.sub(r'recordCount="\d+"', 'recordCount="%d"' % len(recs), new_cd)
-    # pivotTable <items>
-    PF_RE = r'<pivotField\b(?:[^>]*?/>|[^>]*?>.*?</pivotField>)'
-    pf = list(re.finditer(PF_RE, pivottable, re.S))
-    assert len(pf) == len(COLS)
-    new_pt = pivottable
-    for i in _SHARED_IDX:
-        blk = pf[i].group(0)
-        if "<items" in blk:
-            k = len(shared_vals[i])
-            items = ('<items count="%d">' % (k + 1)
-                     + "".join('<item x="%d"/>' % j for j in range(k)) + '<item t="default"/></items>')
-            new_pt = new_pt.replace(blk, re.sub(r'<items\b.*?</items>', items, blk, count=1, flags=re.S))
-    # bodegas (axisCol) visibles
-    new_pt = re.sub(r'<pivotField[^>]*axis="axisCol"[^>]*>.*?</pivotField>',
-                    lambda m: m.group(0).replace(' h="1"', ''), new_pt, flags=re.S)
-    return new_cd, new_rec, new_pt
-
-
 def construir_excel() -> bytes:
-    """Inyecta la sábana fresca en la plantilla, regenera el pivotCache con esa
-    data (para que el pivot NO muestre el cache viejo) y deja refreshOnLoad."""
+    """Inyecta la sábana fresca en la plantilla y deja el pivot con refreshOnLoad
+    (se refresca solo al abrir en Excel) + bodegas visibles."""
     det = _cargar_detalle()
     det = det.sort_values(["Bodega", "Valor"], ascending=[True, False]).reset_index(drop=True)
 
@@ -145,34 +77,26 @@ def construir_excel() -> bytes:
     nrows = len(det) + 1
     buf = io.BytesIO(); wb.save(buf); buf.seek(0)
 
+    # Zip-surgery: garantizar rango + refreshOnLoad + bodegas visibles
     ref = f"A1:L{nrows}"
     zin = zipfile.ZipFile(buf, "r")
-    cd = zin.read("xl/pivotCache/pivotCacheDefinition1.xml").decode("utf-8")
-    rec = zin.read("xl/pivotCache/pivotCacheRecords1.xml").decode("utf-8")
-    pt = zin.read("xl/pivotTables/pivotTable1.xml").decode("utf-8")
-    try:
-        cd, rec, pt = _rebuild_pivot_cache(det, cd, rec, pt)
-    except Exception as e:
-        print(f"[pulso][WARN] rebuild pivotCache falló, se usa refreshOnLoad: {type(e).__name__}: {e}", flush=True)
-        pt = re.sub(r'<pivotField[^>]*axis="axisCol"[^>]*>.*?</pivotField>',
-                    lambda m: m.group(0).replace(' h="1"', ''), pt, flags=re.S)
-    # rango + refreshOnLoad (siempre)
-    cd = re.sub(r'(<worksheetSource ref=")[^"]+(")', r"\g<1>" + ref + r"\g<2>", cd)
-    if "refreshOnLoad" not in cd.split(">")[0]:
-        cd = re.sub(r"(<pivotCacheDefinition )", r'\g<1>refreshOnLoad="1" ', cd, count=1)
-    else:
-        cd = re.sub(r'refreshOnLoad="[^"]*"', 'refreshOnLoad="1"', cd)
-
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
         for it in zin.infolist():
             d = zin.read(it.filename)
             if it.filename == "xl/pivotCache/pivotCacheDefinition1.xml":
-                d = cd.encode("utf-8")
-            elif it.filename == "xl/pivotCache/pivotCacheRecords1.xml":
-                d = rec.encode("utf-8")
+                x = d.decode("utf-8")
+                x = re.sub(r'(<worksheetSource ref=")[^"]+(")', r"\g<1>" + ref + r"\g<2>", x)
+                if "refreshOnLoad" not in x.split(">")[0]:
+                    x = re.sub(r"(<pivotCacheDefinition )", r'\g<1>refreshOnLoad="1" ', x, count=1)
+                else:
+                    x = re.sub(r'refreshOnLoad="[^"]*"', 'refreshOnLoad="1"', x)
+                d = x.encode("utf-8")
             elif it.filename == "xl/pivotTables/pivotTable1.xml":
-                d = pt.encode("utf-8")
+                x = d.decode("utf-8")
+                x = re.sub(r'<pivotField[^>]*axis="axisCol"[^>]*>.*?</pivotField>',
+                           lambda m: m.group(0).replace(' h="1"', ''), x, flags=re.S)
+                d = x.encode("utf-8")
             zout.writestr(it, d)
     zin.close()
     return out.getvalue()
