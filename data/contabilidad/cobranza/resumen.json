@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-17T13:00:41.555168",
+  "generado_en": "2026-07-17T18:51:22.111326",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11143,
-  "total_monto_pendiente_clp": 851472807.0,
+  "total_documentos_pendientes": 11264,
+  "total_monto_pendiente_clp": 857762284.0,
   "monto_por_aging": {
     "+90 días": 45634740.0,
-    "1-30 días": 514204715.0,
+    "1-30 días": 518151041.0,
     "31-60 días": 175396412.0,
     "61-90 días": 19482814.0,
-    "Vigente": 96754126.0
+    "Vigente": 99097277.0
   },
   "monto_por_tipo": {
-    "BOLETA": 541059675.0,
+    "BOLETA": 547349152.0,
     "FACTURA": 310413132.0
   },
   "top_20_deudores": [
@@ -22,15 +22,15 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 118424908.0
+      "monto": 119027203.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 81538137.0
+      "monto": 82159868.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 70231338.0
+      "monto": 71168989.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -38,15 +38,15 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 36301471.0
+      "monto": 37936411.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 31756482.0
+      "monto": 32826799.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23551038.0
+      "monto": 23748988.0
     },
     {
       "partner": "abc S.A.",
@@ -58,15 +58,15 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 20517543.0
+      "monto": 20582473.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19830630.0
+      "monto": 20263119.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 16618640.0
+      "monto": 16634620.0
     },
     {
       "partner": "Cencosud Retail S.A",
@@ -81,12 +81,12 @@
       "monto": 11791293.0
     },
     {
-      "partner": "Comercializadora SP Digital SPA",
-      "monto": 8100546.0
+      "partner": "Global Reward Solutions",
+      "monto": 8148957.0
     },
     {
-      "partner": "Global Reward Solutions",
-      "monto": 7873235.0
+      "partner": "Comercializadora SP Digital SPA",
+      "monto": 8100546.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
@@ -97,6 +97,6 @@
       "monto": 4104800.0
     }
   ],
-  "notas_credito_count": 565,
+  "notas_credito_count": 566,
   "pedidos_venta_count": 10000
 }
