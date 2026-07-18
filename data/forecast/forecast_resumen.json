@@ -1,38 +1,38 @@
 {
-  "generado_en": "2026-07-17T14:36:13.340931",
+  "generado_en": "2026-07-18T14:23:51.358573",
   "fecha_actual": "2026-05-10",
   "mes": "2026-05",
   "anio": 2026,
   "venta_actual_mes": 183579219.0,
-  "venta_pendiente_estimada": 265325210.0,
-  "proyeccion_mes": 448904429.0,
+  "venta_pendiente_estimada": 250435168.0,
+  "proyeccion_mes": 434014387.0,
   "venta_ly_mes_completo": 528082752.0,
-  "pct_vs_ly": -14.993544610220482,
+  "pct_vs_ly": -17.81318640757273,
   "dias_actuales": 10,
   "dias_pendientes": 21,
   "horizontes": {
     "30d": {
-      "proyeccion": 523064165.0,
+      "proyeccion": 520091499.0,
       "venta_ly_mismo_rango": 836365824.0,
-      "pct_vs_ly": -37.45988298536694
+      "pct_vs_ly": -37.81530951221651
     },
     "60d": {
-      "proyeccion": 1117269616.0,
+      "proyeccion": 1078032422.0,
       "venta_ly_mismo_rango": 1444601600.0,
-      "pct_vs_ly": -22.658979749157137
+      "pct_vs_ly": -25.375105357767847
     },
     "90d": {
-      "proyeccion": 2034250622.0,
+      "proyeccion": 1964914299.0,
       "venta_ly_mismo_rango": 2101904128.0,
-      "pct_vs_ly": -3.2186770604220443
+      "pct_vs_ly": -6.517415669683675
     }
   },
   "anio_proyeccion": {
     "venta_ytd": 2527188868.0,
-    "proyeccion_resto_anio": 4280497041.0,
-    "proyeccion_anio_completo": 6807685909.0,
+    "proyeccion_resto_anio": 4123702874.0,
+    "proyeccion_anio_completo": 6650891742.0,
     "venta_anio_ly": 7774849536.0,
-    "pct_anio_vs_ly": -12.439644298217322,
+    "pct_anio_vs_ly": -14.45632856038849,
     "tabla_mensual": [
       {
         "mes": 1,
@@ -69,65 +69,65 @@
       {
         "mes": 5,
         "mes_nombre": "May",
-        "proyeccion": 448904429.0,
+        "proyeccion": 434014387.0,
         "venta_ly": 528082752.0,
-        "pct_vs_ly": -14.993544610220482,
+        "pct_vs_ly": -17.81318640757273,
         "tipo": "mixto"
       },
       {
         "mes": 6,
         "mes_nombre": "Jun",
-        "proyeccion": 960804712.0,
+        "proyeccion": 941929838.0,
         "venta_ly": 846056576.0,
-        "pct_vs_ly": 13.562702454546018,
+        "pct_vs_ly": 11.33177907005595,
         "tipo": "forecast"
       },
       {
         "mes": 7,
         "mes_nombre": "Jul",
-        "proyeccion": 498483391.0,
+        "proyeccion": 435767921.0,
         "venta_ly": 661396352.0,
-        "pct_vs_ly": -24.631669120545737,
+        "pct_vs_ly": -34.11395153869854,
         "tipo": "forecast"
       },
       {
         "mes": 8,
         "mes_nombre": "Aug",
-        "proyeccion": 538858259.0,
+        "proyeccion": 508274053.0,
         "venta_ly": 584376448.0,
-        "pct_vs_ly": -7.789189512305603,
+        "pct_vs_ly": -13.022837463839748,
         "tipo": "forecast"
       },
       {
         "mes": 9,
         "mes_nombre": "Sep",
-        "proyeccion": 524268361.0,
+        "proyeccion": 489550189.0,
         "venta_ly": 622126208.0,
-        "pct_vs_ly": -15.729581191345662,
+        "pct_vs_ly": -21.310148535005936,
         "tipo": "forecast"
       },
       {
         "mes": 10,
         "mes_nombre": "Oct",
-        "proyeccion": 1032184218.0,
+        "proyeccion": 1002511932.0,
         "venta_ly": 1004385280.0,
-        "pct_vs_ly": 2.767756413156513,
+        "pct_vs_ly": -0.186516871294649,
         "tipo": "forecast"
       },
       {
         "mes": 11,
         "mes_nombre": "Nov",
-        "proyeccion": 712866505.0,
+        "proyeccion": 680507112.0,
         "venta_ly": 792863744.0,
-        "pct_vs_ly": -10.089657851727926,
+        "pct_vs_ly": -14.1709887544057,
         "tipo": "forecast"
       },
       {
         "mes": 12,
         "mes_nombre": "Dec",
-        "proyeccion": 1206994488.0,
+        "proyeccion": 1192424420.0,
         "venta_ly": 735203584.0,
-        "pct_vs_ly": 64.17146410428816,
+        "pct_vs_ly": 62.189690848949944,
         "tipo": "forecast"
       }
     ]
@@ -139,8 +139,8 @@
       "fecha_fin": "2026-06-04",
       "multiplicador": 1.0,
       "ancla_total_M": 511.4754098360656,
-      "prophet_ventana_M": 375.220354,
-      "factor_aplicado": 1.363133434483316,
+      "prophet_ventana_M": 376.001192,
+      "factor_aplicado": 1.3603026286046072,
       "dias": 4
     },
     {
@@ -149,8 +149,8 @@
       "fecha_fin": "2026-10-09",
       "multiplicador": 1.0,
       "ancla_total_M": 511.4754098360656,
-      "prophet_ventana_M": 395.604098,
-      "factor_aplicado": 1.292897147481181,
+      "prophet_ventana_M": 392.657696,
+      "factor_aplicado": 1.3025987139599209,
       "dias": 4
     },
     {
@@ -159,8 +159,8 @@
       "fecha_fin": "2026-11-30",
       "multiplicador": 0.5,
       "ancla_total_M": 255.7377049180328,
-      "prophet_ventana_M": 362.839139,
-      "factor_aplicado": 0.7048239217600856,
+      "prophet_ventana_M": 356.524692,
+      "factor_aplicado": 0.7173071337174952,
       "dias": 5
     },
     {
@@ -169,8 +169,8 @@
       "fecha_fin": "2026-12-25",
       "multiplicador": 2.0,
       "ancla_total_M": 1022.9508196721312,
-      "prophet_ventana_M": 484.890835,
-      "factor_aplicado": 2.109651793423011,
+      "prophet_ventana_M": 451.398526,
+      "factor_aplicado": 2.2661811254388793,
       "dias": 21
     }
   ]
