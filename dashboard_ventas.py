@@ -2,6 +2,7 @@
 Dashboard UnionX — Entry point con navegación jerárquica.
 Auth + st.navigation con secciones: Ventas / Stock / Cruce.
 """
+# redeploy nudge 2026-07-20: forzar rebuild en Streamlit Cloud (tomar fix junio conciliación)
 import os
 import sys
 from pathlib import Path
