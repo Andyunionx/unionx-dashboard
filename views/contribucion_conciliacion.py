@@ -249,10 +249,8 @@ def render():
     com_tot_k = gl("Comisión Venta", "Contable") + gl("Comisión Envío", "Contable") + gl("Marketing", "Contable")
     pl = [("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row")]
     if D is not None:  # sub-filas de desglose del RAW (solo si el detalle cargó)
-        # Ingreso bruto = base CONTABLE; Devoluciones (NC) = lado COMERCIAL (impacto en la venta KAM).
+        # Devoluciones (NC) = lado COMERCIAL (impacto en la venta KAM).
         pl += [
-            ("    · Ingreso por producto", None, D["ing_prod"], "memo"),
-            ("    · Ingreso por envío", None, D["ing_env"], "memo"),
             ("    · Devoluciones del período", D["nc_per"], None, "memo"),
             ("    · Devoluciones otro período 2026", D["nc_o2026"], None, "memo"),
             ("    · Devoluciones 2025", D["nc_o2025"], None, "memo"),
