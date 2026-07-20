@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-20T13:45:41.463600",
+  "generado_en": "2026-07-20T19:23:08.034095",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11681,
-  "total_monto_pendiente_clp": 901021811.0,
+  "total_documentos_pendientes": 11813,
+  "total_monto_pendiente_clp": 907976824.0,
   "monto_por_aging": {
-    "+90 días": 45461187.0,
-    "1-30 días": 536154783.0,
-    "31-60 días": 181505811.0,
-    "61-90 días": 21787547.0,
-    "Vigente": 116112483.0
+    "+90 días": 45402257.0,
+    "1-30 días": 541499798.0,
+    "31-60 días": 181057921.0,
+    "61-90 días": 21349637.0,
+    "Vigente": 118667211.0
   },
   "monto_por_tipo": {
-    "BOLETA": 590608679.0,
+    "BOLETA": 597563692.0,
     "FACTURA": 310413132.0
   },
   "top_20_deudores": [
@@ -22,15 +22,15 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 126812162.0
+      "monto": 126633575.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 87268258.0
+      "monto": 87986068.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 71168989.0
+      "monto": 72922336.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -38,11 +38,11 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 37936411.0
+      "monto": 38716226.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 35153319.0
+      "monto": 35557574.0
     },
     {
       "partner": "Cencosud Retail S.A",
@@ -50,27 +50,27 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 25107996.0
+      "monto": 25127966.0
     },
     {
       "partner": "abc S.A.",
       "monto": 22964882.0
     },
     {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 21429665.0
+    },
+    {
       "partner": "Cliente Ripley",
-      "monto": 21516893.0
+      "monto": 20934973.0
     },
     {
       "partner": "Falabella.com SPA",
       "monto": 20915985.0
     },
     {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20263119.0
-    },
-    {
       "partner": "Cliente Walmart",
-      "monto": 16742417.0
+      "monto": 16831867.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 8148957.0
+      "monto": 8550554.0
     },
     {
       "partner": "Comercializadora SP Digital SPA",
@@ -97,6 +97,6 @@
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 565,
+  "notas_credito_count": 568,
   "pedidos_venta_count": 10000
 }
