@@ -248,12 +248,16 @@ def render():
     com_tot_c = gl("Comisión Venta", "Comercial") + gl("Comisión Envío", "Comercial") + gl("Marketing", "Comercial")
     com_tot_k = gl("Comisión Venta", "Contable") + gl("Comisión Envío", "Contable") + gl("Marketing", "Contable")
     pl = [("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row")]
-    if D is not None:  # sub-filas de desglose del RAW (solo si el detalle cargó)
-        # Devoluciones (NC) = lado COMERCIAL (impacto en la venta KAM).
+    if D is not None:  # desglose del RAW bajo Venta. Contable descrito A→D (A−devol=D).
+        cont_venta = gl("Venta", "Contable")
+        devs = D["nc_per"] + D["nc_o2026"] + D["nc_o2025"]   # negativos
+        A = cont_venta - devs                                 # venta bruta = neta + |devoluciones|
         pl += [
-            ("    · Devoluciones del período", D["nc_per"], None, "memo"),
-            ("    · Devoluciones otro período 2026", D["nc_o2026"], None, "memo"),
-            ("    · Devoluciones 2025", D["nc_o2025"], None, "memo"),
+            ("    A. Venta total neta (prod + envío)", None, A, "memo"),
+            ("    B. (−) Devoluciones del período", D["nc_per"], D["nc_per"], "memo"),
+            ("       (−) Devoluciones otro período 2026", D["nc_o2026"], D["nc_o2026"], "memo"),
+            ("    C. (−) Devoluciones 2025", D["nc_o2025"], D["nc_o2025"], "memo"),
+            ("    D. = Venta neta − devoluciones", None, cont_venta, "memo"),
         ]
     pl += [
         ("Costo de Venta", gl("Costo de Venta", "Comercial"), gl("Costo de Venta", "Contable"), "row"),
