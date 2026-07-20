@@ -28,7 +28,25 @@ MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "O
 # Último mes cerrado con datos comercial + contable en el Sheet. Subir a medida que
 # se cargan los meses (define el selector de Mes y el tope de las consultas al RAW).
 MES_MAX = 6  # jun-2026
-MESES_OPT = ["YTD"] + MES_NOM[1:MES_MAX + 1]
+# Selector de período: agregados (YTD/Q1/Q2/1S) + meses individuales cargados.
+MESES_OPT = ["YTD", "Q1", "Q2", "1S"] + MES_NOM[1:MES_MAX + 1]
+
+
+def _meses_periodo(mes):
+    """Set de meses (int) que abarca la selección de período, intersectado con lo
+    cargado (1..MES_MAX). YTD=todo; 1S=Ene–Jun; Q1=Ene–Mar; Q2=Abr–Jun; mes puntual={n}."""
+    disp = set(range(1, MES_MAX + 1))
+    if mes == "YTD":
+        return set(disp)
+    if mes == "1S":
+        return {m for m in disp if m <= 6}
+    if mes == "Q1":
+        return disp & {1, 2, 3}
+    if mes == "Q2":
+        return disp & {4, 5, 6}
+    if mes in MES_NOM:
+        return {MES_NOM.index(mes)} & disp
+    return set(disp)
 MESES_ES = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
             "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
             "noviembre": 11, "diciembre": 12}
@@ -198,7 +216,9 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS", negocio="TODOS"):
     c2n = bundle.get("canal2negocio", {})
     _cset = None if negocio == "TODOS" else {c for c, n in c2n.items() if n == negocio}
     _okc = lambda v: _match(v, canal, "TODOS") and (_cset is None or v in _cset)
-    f = datos[datos.apply(lambda r: _match(r["Mes"], mes, "YTD") and _okc(r["Canal"])
+    MSET = _meses_periodo(mes)  # meses (int) del período seleccionado
+    _inp = lambda mnom: (MES_NOM.index(mnom) if mnom in MES_NOM else -1) in MSET
+    f = datos[datos.apply(lambda r: _inp(r["Mes"]) and _okc(r["Canal"])
                           and _match(r["KAM"], kam, "TODOS"), axis=1)]
     g = lambda c: float(f[c].sum()) if len(f) else 0.0
 
@@ -222,16 +242,16 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS", negocio="TODOS"):
                        "Δ %": ((com - con) / abs(con)) if con else None})
     pyl = pd.DataFrame(lineas)
 
-    # NC del/otro relativo al filtro
+    # NC del/otro relativo al período: NC registrada dentro del período; "del" = origen
+    # 2026 dentro del período, "otro" = registrada en el período pero origen fuera (2025
+    # o mes 2026 fuera del período).
     def _flag(row, kind):
         if not (_okc(row["Canal"]) and _match(row["KAM"], kam, "TODOS")):
             return False
-        oa, om = row["OrigenAnio"], row["OrigenMes"]
-        if mes == "YTD":
-            return (oa == 2025) if kind == "otro" else (oa == 2026)
-        in_per = (row["Mes"] == mes and oa == 2026 and om == mes)
-        if row["Mes"] != mes:
+        if not _inp(row["Mes"]):
             return False
+        oa, om = row["OrigenAnio"], row["OrigenMes"]
+        in_per = (oa == 2026 and _inp(om))
         return (not in_per) if kind == "otro" else in_per
     nc_del = float(nc_tab[nc_tab.apply(lambda r: _flag(r, "del"), axis=1)]["Neto"].sum()) if len(nc_tab) else 0.0
     nc_otro = float(nc_tab[nc_tab.apply(lambda r: _flag(r, "otro"), axis=1)]["Neto"].sum()) if len(nc_tab) else 0.0
@@ -239,17 +259,15 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS", negocio="TODOS"):
     def _cflag(row):
         if not (_okc(row["Canal"]) and _match(row["KAM"], kam, "TODOS")):
             return False
-        oa, om = row["OrigenAnio"], row["OrigenMes"]
-        if mes == "YTD":
-            return oa == 2025
-        if row["Mes"] != mes:
+        if not _inp(row["Mes"]):
             return False
-        return not (oa == 2026 and om == mes)
+        oa, om = row["OrigenAnio"], row["OrigenMes"]
+        return not (oa == 2026 and _inp(om))
     com_otro = float(com_tab[com_tab.apply(_cflag, axis=1)]["Monto"].sum()) if len(com_tab) else 0.0
 
     aporte_tab = bundle.get("aporte_tab")
     if aporte_tab is not None and len(aporte_tab):
-        am = aporte_tab[aporte_tab.apply(lambda r: _match(r["Mes"], mes, "YTD")
+        am = aporte_tab[aporte_tab.apply(lambda r: _inp(r["Mes"])
                         and _okc(r["Canal"]) and _match(r["KAM"], kam, "TODOS"), axis=1)]
         aporte_canal = float(am["Monto"].sum())
     else:
@@ -292,7 +310,7 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
     Regla período (intrínseca a cada fila): origen 2026 y OrigenMes == Mes de registro.
     NC otro 2026 = origen 2026 pero otro mes; NC otro 2025 = origen <= 2025.
     """
-    mi = _mes_a_int(mes)
+    mset = _meses_periodo(mes)  # meses (int) del período
 
     def _flt(df):
         if df is None or not len(df):
@@ -304,8 +322,7 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
             m = m[m["KAM"] == kam]
         if negocio != "TODOS" and "Negocio" in m.columns:
             m = m[m["Negocio"] == negocio]
-        if mi is not None:
-            m = m[m["Mes"] == mi]
+        m = m[m["Mes"].isin(mset)]
         return m
 
     rc = _flt(raw_comp)
@@ -317,14 +334,10 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
     ing_prod, costo_prod = s(prod, "Venta"), s(prod, "Costo")
     ing_env, costo_env = s(env, "Venta"), s(env, "Costo")
     if len(nc):
-        if mi is None:        # YTD: del período = todo 2026; otro período 2026 vacío; otro = 2025
-            per = nc[nc["OrigenAnio"] == 2026]
-            o26 = nc.iloc[0:0]
-            o25 = nc[nc["OrigenAnio"] <= 2025]
-        else:                 # mes: del período = origen ese mes; otro 2026 = otro mes 2026; otro = 2025
-            per = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] == mi)]
-            o26 = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"] != mi)]
-            o25 = nc[nc["OrigenAnio"] <= 2025]
+        # del período = origen 2026 dentro del período; otro 2026 = 2026 fuera del período; otro = <=2025
+        per = nc[(nc["OrigenAnio"] == 2026) & (nc["OrigenMes"].isin(mset))]
+        o26 = nc[(nc["OrigenAnio"] == 2026) & (~nc["OrigenMes"].isin(mset))]
+        o25 = nc[nc["OrigenAnio"] <= 2025]
     else:
         per = o26 = o25 = nc
     nc_per_v, nc_per_c = s(per, "Venta"), s(per, "Costo")
@@ -337,8 +350,7 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
 
     gc = _flt(glosas_comp)
     if len(gc):
-        es_per = ((gc["OrigenAnio"] == 2026) if mi is None
-                  else ((gc["OrigenAnio"] == 2026) & (gc["OrigenMes"] == mi)))
+        es_per = (gc["OrigenAnio"] == 2026) & (gc["OrigenMes"].isin(mset))
         per_g = gc[es_per]
         com_v = float(per_g[per_g["Cat"] == "venta"]["Monto"].sum())
         com_e = float(per_g[per_g["Cat"] == "envio"]["Monto"].sum())
@@ -404,9 +416,9 @@ def construir_b2b(df_ar, df_meta):
 
 def calcular_b2b(b2b, mes="YTD"):
     d, mt = b2b["datos_b2b"], b2b["meta_b2b"]
-    if mes != "YTD":
-        d = d[d["Mes"] == mes]
-        mt = mt[mt["Mes"] == mes]
+    nombres = {MES_NOM[i] for i in _meses_periodo(mes)}  # nombres de mes del período
+    d = d[d["Mes"].isin(nombres)]
+    mt = mt[mt["Mes"].isin(nombres)]
     money_cols = ["Venta", "Costo", "Comisión Venta", "Comisión Envío", "Marketing", "Contribución"]
     pl_canal = (d.groupby("Canal", as_index=False)[money_cols].sum().sort_values("Venta", ascending=False)
                 if len(d) else pd.DataFrame(columns=["Canal"] + money_cols))
