@@ -117,26 +117,3 @@ jobs:
             echo "No es lunes — Pulso KPI semanal omitido."
           fi
         continue-on-error: true
-
-      - name: Enviar Reporte KPI Operacional MENSUAL (primer lunes del mes)
-        # ACTIVO (OK Andrés 20-jul-2026): corre el PRIMER LUNES de cada mes.
-        # Reporte mensual del mes cerrado más reciente (mes anterior), data-driven
-        # desde parquet (WMS categoria_wms + ventas + control_gestion + OTIF snapshot).
-        # HTML email-safe (tablas inline; el reporte "fancy" con gráficos es el
-        # artifact de claude.ai, que CI no puede generar → link opcional vía var).
-        # Envía a EMAIL_TO con copia a EMAIL_CC (Gerardo). Kill-switch: setear
-        # vars.REPORTE_KPI_MENSUAL_ENABLED='false' para pausarlo.
-        if: ${{ github.event.inputs.solo_live != 'true' && vars.REPORTE_KPI_MENSUAL_ENABLED != 'false' }}
-        env:
-          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
-          EMAIL_TO: ${{ vars.REPORTE_KPI_EMAIL_TO || 'andres@unionx.cl' }}
-          EMAIL_CC: ${{ vars.REPORTE_KPI_EMAIL_CC || 'gerardo@unionx.cl' }}
-          ARTIFACT_URL: ${{ vars.REPORTE_KPI_ARTIFACT_URL || '' }}
-          PYTHONIOENCODING: utf-8
-        run: |
-          if [ "$(date +%u)" = "1" ] && [ "$(date +%-d)" -le 7 ]; then
-            SEND=1 python reporte_kpi_operacional.py
-          else
-            echo "No es el primer lunes del mes — Reporte KPI mensual omitido."
-          fi
-        continue-on-error: true

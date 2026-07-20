@@ -4,7 +4,9 @@
 Generaliza `enviar_kpi_junio.py` a CUALQUIER mes cerrado. Por defecto reporta el
 **mes anterior** (mes cerrado más reciente); se puede forzar con MES_KPI/YEAR_KPI.
 
-Diseñado para correr en CI (GitHub Actions) el PRIMER LUNES de cada mes:
+ENVÍO MANUAL (decisión Andrés 20-jul-2026): NO está automatizado en CI porque el
+reporte depende de información externa que Andrés confirma antes de mandarlo. Este
+script fija el FORMATO y QUÉ INFORMACIÓN va; se corre a mano cuando Andrés lo pide.
   - Calcula todo desde parquet (WMS categoria_wms + ventas_historico + control_gestion
     + snapshot OTIF). No hay nada hardcodeado del mes.
   - HTML email-safe (tablas con estilos inline; sin CSS vars ni SVG, que no rendean
