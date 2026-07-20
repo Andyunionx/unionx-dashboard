@@ -88,7 +88,7 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         if k not in ("canal", "kam"):
             df[i] = df[i].apply(num)
     df["_ck"] = df[IX["canal"]].apply(_norm)
-    df = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= 5)].copy()
+    df = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= MES_MAX)].copy()
 
     ck_kams = defaultdict(set)
     for _, r in df.iterrows():
@@ -372,7 +372,7 @@ def construir_b2b(df_ar, df_meta):
     for i in (IX["ano"], IX["mes"], 18, 19, 21, 22, 23, 25):
         df[i] = df[i].apply(num)
     df["_neg"] = df[NEG_IX].apply(_norm)
-    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= 5) & (df["_neg"] == "distribucion")]
+    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= MES_MAX) & (df["_neg"] == "distribucion")]
     rows = []
     for (m, canal), g in d.groupby([IX["mes"], IX["canal"]]):
         rows.append({"Mes": MES_NOM[int(m)], "Canal": str(canal).strip(),
@@ -392,7 +392,7 @@ def construir_b2b(df_ar, df_meta):
         cA, cM, cN, cMV, cMC = (col("AÑO"), col("Mes"), col("Negocio"), col("Meta Venta"), col("Meta Contribución"))
         for _, r in df_meta.iterrows():
             try:
-                if int(num(r[cA])) == 2026 and 1 <= int(num(r[cM])) <= 5 and _norm(r[cN]) == "distribucion":
+                if int(num(r[cA])) == 2026 and 1 <= int(num(r[cM])) <= MES_MAX and _norm(r[cN]) == "distribucion":
                     meta_rows.append({"Mes": MES_NOM[int(num(r[cM]))],
                                       "MetaVenta": num(r[cMV]), "MetaContrib": num(r[cMC])})
             except (TypeError, ValueError):
