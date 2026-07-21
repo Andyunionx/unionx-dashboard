@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-20T19:23:08.034095",
+  "generado_en": "2026-07-21T01:25:35.761017",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11813,
-  "total_monto_pendiente_clp": 907976824.0,
+  "total_documentos_pendientes": 11879,
+  "total_monto_pendiente_clp": 912410908.0,
   "monto_por_aging": {
-    "+90 días": 45402257.0,
-    "1-30 días": 541499798.0,
-    "31-60 días": 181057921.0,
-    "61-90 días": 21349637.0,
-    "Vigente": 118667211.0
+    "+90 días": 45406156.0,
+    "1-30 días": 543341556.0,
+    "31-60 días": 183979158.0,
+    "61-90 días": 21092807.0,
+    "Vigente": 118591231.0
   },
   "monto_por_tipo": {
-    "BOLETA": 597563692.0,
+    "BOLETA": 601997776.0,
     "FACTURA": 310413132.0
   },
   "top_20_deudores": [
@@ -22,11 +22,11 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 126633575.0
+      "monto": 128304577.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 87986068.0
+      "monto": 89220938.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 35557574.0
+      "monto": 35463924.0
     },
     {
       "partner": "Cencosud Retail S.A",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 25127966.0
+      "monto": 25357856.0
     },
     {
       "partner": "abc S.A.",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 20934973.0
+      "monto": 21065843.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 16831867.0
+      "monto": 16578936.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -81,6 +81,10 @@
       "monto": 11791293.0
     },
     {
+      "partner": "Comercial ECCSA S A",
+      "monto": 8961532.0
+    },
+    {
       "partner": "Global Reward Solutions",
       "monto": 8550554.0
     },
@@ -89,14 +93,10 @@
       "monto": 8100546.0
     },
     {
-      "partner": "Comercial ECCSA S A",
-      "monto": 8051596.0
-    },
-    {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 568,
+  "notas_credito_count": 566,
   "pedidos_venta_count": 10000
 }
