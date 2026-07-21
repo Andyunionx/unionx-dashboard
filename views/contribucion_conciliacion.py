@@ -258,7 +258,8 @@ def render():
     else:
         ck = lambda ln: gl(ln, "Contable")
         glosa_otro = 0.0
-    com_tot_c = gl("Comisión Venta", "Comercial") + gl("Comisión Envío", "Comercial") + gl("Marketing", "Comercial")
+    # Comercial: Total Comisiones = Margen − Contribución (stated del Sheet, foots 1:1).
+    com_tot_c = gl("Margen Directo", "Comercial") - gl("Contribución", "Comercial")
     com_tot_k = ck("Comisión Venta") + ck("Comisión Envío") + ck("Marketing") + glosa_otro
     pl = [("Venta", gl("Venta", "Comercial"), ck("Venta"), "row")]
     if D is not None:  # desglose del RAW bajo Venta (columna Contable). A − devol = D.
