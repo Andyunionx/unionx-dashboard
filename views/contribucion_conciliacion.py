@@ -231,10 +231,10 @@ def render():
     except Exception as e:
         st.warning(f"Desglose del RAW no disponible ({type(e).__name__}) — muestro el P&L de la hoja. {str(e)[:100]}")
 
-    contrib_cont = D["margen_contrib"] if D is not None else R["contrib_cont"]
+    contrib_cont = R["contrib_cont"]   # Contable = Sheet (el Drive de contribución)
     st.markdown("---")
 
-    # ---- KPIs (Contribución Contable = RAW) ----
+    # ---- KPIs (Contribución Contable = Sheet) ----
     k1, k2, k3 = st.columns(3)
     k1.metric("Contribución Comercial", fmt_pesos(R["contrib_com"]))
     k2.metric("Contribución Contable", fmt_pesos(contrib_cont))
@@ -244,45 +244,36 @@ def render():
     pyl = R["pyl"].copy()
     pv = pyl.set_index("Línea")
     gl = lambda ln, col: float(pv.loc[ln, col])
-    # (Línea, comercial, contable, tipo). La columna CONTABLE se ancla en el RAW de
-    # ventas (calcular_detalle D): el drive de contribución se construye desde el RAW,
-    # así que la contable = RAW (única fuente) y todo calza (A−devol=D, Venta−Costo=Margen,
-    # Margen−Comisiones=Contribución). Fallback a la hoja (gl) si el detalle RAW no cargó.
-    if D is not None:
-        _ck = {"Venta": D["venta_neta"], "Costo de Venta": D["costo"],
-               "Margen Directo": D["margen_directo"], "Comisión Venta": D["com_venta"],
-               "Comisión Envío": D["com_envio"], "Marketing": D["com_mkt"],
-               "Contribución": D["margen_contrib"]}
-        ck = lambda ln: _ck.get(ln, gl(ln, "Contable"))
-        glosa_otro = D["glosa_otro"]
-    else:
-        ck = lambda ln: gl(ln, "Contable")
-        glosa_otro = 0.0
-    # Comercial: Total Comisiones = Margen − Contribución (stated del Sheet, foots 1:1).
+    # (Línea, comercial, contable, tipo). Comercial y Contable = columnas del Sheet (el
+    # Drive de contribución). El desglose de devoluciones bajo Venta viene del RAW (el
+    # Sheet no lo abre por período de origen); D = Venta contable de la hoja.
+    glosa_otro = D["glosa_otro"] if D is not None else 0.0
     com_tot_c = gl("Margen Directo", "Comercial") - gl("Contribución", "Comercial")
-    com_tot_k = ck("Comisión Venta") + ck("Comisión Envío") + ck("Marketing") + glosa_otro
-    pl = [("Venta", gl("Venta", "Comercial"), ck("Venta"), "row")]
-    if D is not None:  # desglose del RAW bajo Venta (columna Contable). A − devol = D.
-        A = D["ing_prod"] + D["ing_env"]
+    com_tot_k = gl("Comisión Venta", "Contable") + gl("Comisión Envío", "Contable") + gl("Marketing", "Contable")
+    pl = [("Venta", gl("Venta", "Comercial"), gl("Venta", "Contable"), "row")]
+    if D is not None:  # desglose de devoluciones (RAW) bajo la Venta contable de la hoja. A − devol = D.
+        cont_venta = gl("Venta", "Contable")
+        devs = D["nc_per"] + D["nc_o2026"] + D["nc_o2025"]
+        A = cont_venta - devs
         pl += [
             ("    A. Venta total neta (prod + envío)", None, A, "memo"),
             ("    B. (−) Devoluciones del período", None, D["nc_per"], "memo"),
             ("       (−) Devoluciones otro período 2026", None, D["nc_o2026"], "memo"),
             ("    C. (−) Devoluciones 2025", None, D["nc_o2025"], "memo"),
-            ("    D. = Venta neta − devoluciones", None, D["venta_neta"], "memo"),
+            ("    D. = Venta neta − devoluciones", None, cont_venta, "memo"),
         ]
     pl += [
-        ("Costo de Venta", gl("Costo de Venta", "Comercial"), ck("Costo de Venta"), "row"),
-        ("= Margen Directo", gl("Margen Directo", "Comercial"), ck("Margen Directo"), "bold"),
-        ("Comisión Venta", gl("Comisión Venta", "Comercial"), ck("Comisión Venta"), "row"),
-        ("Comisión Envío", gl("Comisión Envío", "Comercial"), ck("Comisión Envío"), "row"),
-        ("Marketing", gl("Marketing", "Comercial"), ck("Marketing"), "row"),
+        ("Costo de Venta", gl("Costo de Venta", "Comercial"), gl("Costo de Venta", "Contable"), "row"),
+        ("= Margen Directo", gl("Margen Directo", "Comercial"), gl("Margen Directo", "Contable"), "bold"),
+        ("Comisión Venta", gl("Comisión Venta", "Comercial"), gl("Comisión Venta", "Contable"), "row"),
+        ("Comisión Envío", gl("Comisión Envío", "Comercial"), gl("Comisión Envío", "Contable"), "row"),
+        ("Marketing", gl("Marketing", "Comercial"), gl("Marketing", "Contable"), "row"),
     ]
     if D is not None and glosa_otro:
-        pl.append(("    · Glosa otro período (timing)", None, glosa_otro, "memo"))
+        pl.append(("    · Glosa otro período (timing, RAW)", None, glosa_otro, "memo"))
     pl += [
         ("= Total Comisiones", com_tot_c, com_tot_k, "bold"),
-        ("= Contribución", gl("Contribución", "Comercial"), ck("Contribución"), "head"),
+        ("= Contribución", gl("Contribución", "Comercial"), gl("Contribución", "Contable"), "head"),
     ]
     _f = lambda v: fmt_pesos(v) if v is not None else ""
     disp = pd.DataFrame([{
@@ -303,10 +294,10 @@ def render():
 
     # estructura % sobre venta (margen, comisiones c/u, marketing, margen contribución).
     # Contable sobre la venta contable del RAW (ck), consistente con el P&L.
-    vc = gl("Venta", "Comercial"); vk = ck("Venta")
+    vc = gl("Venta", "Comercial"); vk = gl("Venta", "Contable")
     fpct = lambda x, base: (f"{x/base*100:.1f}%" if base else "—")
     pct_df = pd.DataFrame([{"Línea": etq, "% Comercial": fpct(gl(ln, "Comercial"), vc),
-                            "% Contable": fpct(ck(ln), vk)}
+                            "% Contable": fpct(gl(ln, "Contable"), vk)}
                            for ln, etq in [("Margen Directo", "Margen Directo"), ("Comisión Venta", "Comisión Venta"),
                                            ("Comisión Envío", "Comisión Envío"), ("Marketing", "Marketing"),
                                            ("Contribución", "Margen Contribución")]])
