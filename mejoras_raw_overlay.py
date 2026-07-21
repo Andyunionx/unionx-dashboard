@@ -127,6 +127,17 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     # P1b — self-heal de marca vacía (mismo SKU + prefijo)
     df = heal_marca(df, verbose=verbose)
 
+    # P1c — tipo_marca SIEMPRE derivado de la marca (Propia/Otras marcas). Evita que
+    # quede el crudo In/Out/No aplica de Odoo cuando el paso de clasificación del
+    # extract falla (le pasó a julio; reportado por Felipe 20-jul). Regla: clasificar_marca.
+    if "marca" in df.columns:
+        try:
+            from clasificar_marca import clasificar_tipo_marca
+            df["tipo_marca"] = df["marca"].apply(clasificar_tipo_marca)
+            log("  [P1c] tipo_marca derivado de marca (Propia/Otras marcas)")
+        except Exception as e:
+            log(f"  [P1c] omitido: {type(e).__name__}: {e}")
+
     # P5 — flag es_despacho (vectorizado, sin concatenar todo)
     pat = "despacho|flete|env[ií]o|shipping"
     marca_l = df["marca"].astype(str).str.lower()
