@@ -506,6 +506,29 @@ def main():
     # _line_id era transitorio (solo para dedup) → no va al parquet (mantiene schema).
     df = df.drop(columns=['_line_id'], errors='ignore')
 
+    # GUARDRAIL anti-clobber (20-jul): un pull incompleto de Odoo (timeout/503) NO debe
+    # pisar un mes_actual bueno. Si ya existe uno del MISMO mes con >30% más de venta
+    # bruta, se aborta el guardado (no se sobrescribe). Override con FORCE_WRITE=1.
+    try:
+        if OUT_PATH.exists() and os.environ.get('FORCE_WRITE') != '1':
+            prev = pd.read_parquet(OUT_PATH, columns=['fecha_venta', 'venta_bruta', 'tipo_movimiento'])
+            pfv = pd.to_datetime(prev['fecha_venta'], errors='coerce')
+            nfv = pd.to_datetime(df['fecha_venta'], errors='coerce')
+            pmax, nmax = pfv.max(), nfv.max()
+            mismo_mes = (pd.notna(pmax) and pd.notna(nmax) and pmax.to_period('M') == nmax.to_period('M'))
+            if mismo_mes:
+                pv = pd.to_numeric(prev['venta_bruta'], errors='coerce').fillna(0).sum()
+                nv = pd.to_numeric(df['venta_bruta'], errors='coerce').fillna(0).sum()
+                if pv > 0 and nv < 0.70 * pv:
+                    print(f"\n[ABORTADO] Pull incompleto: venta bruta ${nv:,.0f} < 70% del actual ${pv:,.0f} "
+                          f"(mismo mes {nmax.to_period('M')}). NO se sobrescribe mes_actual. "
+                          f"Revisar Odoo (timeout/503). Forzar con FORCE_WRITE=1.")
+                    sys.exit(2)
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"   [WARN] guardrail no evaluado: {type(e).__name__}: {str(e)[:80]}")
+
     df.to_parquet(OUT_PATH, index=False)
     size_kb = OUT_PATH.stat().st_size / 1024
     print(f"\n[OK] Guardado {OUT_PATH} ({len(df):,} filas, {size_kb:.0f} KB)")
