@@ -1,40 +1,68 @@
 {
-  "generado_en": "2026-07-20T16:25:22.952556",
+  "generado_en": "2026-07-21T05:53:30.119692",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0158602366959182,
-      "total_pickings": 12421,
+      "valor": 0.014308541545613016,
+      "total_pickings": 13768,
       "on_time": 200,
-      "on_time_pct": 0.016101763143064166,
-      "in_full": 12407,
-      "in_full_pct": 0.9988728765799855,
+      "on_time_pct": 0.01452643811737362,
+      "in_full": 13754,
+      "in_full_pct": 0.9989831493317839,
       "both": 197,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.04285714285714286,
-      "total_pickings": 420,
+      "valor": 0.040268456375838924,
+      "total_pickings": 447,
       "on_time": 19,
-      "on_time_pct": 0.04523809523809524,
-      "in_full": 417,
-      "in_full_pct": 0.9928571428571429,
+      "on_time_pct": 0.042505592841163314,
+      "in_full": 444,
+      "in_full_pct": 0.9932885906040269,
       "both": 18,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999256229081443,
-      "ok": 16122,
-      "total": 16134,
+      "valor": 0.9993219955929713,
+      "ok": 17687,
+      "total": 17699,
       "errores": 12,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.616257430269775,
-      "n_recepciones": 243,
+      "valor": 10.476736675700092,
+      "n_recepciones": 246,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01077",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 18:38",
+          "done": "2026-07-20 18:38"
+        },
+        {
+          "picking": "CA1/RET/01075",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 16:28",
+          "done": "2026-07-20 16:28"
+        },
+        {
+          "picking": "CA1/RET/01076",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 16:28",
+          "done": "2026-07-20 16:28"
+        },
+        {
+          "picking": "CA1/RET/01074",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 16:27",
+          "done": "2026-07-20 16:27"
+        },
         {
           "picking": "CA1/RET/01073",
           "proveedor": "Falabella Retail",
@@ -146,53 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-15 15:33",
           "done": "2026-07-15 15:33"
-        },
-        {
-          "picking": "CA1/RET/01060",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:25",
-          "done": "2026-07-15 15:25"
-        },
-        {
-          "picking": "CA1/RET/01059",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:24",
-          "done": "2026-07-15 15:24"
-        },
-        {
-          "picking": "CA1/RET/01058",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:23",
-          "done": "2026-07-15 15:23"
-        },
-        {
-          "picking": "CA1/RET/01057",
-          "proveedor": "Cliente Ripley, Ruth Lastra Barrientos",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 13:21",
-          "done": "2026-07-15 13:21"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8612964335721934,
-      "total_so": 12218,
-      "total_con_pickings": 12141,
-      "cumplidos": 10457,
-      "parciales": 10,
-      "sin_iniciar": 1674,
+      "valor": 0.9508264123016199,
+      "total_so": 12274,
+      "total_con_pickings": 12161,
+      "cumplidos": 11563,
+      "parciales": 11,
+      "sin_iniciar": 587,
       "error": null
     },
     "oct_30d": {
-      "valor": 65.16556750784146,
-      "n_orders": 11690,
+      "valor": 66.2539868968333,
+      "n_orders": 13063,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 26.279444444444444,
+      "mediana_h": 28.86722222222222,
       "detalle": [
         {
           "so": "S239366",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 11396,
+      "lineas": 12702,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 120,
-      "outgoing": 29713,
-      "internal": 20167,
+      "incoming": 129,
+      "outgoing": 29640,
+      "internal": 20231,
       "total": 50000,
       "error": null
     },
@@ -367,14 +367,14 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 34,
-          "tarde": 34,
+          "total": 37,
+          "tarde": 37,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 184,
-          "tarde": 184,
+          "total": 198,
+          "tarde": 198,
           "on_time_pct": 0.0
         },
         {
@@ -385,14 +385,14 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 8,
-          "tarde": 8,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
-          "total": 15,
-          "tarde": 15,
+          "total": 16,
+          "tarde": 16,
           "on_time_pct": 0.0
         },
         {
@@ -408,6 +408,24 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "ECO3D SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Lokal SpA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 4,
+          "tarde": 3,
+          "on_time_pct": 0.25
+        },
+        {
           "cliente": "COMERCIAL DITEN LIMITADA",
           "total": 3,
           "tarde": 2,
@@ -415,9 +433,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 6,
-          "tarde": 0,
-          "on_time_pct": 1.0
+          "total": 7,
+          "tarde": 1,
+          "on_time_pct": 0.8571428571428571
         },
         {
           "cliente": "Falabella Retail",
@@ -7367,42 +7385,70 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0158602366959182,
-      "total_pickings": 12421,
+      "valor": 0.014308541545613016,
+      "total_pickings": 13768,
       "on_time": 200,
-      "on_time_pct": 0.016101763143064166,
-      "in_full": 12407,
-      "in_full_pct": 0.9988728765799855,
+      "on_time_pct": 0.01452643811737362,
+      "in_full": 13754,
+      "in_full_pct": 0.9989831493317839,
       "both": 197,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.04285714285714286,
-      "total_pickings": 420,
+      "valor": 0.040268456375838924,
+      "total_pickings": 447,
       "on_time": 19,
-      "on_time_pct": 0.04523809523809524,
-      "in_full": 417,
-      "in_full_pct": 0.9928571428571429,
+      "on_time_pct": 0.042505592841163314,
+      "in_full": 444,
+      "in_full_pct": 0.9932885906040269,
       "both": 18,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999256229081443,
-      "ok": 16122,
-      "total": 16134,
+      "valor": 0.9993219955929713,
+      "ok": 17687,
+      "total": 17699,
       "errores": 12,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.616257430269775,
-      "n_recepciones": 243,
+      "valor": 10.476736675700092,
+      "n_recepciones": 246,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01077",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 18:38",
+          "done": "2026-07-20 18:38"
+        },
+        {
+          "picking": "CA1/RET/01075",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 16:28",
+          "done": "2026-07-20 16:28"
+        },
+        {
+          "picking": "CA1/RET/01076",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 16:28",
+          "done": "2026-07-20 16:28"
+        },
+        {
+          "picking": "CA1/RET/01074",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-20 16:27",
+          "done": "2026-07-20 16:27"
+        },
         {
           "picking": "CA1/RET/01073",
           "proveedor": "Falabella Retail",
@@ -7514,34 +7560,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-15 15:33",
           "done": "2026-07-15 15:33"
-        },
-        {
-          "picking": "CA1/RET/01060",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:25",
-          "done": "2026-07-15 15:25"
-        },
-        {
-          "picking": "CA1/RET/01059",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:24",
-          "done": "2026-07-15 15:24"
-        },
-        {
-          "picking": "CA1/RET/01058",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:23",
-          "done": "2026-07-15 15:23"
-        },
-        {
-          "picking": "CA1/RET/01057",
-          "proveedor": "Cliente Ripley, Ruth Lastra Barrientos",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 13:21",
-          "done": "2026-07-15 13:21"
         }
       ],
       "error": null
