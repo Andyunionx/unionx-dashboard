@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-07-21T05:53:30.119692",
+  "generado_en": "2026-07-21T16:24:35.350275",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014308541545613016,
-      "total_pickings": 13768,
-      "on_time": 200,
-      "on_time_pct": 0.01452643811737362,
-      "in_full": 13754,
-      "in_full_pct": 0.9989831493317839,
-      "both": 197,
+      "valor": 0.014530098060267697,
+      "total_pickings": 13971,
+      "on_time": 206,
+      "on_time_pct": 0.014744828573473624,
+      "in_full": 13957,
+      "in_full_pct": 0.9989979242717056,
+      "both": 203,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,18 +23,25 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9993219955929713,
-      "ok": 17687,
-      "total": 17699,
+      "valor": 0.9993312900529395,
+      "ok": 17933,
+      "total": 17945,
       "errores": 12,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.476736675700092,
-      "n_recepciones": 246,
+      "valor": 10.57943657219973,
+      "n_recepciones": 247,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00943",
+          "proveedor": "Urban Products SpA",
+          "horas": 35.8,
+          "scheduled": "2026-07-20 04:00",
+          "done": "2026-07-21 15:50"
+        },
         {
           "picking": "CA1/RET/01077",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-15 15:33",
           "done": "2026-07-15 15:34"
-        },
-        {
-          "picking": "CA1/RET/01061",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:33",
-          "done": "2026-07-15 15:33"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9508264123016199,
-      "total_so": 12274,
-      "total_con_pickings": 12161,
-      "cumplidos": 11563,
+      "valor": 0.958163431740336,
+      "total_so": 12375,
+      "total_con_pickings": 12262,
+      "cumplidos": 11749,
       "parciales": 11,
-      "sin_iniciar": 587,
+      "sin_iniciar": 502,
       "error": null
     },
     "oct_30d": {
-      "valor": 66.2539868968333,
-      "n_orders": 13063,
+      "valor": 65.51643384447796,
+      "n_orders": 13260,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 28.86722222222222,
+      "mediana_h": 28.074444444444445,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 12702,
+      "lineas": 12952,
       "mes": "2026-07",
       "error": null
     },
@@ -7385,13 +7385,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014308541545613016,
-      "total_pickings": 13768,
-      "on_time": 200,
-      "on_time_pct": 0.01452643811737362,
-      "in_full": 13754,
-      "in_full_pct": 0.9989831493317839,
-      "both": 197,
+      "valor": 0.014530098060267697,
+      "total_pickings": 13971,
+      "on_time": 206,
+      "on_time_pct": 0.014744828573473624,
+      "in_full": 13957,
+      "in_full_pct": 0.9989979242717056,
+      "both": 203,
       "error": null
     },
     "b2b_30d": {
@@ -7407,20 +7407,27 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9993219955929713,
-      "ok": 17687,
-      "total": 17699,
+      "valor": 0.9993312900529395,
+      "ok": 17933,
+      "total": 17945,
       "errores": 12,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.476736675700092,
-      "n_recepciones": 246,
+      "valor": 10.57943657219973,
+      "n_recepciones": 247,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00943",
+          "proveedor": "Urban Products SpA",
+          "horas": 35.8,
+          "scheduled": "2026-07-20 04:00",
+          "done": "2026-07-21 15:50"
+        },
         {
           "picking": "CA1/RET/01077",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -7553,13 +7560,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-15 15:33",
           "done": "2026-07-15 15:34"
-        },
-        {
-          "picking": "CA1/RET/01061",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:33",
-          "done": "2026-07-15 15:33"
         }
       ],
       "error": null
