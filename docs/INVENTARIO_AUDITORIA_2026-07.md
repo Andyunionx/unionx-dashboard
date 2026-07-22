@@ -23,14 +23,15 @@ Pérdidas recuento $191,9M estacionadas como activo + ciclo fulfillment ~$103M (
 **Corte fulfillment vs Victor:** él cuantifica $132,2M "salidas Full duplicadas". Mi descomposición de los OUT de 111008 por modalidad del pedido (2026): normal $228,1M / fbm $182,6M / **fbc $103,5M** / sin_pedido $90,2M / fbf $68,5M. Mi corte ($74,5+28,5=103M) ≈ fbc exacto. Cuadrar definición con su papel de trabajo.
 
 ### 3. 111001 (exceso +$275,4M al 31-may) — mecanismo y localización
-El mayor se construye por vía manual paralela (la barrida $1.424M/2026 revierte las recepciones del módulo). Fase 0.2 ejecutada:
-- **Traspasos GL CON código PI: $2.084,8M** (46 PIs) → donde hay data completa, la carga manual calza o difiere 2-4% BAJO el módulo (TC de registro — pregunta a Victor).
-- **Bulto SIN código PI: $823,4M** (ene-feb 2026 + era 2025) → **acá se esconde el exceso**; pedir a Victor el per-PI de esos asientos (MISCE/2026/01/0062, 02/0072, etc.).
-- 69 PIs de 2024-mediados 2025 no están en sus carpetas (su archivo cubre desde ~oct-2025 efectivamente).
+El mayor se construye por vía manual paralela (la barrida $1.424M/2026 revierte las recepciones del módulo). Fase 0.2 ejecutada CON LA COMPARACIÓN CORRECTA (Andrés 22-jul: la OC en Odoo se carga al costo INTERNADO — mercadería + internación del costeo COMEX):
+- **DIF A (Recibido Odoo vs Total carpeta = internado est. vs internado real): mediana −0,7% en 42 PIs → el circuito trazable CUADRA al peso.**
+- **DIF B (Recibido vs Traspaso GL): +$11,8M en 39 PIs** — marginal.
+- **Bulto SIN código PI: $823,4M** (ene-feb 2026 + era 2025) → **el exceso de 111001 NO está en las PIs trazables; está acá y en la era 2024-2025 sin carpetas** (69 PIs). Pedir a Victor el per-PI (MISCE/2026/01/0062, 02/0072, etc.).
 - Génesis confirmada: régimen dual Nubox/Bsale (gap mar-24 $14M → dic-24 $272M), Victor lo reconoce.
+- Archivo: `FASE0_Conciliacion_PI_v2_DIFAB.xlsx`.
 
-### 4. Internación sobre stock (Fase 0.1) — el colchón legítimo es MENOR
-Carpetas Victor: mercadería $2.244,1M / internación $131,7M → **ratio real 5,9%** (no 10-15%). Internación estimada sobre stock actual: **$30,8M piso / ~$60M techo teórico**. → El residuo a castigar en Fase 3 CRECE respecto al estimado inicial: banda **$180-250M**.
+### 4. Internación (Fase 0.1) — CORREGIDO: no hay colchón de base
+La OC/módulo YA valoriza al costo internado (verificado: DIF A mediana −0,7%). **No existe diferencia de base legítima GL-vs-módulo por internación** — mi estimación anterior ($30-60M de colchón) queda invalidada. → Residuo a castigar en Fase 3: banda **$200-270M** (el exceso de 111001 menos lo que el per-PI del bulto logre emparejar).
 
 ## Programa (fases del plan aprobado)
 - **Fase 1** — Asientos composición: pareado rediseñado (REG SALDO) + fulfillment $74,5M + remanente (corte a cuadrar). EERR ≈ neutro. 111008 → 0 y desactivar.
