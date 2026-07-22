@@ -53,7 +53,9 @@ MESES_ES = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio"
 # columnas por POSICIÓN en 'Análisis de Resultados'
 IX = {"ano": 0, "canal": 2, "kam": 3, "mes": 4,
       "VentaC": 8, "CostoC": 9, "ComVentaC": 11, "ComEnvioC": 12, "MktC": 13,
-      "VentaK": 18, "CostoK": 19, "ComVentaK": 21, "ComEnvioK": 22, "MktK": 23}
+      "VentaK": 18, "CostoK": 19, "ComVentaK": 21, "ComEnvioK": 22, "MktK": 23,
+      # columnas "stated" del Sheet (comercial/KAM) — se usan tal cual para calzar 1:1:
+      "MargenDirC": 10, "TotalComC": 14, "ContribC": 15}
 COMP = ["Venta", "Costo", "ComVenta", "ComEnvio", "Mkt"]
 # líneas del P&L (etiqueta, componente)
 LINEAS = [("Venta", "Venta"), ("Costo de Venta", "Costo"), ("Margen Directo", None),
@@ -141,6 +143,10 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         for comp in COMP:
             row[f"{comp}_Com"] = float(d[IX[comp + "C"]].sum())
             row[f"{comp}_Cont"] = float(d[IX[comp + "K"]].sum())
+        # valores "stated" del Sheet (comercial) — para usar tal cual (calzar 1:1)
+        row["MargenDir_Com"] = float(d[IX["MargenDirC"]].sum())
+        row["TotalCom_Com"] = float(d[IX["TotalComC"]].sum())
+        row["Contrib_Com"] = float(d[IX["ContribC"]].sum())
         datos.append(row)
     datos = pd.DataFrame(datos).sort_values(["Canal", "Mes"]).reset_index(drop=True)
     canales = sorted(datos["Canal"].unique())
@@ -229,9 +235,12 @@ def calcular(bundle, mes="YTD", canal="TODOS", kam="TODOS", negocio="TODOS"):
             continue
         vals[label] = (g(f"{comp}_Com"), g(f"{comp}_Cont"))
     venta_c, venta_k = vals["Venta"]
-    margen_c = venta_c - vals["Costo de Venta"][0]
+    # COMERCIAL: usar los valores "stated" del Sheet (Margen Directo KAM / Resultado
+    # Contribución KAM) tal cual, para calzar 1:1 con el Sheet (no recalcular).
+    margen_c = g("MargenDir_Com")
+    contrib_c = g("Contrib_Com")
+    # CONTABLE: recomputado (fallback; la vista lo pisa con el RAW).
     margen_k = venta_k - vals["Costo de Venta"][1]
-    contrib_c = margen_c - vals["Comisión Venta"][0] - vals["Comisión Envío"][0] - vals["Marketing"][0]
     contrib_k = margen_k - vals["Comisión Venta"][1] - vals["Comisión Envío"][1] - vals["Marketing"][1]
     vals["Margen Directo"] = (margen_c, margen_k)
     vals["Contribución"] = (contrib_c, contrib_k)

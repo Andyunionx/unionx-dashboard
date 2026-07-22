@@ -129,6 +129,18 @@ def _castear(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main():
+    # ⛔ DEPRECADO (21-jul-2026): este script lee de TURSO, que está MUERTO desde
+    # may-2026 (migración a Parquet+DuckDB). Bajaba datos viejos/incompletos y PISABA
+    # el ventas_mes_actual.parquet bueno del extract Odoo → clobber de julio (20 y 21-jul,
+    # $373M→$147M y $411M→$122M). La ÚNICA fuente válida es
+    # extract_mes_actual_a_parquet.py --source odoo (pulso / sync_mes_actual).
+    # No sobrescribe nada salvo que se fuerce con FORCE_TURSO_SYNC=1.
+    if os.environ.get('FORCE_TURSO_SYNC') != '1':
+        print("[DESHABILITADO] sync_ventas_mes_actual.py usa Turso (muerto) y clobbea "
+              "el mes_actual bueno. NO se sobrescribe. Fuente válida: "
+              "extract_mes_actual_a_parquet.py --source odoo. Forzar: FORCE_TURSO_SYNC=1.")
+        sys.exit(0)
+
     _load_env()
     if not os.environ.get('LIBSQL_URL') or not os.environ.get('LIBSQL_AUTH_TOKEN'):
         print("[ERROR] LIBSQL_URL / LIBSQL_AUTH_TOKEN no definidos (ni en env ni en .env)")

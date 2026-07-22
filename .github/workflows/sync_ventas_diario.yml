@@ -1,13 +1,13 @@
 name: Sync ventas mes actual (diario)
 
-# Descarga ventas del mes corriente desde Turso y commitea ventas_mes_actual.parquet.
-# Los tabs de Análisis Planificación leen este parquet al arrancar.
+# ⛔ DESHABILITADO (21-jul-2026): leía de TURSO (muerto desde may-2026) y CLOBBEABA
+# el ventas_mes_actual.parquet bueno del extract Odoo (clobber julio 20 y 21-jul).
+# La fuente válida del mes_actual es el extract Odoo (email_diario / sync_mes_actual).
+# Se quita el schedule; queda solo manual. sync_ventas_mes_actual.py además no-opea
+# salvo FORCE_TURSO_SYNC=1.
 
 on:
-  schedule:
-    # 11:00 AM Chile (UTC-3 verano / UTC-4 invierno) → 14:00 UTC cubre ambos
-    - cron: '0 14 * * *'
-  workflow_dispatch:       # permite lanzar manualmente desde GitHub Actions
+  workflow_dispatch:       # solo manual (schedule removido)
 
 jobs:
   sync:
