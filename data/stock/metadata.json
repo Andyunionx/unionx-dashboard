@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-21T22:03:55.361888",
+  "generado_en": "2026-07-22T02:36:37.166521",
   "total_skus": 1899,
   "total_quants": 4751,
   "total_locations": 1417,
@@ -8,13 +8,13 @@
     "valor_total": 996136840.15,
     "unidades_total": 173407.0,
     "costo_promedio_sku": 524558.63,
-    "n_quiebre_critico": 69,
-    "n_bajo": 152,
-    "n_optimo": 131,
-    "n_sobrestock": 335,
-    "n_sin_venta": 1212,
-    "rot_30d_promedio": 0.69,
-    "rot_90d_promedio": 2.29
+    "n_quiebre_critico": 67,
+    "n_bajo": 154,
+    "n_optimo": 127,
+    "n_sobrestock": 334,
+    "n_sin_venta": 1217,
+    "rot_30d_promedio": 0.68,
+    "rot_90d_promedio": 2.26
   },
   "ocupacion": {
     "positions": [
@@ -8217,23 +8217,23 @@
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1212
+      "SKUs": 1217
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 335
+      "SKUs": 334
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 152
+      "SKUs": 154
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 131
+      "SKUs": 127
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 69
+      "SKUs": 67
     }
   ],
   "valor_bodega": [
