@@ -15,12 +15,24 @@ from views.shared import get_service
 EXCEL_LIMITE_DIAS = 90
 EXCEL_AVISO_FILAS = 100_000
 
+# Columnas de ID largo (16+ dígitos). Excel trunca a 15 dígitos significativos si
+# las trata como número → el último dígito pasa a 0. Se fuerzan a formato TEXTO.
+COLS_ID_TEXTO = ("Pedido", "Documento", "Marketplace Reference", "Yuju Pack Id")
+
 
 def _excel_bytes(df: pd.DataFrame) -> bytes:
-    """Solo para df pequenios. Materializa en RAM."""
+    """Solo para df pequenios. Materializa en RAM. Las columnas de ID largo se
+    escriben como TEXTO (formato '@') para que Excel no las trunque a 15 dígitos."""
+    from openpyxl.utils import get_column_letter
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as w:
         df.to_excel(w, index=False, sheet_name='RAW')
+        ws = w.sheets['RAW']
+        for j, col in enumerate(df.columns, start=1):
+            if col in COLS_ID_TEXTO:
+                letter = get_column_letter(j)
+                for cell in ws[letter][1:]:  # saltar encabezado
+                    cell.number_format = '@'
     return output.getvalue()
 
 
@@ -69,6 +81,11 @@ def render():
     with col_d2:
         st.write("")
         fmt = st.selectbox("Formato", formatos, key="fmt_dl")
+
+    if fmt.startswith("CSV"):
+        st.caption("⚠️ Los IDs largos (Marketplace Reference / Yuju Pack Id) se "
+                   "conservan completos en el archivo, pero **Excel los trunca al abrir "
+                   "un CSV**. Para verlos enteros usa **Excel (.xlsx)** o **Parquet**.")
 
     # Aviso si rango grande
     if dias > EXCEL_LIMITE_DIAS:

@@ -954,4 +954,11 @@ class MaestraService:
             if c not in df.columns:
                 df[c] = ''
         df = df[list(DB_TO_RAW.keys())].rename(columns=DB_TO_RAW)
+        # IDs largos (16+ dígitos): garantizar STRING limpio para que ni el export
+        # ni Excel los trunquen a 15 dígitos (último dígito → 0). Si la fuente los
+        # entregó como float, quitar el sufijo '.0'.
+        for c in ('Pedido', 'Documento', 'Marketplace Reference', 'Yuju Pack Id'):
+            if c in df.columns:
+                s = df[c].astype(str).str.replace(r'\.0$', '', regex=True)
+                df[c] = s.where(~s.str.lower().isin(['nan', 'none', '<na>', 'nat']), '')
         return df
