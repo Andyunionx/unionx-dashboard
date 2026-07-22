@@ -35,6 +35,18 @@ DESPACHO_KEYS = ("despacho", "flete", "envio", "envío", "shipping")
 # Solo se aplica a filas con marca vacía (nunca pisa una marca existente).
 PREFIJO_MARCA = {"LH": "Lhotse", "DN": "Dinasty"}
 
+# Override canal → tipo_negocio (P6). Rellena tipo_negocio SOLO cuando viene vacío
+# de Odoo (canal nuevo sin equipo de venta configurado). Nunca pisa un valor existente.
+# Latam Pass agregado 22-jul-2026 (OK Andrés): canal de fidelización nuevo.
+CANAL_TIPO_NEGOCIO = {
+    "latam pass": "Fidelización",
+    # respaldo de canales de fidelización conocidos (por si Odoo los manda vacíos)
+    "travel duty": "Fidelización", "global reward": "Fidelización",
+    "celmedia": "Fidelización", "banco bice": "Fidelización", "cmr": "Fidelización",
+    "friends": "Fidelización", "gluky": "Fidelización", "relacional": "Fidelización",
+    "sawa": "Fidelización",
+}
+
 
 def _norm(s):
     s = str(s or "").strip().lower()
@@ -95,8 +107,21 @@ def heal_marca(df, verbose=True):
     pmask = resta & pref.notna()
     marca = marca.where(~pmask, pref)
     n2 = int(pmask.sum())
+    # 3) token de marca propia en el NOMBRE del producto (Purito, Levo, UMA, ...).
+    #    Cubre productos nuevos que entran sin marca y que aún no están en la Matriz
+    #    (catálogo→Yuju→Odoo). Reportado por Sebastián 21-jul (Purito, Pack490).
+    n3 = 0
+    if "producto" in df.columns:
+        resta2 = marca.eq("") & sku_valido
+        if resta2.any():
+            from clasificar_marca import marca_desde_texto
+            inf = df.loc[resta2, "producto"].apply(marca_desde_texto)
+            hit = inf[inf.ne("")]
+            marca.loc[hit.index] = hit
+            n3 = int(len(hit))
     df["marca"] = marca
-    log(f"  [P1b] marca: {n1} filas por SKU + {n2} por prefijo (quedan {n0 - n1 - n2} sin marca)")
+    log(f"  [P1b] marca: {n1} por SKU + {n2} por prefijo + {n3} por nombre "
+        f"(quedan {n0 - n1 - n2 - n3} sin marca)")
     return df
 
 
@@ -137,6 +162,16 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
             log("  [P1c] tipo_marca derivado de marca (Propia/Otras marcas)")
         except Exception as e:
             log(f"  [P1c] omitido: {type(e).__name__}: {e}")
+
+    # P6 — override canal → tipo_negocio (solo rellena vacíos; nunca pisa Odoo)
+    if "canal" in df.columns and "tipo_negocio" in df.columns:
+        canal_n = df["canal"].astype(str).str.strip().str.lower()
+        tn = df["tipo_negocio"].astype(str).str.strip()
+        vacio = tn.isin(["", "none", "nan", "0"])
+        mapped = canal_n.map(CANAL_TIPO_NEGOCIO)
+        fix = vacio & mapped.notna()
+        df.loc[fix, "tipo_negocio"] = mapped[fix]
+        log(f"  [P6] tipo_negocio por canal: {int(fix.sum()):,} filas rellenadas")
 
     # P5 — flag es_despacho (vectorizado, sin concatenar todo)
     pat = "despacho|flete|env[ií]o|shipping"
