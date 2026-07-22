@@ -35,14 +35,14 @@ La OC/módulo YA valoriza al costo internado (verificado: DIF A mediana −0,7%)
 
 ## Programa (fases del plan aprobado)
 - **Fase 1** — Asientos composición: pareado rediseñado (REG SALDO) + fulfillment $74,5M + remanente (corte a cuadrar). EERR ≈ neutro. 111008 → 0 y desactivar.
-- **Fase 2** — Landed costs + revalorización capas por internación ($30-60M).
-- **Fase 3** — Toma física general + regularización del residuo (**$180-250M estimado**) contra resultados/CPC según auditor externo.
+- **Fase 2** — ELIMINADA como revalorización (la OC ya carga internado). Queda solo verificar que el costeo COMEX→OC capture internación real (DIF A outliers).
+- **Fase 3** — Toma física general + regularización del residuo (**$200-270M estimado**) contra resultados/CPC según auditor externo.
 - **Fase 4** — Corte de fuente: facturas→210215 vía OC, cero manuales en 111001/111006/111008, monitor mensual, checklist cierre.
 
 ## Preguntas quirúrgicas para Victor (reunión)
 1. **¿Qué respaldo tienen MISCE/2026/04/0077 y 0078 (REG SALDO $211,8M)?** ← define el pareado
 2. Per-PI del bulto de traspasos sin código ($823,4M: ene 0062, feb 0072 y era 2025)
-3. ¿Qué TC usa al registrar mercadería? (difs sistemáticas 2-4% bajo módulo)
+3. Outliers de DIF A (estimado vs real por PI, pocos casos — el circuito trazable cuadra mediana −0,7%)
 4. Papel de trabajo de sus $132,2M "salidas Full" (mi fbc = $103,5M)
 5. ¿Contra qué se cancela la base CIF de la DIN? (pendiente de v3)
 6. Casos recepción ≠ precio OC: 26TP0130 (−$8,9M), 26TP0123 (−$1,9M)
