@@ -30,6 +30,13 @@ El mayor se construye por vía manual paralela (la barrida $1.424M/2026 revierte
 - Génesis confirmada: régimen dual Nubox/Bsale (gap mar-24 $14M → dic-24 $272M), Victor lo reconoce.
 - Archivo: `FASE0_Conciliacion_PI_v2_DIFAB.xlsx`.
 
+### 3b. REVISIÓN COMPLETA con premisas validadas (22-jul, sugerencia Andrés) — `REVISION_COMPLETA_PIs.xlsx`
+Casos 0924/0228/0818 auditados con USD reales de Andrés revelaron 3 patrones → chequeo sistemático a las 118 PIs:
+- **16 OK** (circuito sano al peso) · **2 parciales** · **12 REVISAR CARPETA** con defecto específico: patrón-0228 (col15=Odoo pero fila COSTO errada: 0228 −$15,6M, 0207, 0312) · valores DUPLICADOS entre carpetas (0818, 0330, 0801, 0228) · carpeta >4% sobre Odoo/flete doble (1013, 1201, 0105, 1026) · TC fuera de rango (0901).
+- **P00571 sin referencia corregida en Odoo** (→25TP0924PI, con OK Andrés): 0924 CALZA (+$0,5M), no era anomalía.
+- **HALLAZGO MAYOR: 25 OC Topwill SIN referencia de PI = $1.140M**, concentradas 2024-inicios 2025 (P00310 $144,6M, P00234 $138,8M, P00198 $96,7M...) → **la era donde el gap creció es intrazable porque las OC no tienen la llave**. Asignar PI a cada una (Felipe/Victor) = destranca la conciliación del legado.
+- Conclusión: Odoo sale bien parado (calza contra USD reales); los defectos están en las CARPETAS Excel (papel de trabajo del traspaso) y en la falta de referencias 2024.
+
 ### 4. Internación (Fase 0.1) — CORREGIDO: no hay colchón de base
 La OC/módulo YA valoriza al costo internado (verificado: DIF A mediana −0,7%). **No existe diferencia de base legítima GL-vs-módulo por internación** — mi estimación anterior ($30-60M de colchón) queda invalidada. → Residuo a castigar en Fase 3: banda **$200-270M** (el exceso de 111001 menos lo que el per-PI del bulto logre emparejar).
 
