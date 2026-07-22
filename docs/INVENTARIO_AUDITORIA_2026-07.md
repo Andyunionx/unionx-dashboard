@@ -34,7 +34,8 @@ El mayor se construye por vía manual paralela (la barrida $1.424M/2026 revierte
 Casos 0924/0228/0818 auditados con USD reales de Andrés revelaron 3 patrones → chequeo sistemático a las 118 PIs:
 - **16 OK** (circuito sano al peso) · **2 parciales** · **12 REVISAR CARPETA** con defecto específico: patrón-0228 (col15=Odoo pero fila COSTO errada: 0228 −$15,6M, 0207, 0312) · valores DUPLICADOS entre carpetas (0818, 0330, 0801, 0228) · carpeta >4% sobre Odoo/flete doble (1013, 1201, 0105, 1026) · TC fuera de rango (0901).
 - **P00571 sin referencia corregida en Odoo** (→25TP0924PI, con OK Andrés): 0924 CALZA (+$0,5M), no era anomalía.
-- **HALLAZGO MAYOR: 25 OC Topwill SIN referencia de PI = $1.140M**, concentradas 2024-inicios 2025 (P00310 $144,6M, P00234 $138,8M, P00198 $96,7M...) → **la era donde el gap creció es intrazable porque las OC no tienen la llave**. Asignar PI a cada una (Felipe/Victor) = destranca la conciliación del legado.
+- **RESUELTO (22-jul tarde): las 25 OC sin referencia quedaron en 10 por $22,2M (solo menores).** Vía correo (3: P00255→24TP0907, P00310→24TP1114, P00333→24TP1218) + conocimiento de Andrés (9 grandes 2024: P00234→24TP0806, P00198→0711, P00190→0624, P00247→0829, P00192→0725, P00248→0822, P00266→0915, P00342→1216, P00203→0830; + P00604→25TP1118, P00353→PI0124 RED DRAGON, P00286→mixta 0919/1129 aéreo-marítimo a separar). **La era 2024 pasó de intrazable a conciliable.**
+- Hallazgos colaterales: OC con NOMBRES DUPLICADOS en Odoo (P00255/P00310/P00342/P00353 tienen gemelos) — cuidado en análisis por nombre; P00353 con PROVEEDOR MAL ASIGNADO (dice Topwill, es Red Dragon).
 - Conclusión: Odoo sale bien parado (calza contra USD reales); los defectos están en las CARPETAS Excel (papel de trabajo del traspaso) y en la falta de referencias 2024.
 
 ### 4. Internación (Fase 0.1) — CORREGIDO: no hay colchón de base
