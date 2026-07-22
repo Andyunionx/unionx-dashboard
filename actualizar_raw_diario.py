@@ -23,7 +23,13 @@ from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.utils import get_column_letter
+
+# Columnas de ID largo (16+ dígitos, ej. Pedido/pack-id de ML, SKU barcode). Excel
+# y el pivot truncan a 15 dígitos significativos si las tratan como número → se
+# fuerzan a TEXTO ('@') en la hoja Raw para que el dígito 16 no se pierda.
+COLS_ID_TEXTO = {'Pedido', 'SKU', 'Documento'}
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 # Plantilla = "dinámica con apertura de gastos" que diseñó Nicolás (jul-2026):
@@ -194,10 +200,19 @@ def generar_raw_xml(df: pd.DataFrame, tmp_dir: Path) -> bytes:
     # Datos en chunks para no consumir tanta RAM
     n_rows = len(df)
     print(f'   [generar_raw_xml] {n_rows:,} filas a serializar...')
+    # Índices (0-based) de las columnas de ID que van como TEXTO en RAW_COLUMNS.
+    id_idx = {i for i, c in enumerate(RAW_COLUMNS) if c in COLS_ID_TEXTO}
     # Generador (no df.values.tolist()) para no duplicar 440k filas en RAM.
     for r in df.itertuples(index=False, name=None):
         # Agregar None para la columna 56
-        ws.append(list(r) + [None])
+        fila = list(r) + [None]
+        for i in id_idx:
+            v = fila[i]
+            if v not in (None, ''):
+                celda = WriteOnlyCell(ws, value=str(v))
+                celda.number_format = '@'  # TEXTO → Excel no trunca a 15 dígitos
+                fila[i] = celda
+        ws.append(fila)
     del df
     import gc
     gc.collect()
