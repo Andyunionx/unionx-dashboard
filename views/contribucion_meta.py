@@ -1,19 +1,49 @@
 """
-vs Presupuesto — cumplimiento de Meta de Venta y Contribución.
+vs Presupuesto — Presupuesto vs Resultado Contable vs Resultado Comercial.
 
-Fuente: 'Analisis Meta vs Resultados' (drill por AÑO/Negocio/Canal/KAM/Mes/Trim).
+Fuentes:
+  - 'Analisis Meta vs Resultados': Meta (Presupuesto) + Resultado (Comercial/KAM).
+  - 'Análisis de Resultados': Resultado Contable (col 18 venta, col 25 contribución).
 """
+import unicodedata
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from views.contribucion_loader import (
-    cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos,
+    cargar_hoja, parse_numero, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos,
     render_contrib_filters, aplicar_filtros,
 )
 
 
 COLS_NUM = ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
+
+
+def _n(s):
+    s = str(s or "").strip().lower()
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+def _cargar_contable() -> pd.DataFrame:
+    """Resultado CONTABLE por dimensión, desde 'Análisis de Resultados' (acceso
+    posicional: col 18 = Venta Real Contable, col 25 = Total Contribución Contable)."""
+    cols = ['AÑO', 'Negocio', 'Canal', 'KAM', 'Mes', 'Trimestre',
+            'Resultado Venta Contable', 'Resultado Contribución Contable']
+    ar = cargar_hoja("Análisis de Resultados")
+    if ar.empty or ar.shape[1] < 26:
+        return pd.DataFrame(columns=cols)
+    d = pd.DataFrame({
+        'AÑO': ar.iloc[:, 0].astype(str).str.replace('.', '', regex=False).str.strip(),
+        'Negocio': ar.iloc[:, 1].astype(str).str.strip(),
+        'Canal': ar.iloc[:, 2].astype(str).str.strip(),
+        'KAM': ar.iloc[:, 3].astype(str).str.strip(),
+        'Mes': ar.iloc[:, 4].astype(str).str.split('.').str[0].str.strip(),
+        'Resultado Venta Contable': ar.iloc[:, 18].apply(parse_numero),
+        'Resultado Contribución Contable': ar.iloc[:, 25].apply(parse_numero),
+    })
+    d['Trimestre'] = d['Mes'].apply(lambda m: f"Q{(int(m) - 1) // 3 + 1}" if str(m).isdigit() else '')
+    return d
 
 
 def render():
@@ -46,70 +76,91 @@ def render():
     st.caption(f"Filas filtradas: {len(df_f):,} de {len(df):,}")
     st.markdown("---")
 
-    # KPIs consolidados
-    meta_v = df_f['Meta Venta'].sum() if 'Meta Venta' in df_f.columns else 0
-    real_v = df_f['Resultado Venta'].sum() if 'Resultado Venta' in df_f.columns else 0
-    meta_c = df_f['Meta Contribución'].sum() if 'Meta Contribución' in df_f.columns else 0
-    real_c = df_f['Resultado Contribución'].sum() if 'Resultado Contribución' in df_f.columns else 0
+    # ---- Resultado CONTABLE (Análisis de Resultados), filtrado igual que la meta ----
+    cont = _cargar_contable()
+    cont_f = aplicar_filtros(cont, sel)
 
-    pct_v = (real_v / meta_v * 100) if meta_v else 0
-    pct_c = (real_c / meta_c * 100) if meta_c else 0
+    presup_v = df_f['Meta Venta'].sum() if 'Meta Venta' in df_f.columns else 0
+    com_v = df_f['Resultado Venta'].sum() if 'Resultado Venta' in df_f.columns else 0
+    presup_c = df_f['Meta Contribución'].sum() if 'Meta Contribución' in df_f.columns else 0
+    com_c = df_f['Resultado Contribución'].sum() if 'Resultado Contribución' in df_f.columns else 0
+    cont_v = cont_f['Resultado Venta Contable'].sum() if len(cont_f) else 0
+    cont_c = cont_f['Resultado Contribución Contable'].sum() if len(cont_f) else 0
 
-    color_v = '🟢' if pct_v >= 100 else ('🟡' if pct_v >= 85 else '🔴')
-    color_c = '🟢' if pct_c >= 100 else ('🟡' if pct_c >= 85 else '🔴')
+    def _pct(r, m):
+        return (r / m * 100) if m else 0
 
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Meta Venta", fmt_pesos_M(meta_v))
-    c2.metric("Real Venta", fmt_pesos_M(real_v))
-    c3.metric(f"{color_v} % Cumpl. Venta", f"{pct_v:.1f}%")
-    c4.metric("Meta Contrib", fmt_pesos_M(meta_c))
-    c5.metric("Real Contrib", fmt_pesos_M(real_c))
-    c6.metric(f"{color_c} % Cumpl. Contrib", f"{pct_c:.1f}%")
+    def _clr(p):
+        return '🟢' if p >= 100 else ('🟡' if p >= 85 else '🔴')
+
+    st.markdown("#### Venta — Presupuesto vs Contable vs Comercial")
+    v = st.columns(5)
+    v[0].metric("Presupuesto", fmt_pesos_M(presup_v))
+    v[1].metric("Contable", fmt_pesos_M(cont_v))
+    v[2].metric("Comercial", fmt_pesos_M(com_v))
+    v[3].metric(f"{_clr(_pct(cont_v, presup_v))} % Contable", f"{_pct(cont_v, presup_v):.1f}%")
+    v[4].metric(f"{_clr(_pct(com_v, presup_v))} % Comercial", f"{_pct(com_v, presup_v):.1f}%")
+
+    st.markdown("#### Contribución — Presupuesto vs Contable vs Comercial")
+    k = st.columns(5)
+    k[0].metric("Presupuesto", fmt_pesos_M(presup_c))
+    k[1].metric("Contable", fmt_pesos_M(cont_c))
+    k[2].metric("Comercial", fmt_pesos_M(com_c))
+    k[3].metric(f"{_clr(_pct(cont_c, presup_c))} % Contable", f"{_pct(cont_c, presup_c):.1f}%")
+    k[4].metric(f"{_clr(_pct(com_c, presup_c))} % Comercial", f"{_pct(com_c, presup_c):.1f}%")
 
     st.divider()
 
-    # Por Trimestre
+    # ---- Por Trimestre: Presupuesto vs Contable vs Comercial ----
     if 'Trimestre' in df_f.columns:
         st.markdown("### Por Trimestre")
-        df_t = df_f.groupby('Trimestre').agg({
-            'Meta Venta': 'sum', 'Resultado Venta': 'sum',
-            'Meta Contribución': 'sum', 'Resultado Contribución': 'sum',
-        }).reset_index()
-        df_t['% Venta'] = (df_t['Resultado Venta'] / df_t['Meta Venta'] * 100).round(1)
-        df_t['% Contrib'] = (df_t['Resultado Contribución'] / df_t['Meta Contribución'] * 100).round(1)
-
+        gm = df_f.groupby('Trimestre').agg(
+            Presupuesto_V=('Meta Venta', 'sum'), Comercial_V=('Resultado Venta', 'sum'),
+            Presupuesto_C=('Meta Contribución', 'sum'), Comercial_C=('Resultado Contribución', 'sum'),
+        ).reset_index()
+        gc = (cont_f.groupby('Trimestre').agg(
+            Contable_V=('Resultado Venta Contable', 'sum'),
+            Contable_C=('Resultado Contribución Contable', 'sum')).reset_index()
+            if len(cont_f) else pd.DataFrame(columns=['Trimestre', 'Contable_V', 'Contable_C']))
+        g = gm.merge(gc, on='Trimestre', how='left').fillna(0).sort_values('Trimestre')
+        CMAP = {'Presupuesto_V': '#94A3B8', 'Contable_V': '#1E40AF', 'Comercial_V': '#10B981',
+                'Presupuesto_C': '#94A3B8', 'Contable_C': '#1E40AF', 'Comercial_C': '#10B981'}
         c1, c2 = st.columns(2)
         with c1:
-            fig_v = px.bar(df_t, x='Trimestre', y=['Meta Venta', 'Resultado Venta'],
-                           barmode='group', title="Meta vs Real — Venta",
-                           color_discrete_map={'Meta Venta': '#94A3B8', 'Resultado Venta': '#1E40AF'})
-            fig_v.update_layout(height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                yaxis=dict(tickformat=',.0f'))
-            st.plotly_chart(fig_v, width='stretch')
+            fig = px.bar(g, x='Trimestre', y=['Presupuesto_V', 'Contable_V', 'Comercial_V'],
+                         barmode='group', title="Venta", color_discrete_map=CMAP)
+            fig.update_layout(height=340, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                              yaxis=dict(tickformat=',.0f'), legend_title_text='')
+            st.plotly_chart(fig, width='stretch')
         with c2:
-            fig_c = px.bar(df_t, x='Trimestre', y=['Meta Contribución', 'Resultado Contribución'],
-                           barmode='group', title="Meta vs Real — Contribución",
-                           color_discrete_map={'Meta Contribución': '#94A3B8', 'Resultado Contribución': '#10B981'})
-            fig_c.update_layout(height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                                yaxis=dict(tickformat=',.0f'))
-            st.plotly_chart(fig_c, width='stretch')
+            fig = px.bar(g, x='Trimestre', y=['Presupuesto_C', 'Contable_C', 'Comercial_C'],
+                         barmode='group', title="Contribución", color_discrete_map=CMAP)
+            fig.update_layout(height=340, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                              yaxis=dict(tickformat=',.0f'), legend_title_text='')
+            st.plotly_chart(fig, width='stretch')
 
     st.divider()
 
-    # Tabla detalle — montos completos (numeros reales + column_config), descargable con cifra real
-    st.markdown("### Detalle")
-    money_cols = ['Meta Venta', 'Resultado Venta', 'Meta Contribución', 'Resultado Contribución']
-    cols_show = [c for c in ['AÑO', 'Trimestre', 'Mes', 'Negocio', 'Canal', 'KAM', *money_cols]
-                 if c in df_f.columns]
-    df_show = df_f[cols_show].copy()
-    if 'Meta Venta' in df_show.columns:
-        df_show['% Cumpl V'] = (df_show['Resultado Venta'] / df_show['Meta Venta'].replace(0, 1) * 100).round(1)
-        df_show['% Cumpl C'] = (df_show['Resultado Contribución'] / df_show['Meta Contribución'].replace(0, 1) * 100).round(1)
+    # ---- Detalle por Canal (Presupuesto / Contable / Comercial) ----
+    st.markdown("### Detalle por Canal")
+    meta_ag = df_f.groupby(['AÑO', 'Negocio', 'Canal', 'Mes'], as_index=False).agg(
+        **{'Presup. Venta': ('Meta Venta', 'sum'), 'Comercial Venta': ('Resultado Venta', 'sum'),
+           'Presup. Contrib': ('Meta Contribución', 'sum'), 'Comercial Contrib': ('Resultado Contribución', 'sum')})
+    meta_ag['_k'] = meta_ag['AÑO'].astype(str) + '|' + meta_ag['Canal'].map(_n) + '|' + meta_ag['Mes'].astype(str)
+    if len(cont_f):
+        cont_ag = cont_f.groupby(['AÑO', 'Canal', 'Mes'], as_index=False).agg(
+            **{'Contable Venta': ('Resultado Venta Contable', 'sum'),
+               'Contable Contrib': ('Resultado Contribución Contable', 'sum')})
+        cont_ag['_k'] = cont_ag['AÑO'].astype(str) + '|' + cont_ag['Canal'].map(_n) + '|' + cont_ag['Mes'].astype(str)
+        tbl = meta_ag.merge(cont_ag[['_k', 'Contable Venta', 'Contable Contrib']], on='_k', how='left')
+    else:
+        tbl = meta_ag.assign(**{'Contable Venta': 0.0, 'Contable Contrib': 0.0})
+    tbl[['Contable Venta', 'Contable Contrib']] = tbl[['Contable Venta', 'Contable Contrib']].fillna(0)
+    tbl = tbl[['AÑO', 'Negocio', 'Canal', 'Mes', 'Presup. Venta', 'Contable Venta', 'Comercial Venta',
+               'Presup. Contrib', 'Contable Contrib', 'Comercial Contrib']]
     money = st.column_config.NumberColumn(format="$%d")
-    pct = st.column_config.NumberColumn(format="%.1f%%")
-    st.dataframe(
-        df_show, width='stretch', hide_index=True, height=500,
-        column_config={**{c: money for c in money_cols if c in df_show.columns},
-                       '% Cumpl V': pct, '% Cumpl C': pct},
-    )
-    st.caption("💡 Descarga (esquina sup. der. de la tabla) → CSV con montos completos.")
+    st.dataframe(tbl, width='stretch', hide_index=True, height=460,
+                 column_config={c: money for c in tbl.columns if 'Venta' in c or 'Contrib' in c})
+    st.caption("Presupuesto = Meta (hoja Meta vs Resultados) · Comercial = Resultado KAM · "
+               "Contable = 'Análisis de Resultados' (venta col 18 / contribución col 25). "
+               "Descarga con montos completos arriba a la derecha de la tabla.")

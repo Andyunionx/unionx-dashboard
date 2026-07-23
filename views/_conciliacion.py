@@ -25,6 +25,9 @@ NEGOCIO_FIX = {"marketing": "Marketing"}
 SCOPE_NEG = {"marketplace", "fidelizacion", "paginas propias"}
 # Vista Distribución (B2B) = Distribución + Corporativo.
 B2B_NEG = {"distribucion", "corporativo"}
+# Canales que se SACAN de la relación KAM comercial (no son venta comercial):
+# Eattouch, Postventa y Marketing (canales operativos de Ignacia). Clave = _norm(canal).
+EXCLUIR_CANAL = {"eattouch", "postventa", "marketing"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 # Último mes cerrado con datos comercial + contable en el Sheet. Subir a medida que
 # se cargan los meses (define el selector de Mes y el tope de las consultas al RAW).
@@ -131,8 +134,9 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         # El sheet clasifica "Marketing" como Páginas Propias; en el RAW (fuente) es "Marketing".
         if ck in NEGOCIO_FIX:
             negocio_dom[ck] = NEGOCIO_FIX[ck]
-    # Scope Comercial (KAM) = solo líneas digitales (SCOPE_NEG). Corporativo/Distribución → vista B2B.
-    es_scope = {ck: (_norm(negocio_dom.get(ck, "")) in SCOPE_NEG)
+    # Scope Comercial (KAM) = solo líneas digitales (SCOPE_NEG), excluyendo canales
+    # operativos (EXCLUIR_CANAL: Eattouch/Postventa/Marketing). Corporativo/Distribución → vista B2B.
+    es_scope = {ck: (_norm(negocio_dom.get(ck, "")) in SCOPE_NEG) and (ck not in EXCLUIR_CANAL)
                 for ck in negocio_dom}
     df["_conkam"] = df["_ck"].map(es_scope).fillna(False)
     dk = df[df["_conkam"]].copy()
@@ -395,10 +399,15 @@ def construir_b2b(df_ar, df_meta):
     for i in (IX["ano"], IX["mes"], 18, 19, 21, 22, 23, 25):
         df[i] = df[i].apply(num)
     df["_neg"] = df[NEG_IX].apply(_norm)
-    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= MES_MAX) & (df["_neg"].isin(B2B_NEG))]
+    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= MES_MAX) & (df["_neg"].isin(B2B_NEG))].copy()
+    # Dedup de nombres: agrupar por canal NORMALIZADO (une "Albasini E Hijos" y "...e Hijos");
+    # el nombre a mostrar = la variante más frecuente.
+    d["_ckn"] = d[IX["canal"]].apply(_norm)
+    canon = d.groupby("_ckn")[IX["canal"]].agg(
+        lambda s: s.astype(str).str.strip().mode().iat[0] if len(s.mode()) else str(s.iloc[0]).strip()).to_dict()
     rows = []
-    for (m, canal), g in d.groupby([IX["mes"], IX["canal"]]):
-        rows.append({"Mes": MES_NOM[int(m)], "Canal": str(canal).strip(),
+    for (m, ckn), g in d.groupby([IX["mes"], "_ckn"]):
+        rows.append({"Mes": MES_NOM[int(m)], "Canal": canon.get(ckn, ckn),
                      "Venta": float(g[18].sum()), "Costo": float(g[19].sum()),
                      "Comisión Venta": float(g[21].sum()), "Comisión Envío": float(g[22].sum()),
                      "Marketing": float(g[23].sum()), "Contribución": float(g[25].sum())})
