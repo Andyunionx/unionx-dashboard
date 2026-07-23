@@ -20,10 +20,11 @@ EQUIPO = {"trinidad", "ignacia", "claudia", "nicole"}
 # Corrección de línea de negocio: el sheet mete "Marketing" en Páginas Propias;
 # en el RAW contable (fuente única) su tipo_negocio es "Marketing". Clave = _norm(canal).
 NEGOCIO_FIX = {"marketing": "Marketing"}
-# Scope de la conciliación (alineado con el crossover de devoluciones que analiza Gabriela):
-# líneas de negocio + canal explícito. Reemplaza el viejo "canales con KAM".
+# Scope Comercial (KAM) = SOLO líneas digitales (Marketplace, Fidelización, Páginas Propias).
+# Corporativo (UnionX B2B, Sodimac, Dinasty, etc.) y Distribución van a la vista B2B/Distribución.
 SCOPE_NEG = {"marketplace", "fidelizacion", "paginas propias"}
-SCOPE_CANAL = {"unionx b2b"}
+# Vista Distribución (B2B) = Distribución + Corporativo.
+B2B_NEG = {"distribucion", "corporativo"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 # Último mes cerrado con datos comercial + contable en el Sheet. Subir a medida que
 # se cargan los meses (define el selector de Mes y el tope de las consultas al RAW).
@@ -130,8 +131,8 @@ def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
         # El sheet clasifica "Marketing" como Páginas Propias; en el RAW (fuente) es "Marketing".
         if ck in NEGOCIO_FIX:
             negocio_dom[ck] = NEGOCIO_FIX[ck]
-    # Scope = líneas de negocio del crossover + canal UnionX B2B (ya NO "canal con KAM").
-    es_scope = {ck: (_norm(negocio_dom.get(ck, "")) in SCOPE_NEG) or (ck in SCOPE_CANAL)
+    # Scope Comercial (KAM) = solo líneas digitales (SCOPE_NEG). Corporativo/Distribución → vista B2B.
+    es_scope = {ck: (_norm(negocio_dom.get(ck, "")) in SCOPE_NEG)
                 for ck in negocio_dom}
     df["_conkam"] = df["_ck"].map(es_scope).fillna(False)
     dk = df[df["_conkam"]].copy()
@@ -385,15 +386,16 @@ NEG_IX = 1  # columna Negocio en 'Análisis de Resultados'
 
 
 def construir_b2b(df_ar, df_meta):
-    """Distribución (B2B): resultado contable (= comercial) por mes×canal + meta total.
+    """Distribución + Corporativo (B2B): resultado contable (= comercial) por mes×canal + meta.
+    Incluye tipo_negocio Distribución y Corporativo (UnionX B2B, Sodimac, Dinasty, etc.).
     El presupuesto de Distribución no viene abierto por canal: es el total (cargado
-    bajo 'Paris tienda'); se compara el total Distribución vs ese total."""
+    bajo 'Paris tienda'); se compara el total vs ese total."""
     df = df_ar.copy()
     df.columns = range(df.shape[1])
     for i in (IX["ano"], IX["mes"], 18, 19, 21, 22, 23, 25):
         df[i] = df[i].apply(num)
     df["_neg"] = df[NEG_IX].apply(_norm)
-    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= MES_MAX) & (df["_neg"] == "distribucion")]
+    d = df[(df[IX["ano"]] == 2026) & (df[IX["mes"]] >= 1) & (df[IX["mes"]] <= MES_MAX) & (df["_neg"].isin(B2B_NEG))]
     rows = []
     for (m, canal), g in d.groupby([IX["mes"], IX["canal"]]):
         rows.append({"Mes": MES_NOM[int(m)], "Canal": str(canal).strip(),
@@ -413,7 +415,7 @@ def construir_b2b(df_ar, df_meta):
         cA, cM, cN, cMV, cMC = (col("AÑO"), col("Mes"), col("Negocio"), col("Meta Venta"), col("Meta Contribución"))
         for _, r in df_meta.iterrows():
             try:
-                if int(num(r[cA])) == 2026 and 1 <= int(num(r[cM])) <= MES_MAX and _norm(r[cN]) == "distribucion":
+                if int(num(r[cA])) == 2026 and 1 <= int(num(r[cM])) <= MES_MAX and _norm(r[cN]) in B2B_NEG:
                     meta_rows.append({"Mes": MES_NOM[int(num(r[cM]))],
                                       "MetaVenta": num(r[cMV]), "MetaContrib": num(r[cMC])})
             except (TypeError, ValueError):
@@ -505,7 +507,7 @@ def construir_workbook(bundle):
 
     ws = wb.create_sheet("P&L", 0)
     ws.sheet_view.showGridLines = False
-    ws["A1"] = "P&L Comercial vs Contable — UnionX H1 2026 (MP/Fidelización/Páginas Propias + UnionX B2B)"
+    ws["A1"] = "P&L Comercial vs Contable — UnionX H1 2026 (Marketplace / Fidelización / Páginas Propias)"
     ws["A1"].font = Font(bold=True, size=14, color="1E40AF")
     ws.merge_cells("A1:E1")
     ws["A3"], ws["A4"], ws["A5"] = "Mes:", "Canal:", "KAM:"

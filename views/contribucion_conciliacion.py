@@ -85,9 +85,10 @@ def _bundle():
 
 def _render_b2b(b):
     """Bloque Distribución / B2B (Nicolás): P&L (comercial=contable) + vs Presupuesto total."""
-    st.info("**Distribución (B2B) — responsable Nicolás.** No tiene visión comercial separada, "
-            "así que **resultado comercial = contable**. El presupuesto no viene abierto por canal: "
-            "es el **total de Distribución** (cargado bajo Paris tienda); se compara el total vs ese total.")
+    st.info("**Distribución + Corporativo (B2B) — responsable Nicolás.** Incluye los negocios "
+            "Distribución y Corporativo (UnionX B2B, Sodimac, Dinasty, etc.). No tiene visión comercial "
+            "separada, así que **resultado comercial = contable**. El presupuesto es el **total de "
+            "Distribución** (cargado bajo Paris tienda); se compara el total vs ese total.")
     mes = st.selectbox("Mes", MESES_OPT, index=0, key="b2b_mes")
     R = calcular_b2b(b, mes)
     tot = R["tot"]
@@ -98,7 +99,7 @@ def _render_b2b(b):
     c3.metric("Contribución (resultado)", fmt_pesos(tot["Contribución"]))
     c4.metric("Meta Contribución", fmt_pesos(R["meta_contrib"]),
               delta=f"{R['cumpl_contrib']*100:.0f}% cumpl." if R["cumpl_contrib"] else None)
-    st.markdown("### P&L Distribución (resultado = comercial = contable)")
+    st.markdown("### P&L Distribución + Corporativo (resultado = comercial = contable)")
     pl = R["pl_canal"]
     if len(pl):
         tot_row = {"Canal": "TOTAL", **{k: tot.get(k, tot["Venta"] - tot["Costo"] if k == "Margen" else tot.get(k)) for k in
@@ -109,8 +110,9 @@ def _render_b2b(b):
         if c in pl_d.columns:
             pl_d[c] = pl_d[c].map(fmt_pesos)
     st.dataframe(pl_d, width="stretch", hide_index=True)
-    st.caption("Canales B2B = negocio Distribución (Paris/Walmart/Falabella tienda, Dimarsa, Lokal, "
-               "Casa Mila, Ferretería, Amar, etc.). Comparación de presupuesto a nivel total.")
+    st.caption("Canales = negocios Distribución (Paris/Walmart/Falabella tienda, Dimarsa, Lokal, "
+               "Casa Mila, Ferretería, etc.) + Corporativo (UnionX B2B, Sodimac, Dinasty, "
+               "Concesionarios, Vinoteca). Presupuesto = total Distribución.")
 
 
 @st.cache_data(ttl=300, show_spinner="Cargando detalle RAW…")
@@ -203,7 +205,7 @@ def render():
         st.warning("Sin datos.")
         return
 
-    vista = st.radio("Vista", ["⚖️ Comercial (KAM)", "🏭 Distribución B2B (Nicolás)"],
+    vista = st.radio("Vista", ["⚖️ Comercial (KAM)", "🏭 Distribución + Corporativo (Nicolás)"],
                      horizontal=True, key="ccon_vista")
     st.markdown("---")
     if vista.startswith("🏭"):
