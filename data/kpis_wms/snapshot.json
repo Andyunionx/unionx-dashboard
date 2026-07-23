@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-07-23T05:57:01.895499",
+  "generado_en": "2026-07-23T16:28:28.690750",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014487632508833921,
-      "total_pickings": 14150,
-      "on_time": 208,
-      "on_time_pct": 0.01469964664310954,
-      "in_full": 14136,
-      "in_full_pct": 0.9990106007067138,
-      "both": 205,
+      "valor": 0.014750511680429106,
+      "total_pickings": 14169,
+      "on_time": 212,
+      "on_time_pct": 0.014962241513162538,
+      "in_full": 14155,
+      "in_full_pct": 0.999011927447244,
+      "both": 209,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.0423728813559322,
-      "total_pickings": 472,
+      "valor": 0.04149377593360996,
+      "total_pickings": 482,
       "on_time": 24,
-      "on_time_pct": 0.05084745762711865,
-      "in_full": 466,
-      "in_full_pct": 0.9872881355932204,
+      "on_time_pct": 0.04979253112033195,
+      "in_full": 476,
+      "in_full_pct": 0.9875518672199171,
       "both": 20,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992350980713545,
-      "ok": 18289,
-      "total": 18303,
+      "valor": 0.9992368492777324,
+      "ok": 18331,
+      "total": 18345,
       "errores": 14,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.703800091074681,
-      "n_recepciones": 244,
+      "valor": 10.660426303854875,
+      "n_recepciones": 245,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00953",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-23 16:02",
+          "done": "2026-07-23 16:06"
+        },
         {
           "picking": "CA1/IN/00952",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 3.0,
           "scheduled": "2026-07-15 13:50",
           "done": "2026-07-15 16:53"
-        },
-        {
-          "picking": "CA1/RET/01068",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:51",
-          "done": "2026-07-15 15:52"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9652930179630984,
-      "total_so": 12416,
-      "total_con_pickings": 12303,
-      "cumplidos": 11876,
+      "valor": 0.9578938893808872,
+      "total_so": 12534,
+      "total_con_pickings": 12421,
+      "cumplidos": 11898,
       "parciales": 12,
-      "sin_iniciar": 415,
+      "sin_iniciar": 511,
       "error": null
     },
     "oct_30d": {
-      "valor": 65.2315521055151,
-      "n_orders": 13462,
+      "valor": 65.12736000955368,
+      "n_orders": 13491,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 26.551666666666666,
+      "mediana_h": 26.497777777777777,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14176,
+      "lineas": 14222,
       "mes": "2026-07",
       "error": null
     },
@@ -373,8 +373,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 202,
-          "tarde": 202,
+          "total": 211,
+          "tarde": 211,
           "on_time_pct": 0.0
         },
         {
@@ -7373,42 +7373,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014487632508833921,
-      "total_pickings": 14150,
-      "on_time": 208,
-      "on_time_pct": 0.01469964664310954,
-      "in_full": 14136,
-      "in_full_pct": 0.9990106007067138,
-      "both": 205,
+      "valor": 0.014750511680429106,
+      "total_pickings": 14169,
+      "on_time": 212,
+      "on_time_pct": 0.014962241513162538,
+      "in_full": 14155,
+      "in_full_pct": 0.999011927447244,
+      "both": 209,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.0423728813559322,
-      "total_pickings": 472,
+      "valor": 0.04149377593360996,
+      "total_pickings": 482,
       "on_time": 24,
-      "on_time_pct": 0.05084745762711865,
-      "in_full": 466,
-      "in_full_pct": 0.9872881355932204,
+      "on_time_pct": 0.04979253112033195,
+      "in_full": 476,
+      "in_full_pct": 0.9875518672199171,
       "both": 20,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992350980713545,
-      "ok": 18289,
-      "total": 18303,
+      "valor": 0.9992368492777324,
+      "ok": 18331,
+      "total": 18345,
       "errores": 14,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.703800091074681,
-      "n_recepciones": 244,
+      "valor": 10.660426303854875,
+      "n_recepciones": 245,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00953",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-23 16:02",
+          "done": "2026-07-23 16:06"
+        },
         {
           "picking": "CA1/IN/00952",
           "proveedor": "",
@@ -7541,13 +7548,6 @@
           "horas": 3.0,
           "scheduled": "2026-07-15 13:50",
           "done": "2026-07-15 16:53"
-        },
-        {
-          "picking": "CA1/RET/01068",
-          "proveedor": "Comercial ECCSA S A",
-          "horas": 0.0,
-          "scheduled": "2026-07-15 15:51",
-          "done": "2026-07-15 15:52"
         }
       ],
       "error": null
