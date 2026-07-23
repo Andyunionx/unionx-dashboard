@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-07-23T13:21:29.466219",
+  "generado_en": "2026-07-23T18:57:06.964081",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11402,
-  "total_monto_pendiente_clp": 855631103.0,
+  "total_documentos_pendientes": 11391,
+  "total_monto_pendiente_clp": 861280698.0,
   "monto_por_aging": {
     "+90 días": 45270140.0,
-    "1-30 días": 514435589.0,
-    "31-60 días": 180017189.0,
+    "1-30 días": 518119237.0,
+    "31-60 días": 179942278.0,
     "61-90 días": 22051823.0,
-    "Vigente": 93856362.0
+    "Vigente": 95897220.0
   },
   "monto_por_tipo": {
-    "BOLETA": 545283941.0,
+    "BOLETA": 550933536.0,
     "FACTURA": 310347162.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 135468144.0
+      "monto": 136904636.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 64254208.0
+      "monto": 64330118.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -38,23 +38,23 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 36821378.0
+      "monto": 37122837.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 33414858.0
+      "monto": 34118721.0
     },
     {
       "partner": "abc S.A.",
       "monto": 23195792.0
     },
     {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 22791696.0
+      "partner": "Cliente Paris",
+      "monto": 22090166.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 22287746.0
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 21508175.0
     },
     {
       "partner": "Falabella.com SPA",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 17829090.0
+      "monto": 17863060.0
     },
     {
       "partner": "Showtime SpA",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 17202065.0
+      "monto": 17515935.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 5461707.0
+      "monto": 5677771.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
@@ -97,6 +97,6 @@
       "monto": 3244328.0
     }
   ],
-  "notas_credito_count": 585,
+  "notas_credito_count": 587,
   "pedidos_venta_count": 10000
 }
