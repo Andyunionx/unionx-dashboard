@@ -26,6 +26,36 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
 NC_DET = PROJECT_ROOT / "data" / "contabilidad" / "nc_detalle_h1.parquet"
 
+SHEET_CONTRIB = "1O7bRbY3v7Wc8atMu2I4PJ-pgA_Sy0-g57-iz0CSu4m4"      # Análisis de Contribución
+SHEET_SEGUIMIENTO = "1d7iN4M-AoNZvBEXxvGWYK5pJoXAI6VxzJIdjh12QNjM"  # Seguimiento contribución
+MIME_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def _hoja_xlsx(sheet_id: str, tab: str) -> bytes:
+    """Lee una hoja de un Drive (por id + pestaña, match tolerante) y la devuelve como .xlsx."""
+    from views.contribucion_loader import _gspread_client
+    gc = _gspread_client()
+    sh = gc.open_by_key(sheet_id)
+    ws = None
+    for w in sh.worksheets():
+        if _norm(w.title) == _norm(tab):
+            ws = w
+            break
+    if ws is None:  # match parcial (ej. "Resumen 2026" con espacios/variantes)
+        for w in sh.worksheets():
+            if _norm(tab) in _norm(w.title) or _norm(w.title) in _norm(tab):
+                ws = w
+                break
+    if ws is None:
+        raise ValueError(f"pestaña '{tab}' no encontrada")
+    vals = ws.get_all_values()
+    df = pd.DataFrame(vals[1:], columns=vals[0]) if vals else pd.DataFrame()
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as w:
+        df.to_excel(w, index=False, sheet_name=ws.title[:31])
+    return buf.getvalue()
+
 
 @st.cache_data(ttl=300, show_spinner="Cargando conciliación…")
 def _bundle():
@@ -142,12 +172,13 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     nc = con.execute(f"""
         SELECT CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) mes, canal,
                anio_venta oa, mes_venta om,
+               COALESCE(NULLIF(TRIM(categoria_padre),''),'(sin categoría)') concepto,
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE tipo_movimiento='Devolución'
           AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
           AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {MES_MAX}
           AND {SCOPE_SQL}
-        GROUP BY 1,2,3,4""").fetchdf()
+        GROUP BY 1,2,3,4,5""").fetchdf()
     rows = []
     for _, r in ing.iterrows():
         d = conkam.get(_norm(r.canal)) or str(r.canal)   # display sheet, fallback al canal RAW
@@ -156,7 +187,7 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
     for _, r in nc.iterrows():
         d = conkam.get(_norm(r.canal)) or str(r.canal)
         rows.append({"Canal": d, "KAM": canal_kam.get(d, ""), "Negocio": canal_neg.get(d, ""), "Tipo": "nc", "Mes": int(r.mes),
-                     "OrigenAnio": int(r.oa or 0), "OrigenMes": int(r.om or 0),
+                     "OrigenAnio": int(r.oa or 0), "OrigenMes": int(r.om or 0), "Concepto": str(r.concepto),
                      "Venta": float(r.venta or 0), "Costo": float(r.costo or 0)})
     raw_comp = pd.DataFrame(rows)
 
@@ -335,76 +366,76 @@ def render():
         dev_sty = dev_df.style.apply(
             lambda r: (["font-weight:700;background-color:#F1F5F9"] * 4 if r.name == _last else [""] * 4), axis=1)
         st.dataframe(dev_sty, width="stretch", hide_index=True)
-        st.caption("Fuente: Devolución del **RAW contable** (misma fuente que la venta; incluye anulaciones "
-                   "boleta→factura que compensan la venta bruta). Margen Directo = Venta − Costo (ambos negativos: "
-                   "la NC revierte la venta y su costo). 'Del período' = NC de ventas del mismo período; "
-                   "'Otro período 2026' se llena al elegir un mes; '2025' = NC de ventas del año anterior.")
+        st.caption("Fuente: Devolución del **RAW contable** (misma fuente que la venta). 'Del período' = NC "
+                   "de ventas del mismo período; 'Otro período 2026' se llena al elegir un mes; '2025' = NC de "
+                   "ventas del año anterior. Dependiente del filtro (año/mes/trimestre/semestre).")
+        # Concepto general al que corresponde la devolución (categoría)
+        if D.get("nc_conceptos"):
+            st.markdown("**Devoluciones por concepto (categoría)**")
+            cc = [(n, v, c) for n, v, c in D["nc_conceptos"] if abs(v) > 0 or abs(c) > 0]
+            cc_df = pd.DataFrame([{"Concepto": n, "Venta (neto)": fmt_pesos(v), "Costo": fmt_pesos(c),
+                                   "Margen Directo": fmt_pesos(v - c)} for n, v, c in cc])
+            st.dataframe(cc_df, width="stretch", hide_index=True, height=min(430, 45 + 35 * len(cc)))
 
-    # ---- Reconciliación paso a paso ----
-    st.markdown("### 🔎 Explicación de la diferencia (reconciliación paso a paso)")
-    _ap = -R.get("aporte_canal", 0.0)  # aporte baja la comisión contable → explica parte de la brecha (positivo)
-    filas = [
-        ("Δ Contribución (Comercial − Contable)", R["delta_contrib"], "head"),
-        ("① Venta comercial", R["venta_com"], ""),
-        ("   (−) Devoluciones NC de otro período", -R["nc_otro"], "sub"),
-        ("   = Venta ajustada", R["venta_aj"], "bold"),
-        ("       (memo) NC del período", R["nc_del"], "memo"),
-        ("② Margen a tasa comercial (× venta ajustada)", R["margen_aj_com"], ""),
-        ("   (−) por diferencia de % de margen (costeo)", -R["costeo"], "sub"),
-        ("   = Margen directo ajustado", R["margen_aj"], "bold"),
-        ("       (comparar) Margen Directo Contable real", R["margen_cont_real"], "memo"),
-        ("③ Comisiones de otro período (glosas, incl. 2025)", R["com_otro"], "sub"),
-        ("   Comisiones por caer (no caída)", R["no_caida"], "sub"),
-        ("       del cual: aporte del canal (Oportunidades Únicas, etc.)", _ap, "memo"),
-        ("       del cual: provisión / aún por caer (resto)", R["no_caida"] - _ap, "memo"),
-        ("④ Contribución ajustada (margen aj. − comisiones comerciales)", R["contrib_aj"], "bold"),
-        ("   Contribución contable (real)", R["contrib_cont"], ""),
-        ("   = Diferencia por EXPLICAR (ajustada − contable)", R["por_explicar"], "head"),
+    # ---- (7,9) Comisiones por período de origen (glosas del Drive Seguimiento) ----
+    if D is not None:
+        st.markdown("#### 💸 Comisiones por período de origen")
+        com_rows = [
+            ("Del período (origen 2026)", D["com_per"]),
+            ("Otro período 2026", D["com_o2026"]),
+            ("2025", D["com_o2025"]),
+        ]
+        tot_com = sum(v for _, v in com_rows)
+        com_rows.append(("= Total comisiones (glosas)", tot_com))
+        com_df = pd.DataFrame([{"Período de origen": n, "Comisión ($)": fmt_pesos(v)} for n, v in com_rows])
+        _lc = len(com_rows) - 1
+        com_sty = com_df.style.apply(
+            lambda r: (["font-weight:700;background-color:#F1F5F9"] * 2 if r.name == _lc else [""] * 2), axis=1)
+        c_a, c_b = st.columns([2, 3])
+        with c_a:
+            st.dataframe(com_sty, width="stretch", hide_index=True)
+        with c_b:
+            cat = D.get("com_per_cat", {})
+            cat_df = pd.DataFrame([
+                {"Comisión del período": "Comisión Venta", "$": fmt_pesos(cat.get("venta", 0))},
+                {"Comisión del período": "Comisión Envío / Logística", "$": fmt_pesos(cat.get("envio", 0))},
+                {"Comisión del período": "Marketing", "$": fmt_pesos(cat.get("mkt", 0))},
+            ])
+            st.dataframe(cat_df, width="stretch", hide_index=True)
+        st.caption("Fuente: glosas del Drive **Seguimiento contribución** ('Detalle Glosas 2026'). Mismo criterio "
+                   "que devoluciones: 'del período' = origen 2026 dentro del filtro; 'otro período 2026' y '2025' = "
+                   "comisiones que caen en el período pero corresponden a otra fecha. Dependiente del filtro "
+                   "(año/mes/trimestre/semestre).")
+
+    # ---- (10) Diferencia por Margen Directo (efecto del margen contable/real) ----
+    st.markdown("#### 📐 Diferencia por Margen Directo")
+    mc = gl("Margen Directo", "Comercial"); mk = gl("Margen Directo", "Contable")
+    vc_ = gl("Venta", "Comercial"); vk_ = gl("Venta", "Contable")
+    tc = (mc / vc_ * 100) if vc_ else 0.0
+    tk = (mk / vk_ * 100) if vk_ else 0.0
+    efecto = vc_ * ((tk - tc) / 100)  # efecto en $ si la venta comercial rindiera al margen contable
+    md_df = pd.DataFrame([
+        {"Concepto": "Margen Directo Comercial", "Monto": fmt_pesos(mc), "% s/venta": f"{tc:.1f}%"},
+        {"Concepto": "Margen Directo Contable (real)", "Monto": fmt_pesos(mk), "% s/venta": f"{tk:.1f}%"},
+        {"Concepto": "Δ Margen Directo (Com − Cont)", "Monto": fmt_pesos(mc - mk), "% s/venta": f"{tc - tk:+.1f} pts"},
+        {"Concepto": "Efecto si se tomara el margen contable (× venta comercial)", "Monto": fmt_pesos(efecto), "% s/venta": ""},
+    ])
+    st.dataframe(md_df, width="stretch", hide_index=True)
+    st.caption("Cuánto cambia el margen directo si se usa la tasa **contable (real)** en vez de la comercial. "
+               "Efecto = venta comercial × (tasa contable − tasa comercial).")
+
+    # ---- (12) Descargas de los Drives ----
+    st.markdown("### ⬇️ Descargas (Drive)")
+    dl = [
+        ("📄 Análisis de Resultados", SHEET_CONTRIB, "Análisis de Resultados", "Analisis_de_Resultados.xlsx"),
+        ("📄 Resumen 2026 (Seguimiento)", SHEET_SEGUIMIENTO, "Resumen 2026", "Resumen_2026.xlsx"),
+        ("📄 Detalle Glosas 2026", SHEET_CONTRIB, "Detalle Glosas 2026", "Detalle_Glosas_2026.xlsx"),
     ]
-    rec = pd.DataFrame([{"Concepto": n, "Monto": v} for n, v, _ in filas])
-
-    def _style(row):
-        tipo = filas[row.name][2]
-        if tipo == "head":
-            return ["background-color:#DCFCE7;font-weight:700"] * 2
-        if tipo == "bold":
-            return ["font-weight:700"] * 2
-        if tipo == "memo":
-            return ["color:#94A3B8;font-style:italic"] * 2
-        return [""] * 2
-
-    sty = (rec.style.apply(_style, axis=1)
-           .format({"Monto": lambda v: fmt_pesos(v)}))
-    st.dataframe(sty, width="stretch", hide_index=True, height=560)
-    st.caption("Regla 'otro período' según el filtro: si eliges un mes → todo lo que no es ese mes + 2025; "
-               "si eliges YTD → solo 2025. La 'diferencia por explicar' es el residual que ni devoluciones, "
-               "ni costeo, ni comisiones de otra fecha alcanzan a justificar.")
-
-    # ---- descarga Excel ----
-    st.markdown("---")
-    try:
-        wb = construir_workbook(b)
-        buf = BytesIO()
-        wb.save(buf)
-        st.download_button(
-            "⬇️ Descargar Excel (con fórmulas y selectores Mes/Canal/KAM)",
-            data=buf.getvalue(),
-            file_name="PyL_Comercial_vs_Contable_H1.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            type="primary",
-        )
-    except Exception as e:
-        st.warning(f"No se pudo generar el Excel descargable: {e}")
-
-    # ---- detalle (expanders) ----
-    with st.expander("Detalle: NC por período de origen / Comisiones por estado"):
-        st.markdown("**NC (devoluciones)** — neto por canal × origen")
-        nc_d = b["nc_tab"].copy()
-        if "Neto" in nc_d.columns:
-            nc_d["Neto"] = nc_d["Neto"].map(fmt_pesos)
-        st.dataframe(nc_d, width="stretch", hide_index=True)
-        st.markdown("**Comisiones (glosas)** — monto por canal × período de origen")
-        com_d = b["com_tab"].copy()
-        if "Monto" in com_d.columns:
-            com_d["Monto"] = com_d["Monto"].map(fmt_pesos)
-        st.dataframe(com_d, width="stretch", hide_index=True)
+    cols_dl = st.columns(len(dl))
+    for i, (label, sid, tab, fname) in enumerate(dl):
+        with cols_dl[i]:
+            try:
+                st.download_button(label, data=_hoja_xlsx(sid, tab), file_name=fname,
+                                   mime=MIME_XLSX, width='stretch', key=f"dl_{i}")
+            except Exception as e:
+                st.caption(f"⚠️ {label}: {type(e).__name__} — {str(e)[:70]}")

@@ -370,8 +370,22 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
         com_e = float(per_g[per_g["Cat"] == "envio"]["Monto"].sum())
         com_m = float(per_g[per_g["Cat"] == "mkt"]["Monto"].sum())
         glosa_otro = float(gc[~es_per]["Monto"].sum())
+        # Buckets de comisiones por período de ORIGEN (igual criterio que devoluciones):
+        com_per = float(per_g["Monto"].sum())
+        com_o2026 = float(gc[(gc["OrigenAnio"] == 2026) & (~gc["OrigenMes"].isin(mset))]["Monto"].sum())
+        com_o2025 = float(gc[gc["OrigenAnio"] <= 2025]["Monto"].sum())
+        # apertura del bucket "del período" por categoría (venta/envío/mkt)
+        com_per_cat = {"venta": com_v, "envio": com_e, "mkt": com_m}
     else:
-        com_v = com_e = com_m = glosa_otro = 0.0
+        com_v = com_e = com_m = glosa_otro = com_per = com_o2026 = com_o2025 = 0.0
+        com_per_cat = {"venta": 0.0, "envio": 0.0, "mkt": 0.0}
+
+    # Devoluciones por CONCEPTO (categoría) en el período/scope filtrado — para la vista.
+    nc_conceptos = []
+    if len(nc) and "Concepto" in nc.columns:
+        by = nc.groupby("Concepto", as_index=False).agg(v=("Venta", "sum"), c=("Costo", "sum"))
+        nc_conceptos = [(str(r["Concepto"]), float(r["v"]), float(r["c"]))
+                        for _, r in by.sort_values("v").iterrows()]
 
     margen_contrib = margen_directo - com_v - com_e - com_m - glosa_otro
     return {
@@ -381,6 +395,8 @@ def calcular_detalle(raw_comp, glosas_comp, mes="YTD", canal="TODOS", kam="TODOS
         "costo": costo, "costo_ing": costo_prod + costo_env, "costo_nc": nc_per_c + nc_o26_c + nc_o25_c,
         "margen_directo": margen_directo,
         "com_venta": com_v, "com_envio": com_e, "com_mkt": com_m, "glosa_otro": glosa_otro,
+        "com_per": com_per, "com_o2026": com_o2026, "com_o2025": com_o2025, "com_per_cat": com_per_cat,
+        "nc_conceptos": nc_conceptos,
         "margen_contrib": margen_contrib, "venta_neta": venta_neta,
     }
 
