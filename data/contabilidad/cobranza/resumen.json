@@ -1,28 +1,28 @@
 {
-  "generado_en": "2026-07-23T18:57:06.964081",
+  "generado_en": "2026-07-24T01:28:23.740003",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11391,
-  "total_monto_pendiente_clp": 861280698.0,
+  "total_documentos_pendientes": 11158,
+  "total_monto_pendiente_clp": 671446511.0,
   "monto_por_aging": {
-    "+90 días": 45270140.0,
-    "1-30 días": 518119237.0,
-    "31-60 días": 179942278.0,
-    "61-90 días": 22051823.0,
-    "Vigente": 95897220.0
+    "+90 días": 45133036.0,
+    "1-30 días": 402610231.0,
+    "31-60 días": 111511690.0,
+    "61-90 días": 21717304.0,
+    "Vigente": 90474250.0
   },
   "monto_por_tipo": {
-    "BOLETA": 550933536.0,
-    "FACTURA": 310347162.0
+    "BOLETA": 549860019.0,
+    "FACTURA": 121586492.0
   },
   "top_20_deudores": [
     {
-      "partner": "Mercadolibre Chile Limitada",
-      "monto": 229370691.0
+      "partner": "Cliente Mercado Libre",
+      "monto": 138164812.0
     },
     {
-      "partner": "Cliente Mercado Libre",
-      "monto": 136904636.0
+      "partner": "Mercadolibre Chile Limitada",
+      "monto": 99221252.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,15 +30,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 64330118.0
-    },
-    {
-      "partner": "FALABELLA.COM",
-      "monto": 45972155.0
+      "monto": 65166928.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 37122837.0
+      "monto": 35401159.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -49,28 +45,24 @@
       "monto": 23195792.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 22090166.0
-    },
-    {
       "partner": "Celmedia Fidelizacion SPA",
       "monto": 21508175.0
     },
     {
-      "partner": "Falabella.com SPA",
-      "monto": 20915985.0
+      "partner": "Cliente Paris",
+      "monto": 19165246.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 17863060.0
+      "partner": "Cliente Walmart",
+      "monto": 17852266.0
     },
     {
       "partner": "Showtime SpA",
       "monto": 17552325.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 17515935.0
+      "partner": "Cliente Ripley",
+      "monto": 17156657.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -79,6 +71,10 @@
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 11791293.0
+    },
+    {
+      "partner": "FALABELLA.COM",
+      "monto": 8276909.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -93,10 +89,14 @@
       "monto": 4104800.0
     },
     {
+      "partner": "MAGIC GLOBAL SPA",
+      "monto": 3270675.0
+    },
+    {
       "partner": "Comercializadora Mercado Local Spa.",
       "monto": 3244328.0
     }
   ],
-  "notas_credito_count": 587,
+  "notas_credito_count": 585,
   "pedidos_venta_count": 10000
 }
