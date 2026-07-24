@@ -25,6 +25,13 @@ def _n(s):
     return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
 
+def _num(v):
+    """Formato chileno: 148.256.265 (miles con punto, sin decimales)."""
+    if v is None or pd.isna(v):
+        return "—"
+    return f"{int(round(v)):,}".replace(",", ".")
+
+
 def _cargar_contable() -> pd.DataFrame:
     """Resultado CONTABLE por dimensión, desde 'Análisis de Resultados' (acceso
     posicional: col 18 = Venta Real Contable, col 25 = Total Contribución Contable)."""
@@ -69,6 +76,10 @@ def render():
         return
 
     df = parsear_columnas_numericas(df, COLS_NUM)
+
+    # Fusionar KAM duplicados por capitalización (CLAUDIA/Claudia → Claudia).
+    if 'KAM' in df.columns:
+        df['KAM'] = df['KAM'].astype(str).str.strip().str.title()
 
     # Filtros al tope
     sel = render_contrib_filters(df, prefix="cmeta")
@@ -141,8 +152,50 @@ def render():
 
     st.divider()
 
-    # ---- Detalle por Canal (Presupuesto / Contable / Comercial) ----
-    st.markdown("### Detalle por Canal")
+    # Helper: arma tabla Presupuesto/Contable/Comercial agrupada por 'dim' (Negocio o Canal).
+    MONEY_COLS = ['Presup. Venta', 'Contable Venta', 'Comercial Venta',
+                  'Presup. Contrib', 'Contable Contrib', 'Comercial Contrib']
+
+    def _tabla_por(dim):
+        m = df_f.groupby(dim, as_index=False).agg(
+            **{'Presup. Venta': ('Meta Venta', 'sum'), 'Comercial Venta': ('Resultado Venta', 'sum'),
+               'Presup. Contrib': ('Meta Contribución', 'sum'), 'Comercial Contrib': ('Resultado Contribución', 'sum')})
+        m['_k'] = m[dim].map(_n)
+        if len(cont_f):
+            c = cont_f.groupby(dim, as_index=False).agg(
+                **{'Contable Venta': ('Resultado Venta Contable', 'sum'),
+                   'Contable Contrib': ('Resultado Contribución Contable', 'sum')})
+            c['_k'] = c[dim].map(_n)
+            m = m.merge(c[['_k', 'Contable Venta', 'Contable Contrib']], on='_k', how='left')
+        else:
+            m = m.assign(**{'Contable Venta': 0.0, 'Contable Contrib': 0.0})
+        m[['Contable Venta', 'Contable Contrib']] = m[['Contable Venta', 'Contable Contrib']].fillna(0)
+        return m.drop(columns='_k')
+
+    def _fmt(df_tbl, keys):
+        out = df_tbl.copy()
+        for c in MONEY_COLS:
+            if c in out.columns:
+                out[c] = out[c].map(_num)
+        return out[keys + [c for c in MONEY_COLS if c in out.columns]]
+
+    # ---- (4) Por Línea de Negocio ----
+    st.markdown("### Por Línea de Negocio")
+    tneg = _tabla_por('Negocio').sort_values('Comercial Venta', ascending=False)
+    st.dataframe(_fmt(tneg, ['Negocio']), width='stretch', hide_index=True)
+
+    st.divider()
+
+    # ---- (5) Top Canales ----
+    st.markdown("### Top Canales")
+    n_top = st.slider("Top N canales (por venta comercial)", 5, 30, 15, key="cmeta_topn")
+    tcanal = _tabla_por('Canal').sort_values('Comercial Venta', ascending=False)
+    st.dataframe(_fmt(tcanal.head(n_top), ['Canal']), width='stretch', hide_index=True)
+
+    st.divider()
+
+    # ---- (3) Detalle por Canal (formato número) ----
+    st.markdown("### Detalle por Canal (mensual)")
     meta_ag = df_f.groupby(['AÑO', 'Negocio', 'Canal', 'Mes'], as_index=False).agg(
         **{'Presup. Venta': ('Meta Venta', 'sum'), 'Comercial Venta': ('Resultado Venta', 'sum'),
            'Presup. Contrib': ('Meta Contribución', 'sum'), 'Comercial Contrib': ('Resultado Contribución', 'sum')})
@@ -156,11 +209,6 @@ def render():
     else:
         tbl = meta_ag.assign(**{'Contable Venta': 0.0, 'Contable Contrib': 0.0})
     tbl[['Contable Venta', 'Contable Contrib']] = tbl[['Contable Venta', 'Contable Contrib']].fillna(0)
-    tbl = tbl[['AÑO', 'Negocio', 'Canal', 'Mes', 'Presup. Venta', 'Contable Venta', 'Comercial Venta',
-               'Presup. Contrib', 'Contable Contrib', 'Comercial Contrib']]
-    money = st.column_config.NumberColumn(format="$%d")
-    st.dataframe(tbl, width='stretch', hide_index=True, height=460,
-                 column_config={c: money for c in tbl.columns if 'Venta' in c or 'Contrib' in c})
+    st.dataframe(_fmt(tbl, ['AÑO', 'Negocio', 'Canal', 'Mes']), width='stretch', hide_index=True, height=460)
     st.caption("Presupuesto = Meta (hoja Meta vs Resultados) · Comercial = Resultado KAM · "
-               "Contable = 'Análisis de Resultados' (venta col 18 / contribución col 25). "
-               "Descarga con montos completos arriba a la derecha de la tabla.")
+               "Contable = 'Análisis de Resultados' (venta col 18 / contribución col 25). Montos en pesos.")

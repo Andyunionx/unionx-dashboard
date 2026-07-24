@@ -21,6 +21,30 @@ COLS_NUM = [
     'Margen Directo KAM', 'Comisión Venta KAM', 'Comisión Envío KAM',
     'Marketing KAM', 'Total Comisiones KAM', 'Resultado Contribución KAM',
 ]
+# Columnas CONTABLES (misma hoja, cols 16-25). Nombres tal cual en el Sheet.
+COLS_NUM_CONT = [
+    'Venta Real Contable', 'Costo Venta Contable', 'Margen Front Contable',
+    'Comisión Venta Contable', 'Comisión Logística Contable', 'Marketing Contable',
+    'Resultado Comisiones Contable', 'Total Contribución Contable',
+]
+# Líneas P&L con su columna Comercial (KAM) y Contable equivalente.
+LINEAS_PYL_CC = [
+    ('Venta', 'Venta REAL KAM', 'Venta Real Contable'),
+    ('Costo Venta', 'Costo Venta KAM', 'Costo Venta Contable'),
+    ('Margen Directo', 'Margen Directo KAM', 'Margen Front Contable'),
+    ('Comisión Venta', 'Comisión Venta KAM', 'Comisión Venta Contable'),
+    ('Comisión Logístico (Envío)', 'Comisión Envío KAM', 'Comisión Logística Contable'),
+    ('Marketing', 'Marketing KAM', 'Marketing Contable'),
+    ('Total Comisiones', 'Total Comisiones KAM', 'Resultado Comisiones Contable'),
+    ('Contribución', 'Resultado Contribución KAM', 'Total Contribución Contable'),
+]
+
+
+def _num(v):
+    """Formato chileno: 148.256.265 (miles con punto, sin decimales, sin $)."""
+    if v is None or pd.isna(v):
+        return "—"
+    return f"{int(round(v)):,}".replace(",", ".")
 
 
 def _kpi_card(label: str, value: str, sub: str = "", color: str = "blue") -> str:
@@ -55,7 +79,7 @@ def render():
         st.warning("Sin datos")
         return
 
-    df = parsear_columnas_numericas(df, COLS_NUM)
+    df = parsear_columnas_numericas(df, COLS_NUM + COLS_NUM_CONT)
 
     # Filtros al tope
     sel = render_contrib_filters(df, prefix="cgen")
@@ -65,12 +89,13 @@ def render():
 
     # Calcular KPIs por año
     def _kpis_anio(df_a):
+        def s(c):
+            return df_a[c].sum() if c in df_a.columns else 0
         return {
-            'venta': df_a['Venta REAL KAM'].sum() if 'Venta REAL KAM' in df_a.columns else 0,
-            'costo': df_a['Costo Venta KAM'].sum() if 'Costo Venta KAM' in df_a.columns else 0,
-            'margen': df_a['Margen Directo KAM'].sum() if 'Margen Directo KAM' in df_a.columns else 0,
-            'comisiones': df_a['Total Comisiones KAM'].sum() if 'Total Comisiones KAM' in df_a.columns else 0,
-            'contrib': df_a['Resultado Contribución KAM'].sum() if 'Resultado Contribución KAM' in df_a.columns else 0,
+            'venta': s('Venta REAL KAM'), 'costo': s('Costo Venta KAM'),
+            'margen': s('Margen Directo KAM'), 'comisiones': s('Total Comisiones KAM'),
+            'contrib': s('Resultado Contribución KAM'),        # comercial (KAM)
+            'contrib_cont': s('Total Contribución Contable'),  # contable
         }
 
     df_2026 = df_f[df_f['AÑO'].astype(str).isin(['2026', '2.026'])]
@@ -97,12 +122,13 @@ def render():
     delta_v, delta_v_txt = _delta_yoy(k26['venta'], k25['venta'])
     color_v = '#1E40AF' if not delta_v else ('#16A34A' if delta_v >= 0 else '#DC2626')
 
-    cols = st.columns(5)
+    cols = st.columns(6)
     cols[0].markdown(_kpi_card("Venta 2026", fmt_pesos_M(k26['venta']), delta_v_txt, color_v), unsafe_allow_html=True)
     cols[1].markdown(_kpi_card("Costo 2026", fmt_pesos_M(k26['costo']), _pct_venta(k26['costo'], k26['venta']), '#EA580C'), unsafe_allow_html=True)
     cols[2].markdown(_kpi_card("Margen 2026", fmt_pesos_M(k26['margen']), _pct_venta(k26['margen'], k26['venta']), '#16A34A'), unsafe_allow_html=True)
     cols[3].markdown(_kpi_card("Comisiones 2026", fmt_pesos_M(k26['comisiones']), _pct_venta(k26['comisiones'], k26['venta']), '#DC2626'), unsafe_allow_html=True)
-    cols[4].markdown(_kpi_card("Contribución 2026", fmt_pesos_M(k26['contrib']), _pct_venta(k26['contrib'], k26['venta']), '#16A34A'), unsafe_allow_html=True)
+    cols[4].markdown(_kpi_card("Contrib. Comercial 2026", fmt_pesos_M(k26['contrib']), _pct_venta(k26['contrib'], k26['venta']), '#16A34A'), unsafe_allow_html=True)
+    cols[5].markdown(_kpi_card("Contrib. Contable 2026", fmt_pesos_M(k26['contrib_cont']), _pct_venta(k26['contrib_cont'], k26['venta']), '#0F766E'), unsafe_allow_html=True)
 
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
@@ -124,43 +150,48 @@ def render():
 
     st.divider()
 
-    # ===== P&L DESGLOSADO (incluye comision venta / logistico / marketing) =====
-    st.markdown("### P&L desglosado — $ y % sobre venta")
-    st.caption("Desglose completo de comisiones (venta, logístico, marketing). 2026 vs 2025.")
+    # ===== P&L DESGLOSADO — Comercial vs Contable (formato número) =====
+    st.markdown("### P&L desglosado — Comercial vs Contable (2026)")
+    st.caption("Comercial = columnas KAM · Contable = columnas contables del Sheet. Montos en pesos (148.256.265).")
 
-    LINEAS_PYL = [
-        ('Venta', 'Venta REAL KAM'),
-        ('Costo Venta', 'Costo Venta KAM'),
-        ('Margen Directo', 'Margen Directo KAM'),
-        ('Comisión Venta', 'Comisión Venta KAM'),
-        ('Comisión Logístico (Envío)', 'Comisión Envío KAM'),
-        ('Marketing', 'Marketing KAM'),
-        ('Total Comisiones', 'Total Comisiones KAM'),
-        ('Contribución', 'Resultado Contribución KAM'),
-    ]
-    v26 = df_2026['Venta REAL KAM'].sum() if 'Venta REAL KAM' in df_2026.columns else 0
-    v25 = df_2025['Venta REAL KAM'].sum() if 'Venta REAL KAM' in df_2025.columns else 0
+    vc = df_2026['Venta REAL KAM'].sum() if 'Venta REAL KAM' in df_2026.columns else 0
+    vk = df_2026['Venta Real Contable'].sum() if 'Venta Real Contable' in df_2026.columns else 0
     pyl_rows = []
-    for label, col in LINEAS_PYL:
-        m26 = df_2026[col].sum() if col in df_2026.columns else 0
-        m25 = df_2025[col].sum() if col in df_2025.columns else 0
+    for label, ccom, ccont in LINEAS_PYL_CC:
+        mc = df_2026[ccom].sum() if ccom in df_2026.columns else 0
+        mk = df_2026[ccont].sum() if ccont in df_2026.columns else 0
         pyl_rows.append({
             'Línea': label,
-            '2026 $': m26, '2026 %Vta': (m26 / v26 if v26 else None),
-            '2025 $': m25, '2025 %Vta': (m25 / v25 if v25 else None),
+            'Comercial': _num(mc), 'Com. %Vta': (f"{mc / vc * 100:.1f}%" if vc else "—"),
+            'Contable': _num(mk), 'Cont. %Vta': (f"{mk / vk * 100:.1f}%" if vk else "—"),
         })
-    df_pyl = pd.DataFrame(pyl_rows)
-    money = st.column_config.NumberColumn(format="$%d")
-    pct = st.column_config.NumberColumn(format="%.1f%%")
-    # %Vta como fraccion*100 para el format
-    df_pyl_disp = df_pyl.copy()
-    df_pyl_disp['2026 %Vta'] = df_pyl_disp['2026 %Vta'] * 100
-    df_pyl_disp['2025 %Vta'] = df_pyl_disp['2025 %Vta'] * 100
-    st.dataframe(
-        df_pyl_disp, width='stretch', hide_index=True,
-        column_config={'2026 $': money, '2025 $': money,
-                       '2026 %Vta': pct, '2025 %Vta': pct},
-    )
+    st.dataframe(pd.DataFrame(pyl_rows), width='stretch', hide_index=True)
+
+    st.divider()
+
+    # ===== P&L POR LÍNEA DE NEGOCIO (misma estructura, formato número) =====
+    st.markdown("### P&L por Línea de Negocio (2026)")
+    st.caption("Misma estructura del P&L, abierto por línea de negocio. Contribución comercial y contable.")
+    if 'Negocio' in df_2026.columns and len(df_2026):
+        neg_rows = []
+        orden = ['Venta', 'Costo Venta', 'Margen Directo', 'Comisión Venta',
+                 'Comisión Logístico (Envío)', 'Marketing', 'Total Comisiones']
+        col_de = {lab: ccom for lab, ccom, _ in LINEAS_PYL_CC}
+        for neg, g in df_2026.groupby('Negocio'):
+            r = {'Línea de Negocio': str(neg).strip()}
+            for lab in orden:
+                r[lab] = _num(g[col_de[lab]].sum() if col_de[lab] in g.columns else 0)
+            r['Contrib. Comercial'] = _num(g['Resultado Contribución KAM'].sum() if 'Resultado Contribución KAM' in g.columns else 0)
+            r['Contrib. Contable'] = _num(g['Total Contribución Contable'].sum() if 'Total Contribución Contable' in g.columns else 0)
+            neg_rows.append(r)
+        # fila TOTAL
+        tot = {'Línea de Negocio': 'TOTAL'}
+        for lab in orden:
+            tot[lab] = _num(df_2026[col_de[lab]].sum() if col_de[lab] in df_2026.columns else 0)
+        tot['Contrib. Comercial'] = _num(df_2026['Resultado Contribución KAM'].sum() if 'Resultado Contribución KAM' in df_2026.columns else 0)
+        tot['Contrib. Contable'] = _num(df_2026['Total Contribución Contable'].sum() if 'Total Contribución Contable' in df_2026.columns else 0)
+        neg_rows.append(tot)
+        st.dataframe(pd.DataFrame(neg_rows), width='stretch', hide_index=True)
 
     st.divider()
 
