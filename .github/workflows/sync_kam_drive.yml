@@ -15,9 +15,9 @@ name: "Sync KAM Drive (Analisis de Resultados)"
 
 on:
   schedule:
-    # 10:00 UTC = 07:00 Chile (verano) / 06:00 (invierno)
-    # 1h despues del sync_pyl_drive (que corre 09:00 UTC)
-    - cron: '0 10 * * *'
+    # Cada 3 horas, todos los días (la vista de Contribución depende de este drive
+    # y no puede quedar desactualizada). Refresca el snapshot parquet de fallback.
+    - cron: '0 */3 * * *'
   workflow_dispatch:  # trigger manual desde GitHub UI
 
 permissions:
