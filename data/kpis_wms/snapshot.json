@@ -1,40 +1,54 @@
 {
-  "generado_en": "2026-07-23T16:28:28.690750",
+  "generado_en": "2026-07-24T05:52:08.166885",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014750511680429106,
-      "total_pickings": 14169,
-      "on_time": 212,
-      "on_time_pct": 0.014962241513162538,
-      "in_full": 14155,
-      "in_full_pct": 0.999011927447244,
-      "both": 209,
+      "valor": 0.015257517118189937,
+      "total_pickings": 13436,
+      "on_time": 208,
+      "on_time_pct": 0.015480797856504911,
+      "in_full": 13422,
+      "in_full_pct": 0.9989580232211968,
+      "both": 205,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.04149377593360996,
-      "total_pickings": 482,
-      "on_time": 24,
-      "on_time_pct": 0.04979253112033195,
-      "in_full": 476,
-      "in_full_pct": 0.9875518672199171,
-      "both": 20,
+      "valor": 0.03508771929824561,
+      "total_pickings": 456,
+      "on_time": 20,
+      "on_time_pct": 0.043859649122807015,
+      "in_full": 452,
+      "in_full_pct": 0.9912280701754386,
+      "both": 16,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992368492777324,
-      "ok": 18331,
-      "total": 18345,
-      "errores": 14,
+      "valor": 0.9992489022417379,
+      "ok": 17295,
+      "total": 17308,
+      "errores": 13,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.660426303854875,
-      "n_recepciones": 245,
+      "valor": 11.066900894538607,
+      "n_recepciones": 236,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00957",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-23 18:16",
+          "done": "2026-07-23 18:23"
+        },
+        {
+          "picking": "CA1/IN/00955",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-23 16:56",
+          "done": "2026-07-23 17:01"
+        },
         {
           "picking": "CA1/IN/00953",
           "proveedor": "",
@@ -160,39 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-20 14:52",
           "done": "2026-07-20 14:55"
-        },
-        {
-          "picking": "CA1/IN/00948",
-          "proveedor": "HINATURE Inc.",
-          "horas": 0.5,
-          "scheduled": "2026-07-17 17:26",
-          "done": "2026-07-17 17:54"
-        },
-        {
-          "picking": "CA1/IN/00945",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 3.0,
-          "scheduled": "2026-07-15 13:50",
-          "done": "2026-07-15 16:53"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9578938893808872,
-      "total_so": 12534,
-      "total_con_pickings": 12421,
-      "cumplidos": 11898,
-      "parciales": 12,
-      "sin_iniciar": 511,
+      "valor": 0.9550625711035268,
+      "total_so": 12419,
+      "total_con_pickings": 12306,
+      "cumplidos": 11753,
+      "parciales": 14,
+      "sin_iniciar": 539,
       "error": null
     },
     "oct_30d": {
-      "valor": 65.12736000955368,
-      "n_orders": 13491,
+      "valor": 62.88604370498264,
+      "n_orders": 12742,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 26.497777777777777,
+      "mediana_h": 25.4025,
       "detalle": [
         {
           "so": "S239366",
@@ -346,47 +346,41 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14222,
+      "lineas": 14537,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 123,
-      "outgoing": 29953,
-      "internal": 19924,
+      "incoming": 118,
+      "outgoing": 29860,
+      "internal": 20022,
       "total": 50000,
       "error": null
     },
     "top_clientes_otif_30d": {
       "valor": [
         {
-          "cliente": "Casa Mila SpA",
-          "total": 5,
-          "tarde": 5,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 40,
-          "tarde": 40,
+          "total": 37,
+          "tarde": 37,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 211,
-          "tarde": 211,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 10,
-          "tarde": 10,
+          "total": 209,
+          "tarde": 209,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
-          "total": 14,
-          "tarde": 14,
+          "total": 15,
+          "tarde": 15,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 7,
+          "tarde": 7,
           "on_time_pct": 0.0
         },
         {
@@ -409,9 +403,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 65,
-          "tarde": 62,
-          "on_time_pct": 0.046153846153846156
+          "total": 60,
+          "tarde": 57,
+          "on_time_pct": 0.05
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -422,12 +416,12 @@
         {
           "cliente": "Cliente Mercado Libre",
           "total": 6,
-          "tarde": 1,
-          "on_time_pct": 0.8333333333333334
+          "tarde": 2,
+          "on_time_pct": 0.6666666666666666
         },
         {
           "cliente": "Falabella Retail",
-          "total": 10,
+          "total": 8,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -7373,42 +7367,56 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014750511680429106,
-      "total_pickings": 14169,
-      "on_time": 212,
-      "on_time_pct": 0.014962241513162538,
-      "in_full": 14155,
-      "in_full_pct": 0.999011927447244,
-      "both": 209,
+      "valor": 0.015257517118189937,
+      "total_pickings": 13436,
+      "on_time": 208,
+      "on_time_pct": 0.015480797856504911,
+      "in_full": 13422,
+      "in_full_pct": 0.9989580232211968,
+      "both": 205,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.04149377593360996,
-      "total_pickings": 482,
-      "on_time": 24,
-      "on_time_pct": 0.04979253112033195,
-      "in_full": 476,
-      "in_full_pct": 0.9875518672199171,
-      "both": 20,
+      "valor": 0.03508771929824561,
+      "total_pickings": 456,
+      "on_time": 20,
+      "on_time_pct": 0.043859649122807015,
+      "in_full": 452,
+      "in_full_pct": 0.9912280701754386,
+      "both": 16,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992368492777324,
-      "ok": 18331,
-      "total": 18345,
-      "errores": 14,
+      "valor": 0.9992489022417379,
+      "ok": 17295,
+      "total": 17308,
+      "errores": 13,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.660426303854875,
-      "n_recepciones": 245,
+      "valor": 11.066900894538607,
+      "n_recepciones": 236,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00957",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-23 18:16",
+          "done": "2026-07-23 18:23"
+        },
+        {
+          "picking": "CA1/IN/00955",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-07-23 16:56",
+          "done": "2026-07-23 17:01"
+        },
         {
           "picking": "CA1/IN/00953",
           "proveedor": "",
@@ -7534,20 +7542,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-20 14:52",
           "done": "2026-07-20 14:55"
-        },
-        {
-          "picking": "CA1/IN/00948",
-          "proveedor": "HINATURE Inc.",
-          "horas": 0.5,
-          "scheduled": "2026-07-17 17:26",
-          "done": "2026-07-17 17:54"
-        },
-        {
-          "picking": "CA1/IN/00945",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 3.0,
-          "scheduled": "2026-07-15 13:50",
-          "done": "2026-07-15 16:53"
         }
       ],
       "error": null
