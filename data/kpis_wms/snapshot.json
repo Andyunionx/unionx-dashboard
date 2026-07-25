@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-07-24T16:44:27.353464",
+  "generado_en": "2026-07-25T05:44:50.437862",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.015950119625897194,
-      "total_pickings": 13793,
+      "valor": 0.01585471317382531,
+      "total_pickings": 13876,
       "on_time": 223,
-      "on_time_pct": 0.01616762125715943,
-      "in_full": 13776,
-      "in_full_pct": 0.9987674907561807,
+      "on_time_pct": 0.016070913808013836,
+      "in_full": 13857,
+      "in_full_pct": 0.998630729316806,
       "both": 220,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.04700854700854701,
-      "total_pickings": 468,
-      "on_time": 26,
-      "on_time_pct": 0.05555555555555555,
-      "in_full": 464,
-      "in_full_pct": 0.9914529914529915,
-      "both": 22,
+      "valor": 0.043933054393305436,
+      "total_pickings": 478,
+      "on_time": 25,
+      "on_time_pct": 0.05230125523012552,
+      "in_full": 473,
+      "in_full_pct": 0.9895397489539749,
+      "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999271953405018,
-      "ok": 17843,
-      "total": 17856,
-      "errores": 13,
+      "valor": 0.999056446689238,
+      "ok": 18000,
+      "total": 18017,
+      "errores": 17,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.838532733978791,
-      "n_recepciones": 241,
+      "valor": 11.495319100091827,
+      "n_recepciones": 242,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00949",
+          "proveedor": "HINATURE Inc.",
+          "horas": 169.8,
+          "scheduled": "2026-07-17 17:26",
+          "done": "2026-07-24 19:13"
+        },
         {
           "picking": "CA1/IN/00960",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-20 16:28",
           "done": "2026-07-20 16:28"
-        },
-        {
-          "picking": "CA1/RET/01076",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-20 16:28",
-          "done": "2026-07-20 16:28"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9712542155130882,
-      "total_so": 12567,
-      "total_con_pickings": 12454,
-      "cumplidos": 12096,
+      "valor": 0.9664654046997389,
+      "total_so": 12365,
+      "total_con_pickings": 12256,
+      "cumplidos": 11845,
       "parciales": 13,
-      "sin_iniciar": 345,
+      "sin_iniciar": 398,
       "error": null
     },
     "oct_30d": {
-      "valor": 62.232130556192125,
-      "n_orders": 13091,
+      "valor": 61.99593612501897,
+      "n_orders": 13182,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 25.2175,
+      "mediana_h": 25.084444444444443,
       "detalle": [
         {
           "so": "S239366",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 15085,
+      "lineas": 15336,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 118,
-      "outgoing": 29861,
-      "internal": 20021,
+      "outgoing": 29837,
+      "internal": 20045,
       "total": 50000,
       "error": null
     },
@@ -361,14 +361,14 @@
       "valor": [
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 40,
-          "tarde": 40,
+          "total": 42,
+          "tarde": 42,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 210,
-          "tarde": 210,
+          "total": 219,
+          "tarde": 219,
           "on_time_pct": 0.0
         },
         {
@@ -409,9 +409,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 6,
+          "total": 5,
           "tarde": 2,
-          "on_time_pct": 0.6666666666666666
+          "on_time_pct": 0.6
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -452,6 +452,14 @@
       "2025-05"
     ],
     "cortes_disponibles": [
+      {
+        "label": "Corte Julio 2026 (26-06 al 25-07)",
+        "mes": 7,
+        "anio": 2026,
+        "desde": "2026-06-26",
+        "hasta": "2026-07-25",
+        "key": "2026-07"
+      },
       {
         "label": "Corte Junio 2026 (26-05 al 25-06)",
         "mes": 6,
@@ -558,6 +566,72 @@
       }
     ],
     "dashboard_por_corte": {
+      "2026-07": {
+        "corte": {
+          "label": "Corte Julio 2026 (26-06 al 25-07)",
+          "mes": 7,
+          "anio": 2026,
+          "desde": "2026-06-26",
+          "hasta": "2026-07-25",
+          "key": "2026-07"
+        },
+        "resumen": {
+          "n_ordenes": 56,
+          "cancelacion_clp": 4193.277311,
+          "quiebre_clp": 0.0,
+          "n_canceladas": 1,
+          "n_quiebres": 0,
+          "ns_empresa_pct": 0.9821428571428571,
+          "ns_courier_pct": 0.9821428571428571,
+          "otif_total_pct": 0.9821428571428571,
+          "n_empresa_ok": 55,
+          "n_courier_ok": 55,
+          "n_otif_ok": 55
+        },
+        "por_cliente": [
+          {
+            "CLIENTE": "FALABELLA",
+            "ORDENES": 56,
+            "A_TPO_EMP": 55,
+            "A_TPO_COU": 55,
+            "OTIF": 55,
+            "NS_EMP_PCT": 0.9821,
+            "NS_COU_PCT": 0.9821,
+            "OTIF_PCT": 0.9821
+          },
+          {
+            "CLIENTE": "TOTAL",
+            "ORDENES": 56,
+            "A_TPO_EMP": 55,
+            "NS_EMP_PCT": 0.9821428571428571,
+            "A_TPO_COU": 55,
+            "NS_COU_PCT": 0.9821428571428571,
+            "OTIF": 55,
+            "OTIF_PCT": 0.9821428571428571
+          }
+        ],
+        "pareto_quiebres": [],
+        "opciones_filtros": {
+          "couriers": [
+            "Todos",
+            "HDC",
+            "RECIBELO"
+          ],
+          "clientes": [
+            "Todos",
+            "FALABELLA"
+          ],
+          "servicios": [
+            "Todos"
+          ]
+        },
+        "filtros_aplicados": {
+          "courier": "Todos",
+          "cliente": "Todos",
+          "servicio": "Todos"
+        },
+        "error": null
+      },
       "2026-06": {
         "corte": {
           "label": "Corte Junio 2026 (26-05 al 25-06)",
@@ -2077,310 +2151,18 @@
           "servicio": "Todos"
         },
         "error": null
-      },
-      "2026-01": {
-        "corte": {
-          "label": "Corte Enero 2026 (26-12 al 25-01)",
-          "mes": 1,
-          "anio": 2026,
-          "desde": "2025-12-26",
-          "hasta": "2026-01-25",
-          "key": "2026-01"
-        },
-        "resumen": {
-          "n_ordenes": 5132,
-          "cancelacion_clp": 5488152.512787,
-          "quiebre_clp": 417050.680685,
-          "n_canceladas": 182,
-          "n_quiebres": 16,
-          "ns_empresa_pct": 0.940958690568979,
-          "ns_courier_pct": 0.9062743569758379,
-          "otif_total_pct": 0.8883476227591582,
-          "n_empresa_ok": 4829,
-          "n_courier_ok": 4651,
-          "n_otif_ok": 4559
-        },
-        "por_cliente": [
-          {
-            "CLIENTE": "MERCADO LIBRE F",
-            "ORDENES": 1102,
-            "A_TPO_EMP": 1046,
-            "A_TPO_COU": 1016,
-            "OTIF": 1014,
-            "NS_EMP_PCT": 0.9492,
-            "NS_COU_PCT": 0.922,
-            "OTIF_PCT": 0.9201
-          },
-          {
-            "CLIENTE": "FALABELLA HDC",
-            "ORDENES": 917,
-            "A_TPO_EMP": 869,
-            "A_TPO_COU": 869,
-            "OTIF": 869,
-            "NS_EMP_PCT": 0.9477,
-            "NS_COU_PCT": 0.9477,
-            "OTIF_PCT": 0.9477
-          },
-          {
-            "CLIENTE": "MERCADO LIBRE C",
-            "ORDENES": 656,
-            "A_TPO_EMP": 634,
-            "A_TPO_COU": 634,
-            "OTIF": 634,
-            "NS_EMP_PCT": 0.9665,
-            "NS_COU_PCT": 0.9665,
-            "OTIF_PCT": 0.9665
-          },
-          {
-            "CLIENTE": "PAGINAS",
-            "ORDENES": 619,
-            "A_TPO_EMP": 601,
-            "A_TPO_COU": 555,
-            "OTIF": 546,
-            "NS_EMP_PCT": 0.9709,
-            "NS_COU_PCT": 0.8966,
-            "OTIF_PCT": 0.8821
-          },
-          {
-            "CLIENTE": "WALMART",
-            "ORDENES": 473,
-            "A_TPO_EMP": 449,
-            "A_TPO_COU": 400,
-            "OTIF": 384,
-            "NS_EMP_PCT": 0.9493,
-            "NS_COU_PCT": 0.8457,
-            "OTIF_PCT": 0.8118
-          },
-          {
-            "CLIENTE": "FALABELLA F",
-            "ORDENES": 387,
-            "A_TPO_EMP": 354,
-            "A_TPO_COU": 360,
-            "OTIF": 340,
-            "NS_EMP_PCT": 0.9147,
-            "NS_COU_PCT": 0.9302,
-            "OTIF_PCT": 0.8786
-          },
-          {
-            "CLIENTE": "KITCHEN CENTER",
-            "ORDENES": 352,
-            "A_TPO_EMP": 333,
-            "A_TPO_COU": 318,
-            "OTIF": 309,
-            "NS_EMP_PCT": 0.946,
-            "NS_COU_PCT": 0.9034,
-            "OTIF_PCT": 0.8778
-          },
-          {
-            "CLIENTE": "PARIS",
-            "ORDENES": 251,
-            "A_TPO_EMP": 231,
-            "A_TPO_COU": 201,
-            "OTIF": 200,
-            "NS_EMP_PCT": 0.9203,
-            "NS_COU_PCT": 0.8008,
-            "OTIF_PCT": 0.7968
-          },
-          {
-            "CLIENTE": "RIPLEY",
-            "ORDENES": 187,
-            "A_TPO_EMP": 143,
-            "A_TPO_COU": 116,
-            "OTIF": 99,
-            "NS_EMP_PCT": 0.7647,
-            "NS_COU_PCT": 0.6203,
-            "OTIF_PCT": 0.5294
-          },
-          {
-            "CLIENTE": "DUTY TRAVEL",
-            "ORDENES": 130,
-            "A_TPO_EMP": 112,
-            "A_TPO_COU": 130,
-            "OTIF": 112,
-            "NS_EMP_PCT": 0.8615,
-            "NS_COU_PCT": 1.0,
-            "OTIF_PCT": 0.8615
-          },
-          {
-            "CLIENTE": "BICE",
-            "ORDENES": 58,
-            "A_TPO_EMP": 57,
-            "A_TPO_COU": 52,
-            "OTIF": 52,
-            "NS_EMP_PCT": 0.9828,
-            "NS_COU_PCT": 0.8966,
-            "OTIF_PCT": 0.8966
-          },
-          {
-            "CLIENTE": "TOTAL",
-            "ORDENES": 5132,
-            "A_TPO_EMP": 4829,
-            "NS_EMP_PCT": 0.940958690568979,
-            "A_TPO_COU": 4651,
-            "NS_COU_PCT": 0.9062743569758379,
-            "OTIF": 4559,
-            "OTIF_PCT": 0.8883476227591582
-          }
-        ],
-        "pareto_quiebres": [
-          {
-            "SKU": "Pack330",
-            "monto": 56486.55462,
-            "n_ordenes": 1,
-            "pct": 0.13544290235235107,
-            "pct_acumulado": 0.13544290235235107
-          },
-          {
-            "SKU": "TD10000010708",
-            "monto": 55453.78151,
-            "n_ordenes": 1,
-            "pct": 0.132966529197166,
-            "pct_acumulado": 0.2684094315495171
-          },
-          {
-            "SKU": "1571423280815",
-            "monto": 50411.76471,
-            "n_ordenes": 1,
-            "pct": 0.12087683114963241,
-            "pct_acumulado": 0.38928626269914945
-          },
-          {
-            "SKU": "Pack397",
-            "monto": 39487.0,
-            "n_ordenes": 1,
-            "pct": 0.09468153830882892,
-            "pct_acumulado": 0.48396780100797837
-          },
-          {
-            "SKU": "PACK255",
-            "monto": 39470.58824,
-            "n_ordenes": 1,
-            "pct": 0.09464218635291544,
-            "pct_acumulado": 0.5786099873608939
-          },
-          {
-            "SKU": "73678",
-            "monto": 38391.0,
-            "n_ordenes": 1,
-            "pct": 0.09205356034173907,
-            "pct_acumulado": 0.6706635477026329
-          },
-          {
-            "SKU": "LHSHNUCO-GR",
-            "monto": 33150.96639,
-            "n_ordenes": 2,
-            "pct": 0.07948905954439398,
-            "pct_acumulado": 0.7501526072470269
-          },
-          {
-            "SKU": "Pack255",
-            "monto": 22681.0,
-            "n_ordenes": 1,
-            "pct": 0.054384277620040736,
-            "pct_acumulado": 0.8045368848670676
-          },
-          {
-            "SKU": "LHMOBI001-BL",
-            "monto": 21000.0,
-            "n_ordenes": 1,
-            "pct": 0.050353592435115536,
-            "pct_acumulado": 0.8548904773021831
-          },
-          {
-            "SKU": "1659990807310",
-            "monto": 16798.31933,
-            "n_ordenes": 1,
-            "pct": 0.04027884405417824,
-            "pct_acumulado": 0.8951693213563614
-          },
-          {
-            "SKU": "6902221326232",
-            "monto": 15109.2437,
-            "n_ordenes": 1,
-            "pct": 0.03622879520345891,
-            "pct_acumulado": 0.9313981165598203
-          },
-          {
-            "SKU": "200200B",
-            "monto": 8467.226891,
-            "n_ordenes": 1,
-            "pct": 0.020302632948812592,
-            "pct_acumulado": 0.9517007495086329
-          },
-          {
-            "SKU": "SIMDESSOM",
-            "monto": 8394.957983,
-            "n_ordenes": 1,
-            "pct": 0.020129347275519124,
-            "pct_acumulado": 0.971830096784152
-          },
-          {
-            "SKU": "1660858101318",
-            "monto": 7555.0,
-            "n_ordenes": 1,
-            "pct": 0.018115304326061805,
-            "pct_acumulado": 0.9899454011102138
-          },
-          {
-            "SKU": "1610816087324",
-            "monto": 4193.277311,
-            "n_ordenes": 1,
-            "pct": 0.010054598889786248,
-            "pct_acumulado": 1.0
-          }
-        ],
-        "opciones_filtros": {
-          "couriers": [
-            "Todos",
-            "99MINUTOS",
-            "BLUEXPRESS",
-            "COLECTA",
-            "HDC",
-            "RECIBELO",
-            "RETIRO EN BODEGA",
-            "RIPLEY",
-            "STARKEN",
-            "WELIVERY"
-          ],
-          "clientes": [
-            "Todos",
-            "BICE",
-            "DUTY TRAVEL",
-            "FALABELLA F",
-            "FALABELLA HDC",
-            "KITCHEN CENTER",
-            "MERCADO LIBRE C",
-            "MERCADO LIBRE F",
-            "PAGINAS",
-            "PARIS",
-            "RIPLEY",
-            "WALMART"
-          ],
-          "servicios": [
-            "Todos",
-            "BLUEXPRESS",
-            "COLECTA 1",
-            "COLECTA 2",
-            "EXPRESS",
-            "FLEX",
-            "FLEX1",
-            "FLEX2",
-            "HDC",
-            "Next Day",
-            "RETIRO EN BODEGA",
-            "RIPLEY",
-            "priority"
-          ]
-        },
-        "filtros_aplicados": {
-          "courier": "Todos",
-          "cliente": "Todos",
-          "servicio": "Todos"
-        },
-        "error": null
       }
     },
     "couriers_por_corte": {
+      "2026-07": [
+        {
+          "CURIER": "HOME DELIVERY CORP",
+          "n_pedidos": 38,
+          "ns_courier_pct": 100.0,
+          "ns_empresa_pct": 100.0,
+          "otif_total_pct": 100.0
+        }
+      ],
       "2026-06": [
         {
           "CURIER": "RECIBELO",
@@ -3011,85 +2793,6 @@
           "ns_empresa_pct": 98.0,
           "otif_total_pct": 86.3
         }
-      ],
-      "2025-07": [
-        {
-          "CURIER": "RECIBELO",
-          "n_pedidos": 1597,
-          "ns_courier_pct": 94.1,
-          "ns_empresa_pct": 96.7,
-          "otif_total_pct": 93.9
-        },
-        {
-          "CURIER": "HOME DELIVERY CORP",
-          "n_pedidos": 1215,
-          "ns_courier_pct": 97.8,
-          "ns_empresa_pct": 97.4,
-          "otif_total_pct": 97.4
-        },
-        {
-          "CURIER": "BLUEXPRESS",
-          "n_pedidos": 689,
-          "ns_courier_pct": 83.5,
-          "ns_empresa_pct": 82.9,
-          "otif_total_pct": 71.6
-        },
-        {
-          "CURIER": "WELIVERY",
-          "n_pedidos": 489,
-          "ns_courier_pct": 96.1,
-          "ns_empresa_pct": 69.9,
-          "otif_total_pct": 67.5
-        },
-        {
-          "CURIER": "COLECTA 1",
-          "n_pedidos": 389,
-          "ns_courier_pct": 87.9,
-          "ns_empresa_pct": 97.9,
-          "otif_total_pct": 87.9
-        },
-        {
-          "CURIER": "STARKEN",
-          "n_pedidos": 272,
-          "ns_courier_pct": 100.0,
-          "ns_empresa_pct": 100.0,
-          "otif_total_pct": 100.0
-        },
-        {
-          "CURIER": "RIPLEY",
-          "n_pedidos": 243,
-          "ns_courier_pct": 91.8,
-          "ns_empresa_pct": 89.3,
-          "otif_total_pct": 82.7
-        },
-        {
-          "CURIER": "BLUEXPRESSXPRESS",
-          "n_pedidos": 202,
-          "ns_courier_pct": 88.6,
-          "ns_empresa_pct": 63.4,
-          "otif_total_pct": 52.5
-        },
-        {
-          "CURIER": "FLEX",
-          "n_pedidos": 193,
-          "ns_courier_pct": 96.9,
-          "ns_empresa_pct": 97.4,
-          "otif_total_pct": 96.9
-        },
-        {
-          "CURIER": "COLECTA",
-          "n_pedidos": 85,
-          "ns_courier_pct": 67.1,
-          "ns_empresa_pct": 89.4,
-          "otif_total_pct": 67.1
-        },
-        {
-          "CURIER": "SAMEDAY",
-          "n_pedidos": 36,
-          "ns_courier_pct": 94.4,
-          "ns_empresa_pct": 100.0,
-          "otif_total_pct": 94.4
-        }
       ]
     },
     "ytd_por_anio": {
@@ -3101,16 +2804,17 @@
           "2026-03",
           "2026-04",
           "2026-05",
-          "2026-06"
+          "2026-06",
+          "2026-07"
         ],
         "ventana": {
           "desde": "2025-12-26",
-          "hasta": "2026-06-25"
+          "hasta": "2026-07-25"
         },
-        "n_ordenes": 47129,
-        "n_empresa_ok": 44865,
-        "n_courier_ok": 43174,
-        "n_otif_ok": 42224,
+        "n_ordenes": 47185,
+        "n_empresa_ok": 44920,
+        "n_courier_ok": 43229,
+        "n_otif_ok": 42279,
         "ns_empresa_pct": 95.2,
         "ns_courier_pct": 91.6,
         "otif_total_pct": 89.6,
@@ -3174,12 +2878,22 @@
             "ns_empresa_pct": 91.3,
             "ns_courier_pct": 88.8,
             "otif_total_pct": 83.9
+          },
+          {
+            "key": "2026-07",
+            "mes": 7,
+            "anio": 2026,
+            "label_corto": "07/26",
+            "n_ordenes": 56,
+            "ns_empresa_pct": 98.2,
+            "ns_courier_pct": 98.2,
+            "otif_total_pct": 98.2
           }
         ],
         "por_courier": [
           {
             "CURIER": "RECIBELO",
-            "n_pedidos": 17127,
+            "n_pedidos": 17145,
             "pct_volumen": 36.3,
             "ns_courier_pct": 91.4,
             "otif_total_pct": 90.8,
@@ -3195,7 +2909,7 @@
           },
           {
             "CURIER": "HOME DELIVERY CORP",
-            "n_pedidos": 8520,
+            "n_pedidos": 8558,
             "pct_volumen": 18.1,
             "ns_courier_pct": 96.1,
             "otif_total_pct": 96.1,
@@ -3270,7 +2984,7 @@
           {
             "CANAL": "PAGINAS",
             "n_pedidos": 6106,
-            "pct_volumen": 13.0,
+            "pct_volumen": 12.9,
             "ns_empresa_pct": 93.4,
             "ns_courier_pct": 89.3,
             "otif_total_pct": 83.4
@@ -3338,6 +3052,14 @@
             "ns_empresa_pct": 93.7,
             "ns_courier_pct": 94.8,
             "otif_total_pct": 89.7
+          },
+          {
+            "CANAL": "FALABELLA",
+            "n_pedidos": 56,
+            "pct_volumen": 0.1,
+            "ns_empresa_pct": 98.2,
+            "ns_courier_pct": 98.2,
+            "otif_total_pct": 98.2
           }
         ],
         "opciones": {
@@ -3357,6 +3079,7 @@
             "Todos",
             "BICE",
             "DUTY TRAVEL",
+            "FALABELLA",
             "FALABELLA F",
             "FALABELLA HDC",
             "KITCHEN CENTER",
@@ -7367,42 +7090,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.015950119625897194,
-      "total_pickings": 13793,
+      "valor": 0.01585471317382531,
+      "total_pickings": 13876,
       "on_time": 223,
-      "on_time_pct": 0.01616762125715943,
-      "in_full": 13776,
-      "in_full_pct": 0.9987674907561807,
+      "on_time_pct": 0.016070913808013836,
+      "in_full": 13857,
+      "in_full_pct": 0.998630729316806,
       "both": 220,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.04700854700854701,
-      "total_pickings": 468,
-      "on_time": 26,
-      "on_time_pct": 0.05555555555555555,
-      "in_full": 464,
-      "in_full_pct": 0.9914529914529915,
-      "both": 22,
+      "valor": 0.043933054393305436,
+      "total_pickings": 478,
+      "on_time": 25,
+      "on_time_pct": 0.05230125523012552,
+      "in_full": 473,
+      "in_full_pct": 0.9895397489539749,
+      "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999271953405018,
-      "ok": 17843,
-      "total": 17856,
-      "errores": 13,
+      "valor": 0.999056446689238,
+      "ok": 18000,
+      "total": 18017,
+      "errores": 17,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.838532733978791,
-      "n_recepciones": 241,
+      "valor": 11.495319100091827,
+      "n_recepciones": 242,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00949",
+          "proveedor": "HINATURE Inc.",
+          "horas": 169.8,
+          "scheduled": "2026-07-17 17:26",
+          "done": "2026-07-24 19:13"
+        },
         {
           "picking": "CA1/IN/00960",
           "proveedor": "",
@@ -7531,13 +7261,6 @@
         },
         {
           "picking": "CA1/RET/01075",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-20 16:28",
-          "done": "2026-07-20 16:28"
-        },
-        {
-          "picking": "CA1/RET/01076",
           "proveedor": "Falabella Retail",
           "horas": 0.0,
           "scheduled": "2026-07-20 16:28",
