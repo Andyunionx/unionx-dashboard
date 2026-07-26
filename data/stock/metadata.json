@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-07-26T19:10:08.190039",
+  "generado_en": "2026-07-26T22:00:01.345214",
   "total_skus": 1893,
   "total_quants": 4702,
   "total_locations": 1417,
@@ -10,8 +10,8 @@
     "costo_promedio_sku": 512624.5,
     "n_quiebre_critico": 72,
     "n_bajo": 141,
-    "n_optimo": 134,
-    "n_sobrestock": 318,
+    "n_optimo": 133,
+    "n_sobrestock": 319,
     "n_sin_venta": 1228,
     "rot_30d_promedio": 0.74,
     "rot_90d_promedio": 2.45
@@ -8221,7 +8221,7 @@
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 318
+      "SKUs": 319
     },
     {
       "Categoria": "BAJO",
@@ -8229,7 +8229,7 @@
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 134
+      "SKUs": 133
     },
     {
       "Categoria": "CRITICO",
