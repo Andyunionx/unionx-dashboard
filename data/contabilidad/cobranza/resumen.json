@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-07-25T18:48:15.322387",
+  "generado_en": "2026-07-26T01:31:34.038379",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11401,
-  "total_monto_pendiente_clp": 686919609.0,
+  "total_documentos_pendientes": 11431,
+  "total_monto_pendiente_clp": 688222670.0,
   "monto_por_aging": {
-    "+90 días": 44998114.0,
-    "1-30 días": 415064077.0,
-    "31-60 días": 113228615.0,
-    "61-90 días": 22383144.0,
-    "Vigente": 91245659.0
+    "+90 días": 44675694.0,
+    "1-30 días": 412879719.0,
+    "31-60 días": 117244210.0,
+    "61-90 días": 22833578.0,
+    "Vigente": 90589469.0
   },
   "monto_por_tipo": {
-    "BOLETA": 565333117.0,
+    "BOLETA": 566636178.0,
     "FACTURA": 121586492.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 142245904.0
+      "monto": 143124805.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -30,11 +30,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 66228368.0
+      "monto": 66534248.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 37203980.0
+      "monto": 37439430.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -50,11 +50,11 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 20717616.0
+      "monto": 20914547.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 17999146.0
+      "monto": 17829276.0
     },
     {
       "partner": "Showtime SpA",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 17399515.0
+      "monto": 16961752.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -97,6 +97,6 @@
       "monto": 3244328.0
     }
   ],
-  "notas_credito_count": 562,
+  "notas_credito_count": 557,
   "pedidos_venta_count": 10000
 }
