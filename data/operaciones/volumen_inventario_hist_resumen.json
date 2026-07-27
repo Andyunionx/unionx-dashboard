@@ -1,19 +1,19 @@
 {
-  "generado_en": "2026-07-26T16:31:03.285812",
+  "generado_en": "2026-07-27T07:00:51.399841",
   "rango_desde": "2025-06-24",
-  "rango_hasta": "2026-07-24",
+  "rango_hasta": "2026-07-25",
   "buffer_dias_vivo": 2,
-  "n_pickings": 261774,
+  "n_pickings": 262653,
   "fecha_done_min": "2025-06-24 00:01:33",
-  "fecha_done_max": "2026-07-23 20:36:26",
-  "n_unidades_total": 1899345.0,
-  "n_lineas_total": 390832,
+  "fecha_done_max": "2026-07-24 19:13:48",
+  "n_unidades_total": 1906799.0,
+  "n_lineas_total": 392093,
   "top_picking_types": {
-    "Bodega Carrascal N°9-10: Pick": 107624,
-    "Bodega Carrascal N°9-10: Delivery Orders": 106780,
-    "Bodega Fulfillment Mercado Libre: Órdenes de entrega": 23164,
+    "Bodega Carrascal N°9-10: Pick": 107926,
+    "Bodega Carrascal N°9-10: Delivery Orders": 107091,
+    "Bodega Fulfillment Mercado Libre: Órdenes de entrega": 23389,
     "Bodega Fulfillment Falabella: Órdenes de entrega": 6433,
-    "Bodega Carrascal N°9-10: Internal Transfers": 3630,
+    "Bodega Carrascal N°9-10: Internal Transfers": 3670,
     "Bodega Duty Travel: Elegir": 2716,
     "Bodega Duty Travel: Órdenes de entrega": 2689,
     "Bodega Kitchen Center: Elegir": 1414,
@@ -21,15 +21,15 @@
     "Bodega Reserva Stock: Recogida": 1232
   },
   "uds_por_categoria": {
-    "entrega_ca1": 447503.0,
+    "entrega_ca1": 448534.0,
     "entrega_reserva": 4384.0,
-    "fulfillment_marketplace": 36120.0,
+    "fulfillment_marketplace": 36363.0,
     "interno_ca1_otro": 20280.0,
     "otra_bodega": 17903.0,
-    "pick_ca1": 485755.0,
+    "pick_ca1": 486239.0,
     "pick_reserva": 4383.0,
-    "recepcion_putaway": 432723.0,
-    "reposicion_fulfillment": 29681.0,
-    "reslotting": 420613.0
+    "recepcion_putaway": 436723.0,
+    "reposicion_fulfillment": 29686.0,
+    "reslotting": 422304.0
   }
 }
