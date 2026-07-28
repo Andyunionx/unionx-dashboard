@@ -2,6 +2,7 @@
 Servicio de extracción y enriquecimiento de datos de ventas.
 Refactor del script descargar_reporte_ventas_completo.py.
 """
+import os
 import pandas as pd
 from typing import Dict, Callable, Optional
 from datetime import datetime
@@ -1186,6 +1187,30 @@ class VentasService(BaseOdooService):
                             if factura_orig_id in (orden.get('invoice_ids') or []):
                                 orden_orig = orden
                                 break
+
+                    # ════════════════════════════════════════════════════════════
+                    # FIX ANULACIÓN BOLETA→FACTURA (bug detectado por Nicole 28-jul-2026)
+                    # ════════════════════════════════════════════════════════════
+                    # Cuando un cliente pide factura, Odoo ANULA la boleta con esta NC
+                    # (reversed_entry = la BOLETA) y reemite una FACTURA. El extract genera
+                    # filas Venta para boleta Y factura (misma sale.order.line); el dedup por
+                    # Linea ID descarta la boleta y deja la factura. Pero esta NC (que revierte
+                    # la boleta ya descartada) sobrevive como "Devolución" y termina restando la
+                    # FACTURA real → net cero, venta borrada.
+                    # REGLA: si la NC revierte una BOLETA (BEL) y el mismo pedido tiene además una
+                    # FACTURA (FAC), es una conversión boleta→factura → NO emitir la Devolución
+                    # (la venta real es la factura). Las devoluciones REALES (NC revierte la
+                    # factura, o boleta sin factura reemitida) NO entran acá y siguen restando.
+                    if factura_orig and orden_orig and os.environ.get('DISABLE_NC_ANULACION_FIX') != '1':
+                        _doc_rev = (factura_orig.get('name', '') or '').upper()
+                        if _doc_rev.startswith('BEL'):
+                            _inv_ids = orden_orig.get('invoice_ids') or []
+                            _tiene_factura = any(
+                                (facturas_dict.get(iid, {}).get('name', '') or '').upper().startswith('FAC')
+                                for iid in _inv_ids
+                            )
+                            if _tiene_factura:
+                                continue  # anulación boleta→factura: la factura es la venta real
 
                     if factura_orig:  # Crear línea NC incluso sin orden asociada
                         # Si no tenemos la orden, usar datos de la factura original
