@@ -201,18 +201,27 @@ def render():
         'Venta Comercial': _cc['Comercial Venta'],
         'Venta Contable': _cc['Contable Venta'],
         'Δ Venta (Com-Cont)': _cc['Comercial Venta'] - _cc['Contable Venta'],
+        '% Venta (Cont/Com)': _cc['Contable Venta'] / _cc['Comercial Venta'].replace(0, pd.NA),
         'Contrib Comercial': _cc['Comercial Contrib'],
         'Contrib Contable': _cc['Contable Contrib'],
         'Δ Contrib (Com-Cont)': _cc['Comercial Contrib'] - _cc['Contable Contrib'],
+        '% Contrib (Cont/Com)': _cc['Contable Contrib'] / _cc['Comercial Contrib'].replace(0, pd.NA),
     })
-    # fila TOTAL al inicio
+    # fila TOTAL al inicio (los % se recalculan sobre los totales, no se suman)
     _tot = {'Canal': 'TOTAL'}
-    for _c in _cc_out.columns:
-        if _c != 'Canal':
-            _tot[_c] = _cc_out[_c].sum()
+    for _c in ('Venta Comercial', 'Venta Contable', 'Δ Venta (Com-Cont)',
+               'Contrib Comercial', 'Contrib Contable', 'Δ Contrib (Com-Cont)'):
+        _tot[_c] = _cc_out[_c].sum()
+    _tot['% Venta (Cont/Com)'] = (_tot['Venta Contable'] / _tot['Venta Comercial']
+                                  if _tot['Venta Comercial'] else pd.NA)
+    _tot['% Contrib (Cont/Com)'] = (_tot['Contrib Contable'] / _tot['Contrib Comercial']
+                                    if _tot['Contrib Comercial'] else pd.NA)
     _cc_out = pd.concat([pd.DataFrame([_tot]), _cc_out], ignore_index=True)
+    _pct_cols = ('% Venta (Cont/Com)', '% Contrib (Cont/Com)')
     for _c in _cc_out.columns:
-        if _c != 'Canal':
+        if _c in _pct_cols:
+            _cc_out[_c] = _cc_out[_c].map(lambda v: '—' if pd.isna(v) else f"{v*100:,.1f}%".replace(",", "."))
+        elif _c != 'Canal':
             _cc_out[_c] = _cc_out[_c].map(_num)
     st.dataframe(_cc_out, width='stretch', hide_index=True, height=460)
 
