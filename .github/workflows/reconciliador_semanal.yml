@@ -1,0 +1,53 @@
+name: "Reconciliador ventas Odoo<->RAW (semanal)"
+
+# Detecta ventas confirmadas en Odoo que NO están en el RAW (cruce de meses,
+# fulfillment sin captura) y guarda los candidatos en data/reconciliacion/candidatos.parquet.
+# DRY-RUN: NO overlaya el RAW (el overlay es manual, tras revisión). La descarga RAW
+# de la app lee ese parquet y lo muestra en pestañas 'Reconciliación' + 'Resumen'.
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'   # lunes 12:00 UTC (~08/09 Chile)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reconciliar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Reconciliar (dry-run, ventana últimos ~45 días)
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          DESDE=$(date -u -d '45 days ago' +%Y-%m-%d)
+          HASTA=$(date -u +%Y-%m-%d)
+          echo "Reconciliando $DESDE .. $HASTA (dry-run)"
+          python reconciliador_ventas.py --desde "$DESDE" --hasta "$HASTA"
+      - name: Commit candidatos si cambió
+        if: always()
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Reconciliador"
+          git pull --rebase origin main || true
+          git add data/reconciliacion/candidatos.parquet || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios en candidatos"
+          else
+            git commit -m "Reconciliador: candidatos $(date -u +'%Y-%m-%d %H:%M UTC')"
+            for i in 1 2 3; do
+              git push && break || { echo "retry $i"; git pull --rebase origin main || true; sleep 5; }
+            done
+          fi

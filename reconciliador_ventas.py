@@ -195,6 +195,16 @@ def main():
     with pd.ExcelWriter(out, engine="openpyxl") as w:
         add.to_excel(w, index=False, sheet_name="candidatos")
     print(f"  candidatos → {out.relative_to(ROOT)}")
+    # Parquet de candidatos para que la descarga RAW lo muestre en pestañas nuevas
+    # (sin tocar el formato de la hoja RAW). Se sobrescribe con el último período.
+    rec_dir = ROOT / "data" / "reconciliacion"; rec_dir.mkdir(parents=True, exist_ok=True)
+    cand = add.copy()
+    cand["estado"] = cand["canal"].astype(str).apply(lambda c: "revisar" if c.startswith("(REVISAR") else "detectado")
+    cand["periodo"] = f"{a.desde}..{a.hasta}"
+    cols_c = ["periodo", "canal", "pedido", "pedido_marketplace", "sku", "producto",
+              "fecha_venta", "mes_venta", "venta_bruta", "venta_neta", "estado"]
+    cand.reindex(columns=cols_c).to_parquet(rec_dir / "candidatos.parquet", index=False)
+    print(f"  candidatos parquet → data/reconciliacion/candidatos.parquet ({len(cand)} filas)")
     if a.apply and len(to_hist):
         base = pd.read_parquet(HIST); ex = to_hist.reindex(columns=base.columns)
         if "es_despacho" in base.columns:

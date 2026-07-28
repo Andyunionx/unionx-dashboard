@@ -20,9 +20,24 @@ EXCEL_AVISO_FILAS = 100_000
 COLS_ID_TEXTO = ("Pedido", "Documento", "Marketplace Reference", "Yuju Pack Id")
 
 
+def _cargar_reconciliacion():
+    """Candidatos del reconciliador (ventas Odoo detectadas fuera del RAW). Opcional:
+    si no existe el parquet, no agrega pestañas. NO afecta la hoja RAW."""
+    from pathlib import Path
+    p = Path(__file__).resolve().parent.parent / "data" / "reconciliacion" / "candidatos.parquet"
+    if not p.exists():
+        return None
+    try:
+        return pd.read_parquet(p)
+    except Exception:
+        return None
+
+
 def _excel_bytes(df: pd.DataFrame) -> bytes:
     """Solo para df pequenios. Materializa en RAM. Las columnas de ID largo se
-    escriben como TEXTO (formato '@') para que Excel no las trunque a 15 dígitos."""
+    escriben como TEXTO (formato '@') para que Excel no las trunque a 15 dígitos.
+    Agrega pestañas 'Reconciliación' + 'Resumen Reconciliación' si hay candidatos
+    (sin tocar la hoja RAW ni su formato)."""
     from openpyxl.utils import get_column_letter
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as w:
@@ -33,6 +48,20 @@ def _excel_bytes(df: pd.DataFrame) -> bytes:
                 letter = get_column_letter(j)
                 for cell in ws[letter][1:]:  # saltar encabezado
                     cell.number_format = '@'
+        # Pestañas nuevas del reconciliador (no modifican la hoja RAW)
+        rec = _cargar_reconciliacion()
+        if rec is not None and len(rec):
+            rec.to_excel(w, index=False, sheet_name='Reconciliación')
+            resumen = (rec.groupby(['canal', 'estado'], as_index=False)
+                       .agg(Lineas=('venta_neta', 'size'), Venta_neta=('venta_neta', 'sum')))
+            resumen.to_excel(w, index=False, sheet_name='Resumen Reconciliación')
+            # IDs como texto también en la pestaña Reconciliación
+            wsr = w.sheets['Reconciliación']
+            for j, col in enumerate(rec.columns, start=1):
+                if col in ('pedido', 'pedido_marketplace', 'sku'):
+                    letter = get_column_letter(j)
+                    for cell in wsr[letter][1:]:
+                        cell.number_format = '@'
     return output.getvalue()
 
 
