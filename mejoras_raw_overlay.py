@@ -40,6 +40,7 @@ PREFIJO_MARCA = {"LH": "Lhotse", "DN": "Dinasty"}
 # Latam Pass agregado 22-jul-2026 (OK Andrés): canal de fidelización nuevo.
 CANAL_TIPO_NEGOCIO = {
     "latam pass": "Fidelización",
+    "shopping latam pass": "Fidelización",  # canal nuevo (Andrés 28-jul): fidelización
     # respaldo de canales de fidelización conocidos (por si Odoo los manda vacíos)
     "travel duty": "Fidelización", "global reward": "Fidelización",
     "celmedia": "Fidelización", "banco bice": "Fidelización", "cmr": "Fidelización",
