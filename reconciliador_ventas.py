@@ -76,7 +76,8 @@ def main():
         b = M.execute_kw(DB, uid, PWD, "sale.order", "search_read",
             [[["state", "in", ["sale", "done"]], ["date_order", ">=", a.desde + " 00:00:00"],
               ["date_order", "<=", a.hasta + " 23:59:59"]]],
-            {"fields": ["id", "name", "client_order_ref", "channel", "date_order", "amount_total", "partner_id"],
+            {"fields": ["id", "name", "client_order_ref", "channel", "channel_order_reference",
+                        "date_order", "amount_total", "partner_id"],
              "limit": 2000, "offset": off})
         if not b:
             break
@@ -119,10 +120,16 @@ def main():
         if "POLAR" in nm:
             return "Abc"
         partner = re.sub(r"\s+", " ", str((o.get("partner_id") or [0, ""])[1]).strip().lower())
-        if partner in empresa2canal:
-            return empresa2canal[partner]
-        ch = o.get("channel")
-        if ch == "Web":
+        c = empresa2canal.get(partner)
+        if c and c != "Web":
+            return c
+        if c == "Web" or o.get("channel") == "Web":
+            # web → prefijo del channel_order_reference (igual que _estandarizar_canal del extract)
+            ref = str(o.get("channel_order_reference") or "").upper()
+            if ref.startswith("LH"):
+                return "Lhotse web"
+            if ref.startswith("SH"):
+                return "Simplit web"
             return "UnionX web"
         return f"(REVISAR: {(o.get('partner_id') or [0, ''])[1]})"
     import collections
@@ -176,7 +183,12 @@ def main():
     existe = key(hist) | key(mes)
     nuevas["_k"] = list(zip(nuevas["pedido"].astype(str), nuevas["sku"].astype(str), nuevas["venta_bruta"].round().astype("Int64").astype(str)))
     add = nuevas[~nuevas["_k"].isin(existe)].drop(columns="_k")
-    to_hist = add[add["mes_venta"] <= a.freeze]
+    # No overlayar canales sin resolver (REVISAR): quedan en el Excel para revisión manual.
+    revisar = add[add["canal"].astype(str).str.startswith("(REVISAR")]
+    if len(revisar):
+        print(f"  ⚠️  {len(revisar)} líneas '(REVISAR)' NO se overlayan (quedan en el Excel): {fmt(revisar['venta_bruta'].sum())}")
+    add_ok = add[~add["canal"].astype(str).str.startswith("(REVISAR")]
+    to_hist = add_ok[add_ok["mes_venta"] <= a.freeze]
     print(f"\n  líneas nuevas: {len(add)} · a histórico (mes<={a.freeze}): {len(to_hist)} · {fmt(to_hist['venta_bruta'].sum())}")
     out = ROOT / "data" / "outputs" / f"reconciliacion_ventas_{a.desde}_{a.hasta}.xlsx"
     out.parent.mkdir(parents=True, exist_ok=True)
