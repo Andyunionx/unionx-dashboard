@@ -51,7 +51,18 @@ def _matriz():
 
 def main(apply=False):
     from clasificar_marca import clasificar_tipo_marca
-    miss = json.load(open(MISS)); allref = [x[0] for x in miss["kitchen"]] + miss["abc"]
+    miss = json.load(open(MISS))
+    # ref -> canal (para saber a qué canal pertenece cada orden; Walmart no se puede
+    # inferir del name porque es S-number). Kitchen/abc usan 'CANAL número' (name);
+    # Walmart usa el ref 13-díg (convención fulfillment del RAW).
+    ref2canal = {}
+    for x in miss["kitchen"]:
+        ref2canal[str(x[0])] = "Kitchen Center"
+    for r in miss["abc"]:
+        ref2canal[str(r)] = "Abc"
+    for r in miss.get("walmart", []):
+        ref2canal[str(r)] = "Walmart"
+    allref = list(ref2canal.keys())
     M, DB, uid, PWD = _odoo()
     so = M.execute_kw(DB, uid, PWD, "sale.order", "search_read",
         [[["client_order_ref", "in", allref], ["state", "in", ["sale", "done"]]]],
@@ -71,10 +82,13 @@ def main(apply=False):
     rows = []
     for l in lines:
         o = o_by_id[l["order_id"][0]]
-        nm = str(o["name"]); ref = str(o.get("client_order_ref") or "")
-        canal = "Kitchen Center" if nm.upper().startswith("KITCHEN") else ("Abc" if "POLAR" in nm.upper() else "")
+        ref = str(o.get("client_order_ref") or "")
+        canal = ref2canal.get(ref, "")
         if not canal:
             continue
+        # pedido con formato estándar 'CANAL número' (= sale.order.name) para Kitchen/abc;
+        # Walmart mantiene el ref 13-díg (convención fulfillment del RAW).
+        pedido = str(o["name"]) if canal in ("Kitchen Center", "Abc") else ref
         fv = str(o["date_order"])[:10]; fdt = pd.to_datetime(fv)
         pid = l["product_id"][0] if l.get("product_id") else None
         sku = str((prod.get(pid) or {}).get("default_code") or "").strip()
@@ -87,7 +101,7 @@ def main(apply=False):
         rows.append({
             "tipo_movimiento": "Venta", "bodega": "Bodega Carrascal N°9-10",
             "documento": inv0.get("name", ""), "fecha_documento": str(inv0.get("invoice_date") or fv),
-            "pedido": ref, "estado_pedido": "sale", "tipo_despacho": "",
+            "pedido": pedido, "estado_pedido": "sale", "tipo_despacho": "",
             "sku": sku, "canal": canal, "fecha_venta": fv, "hora_venta": "",
             "producto": mat.get("producto") or (pnom.split("] ")[-1] if "]" in pnom else pnom),
             "categoria_macro": mat.get("categoria_macro", ""), "categoria_padre": mat.get("categoria_padre", ""),
