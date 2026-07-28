@@ -49,6 +49,10 @@ def _cargar_contable() -> pd.DataFrame:
         'Resultado Venta Contable': ar.iloc[:, 18].apply(parse_numero),
         'Resultado Contribución Contable': ar.iloc[:, 25].apply(parse_numero),
     })
+    # KAM en la hoja viene en MAYÚSCULAS ('TRINIDAD'); el df comercial lo normaliza a
+    # Title Case ('Trinidad'). Igualar acá para que el filtro KAM matchee (si no, el
+    # Contable queda en $0 al filtrar por KAM).
+    d['KAM'] = d['KAM'].astype(str).str.strip().str.title()
     d['Trimestre'] = d['Mes'].apply(lambda m: f"Q{(int(m) - 1) // 3 + 1}" if str(m).isdigit() else '')
     return d
 
