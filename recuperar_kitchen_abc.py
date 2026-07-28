@@ -101,7 +101,7 @@ def main(apply=False):
         rows.append({
             "tipo_movimiento": "Venta", "bodega": "Bodega Carrascal N°9-10",
             "documento": inv0.get("name", ""), "fecha_documento": str(inv0.get("invoice_date") or fv),
-            "pedido": pedido, "estado_pedido": "sale", "tipo_despacho": "",
+            "pedido": pedido, "pedido_marketplace": ref, "estado_pedido": "sale", "tipo_despacho": "",
             "sku": sku, "canal": canal, "fecha_venta": fv, "hora_venta": "",
             "producto": mat.get("producto") or (pnom.split("] ")[-1] if "]" in pnom else pnom),
             "categoria_macro": mat.get("categoria_macro", ""), "categoria_padre": mat.get("categoria_padre", ""),
