@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-07-27T16:59:30.710553",
+  "generado_en": "2026-07-28T05:48:04.570921",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.015250876925423212,
-      "total_pickings": 13114,
-      "on_time": 203,
-      "on_time_pct": 0.01547964007930456,
-      "in_full": 13097,
-      "in_full_pct": 0.998703675461339,
-      "both": 200,
+      "valor": 0.014813728366089763,
+      "total_pickings": 13636,
+      "on_time": 205,
+      "on_time_pct": 0.015033734232912878,
+      "in_full": 13619,
+      "in_full_pct": 0.9987533000880023,
+      "both": 202,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.05048076923076923,
-      "total_pickings": 416,
+      "valor": 0.04918032786885246,
+      "total_pickings": 427,
       "on_time": 25,
-      "on_time_pct": 0.06009615384615385,
-      "in_full": 411,
-      "in_full_pct": 0.9879807692307693,
+      "on_time_pct": 0.0585480093676815,
+      "in_full": 422,
+      "in_full_pct": 0.9882903981264637,
       "both": 21,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9990001176332196,
-      "ok": 16985,
-      "total": 17002,
+      "valor": 0.9990390594087389,
+      "ok": 17674,
+      "total": 17691,
       "errores": 17,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.172199910754127,
-      "n_recepciones": 249,
+      "valor": 11.127525555555556,
+      "n_recepciones": 250,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01094",
+          "proveedor": "Cliente Kitchen Center",
+          "horas": 0.0,
+          "scheduled": "2026-07-27 17:12",
+          "done": "2026-07-27 17:13"
+        },
         {
           "picking": "CA1/RET/01093",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-21 19:59",
           "done": "2026-07-21 19:59"
-        },
-        {
-          "picking": "CA1/RET/01083",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-21 19:58",
-          "done": "2026-07-21 19:58"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8909134309357097,
-      "total_so": 12669,
-      "total_con_pickings": 12568,
-      "cumplidos": 11197,
-      "parciales": 10,
-      "sin_iniciar": 1361,
+      "valor": 0.9014294690543513,
+      "total_so": 12871,
+      "total_con_pickings": 12732,
+      "cumplidos": 11477,
+      "parciales": 11,
+      "sin_iniciar": 1244,
       "error": null
     },
     "oct_30d": {
-      "valor": 62.68867439144884,
-      "n_orders": 12370,
+      "valor": 61.70145039959351,
+      "n_orders": 12902,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 25.265555555555554,
+      "mediana_h": 25.660833333333333,
       "detalle": [
         {
           "so": "S239366",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 15429,
+      "lineas": 16113,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 123,
-      "outgoing": 29743,
-      "internal": 20134,
+      "outgoing": 29782,
+      "internal": 20095,
       "total": 50000,
       "error": null
     },
@@ -385,20 +385,20 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 181,
-          "tarde": 181,
+          "total": 188,
+          "tarde": 188,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
-          "total": 12,
-          "tarde": 12,
+          "total": 13,
+          "tarde": 13,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Lokal SpA",
-          "total": 4,
-          "tarde": 4,
+          "total": 6,
+          "tarde": 6,
           "on_time_pct": 0.0
         },
         {
@@ -7090,42 +7090,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.015250876925423212,
-      "total_pickings": 13114,
-      "on_time": 203,
-      "on_time_pct": 0.01547964007930456,
-      "in_full": 13097,
-      "in_full_pct": 0.998703675461339,
-      "both": 200,
+      "valor": 0.014813728366089763,
+      "total_pickings": 13636,
+      "on_time": 205,
+      "on_time_pct": 0.015033734232912878,
+      "in_full": 13619,
+      "in_full_pct": 0.9987533000880023,
+      "both": 202,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.05048076923076923,
-      "total_pickings": 416,
+      "valor": 0.04918032786885246,
+      "total_pickings": 427,
       "on_time": 25,
-      "on_time_pct": 0.06009615384615385,
-      "in_full": 411,
-      "in_full_pct": 0.9879807692307693,
+      "on_time_pct": 0.0585480093676815,
+      "in_full": 422,
+      "in_full_pct": 0.9882903981264637,
       "both": 21,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9990001176332196,
-      "ok": 16985,
-      "total": 17002,
+      "valor": 0.9990390594087389,
+      "ok": 17674,
+      "total": 17691,
       "errores": 17,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.172199910754127,
-      "n_recepciones": 249,
+      "valor": 11.127525555555556,
+      "n_recepciones": 250,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01094",
+          "proveedor": "Cliente Kitchen Center",
+          "horas": 0.0,
+          "scheduled": "2026-07-27 17:12",
+          "done": "2026-07-27 17:13"
+        },
         {
           "picking": "CA1/RET/01093",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -7258,13 +7265,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-21 19:59",
           "done": "2026-07-21 19:59"
-        },
-        {
-          "picking": "CA1/RET/01083",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-21 19:58",
-          "done": "2026-07-21 19:58"
         }
       ],
       "error": null
