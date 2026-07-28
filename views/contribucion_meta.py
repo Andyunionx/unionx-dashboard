@@ -190,6 +190,34 @@ def render():
 
     st.divider()
 
+    # ---- (4b) Por Canal — Comercial vs Contable (respeta TODOS los filtros, incl. KAM) ----
+    st.markdown("### Por Canal — Comercial vs Contable")
+    st.caption("Resultado Venta y Contribución por canal: **Comercial** (KAM) vs **Contable** "
+               "('Análisis de Resultados'), con la diferencia. Respeta los filtros activos "
+               "(al filtrar por un KAM, muestra solo sus canales).")
+    _cc = _tabla_por('Canal').sort_values('Comercial Venta', ascending=False)
+    _cc_out = pd.DataFrame({
+        'Canal': _cc['Canal'],
+        'Venta Comercial': _cc['Comercial Venta'],
+        'Venta Contable': _cc['Contable Venta'],
+        'Δ Venta (Com-Cont)': _cc['Comercial Venta'] - _cc['Contable Venta'],
+        'Contrib Comercial': _cc['Comercial Contrib'],
+        'Contrib Contable': _cc['Contable Contrib'],
+        'Δ Contrib (Com-Cont)': _cc['Comercial Contrib'] - _cc['Contable Contrib'],
+    })
+    # fila TOTAL al inicio
+    _tot = {'Canal': 'TOTAL'}
+    for _c in _cc_out.columns:
+        if _c != 'Canal':
+            _tot[_c] = _cc_out[_c].sum()
+    _cc_out = pd.concat([pd.DataFrame([_tot]), _cc_out], ignore_index=True)
+    for _c in _cc_out.columns:
+        if _c != 'Canal':
+            _cc_out[_c] = _cc_out[_c].map(_num)
+    st.dataframe(_cc_out, width='stretch', hide_index=True, height=460)
+
+    st.divider()
+
     # ---- (5) Top Canales ----
     st.markdown("### Top Canales")
     n_top = st.slider("Top N canales (por venta comercial)", 5, 30, 15, key="cmeta_topn")
