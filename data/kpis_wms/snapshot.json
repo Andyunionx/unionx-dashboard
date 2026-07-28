@@ -1,40 +1,110 @@
 {
-  "generado_en": "2026-07-28T05:48:04.570921",
+  "generado_en": "2026-07-28T16:42:01.628058",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014813728366089763,
-      "total_pickings": 13636,
-      "on_time": 205,
-      "on_time_pct": 0.015033734232912878,
-      "in_full": 13619,
-      "in_full_pct": 0.9987533000880023,
-      "both": 202,
+      "valor": 0.014282742841295154,
+      "total_pickings": 14423,
+      "on_time": 209,
+      "on_time_pct": 0.014490743950634403,
+      "in_full": 14406,
+      "in_full_pct": 0.9988213270470776,
+      "both": 206,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.04918032786885246,
-      "total_pickings": 427,
-      "on_time": 25,
-      "on_time_pct": 0.0585480093676815,
-      "in_full": 422,
-      "in_full_pct": 0.9882903981264637,
-      "both": 21,
+      "valor": 0.053488372093023255,
+      "total_pickings": 430,
+      "on_time": 27,
+      "on_time_pct": 0.06279069767441861,
+      "in_full": 425,
+      "in_full_pct": 0.9883720930232558,
+      "both": 23,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9990390594087389,
-      "ok": 17674,
-      "total": 17691,
+      "valor": 0.9990853822564157,
+      "ok": 18570,
+      "total": 18587,
       "errores": 17,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.127525555555556,
-      "n_recepciones": 250,
+      "valor": 10.699705128205128,
+      "n_recepciones": 260,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01104",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:30",
+          "done": "2026-07-28 16:31"
+        },
+        {
+          "picking": "CA1/RET/01103",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:27",
+          "done": "2026-07-28 16:28"
+        },
+        {
+          "picking": "CA1/RET/01102",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:11",
+          "done": "2026-07-28 16:11"
+        },
+        {
+          "picking": "CA1/RET/01101",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:10",
+          "done": "2026-07-28 16:10"
+        },
+        {
+          "picking": "CA1/RET/01100",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:08",
+          "done": "2026-07-28 16:09"
+        },
+        {
+          "picking": "CA1/RET/01099",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:35",
+          "done": "2026-07-28 15:35"
+        },
+        {
+          "picking": "CA1/RET/01096",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:33",
+          "done": "2026-07-28 15:34"
+        },
+        {
+          "picking": "CA1/RET/01097",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:34",
+          "done": "2026-07-28 15:34"
+        },
+        {
+          "picking": "CA1/RET/01098",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:34",
+          "done": "2026-07-28 15:34"
+        },
+        {
+          "picking": "CA1/RET/01095",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:33",
+          "done": "2026-07-28 15:33"
+        },
         {
           "picking": "CA1/RET/01094",
           "proveedor": "Cliente Kitchen Center",
@@ -104,95 +174,25 @@
           "horas": 0.1,
           "scheduled": "2026-07-24 15:21",
           "done": "2026-07-24 15:24"
-        },
-        {
-          "picking": "CA1/IN/00959",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-24 14:56",
-          "done": "2026-07-24 15:00"
-        },
-        {
-          "picking": "CA1/IN/00958",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-24 14:18",
-          "done": "2026-07-24 14:27"
-        },
-        {
-          "picking": "CA1/RET/01086",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-24 14:01",
-          "done": "2026-07-24 14:02"
-        },
-        {
-          "picking": "CA1/RET/01085",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-24 14:01",
-          "done": "2026-07-24 14:01"
-        },
-        {
-          "picking": "CA1/IN/00957",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-23 18:16",
-          "done": "2026-07-23 18:23"
-        },
-        {
-          "picking": "CA1/IN/00955",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-23 16:56",
-          "done": "2026-07-23 17:01"
-        },
-        {
-          "picking": "CA1/IN/00953",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-23 16:02",
-          "done": "2026-07-23 16:06"
-        },
-        {
-          "picking": "CA1/IN/00952",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-21 20:45",
-          "done": "2026-07-21 20:55"
-        },
-        {
-          "picking": "CA1/IN/00951",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-21 20:37",
-          "done": "2026-07-21 20:40"
-        },
-        {
-          "picking": "CA1/RET/01084",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-21 19:59",
-          "done": "2026-07-21 19:59"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9014294690543513,
-      "total_so": 12871,
-      "total_con_pickings": 12732,
-      "cumplidos": 11477,
-      "parciales": 11,
-      "sin_iniciar": 1244,
+      "valor": 0.9494651991939235,
+      "total_so": 13041,
+      "total_con_pickings": 12902,
+      "cumplidos": 12250,
+      "parciales": 12,
+      "sin_iniciar": 640,
       "error": null
     },
     "oct_30d": {
-      "valor": 61.70145039959351,
-      "n_orders": 12902,
+      "valor": 61.733712215320914,
+      "n_orders": 13685,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 25.660833333333333,
+      "mediana_h": 26.519444444444446,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 16113,
+      "lineas": 17167,
       "mes": "2026-07",
       "error": null
     },
@@ -408,20 +408,20 @@
           "on_time_pct": 0.05
         },
         {
-          "cliente": "Cliente Mercado Libre",
-          "total": 5,
-          "tarde": 2,
-          "on_time_pct": 0.6
-        },
-        {
           "cliente": "Cencosud Retail S.A",
           "total": 9,
           "tarde": 3,
           "on_time_pct": 0.6666666666666666
         },
         {
+          "cliente": "Cliente Mercado Libre",
+          "total": 7,
+          "tarde": 2,
+          "on_time_pct": 0.7142857142857143
+        },
+        {
           "cliente": "Falabella Retail",
-          "total": 8,
+          "total": 9,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -7090,42 +7090,112 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014813728366089763,
-      "total_pickings": 13636,
-      "on_time": 205,
-      "on_time_pct": 0.015033734232912878,
-      "in_full": 13619,
-      "in_full_pct": 0.9987533000880023,
-      "both": 202,
+      "valor": 0.014282742841295154,
+      "total_pickings": 14423,
+      "on_time": 209,
+      "on_time_pct": 0.014490743950634403,
+      "in_full": 14406,
+      "in_full_pct": 0.9988213270470776,
+      "both": 206,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.04918032786885246,
-      "total_pickings": 427,
-      "on_time": 25,
-      "on_time_pct": 0.0585480093676815,
-      "in_full": 422,
-      "in_full_pct": 0.9882903981264637,
-      "both": 21,
+      "valor": 0.053488372093023255,
+      "total_pickings": 430,
+      "on_time": 27,
+      "on_time_pct": 0.06279069767441861,
+      "in_full": 425,
+      "in_full_pct": 0.9883720930232558,
+      "both": 23,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9990390594087389,
-      "ok": 17674,
-      "total": 17691,
+      "valor": 0.9990853822564157,
+      "ok": 18570,
+      "total": 18587,
       "errores": 17,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.127525555555556,
-      "n_recepciones": 250,
+      "valor": 10.699705128205128,
+      "n_recepciones": 260,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01104",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:30",
+          "done": "2026-07-28 16:31"
+        },
+        {
+          "picking": "CA1/RET/01103",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:27",
+          "done": "2026-07-28 16:28"
+        },
+        {
+          "picking": "CA1/RET/01102",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:11",
+          "done": "2026-07-28 16:11"
+        },
+        {
+          "picking": "CA1/RET/01101",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:10",
+          "done": "2026-07-28 16:10"
+        },
+        {
+          "picking": "CA1/RET/01100",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 16:08",
+          "done": "2026-07-28 16:09"
+        },
+        {
+          "picking": "CA1/RET/01099",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:35",
+          "done": "2026-07-28 15:35"
+        },
+        {
+          "picking": "CA1/RET/01096",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:33",
+          "done": "2026-07-28 15:34"
+        },
+        {
+          "picking": "CA1/RET/01097",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:34",
+          "done": "2026-07-28 15:34"
+        },
+        {
+          "picking": "CA1/RET/01098",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:34",
+          "done": "2026-07-28 15:34"
+        },
+        {
+          "picking": "CA1/RET/01095",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 15:33",
+          "done": "2026-07-28 15:33"
+        },
         {
           "picking": "CA1/RET/01094",
           "proveedor": "Cliente Kitchen Center",
@@ -7195,76 +7265,6 @@
           "horas": 0.1,
           "scheduled": "2026-07-24 15:21",
           "done": "2026-07-24 15:24"
-        },
-        {
-          "picking": "CA1/IN/00959",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-24 14:56",
-          "done": "2026-07-24 15:00"
-        },
-        {
-          "picking": "CA1/IN/00958",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-24 14:18",
-          "done": "2026-07-24 14:27"
-        },
-        {
-          "picking": "CA1/RET/01086",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-24 14:01",
-          "done": "2026-07-24 14:02"
-        },
-        {
-          "picking": "CA1/RET/01085",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-24 14:01",
-          "done": "2026-07-24 14:01"
-        },
-        {
-          "picking": "CA1/IN/00957",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-23 18:16",
-          "done": "2026-07-23 18:23"
-        },
-        {
-          "picking": "CA1/IN/00955",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-23 16:56",
-          "done": "2026-07-23 17:01"
-        },
-        {
-          "picking": "CA1/IN/00953",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-23 16:02",
-          "done": "2026-07-23 16:06"
-        },
-        {
-          "picking": "CA1/IN/00952",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-21 20:45",
-          "done": "2026-07-21 20:55"
-        },
-        {
-          "picking": "CA1/IN/00951",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-21 20:37",
-          "done": "2026-07-21 20:40"
-        },
-        {
-          "picking": "CA1/RET/01084",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-21 19:59",
-          "done": "2026-07-21 19:59"
         }
       ],
       "error": null
