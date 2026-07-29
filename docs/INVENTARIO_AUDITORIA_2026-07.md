@@ -41,6 +41,36 @@ Casos 0924/0228/0818 auditados con USD reales de Andrés revelaron 3 patrones �
 ### 4. Internación (Fase 0.1) — CORREGIDO: no hay colchón de base
 La OC/módulo YA valoriza al costo internado (verificado: DIF A mediana −0,7%). **No existe diferencia de base legítima GL-vs-módulo por internación** — mi estimación anterior ($30-60M de colchón) queda invalidada. → Residuo a castigar en Fase 3: banda **$200-270M** (el exceso de 111001 menos lo que el per-PI del bulto logre emparejar).
 
+## Actualización corte 30-jun / 29-jul (v4.4, 29-jul-2026)
+
+**Saldos frescos (retomada la auditoría tras stand-by 24→29 jul):**
+
+| Cuenta | 31-may | 30-jun | 29-jul |
+|---|---:|---:|---:|
+| 111001 Mercadería Nacional | 1.488,4M | 1.323,6M | 1.188,9M |
+| 111008 Inventario Reservado | 293,8M | 297,8M | 297,9M |
+| 111006 Import. en Tránsito | 267,7M | 339,8M | 381,0M |
+| 210215 Fact. por Recibir | 0,0M | −4,2M | −89,4M |
+| 210208 Prov. Steven | 18,1M | −18,1M | −18,1M |
+| 1101016 Pago ML | 0,0M | 0,0M | 0,0M |
+| Capas AVCO (módulo) | 1.213M* | 1.061,0M | 915,1M |
+| **GAP (111001+111008 − capas)** | **569,2M** | **560,3M** | **571,7M** |
+
+El gap se mantiene estable (~$560-572M) a través del cierre de junio → confirma (de nuevo) que es estructural: los cierres mueven los saldos, no la brecha.
+
+**HALLAZGO NUEVO — 111008 tiene fuentes VIVAS (+$4,1M en jun-jul):** la cuenta "muerta desde abril" sigue recibiendo cargos por dos vías:
+1. **MISCE/2026/06/0015 "AJUSTE COSTO VENTA AL REAL JUNIO 26" (D:111008 $2,9M)** — el ajuste manual del cierre de Víctor usa 111008 como contrapartida (contrapartidas del asiento: 41410109 Costo Liquidación / 41410101 Costo de Venta / 111001).
+2. **Goteo de NC de ventas fulfillment pre-abril (~$1,2M):** las devoluciones reversan el costo contra 111008 porque la factura original tenía el costo ahí (N/C 040142, 040325, 040326, 040474, 040779...). Seguirá goteando mientras haya devoluciones de esas ventas.
+
+→ **Condición nueva para Fase 1:** el asiento de limpieza debe ir acompañado de (a) que el "ajuste costo venta al real" deje de usar 111008, y (b) definición para el goteo NC (re-mapear la reversión o barrerlo en cada cierre hasta que muera).
+
+**Asiento global de limpieza actualizado al corte 30-jun ($297,8M):**
+`H:111008 297,8M / D:210208 Steven 113,0M / D:1101016 Pago ML 98,8M / D:111001 88,9M (reclasifs 74,5+14,4) / D-H resultados: merma candidata −57,1M, sobrante +93,0M, nuevos jun-jul −4,1M (reversa contra 41410109/41410101 donde nacieron → EERR neutro)`. Banda EERR del paquete se mantiene: +$35,9M a −$62,9M según respuesta de cobranza ML. ⚠️ Vigente advertencia Andrés: las reclasificaciones SUBEN 111001 → deben ir en paquete con las cuadraturas Nubox ($377,1M identificadas con glosa).
+
+**P00191 (última OC sin referencia) — propuesta de resolución:** Steven, $2,1M, 7 cámaras INNCAMINS-*, creada 16-sep-2024 y recepcionada el mismo día (patrón regularización). **P00190 (→24TP0624PI) se creó al día siguiente con los mismos SKUs** → propuesta: P00191 → 24TP0624PI (misma PI, OC complementaria). No verificable contra carpeta (era pre-oct-2024 sin carpeta, bucket "falta contraparte"). Pendiente OK Andrés para escribir la ref.
+
+**Victor:** sin respuesta desde el consolidado del 23-jul (maestro v3). Hoy 29-jul se le envió además el estado NC. Siguen en su cancha: papel de trabajo REG SALDO, per-PI del bulto $823M, corte fulfillment $132,2M.
+
 ## Programa (fases del plan aprobado)
 - **Fase 1** — Asientos composición: pareado rediseñado (REG SALDO) + fulfillment $74,5M + remanente (corte a cuadrar). EERR ≈ neutro. 111008 → 0 y desactivar.
 - **Fase 2** — ELIMINADA como revalorización (la OC ya carga internado). Queda solo verificar que el costeo COMEX→OC capture internación real (DIF A outliers).
