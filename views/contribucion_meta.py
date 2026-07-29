@@ -13,7 +13,7 @@ import streamlit as st
 
 from views.contribucion_loader import (
     cargar_hoja, parse_numero, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos,
-    render_contrib_filters, aplicar_filtros,
+    render_contrib_filters, aplicar_filtros, excluir_no_comerciales,
 )
 
 
@@ -54,7 +54,7 @@ def _cargar_contable() -> pd.DataFrame:
     # Contable queda en $0 al filtrar por KAM).
     d['KAM'] = d['KAM'].astype(str).str.strip().str.title()
     d['Trimestre'] = d['Mes'].apply(lambda m: f"Q{(int(m) - 1) // 3 + 1}" if str(m).isdigit() else '')
-    return d
+    return excluir_no_comerciales(d)
 
 
 def render():
@@ -80,6 +80,9 @@ def render():
         return
 
     df = parsear_columnas_numericas(df, COLS_NUM)
+
+    # Excluir canales no comerciales (Marketing/Postventa/Eattouch) — no son portafolio KAM.
+    df = excluir_no_comerciales(df)
 
     # Fusionar KAM duplicados por capitalización (CLAUDIA/Claudia → Claudia).
     if 'KAM' in df.columns:

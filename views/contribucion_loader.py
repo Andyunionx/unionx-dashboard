@@ -217,6 +217,25 @@ def render_contrib_filters(df: pd.DataFrame, prefix: str = "contrib", *, with_an
     return selecciones
 
 
+# Canales NO comerciales — no pertenecen al portafolio de ningún KAM. Se excluyen
+# de los análisis por KAM/canal (igual que EXCLUIR_CANAL en la vista Conciliación).
+EXCLUIR_CANAL_NO_COMERCIAL = {"eattouch", "postventa", "marketing"}
+
+
+def _canal_norm(s):
+    import unicodedata
+    s = str(s or "").strip().lower()
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+def excluir_no_comerciales(df: pd.DataFrame) -> pd.DataFrame:
+    """Saca canales no comerciales (Marketing/Postventa/Eattouch) que en las hojas
+    fuente vienen etiquetados a un KAM pero no son parte de su portafolio."""
+    if df is None or df.empty or 'Canal' not in df.columns:
+        return df
+    return df[df['Canal'].map(lambda c: _canal_norm(c) not in EXCLUIR_CANAL_NO_COMERCIAL)]
+
+
 def aplicar_filtros(df: pd.DataFrame, sel: dict) -> pd.DataFrame:
     """Aplica las selecciones de render_contrib_filters al DataFrame."""
     df_f = df.copy()

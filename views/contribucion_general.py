@@ -12,7 +12,7 @@ import streamlit as st
 
 from views.contribucion_loader import (
     cargar_hoja, parsear_columnas_numericas, fmt_pesos_M, fmt_pesos, fmt_pct,
-    render_contrib_filters, aplicar_filtros,
+    render_contrib_filters, aplicar_filtros, excluir_no_comerciales,
 )
 
 
@@ -80,6 +80,7 @@ def render():
         return
 
     df = parsear_columnas_numericas(df, COLS_NUM + COLS_NUM_CONT)
+    df = excluir_no_comerciales(df)  # sacar Marketing/Postventa/Eattouch (no portafolio KAM)
 
     # Filtros al tope
     sel = render_contrib_filters(df, prefix="cgen")
