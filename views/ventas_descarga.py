@@ -48,9 +48,16 @@ def _excel_bytes(df: pd.DataFrame) -> bytes:
                 letter = get_column_letter(j)
                 for cell in ws[letter][1:]:  # saltar encabezado
                     cell.number_format = '@'
-        # Pestañas nuevas del reconciliador (no modifican la hoja RAW)
+        # Pestañas nuevas del reconciliador (no modifican la hoja RAW).
+        # ANEXO en dry-run: ventas de Odoo detectadas que NO están en el RAW
+        # (cruce de meses / fulfillment). NO son parte del RAW; son para revisión.
         rec = _cargar_reconciliacion()
         if rec is not None and len(rec):
+            rec = rec.copy()
+            # 'periodo' es la VENTANA que barrió el reconciliador (no una fecha de venta).
+            # Renombrar para que no se confunda con la fecha del documento.
+            if 'periodo' in rec.columns:
+                rec = rec.rename(columns={'periodo': 'Ventana detección (Odoo)'})
             rec.to_excel(w, index=False, sheet_name='Reconciliación')
             resumen = (rec.groupby(['canal', 'estado'], as_index=False)
                        .agg(Lineas=('venta_neta', 'size'), Venta_neta=('venta_neta', 'sum')))
