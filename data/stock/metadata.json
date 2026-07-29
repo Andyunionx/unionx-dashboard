@@ -1,17 +1,17 @@
 {
-  "generado_en": "2026-07-29T02:35:05.683335",
+  "generado_en": "2026-07-29T05:53:00.726588",
   "total_skus": 1885,
   "total_quants": 4832,
   "total_locations": 1417,
   "kpis": {
     "n_skus": 1885,
-    "valor_total": 960790494.18,
+    "valor_total": 960790485.18,
     "unidades_total": 174074.0,
     "costo_promedio_sku": 509703.18,
     "n_quiebre_critico": 89,
-    "n_bajo": 142,
+    "n_bajo": 144,
     "n_optimo": 138,
-    "n_sobrestock": 301,
+    "n_sobrestock": 299,
     "n_sin_venta": 1215,
     "rot_30d_promedio": 0.79,
     "rot_90d_promedio": 2.46
@@ -8221,11 +8221,11 @@
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 301
+      "SKUs": 299
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 142
+      "SKUs": 144
     },
     {
       "Categoria": "OPTIMO",
@@ -8281,7 +8281,7 @@
     },
     {
       "Bodega": "BNC/Stock",
-      "Valor": 8413334.0,
+      "Valor": 8413325.0,
       "Unidades": 665.0,
       "SKUs": 203
     },
