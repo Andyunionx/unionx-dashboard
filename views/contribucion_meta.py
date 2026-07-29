@@ -190,34 +190,42 @@ def render():
 
     st.divider()
 
-    # ---- (4b) Por Canal — Comercial vs Contable (respeta TODOS los filtros, incl. KAM) ----
-    st.markdown("### Por Canal — Comercial vs Contable")
-    st.caption("Resultado Venta y Contribución por canal: **Comercial** (KAM) vs **Contable** "
-               "('Análisis de Resultados'), con la diferencia. Respeta los filtros activos "
-               "(al filtrar por un KAM, muestra solo sus canales).")
+    # ---- (4b) Por Canal — Presupuesto vs Contable vs Comercial (respeta TODOS los filtros) ----
+    st.markdown("### Por Canal — Presupuesto vs Contable vs Comercial")
+    st.caption("Venta y Contribución por canal: **Presupuesto** (meta) vs **Contable** "
+               "('Análisis de Resultados') vs **Comercial** (KAM), con el % de cumplimiento "
+               "de cada uno sobre el presupuesto. Respeta los filtros activos (al filtrar por "
+               "un KAM, muestra solo sus canales).")
     _cc = _tabla_por('Canal').sort_values('Comercial Venta', ascending=False)
+
+    def _ratio(num, den):
+        return num / den.replace(0, pd.NA)
+
     _cc_out = pd.DataFrame({
         'Canal': _cc['Canal'],
-        'Venta Comercial': _cc['Comercial Venta'],
-        'Venta Contable': _cc['Contable Venta'],
-        'Δ Venta (Com-Cont)': _cc['Comercial Venta'] - _cc['Contable Venta'],
-        '% Venta (Cont/Com)': _cc['Contable Venta'] / _cc['Comercial Venta'].replace(0, pd.NA),
-        'Contrib Comercial': _cc['Comercial Contrib'],
-        'Contrib Contable': _cc['Contable Contrib'],
-        'Δ Contrib (Com-Cont)': _cc['Comercial Contrib'] - _cc['Contable Contrib'],
-        '% Contrib (Cont/Com)': _cc['Contable Contrib'] / _cc['Comercial Contrib'].replace(0, pd.NA),
+        'Presup. Venta': _cc['Presup. Venta'],
+        'Contable Venta': _cc['Contable Venta'],
+        'Comercial Venta': _cc['Comercial Venta'],
+        '% Cont/Pres Vta': _ratio(_cc['Contable Venta'], _cc['Presup. Venta']),
+        '% Com/Pres Vta': _ratio(_cc['Comercial Venta'], _cc['Presup. Venta']),
+        'Presup. Contrib': _cc['Presup. Contrib'],
+        'Contable Contrib': _cc['Contable Contrib'],
+        'Comercial Contrib': _cc['Comercial Contrib'],
+        '% Cont/Pres Ctb': _ratio(_cc['Contable Contrib'], _cc['Presup. Contrib']),
+        '% Com/Pres Ctb': _ratio(_cc['Comercial Contrib'], _cc['Presup. Contrib']),
     })
+    _pct_cols = ('% Cont/Pres Vta', '% Com/Pres Vta', '% Cont/Pres Ctb', '% Com/Pres Ctb')
+    _money_cols = ('Presup. Venta', 'Contable Venta', 'Comercial Venta',
+                   'Presup. Contrib', 'Contable Contrib', 'Comercial Contrib')
     # fila TOTAL al inicio (los % se recalculan sobre los totales, no se suman)
     _tot = {'Canal': 'TOTAL'}
-    for _c in ('Venta Comercial', 'Venta Contable', 'Δ Venta (Com-Cont)',
-               'Contrib Comercial', 'Contrib Contable', 'Δ Contrib (Com-Cont)'):
+    for _c in _money_cols:
         _tot[_c] = _cc_out[_c].sum()
-    _tot['% Venta (Cont/Com)'] = (_tot['Venta Contable'] / _tot['Venta Comercial']
-                                  if _tot['Venta Comercial'] else pd.NA)
-    _tot['% Contrib (Cont/Com)'] = (_tot['Contrib Contable'] / _tot['Contrib Comercial']
-                                    if _tot['Contrib Comercial'] else pd.NA)
+    _tot['% Cont/Pres Vta'] = (_tot['Contable Venta'] / _tot['Presup. Venta']) if _tot['Presup. Venta'] else pd.NA
+    _tot['% Com/Pres Vta'] = (_tot['Comercial Venta'] / _tot['Presup. Venta']) if _tot['Presup. Venta'] else pd.NA
+    _tot['% Cont/Pres Ctb'] = (_tot['Contable Contrib'] / _tot['Presup. Contrib']) if _tot['Presup. Contrib'] else pd.NA
+    _tot['% Com/Pres Ctb'] = (_tot['Comercial Contrib'] / _tot['Presup. Contrib']) if _tot['Presup. Contrib'] else pd.NA
     _cc_out = pd.concat([pd.DataFrame([_tot]), _cc_out], ignore_index=True)
-    _pct_cols = ('% Venta (Cont/Com)', '% Contrib (Cont/Com)')
     for _c in _cc_out.columns:
         if _c in _pct_cols:
             _cc_out[_c] = _cc_out[_c].map(lambda v: '—' if pd.isna(v) else f"{v*100:,.1f}%".replace(",", "."))
