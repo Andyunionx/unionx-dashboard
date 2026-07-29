@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-07-29T05:54:19.750564",
+  "generado_en": "2026-07-29T16:23:11.062600",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.022616585496030423,
-      "total_pickings": 14989,
+      "valor": 0.02257742257742258,
+      "total_pickings": 15015,
       "on_time": 342,
-      "on_time_pct": 0.022816732270331576,
-      "in_full": 14972,
-      "in_full_pct": 0.9988658349456268,
+      "on_time_pct": 0.02277722277722278,
+      "in_full": 14998,
+      "in_full_pct": 0.9988677988677989,
       "both": 339,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.05806451612903226,
-      "total_pickings": 465,
-      "on_time": 31,
-      "on_time_pct": 0.06666666666666667,
-      "in_full": 460,
-      "in_full_pct": 0.989247311827957,
-      "both": 27,
+      "valor": 0.06581740976645435,
+      "total_pickings": 471,
+      "on_time": 35,
+      "on_time_pct": 0.07430997876857749,
+      "in_full": 466,
+      "in_full_pct": 0.9893842887473461,
+      "both": 31,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9991212199534764,
-      "ok": 19328,
-      "total": 19345,
+      "valor": 0.9991283839212469,
+      "ok": 19487,
+      "total": 19504,
       "errores": 17,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.257320623206232,
-      "n_recepciones": 271,
+      "valor": 10.071602254428342,
+      "n_recepciones": 276,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01125",
+          "proveedor": "Sanchez y Cia.",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 15:50",
+          "done": "2026-07-29 15:51"
+        },
+        {
+          "picking": "CA1/RET/01124",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:34",
+          "done": "2026-07-29 13:34"
+        },
+        {
+          "picking": "CA1/RET/01123",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:33",
+          "done": "2026-07-29 13:33"
+        },
+        {
+          "picking": "CA1/RET/01121",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:32",
+          "done": "2026-07-29 13:32"
+        },
+        {
+          "picking": "CA1/RET/01122",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:32",
+          "done": "2026-07-29 13:32"
+        },
         {
           "picking": "CA1/RET/01120",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -139,60 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-28 16:30",
           "done": "2026-07-28 16:31"
-        },
-        {
-          "picking": "CA1/RET/01103",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:27",
-          "done": "2026-07-28 16:28"
-        },
-        {
-          "picking": "CA1/RET/01102",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:11",
-          "done": "2026-07-28 16:11"
-        },
-        {
-          "picking": "CA1/RET/01101",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:10",
-          "done": "2026-07-28 16:10"
-        },
-        {
-          "picking": "CA1/RET/01100",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:08",
-          "done": "2026-07-28 16:09"
-        },
-        {
-          "picking": "CA1/RET/01099",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:35",
-          "done": "2026-07-28 15:35"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9592584115358206,
-      "total_so": 13113,
-      "total_con_pickings": 13107,
-      "cumplidos": 12573,
+      "valor": 0.9514020104300507,
+      "total_so": 13237,
+      "total_con_pickings": 13231,
+      "cumplidos": 12588,
       "parciales": 10,
-      "sin_iniciar": 524,
+      "sin_iniciar": 633,
       "error": null
     },
     "oct_30d": {
-      "valor": 62.86998082678638,
-      "n_orders": 14256,
+      "valor": 62.792157503344846,
+      "n_orders": 14284,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 26.120833333333334,
+      "mediana_h": 26.065555555555555,
       "detalle": [
         {
           "so": "S239366",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 17767,
+      "lineas": 18078,
       "mes": "2026-07",
       "error": null
     },
@@ -367,8 +367,8 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 7,
-          "tarde": 7,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -421,7 +421,7 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 9,
+          "total": 13,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -649,16 +649,16 @@
         },
         "resumen": {
           "n_ordenes": 13713,
-          "cancelacion_clp": 4491888.068211,
-          "quiebre_clp": 790962.766333,
-          "n_canceladas": 362,
-          "n_quiebres": 28,
-          "ns_empresa_pct": 0.9130751841318457,
-          "ns_courier_pct": 0.8879894990155327,
-          "otif_total_pct": 0.8392036753445635,
-          "n_empresa_ok": 12521,
-          "n_courier_ok": 12177,
-          "n_otif_ok": 11508
+          "cancelacion_clp": 4639728.404351,
+          "quiebre_clp": 797676.766333,
+          "n_canceladas": 368,
+          "n_quiebres": 29,
+          "ns_empresa_pct": 0.9620797783125501,
+          "ns_courier_pct": 0.8903230511193758,
+          "otif_total_pct": 0.8834682418143368,
+          "n_empresa_ok": 13193,
+          "n_courier_ok": 12209,
+          "n_otif_ok": 12115
         },
         "por_cliente": [
           {
@@ -674,52 +674,52 @@
           {
             "CLIENTE": "FALABELLA HDC",
             "ORDENES": 2379,
-            "A_TPO_EMP": 2243,
-            "A_TPO_COU": 2239,
-            "OTIF": 2238,
-            "NS_EMP_PCT": 0.9428,
-            "NS_COU_PCT": 0.9412,
-            "OTIF_PCT": 0.9407
+            "A_TPO_EMP": 2244,
+            "A_TPO_COU": 2244,
+            "OTIF": 2244,
+            "NS_EMP_PCT": 0.9433,
+            "NS_COU_PCT": 0.9433,
+            "OTIF_PCT": 0.9433
           },
           {
             "CLIENTE": "PAGINAS",
             "ORDENES": 2001,
-            "A_TPO_EMP": 1700,
-            "A_TPO_COU": 1729,
-            "OTIF": 1446,
-            "NS_EMP_PCT": 0.8496,
-            "NS_COU_PCT": 0.8641,
-            "OTIF_PCT": 0.7226
+            "A_TPO_EMP": 1922,
+            "A_TPO_COU": 1731,
+            "OTIF": 1665,
+            "NS_EMP_PCT": 0.9605,
+            "NS_COU_PCT": 0.8651,
+            "OTIF_PCT": 0.8321
           },
           {
             "CLIENTE": "PARIS",
             "ORDENES": 1353,
-            "A_TPO_EMP": 990,
+            "A_TPO_EMP": 1282,
             "A_TPO_COU": 1263,
-            "OTIF": 957,
-            "NS_EMP_PCT": 0.7317,
+            "OTIF": 1242,
+            "NS_EMP_PCT": 0.9475,
             "NS_COU_PCT": 0.9335,
-            "OTIF_PCT": 0.7073
+            "OTIF_PCT": 0.918
           },
           {
             "CLIENTE": "KITCHEN CENTER",
             "ORDENES": 1241,
-            "A_TPO_EMP": 1237,
-            "A_TPO_COU": 1207,
-            "OTIF": 1204,
-            "NS_EMP_PCT": 0.9968,
-            "NS_COU_PCT": 0.9726,
-            "OTIF_PCT": 0.9702
+            "A_TPO_EMP": 1239,
+            "A_TPO_COU": 1211,
+            "OTIF": 1210,
+            "NS_EMP_PCT": 0.9984,
+            "NS_COU_PCT": 0.9758,
+            "OTIF_PCT": 0.975
           },
           {
             "CLIENTE": "FALABELLA F",
             "ORDENES": 1204,
             "A_TPO_EMP": 1158,
-            "A_TPO_COU": 1058,
-            "OTIF": 1057,
+            "A_TPO_COU": 1059,
+            "OTIF": 1058,
             "NS_EMP_PCT": 0.9618,
-            "NS_COU_PCT": 0.8787,
-            "OTIF_PCT": 0.8779
+            "NS_COU_PCT": 0.8796,
+            "OTIF_PCT": 0.8787
           },
           {
             "CLIENTE": "MERCADO LIBRE C",
@@ -734,22 +734,22 @@
           {
             "CLIENTE": "RIPLEY",
             "ORDENES": 897,
-            "A_TPO_EMP": 662,
-            "A_TPO_COU": 345,
-            "OTIF": 286,
-            "NS_EMP_PCT": 0.738,
-            "NS_COU_PCT": 0.3846,
-            "OTIF_PCT": 0.3188
+            "A_TPO_EMP": 799,
+            "A_TPO_COU": 364,
+            "OTIF": 359,
+            "NS_EMP_PCT": 0.8907,
+            "NS_COU_PCT": 0.4058,
+            "OTIF_PCT": 0.4002
           },
           {
             "CLIENTE": "WALMART",
             "ORDENES": 558,
-            "A_TPO_EMP": 537,
+            "A_TPO_EMP": 551,
             "A_TPO_COU": 520,
-            "OTIF": 507,
-            "NS_EMP_PCT": 0.9624,
+            "OTIF": 520,
+            "NS_EMP_PCT": 0.9875,
             "NS_COU_PCT": 0.9319,
-            "OTIF_PCT": 0.9086
+            "OTIF_PCT": 0.9319
           },
           {
             "CLIENTE": "DUTY TRAVEL",
@@ -764,22 +764,22 @@
           {
             "CLIENTE": "BICE",
             "ORDENES": 31,
-            "A_TPO_EMP": 27,
-            "A_TPO_COU": 30,
-            "OTIF": 27,
-            "NS_EMP_PCT": 0.871,
-            "NS_COU_PCT": 0.9677,
-            "OTIF_PCT": 0.871
+            "A_TPO_EMP": 31,
+            "A_TPO_COU": 31,
+            "OTIF": 31,
+            "NS_EMP_PCT": 1.0,
+            "NS_COU_PCT": 1.0,
+            "OTIF_PCT": 1.0
           },
           {
             "CLIENTE": "TOTAL",
             "ORDENES": 13713,
-            "A_TPO_EMP": 12521,
-            "NS_EMP_PCT": 0.9130751841318457,
-            "A_TPO_COU": 12177,
-            "NS_COU_PCT": 0.8879894990155327,
-            "OTIF": 11508,
-            "OTIF_PCT": 0.8392036753445635
+            "A_TPO_EMP": 13193,
+            "NS_EMP_PCT": 0.9620797783125501,
+            "A_TPO_COU": 12209,
+            "NS_COU_PCT": 0.8903230511193758,
+            "OTIF": 12115,
+            "OTIF_PCT": 0.8834682418143368
           }
         ],
         "pareto_quiebres": [
@@ -787,141 +787,141 @@
             "SKU": "20-65095",
             "monto": 174655.4622,
             "n_ordenes": 1,
-            "pct": 0.22081375967888356,
-            "pct_acumulado": 0.22081375967888356
+            "pct": 0.21895518281535095,
+            "pct_acumulado": 0.21895518281535095
           },
           {
             "SKU": "LVSPTVUN",
             "monto": 174655.4622,
             "n_ordenes": 1,
-            "pct": 0.22081375967888356,
-            "pct_acumulado": 0.4416275193577671
+            "pct": 0.21895518281535095,
+            "pct_acumulado": 0.4379103656307019
           },
           {
             "SKU": "BDCOCPQMD",
             "monto": 47050.42017,
             "n_ordenes": 1,
-            "pct": 0.059485000018561544,
-            "pct_acumulado": 0.5011125193763286
+            "pct": 0.05898431815470255,
+            "pct_acumulado": 0.49689468378540447
           },
           {
             "SKU": "1597098592591",
             "monto": 47042.01681,
             "n_ordenes": 1,
-            "pct": 0.05947437580164808,
-            "pct_acumulado": 0.5605868951779767
+            "pct": 0.05897378336121893,
+            "pct_acumulado": 0.5558684671466234
           },
           {
             "SKU": "",
             "monto": 42840.33614,
             "n_ordenes": 2,
-            "pct": 0.054162266497844176,
-            "pct_acumulado": 0.6147491616758208
+            "pct": 0.05370638577946969,
+            "pct_acumulado": 0.6095748529260931
           },
           {
             "SKU": "751178",
             "monto": 40328.0,
             "n_ordenes": 1,
-            "pct": 0.0509859651004377,
-            "pct_acumulado": 0.6657351267762586
+            "pct": 0.050556819130375144,
+            "pct_acumulado": 0.6601316720564683
           },
           {
             "SKU": "SMBATSAV9-CR",
             "monto": 38067.22689,
             "n_ordenes": 1,
-            "pct": 0.04812771031749612,
-            "pct_acumulado": 0.7138628370937546
+            "pct": 0.047722622115470216,
+            "pct_acumulado": 0.7078542941719385
           },
           {
             "SKU": "LTW25-MPK08L-GR",
             "monto": 30235.29412,
             "n_ordenes": 1,
-            "pct": 0.038225938573789656,
-            "pct_acumulado": 0.7520887756675443
+            "pct": 0.03790419302168555,
+            "pct_acumulado": 0.745758487193624
           },
           {
             "SKU": "DYNTALCPER",
             "monto": 25201.68067,
             "n_ordenes": 1,
-            "pct": 0.03186203161855276,
-            "pct_acumulado": 0.783950807286097
+            "pct": 0.031593850709548246,
+            "pct_acumulado": 0.7773523379031723
           },
           {
             "SKU": "1623703690011",
             "monto": 23495.79832,
             "n_ordenes": 1,
-            "pct": 0.02970531524376222,
-            "pct_acumulado": 0.8136561225298592
+            "pct": 0.029455287293890405,
+            "pct_acumulado": 0.8068076251970626
           },
           {
             "SKU": "1660858844449",
             "monto": 20159.66387,
             "n_ordenes": 1,
-            "pct": 0.0254875004590452,
-            "pct_acumulado": 0.8391436229889044
+            "pct": 0.025272973616463714,
+            "pct_acumulado": 0.8320805988135264
           },
           {
             "SKU": "LHHEDWEPR-BK",
             "monto": 19647.05882,
             "n_ordenes": 1,
-            "pct": 0.024839423113538154,
-            "pct_acumulado": 0.8639830461024426
+            "pct": 0.02463035110113523,
+            "pct_acumulado": 0.8567109499146616
           },
           {
             "SKU": "LVFNOTHS15-BK",
             "monto": 19319.32773,
             "n_ordenes": 1,
-            "pct": 0.02442507859069873,
-            "pct_acumulado": 0.8884081246931413
-          },
-          {
-            "SKU": "LHCAMACSUM",
-            "monto": 19033.61345,
-            "n_ordenes": 1,
-            "pct": 0.02406385516506947,
-            "pct_acumulado": 0.9124719798582108
+            "pct": 0.024219494092592022,
+            "pct_acumulado": 0.8809304440072536
           },
           {
             "SKU": "SIMCUROM-30",
             "monto": 19033.61345,
             "n_ordenes": 1,
-            "pct": 0.02406385516506947,
-            "pct_acumulado": 0.9365358350232803
+            "pct": 0.023861311064003316,
+            "pct_acumulado": 0.904791755071257
+          },
+          {
+            "SKU": "LHCAMACSUM",
+            "monto": 19033.61345,
+            "n_ordenes": 1,
+            "pct": 0.023861311064003316,
+            "pct_acumulado": 0.9286530661352603
           },
           {
             "SKU": "PACK34",
             "monto": 19033.61345,
             "n_ordenes": 1,
-            "pct": 0.02406385516506947,
-            "pct_acumulado": 0.9605996901883498
+            "pct": 0.023861311064003316,
+            "pct_acumulado": 0.9525143771992637
           },
           {
             "SKU": "1627418212924",
             "monto": 15117.64706,
             "n_ordenes": 1,
-            "pct": 0.019112969286894828,
-            "pct_acumulado": 0.9797126594752447
+            "pct": 0.018952096510842776,
+            "pct_acumulado": 0.9714664737101064
           },
           {
             "SKU": "Pack449",
             "monto": 8394.957983,
             "n_ordenes": 1,
-            "pct": 0.010613594394487178,
-            "pct_acumulado": 0.9903262538697318
+            "pct": 0.010524260373775787,
+            "pct_acumulado": 0.9819907340838822
           },
           {
             "SKU": "172462A",
             "monto": 7555.0,
             "n_ordenes": 1,
-            "pct": 0.009551650623234646,
-            "pct_acumulado": 0.9998779044929664
+            "pct": 0.009471254922881972,
+            "pct_acumulado": 0.9914619890067641
           },
           {
-            "SKU": "151170",
-            "monto": 16.798,
+            "SKU": "1660858025311",
+            "monto": 6714.0,
             "n_ordenes": 1,
-            "pct": 2.1237409287769102e-05,
-            "pct_acumulado": 0.9998991419022542
+            "pct": 0.00841694315714488,
+            "pct_acumulado": 0.999878932163909
           }
         ],
         "opciones_filtros": {
@@ -971,6 +971,7 @@
             "HDC",
             "Next Day",
             "Priority",
+            "Retirado en bodega",
             "Retiro Tienda Ripley Antofagasta_BE",
             "Retiro Tienda Ripley Arica_BE",
             "Retiro Tienda Ripley Castellón_BE",
@@ -2179,17 +2180,17 @@
         },
         {
           "CURIER": "BLUEXPRESS",
-          "n_pedidos": 4346,
-          "ns_courier_pct": 83.6,
-          "ns_empresa_pct": 79.0,
-          "otif_total_pct": 68.4
+          "n_pedidos": 4344,
+          "ns_courier_pct": 84.1,
+          "ns_empresa_pct": 94.4,
+          "otif_total_pct": 82.0
         },
         {
           "CURIER": "HOME DELIVERY CORP",
           "n_pedidos": 2379,
-          "ns_courier_pct": 94.1,
+          "ns_courier_pct": 94.3,
           "ns_empresa_pct": 94.3,
-          "otif_total_pct": 94.1
+          "otif_total_pct": 94.3
         },
         {
           "CURIER": "COLECTA",
@@ -2201,9 +2202,9 @@
         {
           "CURIER": "WELIVERY",
           "n_pedidos": 826,
-          "ns_courier_pct": 96.5,
-          "ns_empresa_pct": 99.6,
-          "otif_total_pct": 96.2
+          "ns_courier_pct": 96.9,
+          "ns_empresa_pct": 99.8,
+          "otif_total_pct": 96.7
         },
         {
           "CURIER": "STARKEN",
@@ -2818,12 +2819,12 @@
           "hasta": "2026-07-25"
         },
         "n_ordenes": 47185,
-        "n_empresa_ok": 44920,
-        "n_courier_ok": 43229,
-        "n_otif_ok": 42279,
-        "ns_empresa_pct": 95.2,
-        "ns_courier_pct": 91.6,
-        "otif_total_pct": 89.6,
+        "n_empresa_ok": 45592,
+        "n_courier_ok": 43261,
+        "n_otif_ok": 42886,
+        "ns_empresa_pct": 96.6,
+        "ns_courier_pct": 91.7,
+        "otif_total_pct": 90.9,
         "trend": [
           {
             "key": "2026-01",
@@ -2881,9 +2882,9 @@
             "anio": 2026,
             "label_corto": "06/26",
             "n_ordenes": 13713,
-            "ns_empresa_pct": 91.3,
-            "ns_courier_pct": 88.8,
-            "otif_total_pct": 83.9
+            "ns_empresa_pct": 96.2,
+            "ns_courier_pct": 89.0,
+            "otif_total_pct": 88.3
           },
           {
             "key": "2026-07",
@@ -2907,18 +2908,18 @@
           },
           {
             "CURIER": "BLUEXPRESS",
-            "n_pedidos": 10788,
+            "n_pedidos": 10786,
             "pct_volumen": 22.9,
-            "ns_courier_pct": 87.1,
-            "otif_total_pct": 80.0,
-            "ns_empresa_pct": 89.5
+            "ns_courier_pct": 87.3,
+            "otif_total_pct": 85.5,
+            "ns_empresa_pct": 95.7
           },
           {
             "CURIER": "HOME DELIVERY CORP",
             "n_pedidos": 8558,
             "pct_volumen": 18.1,
-            "ns_courier_pct": 96.1,
-            "otif_total_pct": 96.1,
+            "ns_courier_pct": 96.2,
+            "otif_total_pct": 96.2,
             "ns_empresa_pct": 96.2
           },
           {
@@ -2933,9 +2934,9 @@
             "CURIER": "WELIVERY",
             "n_pedidos": 2423,
             "pct_volumen": 5.1,
-            "ns_courier_pct": 96.4,
-            "otif_total_pct": 95.0,
-            "ns_empresa_pct": 97.8
+            "ns_courier_pct": 96.5,
+            "otif_total_pct": 95.1,
+            "ns_empresa_pct": 97.9
           },
           {
             "CURIER": "STARKEN",
@@ -2963,7 +2964,7 @@
           },
           {
             "CURIER": "RETIRO EN BODEGA",
-            "n_pedidos": 55,
+            "n_pedidos": 57,
             "pct_volumen": 0.1,
             "ns_courier_pct": 100.0,
             "otif_total_pct": 100.0,
@@ -2984,16 +2985,16 @@
             "n_pedidos": 8520,
             "pct_volumen": 18.1,
             "ns_empresa_pct": 96.2,
-            "ns_courier_pct": 96.1,
-            "otif_total_pct": 96.1
+            "ns_courier_pct": 96.2,
+            "otif_total_pct": 96.2
           },
           {
             "CANAL": "PAGINAS",
             "n_pedidos": 6106,
             "pct_volumen": 12.9,
-            "ns_empresa_pct": 93.4,
-            "ns_courier_pct": 89.3,
-            "otif_total_pct": 83.4
+            "ns_empresa_pct": 97.0,
+            "ns_courier_pct": 89.4,
+            "otif_total_pct": 87.0
           },
           {
             "CANAL": "MERCADO LIBRE C",
@@ -3007,33 +3008,33 @@
             "CANAL": "KITCHEN CENTER",
             "n_pedidos": 3714,
             "pct_volumen": 7.9,
-            "ns_empresa_pct": 97.9,
-            "ns_courier_pct": 96.4,
-            "otif_total_pct": 95.0
+            "ns_empresa_pct": 98.0,
+            "ns_courier_pct": 96.6,
+            "otif_total_pct": 95.2
           },
           {
             "CANAL": "FALABELLA F",
             "n_pedidos": 3504,
             "pct_volumen": 7.4,
             "ns_empresa_pct": 96.6,
-            "ns_courier_pct": 92.5,
+            "ns_courier_pct": 92.6,
             "otif_total_pct": 91.7
           },
           {
             "CANAL": "PARIS",
             "n_pedidos": 3387,
             "pct_volumen": 7.2,
-            "ns_empresa_pct": 86.7,
+            "ns_empresa_pct": 95.4,
             "ns_courier_pct": 89.8,
-            "otif_total_pct": 80.0
+            "otif_total_pct": 88.4
           },
           {
             "CANAL": "RIPLEY",
             "n_pedidos": 2457,
             "pct_volumen": 5.2,
-            "ns_empresa_pct": 85.9,
-            "ns_courier_pct": 49.2,
-            "otif_total_pct": 45.8
+            "ns_empresa_pct": 91.5,
+            "ns_courier_pct": 50.0,
+            "otif_total_pct": 48.8
           },
           {
             "CANAL": "DUTY TRAVEL",
@@ -3047,17 +3048,17 @@
             "CANAL": "WALMART",
             "n_pedidos": 2092,
             "pct_volumen": 4.4,
-            "ns_empresa_pct": 96.9,
+            "ns_empresa_pct": 97.6,
             "ns_courier_pct": 92.1,
-            "otif_total_pct": 90.3
+            "otif_total_pct": 90.9
           },
           {
             "CANAL": "BICE",
             "n_pedidos": 174,
             "pct_volumen": 0.4,
-            "ns_empresa_pct": 93.7,
-            "ns_courier_pct": 94.8,
-            "otif_total_pct": 89.7
+            "ns_empresa_pct": 96.0,
+            "ns_courier_pct": 95.4,
+            "otif_total_pct": 92.0
           },
           {
             "CANAL": "FALABELLA",
@@ -3601,22 +3602,22 @@
       {
         "MES": "2026-05",
         "n_pedidos": 6227,
-        "otif_empresa": 0.9688453508912799,
-        "otif_courier": 0.922273968202987,
-        "otif_total": 0.9193833306568171,
+        "otif_empresa": 0.9690059418660671,
+        "otif_courier": 0.9224345591777742,
+        "otif_total": 0.9195439216316043,
         "otif_empresa_pct": 96.9,
         "otif_courier_pct": 92.2,
-        "otif_total_pct": 91.9
+        "otif_total_pct": 92.0
       },
       {
         "MES": "2026-06",
         "n_pedidos": 12320,
-        "otif_empresa": 0.9074675324675324,
-        "otif_courier": 0.8835227272727273,
-        "otif_total": 0.8294642857142858,
-        "otif_empresa_pct": 90.7,
-        "otif_courier_pct": 88.4,
-        "otif_total_pct": 82.9
+        "otif_empresa": 0.9619318181818182,
+        "otif_courier": 0.8860389610389611,
+        "otif_total": 0.8786525974025974,
+        "otif_empresa_pct": 96.2,
+        "otif_courier_pct": 88.6,
+        "otif_total_pct": 87.9
       },
       {
         "MES": "2026-07",
@@ -3665,27 +3666,27 @@
       },
       "2026-06": {
         "n_pedidos": 12320,
-        "otif_empresa_pct": 0.9074675324675324,
-        "otif_courier_pct": 0.8835227272727273,
-        "otif_total_pct": 0.8294642857142858,
-        "n_empresa_ok": 11180,
-        "n_courier_ok": 10885,
-        "n_otif_ok": 10219,
-        "dias_empresa_promedio": -15.563434394053287,
-        "dias_courier_promedio": -249.90704084189426,
+        "otif_empresa_pct": 0.9619318181818182,
+        "otif_courier_pct": 0.8860389610389611,
+        "otif_total_pct": 0.8786525974025974,
+        "n_empresa_ok": 11851,
+        "n_courier_ok": 10916,
+        "n_otif_ok": 10825,
+        "dias_empresa_promedio": -0.20140397793748954,
+        "dias_courier_promedio": -35.42336620424536,
         "mes": "2026-06",
         "error": null
       },
       "2026-05": {
         "n_pedidos": 6227,
-        "otif_empresa_pct": 0.9688453508912799,
-        "otif_courier_pct": 0.922273968202987,
-        "otif_total_pct": 0.9193833306568171,
-        "n_empresa_ok": 6033,
-        "n_courier_ok": 5743,
-        "n_otif_ok": 5725,
-        "dias_empresa_promedio": -7.857001484413656,
-        "dias_courier_promedio": -212.93963384463137,
+        "otif_empresa_pct": 0.9690059418660671,
+        "otif_courier_pct": 0.9224345591777742,
+        "otif_total_pct": 0.9195439216316043,
+        "n_empresa_ok": 6034,
+        "n_courier_ok": 5744,
+        "n_otif_ok": 5726,
+        "dias_empresa_promedio": -0.2421243608774534,
+        "dias_courier_promedio": -213.49430974764968,
         "mes": "2026-05",
         "error": null
       },
@@ -3746,12 +3747,12 @@
         {
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 2233,
-          "otif_empresa": 0.941782355575459,
-          "otif_courier": 0.9399910434393193,
-          "otif_total": 0.9395432154052844,
+          "otif_empresa": 0.942230183609494,
+          "otif_courier": 0.942230183609494,
+          "otif_total": 0.942230183609494,
           "otif_empresa_pct": 94.2,
-          "otif_courier_pct": 94.0,
-          "otif_total_pct": 94.0
+          "otif_courier_pct": 94.2,
+          "otif_total_pct": 94.2
         },
         {
           "CLIENTE": "MERCADO LIBRE F",
@@ -3766,32 +3767,32 @@
         {
           "CLIENTE": "PAGINAS",
           "n_pedidos": 1714,
-          "otif_empresa": 0.8284714119019837,
-          "otif_courier": 0.8459743290548425,
-          "otif_total": 0.6814469078179697,
-          "otif_empresa_pct": 82.8,
-          "otif_courier_pct": 84.6,
-          "otif_total_pct": 68.1
+          "otif_empresa": 0.9579929988331388,
+          "otif_courier": 0.8471411901983664,
+          "otif_total": 0.809218203033839,
+          "otif_empresa_pct": 95.8,
+          "otif_courier_pct": 84.7,
+          "otif_total_pct": 80.9
         },
         {
           "CLIENTE": "PARIS",
           "n_pedidos": 1300,
-          "otif_empresa": 0.7261538461538461,
+          "otif_empresa": 0.9507692307692308,
           "otif_courier": 0.936923076923077,
-          "otif_total": 0.7015384615384616,
-          "otif_empresa_pct": 72.6,
+          "otif_total": 0.9207692307692308,
+          "otif_empresa_pct": 95.1,
           "otif_courier_pct": 93.7,
-          "otif_total_pct": 70.2
+          "otif_total_pct": 92.1
         },
         {
           "CLIENTE": "FALABELLA F",
           "n_pedidos": 1152,
           "otif_empresa": 0.9609375,
-          "otif_courier": 0.875,
-          "otif_total": 0.8741319444444444,
+          "otif_courier": 0.8758680555555556,
+          "otif_total": 0.875,
           "otif_empresa_pct": 96.1,
-          "otif_courier_pct": 87.5,
-          "otif_total_pct": 87.4
+          "otif_courier_pct": 87.6,
+          "otif_total_pct": 87.5
         },
         {
           "CLIENTE": "MERCADO LIBRE C",
@@ -3806,32 +3807,32 @@
         {
           "CLIENTE": "KITCHEN CENTER",
           "n_pedidos": 948,
-          "otif_empresa": 0.9957805907172996,
-          "otif_courier": 0.9662447257383966,
-          "otif_total": 0.9630801687763713,
-          "otif_empresa_pct": 99.6,
-          "otif_courier_pct": 96.6,
-          "otif_total_pct": 96.3
+          "otif_empresa": 0.9978902953586498,
+          "otif_courier": 0.9704641350210971,
+          "otif_total": 0.9694092827004219,
+          "otif_empresa_pct": 99.8,
+          "otif_courier_pct": 97.0,
+          "otif_total_pct": 96.9
         },
         {
           "CLIENTE": "RIPLEY",
           "n_pedidos": 835,
-          "otif_empresa": 0.7365269461077845,
-          "otif_courier": 0.38802395209580837,
-          "otif_total": 0.3197604790419162,
-          "otif_empresa_pct": 73.7,
-          "otif_courier_pct": 38.8,
-          "otif_total_pct": 32.0
+          "otif_empresa": 0.9005988023952096,
+          "otif_courier": 0.41077844311377243,
+          "otif_total": 0.40718562874251496,
+          "otif_empresa_pct": 90.1,
+          "otif_courier_pct": 41.1,
+          "otif_total_pct": 40.7
         },
         {
           "CLIENTE": "WALMART",
           "n_pedidos": 513,
-          "otif_empresa": 0.9590643274853801,
+          "otif_empresa": 0.98635477582846,
           "otif_courier": 0.9317738791423001,
-          "otif_total": 0.9064327485380117,
-          "otif_empresa_pct": 95.9,
+          "otif_total": 0.9317738791423001,
+          "otif_empresa_pct": 98.6,
           "otif_courier_pct": 93.2,
-          "otif_total_pct": 90.6
+          "otif_total_pct": 93.2
         },
         {
           "CLIENTE": "DUTY TRAVEL",
@@ -3846,12 +3847,12 @@
         {
           "CLIENTE": "BICE",
           "n_pedidos": 28,
-          "otif_empresa": 0.8928571428571429,
+          "otif_empresa": 1.0,
           "otif_courier": 1.0,
-          "otif_total": 0.8928571428571429,
-          "otif_empresa_pct": 89.3,
+          "otif_total": 1.0,
+          "otif_empresa_pct": 100.0,
           "otif_courier_pct": 100.0,
-          "otif_total_pct": 89.3
+          "otif_total_pct": 100.0
         }
       ],
       "2026-05": [
@@ -3958,12 +3959,12 @@
         {
           "CLIENTE": "BICE",
           "n_pedidos": 25,
-          "otif_empresa": 0.84,
-          "otif_courier": 0.92,
-          "otif_total": 0.8,
-          "otif_empresa_pct": 84.0,
-          "otif_courier_pct": 92.0,
-          "otif_total_pct": 80.0
+          "otif_empresa": 0.88,
+          "otif_courier": 0.96,
+          "otif_total": 0.84,
+          "otif_empresa_pct": 88.0,
+          "otif_courier_pct": 96.0,
+          "otif_total_pct": 84.0
         }
       ],
       "2026-04": [
@@ -4314,23 +4315,23 @@
         {
           "CURIER": "RECIBELO",
           "n_pedidos": 4096,
-          "otif_courier": 0.85400390625,
-          "dias_promedio": -11.5,
+          "otif_courier": 0.854248046875,
+          "dias_promedio": 0.1,
           "otif_courier_pct": 85.4
         },
         {
           "CURIER": "BLUEXPRESS",
-          "n_pedidos": 3976,
-          "otif_courier": 0.8345070422535211,
-          "dias_promedio": -653.9,
-          "otif_courier_pct": 83.5
+          "n_pedidos": 3974,
+          "otif_courier": 0.8399597382989431,
+          "dias_promedio": -109.5,
+          "otif_courier_pct": 84.0
         },
         {
           "CURIER": "HDC",
           "n_pedidos": 2233,
-          "otif_courier": 0.9399910434393193,
-          "dias_promedio": -109.8,
-          "otif_courier_pct": 94.0
+          "otif_courier": 0.942230183609494,
+          "dias_promedio": 0.0,
+          "otif_courier_pct": 94.2
         },
         {
           "CURIER": "COLECTA",
@@ -4342,9 +4343,9 @@
         {
           "CURIER": "WELIVERY",
           "n_pedidos": 624,
-          "otif_courier": 0.9567307692307693,
-          "dias_promedio": -298.8,
-          "otif_courier_pct": 95.7
+          "otif_courier": 0.9615384615384616,
+          "dias_promedio": -2.7,
+          "otif_courier_pct": 96.2
         },
         {
           "CURIER": "STARKEN",
@@ -4355,7 +4356,7 @@
         },
         {
           "CURIER": "RETIRO EN BODEGA",
-          "n_pedidos": 9,
+          "n_pedidos": 11,
           "otif_courier": 1.0,
           "dias_promedio": 0.0,
           "otif_courier_pct": 100.0
@@ -4372,9 +4373,9 @@
         {
           "CURIER": "BLUEXPRESS",
           "n_pedidos": 1328,
-          "otif_courier": 0.8320783132530121,
-          "dias_promedio": -995.7,
-          "otif_courier_pct": 83.2
+          "otif_courier": 0.8328313253012049,
+          "dias_promedio": -998.3,
+          "otif_courier_pct": 83.3
         },
         {
           "CURIER": "HDC",
@@ -4585,836 +4586,506 @@
       "2026-06": [
         {
           "FECHA": "2026-06-01",
-          "ORDEN": "24703394101-A",
+          "ORDEN": "24717613201-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 214.0
+          "dias_courier": 35.0
         },
         {
           "FECHA": "2026-06-01",
-          "ORDEN": "24704465802-A",
-          "CLIENTE": "RIPLEY",
+          "ORDEN": "3112158203",
+          "CLIENTE": "PARIS",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 214.0
+          "dias_courier": 28.0
         },
         {
           "FECHA": "2026-06-01",
-          "ORDEN": "24705530801-A",
+          "ORDEN": "24731448801-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 214.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24718227801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 214.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24719656101-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 214.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24724810202-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 214.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24732870202-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 214.0
+          "dias_courier": 25.0
         },
         {
           "FECHA": "2026-06-02",
-          "ORDEN": "24741240501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 214.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24705510101-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24715576201-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24720641101-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24726968501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24739770101-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 5.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24742375001-A",
+          "ORDEN": "24738736101-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "Demorado",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 1.0,
-          "dias_courier": 184.0
+          "dias_courier": 21.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "3116875221",
+          "CLIENTE": "PARIS",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 20.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24707365301-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "Demorado",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 2.0,
+          "dias_courier": 19.0
+        },
+        {
+          "FECHA": "2026-06-04",
+          "ORDEN": "24789217501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 19.0
+        },
+        {
+          "FECHA": "2026-06-08",
+          "ORDEN": "24806379002-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -1.0,
+          "dias_courier": 18.0
         },
         {
           "FECHA": "2026-06-06",
-          "ORDEN": "24801928201-A",
-          "CLIENTE": "RIPLEY",
+          "ORDEN": "901992",
+          "CLIENTE": "KITCHEN CENTER",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": -1.0,
-          "dias_courier": 174.0
+          "dias_courier": 18.0
         },
         {
-          "FECHA": "2026-06-23",
-          "ORDEN": "24846424202-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 174.0
-        },
-        {
-          "FECHA": "2026-06-25",
-          "ORDEN": "24850611301-A",
+          "FECHA": "2026-06-11",
+          "ORDEN": "24815646201-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 174.0
-        },
-        {
-          "FECHA": "2026-06-09",
-          "ORDEN": "24810783801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 173.0
-        },
-        {
-          "FECHA": "2026-06-25",
-          "ORDEN": "24850423504-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 170.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24705761801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24710524901-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24714776001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24716954101-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24717261701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24719085801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24724372701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24730029501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
+          "dias_courier": 17.0
         },
         {
           "FECHA": "2026-06-02",
-          "ORDEN": "24734245702-A",
+          "ORDEN": "24756054203-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 153.0
+          "dias_courier": 16.0
         },
         {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24737301001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24738726602-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24740122001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-06-08",
-          "ORDEN": "24808702501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 144.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24748991001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 143.0
-        },
-        {
-          "FECHA": "2026-06-08",
-          "ORDEN": "24808191801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 143.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24703806902-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24705991801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24707393801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24709282102-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24710814601-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24723590803-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24739003701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-02",
-          "ORDEN": "24740313901-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 123.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24703677501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24710791001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24713511601-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24715035102-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24716014303-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24719807101-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24724560601-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-06-01",
-          "ORDEN": "24727531201-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 122.0
-        }
-      ],
-      "2026-05": [
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24697951301-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 244.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24698354901-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 244.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24699306401-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 214.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24695218501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24700448804-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 184.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24698492901-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 183.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24700736701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24701801901-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24703248102-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 153.0
-        },
-        {
-          "FECHA": "2026-05-27",
-          "ORDEN": "24680304401-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 130.0
-        },
-        {
-          "FECHA": "2026-05-27",
-          "ORDEN": "24679087401-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 129.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24694569001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24694791701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24698984801-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24701482502-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 122.0
-        },
-        {
-          "FECHA": "2026-05-28",
-          "ORDEN": "24616465701OPL-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 120.0
-        },
-        {
-          "FECHA": "2026-05-30",
-          "ORDEN": "24696942301-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 92.0
-        },
-        {
-          "FECHA": "2026-05-30",
-          "ORDEN": "24697194301-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 92.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24699599202-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 91.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24700112201-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 91.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24694045701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 72.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24695417701-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 68.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24695000702-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 61.0
-        },
-        {
-          "FECHA": "2026-05-30",
-          "ORDEN": "24697009001-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 61.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24700388301-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 61.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24694274601-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 42.0
-        },
-        {
-          "FECHA": "2026-05-29",
-          "ORDEN": "24695361501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 41.0
-        },
-        {
-          "FECHA": "2026-05-26",
-          "ORDEN": "24667533501-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "Demorado",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 1.0,
-          "dias_courier": 31.0
-        },
-        {
-          "FECHA": "2026-05-26",
-          "ORDEN": "24668120201-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 31.0
-        },
-        {
-          "FECHA": "2026-05-30",
-          "ORDEN": "24696111601-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 31.0
-        },
-        {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24700701403-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "BLUEXPRESS",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 31.0
-        },
-        {
-          "FECHA": "2026-05-28",
-          "ORDEN": "24693467201-A",
+          "FECHA": "2026-06-03",
+          "ORDEN": "24787934102-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "Demorado",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 3.0,
-          "dias_courier": 30.0
+          "dias_courier": 16.0
         },
         {
-          "FECHA": "2026-05-31",
-          "ORDEN": "24700300202-A",
+          "FECHA": "2026-06-06",
+          "ORDEN": "24800759701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -2.0,
+          "dias_courier": 15.0
+        },
+        {
+          "FECHA": "2026-06-18",
+          "ORDEN": "24834733501-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 30.0
+          "dias_courier": 15.0
         },
+        {
+          "FECHA": "2026-06-21",
+          "ORDEN": "24841735501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 15.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24735528602-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 14.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24760209001-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 13.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24741502201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "Demorado",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 1.0,
+          "dias_courier": 12.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24788056101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 12.0
+        },
+        {
+          "FECHA": "2026-06-25",
+          "ORDEN": "24852134403-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 12.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24705895401-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24739147501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24739526501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-06-04",
+          "ORDEN": "24794319601-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-06-14",
+          "ORDEN": "24820556801-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-06-25",
+          "ORDEN": "24851808001-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "3117130970",
+          "CLIENTE": "PARIS",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-11",
+          "ORDEN": "3120309051",
+          "CLIENTE": "PARIS",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24708885801-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24713101401-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24757285901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24775473401-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-17",
+          "ORDEN": "24832143201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "897928",
+          "CLIENTE": "KITCHEN CENTER",
+          "CURIER": "WELIVERY",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -1.0,
+          "dias_courier": 10.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24716250901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24737758901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24739819001-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24756819003-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24757236301-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24759053502-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24762050801-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24765248201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-03",
+          "ORDEN": "24787512601-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-04",
+          "ORDEN": "24791305101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-04",
+          "ORDEN": "24792752701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-07",
+          "ORDEN": "3240109617",
+          "CLIENTE": "FALABELLA F",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24715870301-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 8.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24728506201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "Demorado",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 1.0,
+          "dias_courier": 8.0
+        },
+        {
+          "FECHA": "2026-06-01",
+          "ORDEN": "24729948401-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 8.0
+        },
+        {
+          "FECHA": "2026-06-02",
+          "ORDEN": "24734695101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 8.0
+        }
+      ],
+      "2026-05": [
         {
           "FECHA": "2026-05-01",
           "ORDEN": "24586081101-A",
@@ -5446,6 +5117,16 @@
           "dias_courier": 14.0
         },
         {
+          "FECHA": "2026-05-27",
+          "ORDEN": "24680304401-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "Demorado",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 1.0,
+          "dias_courier": 14.0
+        },
+        {
           "FECHA": "2026-05-31",
           "ORDEN": "24701956801-A",
           "CLIENTE": "RIPLEY",
@@ -5466,9 +5147,39 @@
           "dias_courier": 13.0
         },
         {
+          "FECHA": "2026-05-27",
+          "ORDEN": "24679087401-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 13.0
+        },
+        {
+          "FECHA": "2026-05-29",
+          "ORDEN": "24694045701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 13.0
+        },
+        {
           "FECHA": "2026-05-03",
           "ORDEN": "SH11632",
           "CLIENTE": "PAGINAS",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 12.0
+        },
+        {
+          "FECHA": "2026-05-29",
+          "ORDEN": "24694274601-A",
+          "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
@@ -5484,6 +5195,26 @@
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
           "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-05-29",
+          "ORDEN": "24695361501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 11.0
+        },
+        {
+          "FECHA": "2026-05-29",
+          "ORDEN": "24695417701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
         },
         {
           "FECHA": "2026-05-01",
@@ -5526,6 +5257,26 @@
           "dias_courier": 8.0
         },
         {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24697951301-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 8.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24698354901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 8.0
+        },
+        {
           "FECHA": "2026-05-04",
           "ORDEN": "24596336901-A",
           "CLIENTE": "RIPLEY",
@@ -5548,6 +5299,16 @@
         {
           "FECHA": "2026-05-16",
           "ORDEN": "24627887101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 7.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24699306401-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "BLUEXPRESS",
           "Estado Empresa": "A Tiempo",
@@ -5584,6 +5345,246 @@
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
           "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-10",
+          "ORDEN": "24613292701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-14",
+          "ORDEN": "24622025701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-16",
+          "ORDEN": "24625568801-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-16",
+          "ORDEN": "24626338301-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-29",
+          "ORDEN": "24694766201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-29",
+          "ORDEN": "24695218501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "Demorado",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 1.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24698492901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24700448804-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 6.0
+        },
+        {
+          "FECHA": "2026-05-12",
+          "ORDEN": "3105443450",
+          "CLIENTE": "PARIS",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-01",
+          "ORDEN": "24585964201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-09",
+          "ORDEN": "24611558001-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-10",
+          "ORDEN": "24612121001-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-14",
+          "ORDEN": "24622110101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-10",
+          "ORDEN": "6,90E+12",
+          "CLIENTE": "WALMART",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24700736701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24701801901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-31",
+          "ORDEN": "24703248102-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 5.0
+        },
+        {
+          "FECHA": "2026-05-02",
+          "ORDEN": "3102690020",
+          "CLIENTE": "PARIS",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
+        },
+        {
+          "FECHA": "2026-05-05",
+          "ORDEN": "24599996101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
+        },
+        {
+          "FECHA": "2026-05-06",
+          "ORDEN": "24600801301-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
+        },
+        {
+          "FECHA": "2026-05-06",
+          "ORDEN": "24604210101-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
+        },
+        {
+          "FECHA": "2026-05-07",
+          "ORDEN": "24606262601-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
+        },
+        {
+          "FECHA": "2026-05-08",
+          "ORDEN": "24607496901-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
+        },
+        {
+          "FECHA": "2026-05-09",
+          "ORDEN": "24610354701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "BLUEXPRESS",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 4.0
         }
       ],
       "2026-04": [
@@ -7096,42 +7097,77 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.022616585496030423,
-      "total_pickings": 14989,
+      "valor": 0.02257742257742258,
+      "total_pickings": 15015,
       "on_time": 342,
-      "on_time_pct": 0.022816732270331576,
-      "in_full": 14972,
-      "in_full_pct": 0.9988658349456268,
+      "on_time_pct": 0.02277722277722278,
+      "in_full": 14998,
+      "in_full_pct": 0.9988677988677989,
       "both": 339,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.05806451612903226,
-      "total_pickings": 465,
-      "on_time": 31,
-      "on_time_pct": 0.06666666666666667,
-      "in_full": 460,
-      "in_full_pct": 0.989247311827957,
-      "both": 27,
+      "valor": 0.06581740976645435,
+      "total_pickings": 471,
+      "on_time": 35,
+      "on_time_pct": 0.07430997876857749,
+      "in_full": 466,
+      "in_full_pct": 0.9893842887473461,
+      "both": 31,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9991212199534764,
-      "ok": 19328,
-      "total": 19345,
+      "valor": 0.9991283839212469,
+      "ok": 19487,
+      "total": 19504,
       "errores": 17,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.257320623206232,
-      "n_recepciones": 271,
+      "valor": 10.071602254428342,
+      "n_recepciones": 276,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01125",
+          "proveedor": "Sanchez y Cia.",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 15:50",
+          "done": "2026-07-29 15:51"
+        },
+        {
+          "picking": "CA1/RET/01124",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:34",
+          "done": "2026-07-29 13:34"
+        },
+        {
+          "picking": "CA1/RET/01123",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:33",
+          "done": "2026-07-29 13:33"
+        },
+        {
+          "picking": "CA1/RET/01121",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:32",
+          "done": "2026-07-29 13:32"
+        },
+        {
+          "picking": "CA1/RET/01122",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-07-29 13:32",
+          "done": "2026-07-29 13:32"
+        },
         {
           "picking": "CA1/RET/01120",
           "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -7236,41 +7272,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-28 16:30",
           "done": "2026-07-28 16:31"
-        },
-        {
-          "picking": "CA1/RET/01103",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:27",
-          "done": "2026-07-28 16:28"
-        },
-        {
-          "picking": "CA1/RET/01102",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:11",
-          "done": "2026-07-28 16:11"
-        },
-        {
-          "picking": "CA1/RET/01101",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:10",
-          "done": "2026-07-28 16:10"
-        },
-        {
-          "picking": "CA1/RET/01100",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 16:08",
-          "done": "2026-07-28 16:09"
-        },
-        {
-          "picking": "CA1/RET/01099",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:35",
-          "done": "2026-07-28 15:35"
         }
       ],
       "error": null
