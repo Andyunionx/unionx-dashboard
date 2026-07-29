@@ -341,13 +341,28 @@ def reconstruir_cmr_desde_drive(df_mes):
             'costo_unitario': (float(pd.to_numeric(a['costo_unitario'], errors='coerce') or 0) if a is not None else 0),
             'costo_total': costo, 'margen_front': neta - costo, 'margen_final': neta - costo,
             'comision': float(c.get('comision') or 0), 'comision_pct': float(c.get('comision_pct') or 0),
-            'logistica': float(c.get('envio_cmr') or 0), 'marketing': 0,
+            'logistica': 0, 'marketing': 0,  # el Envío CMR va como INGRESO aparte (abajo), no como logística
         })
         if a is not None:
             for col in _CMR_ATTR:
                 if col in cols:
                     row[col] = a[col]
         filas.append(row)
+        # INGRESO POR ENVÍO CMR (decisión Andrés 29-jul-2026): fila de ingreso separada.
+        env = float(c.get('envio_cmr') or 0)
+        if env:
+            erow = {col: (0 if col in NUM else '') for col in cols}
+            erow.update({
+                'tipo_movimiento': 'Venta', 'canal': 'CMR', 'tipo_negocio': 'Fidelización',
+                'sku': 'Delivery_007', 'producto': 'Envíos', 'categoria_macro': 'Envíos',
+                'tipo_compra': 'Envío', 'estado_pedido': 'sale', 'pedido_marketplace': name,
+                'fecha_venta': f.isoformat(), 'fecha_documento': f.isoformat(),
+                'anio_venta': f.year, 'mes_venta': f.month, 'semana_venta': f.isocalendar()[1],
+                'dia_semana': f.weekday(), 'cantidad': 1.0,
+                'venta_bruta': env, 'venta_neta': env / 1.19,
+                'margen_front': env / 1.19, 'margen_final': env / 1.19,
+            })
+            filas.append(erow)
     cmr_new = pd.DataFrame(filas).reindex(columns=cols)
     for col in cols:
         try:
