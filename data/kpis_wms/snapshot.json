@@ -1,40 +1,138 @@
 {
-  "generado_en": "2026-07-28T16:42:01.628058",
+  "generado_en": "2026-07-29T05:54:19.750564",
   "mes_actual": "2026-07",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.014282742841295154,
-      "total_pickings": 14423,
-      "on_time": 209,
-      "on_time_pct": 0.014490743950634403,
-      "in_full": 14406,
-      "in_full_pct": 0.9988213270470776,
-      "both": 206,
+      "valor": 0.022616585496030423,
+      "total_pickings": 14989,
+      "on_time": 342,
+      "on_time_pct": 0.022816732270331576,
+      "in_full": 14972,
+      "in_full_pct": 0.9988658349456268,
+      "both": 339,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.053488372093023255,
-      "total_pickings": 430,
-      "on_time": 27,
-      "on_time_pct": 0.06279069767441861,
-      "in_full": 425,
-      "in_full_pct": 0.9883720930232558,
-      "both": 23,
+      "valor": 0.05806451612903226,
+      "total_pickings": 465,
+      "on_time": 31,
+      "on_time_pct": 0.06666666666666667,
+      "in_full": 460,
+      "in_full_pct": 0.989247311827957,
+      "both": 27,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9990853822564157,
-      "ok": 18570,
-      "total": 18587,
+      "valor": 0.9991212199534764,
+      "ok": 19328,
+      "total": 19345,
       "errores": 17,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.699705128205128,
-      "n_recepciones": 260,
+      "valor": 10.257320623206232,
+      "n_recepciones": 271,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01120",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:07",
+          "done": "2026-07-28 20:07"
+        },
+        {
+          "picking": "CA1/RET/01118",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:05",
+          "done": "2026-07-28 20:05"
+        },
+        {
+          "picking": "CA1/RET/01117",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:04",
+          "done": "2026-07-28 20:04"
+        },
+        {
+          "picking": "CA1/RET/01116",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:01",
+          "done": "2026-07-28 20:01"
+        },
+        {
+          "picking": "CA1/RET/01115",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:00",
+          "done": "2026-07-28 20:00"
+        },
+        {
+          "picking": "CA1/RET/01114",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:55",
+          "done": "2026-07-28 19:55"
+        },
+        {
+          "picking": "BVO/RET/00001",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:51",
+          "done": "2026-07-28 19:52"
+        },
+        {
+          "picking": "CA1/RET/01113",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:20",
+          "done": "2026-07-28 19:20"
+        },
+        {
+          "picking": "CA1/RET/01112",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:16",
+          "done": "2026-07-28 19:16"
+        },
+        {
+          "picking": "CA1/RET/01111",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:11",
+          "done": "2026-07-28 19:11"
+        },
+        {
+          "picking": "CA1/RET/01110",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:09",
+          "done": "2026-07-28 19:09"
+        },
+        {
+          "picking": "CA1/RET/01109",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:08",
+          "done": "2026-07-28 19:08"
+        },
+        {
+          "picking": "CA1/RET/01108",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:00",
+          "done": "2026-07-28 19:00"
+        },
+        {
+          "picking": "CA1/RET/01107",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 18:48",
+          "done": "2026-07-28 18:49"
+        },
         {
           "picking": "CA1/RET/01104",
           "proveedor": "Falabella Retail",
@@ -76,123 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-28 15:35",
           "done": "2026-07-28 15:35"
-        },
-        {
-          "picking": "CA1/RET/01096",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:33",
-          "done": "2026-07-28 15:34"
-        },
-        {
-          "picking": "CA1/RET/01097",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:34",
-          "done": "2026-07-28 15:34"
-        },
-        {
-          "picking": "CA1/RET/01098",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:34",
-          "done": "2026-07-28 15:34"
-        },
-        {
-          "picking": "CA1/RET/01095",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:33",
-          "done": "2026-07-28 15:33"
-        },
-        {
-          "picking": "CA1/RET/01094",
-          "proveedor": "Cliente Kitchen Center",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 17:12",
-          "done": "2026-07-27 17:13"
-        },
-        {
-          "picking": "CA1/RET/01093",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:40",
-          "done": "2026-07-27 16:40"
-        },
-        {
-          "picking": "CA1/RET/01092",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:30",
-          "done": "2026-07-27 16:30"
-        },
-        {
-          "picking": "CA1/RET/01091",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:27",
-          "done": "2026-07-27 16:27"
-        },
-        {
-          "picking": "CA1/RET/01090",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:25",
-          "done": "2026-07-27 16:25"
-        },
-        {
-          "picking": "CA1/RET/01089",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:13",
-          "done": "2026-07-27 16:13"
-        },
-        {
-          "picking": "CA1/RET/01088",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:10",
-          "done": "2026-07-27 16:10"
-        },
-        {
-          "picking": "CA1/RET/01087",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:09",
-          "done": "2026-07-27 16:09"
-        },
-        {
-          "picking": "CA1/IN/00949",
-          "proveedor": "HINATURE Inc.",
-          "horas": 169.8,
-          "scheduled": "2026-07-17 17:26",
-          "done": "2026-07-24 19:13"
-        },
-        {
-          "picking": "CA1/IN/00960",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-24 15:21",
-          "done": "2026-07-24 15:24"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9494651991939235,
-      "total_so": 13041,
-      "total_con_pickings": 12902,
-      "cumplidos": 12250,
-      "parciales": 12,
-      "sin_iniciar": 640,
+      "valor": 0.9592584115358206,
+      "total_so": 13113,
+      "total_con_pickings": 13107,
+      "cumplidos": 12573,
+      "parciales": 10,
+      "sin_iniciar": 524,
       "error": null
     },
     "oct_30d": {
-      "valor": 61.733712215320914,
-      "n_orders": 13685,
+      "valor": 62.86998082678638,
+      "n_orders": 14256,
       "min_h": 0.0033333333333333335,
       "max_h": 719.81,
-      "mediana_h": 26.519444444444446,
+      "mediana_h": 26.120833333333334,
       "detalle": [
         {
           "so": "S239366",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 17167,
+      "lineas": 17767,
       "mes": "2026-07",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 123,
-      "outgoing": 29782,
-      "internal": 20095,
+      "incoming": 120,
+      "outgoing": 29901,
+      "internal": 19979,
       "total": 50000,
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 38,
-          "tarde": 38,
+          "total": 42,
+          "tarde": 42,
           "on_time_pct": 0.0
         },
         {
@@ -379,14 +379,14 @@
         },
         {
           "cliente": "abc S.A.",
-          "total": 61,
-          "tarde": 61,
+          "total": 77,
+          "tarde": 77,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 188,
-          "tarde": 188,
+          "total": 191,
+          "tarde": 191,
           "on_time_pct": 0.0
         },
         {
@@ -403,9 +403,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 60,
-          "tarde": 57,
-          "on_time_pct": 0.05
+          "total": 67,
+          "tarde": 64,
+          "on_time_pct": 0.04477611940298507
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -415,13 +415,19 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 7,
+          "total": 8,
           "tarde": 2,
-          "on_time_pct": 0.7142857142857143
+          "on_time_pct": 0.75
         },
         {
           "cliente": "Falabella Retail",
           "total": 9,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Mercadolibre Chile Limitada",
+          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -7090,42 +7096,140 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.014282742841295154,
-      "total_pickings": 14423,
-      "on_time": 209,
-      "on_time_pct": 0.014490743950634403,
-      "in_full": 14406,
-      "in_full_pct": 0.9988213270470776,
-      "both": 206,
+      "valor": 0.022616585496030423,
+      "total_pickings": 14989,
+      "on_time": 342,
+      "on_time_pct": 0.022816732270331576,
+      "in_full": 14972,
+      "in_full_pct": 0.9988658349456268,
+      "both": 339,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.053488372093023255,
-      "total_pickings": 430,
-      "on_time": 27,
-      "on_time_pct": 0.06279069767441861,
-      "in_full": 425,
-      "in_full_pct": 0.9883720930232558,
-      "both": 23,
+      "valor": 0.05806451612903226,
+      "total_pickings": 465,
+      "on_time": 31,
+      "on_time_pct": 0.06666666666666667,
+      "in_full": 460,
+      "in_full_pct": 0.989247311827957,
+      "both": 27,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9990853822564157,
-      "ok": 18570,
-      "total": 18587,
+      "valor": 0.9991212199534764,
+      "ok": 19328,
+      "total": 19345,
       "errores": 17,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.699705128205128,
-      "n_recepciones": 260,
+      "valor": 10.257320623206232,
+      "n_recepciones": 271,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01120",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:07",
+          "done": "2026-07-28 20:07"
+        },
+        {
+          "picking": "CA1/RET/01118",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:05",
+          "done": "2026-07-28 20:05"
+        },
+        {
+          "picking": "CA1/RET/01117",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:04",
+          "done": "2026-07-28 20:04"
+        },
+        {
+          "picking": "CA1/RET/01116",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:01",
+          "done": "2026-07-28 20:01"
+        },
+        {
+          "picking": "CA1/RET/01115",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 20:00",
+          "done": "2026-07-28 20:00"
+        },
+        {
+          "picking": "CA1/RET/01114",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:55",
+          "done": "2026-07-28 19:55"
+        },
+        {
+          "picking": "BVO/RET/00001",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:51",
+          "done": "2026-07-28 19:52"
+        },
+        {
+          "picking": "CA1/RET/01113",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:20",
+          "done": "2026-07-28 19:20"
+        },
+        {
+          "picking": "CA1/RET/01112",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:16",
+          "done": "2026-07-28 19:16"
+        },
+        {
+          "picking": "CA1/RET/01111",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:11",
+          "done": "2026-07-28 19:11"
+        },
+        {
+          "picking": "CA1/RET/01110",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:09",
+          "done": "2026-07-28 19:09"
+        },
+        {
+          "picking": "CA1/RET/01109",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:08",
+          "done": "2026-07-28 19:08"
+        },
+        {
+          "picking": "CA1/RET/01108",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 19:00",
+          "done": "2026-07-28 19:00"
+        },
+        {
+          "picking": "CA1/RET/01107",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-07-28 18:48",
+          "done": "2026-07-28 18:49"
+        },
         {
           "picking": "CA1/RET/01104",
           "proveedor": "Falabella Retail",
@@ -7167,104 +7271,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-28 15:35",
           "done": "2026-07-28 15:35"
-        },
-        {
-          "picking": "CA1/RET/01096",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:33",
-          "done": "2026-07-28 15:34"
-        },
-        {
-          "picking": "CA1/RET/01097",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:34",
-          "done": "2026-07-28 15:34"
-        },
-        {
-          "picking": "CA1/RET/01098",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:34",
-          "done": "2026-07-28 15:34"
-        },
-        {
-          "picking": "CA1/RET/01095",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-07-28 15:33",
-          "done": "2026-07-28 15:33"
-        },
-        {
-          "picking": "CA1/RET/01094",
-          "proveedor": "Cliente Kitchen Center",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 17:12",
-          "done": "2026-07-27 17:13"
-        },
-        {
-          "picking": "CA1/RET/01093",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:40",
-          "done": "2026-07-27 16:40"
-        },
-        {
-          "picking": "CA1/RET/01092",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:30",
-          "done": "2026-07-27 16:30"
-        },
-        {
-          "picking": "CA1/RET/01091",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:27",
-          "done": "2026-07-27 16:27"
-        },
-        {
-          "picking": "CA1/RET/01090",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:25",
-          "done": "2026-07-27 16:25"
-        },
-        {
-          "picking": "CA1/RET/01089",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:13",
-          "done": "2026-07-27 16:13"
-        },
-        {
-          "picking": "CA1/RET/01088",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:10",
-          "done": "2026-07-27 16:10"
-        },
-        {
-          "picking": "CA1/RET/01087",
-          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-          "horas": 0.0,
-          "scheduled": "2026-07-27 16:09",
-          "done": "2026-07-27 16:09"
-        },
-        {
-          "picking": "CA1/IN/00949",
-          "proveedor": "HINATURE Inc.",
-          "horas": 169.8,
-          "scheduled": "2026-07-17 17:26",
-          "done": "2026-07-24 19:13"
-        },
-        {
-          "picking": "CA1/IN/00960",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-24 15:21",
-          "done": "2026-07-24 15:24"
         }
       ],
       "error": null
