@@ -241,6 +241,46 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
             n_ref += origen == 'ref'; n_fs += origen == 'fs'
             break
     print(f"   [CMR] {n} filas enriquecidas (por ref #: {n_ref}, por fecha+sku: {n_fs}), venta bruta +${total:,.0f}", flush=True)
+
+    # INGRESO POR ENVÍO CMR (decisión Andrés 29-jul-2026): el 'Envío CMR' del Sheet es
+    # INGRESO, no costo. El match de producto lo descartaba (logistica=0). Se agrega como
+    # filas de ingreso separadas (tipo_compra='Envío', costo 0), para los meses presentes
+    # en df. Se sacan primero las Delivery/Envío previas de CMR para no duplicar.
+    meses_df = set(pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m').dropna())
+    es_env_cmr_prev = ((df['canal'] == 'CMR')
+                       & df['sku'].astype(str).str.contains('elivery|nvio', case=False, na=False))
+    if es_env_cmr_prev.any():
+        df = df[~es_env_cmr_prev].copy()
+    NUMc = set(c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]))
+    env_rows = []
+    for _, cmr in df_cmr.iterrows():
+        env = float(cmr.get('envio_cmr') or 0)
+        f = cmr['fecha']
+        if env == 0 or f is None or f.strftime('%Y-%m') not in meses_df:
+            continue
+        row = {c: (0 if c in NUMc else '') for c in df.columns}
+        row.update({
+            'tipo_movimiento': 'Venta', 'canal': 'CMR', 'tipo_negocio': 'Fidelización',
+            'sku': 'Delivery_007', 'producto': 'Envíos', 'categoria_macro': 'Envíos',
+            'tipo_compra': 'Envío', 'estado_pedido': 'sale',
+            'pedido_marketplace': str(cmr.get('cmr_name', '')).strip(),
+            'fecha_venta': f.isoformat(), 'fecha_documento': f.isoformat(),
+            'anio_venta': f.year, 'mes_venta': f.month, 'semana_venta': f.isocalendar()[1],
+            'dia_semana': f.weekday(), 'cantidad': 1.0,
+            'venta_bruta': env, 'venta_neta': env / 1.19,
+            'margen_front': env / 1.19, 'margen_final': env / 1.19,
+        })
+        env_rows.append(row)
+    if env_rows:
+        env_df = pd.DataFrame(env_rows).reindex(columns=df.columns)
+        for c in df.columns:
+            try:
+                env_df[c] = env_df[c].astype(df[c].dtype)
+            except (ValueError, TypeError):
+                pass
+        df = pd.concat([df, env_df], ignore_index=True)
+        _tot_env = sum(r['venta_bruta'] for r in env_rows)
+        print(f"   [CMR] +{len(env_rows)} filas Envío CMR como ingreso (${_tot_env:,.0f})", flush=True)
     return df
 
 
