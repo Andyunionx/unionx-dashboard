@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-07-29T18:53:23.961475",
+  "generado_en": "2026-07-30T01:17:49.462023",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11999,
-  "total_monto_pendiente_clp": 737556320.0,
+  "total_documentos_pendientes": 12085,
+  "total_monto_pendiente_clp": 742960783.0,
   "monto_por_aging": {
-    "+90 días": 44389470.0,
-    "1-30 días": 445839430.0,
-    "31-60 días": 116131575.0,
-    "61-90 días": 33202310.0,
-    "Vigente": 97993535.0
+    "+90 días": 46723343.0,
+    "1-30 días": 455611347.0,
+    "31-60 días": 115339785.0,
+    "61-90 días": 36020922.0,
+    "Vigente": 89265386.0
   },
   "monto_por_tipo": {
-    "BOLETA": 577530372.0,
+    "BOLETA": 582934835.0,
     "FACTURA": 160025948.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 156595592.0
+      "monto": 157324474.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -26,15 +26,15 @@
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 77988259.0
+      "monto": 78922292.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 49914257.0
+      "monto": 50339067.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 43955282.0
+      "monto": 46022453.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 25790616.0
+      "monto": 26487975.0
     },
     {
       "partner": "abc S.A.",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 21262611.0
+      "monto": 21288101.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -66,7 +66,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 15055369.0
+      "monto": 14935736.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -85,18 +85,18 @@
       "monto": 4104800.0
     },
     {
+      "partner": "Shopping LATAM Pass",
+      "monto": 3502460.0
+    },
+    {
       "partner": "Comercializadora Mercado Local Spa.",
       "monto": 3244328.0
     },
     {
       "partner": "VICAPITAL SpA",
       "monto": 3105900.0
-    },
-    {
-      "partner": "Shopping LATAM Pass",
-      "monto": 3050560.0
     }
   ],
-  "notas_credito_count": 560,
+  "notas_credito_count": 555,
   "pedidos_venta_count": 10000
 }
