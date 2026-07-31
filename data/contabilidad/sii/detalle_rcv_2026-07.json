@@ -1,6 +1,16 @@
 [
  {
   "tipo_doc": "33",
+  "rut_emisor": "96930480-5",
+  "razon_social": "DUTY FREE T C S A",
+  "folio": "172007",
+  "fecha": "2026-07-30",
+  "monto_neto": 24202.0,
+  "monto_iva": 4598.0,
+  "monto_total": 28800.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "77398220-1",
   "razon_social": "MercadoLibre Chile LTDA",
   "folio": "14408178",
@@ -8,16 +18,6 @@
   "monto_neto": 64697.0,
   "monto_iva": 12293.0,
   "monto_total": 76990.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "97023000-9",
-  "razon_social": "Banco Itaú Chile",
-  "folio": "7915783",
-  "fecha": "2026-06-30",
-  "monto_neto": 61230.0,
-  "monto_iva": 11634.0,
-  "monto_total": 72864.0
  },
  {
   "tipo_doc": "33",
@@ -221,6 +221,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "97023000-9",
+  "razon_social": "Banco Itaú Chile",
+  "folio": "7915783",
+  "fecha": "2026-06-30",
+  "monto_neto": 61230.0,
+  "monto_iva": 11634.0,
+  "monto_total": 72864.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "88824300-3",
   "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
   "folio": "353525",
@@ -241,6 +251,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "88824300-3",
+  "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
+  "folio": "354788",
+  "fecha": "2026-07-29",
+  "monto_neto": 0.0,
+  "monto_iva": 0.0,
+  "monto_total": 0.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "77814048-9",
   "razon_social": "MECÁNICA HÉCTOR ANDRÉS AGURTO ABARCA E.I.R.L.",
   "folio": "77",
@@ -251,13 +271,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76172595-5",
-  "razon_social": "MEDLOG CHILE S.A",
-  "folio": "960981",
-  "fecha": "2026-07-28",
-  "monto_neto": 168000.0,
-  "monto_iva": 31920.0,
-  "monto_total": 199920.0
+  "rut_emisor": "97080000-K",
+  "razon_social": "Banco BICE",
+  "folio": "3866686",
+  "fecha": "2026-07-29",
+  "monto_neto": 28085.0,
+  "monto_iva": 5336.0,
+  "monto_total": 33421.0
  },
  {
   "tipo_doc": "33",
@@ -273,6 +293,16 @@
   "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2446877",
+  "fecha": "2026-07-28",
+  "monto_neto": 218385.0,
+  "monto_iva": 41493.0,
+  "monto_total": 259878.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
   "folio": "2446876",
   "fecha": "2026-07-28",
   "monto_neto": 561825.0,
@@ -281,13 +311,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77953648-3",
-  "razon_social": "FOTOGRÁFICO SPA",
-  "folio": "197",
+  "rut_emisor": "81201000-K",
+  "razon_social": "Cencosud_Retail_S.A.",
+  "folio": "27131587",
   "fecha": "2026-07-28",
-  "monto_neto": 270000.0,
-  "monto_iva": 51300.0,
-  "monto_total": 321300.0
+  "monto_neto": 3395436.0,
+  "monto_iva": 645133.0,
+  "monto_total": 4040569.0
  },
  {
   "tipo_doc": "33",
@@ -301,13 +331,23 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "81201000-K",
-  "razon_social": "Cencosud_Retail_S.A.",
-  "folio": "27131587",
+  "rut_emisor": "77953648-3",
+  "razon_social": "FOTOGRÁFICO SPA",
+  "folio": "197",
   "fecha": "2026-07-28",
-  "monto_neto": 3395436.0,
-  "monto_iva": 645133.0,
-  "monto_total": 4040569.0
+  "monto_neto": 270000.0,
+  "monto_iva": 51300.0,
+  "monto_total": 321300.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "76172595-5",
+  "razon_social": "MEDLOG CHILE S.A",
+  "folio": "960981",
+  "fecha": "2026-07-28",
+  "monto_neto": 168000.0,
+  "monto_iva": 31920.0,
+  "monto_total": 199920.0
  },
  {
   "tipo_doc": "33",
@@ -323,11 +363,11 @@
   "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
-  "folio": "2446877",
-  "fecha": "2026-07-28",
-  "monto_neto": 218385.0,
-  "monto_iva": 41493.0,
-  "monto_total": 259878.0
+  "folio": "2440494",
+  "fecha": "2026-06-28",
+  "monto_neto": 457909.0,
+  "monto_iva": 87003.0,
+  "monto_total": 544912.0
  },
  {
   "tipo_doc": "33",
@@ -341,13 +381,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "83382700-6",
-  "razon_social": "Comercial Eccsa S.A.",
-  "folio": "2440494",
-  "fecha": "2026-06-28",
-  "monto_neto": 457909.0,
-  "monto_iva": 87003.0,
-  "monto_total": 544912.0
+  "rut_emisor": "77096952-2",
+  "razon_social": "FID CHILE SEGUROS GENERALES S.A.",
+  "folio": "474827",
+  "fecha": "2026-07-27",
+  "monto_neto": 40334.0,
+  "monto_iva": 7663.0,
+  "monto_total": 47997.0
  },
  {
   "tipo_doc": "33",
@@ -361,16 +401,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77096952-2",
-  "razon_social": "FID CHILE SEGUROS GENERALES S.A.",
-  "folio": "474827",
-  "fecha": "2026-07-27",
-  "monto_neto": 40334.0,
-  "monto_iva": 7663.0,
-  "monto_total": 47997.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "96999930-7",
   "razon_social": "KITCHEN CENTER SPA",
   "folio": "11390178",
@@ -378,6 +408,16 @@
   "monto_neto": 1780000.0,
   "monto_iva": 338200.0,
   "monto_total": 2118200.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2437657",
+  "fecha": "2026-07-27",
+  "monto_neto": 14976.0,
+  "monto_iva": 2845.0,
+  "monto_total": 17821.0
  },
  {
   "tipo_doc": "33",
@@ -398,16 +438,6 @@
   "monto_neto": 30607.0,
   "monto_iva": 5815.0,
   "monto_total": 36422.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "83382700-6",
-  "razon_social": "Comercial Eccsa S.A.",
-  "folio": "2437657",
-  "fecha": "2026-07-27",
-  "monto_neto": 14976.0,
-  "monto_iva": 2845.0,
-  "monto_total": 17821.0
  },
  {
   "tipo_doc": "33",
@@ -441,16 +471,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77029396-0",
-  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
-  "folio": "2353",
-  "fecha": "2026-07-27",
-  "monto_neto": 245074.0,
-  "monto_iva": 46564.0,
-  "monto_total": 291638.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
   "folio": "2438102",
@@ -458,6 +478,16 @@
   "monto_neto": 43812.0,
   "monto_iva": 8324.0,
   "monto_total": 52136.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77029396-0",
+  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
+  "folio": "2353",
+  "fecha": "2026-07-27",
+  "monto_neto": 245074.0,
+  "monto_iva": 46564.0,
+  "monto_total": 291638.0
  },
  {
   "tipo_doc": "33",
@@ -521,16 +551,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77398220-1",
-  "razon_social": "MercadoLibre Chile Ltda.",
-  "folio": "15233515",
-  "fecha": "2026-07-23",
-  "monto_neto": 4328832.0,
-  "monto_iva": 822478.0,
-  "monto_total": 5151310.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "76771632-K",
   "razon_social": "CART PAPER LIMITADA",
   "folio": "70645",
@@ -551,53 +571,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77029396-0",
-  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
-  "folio": "2342",
-  "fecha": "2026-07-22",
-  "monto_neto": 245070.0,
-  "monto_iva": 46563.0,
-  "monto_total": 291633.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "78186172-3",
-  "razon_social": "Sociedad Comercial Sur Negro Ltda",
-  "folio": "59723",
-  "fecha": "2026-07-22",
-  "monto_neto": 64862.0,
-  "monto_iva": 12324.0,
-  "monto_total": 80013.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77261280-K",
-  "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5677261",
-  "fecha": "2026-07-22",
-  "monto_neto": 20000.0,
-  "monto_iva": 3800.0,
-  "monto_total": 23800.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77261280-K",
-  "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5677262",
-  "fecha": "2026-07-22",
-  "monto_neto": 20000.0,
-  "monto_iva": 3800.0,
-  "monto_total": 23800.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "85896100-9",
-  "razon_social": "SERVICIOS EQUIFAX CHILE LIMITADA",
-  "folio": "4186733",
-  "fecha": "2026-07-22",
-  "monto_neto": 149284.0,
-  "monto_iva": 28364.0,
-  "monto_total": 177648.0
+  "rut_emisor": "77398220-1",
+  "razon_social": "MercadoLibre Chile Ltda.",
+  "folio": "15233515",
+  "fecha": "2026-07-23",
+  "monto_neto": 4328832.0,
+  "monto_iva": 822478.0,
+  "monto_total": 5151310.0
  },
  {
   "tipo_doc": "33",
@@ -611,9 +591,19 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "77029396-0",
+  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
+  "folio": "2342",
+  "fecha": "2026-07-22",
+  "monto_neto": 245070.0,
+  "monto_iva": 46563.0,
+  "monto_total": 291633.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "77261280-K",
   "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5677263",
+  "folio": "5677262",
   "fecha": "2026-07-22",
   "monto_neto": 20000.0,
   "monto_iva": 3800.0,
@@ -631,6 +621,36 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "85896100-9",
+  "razon_social": "SERVICIOS EQUIFAX CHILE LIMITADA",
+  "folio": "4186733",
+  "fecha": "2026-07-22",
+  "monto_neto": 149284.0,
+  "monto_iva": 28364.0,
+  "monto_total": 177648.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "78186172-3",
+  "razon_social": "Sociedad Comercial Sur Negro Ltda",
+  "folio": "59723",
+  "fecha": "2026-07-22",
+  "monto_neto": 64862.0,
+  "monto_iva": 12324.0,
+  "monto_total": 80013.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77261280-K",
+  "razon_social": "FALABELLA RETAIL S.A.",
+  "folio": "5677263",
+  "fecha": "2026-07-22",
+  "monto_neto": 20000.0,
+  "monto_iva": 3800.0,
+  "monto_total": 23800.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "76212492-0",
   "razon_social": "Falabella.com SpA",
   "folio": "490022",
@@ -638,6 +658,16 @@
   "monto_neto": 31132754.0,
   "monto_iva": 5915223.0,
   "monto_total": 37047977.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77261280-K",
+  "razon_social": "FALABELLA RETAIL S.A.",
+  "folio": "5676907",
+  "fecha": "2026-07-22",
+  "monto_neto": 38839.0,
+  "monto_iva": 7379.0,
+  "monto_total": 46218.0
  },
  {
   "tipo_doc": "33",
@@ -653,21 +683,11 @@
   "tipo_doc": "33",
   "rut_emisor": "77261280-K",
   "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5676907",
+  "folio": "5677261",
   "fecha": "2026-07-22",
-  "monto_neto": 38839.0,
-  "monto_iva": 7379.0,
-  "monto_total": 46218.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76836436-2",
-  "razon_social": "LANCENTER CHILE SPA",
-  "folio": "799",
-  "fecha": "2026-07-21",
-  "monto_neto": 88227.0,
-  "monto_iva": 16763.0,
-  "monto_total": 104990.0
+  "monto_neto": 20000.0,
+  "monto_iva": 3800.0,
+  "monto_total": 23800.0
  },
  {
   "tipo_doc": "33",
@@ -691,6 +711,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "76836436-2",
+  "razon_social": "LANCENTER CHILE SPA",
+  "folio": "799",
+  "fecha": "2026-07-21",
+  "monto_neto": 88227.0,
+  "monto_iva": 16763.0,
+  "monto_total": 104990.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "12484640-4",
   "razon_social": "ALDO ESTEBAN GONZALEZ ASIS",
   "folio": "624",
@@ -711,16 +741,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77261280-K",
-  "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5678042",
-  "fecha": "2026-07-20",
-  "monto_neto": 20000.0,
-  "monto_iva": 3800.0,
-  "monto_total": 23800.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
   "folio": "2445422",
@@ -738,6 +758,16 @@
   "monto_neto": 120789.0,
   "monto_iva": 22950.0,
   "monto_total": 143739.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77261280-K",
+  "razon_social": "FALABELLA RETAIL S.A.",
+  "folio": "5678042",
+  "fecha": "2026-07-20",
+  "monto_neto": 20000.0,
+  "monto_iva": 3800.0,
+  "monto_total": 23800.0
  },
  {
   "tipo_doc": "33",
