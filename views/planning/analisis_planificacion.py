@@ -48,6 +48,17 @@ _MARCA_TO_PPTO: dict[str, str] = {
     'Purito': 'Purito',
 }
 
+# Canales canónicos del Excel (mismo orden y nombres)
+_CANALES_DISPLAY = [
+    'Corporativo',
+    'Distribución',
+    'UnionX B2B',
+    'Fidelización',
+    'Marketplace',
+    'P.Web',
+    'Tiendas Propias',
+]
+
 
 # ── Cached loaders ────────────────────────────────────────────────────
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -531,10 +542,7 @@ def render():
         (real_marca_piv.index.tolist() if not real_marca_piv.empty else []) +
         (meta_marca_piv.index.tolist() if not meta_marca_piv.empty else [])
     ))
-    _all_canales = sorted(set(
-        (real_canal_piv.index.tolist() if not real_canal_piv.empty else []) +
-        (meta_canal_piv.index.tolist() if not meta_canal_piv.empty else [])
-    ))
+    _all_canales = _CANALES_DISPLAY
 
     # ════════════════════════════════════════════════════════════════
     # TAB 1: CÓMO VAMOS
@@ -621,7 +629,7 @@ def render():
 
                 # ── VN por Canal ──────────────────────────────────────
                 st.markdown("#### Venta Neta por Canal")
-                _cf = canales_f if len(canales_f) < len(_all_canales) else None
+                _cf = canales_f if canales_f else _all_canales
                 df_cv_c, lin_hdr_c = _build_cv_table(real_canal_piv, meta_canal_piv, 'Canal', meses_lin_cv, dims_filter=_cf)
                 _show_cv(df_cv_c, 'Canal', lin_hdr_c)
                 _dl(df_cv_c, f"cv_vn_canal_{per_lbl}.csv")
@@ -737,7 +745,7 @@ def render():
                 )
 
                 # ── Resumen KPIs ──────────────────────────────────────
-                _cf_cc = canales_f_cc if len(canales_f_cc) < len(_all_canales) else None
+                _cf_cc = canales_f_cc if canales_f_cc else _all_canales
                 t_meta_cc = sum(
                     (float(meta_canal_piv.at[d, m]) if (not meta_canal_piv.empty and d in meta_canal_piv.index and m in meta_canal_piv.columns) else 0.0)
                     for d in canales_f_cc for m in meses_cc
