@@ -165,12 +165,13 @@ def _dl(df: pd.DataFrame, filename: str, label="⬇️ Descargar CSV"):
                        file_name=filename, mime='text/csv', use_container_width=True)
 
 
-def _build_comp_table(real_piv, meta_piv, meses, dim_col):
+def _build_comp_table(real_piv, meta_piv, meses, dim_col, dims_filter=None):
     """Returns (df, meta_cols, real_cols, var_cols) for the META|REAL|VAR% table."""
-    all_dims = sorted(set(
+    all_dims_raw = sorted(set(
         (real_piv.index.tolist() if not real_piv.empty else []) +
         (meta_piv.index.tolist() if not meta_piv.empty else [])
     ))
+    all_dims = [d for d in all_dims_raw if dims_filter is None or d in set(dims_filter)]
     rows, mc, rc, vc = [], [], [], []
 
     for dim in all_dims:
@@ -189,13 +190,13 @@ def _build_comp_table(real_piv, meta_piv, meses, dim_col):
         row['TOT VAR%'] = (tr / tm - 1) if tm > 0 else None
         rows.append(row)
 
-    # Grand total row
+    # Grand total row — sums only filtered dims
     tr_row = {dim_col: 'TOTAL'}
     t_m = t_r = 0.0
     for mes in meses:
         lbl = pd.Timestamp(mes + '-01').strftime('%b')
-        m = float(meta_piv[mes].sum()) if (not meta_piv.empty and mes in meta_piv.columns) else 0.0
-        r = float(real_piv[mes].sum())  if (not real_piv.empty  and mes in real_piv.columns)  else 0.0
+        m = sum(float(meta_piv.at[d, mes]) if (not meta_piv.empty and d in meta_piv.index and mes in meta_piv.columns) else 0.0 for d in all_dims)
+        r = sum(float(real_piv.at[d, mes])  if (not real_piv.empty  and d in real_piv.index  and mes in real_piv.columns)  else 0.0 for d in all_dims)
         tr_row[f'{lbl} META'] = m; tr_row[f'{lbl} REAL'] = r
         tr_row[f'{lbl} VAR%'] = (r / m - 1) if m > 0 else None
         t_m += m; t_r += r
@@ -227,45 +228,58 @@ def _show_comp(df, meta_cols, real_cols, var_cols, dim_col):
                  height=min(600, 60 + len(df) * 35))
 
 
-def _build_cv_table(real_piv, meta_piv, dim_col, ultimo_mes, linealidad, ultimo_dia, dias_en_mes):
-    """Cómo Vamos table: dim | Meta Mes | Meta Lineal | Real Acum | vs Lineal ($) | % vs Lineal | % vs Meta."""
-    lin_header = f'Meta Lineal\ndía {ultimo_dia}/{dias_en_mes}'
-    all_dims = sorted(set(
+def _build_cv_table(real_piv, meta_piv, dim_col, meses_lin, dims_filter=None):
+    """Cómo Vamos table with per-month linealidad and optional dimension filter.
+    meses_lin: [(mes_str, linealidad_float), ...]
+    """
+    if len(meses_lin) == 1:
+        mes0, lin0 = meses_lin[0]
+        ts0   = pd.Timestamp(mes0 + '-01')
+        dias0 = (ts0 + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
+        dia0  = round(lin0 * dias0)
+        lin_header = f'Meta Lineal\ndía {dia0}/{dias0}'
+    else:
+        lin_header = 'Meta Lineal\n(período)'
+
+    all_dims_raw = sorted(set(
         (real_piv.index.tolist() if not real_piv.empty else []) +
         (meta_piv.index.tolist() if not meta_piv.empty else [])
     ))
+    all_dims = [d for d in all_dims_raw if dims_filter is None or d in set(dims_filter)]
+
     rows = []
-    t_m = t_r = 0.0
+    t_m = t_r = t_mlin = 0.0
     for dim in all_dims:
-        m = float(meta_piv.at[dim, ultimo_mes]) if (not meta_piv.empty and dim in meta_piv.index and ultimo_mes in meta_piv.columns) else 0.0
-        r = float(real_piv.at[dim, ultimo_mes])  if (not real_piv.empty  and dim in real_piv.index  and ultimo_mes in real_piv.columns)  else 0.0
-        m_lin = m * linealidad
-        t_m += m; t_r += r
+        m_tot = r_tot = mlin_tot = 0.0
+        for mes, lin in meses_lin:
+            mv = float(meta_piv.at[dim, mes]) if (not meta_piv.empty and dim in meta_piv.index and mes in meta_piv.columns) else 0.0
+            rv = float(real_piv.at[dim, mes])  if (not real_piv.empty  and dim in real_piv.index  and mes in real_piv.columns)  else 0.0
+            m_tot += mv; r_tot += rv; mlin_tot += mv * lin
+        t_m += m_tot; t_r += r_tot; t_mlin += mlin_tot
         rows.append({
-            dim_col:          dim,
-            'Meta Mes':       m,
-            lin_header:       m_lin,
-            'Real Acum.':     r,
-            'vs Lineal ($)':  r - m_lin,
-            '% vs Lineal':    (r / m_lin - 1) if m_lin > 0 else None,
-            '% vs Meta':      (r / m - 1)     if m     > 0 else None,
+            dim_col:         dim,
+            'Meta Período':  m_tot,
+            lin_header:      mlin_tot,
+            'Real Acum.':    r_tot,
+            'vs Lineal ($)': r_tot - mlin_tot,
+            '% vs Lineal':   (r_tot / mlin_tot - 1) if mlin_tot > 0 else None,
+            '% vs Meta':     (r_tot / m_tot - 1)    if m_tot > 0    else None,
         })
-    t_m_lin = t_m * linealidad
     rows.append({
         dim_col:         'TOTAL',
-        'Meta Mes':      t_m,
-        lin_header:      t_m_lin,
+        'Meta Período':  t_m,
+        lin_header:      t_mlin,
         'Real Acum.':    t_r,
-        'vs Lineal ($)': t_r - t_m_lin,
-        '% vs Lineal':   (t_r / t_m_lin - 1) if t_m_lin > 0 else None,
-        '% vs Meta':     (t_r / t_m - 1)     if t_m     > 0 else None,
+        'vs Lineal ($)': t_r - t_mlin,
+        '% vs Lineal':   (t_r / t_mlin - 1) if t_mlin > 0 else None,
+        '% vs Meta':     (t_r / t_m - 1)    if t_m > 0    else None,
     })
     return pd.DataFrame(rows), lin_header
 
 
 def _show_cv(df, dim_col, lin_header):
     """Display Cómo Vamos table with 5-level color on % vs Lineal."""
-    money_cols = ['Meta Mes', lin_header, 'Real Acum.', 'vs Lineal ($)']
+    money_cols = ['Meta Período', lin_header, 'Real Acum.', 'vs Lineal ($)']
     fmt = {c: _fmt_m for c in money_cols}
     fmt['% vs Lineal'] = _fmt_pct
     fmt['% vs Meta']   = _fmt_pct
@@ -310,29 +324,30 @@ def _show_contrib(df, dim_col):
     )
 
 
-def _build_contrib_ytd(real_cb_piv, real_vn_piv, meses, dim_col):
+def _build_contrib_ytd(real_cb_piv, real_vn_piv, meses, dim_col, dims_filter=None):
     """Real YTD contribution table: dim | Ene ... | TOTAL | % Margen"""
-    all_dims = sorted(real_cb_piv.index.tolist()) if not real_cb_piv.empty else []
+    all_dims_raw = sorted(real_cb_piv.index.tolist()) if not real_cb_piv.empty else []
+    all_dims = [d for d in all_dims_raw if dims_filter is None or d in set(dims_filter)]
     rows = []
     for dim in all_dims:
         row = {dim_col: dim}
         tot_cb = tot_vn = 0.0
         for mes in meses:
             lbl = pd.Timestamp(mes + '-01').strftime('%b')
-            cb = float(real_cb_piv.at[dim, mes]) if mes in real_cb_piv.columns else 0.0
+            cb = float(real_cb_piv.at[dim, mes]) if (not real_cb_piv.empty and dim in real_cb_piv.index and mes in real_cb_piv.columns) else 0.0
             vn = float(real_vn_piv.at[dim, mes]) if (not real_vn_piv.empty and dim in real_vn_piv.index and mes in real_vn_piv.columns) else 0.0
             row[lbl] = cb
             tot_cb += cb; tot_vn += vn
         row['TOTAL'] = tot_cb
         row['% Margen'] = tot_cb / tot_vn if tot_vn > 0 else None
         rows.append(row)
-    # Grand total row
+    # Grand total row — sums only filtered dims
     row_t = {dim_col: 'TOTAL'}
     gt_cb = gt_vn = 0.0
     for mes in meses:
         lbl = pd.Timestamp(mes + '-01').strftime('%b')
-        cb = float(real_cb_piv[mes].sum()) if (not real_cb_piv.empty and mes in real_cb_piv.columns) else 0.0
-        vn = float(real_vn_piv[mes].sum()) if (not real_vn_piv.empty and mes in real_vn_piv.columns) else 0.0
+        cb = sum(float(real_cb_piv.at[d, mes]) if (not real_cb_piv.empty and d in real_cb_piv.index and mes in real_cb_piv.columns) else 0.0 for d in all_dims)
+        vn = sum(float(real_vn_piv.at[d, mes]) if (not real_vn_piv.empty and d in real_vn_piv.index and mes in real_vn_piv.columns) else 0.0 for d in all_dims)
         row_t[lbl] = cb; gt_cb += cb; gt_vn += vn
     row_t['TOTAL'] = gt_cb
     row_t['% Margen'] = gt_cb / gt_vn if gt_vn > 0 else None
@@ -355,6 +370,77 @@ def _show_contrib_ytd(df, dim_col):
         use_container_width=True, hide_index=True,
         height=min(600, 60 + len(df) * 35),
     )
+
+
+def _build_contrib_cv(real_cb_piv, real_vn_piv, dim_col, meses_lin, dims_filter=None):
+    """Period-aggregated contribution for Cómo Vamos."""
+    all_dims_raw = sorted(real_cb_piv.index.tolist() if not real_cb_piv.empty else [])
+    all_dims = [d for d in all_dims_raw if dims_filter is None or d in set(dims_filter)]
+    rows = []
+    t_cb = t_vn = 0.0
+    for dim in all_dims:
+        cb_tot = vn_tot = 0.0
+        for mes, _ in meses_lin:
+            cb = float(real_cb_piv.at[dim, mes]) if (not real_cb_piv.empty and dim in real_cb_piv.index and mes in real_cb_piv.columns) else 0.0
+            vn = float(real_vn_piv.at[dim, mes])  if (not real_vn_piv.empty  and dim in real_vn_piv.index  and mes in real_vn_piv.columns)  else 0.0
+            cb_tot += cb; vn_tot += vn
+        t_cb += cb_tot; t_vn += vn_tot
+        rows.append({dim_col: dim, 'Real Acum.': cb_tot, '% Margen': cb_tot / vn_tot if vn_tot > 0 else None})
+    rows.append({dim_col: 'TOTAL', 'Real Acum.': t_cb, '% Margen': t_cb / t_vn if t_vn > 0 else None})
+    return pd.DataFrame(rows)
+
+
+_Q_MAP = {'Q1': [1,2,3], 'Q2': [4,5,6], 'Q3': [7,8,9], 'Q4': [10,11,12]}
+
+
+def _lin_for_mes(mes_str: str) -> float:
+    """Linealidad 0→1 for a given month string 'YYYY-MM'."""
+    cur = _TODAY.strftime('%Y-%m')
+    if mes_str > cur:
+        return 0.0
+    if mes_str < cur:
+        return 1.0
+    ts   = pd.Timestamp(mes_str + '-01')
+    dias = (ts + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
+    return _TODAY.day / dias
+
+
+def _periodo_filter(key_prefix: str, yr: str, meses_disp: list, default_last: bool = True) -> list:
+    """Render period selector. Returns [(mes_str, linealidad), ...]."""
+    meses_yr = sorted([m for m in meses_disp if m.startswith(yr)])
+    if not meses_yr:
+        return []
+    # Build options: individual months first, then quarters with ≥1 month
+    opts = []  # (kind, value, label)
+    for m in meses_yr:
+        opts.append(('mes', m, pd.Timestamp(m + '-01').strftime('%b %Y')))
+    for q, nums in _Q_MAP.items():
+        if any(m for m in meses_yr if int(m[5:7]) in nums):
+            opts.append(('q', q, f'{q} {yr}'))
+    labels = [o[2] for o in opts]
+    default_idx = (len(meses_yr) - 1) if default_last else 0
+    sel = st.selectbox('Período', labels, index=default_idx, key=f'{key_prefix}_periodo')
+    kind, val, _ = next(o for o in opts if o[2] == sel)
+    if kind == 'mes':
+        meses_sel = [val]
+    else:
+        nums = _Q_MAP[val]
+        meses_sel = [m for m in meses_yr if int(m[5:7]) in nums]
+    return [(m, _lin_for_mes(m)) for m in meses_sel]
+
+
+def _periodo_label(meses_lin: list, yr: str) -> str:
+    """Human-readable label for a period."""
+    if not meses_lin:
+        return ''
+    meses = [m for m, _ in meses_lin]
+    if len(meses) == 1:
+        return pd.Timestamp(meses[0] + '-01').strftime('%B %Y').upper()
+    months_nums = [int(m[5:7]) for m in meses]
+    for q, nums in _Q_MAP.items():
+        if sorted(months_nums) == sorted(nums):
+            return f'{q} {yr}'
+    return ' · '.join(pd.Timestamp(m + '-01').strftime('%b') for m in meses) + f' {yr}'
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -428,166 +514,249 @@ def render():
         "🆕 Nuevos en Tránsito",
     ])
 
+    # Dims disponibles (calculados una vez, reutilizados en los 3 tabs)
+    _all_marcas = sorted(set(
+        (real_marca_piv.index.tolist() if not real_marca_piv.empty else []) +
+        (meta_marca_piv.index.tolist() if not meta_marca_piv.empty else [])
+    ))
+    _all_canales = sorted(set(
+        (real_canal_piv.index.tolist() if not real_canal_piv.empty else []) +
+        (meta_canal_piv.index.tolist() if not meta_canal_piv.empty else [])
+    ))
+
     # ════════════════════════════════════════════════════════════════
     # TAB 1: CÓMO VAMOS
     # ════════════════════════════════════════════════════════════════
     with tab_como:
-        # ── Linealidad ────────────────────────────────────────────────
-        ts_mes_cv     = pd.Timestamp(ultimo_mes + '-01')
-        dias_en_mes_cv = (ts_mes_cv + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
-        if ultimo_mes >= _TODAY.strftime('%Y-%m'):
-            ultimo_dia_cv = _TODAY.day
+        st.subheader(f"Cómo Vamos — {yr}")
+
+        if not ytd_meses:
+            st.info("Sin datos disponibles.")
         else:
-            ultimo_dia_cv = dias_en_mes_cv
-        linealidad_cv = ultimo_dia_cv / dias_en_mes_cv
+            # ── Filtros ───────────────────────────────────────────────
+            col_f1, col_f2, col_f3 = st.columns([2, 4, 4])
+            with col_f1:
+                meses_lin_cv = _periodo_filter('cv', yr, ytd_meses)
+            with col_f2:
+                marcas_cv = st.multiselect('Marcas', _all_marcas, default=_all_marcas, key='cv_marcas')
+            with col_f3:
+                canales_cv = st.multiselect('Canales', _all_canales, default=_all_canales, key='cv_canales')
 
-        mes_h = ts_mes_cv.strftime('%B %Y').upper()
-        st.subheader(f"Cómo Vamos — {mes_h}")
-        st.info(
-            f"📅 Linealidad al día **{ultimo_dia_cv}** de **{dias_en_mes_cv}** "
-            f"· **{linealidad_cv:.1%}**   ·   Meta Lineal = Meta Mes × {linealidad_cv:.4f}"
-        )
+            if not meses_lin_cv:
+                st.info("Sin datos para el período seleccionado.")
+            else:
+                marcas_f  = marcas_cv  if marcas_cv  else _all_marcas
+                canales_f = canales_cv if canales_cv else _all_canales
+                per_lbl   = _periodo_label(meses_lin_cv, yr)
 
-        if df_ventas.empty and df_ppto_marca.empty:
-            st.info("Sin datos suficientes para el comparativo del mes.")
-        else:
-            # ── KPIs globales ─────────────────────────────────────────
-            t_meta     = float(meta_marca_piv[ultimo_mes].sum()) if ultimo_mes in meta_marca_piv.columns else 0.0
-            t_real     = float(real_marca_piv[ultimo_mes].sum()) if ultimo_mes in real_marca_piv.columns else 0.0
-            t_meta_lin = t_meta * linealidad_cv
-            t_cb       = float(real_contrib_piv[ultimo_mes].sum()) if ultimo_mes in real_contrib_piv.columns else 0.0
+                # Linealidad info (solo mes único)
+                if len(meses_lin_cv) == 1:
+                    mes0, lin0 = meses_lin_cv[0]
+                    ts0 = pd.Timestamp(mes0 + '-01')
+                    dias0 = (ts0 + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
+                    dia0  = round(lin0 * dias0)
+                    st.info(f"📅 **{per_lbl}** · Linealidad día **{dia0}/{dias0}** = **{lin0:.1%}**")
+                else:
+                    st.info(f"📅 Período: **{per_lbl}** · " +
+                            " | ".join(pd.Timestamp(m+'-01').strftime('%b') for m, _ in meses_lin_cv))
 
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Meta Mes VN", _fmt_m(t_meta))
-            c2.metric(f"Meta Lineal ({linealidad_cv:.0%})", _fmt_m(t_meta_lin))
-            c3.metric(
-                "Real Acum. VN", _fmt_m(t_real),
-                delta=f"{t_real/t_meta_lin-1:+.1%} vs lineal" if t_meta_lin > 0 else None,
-            )
-            c4.metric("% vs Meta", f"{t_real/t_meta:.1%}" if t_meta > 0 else "—")
-            c5.metric(
-                "Contrib. Real", _fmt_m(t_cb),
-                delta=f"{t_cb/t_real:.1%} margen" if t_real > 0 else None,
-                delta_color="off",
-            )
+                # ── Resumen KPIs ──────────────────────────────────────
+                def _sum_piv(piv, dims, meses_lin):
+                    return sum(
+                        (float(piv.at[d, m]) if (not piv.empty and d in piv.index and m in piv.columns) else 0.0)
+                        for d in dims for m, _ in meses_lin
+                    )
+                def _sum_piv_lin(piv, dims, meses_lin):
+                    return sum(
+                        (float(piv.at[d, m]) if (not piv.empty and d in piv.index and m in piv.columns) else 0.0) * lin
+                        for d in dims for m, lin in meses_lin
+                    )
 
-            st.divider()
+                t_meta_cv  = _sum_piv(meta_marca_piv, marcas_f, meses_lin_cv)
+                t_real_cv  = _sum_piv(real_marca_piv, marcas_f, meses_lin_cv)
+                t_mlin_cv  = _sum_piv_lin(meta_marca_piv, marcas_f, meses_lin_cv)
+                t_cb_cv    = _sum_piv(real_contrib_piv, marcas_f, meses_lin_cv)
 
-            # ── Venta Neta por Marca ───────────────────────────────────
-            st.markdown("#### Venta Neta por Marca")
-            df_cv_m, lin_hdr = _build_cv_table(
-                real_marca_piv, meta_marca_piv, 'Marca',
-                ultimo_mes, linealidad_cv, ultimo_dia_cv, dias_en_mes_cv,
-            )
-            _show_cv(df_cv_m, 'Marca', lin_hdr)
-            _dl(df_cv_m, f"cv_vn_marca_{ultimo_mes}.csv")
+                c1, c2, c3, c4, c5 = st.columns(5)
+                c1.metric("Meta Período VN", _fmt_m(t_meta_cv))
+                c2.metric("Meta Lineal", _fmt_m(t_mlin_cv))
+                c3.metric("Real Acum. VN", _fmt_m(t_real_cv),
+                          delta=f"{t_real_cv/t_mlin_cv-1:+.1%} vs lineal" if t_mlin_cv > 0 else None)
+                c4.metric("% vs Meta", f"{t_real_cv/t_meta_cv:.1%}" if t_meta_cv > 0 else "—")
+                c5.metric("Contrib. Real", _fmt_m(t_cb_cv),
+                          delta=f"{t_cb_cv/t_real_cv:.1%} margen" if t_real_cv > 0 else None,
+                          delta_color="off")
 
-            st.divider()
+                st.divider()
 
-            # ── Contribución Frontal por Marca ─────────────────────────
-            st.markdown("#### Contribución Frontal por Marca")
-            st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
-            all_m_cb = sorted(set(
-                (real_contrib_piv.index.tolist() if not real_contrib_piv.empty else []) +
-                (meta_marca_piv.index.tolist()   if not meta_marca_piv.empty   else [])
-            ))
-            rows_cbm, t_cb_m, t_vn_m = [], 0.0, 0.0
-            for dim in all_m_cb:
-                cb = float(real_contrib_piv.at[dim, ultimo_mes]) if (not real_contrib_piv.empty and dim in real_contrib_piv.index and ultimo_mes in real_contrib_piv.columns) else 0.0
-                vn = float(real_marca_piv.at[dim, ultimo_mes])   if (not real_marca_piv.empty   and dim in real_marca_piv.index   and ultimo_mes in real_marca_piv.columns)   else 0.0
-                t_cb_m += cb; t_vn_m += vn
-                rows_cbm.append({'Marca': dim, 'Real Acum.': cb, '% Margen': cb / vn if vn > 0 else None})
-            rows_cbm.append({'Marca': 'TOTAL', 'Real Acum.': t_cb_m, '% Margen': t_cb_m / t_vn_m if t_vn_m > 0 else None})
-            _show_contrib(pd.DataFrame(rows_cbm), 'Marca')
-            _dl(pd.DataFrame(rows_cbm), f"cv_contrib_marca_{ultimo_mes}.csv")
+                # ── VN por Marca ──────────────────────────────────────
+                st.markdown("#### Venta Neta por Marca")
+                _mf = marcas_f if len(marcas_f) < len(_all_marcas) else None
+                df_cv_m, lin_hdr = _build_cv_table(real_marca_piv, meta_marca_piv, 'Marca', meses_lin_cv, dims_filter=_mf)
+                _show_cv(df_cv_m, 'Marca', lin_hdr)
+                _dl(df_cv_m, f"cv_vn_marca_{per_lbl}.csv")
 
-            st.divider()
+                st.divider()
 
-            # ── Venta Neta por Canal ───────────────────────────────────
-            st.markdown("#### Venta Neta por Canal")
-            df_cv_c, _ = _build_cv_table(
-                real_canal_piv, meta_canal_piv, 'Canal',
-                ultimo_mes, linealidad_cv, ultimo_dia_cv, dias_en_mes_cv,
-            )
-            _show_cv(df_cv_c, 'Canal', lin_hdr)
-            _dl(df_cv_c, f"cv_vn_canal_{ultimo_mes}.csv")
+                # ── Contribución por Marca ────────────────────────────
+                st.markdown("#### Contribución Frontal por Marca")
+                st.caption("_Meta contribución no disponible en PPTO._")
+                df_cbm = _build_contrib_cv(real_contrib_piv, real_marca_piv, 'Marca', meses_lin_cv, dims_filter=_mf)
+                _show_contrib(df_cbm, 'Marca')
+                _dl(df_cbm, f"cv_contrib_marca_{per_lbl}.csv")
 
-            st.divider()
+                st.divider()
 
-            # ── Contribución Frontal por Canal ─────────────────────────
-            st.markdown("#### Contribución Frontal por Canal")
-            st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
-            all_c_cb = sorted(set(
-                (real_contrib_canal_piv.index.tolist() if not real_contrib_canal_piv.empty else []) +
-                (meta_canal_piv.index.tolist()         if not meta_canal_piv.empty         else [])
-            ))
-            rows_cbc, t_cb_c, t_vn_c = [], 0.0, 0.0
-            for dim in all_c_cb:
-                cb = float(real_contrib_canal_piv.at[dim, ultimo_mes]) if (not real_contrib_canal_piv.empty and dim in real_contrib_canal_piv.index and ultimo_mes in real_contrib_canal_piv.columns) else 0.0
-                vn = float(real_canal_piv.at[dim, ultimo_mes])         if (not real_canal_piv.empty         and dim in real_canal_piv.index         and ultimo_mes in real_canal_piv.columns)         else 0.0
-                t_cb_c += cb; t_vn_c += vn
-                rows_cbc.append({'Canal': dim, 'Real Acum.': cb, '% Margen': cb / vn if vn > 0 else None})
-            rows_cbc.append({'Canal': 'TOTAL', 'Real Acum.': t_cb_c, '% Margen': t_cb_c / t_vn_c if t_vn_c > 0 else None})
-            _show_contrib(pd.DataFrame(rows_cbc), 'Canal')
-            _dl(pd.DataFrame(rows_cbc), f"cv_contrib_canal_{ultimo_mes}.csv")
+                # ── VN por Canal ──────────────────────────────────────
+                st.markdown("#### Venta Neta por Canal")
+                _cf = canales_f if len(canales_f) < len(_all_canales) else None
+                df_cv_c, lin_hdr_c = _build_cv_table(real_canal_piv, meta_canal_piv, 'Canal', meses_lin_cv, dims_filter=_cf)
+                _show_cv(df_cv_c, 'Canal', lin_hdr_c)
+                _dl(df_cv_c, f"cv_vn_canal_{per_lbl}.csv")
+
+                st.divider()
+
+                # ── Contribución por Canal ────────────────────────────
+                st.markdown("#### Contribución Frontal por Canal")
+                st.caption("_Meta contribución no disponible en PPTO._")
+                df_cbc = _build_contrib_cv(real_contrib_canal_piv, real_canal_piv, 'Canal', meses_lin_cv, dims_filter=_cf)
+                _show_contrib(df_cbc, 'Canal')
+                _dl(df_cbc, f"cv_contrib_canal_{per_lbl}.csv")
 
     # ════════════════════════════════════════════════════════════════
     # TAB 2: COMP. MARCAS
     # ════════════════════════════════════════════════════════════════
     with tab_comp_m:
-        st.subheader(f"Comparativo por Marca — YTD {yr}")
+        st.subheader(f"Comparativo por Marca — {yr}")
         if not ytd_meses:
             st.info("Sin meses disponibles.")
         else:
-            # Caption con nota de mes parcial
-            _mes_parcial_lbl = pd.Timestamp(ultimo_mes + '-01').strftime('%B').capitalize()
-            _ts_um = pd.Timestamp(ultimo_mes + '-01')
-            _dias_um = (_ts_um + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
-            _dia_um  = _TODAY.day if ultimo_mes >= _TODAY.strftime('%Y-%m') else _dias_um
-            _lin_um  = _dia_um / _dias_um
-            meses_lbl = " | ".join(pd.Timestamp(m + '-01').strftime('%b') for m in ytd_meses)
-            st.caption(
-                f"ENE–{pd.Timestamp(ultimo_mes+'-01').strftime('%b').upper()} {yr} "
-                f"({_mes_parcial_lbl} parcial al día {_dia_um} de {_dias_um} — linealidad {_lin_um:.1%})  ·  Valores en $M CLP"
-            )
+            # ── Filtros ───────────────────────────────────────────────
+            col_f1, col_f2 = st.columns([2, 5])
+            with col_f1:
+                meses_lin_cm = _periodo_filter('comp_m', yr, ytd_meses)
+            with col_f2:
+                marcas_cm = st.multiselect('Marcas', _all_marcas, default=_all_marcas, key='comp_m_marcas')
 
-            st.markdown("#### Venta Neta")
-            df_vn, mc_vn, rc_vn, vc_vn = _build_comp_table(real_marca_piv, meta_marca_piv, ytd_meses, 'Marca')
-            _show_comp(df_vn, mc_vn, rc_vn, vc_vn, 'Marca')
-            _dl(df_vn, f"comp_marcas_venta_neta_{yr}.csv")
+            if not meses_lin_cm:
+                st.info("Sin datos para el período seleccionado.")
+            else:
+                marcas_f_cm = marcas_cm if marcas_cm else _all_marcas
+                meses_cm    = [m for m, _ in meses_lin_cm]
+                per_lbl_cm  = _periodo_label(meses_lin_cm, yr)
 
-            st.divider()
-            st.markdown("#### Contribución Frontal")
-            st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
-            df_cb_m = _build_contrib_ytd(real_contrib_piv, real_marca_piv, ytd_meses, 'Marca')
-            _show_contrib_ytd(df_cb_m, 'Marca')
-            _dl(df_cb_m, f"comp_marcas_contribucion_{yr}.csv")
+                # Nota linealidad último mes del período seleccionado
+                _um_cm  = meses_cm[-1]
+                _ts_cm  = pd.Timestamp(_um_cm + '-01')
+                _dias_cm = (_ts_cm + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
+                _dia_cm  = _TODAY.day if _um_cm >= _TODAY.strftime('%Y-%m') else _dias_cm
+                _lin_cm  = _dia_cm / _dias_cm
+                st.caption(
+                    f"Período: **{per_lbl_cm}** "
+                    f"({'parcial al día ' + str(_dia_cm) + ' de ' + str(_dias_cm) + ' — ' if _um_cm >= _TODAY.strftime('%Y-%m') else ''}"
+                    f"linealidad {_lin_cm:.1%})  ·  Valores en $M CLP"
+                )
+
+                # ── Resumen KPIs ──────────────────────────────────────
+                _mf_cm = marcas_f_cm if len(marcas_f_cm) < len(_all_marcas) else None
+                t_meta_cm = sum(
+                    (float(meta_marca_piv.at[d, m]) if (not meta_marca_piv.empty and d in meta_marca_piv.index and m in meta_marca_piv.columns) else 0.0)
+                    for d in marcas_f_cm for m in meses_cm
+                )
+                t_real_cm = sum(
+                    (float(real_marca_piv.at[d, m]) if (not real_marca_piv.empty and d in real_marca_piv.index and m in real_marca_piv.columns) else 0.0)
+                    for d in marcas_f_cm for m in meses_cm
+                )
+                t_cb_cm = sum(
+                    (float(real_contrib_piv.at[d, m]) if (not real_contrib_piv.empty and d in real_contrib_piv.index and m in real_contrib_piv.columns) else 0.0)
+                    for d in marcas_f_cm for m in meses_cm
+                )
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Meta Período VN", _fmt_m(t_meta_cm))
+                c2.metric("Real Período VN", _fmt_m(t_real_cm),
+                          delta=f"{t_real_cm/t_meta_cm-1:+.1%} vs meta" if t_meta_cm > 0 else None)
+                c3.metric("Contrib. Real", _fmt_m(t_cb_cm))
+                c4.metric("% Margen", f"{t_cb_cm/t_real_cm:.1%}" if t_real_cm > 0 else "—")
+
+                st.divider()
+                st.markdown("#### Venta Neta")
+                df_vn, mc_vn, rc_vn, vc_vn = _build_comp_table(real_marca_piv, meta_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
+                _show_comp(df_vn, mc_vn, rc_vn, vc_vn, 'Marca')
+                _dl(df_vn, f"comp_marcas_vn_{per_lbl_cm}.csv")
+
+                st.divider()
+                st.markdown("#### Contribución Frontal")
+                st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
+                df_cb_m = _build_contrib_ytd(real_contrib_piv, real_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
+                _show_contrib_ytd(df_cb_m, 'Marca')
+                _dl(df_cb_m, f"comp_marcas_contrib_{per_lbl_cm}.csv")
 
     # ════════════════════════════════════════════════════════════════
     # TAB 3: COMP. CANALES
     # ════════════════════════════════════════════════════════════════
     with tab_comp_c:
-        st.subheader(f"Comparativo por Canal — YTD {yr}")
+        st.subheader(f"Comparativo por Canal — {yr}")
         if not ytd_meses:
             st.info("Sin meses disponibles.")
         else:
-            _mes_parcial_lbl_c = pd.Timestamp(ultimo_mes + '-01').strftime('%B').capitalize()
-            st.caption(
-                f"ENE–{pd.Timestamp(ultimo_mes+'-01').strftime('%b').upper()} {yr} "
-                f"({_mes_parcial_lbl_c} parcial al día {_dia_um} de {_dias_um} — linealidad {_lin_um:.1%})  ·  Valores en $M CLP"
-            )
+            # ── Filtros ───────────────────────────────────────────────
+            col_f1, col_f2 = st.columns([2, 5])
+            with col_f1:
+                meses_lin_cc = _periodo_filter('comp_c', yr, ytd_meses)
+            with col_f2:
+                canales_cc = st.multiselect('Canales', _all_canales, default=_all_canales, key='comp_c_canales')
 
-            st.markdown("#### Venta Neta")
-            df_vc, mc_vc, rc_vc, vc_vc = _build_comp_table(real_canal_piv, meta_canal_piv, ytd_meses, 'Canal')
-            _show_comp(df_vc, mc_vc, rc_vc, vc_vc, 'Canal')
-            _dl(df_vc, f"comp_canales_venta_neta_{yr}.csv")
+            if not meses_lin_cc:
+                st.info("Sin datos para el período seleccionado.")
+            else:
+                canales_f_cc = canales_cc if canales_cc else _all_canales
+                meses_cc     = [m for m, _ in meses_lin_cc]
+                per_lbl_cc   = _periodo_label(meses_lin_cc, yr)
 
-            st.divider()
-            st.markdown("#### Contribución Frontal")
-            st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
-            df_cb_c = _build_contrib_ytd(real_contrib_canal_piv, real_canal_piv, ytd_meses, 'Canal')
-            _show_contrib_ytd(df_cb_c, 'Canal')
-            _dl(df_cb_c, f"comp_canales_contribucion_{yr}.csv")
+                _um_cc  = meses_cc[-1]
+                _ts_cc  = pd.Timestamp(_um_cc + '-01')
+                _dias_cc = (_ts_cc + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
+                _dia_cc  = _TODAY.day if _um_cc >= _TODAY.strftime('%Y-%m') else _dias_cc
+                _lin_cc  = _dia_cc / _dias_cc
+                st.caption(
+                    f"Período: **{per_lbl_cc}** "
+                    f"({'parcial al día ' + str(_dia_cc) + ' de ' + str(_dias_cc) + ' — ' if _um_cc >= _TODAY.strftime('%Y-%m') else ''}"
+                    f"linealidad {_lin_cc:.1%})  ·  Valores en $M CLP"
+                )
+
+                # ── Resumen KPIs ──────────────────────────────────────
+                _cf_cc = canales_f_cc if len(canales_f_cc) < len(_all_canales) else None
+                t_meta_cc = sum(
+                    (float(meta_canal_piv.at[d, m]) if (not meta_canal_piv.empty and d in meta_canal_piv.index and m in meta_canal_piv.columns) else 0.0)
+                    for d in canales_f_cc for m in meses_cc
+                )
+                t_real_cc = sum(
+                    (float(real_canal_piv.at[d, m]) if (not real_canal_piv.empty and d in real_canal_piv.index and m in real_canal_piv.columns) else 0.0)
+                    for d in canales_f_cc for m in meses_cc
+                )
+                t_cb_cc = sum(
+                    (float(real_contrib_canal_piv.at[d, m]) if (not real_contrib_canal_piv.empty and d in real_contrib_canal_piv.index and m in real_contrib_canal_piv.columns) else 0.0)
+                    for d in canales_f_cc for m in meses_cc
+                )
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Meta Período VN", _fmt_m(t_meta_cc))
+                c2.metric("Real Período VN", _fmt_m(t_real_cc),
+                          delta=f"{t_real_cc/t_meta_cc-1:+.1%} vs meta" if t_meta_cc > 0 else None)
+                c3.metric("Contrib. Real", _fmt_m(t_cb_cc))
+                c4.metric("% Margen", f"{t_cb_cc/t_real_cc:.1%}" if t_real_cc > 0 else "—")
+
+                st.divider()
+                st.markdown("#### Venta Neta")
+                df_vc, mc_vc, rc_vc, vc_vc = _build_comp_table(real_canal_piv, meta_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
+                _show_comp(df_vc, mc_vc, rc_vc, vc_vc, 'Canal')
+                _dl(df_vc, f"comp_canales_vn_{per_lbl_cc}.csv")
+
+                st.divider()
+                st.markdown("#### Contribución Frontal")
+                st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
+                df_cb_c = _build_contrib_ytd(real_contrib_canal_piv, real_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
+                _show_contrib_ytd(df_cb_c, 'Canal')
+                _dl(df_cb_c, f"comp_canales_contrib_{per_lbl_cc}.csv")
 
     # ════════════════════════════════════════════════════════════════
     # TAB 4: CST x MARCA
