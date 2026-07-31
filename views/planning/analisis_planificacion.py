@@ -66,7 +66,7 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
     """Ventas del año actual con columnas normalizadas para comparativo PPTO.
     Lee historico (meses cerrados) + mes_actual (mes corriente desde Turso sync).
     """
-    need = ['fecha_venta', 'marca', 'tipo_negocio', 'venta_neta', 'margen_front']
+    need = ['fecha_venta', 'marca', 'tipo_negocio', 'canal', 'venta_neta', 'margen_front']
     path_hist = DATA_DIR / 'historico' / 'ventas_historico.parquet'
     path_mes  = DATA_DIR / 'historico' / 'ventas_mes_actual.parquet'
 
@@ -97,6 +97,10 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
         df = df[df['fecha_venta'].dt.year == _TODAY.year].copy()
         df['mes']        = df['fecha_venta'].dt.to_period('M').astype(str)
         df['canal_ppto'] = df['tipo_negocio'].map(_TIPO_NEG_TO_PPTO).fillna('Otros')
+        # Ventas Distribución cuyo canal real sea 'UnionX B2B' se separan de Distribución
+        if 'canal' in df.columns:
+            mask_b2b = (df['tipo_negocio'] == 'Distribución') & (df['canal'] == 'UnionX B2B')
+            df.loc[mask_b2b, 'canal_ppto'] = 'UnionX B2B'
         df['marca_ppto'] = df['marca'].map(_MARCA_TO_PPTO).fillna('Prov. Nacionales')
         df['venta_neta']   = pd.to_numeric(df['venta_neta'],   errors='coerce').fillna(0).astype('float64')
         df['margen_front'] = pd.to_numeric(df['margen_front'], errors='coerce').fillna(0).astype('float64')
