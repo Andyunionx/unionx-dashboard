@@ -405,8 +405,15 @@ def _lin_for_mes(mes_str: str) -> float:
     return _TODAY.day / dias
 
 
-def _periodo_filter(key_prefix: str, yr: str, meses_disp: list, default_last: bool = True) -> list:
-    """Render period selector. Returns [(mes_str, linealidad), ...]."""
+def _periodo_filter(key_prefix: str, yr: str, meses_disp: list,
+                    default_last: bool = True, full_quarter: bool = False) -> list:
+    """Render period selector. Returns [(mes_str, linealidad), ...].
+
+    full_quarter=True  → quarter selection returns all 3 months (including future, lin=0).
+                         Use in Cómo Vamos to show the full Q budget vs elapsed real.
+    full_quarter=False → quarter selection only returns months present in meses_disp.
+                         Use in Comp. tabs to avoid showing -100% VAR% for future months.
+    """
     meses_yr = sorted([m for m in meses_disp if m.startswith(yr)])
     if not meses_yr:
         return []
@@ -425,7 +432,12 @@ def _periodo_filter(key_prefix: str, yr: str, meses_disp: list, default_last: bo
         meses_sel = [val]
     else:
         nums = _Q_MAP[val]
-        meses_sel = [m for m in meses_yr if int(m[5:7]) in nums]
+        if full_quarter:
+            # All 3 months of the quarter, even future ones (lin=0 keeps meta correct)
+            meses_sel = [f'{yr}-{str(n).zfill(2)}' for n in sorted(nums)]
+        else:
+            # Only months already in the available data (no -100% VAR% columns)
+            meses_sel = [m for m in meses_yr if int(m[5:7]) in nums]
     return [(m, _lin_for_mes(m)) for m in meses_sel]
 
 
@@ -536,7 +548,7 @@ def render():
             # ── Filtros ───────────────────────────────────────────────
             col_f1, col_f2, col_f3 = st.columns([2, 4, 4])
             with col_f1:
-                meses_lin_cv = _periodo_filter('cv', yr, ytd_meses)
+                meses_lin_cv = _periodo_filter('cv', yr, ytd_meses, full_quarter=True)
             with col_f2:
                 marcas_cv = st.multiselect('Marcas', _all_marcas, default=_all_marcas, key='cv_marcas')
             with col_f3:
