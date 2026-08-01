@@ -799,21 +799,16 @@ def render():
             st.info("Sin meses disponibles.")
         else:
             # ── Filtros ───────────────────────────────────────────────
-            col_f1, col_f2 = st.columns([2, 5])
-            with col_f1:
-                meses_lin_cc = _periodo_filter('comp_c', yr, ytd_meses)
-            with col_f2:
-                canales_cc = st.multiselect('Canales', _all_canales, default=_all_canales, key='comp_c_canales')
+            meses_lin_cc = _periodo_filter('comp_c', yr, ytd_meses)
 
             if not meses_lin_cc:
                 st.info("Sin datos para el período seleccionado.")
             else:
-                canales_f_cc = canales_cc if canales_cc else _all_canales
                 meses_cc     = [m for m, _ in meses_lin_cc]
                 per_lbl_cc   = _periodo_label(meses_lin_cc, yr)
 
-                _um_cc  = meses_cc[-1]
-                _ts_cc  = pd.Timestamp(_um_cc + '-01')
+                _um_cc   = meses_cc[-1]
+                _ts_cc   = pd.Timestamp(_um_cc + '-01')
                 _dias_cc = (_ts_cc + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
                 _dia_cc  = _TODAY.day if _um_cc >= _TODAY.strftime('%Y-%m') else _dias_cc
                 _lin_cc  = _dia_cc / _dias_cc
@@ -823,8 +818,12 @@ def render():
                     f"linealidad {_lin_cc:.1%})  ·  Valores en $M CLP"
                 )
 
+                # ── Filtro canales (bajo el período, antes de las tablas) ──
+                canales_cc   = st.multiselect('Canales', _all_canales, default=_all_canales, key='comp_c_canales')
+                canales_f_cc = canales_cc if canales_cc else _all_canales
+                _cf_cc       = canales_f_cc
+
                 # ── Resumen KPIs ──────────────────────────────────────
-                _cf_cc = canales_f_cc if canales_f_cc else _all_canales
                 t_meta_cc = sum(
                     (float(meta_canal_piv.at[d, m]) if (not meta_canal_piv.empty and d in meta_canal_piv.index and m in meta_canal_piv.columns) else 0.0)
                     for d in canales_f_cc for m in meses_cc
