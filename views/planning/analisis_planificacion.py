@@ -243,6 +243,64 @@ def _show_comp(df, meta_cols, real_cols, var_cols, dim_col):
                  height=min(600, 60 + len(df) * 35))
 
 
+def _build_comp_agg(real_piv, meta_piv, meses, dim_col, dims_filter=None):
+    """Aggregate Comp table: dim | VENTA META | VENTA REAL | % CUMPLIMIENTO."""
+    all_dims_raw = sorted(set(
+        (real_piv.index.tolist() if not real_piv.empty else []) +
+        (meta_piv.index.tolist() if not meta_piv.empty else [])
+    ))
+    all_dims = [d for d in all_dims_raw if dims_filter is None or d in set(dims_filter)]
+    rows = []
+    for dim in all_dims:
+        m_tot = sum(
+            float(meta_piv.at[dim, mes]) if (not meta_piv.empty and dim in meta_piv.index and mes in meta_piv.columns) else 0.0
+            for mes in meses
+        )
+        r_tot = sum(
+            float(real_piv.at[dim, mes]) if (not real_piv.empty and dim in real_piv.index and mes in real_piv.columns) else 0.0
+            for mes in meses
+        )
+        rows.append({dim_col: dim, 'VENTA META': m_tot, 'VENTA REAL': r_tot,
+                     '% CUMPLIMIENTO': r_tot / m_tot if m_tot > 0 else None})
+    t_m = sum(
+        float(meta_piv.at[d, m]) if (not meta_piv.empty and d in meta_piv.index and m in meta_piv.columns) else 0.0
+        for d in all_dims for m in meses
+    )
+    t_r = sum(
+        float(real_piv.at[d, m]) if (not real_piv.empty and d in real_piv.index and m in real_piv.columns) else 0.0
+        for d in all_dims for m in meses
+    )
+    rows.append({dim_col: 'TOTAL', 'VENTA META': t_m, 'VENTA REAL': t_r,
+                 '% CUMPLIMIENTO': t_r / t_m if t_m > 0 else None})
+    return pd.DataFrame(rows)
+
+
+def _show_comp_agg(df, dim_col):
+    """Display aggregate Comp table. % CUMPLIMIENTO: verde ≥100%, amarillo ≥90%, naranja ≥70%, rojo <70%."""
+    def _c_cumpl(v):
+        if pd.isna(v): return ''
+        if v >= 1.00: return 'color:#22c55e;font-weight:bold'
+        if v >= 0.90: return 'color:#eab308;font-weight:bold'
+        if v >= 0.70: return 'color:#f97316'
+        return 'color:#ef4444'
+    fmt = {
+        'VENTA META': _fmt_m,
+        'VENTA REAL': _fmt_m,
+        '% CUMPLIMIENTO': lambda v: f"{v:.1%}" if pd.notna(v) else "—",
+    }
+    st.dataframe(
+        df.style
+          .format(fmt)
+          .map(_c_cumpl, subset=['% CUMPLIMIENTO'])
+          .apply(lambda row: [
+              'font-weight:bold;background-color:#1e2432' if row[dim_col] == 'TOTAL' else ''
+              for _ in row
+          ], axis=1),
+        use_container_width=True, hide_index=True,
+        height=min(600, 60 + len(df) * 35),
+    )
+
+
 def _build_cv_table(real_piv, meta_piv, dim_col, meses_lin, dims_filter=None):
     """Cómo Vamos table with per-month linealidad and optional dimension filter.
     meses_lin: [(mes_str, linealidad_float), ...]
@@ -428,31 +486,42 @@ def _periodo_filter(key_prefix: str, yr: str, meses_disp: list,
                          Use in Cómo Vamos to show the full Q budget vs elapsed real.
     full_quarter=False → quarter selection only returns months present in meses_disp.
                          Use in Comp. tabs to avoid showing -100% VAR% for future months.
+    S1/S2/Año          → always returns all months of the period (including future with lin=0).
     """
     meses_yr = sorted([m for m in meses_disp if m.startswith(yr)])
     if not meses_yr:
         return []
-    # Build options: individual months first, then quarters with ≥1 month
+    all_yr = [f'{yr}-{str(n).zfill(2)}' for n in range(1, 13)]
+    s1_all = [m for m in all_yr if int(m[5:7]) <= 6]
+    s2_all = [m for m in all_yr if int(m[5:7]) >= 7]
+    # Build options: individual months first, then quarters, then semesters and full year
     opts = []  # (kind, value, label)
     for m in meses_yr:
         opts.append(('mes', m, pd.Timestamp(m + '-01').strftime('%b %Y')))
     for q, nums in _Q_MAP.items():
         if any(m for m in meses_yr if int(m[5:7]) in nums):
             opts.append(('q', q, f'{q} {yr}'))
+    if any(m in meses_yr for m in s1_all):
+        opts.append(('sem', 'S1', f'S1 {yr}'))
+    if any(m in meses_yr for m in s2_all):
+        opts.append(('sem', 'S2', f'S2 {yr}'))
+    opts.append(('ano', yr, f'Año {yr}'))
     labels = [o[2] for o in opts]
     default_idx = (len(meses_yr) - 1) if default_last else 0
     sel = st.selectbox('Período', labels, index=default_idx, key=f'{key_prefix}_periodo')
     kind, val, _ = next(o for o in opts if o[2] == sel)
     if kind == 'mes':
         meses_sel = [val]
-    else:
+    elif kind == 'q':
         nums = _Q_MAP[val]
         if full_quarter:
-            # All 3 months of the quarter, even future ones (lin=0 keeps meta correct)
             meses_sel = [f'{yr}-{str(n).zfill(2)}' for n in sorted(nums)]
         else:
-            # Only months already in the available data (no -100% VAR% columns)
             meses_sel = [m for m in meses_yr if int(m[5:7]) in nums]
+    elif kind == 'sem':
+        meses_sel = s1_all if val == 'S1' else s2_all
+    else:  # ano
+        meses_sel = all_yr
     return [(m, _lin_for_mes(m)) for m in meses_sel]
 
 
@@ -463,10 +532,16 @@ def _periodo_label(meses_lin: list, yr: str) -> str:
     meses = [m for m, _ in meses_lin]
     if len(meses) == 1:
         return pd.Timestamp(meses[0] + '-01').strftime('%B %Y').upper()
-    months_nums = [int(m[5:7]) for m in meses]
+    months_nums = sorted([int(m[5:7]) for m in meses])
     for q, nums in _Q_MAP.items():
-        if sorted(months_nums) == sorted(nums):
+        if months_nums == sorted(nums):
             return f'{q} {yr}'
+    if months_nums == list(range(1, 7)):
+        return f'S1 {yr}'
+    if months_nums == list(range(7, 13)):
+        return f'S2 {yr}'
+    if months_nums == list(range(1, 13)):
+        return f'AÑO {yr}'
     return ' · '.join(pd.Timestamp(m + '-01').strftime('%b') for m in meses) + f' {yr}'
 
 
@@ -704,13 +779,13 @@ def render():
 
                 st.divider()
                 st.markdown("#### Venta Neta")
-                df_vn, mc_vn, rc_vn, vc_vn = _build_comp_table(real_marca_piv, meta_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
-                _show_comp(df_vn, mc_vn, rc_vn, vc_vn, 'Marca')
+                df_vn = _build_comp_agg(real_marca_piv, meta_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
+                _show_comp_agg(df_vn, 'Marca')
                 _dl(df_vn, f"comp_marcas_vn_{per_lbl_cm}.csv")
 
                 st.divider()
                 st.markdown("#### Contribución Frontal")
-                st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
+                st.caption("_Real por mes (suma de margen\\_front desde Odoo). % Margen = Contribución Real / Venta Neta Real. Meta contribución no disponible._")
                 df_cb_m = _build_contrib_ytd(real_contrib_piv, real_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
                 _show_contrib_ytd(df_cb_m, 'Marca')
                 _dl(df_cb_m, f"comp_marcas_contrib_{per_lbl_cm}.csv")
@@ -771,13 +846,13 @@ def render():
 
                 st.divider()
                 st.markdown("#### Venta Neta")
-                df_vc, mc_vc, rc_vc, vc_vc = _build_comp_table(real_canal_piv, meta_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
-                _show_comp(df_vc, mc_vc, rc_vc, vc_vc, 'Canal')
+                df_vc = _build_comp_agg(real_canal_piv, meta_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
+                _show_comp_agg(df_vc, 'Canal')
                 _dl(df_vc, f"comp_canales_vn_{per_lbl_cc}.csv")
 
                 st.divider()
                 st.markdown("#### Contribución Frontal")
-                st.caption("_Meta contribución no disponible en PPTO — se muestra solo Real._")
+                st.caption("_Real por mes (suma de margen\\_front desde Odoo). % Margen = Contribución Real / Venta Neta Real. Meta contribución no disponible._")
                 df_cb_c = _build_contrib_ytd(real_contrib_canal_piv, real_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
                 _show_contrib_ytd(df_cb_c, 'Canal')
                 _dl(df_cb_c, f"comp_canales_contrib_{per_lbl_cc}.csv")
