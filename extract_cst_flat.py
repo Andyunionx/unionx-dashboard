@@ -29,7 +29,7 @@ MONTHS = {
 }
 
 # Filas de resumen que también queremos guardar (como marca especial)
-SUMMARY_ROWS = {'TOTAL PROPIA': '_TOTAL_PROPIA'}
+SUMMARY_ROWS = {'TOTAL PROPIA': '_TOTAL_PROPIA', 'TOTAL EMPRESA': '_TOTAL_EMPRESA'}
 
 _MARCA_NORM = {
     'Dynamo': 'Dynamo Tools',
@@ -54,7 +54,7 @@ for r in all_rows:
     marca_raw = marca_raw.strip()
     if 'REPORTE' in marca_raw or 'Valores' in marca_raw or marca_raw == 'Marca':
         continue
-    if marca_raw in ('PROV. NACIONALES', 'TOTAL EMPRESA'):
+    if marca_raw == 'PROV. NACIONALES':
         continue
 
     # Marcas individuales o TOTAL PROPIA

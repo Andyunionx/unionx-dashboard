@@ -1166,21 +1166,24 @@ def render():
                 row['Cob. ACT'] = round(stk / vta0, 1) if vta0 > 0 else None
                 return row
 
-            # TOTAL PROPIA: directo del Excel (parquet '_TOTAL_PROPIA')
-            if not _cst_idx.empty and '_TOTAL_PROPIA' in _cst_idx.index:
-                _tp = _cst_idx.loc['_TOTAL_PROPIA']
-                tot_prop_row = {'Marca': 'TOTAL PROPIA',
-                                'Stock Hoy ($M)': round(float(_tp.get('stock_hoy_cst', 0)), 1),
-                                'Cob. ACT': float(_tp.get('cobert_act', 0)) or None}
-                for ms in meses_cob:
-                    _lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                    tot_prop_row[f'{_lbl} Stk($M)'] = round(float(_tp.get(f'{ms}_stk_ini', 0)), 1)
-                    tot_prop_row[f'{_lbl} Leg($M)'] = round(float(_tp.get(f'{ms}_llegadas', 0)), 1)
-                    tot_prop_row[f'{_lbl} S+P($M)'] = round(float(_tp.get(f'{ms}_sp', 0)), 1)
-                    tot_prop_row[f'{_lbl} Vta($M)'] = round(float(_tp.get(f'{ms}_venta', 0)), 1)
-                    tot_prop_row[f'{_lbl} Cob.']    = float(_tp.get(f'{ms}_cob', 0)) or None
-            else:
-                tot_prop_row = _tot_row('TOTAL PROPIA', df_prop)
+            def _summary_row_from_parquet(label, key, fallback_df):
+                if not _cst_idx.empty and key in _cst_idx.index:
+                    _r = _cst_idx.loc[key]
+                    row = {'Marca': label,
+                           'Stock Hoy ($M)': round(float(_r.get('stock_hoy_cst', 0)), 1),
+                           'Cob. ACT': float(_r.get('cobert_act', 0)) or None}
+                    for ms in meses_cob:
+                        _lbl = pd.Timestamp(ms + '-01').strftime('%b')
+                        row[f'{_lbl} Stk($M)'] = round(float(_r.get(f'{ms}_stk_ini', 0)), 1)
+                        row[f'{_lbl} Leg($M)'] = round(float(_r.get(f'{ms}_llegadas', 0)), 1)
+                        row[f'{_lbl} S+P($M)'] = round(float(_r.get(f'{ms}_sp', 0)), 1)
+                        row[f'{_lbl} Vta($M)'] = round(float(_r.get(f'{ms}_venta', 0)), 1)
+                        row[f'{_lbl} Cob.']    = float(_r.get(f'{ms}_cob', 0)) or None
+                    return row
+                return _tot_row(label, fallback_df)
+
+            tot_prop_row = _summary_row_from_parquet('TOTAL PROPIA',   '_TOTAL_PROPIA',   df_prop)
+            tot_emp_row  = _summary_row_from_parquet('TOTAL EMPRESA',  '_TOTAL_EMPRESA',  pd.concat([df_prop, df_nac], ignore_index=True) if not df_nac.empty else df_prop)
 
             # PROV. NACIONALES: solo Aug, Sep/Oct en blanco
             tot_nac_row = _tot_row('PROV. NACIONALES', df_nac)
@@ -1189,13 +1192,8 @@ def render():
                 for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
                     tot_nac_row[f'{_lbl} {_sfx}'] = None
 
-            # TOTAL EMPRESA: Sep/Oct en blanco (nacionales incompletas)
-            tot_emp_data = pd.concat([df_prop, df_nac], ignore_index=True) if not df_nac.empty else df_prop
-            tot_emp_row  = _tot_row('TOTAL EMPRESA', tot_emp_data)
-            for ms in meses_cob[1:]:
-                _lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
-                    tot_emp_row[f'{_lbl} {_sfx}'] = None
+            # TOTAL EMPRESA Sep/Oct: solo tiene Aug de nacionales; dejar Sep/Oct del Excel
+            # (ya vienen del parquet _TOTAL_EMPRESA)
 
             # ── Build main display table (propias + 2 summary rows) ───────
             df_main = pd.concat([
