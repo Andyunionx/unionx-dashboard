@@ -611,6 +611,12 @@ def render():
         if m <= ultimo_mes and m.startswith(yr)
     }) if not df_ppto_canal.empty else meses_disp
 
+    # Todos los meses con PPTO (incluye futuros) — para Comp.Marcas y Comp.Canales
+    ppto_meses = sorted({
+        m for m in (df_ppto_canal['mes'].dropna().tolist() if not df_ppto_canal.empty else [])
+        if m.startswith(yr)
+    }) or meses_disp
+
     # ── Warnings ──────────────────────────────────────────────────────
     if df_ventas.empty:
         st.warning("⚠️ `data/historico/ventas_historico.parquet` no encontrado.")
@@ -766,13 +772,13 @@ def render():
     # ════════════════════════════════════════════════════════════════
     with tab_comp_m:
         st.subheader(f"Comparativo por Marca — {yr}")
-        if not ytd_meses:
+        if not ppto_meses:
             st.info("Sin meses disponibles.")
         else:
             # ── Filtros ───────────────────────────────────────────────
             col_f1, col_f2 = st.columns([2, 5])
             with col_f1:
-                meses_lin_cm = _periodo_filter('comp_m', yr, ytd_meses)
+                meses_lin_cm = _periodo_filter('comp_m', yr, ppto_meses)
             with col_f2:
                 marcas_cm = st.multiselect('Marcas', _all_marcas, default=_all_marcas, key='comp_m_marcas')
 
@@ -834,11 +840,11 @@ def render():
     # ════════════════════════════════════════════════════════════════
     with tab_comp_c:
         st.subheader(f"Comparativo por Canal — {yr}")
-        if not ytd_meses:
+        if not ppto_meses:
             st.info("Sin meses disponibles.")
         else:
             # ── Filtros ───────────────────────────────────────────────
-            meses_lin_cc = _periodo_filter('comp_c', yr, ytd_meses)
+            meses_lin_cc = _periodo_filter('comp_c', yr, ppto_meses)
 
             if not meses_lin_cc:
                 st.info("Sin datos para el período seleccionado.")
