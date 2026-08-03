@@ -67,34 +67,41 @@ def _load_auth_config():
     return None
 
 
-auth_config = _load_auth_config()
-if not auth_config:
-    st.error("No hay configuración de autenticación.")
-    st.stop()
+_LOCAL_DEV = os.environ.get('LOCAL_DEV') == '1'
 
-authenticator = stauth.Authenticate(
-    auth_config['credentials'],
-    auth_config['cookie']['name'] + '_planificacion',  # cookie distinta a la de Ventas
-    auth_config['cookie']['key'],
-    auth_config['cookie']['expiry_days'],
-)
-try:
-    authenticator.login(location='main', key='login_main_plan')
-except Exception:
-    pass
+if not _LOCAL_DEV:
+    auth_config = _load_auth_config()
+    if not auth_config:
+        st.error("No hay configuración de autenticación.")
+        st.stop()
 
-if st.session_state.get('authentication_status') is False:
-    st.error('Usuario o contraseña incorrectos')
-    st.stop()
-elif st.session_state.get('authentication_status') is None:
-    st.warning('Ingresá tu usuario y contraseña para acceder a Planificación')
-    st.stop()
+    authenticator = stauth.Authenticate(
+        auth_config['credentials'],
+        auth_config['cookie']['name'] + '_planificacion',
+        auth_config['cookie']['key'],
+        auth_config['cookie']['expiry_days'],
+    )
+    try:
+        authenticator.login(location='main', key='login_main_plan')
+    except Exception:
+        pass
+
+    if st.session_state.get('authentication_status') is False:
+        st.error('Usuario o contraseña incorrectos')
+        st.stop()
+    elif st.session_state.get('authentication_status') is None:
+        st.warning('Ingresá tu usuario y contraseña para acceder a Planificación')
+        st.stop()
+else:
+    st.session_state['authentication_status'] = True
+    st.session_state['name'] = 'Dev Local'
 
 # Autenticado
 with st.sidebar:
     st.markdown("## 📦 **UnionX Planificación**")
     st.caption("Supply Chain Planning · 2026")
-    authenticator.logout('Cerrar sesión', 'sidebar')
+    if not _LOCAL_DEV:
+        authenticator.logout('Cerrar sesión', 'sidebar')
     st.write(f"👤 **{st.session_state.get('name', '')}**")
     st.divider()
 

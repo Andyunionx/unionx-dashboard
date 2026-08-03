@@ -25,6 +25,19 @@ def _month_col_map(header_row):
     }
 
 
+def _first_section_month_col_map(header_row):
+    """Only the FIRST block of 12 '2026.XX' columns (venta meta section).
+    The marca sheet has multiple horizontal sections (venta meta, contrib, ppto compra, etc.),
+    all sharing the same '2026.01'-'2026.12' headers. Only the first block contains venta meta."""
+    result = {}
+    for i, v in enumerate(header_row):
+        if v is not None and str(v).startswith("2026."):
+            result[i] = f"2026-{str(v).split('.')[1]}"
+            if len(result) == 12:
+                break
+    return result
+
+
 def extract_canal(rows):
     """Canal metas: rows where col[0] is canal name and col[1]=='Venta Neta Total'."""
     # Header: first row where col[0]=='CANAL'
@@ -74,13 +87,14 @@ def extract_marca(rows):
     if header_idx is None:
         raise ValueError("Header de marcas no encontrado")
 
-    month_map = _month_col_map(rows[header_idx])
+    # Use ONLY the first 12-month block (venta meta section).
+    # Subsequent sections in the same row contain contrib, ppto-compra, etc.
+    month_map = _first_section_month_col_map(rows[header_idx])
     if not month_map:
         raise ValueError("Sin columnas de meses en header de marcas")
 
     SKIP = {'', None, 'total', 'grand total', 'corportativo otros', 'corporativo otros'}
     records = []
-    # Search beyond header for rows where first two cols are empty
     for r in rows[header_idx + 1:]:
         c0 = (r[0] or '').strip()
         c1 = (str(r[1]) if r[1] is not None else '').strip()
@@ -137,18 +151,38 @@ def main():
     # ── Marca ──────────────────────────────────────────────────────────────
     try:
         df_marca = extract_marca(rows)
-        # Consolidated total > individual canal breakdown for same (marca, mes) → keep max
-        df_marca = (df_marca
-                    .sort_values('meta_venta_neta', ascending=False)
-                    .drop_duplicates(subset=['marca', 'mes'], keep='first')
-                    .reset_index(drop=True))
+        df_marca = df_marca.drop_duplicates(subset=['marca', 'mes']).reset_index(drop=True)
+
+        # Normalize: scale marca metas per month so their total matches the canal total.
+        # The "supuesto" section sums to a different total than the official canal budget.
+        if not df_canal.empty:
+            canal_monthly = df_canal.groupby('mes')['meta_venta_neta'].sum()
+            marca_monthly = df_marca.groupby('mes')['meta_venta_neta'].sum()
+            def _normalize_row(row):
+                mes = row['mes']
+                c_tot = canal_monthly.get(mes, 0)
+                m_tot = marca_monthly.get(mes, 0)
+                if m_tot > 0 and c_tot > 0:
+                    row['meta_venta_neta'] *= c_tot / m_tot
+                return row
+            df_marca = df_marca.apply(_normalize_row, axis=1)
+            print("\nNormalización marca→canal aplicada:")
+            for mes in sorted(canal_monthly.index):
+                orig = marca_monthly.get(mes, 0) / 1e6
+                norm = canal_monthly.get(mes, 0) / 1e6
+                print(f"  {mes}: {orig:.1f}M → {norm:.1f}M (factor {norm/orig:.3f})" if orig > 0 else f"  {mes}: sin datos marca")
+
         out = OUT_DIR / 'planif_ppto_marca.parquet'
         df_marca.to_parquet(out, index=False)
         print(f"\n✅ Marca: {len(df_marca)} registros → {out}")
-        pivot = df_marca.pivot_table(index='marca', values='meta_venta_neta', aggfunc='sum')
-        pivot['total_anual_$M'] = (pivot['meta_venta_neta'] / 1e6).round(1)
-        print(pivot[['total_anual_$M']].sort_values('total_anual_$M', ascending=False).to_string())
+        pivot = df_marca.pivot_table(index='marca', columns='mes', values='meta_venta_neta', aggfunc='sum')
+        jul_col = '2026-07'
+        if jul_col in pivot.columns:
+            print(f"\nJulio 2026 por marca ($M):")
+            print((pivot[jul_col] / 1e6).round(1).sort_values(ascending=False).to_string())
+            print(f"TOTAL Jul: {pivot[jul_col].sum()/1e6:.1f}M")
     except Exception as e:
+        import traceback; traceback.print_exc()
         print(f"❌ ERROR extrayendo marca: {e}")
 
     print("\nDone!")
