@@ -1320,11 +1320,19 @@ def render():
             def _fmt_sob_m(v):
                 return f"{v:.1f}m" if pd.notna(v) and v is not None else "—"
 
-            _SOB_COLS   = ['nombre_clean', 'skus', 'cobert_act', 'meses_exceso',
-                           'stock_cst', 'capital_inmovilizado', 'tiene_llegadas']
-            _SOB_HEADS  = ['Nombre', 'SKUs', 'Cob. ACT (m)', 'Meses Exceso',
-                           'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
+            # Columnas para niveles de jerarquía (sin Cob/Meses Exceso)
+            _SOB_COLS   = ['nombre_clean', 'skus', 'stock_cst', 'capital_inmovilizado', 'tiene_llegadas']
+            _SOB_HEADS  = ['Nombre', 'SKUs', 'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
             _SOB_FMT    = {
+                'SKUs': lambda v: f"{int(v)}" if pd.notna(v) and v is not None else "—",
+                'Stock CST ($)': _fmt_sob_clp, 'Capital Inmovilizado ($)': _fmt_sob_clp,
+            }
+            # Columnas para nivel SKU (incluye Cob/Meses Exceso)
+            _SK_COLS  = ['nombre_clean', 'descripcion', 'cobert_act', 'meses_exceso',
+                         'stock_cst', 'capital_inmovilizado', 'tiene_llegadas']
+            _SK_HEADS = ['SKU', 'Descripción', 'Cob. ACT (m)', 'Meses Exceso',
+                         'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
+            _SK_FMT   = {
                 'Cob. ACT (m)': _fmt_sob_m, 'Meses Exceso': _fmt_sob_m,
                 'Stock CST ($)': _fmt_sob_clp, 'Capital Inmovilizado ($)': _fmt_sob_clp,
             }
@@ -1383,12 +1391,8 @@ def render():
                             (_df_sob['cat_padre_parent'] == _cp_sel_sk) &
                             (_df_sob['cat_hijo_parent'] == _ch_sel_sk)
                         ].copy()
-                        _sk_cols  = ['nombre_clean', 'descripcion', 'cobert_act', 'meses_exceso',
-                                     'stock_cst', 'capital_inmovilizado', 'tiene_llegadas']
-                        _sk_heads = ['SKU', 'Descripción', 'Cob. ACT (m)', 'Meses Exceso',
-                                     'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
-                        _df_sk_show = _df_sk[_sk_cols].rename(columns=dict(zip(_sk_cols, _sk_heads)))
-                        st.dataframe(_df_sk_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
+                        _df_sk_show = _df_sk[_SK_COLS].rename(columns=dict(zip(_SK_COLS, _SK_HEADS)))
+                        st.dataframe(_df_sk_show.style.format(_SK_FMT), use_container_width=True, hide_index=True)
 
             _dl(
                 _df_marcas_sob[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS))),
