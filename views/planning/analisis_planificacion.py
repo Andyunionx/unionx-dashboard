@@ -277,7 +277,13 @@ def _build_comp_agg(real_piv, meta_piv, meses, dim_col, dims_filter=None):
     )
     rows.append({dim_col: 'TOTAL', 'VENTA META': t_m, 'VENTA REAL': t_r,
                  '% CUMPLIMIENTO': t_r / t_m if t_m > 0 else None})
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    total_mask = df[dim_col] == 'TOTAL'
+    df = pd.concat([
+        df[~total_mask].sort_values('VENTA META', ascending=False),
+        df[total_mask]
+    ]).reset_index(drop=True)
+    return df
 
 
 def _show_comp_agg(df, dim_col):
@@ -430,7 +436,13 @@ def _build_contrib_ytd(real_cb_piv, real_vn_piv, meses, dim_col, dims_filter=Non
     row_t['TOTAL'] = gt_cb
     row_t['% Margen'] = gt_cb / gt_vn if gt_vn > 0 else None
     rows.append(row_t)
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    total_mask = df[dim_col] == 'TOTAL'
+    df = pd.concat([
+        df[~total_mask].sort_values('TOTAL', ascending=False),
+        df[total_mask]
+    ]).reset_index(drop=True)
+    return df
 
 
 def _show_contrib_ytd(df, dim_col):
