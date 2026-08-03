@@ -1077,8 +1077,7 @@ def render():
             _cst_flat = pd.read_parquet(_cst_path) if _cst_path.exists() else pd.DataFrame()
             _cst_idx  = (_cst_flat.set_index('marca') if not _cst_flat.empty else pd.DataFrame())
 
-            meses_cob = meses_plan[:4]
-            # Last 3 months available in the snapshot (for Nov extrapolation)
+            meses_cob  = meses_plan[:3]   # solo Aug, Sep, Oct — Nov eliminado
             _cst_meses = ['2026-08', '2026-09', '2026-10']
 
             # ── PROPIAS row: uses FCST Venta+Llegadas from Excel snapshot ─
@@ -1088,20 +1087,14 @@ def render():
                     sk_tot = float(r.get('stock_hoy_cst', 0.0))
                     cob_a  = float(r.get('cobert_act', 0.0)) or None
                     row = {'Marca': marca, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': cob_a}
-                    last_vta = float(r.get('2026-10_venta', r.get('2026-09_venta', 0)))
                     for ms in meses_cob:
                         _lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                        if ms in _cst_meses:
-                            # StkIni directo del Excel (no calculado rodante)
-                            stk_ini = float(r.get(f'{ms}_stk_ini', 0))
-                            leg     = float(r.get(f'{ms}_llegadas', 0))
-                            vta     = float(r.get(f'{ms}_venta', 0))
-                        else:
-                            stk_ini = 0.0
-                            leg     = 0.0
-                            vta     = last_vta
-                        sp  = stk_ini + leg
-                        cob = round(sp / vta, 2) if vta > 0 else None
+                        # Todos los valores directos del Excel — sin recalcular
+                        stk_ini = float(r.get(f'{ms}_stk_ini', 0))
+                        leg     = float(r.get(f'{ms}_llegadas', 0))
+                        sp      = float(r.get(f'{ms}_sp', 0))
+                        vta     = float(r.get(f'{ms}_venta', 0))
+                        cob     = float(r.get(f'{ms}_cob', 0)) or None
                         row[f'{_lbl} Stk($M)'] = round(stk_ini, 1)
                         row[f'{_lbl} Leg($M)'] = round(leg, 1)
                         row[f'{_lbl} S+P($M)'] = round(sp, 1)
@@ -1173,17 +1166,36 @@ def render():
                 row['Cob. ACT'] = round(stk / vta0, 1) if vta0 > 0 else None
                 return row
 
-            tot_prop_row = _tot_row('TOTAL PROPIA', df_prop)
-            tot_emp_data = pd.concat([df_prop, df_nac], ignore_index=True) if not df_nac.empty else df_prop
-            tot_nac_row  = _tot_row('PROV. NACIONALES', df_nac)
-            tot_emp_row  = _tot_row('TOTAL EMPRESA', tot_emp_data)
-
-            # Blanquear Sep/Oct/Nov para PROV. NACIONALES y TOTAL EMPRESA
-            for _row in (tot_nac_row, tot_emp_row):
-                for ms in meses_cob[1:]:
+            # TOTAL PROPIA: directo del Excel (parquet '_TOTAL_PROPIA')
+            if not _cst_idx.empty and '_TOTAL_PROPIA' in _cst_idx.index:
+                _tp = _cst_idx.loc['_TOTAL_PROPIA']
+                tot_prop_row = {'Marca': 'TOTAL PROPIA',
+                                'Stock Hoy ($M)': round(float(_tp.get('stock_hoy_cst', 0)), 1),
+                                'Cob. ACT': float(_tp.get('cobert_act', 0)) or None}
+                for ms in meses_cob:
                     _lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                    for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
-                        _row[f'{_lbl} {_sfx}'] = None
+                    tot_prop_row[f'{_lbl} Stk($M)'] = round(float(_tp.get(f'{ms}_stk_ini', 0)), 1)
+                    tot_prop_row[f'{_lbl} Leg($M)'] = round(float(_tp.get(f'{ms}_llegadas', 0)), 1)
+                    tot_prop_row[f'{_lbl} S+P($M)'] = round(float(_tp.get(f'{ms}_sp', 0)), 1)
+                    tot_prop_row[f'{_lbl} Vta($M)'] = round(float(_tp.get(f'{ms}_venta', 0)), 1)
+                    tot_prop_row[f'{_lbl} Cob.']    = float(_tp.get(f'{ms}_cob', 0)) or None
+            else:
+                tot_prop_row = _tot_row('TOTAL PROPIA', df_prop)
+
+            # PROV. NACIONALES: solo Aug, Sep/Oct en blanco
+            tot_nac_row = _tot_row('PROV. NACIONALES', df_nac)
+            for ms in meses_cob[1:]:
+                _lbl = pd.Timestamp(ms + '-01').strftime('%b')
+                for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
+                    tot_nac_row[f'{_lbl} {_sfx}'] = None
+
+            # TOTAL EMPRESA: Sep/Oct en blanco (nacionales incompletas)
+            tot_emp_data = pd.concat([df_prop, df_nac], ignore_index=True) if not df_nac.empty else df_prop
+            tot_emp_row  = _tot_row('TOTAL EMPRESA', tot_emp_data)
+            for ms in meses_cob[1:]:
+                _lbl = pd.Timestamp(ms + '-01').strftime('%b')
+                for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
+                    tot_emp_row[f'{_lbl} {_sfx}'] = None
 
             # ── Build main display table (propias + 2 summary rows) ───────
             df_main = pd.concat([
