@@ -721,6 +721,16 @@ def render():
             _cargar_ventas_ytd.clear()
             st.rerun()
 
+        _xl_report = DATA_DIR / 'planificacion' / 'analisis_planificacion_AGO26_v2.xlsx'
+        if _xl_report.exists():
+            st.download_button(
+                "⬇️ Descargar Reporte Excel",
+                data=_xl_report.read_bytes(),
+                file_name="analisis_planificacion_AGO26_v2.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+
     # ── Load all data ─────────────────────────────────────────────────
     with st.spinner("Cargando datos..."):
         df_ventas     = _cargar_ventas_ytd()
