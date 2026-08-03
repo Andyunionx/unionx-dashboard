@@ -1337,6 +1337,13 @@ def render():
                 'Stock CST ($)': _fmt_sob_clp, 'Capital Inmovilizado ($)': _fmt_sob_clp,
             }
 
+            def _with_total(df, label_col):
+                """Agrega fila TOTAL sumando columnas numéricas al final."""
+                num_cols = df.select_dtypes(include='number').columns.tolist()
+                tot = {c: df[c].sum() for c in num_cols}
+                tot[label_col] = 'TOTAL'
+                return pd.concat([df, pd.DataFrame([tot])], ignore_index=True)
+
             _df_marcas_sob = _df_sob[(_df_sob['nivel'] == 1) & (_df_sob['nombre_clean'] != 'TOTAL')].copy()
 
             # Métricas
@@ -1347,7 +1354,10 @@ def render():
 
             # ── 1. Marcas (vista general, siempre visible) ──────────────
             st.markdown("##### 1️⃣ Resumen por Marca")
-            _df_marcas_show = _df_marcas_sob[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS)))
+            _df_marcas_show = _with_total(
+                _df_marcas_sob[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS))),
+                'Nombre'
+            )
             st.dataframe(_df_marcas_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
 
             # ── 2. Categoría Padre ──────────────────────────────────────
@@ -1355,7 +1365,10 @@ def render():
                 _marcas_list = _df_marcas_sob['nombre_clean'].tolist()
                 _m_sel_cp = st.selectbox("Marca", _marcas_list, key='sob_marca_cp')
                 _df_cp = _df_sob[(_df_sob['nivel'] == 2) & (_df_sob['marca_parent'] == _m_sel_cp)].copy()
-                _df_cp_show = _df_cp[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS)))
+                _df_cp_show = _with_total(
+                    _df_cp[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS))),
+                    'Nombre'
+                )
                 st.dataframe(_df_cp_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
 
             # ── 3. Categoría Hijo ───────────────────────────────────────
@@ -1369,7 +1382,10 @@ def render():
                         (_df_sob['marca_parent'] == _m_sel_ch) &
                         (_df_sob['cat_padre_parent'] == _cp_sel_ch)
                     ].copy()
-                    _df_ch_show = _df_ch[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS)))
+                    _df_ch_show = _with_total(
+                        _df_ch[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS))),
+                        'Nombre'
+                    )
                     st.dataframe(_df_ch_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
 
             # ── 4. SKU Detalle ──────────────────────────────────────────
@@ -1391,7 +1407,10 @@ def render():
                             (_df_sob['cat_padre_parent'] == _cp_sel_sk) &
                             (_df_sob['cat_hijo_parent'] == _ch_sel_sk)
                         ].copy()
-                        _df_sk_show = _df_sk[_SK_COLS].rename(columns=dict(zip(_SK_COLS, _SK_HEADS)))
+                        _df_sk_show = _with_total(
+                            _df_sk[_SK_COLS].rename(columns=dict(zip(_SK_COLS, _SK_HEADS))),
+                            'SKU'
+                        )
                         st.dataframe(_df_sk_show.style.format(_SK_FMT), use_container_width=True, hide_index=True)
 
             _dl(
