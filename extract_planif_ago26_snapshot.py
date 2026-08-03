@@ -58,11 +58,20 @@ def _extract_critico():
 # ══════════════════════════════════════════════════════════════════════════════
 # 2. Sobrestock x SKU Padre
 # ══════════════════════════════════════════════════════════════════════════════
+def _clean_nombre(s):
+    for ch in ('▶', '▸', '▹', '↳'):
+        s = s.replace(ch, '')
+    return s.strip()
+
+
 def _extract_sobrestock():
     ws = wb['Sobrestock x SKU Padre']
     rows = list(ws.iter_rows(values_only=True))
     # R0 = title, R1 = headers
     records = []
+    cur_marca = ''
+    cur_cat_padre = ''
+    cur_cat_hijo = ''
     for r in rows[2:]:
         col0 = r[0]
         if col0 is None:
@@ -73,16 +82,33 @@ def _extract_sobrestock():
         # Detect level from prefix
         if col0_str.startswith('▶'):
             nivel = 1
-        elif col0_str.startswith('▸') or '▸' in col0_str:
+        elif '▸' in col0_str:
             nivel = 2
-        elif col0_str.startswith('▹') or '▹' in col0_str:
+        elif '▹' in col0_str:
             nivel = 3
         elif '↳' in col0_str:
             nivel = 4
         else:
             nivel = 1
+
+        nombre_clean = _clean_nombre(col0_str)
+
+        if nivel == 1:
+            cur_marca     = nombre_clean
+            cur_cat_padre = ''
+            cur_cat_hijo  = ''
+        elif nivel == 2:
+            cur_cat_padre = nombre_clean
+            cur_cat_hijo  = ''
+        elif nivel == 3:
+            cur_cat_hijo  = nombre_clean
+
         records.append({
-            'nombre':               str(col0),              # keep raw with indentation
+            'nombre':               str(col0),
+            'nombre_clean':         nombre_clean,
+            'marca_parent':         cur_marca,
+            'cat_padre_parent':     cur_cat_padre,
+            'cat_hijo_parent':      cur_cat_hijo if nivel == 4 else '',
             'descripcion':          str(r[1]).strip() if r[1] else '',
             'skus':                 r[2],
             'cobert_act':           float(r[3]) if r[3] is not None else None,
