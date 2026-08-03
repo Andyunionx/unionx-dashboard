@@ -726,6 +726,10 @@ def render():
         df_ventas     = _cargar_ventas_ytd()
         df_ppto_canal = cargar_ppto_canal()
         df_ppto_marca = cargar_ppto_marca()
+        # UMA en ventas reales = 'Mattel' en el PPTO — normalizar para que coincidan
+        if not df_ppto_marca.empty and 'marca' in df_ppto_marca.columns:
+            df_ppto_marca = df_ppto_marca.copy()
+            df_ppto_marca['marca'] = df_ppto_marca['marca'].replace({'Mattel': 'UMA'})
         df_base       = _preparar_datos()
         costo_map     = cargar_costo_unit_sku()
         df_tr_raw     = cargar_transito()
