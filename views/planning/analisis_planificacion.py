@@ -46,6 +46,7 @@ _MARCA_TO_PPTO: dict[str, str] = {
     'T-Care': 'T-Care',    't-care': 'T-Care',
     'Dynamo TL': 'Dynamo Tools', 'Dynamo': 'Dynamo Tools',
     'Dinamo Tools': 'Dynamo Tools', 'Dynamo Tools': 'Dynamo Tools',
+    'UMA': 'UMA',
     'Purito': 'Purito',
 }
 
@@ -184,8 +185,9 @@ def _color_pct(v):
 def _fmt_cob(v):
     if pd.isna(v): return "—"
     if v < 1:  return f"🔴 {v:.1f}m"
-    if v < 2:  return f"🟡 {v:.1f}m"
+    if v < 2:  return f"🟠 {v:.1f}m"
     if v <= 4: return f"🟢 {v:.1f}m"
+    if v <= 6: return f"🔵 {v:.1f}m"
     return f"🟣 {v:.1f}m"
 
 def _dl(df: pd.DataFrame, filename: str, label="⬇️ Descargar Reporte"):
@@ -993,82 +995,183 @@ def render():
                 )
 
     # ════════════════════════════════════════════════════════════════
-    # TAB 4: CST x MARCA
+    # TAB 4: COBERTURAS
     # ════════════════════════════════════════════════════════════════
+    # Brands classified as "Propias" (own brands) vs "Prov. Nacionales"
+    _PROPIAS_BRANDS = {'Lhotse', 'Simplit', 'Levo', 'Xroad', 'Dynamo Tools', 'Bandú', 'T-Care', 'UMA'}
+
     with tab_cst:
         st.subheader("📦 Coberturas por Marca")
-        st.caption(f"Proyección {N_MESES} meses desde {_TODAY.strftime('%b %Y')}. Valores en $M CLP.")
+        st.caption(f"Proyección 4 meses desde {_TODAY.strftime('%b %Y')}. Valores en $M CLP.")
 
-        if df_base.empty:
-            st.info("Sin datos de planificación disponibles.")
+        _sl_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_stock_live.parquet'
+        if not _sl_path.exists():
+            st.info("Sin datos de stock disponibles.")
         else:
-            _df_c = df_base[df_base['marca'].notna() & ~df_base['marca'].isin({'Sin clasificar', ''})].copy()
-            _df_c['sku_s'] = _df_c['sku'].astype(str)
-            _df_c['_cu']   = _df_c['sku_s'].map(costo_map).fillna(0)
-            _df_c['_sk_c'] = _df_c['stock_actual'].astype(float) * _df_c['_cu']
-            _df_c['_vt_c'] = _df_c['venta_prom_3m'].astype(float) * _df_c['_cu']
+            # ── Enrich cost map with inferred costs from stock_live ──────
+            # costo_override.csv (May-26) lacks Bandú/T-Care/UMA; infer from Odoo valuation
+            _df_sl = pd.read_parquet(_sl_path, columns=['sku', 'marca', 'stock_total', 'valor_total_clp'])
+            _inf_cost = {
+                str(r['sku']): r['valor_total_clp'] / r['stock_total']
+                for _, r in _df_sl[_df_sl['stock_total'] > 0].iterrows()
+            }
+            # costo_override takes precedence over inferred
+            _costo_rich: dict = {**_inf_cost, **costo_map}
 
-            # Pre-compute PPTO monthly arrays
-            _all_skus = _df_c['sku_s'].values
-            _ppto_arr = []
-            for ms in meses_plan:
-                _ppto_arr.append(
-                    _ppto_piv_plan[ms].reindex(_all_skus, fill_value=0).values.astype(float)
-                    if ms in _ppto_piv_plan.columns else np.zeros(len(_df_c))
+            # ── Brand stock from Odoo valuation (valor_total_clp) ────────
+            def _norm_brand(m):
+                if not isinstance(m, str): return ''
+                return _MARCA_TO_PPTO.get(m, m)
+
+            _df_sl['_marca_std'] = _df_sl['marca'].map(_norm_brand)
+            _brand_stock_M = (_df_sl.groupby('_marca_std')['valor_total_clp'].sum() / 1e6)
+
+            # ── Rebuild _df_c with enriched cost ─────────────────────────
+            _df_c = df_base[df_base['marca'].notna() & ~df_base['marca'].isin({'Sin clasificar', ''})].copy()
+            _df_c['sku_s']  = _df_c['sku'].astype(str)
+            _df_c['_cu']    = _df_c['sku_s'].map(_costo_rich).fillna(0)
+            _df_c['_sk_c']  = _df_c['stock_actual'].astype(float) * _df_c['_cu']
+            _df_c['_vt_c']  = _df_c['venta_prom_3m'].astype(float) * _df_c['_cu']
+            # Normalize brand name for grouping
+            _df_c['_marca_std'] = _df_c['marca'].map(_norm_brand)
+
+            # ── Also add stock_live SKUs not in df_base (new brands) ─────
+            _base_skus = set(_df_c['sku_s'].tolist())
+            _sl_extra = _df_sl[~_df_sl['sku'].astype(str).isin(_base_skus) & (_df_sl['stock_total'] > 0)].copy()
+            if not _sl_extra.empty:
+                _sl_extra['sku_s'] = _sl_extra['sku'].astype(str)
+                _sl_extra['_cu']   = _sl_extra['sku_s'].map(_costo_rich).fillna(0)
+                _sl_extra['_sk_c'] = _sl_extra['stock_total'] * _sl_extra['_cu']
+                _sl_extra['_vt_c'] = 0.0
+                _sl_extra['_marca_std'] = _sl_extra['marca'].map(_norm_brand)
+                _sl_extra['stock_actual'] = _sl_extra['stock_total']
+                _sl_extra['venta_prom_3m'] = 0.0
+                _df_c = pd.concat([_df_c, _sl_extra[['sku_s','_cu','_sk_c','_vt_c','_marca_std',
+                                                       'stock_actual','venta_prom_3m']]], ignore_index=True)
+
+            # 4-month horizon for Coberturas (same months as meses_plan, first 4)
+            meses_cob  = meses_plan[:4]
+            labels_cob = labels_plan[:4]
+
+            # Pre-compute PPTO (forecast) monthly arrays for Coberturas SKUs
+            _all_skus_c = _df_c['sku_s'].values
+            _ppto_arr_c = []
+            for ms in meses_cob:
+                _ppto_arr_c.append(
+                    _ppto_piv_plan[ms].reindex(_all_skus_c, fill_value=0).values.astype(float)
+                    if (not _ppto_piv_plan.empty and ms in _ppto_piv_plan.columns)
+                    else np.zeros(len(_df_c))
                 )
 
             brand_rows = []
-            for marca, grp in _df_c.groupby('marca', sort=False):
-                mask_g = np.isin(_all_skus, grp['sku_s'].values)
-                sk_tot = grp['_sk_c'].sum() / 1e6
+            for marca_std, grp in _df_c.groupby('_marca_std', sort=False):
+                if not marca_std:
+                    continue
+                mask_g = np.isin(_all_skus_c, grp['sku_s'].values)
+
+                # Stock Hoy: prefer Odoo valor_total_clp, fallback to stock_actual × cost
+                sk_tot = _brand_stock_M.get(marca_std, grp['_sk_c'].sum() / 1e6)
                 vt_tot = grp['_vt_c'].sum() / 1e6
-                cob_a  = round(sk_tot / vt_tot, 1) if vt_tot > 0 else None
 
-                row_b = {'Marca': marca, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': cob_a}
+                # Cob ACT uses forecast month 0 consumption if available, else 3m avg
+                _vt_m0 = (_ppto_arr_c[0][mask_g] * grp['_cu'].values).sum() / 1e6
+                _vt_ref = _vt_m0 if _vt_m0 > 0 else vt_tot
+                cob_a   = round(sk_tot / _vt_ref, 1) if _vt_ref > 0 else None
 
-                _stk_v = grp['_sk_c'].values.astype(float).copy()
-                for i, (ms, ml) in enumerate(zip(meses_plan, labels_plan)):
-                    # Transit in cost
-                    if ms in _tr_piv.columns:
+                row_b = {'Marca': marca_std, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': cob_a}
+
+                _stk_M = sk_tot  # rolling stock in $M, starts at Odoo valuation
+                for i, (ms, _lbl_y) in enumerate(zip(meses_cob, labels_cob)):
+                    _lbl = pd.Timestamp(ms + '-01').strftime('%b')
+
+                    # Transit cost
+                    if not _tr_piv.empty and ms in _tr_piv.columns:
                         _tr_u = _tr_piv[ms].reindex(grp['sku_s'], fill_value=0).values.astype(float)
+                        _tr_c = (_tr_u * grp['_cu'].values).sum() / 1e6
                     else:
-                        _tr_u = np.zeros(len(grp))
-                    _tr_c = _tr_u * grp['_cu'].values
-                    _tr_tot = _tr_c.sum() / 1e6
+                        _tr_c = 0.0
 
-                    # Venta: use PPTO if available, else 3m avg
-                    _vt_ppto = (_ppto_arr[i][mask_g] * grp['_cu'].values).sum() / 1e6
-                    _vt_ms   = _vt_ppto if _vt_ppto > 0 else vt_tot
+                    # Forecast consumption cost
+                    _vt_ms = (_ppto_arr_c[i][mask_g] * grp['_cu'].values).sum() / 1e6
+                    if _vt_ms <= 0:
+                        _vt_ms = vt_tot  # fallback to 3m avg
 
-                    _stk_ini = _stk_v.sum() / 1e6
-                    _stk_ped = _stk_ini + _tr_tot
+                    _stk_ini = _stk_M
+                    _stk_ped = _stk_ini + _tr_c
                     _cob_m   = round(_stk_ped / _vt_ms, 1) if _vt_ms > 0 else None
 
-                    _lbl = pd.Timestamp(ms + '-01').strftime('%b')
                     row_b[f'{_lbl} Stk($M)'] = round(_stk_ini, 1)
-                    row_b[f'{_lbl} Leg($M)'] = round(_tr_tot, 1)
+                    row_b[f'{_lbl} Leg($M)'] = round(_tr_c, 1)
                     row_b[f'{_lbl} S+P($M)'] = round(_stk_ped, 1)
                     row_b[f'{_lbl} Vta($M)'] = round(_vt_ms, 1)
                     row_b[f'{_lbl} Cob.']    = _cob_m
 
-                    # Next month stock
-                    _vt_ppto_u = _ppto_arr[i][mask_g]
-                    _stk_v     = np.maximum(0.0, _stk_v + _tr_c - _vt_ppto_u * grp['_cu'].values)
+                    _stk_M = max(0.0, _stk_ped - _vt_ms)
 
                 brand_rows.append(row_b)
 
-            df_cst_m = pd.DataFrame(brand_rows).sort_values('Stock Hoy ($M)', ascending=False)
+            if not brand_rows:
+                st.info("Sin datos de planificación disponibles.")
+            else:
+                df_cst_all = pd.DataFrame(brand_rows)
 
-            num_cst  = [c for c in df_cst_m.columns if '$M' in c]
-            cob_cst  = [c for c in df_cst_m.columns if c.endswith('Cob.') or c == 'Cob. ACT']
-            fmt_cst  = {c: (lambda v: f"${v:.1f}M" if pd.notna(v) else "—") for c in num_cst}
-            fmt_cst.update({c: _fmt_cob for c in cob_cst})
+                # Numeric columns for aggregation
+                _num_cols = [c for c in df_cst_all.columns if '$M' in c]
+                _cob_cols = [c for c in df_cst_all.columns if c.endswith('Cob.') or c == 'Cob. ACT']
 
-            st.dataframe(
-                df_cst_m.style.format(fmt_cst),
-                use_container_width=True, hide_index=True
-            )
-            _dl(df_cst_m, f"cst_x_marca_{_TODAY.strftime('%Y-%m')}.csv")
+                def _summary_row(label, sub_df):
+                    row = {'Marca': label}
+                    for c in _num_cols:
+                        row[c] = round(sub_df[c].sum(), 1)
+                    # Coverage = S+P / Vta for ACT and each month
+                    for lbl in [pd.Timestamp(ms + '-01').strftime('%b') for ms in meses_cob]:
+                        vta = row.get(f'{lbl} Vta($M)', 0)
+                        sp  = row.get(f'{lbl} S+P($M)', 0)
+                        row[f'{lbl} Cob.'] = round(sp / vta, 1) if vta > 0 else None
+                    stk_hoy = row.get('Stock Hoy ($M)', 0)
+                    vta_m0  = row.get(f'{pd.Timestamp(meses_cob[0]+"-01").strftime("%b")} Vta($M)', 0)
+                    row['Cob. ACT'] = round(stk_hoy / vta_m0, 1) if vta_m0 > 0 else None
+                    return row
+
+                # Split into propias and nacionales
+                mask_prop = df_cst_all['Marca'].isin(_PROPIAS_BRANDS)
+                df_prop = df_cst_all[mask_prop].sort_values('Stock Hoy ($M)', ascending=False)
+                df_nac  = df_cst_all[~mask_prop].sort_values('Stock Hoy ($M)', ascending=False)
+
+                # Summary rows
+                tot_prop = _summary_row('TOTAL PROPIA', df_prop)
+                tot_nac  = _summary_row('PROV. NACIONALES', df_nac)
+                tot_emp  = _summary_row('TOTAL EMPRESA', df_cst_all)
+
+                df_cst_m = pd.concat([
+                    df_prop,
+                    pd.DataFrame([tot_prop]),
+                    df_nac,
+                    pd.DataFrame([tot_nac]),
+                    pd.DataFrame([tot_emp]),
+                ], ignore_index=True)
+
+                fmt_cst = {c: (lambda v: f"${v:.1f}M" if pd.notna(v) else "—") for c in _num_cols}
+                fmt_cst.update({c: _fmt_cob for c in _cob_cols})
+
+                def _style_summary(row):
+                    if row['Marca'] in ('TOTAL PROPIA', 'PROV. NACIONALES', 'TOTAL EMPRESA'):
+                        return ['font-weight: bold; background-color: #1e293b; color: white'] * len(row)
+                    return [''] * len(row)
+
+                st.dataframe(
+                    df_cst_m.style.format(fmt_cst).apply(_style_summary, axis=1),
+                    use_container_width=True, hide_index=True
+                )
+
+                st.divider()
+                st.download_button(
+                    "⬇️ Descargar Reporte",
+                    data=df_cst_m.to_csv(index=False, encoding='utf-8-sig'),
+                    file_name=f"coberturas_{_TODAY.strftime('%Y-%m')}.csv",
+                    mime='text/csv',
+                    use_container_width=True,
+                )
 
     # ════════════════════════════════════════════════════════════════
     # TAB 5: DETALLE CRÍTICO
