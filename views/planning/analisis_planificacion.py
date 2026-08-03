@@ -235,7 +235,7 @@ def _show_comp(df, meta_cols, real_cols, var_cols, dim_col):
           .format(fmt)
           .map(_color_pct, subset=var_cols)
           .apply(lambda row: [
-              'font-weight:bold; background-color:#1e2432' if row[dim_col] == 'TOTAL' else ''
+              'font-weight:bold;background-color:#1e2432;color:white' if row[dim_col] == 'TOTAL' else ''
               for _ in row
           ], axis=1)
     )
@@ -293,7 +293,7 @@ def _show_comp_agg(df, dim_col):
           .format(fmt)
           .map(_c_cumpl, subset=['% CUMPLIMIENTO'])
           .apply(lambda row: [
-              'font-weight:bold;background-color:#1e2432' if row[dim_col] == 'TOTAL' else ''
+              'font-weight:bold;background-color:#1e2432;color:white' if row[dim_col] == 'TOTAL' else ''
               for _ in row
           ], axis=1),
         use_container_width=True, hide_index=True,
@@ -371,7 +371,7 @@ def _show_cv(df, dim_col, lin_header):
           .map(_c5,        subset=['% vs Lineal'])
           .map(_color_pct, subset=['% vs Meta'])
           .apply(lambda row: [
-              'font-weight:bold;background-color:#1e2432' if row[dim_col] == 'TOTAL' else ''
+              'font-weight:bold;background-color:#1e2432;color:white' if row[dim_col] == 'TOTAL' else ''
               for _ in row
           ], axis=1),
         use_container_width=True, hide_index=True,
@@ -389,7 +389,7 @@ def _show_contrib(df, dim_col):
         df.style
           .format(fmt)
           .apply(lambda row: [
-              'font-weight:bold;background-color:#1e2432' if row[dim_col] == 'TOTAL' else ''
+              'font-weight:bold;background-color:#1e2432;color:white' if row[dim_col] == 'TOTAL' else ''
               for _ in row
           ], axis=1),
         use_container_width=True, hide_index=True,
@@ -437,7 +437,7 @@ def _show_contrib_ytd(df, dim_col):
         df.style
           .format(fmt)
           .apply(lambda row: [
-              'font-weight:bold;background-color:#1e2432' if row[dim_col] == 'TOTAL' else ''
+              'font-weight:bold;background-color:#1e2432;color:white' if row[dim_col] == 'TOTAL' else ''
               for _ in row
           ], axis=1),
         use_container_width=True, hide_index=True,
