@@ -130,6 +130,9 @@ def _extract_sobrestock():
 # ══════════════════════════════════════════════════════════════════════════════
 # 3. Tránsitos por Embarque
 # ══════════════════════════════════════════════════════════════════════════════
+_TRANSITOS_EXCLUIR = {'26TP0528PI', '26TP0704PI'}
+
+
 def _extract_transitos():
     ws = wb['Tránsitos por Embarque']
     rows = list(ws.iter_rows(values_only=True))
@@ -138,6 +141,7 @@ def _extract_transitos():
     # SKU rows: col[0] starts with '  ↳  '
     records = []
     current_pi = None
+    skip_pi = False
     for r in rows[2:]:
         col0 = r[0]
         if col0 is None:
@@ -147,7 +151,9 @@ def _extract_transitos():
             continue
 
         if col0_str.startswith('↳') or str(r[0]).startswith('  ↳'):
-            # SKU row
+            # SKU row — omitir si pertenece a un PI excluido
+            if skip_pi:
+                continue
             sku_raw = col0_str.lstrip('↳ ').strip()
             records.append({
                 'row_type':      'sku',
@@ -167,6 +173,9 @@ def _extract_transitos():
         else:
             # PI row
             current_pi = col0_str
+            skip_pi = col0_str in _TRANSITOS_EXCLUIR
+            if skip_pi:
+                continue
             records.append({
                 'row_type':      'pi',
                 'pi_embarque':   col0_str,
