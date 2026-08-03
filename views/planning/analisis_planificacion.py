@@ -734,7 +734,7 @@ def render():
         "📊 Cómo Vamos",
         "📈 Comp. Marcas",
         "📈 Comp. Canales",
-        "💰 CST x Marca",
+        "📦 Coberturas",
         "🔴 Detalle Crítico",
         "🚢 Tránsitos",
         "🆕 Nuevos en Tránsito",
@@ -996,7 +996,7 @@ def render():
     # TAB 4: CST x MARCA
     # ════════════════════════════════════════════════════════════════
     with tab_cst:
-        st.subheader("💰 Cobertura a Costo por Marca")
+        st.subheader("📦 Coberturas por Marca")
         st.caption(f"Proyección {N_MESES} meses desde {_TODAY.strftime('%b %Y')}. Valores en $M CLP.")
 
         if df_base.empty:
