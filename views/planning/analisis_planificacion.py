@@ -320,6 +320,70 @@ def _show_comp_agg(df, dim_col):
     )
 
 
+def _build_comp_vn_ytd(real_vn_piv, meta_vn_piv, meses, dim_col, dims_filter=None):
+    """VN table: dim | mes1_real | mes2_real | ... | TOT META | TOT REAL | % CUMPL."""
+    all_dims_raw = sorted(set(
+        (real_vn_piv.index.tolist() if not real_vn_piv.empty else []) +
+        (meta_vn_piv.index.tolist() if not meta_vn_piv.empty else [])
+    ))
+    all_dims = [d for d in all_dims_raw if dims_filter is None or d in set(dims_filter)]
+    rows = []
+    for dim in all_dims:
+        row = {dim_col: dim}
+        tot_r = tot_m = 0.0
+        for mes in meses:
+            lbl = pd.Timestamp(mes + '-01').strftime('%b')
+            r = float(real_vn_piv.at[dim, mes]) if (not real_vn_piv.empty and dim in real_vn_piv.index and mes in real_vn_piv.columns) else 0.0
+            m = float(meta_vn_piv.at[dim, mes]) if (not meta_vn_piv.empty and dim in meta_vn_piv.index and mes in meta_vn_piv.columns) else 0.0
+            row[lbl] = r
+            tot_r += r; tot_m += m
+        row['TOT META'] = tot_m
+        row['TOT REAL'] = tot_r
+        row['% CUMPL.'] = tot_r / tot_m if tot_m > 0 else None
+        rows.append(row)
+    row_t = {dim_col: 'TOTAL'}
+    gt_r = gt_m = 0.0
+    for mes in meses:
+        lbl = pd.Timestamp(mes + '-01').strftime('%b')
+        r = sum(float(real_vn_piv.at[d, mes]) if (not real_vn_piv.empty and d in real_vn_piv.index and mes in real_vn_piv.columns) else 0.0 for d in all_dims)
+        m = sum(float(meta_vn_piv.at[d, mes]) if (not meta_vn_piv.empty and d in meta_vn_piv.index and mes in meta_vn_piv.columns) else 0.0 for d in all_dims)
+        row_t[lbl] = r; gt_r += r; gt_m += m
+    row_t['TOT META'] = gt_m; row_t['TOT REAL'] = gt_r
+    row_t['% CUMPL.'] = gt_r / gt_m if gt_m > 0 else None
+    rows.append(row_t)
+    df = pd.DataFrame(rows)
+    total_mask = df[dim_col] == 'TOTAL'
+    df = pd.concat([
+        df[~total_mask].sort_values('TOT META', ascending=False),
+        df[total_mask]
+    ]).reset_index(drop=True)
+    return df
+
+
+def _show_comp_vn_ytd(df, dim_col):
+    """Display VN YTD table: monthly real cols + TOT META + TOT REAL + % CUMPL."""
+    def _c_cumpl(v):
+        if pd.isna(v): return ''
+        if v >= 1.00: return 'color:#22c55e;font-weight:bold'
+        if v >= 0.90: return 'color:#eab308;font-weight:bold'
+        if v >= 0.70: return 'color:#f97316'
+        return 'color:#ef4444'
+    mon_cols = [c for c in df.columns if c not in (dim_col, 'TOT META', 'TOT REAL', '% CUMPL.')]
+    fmt = {c: _fmt_m for c in mon_cols + ['TOT META', 'TOT REAL']}
+    fmt['% CUMPL.'] = lambda v: f"{v:.1%}" if pd.notna(v) else "—"
+    st.dataframe(
+        df.style
+          .format(fmt)
+          .map(_c_cumpl, subset=['% CUMPL.'])
+          .apply(lambda row: [
+              'font-weight:bold;background-color:#1e2432;color:white' if row[dim_col] == 'TOTAL' else ''
+              for _ in row
+          ], axis=1),
+        use_container_width=True, hide_index=True,
+        height=min(600, 60 + len(df) * 35),
+    )
+
+
 def _build_cv_table(real_piv, meta_piv, dim_col, meses_lin, dims_filter=None):
     """Cómo Vamos table with per-month linealidad and optional dimension filter.
     meses_lin: [(mes_str, linealidad_float), ...]
@@ -809,8 +873,8 @@ def render():
 
                 st.divider()
                 st.markdown("#### Venta Neta")
-                df_vn = _build_comp_agg(real_marca_piv, meta_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
-                _show_comp_agg(df_vn, 'Marca')
+                df_vn = _build_comp_vn_ytd(real_marca_piv, meta_marca_piv, meses_cm, 'Marca', dims_filter=_mf_cm)
+                _show_comp_vn_ytd(df_vn, 'Marca')
 
                 st.divider()
                 st.markdown("#### Contribución Frontal")
@@ -878,8 +942,8 @@ def render():
 
                 st.divider()
                 st.markdown("#### Venta Neta")
-                df_vc = _build_comp_agg(real_canal_piv, meta_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
-                _show_comp_agg(df_vc, 'Canal')
+                df_vc = _build_comp_vn_ytd(real_canal_piv, meta_canal_piv, meses_cc, 'Canal', dims_filter=_cf_cc)
+                _show_comp_vn_ytd(df_vc, 'Canal')
 
                 st.divider()
                 st.markdown("#### Contribución Frontal")
