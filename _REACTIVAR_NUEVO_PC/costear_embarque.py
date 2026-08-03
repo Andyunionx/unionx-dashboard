@@ -453,30 +453,39 @@ def leer_pl(path: Path, productos: list[Producto]) -> float:
             "cbm": cbm,
         })
 
-    # Match: buscar por model + descripcion mas cercana, fallback a model unicamente
+    # Agregar PL por modelo: CBM y qty totales del modelo.
+    # FIX 30-jul-2026: repartir el CBM del modelo entre sus variantes del PI
+    # POR CANTIDAD. Antes se asignaba el CBM completo de una fila PL a CADA
+    # variante de color → se triplicaba el CBM (ej. R450 Black/Blue/Grey con
+    # 0.924 c/u en 26TP0702; CBM total superaba la capacidad del contenedor).
+    pl_by_model: dict[str, dict] = {}
+    for it in items_pl:
+        agg = pl_by_model.setdefault(it["model"].lower(), {"cbm": 0.0, "qty": 0.0, "items": []})
+        agg["cbm"] += it["cbm"]
+        agg["qty"] += it["qty"]
+        agg["items"].append(it)
+
     total_cbm = 0.0
     for prod in productos:
-        match = None
-        # 1) Match exacto por model + descripcion
-        candidatos = [it for it in items_pl if it["model"].lower() == prod.model.lower()]
-        if len(candidatos) == 1:
-            match = candidatos[0]
-        elif len(candidatos) > 1:
-            # buscar por descripcion mas cercana
-            d_norm = _norm(prod.descripcion)
-            best = None
-            best_score = 0
-            for c in candidatos:
-                # score por substring overlap
-                if d_norm and c["descripcion"]:
-                    score = sum(1 for w in d_norm.split() if w in c["descripcion"])
-                    if score > best_score:
-                        best, best_score = c, score
-            match = best if best else candidatos[0]
-
-        if match:
-            prod.cbm_total = match["cbm"]
-            total_cbm += match["cbm"]
+        agg = pl_by_model.get(prod.model.lower())
+        if agg and agg["qty"] > 0:
+            # CBM por unidad del modelo × qty de esta variante
+            prod.cbm_total = (agg["cbm"] / agg["qty"]) * prod.qty
+        elif agg:
+            # Sin qty en PL: fallback a match por descripcion (comportamiento previo)
+            cand = agg["items"]
+            if len(cand) == 1:
+                prod.cbm_total = cand[0]["cbm"]
+            else:
+                d_norm = _norm(prod.descripcion)
+                best, best_score = None, 0
+                for c in cand:
+                    if d_norm and c["descripcion"]:
+                        score = sum(1 for w in d_norm.split() if w in c["descripcion"])
+                        if score > best_score:
+                            best, best_score = c, score
+                prod.cbm_total = (best or cand[0])["cbm"]
+        total_cbm += prod.cbm_total
 
     print(f"  Total CBM: {total_cbm:.4f}")
     return total_cbm
