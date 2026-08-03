@@ -239,9 +239,24 @@ def _fmt_cob(v):
     if v <= 6: return f"🔵 {v:.1f}m"
     return f"🟣 {v:.1f}m"
 
+_REPORT_EXCEL_PATH = DATA_DIR / 'planificacion' / 'analisis_planificacion_AGO26.xlsx'
+
+
+def _dl_excel(key: str, label="⬇️ Descargar Reporte"):
+    """Descarga el Excel de planificación completo."""
+    if _REPORT_EXCEL_PATH.exists():
+        st.download_button(
+            label,
+            data=_REPORT_EXCEL_PATH.read_bytes(),
+            file_name=_REPORT_EXCEL_PATH.name,
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            use_container_width=True,
+            key=key,
+        )
+
+
 def _dl(df: pd.DataFrame, filename: str, label="⬇️ Descargar Reporte"):
-    st.download_button(label, data=df.to_csv(index=False, encoding='utf-8-sig'),
-                       file_name=filename, mime='text/csv', use_container_width=True)
+    _dl_excel(key=f'dl_{filename}', label=label)
 
 
 def _report_csv(*sections: tuple) -> bytes:
@@ -721,15 +736,7 @@ def render():
             _cargar_ventas_ytd.clear()
             st.rerun()
 
-        _xl_report = DATA_DIR / 'planificacion' / 'analisis_planificacion_AGO26_v2.xlsx'
-        if _xl_report.exists():
-            st.download_button(
-                "⬇️ Descargar Reporte Excel",
-                data=_xl_report.read_bytes(),
-                file_name="analisis_planificacion_AGO26_v2.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-            )
+        _dl_excel('dl_sidebar', label="⬇️ Descargar Reporte Excel")
 
     # ── Load all data ─────────────────────────────────────────────────
     with st.spinner("Cargando datos..."):
@@ -892,18 +899,7 @@ def render():
             _show_contrib(df_cbc, 'Canal')
 
             st.divider()
-            st.download_button(
-                "⬇️ Descargar Reporte",
-                data=_report_csv(
-                    ("Venta Neta por Marca", df_cv_m),
-                    ("Contribución Frontal por Marca", df_cbm),
-                    ("Venta Neta por Canal", df_cv_c),
-                    ("Contribución Frontal por Canal", df_cbc),
-                ),
-                file_name=f"cv_{per_lbl}.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
+            _dl_excel('dl_cv')
 
     # ════════════════════════════════════════════════════════════════
     # TAB 2: COMP. MARCAS
@@ -972,16 +968,7 @@ def render():
                 _show_contrib_ytd(df_cb_m, 'Marca')
 
                 st.divider()
-                st.download_button(
-                    "⬇️ Descargar Reporte",
-                    data=_report_csv(
-                        ("Venta Neta por Marca", df_vn),
-                        ("Contribución Frontal por Marca", df_cb_m),
-                    ),
-                    file_name=f"comp_marcas_{per_lbl_cm}.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                )
+                _dl_excel('dl_comp_m')
 
     # ════════════════════════════════════════════════════════════════
     # TAB 3: COMP. CANALES
@@ -1048,16 +1035,7 @@ def render():
                 _show_contrib_ytd(df_cb_c, 'Canal')
 
                 st.divider()
-                st.download_button(
-                    "⬇️ Descargar Reporte",
-                    data=_report_csv(
-                        ("Venta Neta por Canal", df_vc),
-                        ("Contribución Frontal por Canal", df_cb_c),
-                    ),
-                    file_name=f"comp_canales_{per_lbl_cc}.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                )
+                _dl_excel('dl_comp_c')
 
     # ════════════════════════════════════════════════════════════════
     # TAB 4: COBERTURAS
@@ -1271,13 +1249,7 @@ def render():
                                 pd.DataFrame([tot_emp_row])],
                                ignore_index=True) if not df_nac.empty else pd.concat(
                 [df_prop, pd.DataFrame([tot_prop_row]), pd.DataFrame([tot_emp_row])], ignore_index=True)
-            st.download_button(
-                "⬇️ Descargar Reporte",
-                data=dl_df.to_csv(index=False, encoding='utf-8-sig'),
-                file_name=f"coberturas_{_TODAY.strftime('%Y-%m')}.csv",
-                mime='text/csv',
-                use_container_width=True,
-            )
+            _dl_excel('dl_coberturas')
 
     # ════════════════════════════════════════════════════════════════
     # TAB 5: CRÍTICOS POR MARCA
