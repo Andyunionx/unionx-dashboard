@@ -1307,7 +1307,7 @@ def render():
     # ════════════════════════════════════════════════════════════════
     with tab_sob:
         st.subheader("📦 Sobrestock — Capital Inmovilizado | AGO 2026")
-        st.caption("Exceso sobre 4 meses de cobertura óptimos. Jerarquía: Marca → Cat. Padre → Cat. Hijo → SKU.")
+        st.caption("Exceso sobre 4 meses de cobertura óptimos.")
 
         _sob_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_sobrestock_snapshot.parquet'
         if not _sob_path.exists():
@@ -1315,31 +1315,85 @@ def render():
         else:
             _df_sob = pd.read_parquet(_sob_path)
 
-            _cap_tot = _df_sob[_df_sob['nivel'] == 1]['capital_inmovilizado'].sum()
-            c1s, c2s, c3s = st.columns(3)
-            c1s.metric("Capital Inmovilizado Total", f"${_cap_tot:,.0f}")
-            c2s.metric("Marcas con sobrestock", int((_df_sob['nivel'] == 1).sum()))
-            c3s.metric("SKUs con sobrestock", int((_df_sob['nivel'] == 4).sum()))
-
             def _fmt_sob_clp(v):
                 return f"${v:,.0f}" if pd.notna(v) and v is not None else "—"
             def _fmt_sob_m(v):
                 return f"{v:.1f}m" if pd.notna(v) and v is not None else "—"
 
-            _df_sob_show = _df_sob[['nombre', 'descripcion', 'skus', 'cobert_act',
-                                     'meses_exceso', 'stock_cst', 'capital_inmovilizado',
-                                     'tiene_llegadas']].copy()
-            _df_sob_show.columns = ['Marca / Categoría / SKU', 'Descripción', 'SKUs',
-                                     'Cob. ACT (m)', 'Meses Exceso',
-                                     'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
-            fmt_sob = {
-                'Cob. ACT (m)':          _fmt_sob_m,
-                'Meses Exceso':           _fmt_sob_m,
-                'Stock CST ($)':          _fmt_sob_clp,
-                'Capital Inmovilizado ($)': _fmt_sob_clp,
+            _SOB_COLS   = ['nombre_clean', 'skus', 'cobert_act', 'meses_exceso',
+                           'stock_cst', 'capital_inmovilizado', 'tiene_llegadas']
+            _SOB_HEADS  = ['Nombre', 'SKUs', 'Cob. ACT (m)', 'Meses Exceso',
+                           'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
+            _SOB_FMT    = {
+                'Cob. ACT (m)': _fmt_sob_m, 'Meses Exceso': _fmt_sob_m,
+                'Stock CST ($)': _fmt_sob_clp, 'Capital Inmovilizado ($)': _fmt_sob_clp,
             }
-            st.dataframe(_df_sob_show.style.format(fmt_sob), use_container_width=True, hide_index=True)
-            _dl(_df_sob_show, "sobrestock_AGO26.csv")
+
+            _df_marcas_sob = _df_sob[(_df_sob['nivel'] == 1) & (_df_sob['nombre_clean'] != 'TOTAL')].copy()
+
+            # Métricas
+            c1s, c2s, c3s = st.columns(3)
+            c1s.metric("Capital Inmovilizado Total", f"${_df_marcas_sob['capital_inmovilizado'].sum():,.0f}")
+            c2s.metric("Marcas con sobrestock", len(_df_marcas_sob))
+            c3s.metric("SKUs con sobrestock", int((_df_sob['nivel'] == 4).sum()))
+
+            # ── 1. Marcas (vista general, siempre visible) ──────────────
+            st.markdown("##### 1️⃣ Resumen por Marca")
+            _df_marcas_show = _df_marcas_sob[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS)))
+            st.dataframe(_df_marcas_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
+
+            # ── 2. Categoría Padre ──────────────────────────────────────
+            with st.expander("2️⃣ Desglose por Categoría Padre"):
+                _marcas_list = _df_marcas_sob['nombre_clean'].tolist()
+                _m_sel_cp = st.selectbox("Marca", _marcas_list, key='sob_marca_cp')
+                _df_cp = _df_sob[(_df_sob['nivel'] == 2) & (_df_sob['marca_parent'] == _m_sel_cp)].copy()
+                _df_cp_show = _df_cp[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS)))
+                st.dataframe(_df_cp_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
+
+            # ── 3. Categoría Hijo ───────────────────────────────────────
+            with st.expander("3️⃣ Desglose por Categoría Hijo"):
+                _m_sel_ch = st.selectbox("Marca", _df_marcas_sob['nombre_clean'].tolist(), key='sob_marca_ch')
+                _cp_list  = _df_sob[(_df_sob['nivel'] == 2) & (_df_sob['marca_parent'] == _m_sel_ch)]['nombre_clean'].tolist()
+                if _cp_list:
+                    _cp_sel_ch = st.selectbox("Categoría Padre", _cp_list, key='sob_cp_ch')
+                    _df_ch = _df_sob[
+                        (_df_sob['nivel'] == 3) &
+                        (_df_sob['marca_parent'] == _m_sel_ch) &
+                        (_df_sob['cat_padre_parent'] == _cp_sel_ch)
+                    ].copy()
+                    _df_ch_show = _df_ch[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS)))
+                    st.dataframe(_df_ch_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
+
+            # ── 4. SKU Detalle ──────────────────────────────────────────
+            with st.expander("4️⃣ Detalle SKU"):
+                _m_sel_sk = st.selectbox("Marca", _df_marcas_sob['nombre_clean'].tolist(), key='sob_marca_sk')
+                _cp_list_sk = _df_sob[(_df_sob['nivel'] == 2) & (_df_sob['marca_parent'] == _m_sel_sk)]['nombre_clean'].tolist()
+                if _cp_list_sk:
+                    _cp_sel_sk = st.selectbox("Categoría Padre", _cp_list_sk, key='sob_cp_sk')
+                    _ch_list_sk = _df_sob[
+                        (_df_sob['nivel'] == 3) &
+                        (_df_sob['marca_parent'] == _m_sel_sk) &
+                        (_df_sob['cat_padre_parent'] == _cp_sel_sk)
+                    ]['nombre_clean'].tolist()
+                    if _ch_list_sk:
+                        _ch_sel_sk = st.selectbox("Categoría Hijo", _ch_list_sk, key='sob_ch_sk')
+                        _df_sk = _df_sob[
+                            (_df_sob['nivel'] == 4) &
+                            (_df_sob['marca_parent'] == _m_sel_sk) &
+                            (_df_sob['cat_padre_parent'] == _cp_sel_sk) &
+                            (_df_sob['cat_hijo_parent'] == _ch_sel_sk)
+                        ].copy()
+                        _sk_cols  = ['nombre_clean', 'descripcion', 'cobert_act', 'meses_exceso',
+                                     'stock_cst', 'capital_inmovilizado', 'tiene_llegadas']
+                        _sk_heads = ['SKU', 'Descripción', 'Cob. ACT (m)', 'Meses Exceso',
+                                     'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
+                        _df_sk_show = _df_sk[_sk_cols].rename(columns=dict(zip(_sk_cols, _sk_heads)))
+                        st.dataframe(_df_sk_show.style.format(_SOB_FMT), use_container_width=True, hide_index=True)
+
+            _dl(
+                _df_marcas_sob[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS))),
+                "sobrestock_AGO26.csv"
+            )
 
     # ════════════════════════════════════════════════════════════════
     # TAB 7: TRÁNSITOS POR EMBARQUE
