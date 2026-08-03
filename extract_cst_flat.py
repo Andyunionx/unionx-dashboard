@@ -61,7 +61,8 @@ for r in all_rows:
     marca = _MARCA_NORM.get(marca_raw, marca_raw)
     stk_hoy = float(r[1] or 0)
 
-    row = {'marca': marca, 'stock_hoy_cst': stk_hoy / 1e6}
+    cobert_act = float(r[2] or 0)
+    row = {'marca': marca, 'stock_hoy_cst': stk_hoy / 1e6, 'cobert_act': cobert_act}
     for mes, cols in MONTHS.items():
         row[f'{mes}_llegadas'] = float(r[cols['llegadas']] or 0) / 1e6
         row[f'{mes}_venta']    = float(r[cols['venta']]    or 0) / 1e6

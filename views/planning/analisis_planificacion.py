@@ -1085,10 +1085,8 @@ def render():
             def _propia_row(marca):
                 if not _cst_idx.empty and marca in _cst_idx.index:
                     r = _cst_idx.loc[marca]
-                    sk_tot = float(r.get('stock_hoy_cst', 0.0))  # del Excel
-                    # Cob.ACT = current stock / Aug FCST Venta
-                    vta_m0 = float(r.get('2026-08_venta', 0))
-                    cob_a  = round(sk_tot / vta_m0, 2) if vta_m0 > 0 else None
+                    sk_tot = float(r.get('stock_hoy_cst', 0.0))
+                    cob_a  = float(r.get('cobert_act', 0.0)) or None
                     row = {'Marca': marca, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': cob_a}
                     _stk_M = sk_tot
                     for ms in meses_cob:
