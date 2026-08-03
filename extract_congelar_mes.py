@@ -114,6 +114,22 @@ def main():
     except Exception as e:
         print(f"   [WARN] rebuild CMR omitido: {type(e).__name__}: {str(e)[:80]}")
 
+    # Alinear dtypes de nu_mes al histórico ANTES del concat. El extract produce
+    # 'dia_semana' como int (0-6) mientras el histórico usa el NOMBRE del día
+    # ("Lunes"...) → sin esto, el concat deja la columna object mixta y
+    # to_parquet revienta con ArrowTypeError (rompió el freeze jul-2026).
+    _DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+    if 'dia_semana' in nu_mes.columns and h['dia_semana'].dtype == object:
+        nu_mes['dia_semana'] = nu_mes['dia_semana'].map(
+            lambda v: _DIAS[int(v)] if isinstance(v, (int, float)) and not isinstance(v, bool)
+            and 0 <= int(v) <= 6 else v)
+    for c in cols:
+        if h[c].dtype != nu_mes[c].dtype:
+            try:
+                nu_mes[c] = nu_mes[c].astype(h[c].dtype)
+            except (ValueError, TypeError):
+                pass
+
     h_new = pd.concat([h[fuera_mask], nu_mes], ignore_index=True)
     print(f"[2/4] Mes {mes}: {int((~fuera_mask).sum()):,} filas viejas → {len(nu_mes):,} frescas")
 
