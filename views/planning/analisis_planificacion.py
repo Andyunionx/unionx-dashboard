@@ -1088,25 +1088,25 @@ def render():
                     sk_tot = float(r.get('stock_hoy_cst', 0.0))
                     cob_a  = float(r.get('cobert_act', 0.0)) or None
                     row = {'Marca': marca, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': cob_a}
-                    _stk_M = sk_tot
+                    last_vta = float(r.get('2026-10_venta', r.get('2026-09_venta', 0)))
                     for ms in meses_cob:
                         _lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                        # For months beyond the snapshot, extrapolate from last available
                         if ms in _cst_meses:
-                            leg = float(r.get(f'{ms}_llegadas', 0))
-                            vta = float(r.get(f'{ms}_venta', 0))
+                            # StkIni directo del Excel (no calculado rodante)
+                            stk_ini = float(r.get(f'{ms}_stk_ini', 0))
+                            leg     = float(r.get(f'{ms}_llegadas', 0))
+                            vta     = float(r.get(f'{ms}_venta', 0))
                         else:
-                            leg = 0.0
-                            # Fallback to Oct venta if available
-                            vta = float(r.get('2026-10_venta', r.get('2026-09_venta', 0)))
-                        sp   = _stk_M + leg
-                        cob  = round(sp / vta, 2) if vta > 0 else None
-                        row[f'{_lbl} Stk($M)'] = round(_stk_M, 1)
+                            stk_ini = 0.0
+                            leg     = 0.0
+                            vta     = last_vta
+                        sp  = stk_ini + leg
+                        cob = round(sp / vta, 2) if vta > 0 else None
+                        row[f'{_lbl} Stk($M)'] = round(stk_ini, 1)
                         row[f'{_lbl} Leg($M)'] = round(leg, 1)
                         row[f'{_lbl} S+P($M)'] = round(sp, 1)
                         row[f'{_lbl} Vta($M)'] = round(vta, 1)
                         row[f'{_lbl} Cob.']    = cob
-                        _stk_M = max(0.0, sp - vta)
                 else:
                     # No snapshot data — fallback a stock live
                     sk_tot = _brand_stock_M.get(marca, 0.0)

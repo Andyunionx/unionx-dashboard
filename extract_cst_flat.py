@@ -23,9 +23,9 @@ OUT_PATH   = Path(__file__).parent / "data" / "planificacion" / "snapshots" / "p
 # OCT26:[13]=StkIni [14]=Llegadas [15]=S+P [16]=Venta [17]=Cobert
 
 MONTHS = {
-    '2026-08': {'llegadas': 4,  'venta': 6},
-    '2026-09': {'llegadas': 9,  'venta': 11},
-    '2026-10': {'llegadas': 14, 'venta': 16},
+    '2026-08': {'stk_ini': 3,  'llegadas': 4,  'venta': 6},
+    '2026-09': {'stk_ini': 8,  'llegadas': 9,  'venta': 11},
+    '2026-10': {'stk_ini': 13, 'llegadas': 14, 'venta': 16},
 }
 
 # Filas a ignorar (no son marcas individuales)
@@ -64,6 +64,7 @@ for r in all_rows:
     cobert_act = float(r[2] or 0)
     row = {'marca': marca, 'stock_hoy_cst': stk_hoy / 1e6, 'cobert_act': cobert_act}
     for mes, cols in MONTHS.items():
+        row[f'{mes}_stk_ini']  = float(r[cols['stk_ini']]  or 0) / 1e6
         row[f'{mes}_llegadas'] = float(r[cols['llegadas']] or 0) / 1e6
         row[f'{mes}_venta']    = float(r[cols['venta']]    or 0) / 1e6
     records.append(row)
@@ -76,7 +77,7 @@ for _, r in df.iterrows():
     print(f"\n  {r['marca']}")
     print(f"    Stock Hoy: {r['stock_hoy_cst']:.1f}M")
     for mes in ['2026-08', '2026-09', '2026-10']:
-        print(f"    {mes}: Leg={r[f'{mes}_llegadas']:.1f}M  Vta={r[f'{mes}_venta']:.1f}M")
+        print(f"    {mes}: StkIni={r[f'{mes}_stk_ini']:.1f}M  Leg={r[f'{mes}_llegadas']:.1f}M  Vta={r[f'{mes}_venta']:.1f}M")
 
 OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 df.to_parquet(str(OUT_PATH), index=False)
