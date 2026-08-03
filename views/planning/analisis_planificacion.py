@@ -1449,7 +1449,8 @@ def render():
                                        'Marcas', 'SKUs', 'Críticos <1m', 'Inquietos 1-2m',
                                        'Unidades', 'Valor USD', 'Nivel Riesgo']
             fmt_tr_pi = {
-                'SKUs': lambda v: f"{int(v)}" if pd.notna(v) else "—",
+                'SKUs':      lambda v: f"{int(v)}" if pd.notna(v) else "—",
+                'Unidades':  lambda v: f"{int(v):,}" if pd.notna(v) else "—",
                 'Valor USD': lambda v: f"${v:,.0f}" if pd.notna(v) else "—",
             }
             st.dataframe(_df_tr_pi_show.style.format(fmt_tr_pi), use_container_width=True, hide_index=True)
