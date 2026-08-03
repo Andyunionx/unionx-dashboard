@@ -11,7 +11,7 @@ import openpyxl
 import pandas as pd
 from pathlib import Path
 
-PPTO_PATH = Path(r"C:\Users\felip\Desktop\UNIONX\PPTO 2026\Metas oficiales 2SEM OFICIAL.xlsx")
+PPTO_PATH = Path(r"C:\Users\felip\Desktop\UNIONX\PPTO 2026\Metas oficiales 2SEM OFICIAL Detallado.xlsx")
 SHEET_NAME = "PPTO MARCA 2026"
 OUT_DIR = Path(__file__).parent / "data" / "planificacion" / "snapshots"
 
