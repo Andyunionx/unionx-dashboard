@@ -553,6 +553,13 @@ def render():
     st.title("📊 Análisis de Planificación")
     st.caption("Seguimiento comercial vs PPTO + estado supply chain.")
 
+    with st.sidebar:
+        if st.button("🔄 Limpiar cache", help="Fuerza recarga de datos desde disco"):
+            cargar_ppto_canal.clear()
+            cargar_ppto_marca.clear()
+            _cargar_ventas_ytd.clear()
+            st.rerun()
+
     # ── Load all data ─────────────────────────────────────────────────
     with st.spinner("Cargando datos..."):
         df_ventas     = _cargar_ventas_ytd()

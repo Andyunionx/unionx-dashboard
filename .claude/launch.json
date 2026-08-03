@@ -4,7 +4,7 @@
     {
       "name": "planif",
       "runtimeExecutable": "streamlit",
-      "runtimeArgs": ["run", "app.py", "--server.port=8501", "--server.headless=true"],
+      "runtimeArgs": ["run", "dashboard_planificacion.py", "--server.port=8501", "--server.headless=true"],
       "port": 8501
     },
     {

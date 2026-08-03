@@ -593,7 +593,7 @@ def cargar_planif_transito_live() -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def cargar_ppto_canal() -> pd.DataFrame:
     """Meta venta neta por canal (PPTO 2026). cols: canal, mes (YYYY-MM), meta_venta_neta."""
     path = SNAPSHOTS_DIR / 'planif_ppto_canal.parquet'
@@ -602,7 +602,7 @@ def cargar_ppto_canal() -> pd.DataFrame:
     return pd.read_parquet(path)
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=300, show_spinner=False)
 def cargar_ppto_marca() -> pd.DataFrame:
     """Meta venta neta por marca (PPTO 2026). cols: marca, mes (YYYY-MM), meta_venta_neta."""
     path = SNAPSHOTS_DIR / 'planif_ppto_marca.parquet'
