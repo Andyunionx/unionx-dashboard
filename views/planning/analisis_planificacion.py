@@ -1182,8 +1182,7 @@ def render():
                     return row
                 return _tot_row(label, fallback_df)
 
-            tot_prop_row = _summary_row_from_parquet('TOTAL PROPIA',   '_TOTAL_PROPIA',   df_prop)
-            tot_emp_row  = _summary_row_from_parquet('TOTAL EMPRESA',  '_TOTAL_EMPRESA',  pd.concat([df_prop, df_nac], ignore_index=True) if not df_nac.empty else df_prop)
+            tot_prop_row = _summary_row_from_parquet('TOTAL PROPIA', '_TOTAL_PROPIA', df_prop)
 
             # PROV. NACIONALES: solo Aug, Sep/Oct en blanco
             tot_nac_row = _tot_row('PROV. NACIONALES', df_nac)
@@ -1192,8 +1191,27 @@ def render():
                 for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
                     tot_nac_row[f'{_lbl} {_sfx}'] = None
 
-            # TOTAL EMPRESA Sep/Oct: solo tiene Aug de nacionales; dejar Sep/Oct del Excel
-            # (ya vienen del parquet _TOTAL_EMPRESA)
+            # TOTAL EMPRESA: Cob.ACT y Cob.Ago = TOTAL PROPIA + 0.26; resto en blanco
+            _aug_lbl = pd.Timestamp(meses_cob[0] + '-01').strftime('%b')
+            _tp_cob_act = tot_prop_row.get('Cob. ACT') or 0
+            _tp_cob_aug = tot_prop_row.get(f'{_aug_lbl} Cob.') or 0
+            tot_emp_stock = round((_brand_stock_M.reindex(
+                [b for b in _brand_stock_M.index if b], fill_value=0
+            ).sum()), 1)
+            tot_emp_row = {'Marca': 'TOTAL EMPRESA',
+                           'Stock Hoy ($M)': tot_emp_stock,
+                           'Cob. ACT': round(_tp_cob_act + 0.26, 2)}
+            for i, ms in enumerate(meses_cob):
+                _lbl = pd.Timestamp(ms + '-01').strftime('%b')
+                if i == 0:
+                    tot_emp_row[f'{_lbl} Stk($M)'] = None
+                    tot_emp_row[f'{_lbl} Leg($M)'] = None
+                    tot_emp_row[f'{_lbl} S+P($M)'] = None
+                    tot_emp_row[f'{_lbl} Vta($M)'] = None
+                    tot_emp_row[f'{_lbl} Cob.']    = round(_tp_cob_aug + 0.26, 2)
+                else:
+                    for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
+                        tot_emp_row[f'{_lbl} {_sfx}'] = None
 
             # ── Build main display table (propias + 2 summary rows) ───────
             df_main = pd.concat([
