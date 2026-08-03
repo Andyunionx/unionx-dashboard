@@ -335,7 +335,8 @@ def _build_comp_vn_ytd(real_vn_piv, meta_vn_piv, meses, dim_col, dims_filter=Non
             lbl = pd.Timestamp(mes + '-01').strftime('%b')
             r = float(real_vn_piv.at[dim, mes]) if (not real_vn_piv.empty and dim in real_vn_piv.index and mes in real_vn_piv.columns) else 0.0
             m = float(meta_vn_piv.at[dim, mes]) if (not meta_vn_piv.empty and dim in meta_vn_piv.index and mes in meta_vn_piv.columns) else 0.0
-            row[lbl] = r
+            if len(meses) > 1:
+                row[lbl] = r
             tot_r += r; tot_m += m
         row['TOT META'] = tot_m
         row['TOT REAL'] = tot_r
@@ -347,7 +348,9 @@ def _build_comp_vn_ytd(real_vn_piv, meta_vn_piv, meses, dim_col, dims_filter=Non
         lbl = pd.Timestamp(mes + '-01').strftime('%b')
         r = sum(float(real_vn_piv.at[d, mes]) if (not real_vn_piv.empty and d in real_vn_piv.index and mes in real_vn_piv.columns) else 0.0 for d in all_dims)
         m = sum(float(meta_vn_piv.at[d, mes]) if (not meta_vn_piv.empty and d in meta_vn_piv.index and mes in meta_vn_piv.columns) else 0.0 for d in all_dims)
-        row_t[lbl] = r; gt_r += r; gt_m += m
+        if len(meses) > 1:
+            row_t[lbl] = r
+        gt_r += r; gt_m += m
     row_t['TOT META'] = gt_m; row_t['TOT REAL'] = gt_r
     row_t['% CUMPL.'] = gt_r / gt_m if gt_m > 0 else None
     rows.append(row_t)
