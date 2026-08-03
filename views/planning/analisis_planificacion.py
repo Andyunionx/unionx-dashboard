@@ -84,10 +84,14 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
     df_mes  = _safe_read(path_mes)  if path_mes.exists()  else None
     df_hist = _safe_read(path_hist) if path_hist.exists() else None
 
-    # Evitar solapamiento: si mes_actual existe, cortar historico antes de su fecha mínima
-    if df_mes is not None and not df_mes.empty and df_hist is not None:
-        mes_inicio = pd.to_datetime(df_mes['fecha_venta'], errors='coerce').min()
-        df_hist = df_hist[pd.to_datetime(df_hist['fecha_venta'], errors='coerce') < mes_inicio]
+    # ventas_mes_actual cubre el mes corriente (live). Los meses cerrados están en
+    # ventas_historico (congelados al cierre). Solo usamos mes_actual para el mes
+    # en curso — si tiene datos de meses anteriores, los descartamos para no
+    # pisar el histórico congelado (que tiene el dato definitivo).
+    if df_mes is not None and not df_mes.empty:
+        mes_corriente = _TODAY.to_period('M').strftime('%Y-%m')
+        fechas_mes = pd.to_datetime(df_mes['fecha_venta'], errors='coerce')
+        df_mes = df_mes[fechas_mes.dt.to_period('M').astype(str) == mes_corriente]
 
     dfs = [d for d in (df_hist, df_mes) if d is not None and not d.empty]
     if not dfs:
