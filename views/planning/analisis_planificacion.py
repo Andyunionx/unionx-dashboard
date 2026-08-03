@@ -1048,7 +1048,7 @@ def render():
     # TAB 4: COBERTURAS
     # ════════════════════════════════════════════════════════════════
     # Own brands: exact order matching the Excel CST x Marca
-    _PROPIAS_ORDER = ['Lhotse', 'Simplit', 'Levo', 'Xroad', 'Dynamo Tools', 'Bandú', 'T-Care', 'UMA']
+    _PROPIAS_ORDER = ['Lhotse', 'Simplit', 'Levo', 'Xroad', 'Dynamo Tools', 'Bandú', 'T-Care', 'UMA', 'Purito']
     _PROPIAS_SET   = set(_PROPIAS_ORDER)
 
     with tab_cst:
