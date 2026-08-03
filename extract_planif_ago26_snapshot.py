@@ -130,7 +130,7 @@ def _extract_sobrestock():
 # ══════════════════════════════════════════════════════════════════════════════
 # 3. Tránsitos por Embarque
 # ══════════════════════════════════════════════════════════════════════════════
-_TRANSITOS_EXCLUIR = {'26TP0528PI', '26TP0704PI'}
+_TRANSITOS_EXCLUIR = {'26TP0528PI', '26TP0704PI', 'TOTAL'}
 
 
 def _extract_transitos():
