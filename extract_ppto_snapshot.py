@@ -179,8 +179,32 @@ def main():
         df_marca = extract_marca(rows)
         df_marca = df_marca.drop_duplicates(subset=['marca', 'mes']).reset_index(drop=True)
 
+        # Split H1 Dynamo Tools meta into 3 brands using H2 proportions.
+        # Marcas Flash se aperturó en Jul-2026 a Dynamo Tools + Bandú + T-Care.
+        # En H1 el PPTO solo tenía una línea (ahora "Dynamo Tools"); redistribuimos
+        # proporcionalmente según cómo quedó el split en H2.
+        H1 = [f'2026-{m:02d}' for m in range(1, 7)]
+        H2 = [f'2026-{m:02d}' for m in range(7, 13)]
+        SPLIT_3 = {'Dynamo Tools', 'Bandú', 'T-Care'}
+        h2_totals = (df_marca[df_marca['mes'].isin(H2) & df_marca['marca'].isin(SPLIT_3)]
+                     .groupby('marca')['meta_venta_neta'].sum())
+        h2_grand = h2_totals.sum()
+        if h2_grand > 0:
+            props = h2_totals / h2_grand  # {marca: proporción}
+            h1_dynamo = df_marca[df_marca['mes'].isin(H1) & (df_marca['marca'] == 'Dynamo Tools')]
+            df_marca = df_marca[~(df_marca['mes'].isin(H1) & (df_marca['marca'] == 'Dynamo Tools'))]
+            new_rows = []
+            for _, row in h1_dynamo.iterrows():
+                for brand, prop in props.items():
+                    new_rows.append({'marca': brand, 'mes': row['mes'],
+                                     'meta_venta_neta': row['meta_venta_neta'] * prop})
+            if new_rows:
+                df_marca = pd.concat([df_marca, pd.DataFrame(new_rows)], ignore_index=True)
+            print(f"\nSplit H1 Marcas Flash → 3 marcas (proporciones H2):")
+            for b, p in props.items():
+                print(f"  {b}: {p:.1%}")
+
         # Normalize: scale marca metas per month so their total matches the canal total.
-        # The "supuesto" section sums to a different total than the official canal budget.
         if not df_canal.empty:
             canal_monthly = df_canal.groupby('mes')['meta_venta_neta'].sum()
             marca_monthly = df_marca.groupby('mes')['meta_venta_neta'].sum()
@@ -192,21 +216,24 @@ def main():
                     row['meta_venta_neta'] *= c_tot / m_tot
                 return row
             df_marca = df_marca.apply(_normalize_row, axis=1)
-            print("\nNormalización marca→canal aplicada:")
+            print("\nNormalización marca→canal:")
             for mes in sorted(canal_monthly.index):
                 orig = marca_monthly.get(mes, 0) / 1e6
                 norm = canal_monthly.get(mes, 0) / 1e6
-                print(f"  {mes}: {orig:.1f}M → {norm:.1f}M (factor {norm/orig:.3f})" if orig > 0 else f"  {mes}: sin datos marca")
+                print(f"  {mes}: {orig:.1f}M → {norm:.1f}M" if orig > 0 else f"  {mes}: sin datos")
 
+        df_marca = df_marca.sort_values(['mes', 'marca']).reset_index(drop=True)
         out = OUT_DIR / 'planif_ppto_marca.parquet'
         df_marca.to_parquet(out, index=False)
         print(f"\n✅ Marca: {len(df_marca)} registros → {out}")
         pivot = df_marca.pivot_table(index='marca', columns='mes', values='meta_venta_neta', aggfunc='sum')
-        jul_col = '2026-07'
-        if jul_col in pivot.columns:
-            print(f"\nJulio 2026 por marca ($M):")
-            print((pivot[jul_col] / 1e6).round(1).sort_values(ascending=False).to_string())
-            print(f"TOTAL Jul: {pivot[jul_col].sum()/1e6:.1f}M")
+        print("\nResumen H1 ($M):")
+        h1_cols = [c for c in sorted(pivot.columns) if c <= '2026-06']
+        print((pivot[h1_cols] / 1e6).fillna(0).round(1).to_string())
+        print("\nResumen H2 ($M):")
+        h2_cols = [c for c in sorted(pivot.columns) if c >= '2026-07']
+        print((pivot[h2_cols] / 1e6).fillna(0).round(1).to_string())
+        print(f"\nTotales mensuales: {(pivot.sum()/1e6).round(0).to_dict()}")
     except Exception as e:
         import traceback; traceback.print_exc()
         print(f"❌ ERROR extrayendo marca: {e}")
