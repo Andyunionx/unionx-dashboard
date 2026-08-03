@@ -87,13 +87,19 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
     # Separación estricta por mes: historico = meses cerrados (<mes corriente),
     # mes_actual = solo el mes corriente en curso. Esto evita doble conteo si el
     # parquet de historico fue regenerado incluyendo datos del mes abierto.
+    # Separación estricta por mes: historico = meses cerrados (<mes corriente),
+    # mes_actual = solo el mes corriente, hasta ayer (la venta cierra al día anterior).
     mes_corriente = _TODAY.to_period('M').strftime('%Y-%m')
+    ayer = (_TODAY - pd.Timedelta(days=1)).date()
     if df_hist is not None and not df_hist.empty:
         fechas_hist = pd.to_datetime(df_hist['fecha_venta'], errors='coerce')
         df_hist = df_hist[fechas_hist.dt.to_period('M').astype(str) < mes_corriente]
     if df_mes is not None and not df_mes.empty:
         fechas_mes = pd.to_datetime(df_mes['fecha_venta'], errors='coerce')
-        df_mes = df_mes[fechas_mes.dt.to_period('M').astype(str) == mes_corriente]
+        df_mes = df_mes[
+            (fechas_mes.dt.to_period('M').astype(str) == mes_corriente) &
+            (fechas_mes.dt.date <= ayer)
+        ]
 
     dfs = [d for d in (df_hist, df_mes) if d is not None and not d.empty]
     if not dfs:
