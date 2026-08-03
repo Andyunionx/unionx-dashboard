@@ -42,9 +42,10 @@ _MARCA_TO_PPTO: dict[str, str] = {
     'Simplit': 'Simplit',  'SIMPLIT': 'Simplit',  'simplit': 'Simplit',
     'Levo': 'Levo',        'levo': 'Levo',        'LEVO': 'Levo',
     'Xroad': 'Xroad',      'xroad': 'Xroad',      'XROAD': 'Xroad',
-    'Bandú': 'Lhotse',     'Bandu': 'Lhotse',     'bandú': 'Lhotse',
-    'T-Care': 'Marcas Flash',
-    'Dynamo TL': 'Marcas Flash', 'Dynamo': 'Marcas Flash',
+    'Bandú': 'Bandú',      'Bandu': 'Bandú',      'bandú': 'Bandú',
+    'T-Care': 'T-Care',    't-care': 'T-Care',
+    'Dynamo TL': 'Dynamo Tools', 'Dynamo': 'Dynamo Tools',
+    'Dinamo Tools': 'Dynamo Tools', 'Dynamo Tools': 'Dynamo Tools',
     'Purito': 'Purito',
 }
 

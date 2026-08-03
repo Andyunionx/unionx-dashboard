@@ -67,25 +67,25 @@ def extract_canal(rows):
     return pd.DataFrame(records)
 
 
-def extract_marca(rows):
-    """Marca totals: rows where col[0]=='' AND col[1]=='' AND col[2] is marca name."""
-    # Find header of the brand section (row with col[1]=='Tipo canal' OR col[2]=='Marca')
-    header_idx = None
+def _marca_header_idx(rows):
     for i, r in enumerate(rows):
         c1 = str(r[1]).strip() if r[1] is not None else ''
         c2 = str(r[2]).strip() if r[2] is not None else ''
         if c1 == 'Tipo canal' and c2 == 'Marca':
-            header_idx = i
-            break
-    if header_idx is None:
-        # Fallback: find header row where col[3] starts with '2026.' and col[2]=='Marca'
-        for i, r in enumerate(rows):
-            if str(r[2]).strip() == 'Marca' and r[3] is not None and str(r[3]).startswith('2026.'):
-                header_idx = i
-                break
+            return i
+    # Fallback
+    for i, r in enumerate(rows):
+        if str(r[2]).strip() == 'Marca' and r[3] is not None and str(r[3]).startswith('2026.'):
+            return i
+    raise ValueError("Header de marcas no encontrado")
 
-    if header_idx is None:
-        raise ValueError("Header de marcas no encontrado")
+
+def extract_marca(rows):
+    """Marca totals: rows where col[0]=='' AND col[1]=='' AND col[2] is marca name.
+    Also extracts Bandú and T-Care from their per-canal rows (new brands from H2-2026,
+    summed across canals). 'Marcas Flash' is renamed 'Dynamo Tools' since that's the
+    individual brand it represents."""
+    header_idx = _marca_header_idx(rows)
 
     # Use ONLY the first 12-month block (venta meta section).
     # Subsequent sections in the same row contain contrib, ppto-compra, etc.
@@ -93,6 +93,7 @@ def extract_marca(rows):
     if not month_map:
         raise ValueError("Sin columnas de meses en header de marcas")
 
+    # ── Brand-total rows (c0='', c1='') ───────────────────────────────────
     SKIP = {'', None, 'total', 'grand total', 'corportativo otros', 'corporativo otros'}
     records = []
     for r in rows[header_idx + 1:]:
@@ -106,6 +107,9 @@ def extract_marca(rows):
         marca = str(c2).strip()
         if 'Total' in marca or 'TOTAL' in marca:
             continue
+        # "Marcas Flash" brand-total = Dynamo Tools canal sum; rename for clarity
+        if marca == 'Marcas Flash':
+            marca = 'Dynamo Tools'
         found_any = False
         for col_idx, mes in month_map.items():
             val = r[col_idx]
@@ -113,9 +117,31 @@ def extract_marca(rows):
                 found_any = True
                 records.append({'marca': marca, 'mes': mes, 'meta_venta_neta': float(val)})
         if not found_any and len(records) > 0:
-            break  # likely end of marca section
+            break
 
-    return pd.DataFrame(records)
+    # ── Per-canal rows for Bandú and T-Care (new brands, H2-2026) ─────────
+    # These brands don't have a brand-total row; must sum across canals.
+    NEW_BRANDS = {'Bandú', 'T-Care'}
+    for r in rows[header_idx + 1:]:
+        c0 = (r[0] or '').strip()
+        c1 = (str(r[1]) if r[1] is not None else '').strip()
+        c2 = str(r[2]).strip() if r[2] is not None else ''
+        if c0 != '' or c1 == '':
+            continue  # keep only canal-specific rows (c0='', c1=canal)
+        if c2 not in NEW_BRANDS:
+            continue
+        for col_idx, mes in month_map.items():
+            val = r[col_idx]
+            if val is not None and isinstance(val, (int, float)) and float(val) > 0:
+                records.append({'marca': c2, 'mes': mes, 'meta_venta_neta': float(val)})
+
+    df = pd.DataFrame(records)
+    if df.empty:
+        return df
+
+    # Sum per-canal contributions for Bandú / T-Care across canals
+    df = df.groupby(['marca', 'mes'], as_index=False)['meta_venta_neta'].sum()
+    return df
 
 
 def main():
