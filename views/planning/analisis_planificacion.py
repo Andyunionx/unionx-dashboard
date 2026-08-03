@@ -1083,10 +1083,9 @@ def render():
 
             # ── PROPIAS row: uses FCST Venta+Llegadas from Excel snapshot ─
             def _propia_row(marca):
-                sk_tot = _brand_stock_M.get(marca, 0.0)
-
                 if not _cst_idx.empty and marca in _cst_idx.index:
                     r = _cst_idx.loc[marca]
+                    sk_tot = float(r.get('stock_hoy_cst', 0.0))  # del Excel
                     # Cob.ACT = current stock / Aug FCST Venta
                     vta_m0 = float(r.get('2026-08_venta', 0))
                     cob_a  = round(sk_tot / vta_m0, 2) if vta_m0 > 0 else None
@@ -1111,7 +1110,8 @@ def render():
                         row[f'{_lbl} Cob.']    = cob
                         _stk_M = max(0.0, sp - vta)
                 else:
-                    # No snapshot data — show stock only
+                    # No snapshot data — fallback a stock live
+                    sk_tot = _brand_stock_M.get(marca, 0.0)
                     row = {'Marca': marca, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': None}
                     for ms in meses_cob:
                         _lbl = pd.Timestamp(ms + '-01').strftime('%b')
