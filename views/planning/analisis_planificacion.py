@@ -193,6 +193,18 @@ def _dl(df: pd.DataFrame, filename: str, label="⬇️ Descargar Reporte"):
                        file_name=filename, mime='text/csv', use_container_width=True)
 
 
+def _report_csv(*sections: tuple) -> bytes:
+    """Merge (title, df) pairs into one UTF-8 CSV, sections separated by a title row."""
+    import io
+    buf = io.StringIO()
+    for i, (title, df) in enumerate(sections):
+        if i > 0:
+            buf.write("\n")
+        buf.write(f"### {title}\n")
+        df.to_csv(buf, index=False)
+    return buf.getvalue().encode('utf-8-sig')
+
+
 def _build_comp_table(real_piv, meta_piv, meses, dim_col, dims_filter=None):
     """Returns (df, meta_cols, real_cols, var_cols) for the META|REAL|VAR% table."""
     all_dims_raw = sorted(set(
@@ -813,11 +825,18 @@ def render():
             _show_contrib(df_cbc, 'Canal')
 
             st.divider()
-            _d1, _d2, _d3, _d4 = st.columns(4)
-            with _d1: _dl(df_cv_m,  f"cv_vn_marca_{per_lbl}.csv",    "⬇️ VN Marca")
-            with _d2: _dl(df_cbm,   f"cv_contrib_marca_{per_lbl}.csv","⬇️ Contrib. Marca")
-            with _d3: _dl(df_cv_c,  f"cv_vn_canal_{per_lbl}.csv",    "⬇️ VN Canal")
-            with _d4: _dl(df_cbc,   f"cv_contrib_canal_{per_lbl}.csv","⬇️ Contrib. Canal")
+            st.download_button(
+                "⬇️ Descargar Reporte",
+                data=_report_csv(
+                    ("Venta Neta por Marca", df_cv_m),
+                    ("Contribución Frontal por Marca", df_cbm),
+                    ("Venta Neta por Canal", df_cv_c),
+                    ("Contribución Frontal por Canal", df_cbc),
+                ),
+                file_name=f"cv_{per_lbl}.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
 
     # ════════════════════════════════════════════════════════════════
     # TAB 2: COMP. MARCAS
@@ -886,9 +905,16 @@ def render():
                 _show_contrib_ytd(df_cb_m, 'Marca')
 
                 st.divider()
-                _dm1, _dm2 = st.columns(2)
-                with _dm1: _dl(df_vn,   f"comp_marcas_vn_{per_lbl_cm}.csv",     "⬇️ Venta Neta")
-                with _dm2: _dl(df_cb_m, f"comp_marcas_contrib_{per_lbl_cm}.csv", "⬇️ Contribución")
+                st.download_button(
+                    "⬇️ Descargar Reporte",
+                    data=_report_csv(
+                        ("Venta Neta por Marca", df_vn),
+                        ("Contribución Frontal por Marca", df_cb_m),
+                    ),
+                    file_name=f"comp_marcas_{per_lbl_cm}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
 
     # ════════════════════════════════════════════════════════════════
     # TAB 3: COMP. CANALES
@@ -955,9 +981,16 @@ def render():
                 _show_contrib_ytd(df_cb_c, 'Canal')
 
                 st.divider()
-                _dc1, _dc2 = st.columns(2)
-                with _dc1: _dl(df_vc,   f"comp_canales_vn_{per_lbl_cc}.csv",     "⬇️ Venta Neta")
-                with _dc2: _dl(df_cb_c, f"comp_canales_contrib_{per_lbl_cc}.csv", "⬇️ Contribución")
+                st.download_button(
+                    "⬇️ Descargar Reporte",
+                    data=_report_csv(
+                        ("Venta Neta por Canal", df_vc),
+                        ("Contribución Frontal por Canal", df_cb_c),
+                    ),
+                    file_name=f"comp_canales_{per_lbl_cc}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
 
     # ════════════════════════════════════════════════════════════════
     # TAB 4: CST x MARCA
