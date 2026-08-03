@@ -1123,17 +1123,22 @@ def render():
                 vt_6w  = brand_6w_M.get(marca, 0.0)
                 cob_a  = round(sk_tot / vt_6w, 1) if vt_6w > 0 else None
                 row = {'Marca': marca, 'Stock Hoy ($M)': round(sk_tot, 1), 'Cob. ACT': cob_a}
-                _stk_M = sk_tot
-                for ms in meses_cob:
+                for i, ms in enumerate(meses_cob):
                     _lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                    sp   = _stk_M  # no llegadas for nacionales (simplified)
-                    cob  = round(sp / vt_6w, 1) if vt_6w > 0 else None
-                    row[f'{_lbl} Stk($M)'] = round(_stk_M, 1)
-                    row[f'{_lbl} Leg($M)'] = 0.0
-                    row[f'{_lbl} S+P($M)'] = round(sp, 1)
-                    row[f'{_lbl} Vta($M)'] = round(vt_6w, 1)
-                    row[f'{_lbl} Cob.']    = cob
-                    _stk_M = max(0.0, sp - vt_6w)
+                    if i == 0:  # solo agosto
+                        sp  = sk_tot
+                        cob = round(sp / vt_6w, 1) if vt_6w > 0 else None
+                        row[f'{_lbl} Stk($M)'] = round(sk_tot, 1)
+                        row[f'{_lbl} Leg($M)'] = 0.0
+                        row[f'{_lbl} S+P($M)'] = round(sp, 1)
+                        row[f'{_lbl} Vta($M)'] = round(vt_6w, 1)
+                        row[f'{_lbl} Cob.']    = cob
+                    else:
+                        row[f'{_lbl} Stk($M)'] = None
+                        row[f'{_lbl} Leg($M)'] = None
+                        row[f'{_lbl} S+P($M)'] = None
+                        row[f'{_lbl} Vta($M)'] = None
+                        row[f'{_lbl} Cob.']    = None
                 return row
 
             # ── PROPIAS rows (in Excel order) ─────────────────────────────
@@ -1172,6 +1177,13 @@ def render():
             tot_emp_data = pd.concat([df_prop, df_nac], ignore_index=True) if not df_nac.empty else df_prop
             tot_nac_row  = _tot_row('PROV. NACIONALES', df_nac)
             tot_emp_row  = _tot_row('TOTAL EMPRESA', tot_emp_data)
+
+            # Blanquear Sep/Oct/Nov para PROV. NACIONALES y TOTAL EMPRESA
+            for _row in (tot_nac_row, tot_emp_row):
+                for ms in meses_cob[1:]:
+                    _lbl = pd.Timestamp(ms + '-01').strftime('%b')
+                    for _sfx in ['Stk($M)', 'Leg($M)', 'S+P($M)', 'Vta($M)', 'Cob.']:
+                        _row[f'{_lbl} {_sfx}'] = None
 
             # ── Build main display table (propias + 2 summary rows) ───────
             df_main = pd.concat([
