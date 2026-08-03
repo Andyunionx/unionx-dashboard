@@ -100,6 +100,28 @@ jobs:
           python enviar_pulso_stock.py
         continue-on-error: true
 
+      - name: Enviar Pulso Reposición Fulfillment (solo lunes)
+        # ACTIVO (OK Andrés 03-08-2026): sugerido semanal de carga full por SKU/canal.
+        # Pipeline: transito_vivo (Seimex×Odoo, tolerante) → pulso (panel Nicole vía
+        # DRIVE_OAUTH_TOKEN_JSON) → mail HTML + Excel. Gate lunes igual que el KPI.
+        # Deshabilitar con vars.PULSO_FF_ENABLED='false'.
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_FF_ENABLED != 'false' }}
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          SEIMEX_EMAIL: ${{ secrets.SEIMEX_EMAIL }}
+          SEIMEX_PASSWORD: ${{ secrets.SEIMEX_PASSWORD }}
+          EMAIL_TO: ${{ vars.PULSO_FF_EMAIL_TO || 'nicole@unionx.cl,nicolas@unionx.cl,trinidad@unionx.cl,claudia@unionx.cl,andres@unionx.cl' }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ "$(date +%u)" = "1" ]; then
+            python enviar_pulso_reposicion.py
+          else
+            echo "No es lunes — Pulso Reposición FF omitido."
+          fi
+        continue-on-error: true
+
       - name: Enviar Pulso KPI Semanal (solo lunes)
         # ACTIVO (OK Andrés 15-jul-2026): corre si vars.PULSO_KPI_ENABLED=='true'
         # Y es lunes. KPIs WMS + COP inferido, semana vs semana vs mes anterior
