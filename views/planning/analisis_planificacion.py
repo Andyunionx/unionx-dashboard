@@ -782,12 +782,13 @@ def render():
 
     # ── TABS ──────────────────────────────────────────────────────────
     (tab_como, tab_comp_m, tab_comp_c,
-     tab_cst, tab_crit, tab_tr, tab_nv) = st.tabs([
+     tab_cst, tab_crit, tab_sob, tab_tr, tab_nv) = st.tabs([
         "📊 Cómo Vamos",
         "📈 Comp. Marcas",
         "📈 Comp. Canales",
         "📦 Coberturas",
-        "🔴 Detalle Crítico",
+        "🔴 Críticos por Marca",
+        "📦 Sobrestock",
         "🚢 Tránsitos",
         "🆕 Nuevos en Tránsito",
     ])
@@ -1265,210 +1266,159 @@ def render():
             )
 
     # ════════════════════════════════════════════════════════════════
-    # TAB 5: DETALLE CRÍTICO
+    # TAB 5: CRÍTICOS POR MARCA
     # ════════════════════════════════════════════════════════════════
     with tab_crit:
-        st.subheader("🔴 Detalle Crítico — Cobertura < 1 mes")
+        st.subheader("🔴 Críticos por Marca — Cobertura < 1 mes | AGO 2026")
 
-        if df_base.empty:
-            st.info("Sin datos de planificación disponibles.")
+        _crit_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_critico_marca_snapshot.parquet'
+        if not _crit_path.exists():
+            st.info("⚠️ Parquet no encontrado — ejecutar: `python extract_planif_ago26_snapshot.py`")
         else:
-            _df_cr = df_base[
-                df_base['cobertura_fc3m_meses'].notna() &
-                (df_base['cobertura_fc3m_meses'] < 1) &
-                df_base['marca'].notna() &
-                ~df_base['marca'].isin({'Sin clasificar', ''}) &
-                (df_base['stock_actual'] > 0)
-            ].copy()
+            _df_cm = pd.read_parquet(_crit_path)
+            _df_cm_brands = _df_cm[~_df_cm['is_total']].copy()
+            _df_cm_total  = _df_cm[_df_cm['is_total']]
+            _tot_cm = _df_cm_total.iloc[0] if len(_df_cm_total) > 0 else None
 
-            n_cr = len(_df_cr)
-            c1c, c2c = st.columns(2)
-            c1c.metric("SKUs críticos (<1m)", n_cr)
-            c2c.metric("Marcas afectadas", _df_cr['marca'].nunique())
+            c1cr, c2cr, c3cr = st.columns(3)
+            c1cr.metric("SKUs críticos", int(_tot_cm['skus']) if _tot_cm is not None else "—")
+            c2cr.metric("Marcas afectadas", int((_df_cm_brands['skus'] > 0).sum()))
+            c3cr.metric("Sin stock", int(_tot_cm['sin_stock']) if _tot_cm is not None else "—")
 
-            if _df_cr.empty:
-                st.success("✅ No hay SKUs con cobertura crítica en este momento.")
-            else:
-                # Add next-3m transit
-                _df_cr['_cu'] = _df_cr['sku'].astype(str).map(costo_map).fillna(0)
-                next3 = meses_plan[:3]
-                for ms in next3:
-                    lbl = pd.Timestamp(ms + '-01').strftime('%b')
-                    _df_cr[f'Leg {lbl}'] = (
-                        _tr_piv[ms].reindex(_df_cr['sku'].astype(str), fill_value=0).values.astype(int)
-                        if ms in _tr_piv.columns else 0
-                    )
-                leg_cols = [f'Leg {pd.Timestamp(ms+"-01").strftime("%b")}' for ms in next3]
-                _df_cr['Llegadas (u)'] = _df_cr[leg_cols].sum(axis=1)
+            def _fmt_crit_m(v):
+                return f"{v:.2f}m" if pd.notna(v) and v else "—"
+            def _fmt_crit_clp(v):
+                return f"${v:,.0f}" if pd.notna(v) and v else "—"
 
-                rename_cr = {
-                    'marca': 'Marca', 'categoria_padre': 'Cat. Padre',
-                    'sku': 'SKU', 'producto': 'Descripción',
-                    'stock_actual': 'Stock (u)', 'venta_prom_3m': 'Vta/mes (u)',
-                    'cobertura_fc3m_meses': 'Cob. (m)',
-                }
-                show_cr_cols = list(rename_cr.keys()) + leg_cols + ['Llegadas (u)']
-                _df_cr_show = (
-                    _df_cr[[c for c in show_cr_cols if c in _df_cr.columns]]
-                    .rename(columns=rename_cr)
-                    .sort_values('Cob. (m)')
-                    .reset_index(drop=True)
-                )
-                fmt_cr = {
-                    'Cob. (m)': _fmt_cob,
-                    'Vta/mes (u)': lambda v: f"{v:.0f}" if pd.notna(v) else "—",
-                }
-                st.dataframe(_df_cr_show.style.format(fmt_cr), use_container_width=True, hide_index=True)
-                _dl(_df_cr_show, f"detalle_critico_{_TODAY.strftime('%Y-%m')}.csv")
+            _df_cm_show = _df_cm[['marca', 'skus', 'cob_prom', 'sin_stock',
+                                    'stock_hoy_cst', 'venta_cst_ago26', 'detalle_llegadas']].copy()
+            _df_cm_show.columns = ['Marca', 'SKUs', 'Cob. Prom (m)', 'Sin Stock',
+                                     'Stock Hoy CST ($)', 'Venta CST AGO26 ($)', 'Detalle Llegadas']
+            fmt_cm = {
+                'Cob. Prom (m)': _fmt_crit_m,
+                'Stock Hoy CST ($)': _fmt_crit_clp,
+                'Venta CST AGO26 ($)': _fmt_crit_clp,
+            }
+            st.dataframe(_df_cm_show.style.format(fmt_cm), use_container_width=True, hide_index=True)
+            _dl(_df_cm_show, "criticos_por_marca_AGO26.csv")
 
     # ════════════════════════════════════════════════════════════════
-    # TAB 6: TRÁNSITOS POR EMBARQUE
+    # TAB 6: SOBRESTOCK
+    # ════════════════════════════════════════════════════════════════
+    with tab_sob:
+        st.subheader("📦 Sobrestock — Capital Inmovilizado | AGO 2026")
+        st.caption("Exceso sobre 4 meses de cobertura óptimos. Jerarquía: Marca → Cat. Padre → Cat. Hijo → SKU.")
+
+        _sob_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_sobrestock_snapshot.parquet'
+        if not _sob_path.exists():
+            st.info("⚠️ Parquet no encontrado — ejecutar: `python extract_planif_ago26_snapshot.py`")
+        else:
+            _df_sob = pd.read_parquet(_sob_path)
+
+            _cap_tot = _df_sob[_df_sob['nivel'] == 1]['capital_inmovilizado'].sum()
+            c1s, c2s, c3s = st.columns(3)
+            c1s.metric("Capital Inmovilizado Total", f"${_cap_tot:,.0f}")
+            c2s.metric("Marcas con sobrestock", int((_df_sob['nivel'] == 1).sum()))
+            c3s.metric("SKUs con sobrestock", int((_df_sob['nivel'] == 4).sum()))
+
+            def _fmt_sob_clp(v):
+                return f"${v:,.0f}" if pd.notna(v) and v is not None else "—"
+            def _fmt_sob_m(v):
+                return f"{v:.1f}m" if pd.notna(v) and v is not None else "—"
+
+            _df_sob_show = _df_sob[['nombre', 'descripcion', 'skus', 'cobert_act',
+                                     'meses_exceso', 'stock_cst', 'capital_inmovilizado',
+                                     'tiene_llegadas']].copy()
+            _df_sob_show.columns = ['Marca / Categoría / SKU', 'Descripción', 'SKUs',
+                                     'Cob. ACT (m)', 'Meses Exceso',
+                                     'Stock CST ($)', 'Capital Inmovilizado ($)', 'Tiene Llegadas']
+            fmt_sob = {
+                'Cob. ACT (m)':          _fmt_sob_m,
+                'Meses Exceso':           _fmt_sob_m,
+                'Stock CST ($)':          _fmt_sob_clp,
+                'Capital Inmovilizado ($)': _fmt_sob_clp,
+            }
+            st.dataframe(_df_sob_show.style.format(fmt_sob), use_container_width=True, hide_index=True)
+            _dl(_df_sob_show, "sobrestock_AGO26.csv")
+
+    # ════════════════════════════════════════════════════════════════
+    # TAB 7: TRÁNSITOS POR EMBARQUE
     # ════════════════════════════════════════════════════════════════
     with tab_tr:
-        st.subheader("🚢 Tránsitos por Embarque (PI)")
+        st.subheader("🚢 Tránsitos por Embarque | AGO 2026")
+        st.caption("Cobertura SKUs: 🔴<1m  🟠1-2m  🟢2-4m  🔵4-6m  🟣>6m")
 
-        if df_tr_raw.empty:
-            st.info("Sin datos de tránsito COMEX disponibles.")
+        _tr_snap_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_transitos_snapshot.parquet'
+        if not _tr_snap_path.exists():
+            st.info("⚠️ Parquet no encontrado — ejecutar: `python extract_planif_ago26_snapshot.py`")
         else:
-            _df_tr = df_tr_raw.copy()
-            _df_tr['fecha_eta_bodega'] = pd.to_datetime(_df_tr['fecha_eta_bodega'], errors='coerce')
-            _df_tr['cantidad'] = pd.to_numeric(_df_tr['cantidad'], errors='coerce').fillna(0)
+            _df_tr_snap = pd.read_parquet(_tr_snap_path)
+            _df_tr_pi  = _df_tr_snap[_df_tr_snap['row_type'] == 'pi'].copy()
+            _df_tr_sku = _df_tr_snap[_df_tr_snap['row_type'] == 'sku'].copy()
 
-            has_pi  = 'pi' in _df_tr.columns
-            has_usd = 'costo_total_usd' in _df_tr.columns
-            has_clp = 'costo_ingreso_clp' in _df_tr.columns
+            c1t, c2t, c3t = st.columns(3)
+            c1t.metric("Embarques en tránsito", len(_df_tr_pi))
+            c2t.metric("Unidades totales", f"{int(_df_tr_pi['unidades'].sum()):,}")
+            c3t.metric("Valor USD total", f"${_df_tr_pi['valor_usd'].sum():,.0f}")
 
-            if has_pi:
-                agg = {'sku': 'nunique', 'cantidad': 'sum', 'fecha_eta_bodega': 'max'}
-                if has_usd: agg['costo_total_usd'] = 'sum'
-                if has_clp: agg['costo_ingreso_clp'] = 'sum'
-                if 'status' in _df_tr.columns:
-                    agg['status'] = lambda x: x.mode().iloc[0] if len(x) > 0 else '—'
+            _df_tr_pi_show = _df_tr_pi[['pi_embarque', 'eta_o_desc', 'eta_bodega', 'mes_llegada',
+                                         'marcas', 'skus_distintos', 'criticos', 'inquietos',
+                                         'unidades', 'valor_usd', 'nivel_riesgo']].copy()
+            _df_tr_pi_show.columns = ['PI', 'ETA Chile', 'ETA Bodega', 'Mes Llegada',
+                                       'Marcas', 'SKUs', 'Críticos <1m', 'Inquietos 1-2m',
+                                       'Unidades', 'Valor USD', 'Nivel Riesgo']
+            fmt_tr_pi = {
+                'Valor USD': lambda v: f"${v:,.0f}" if pd.notna(v) else "—",
+            }
+            st.dataframe(_df_tr_pi_show.style.format(fmt_tr_pi), use_container_width=True, hide_index=True)
 
-                df_pi_grp = _df_tr.groupby('pi').agg(agg).reset_index()
-                df_pi_grp.rename(columns={
-                    'pi': 'PI', 'sku': 'N° SKUs', 'cantidad': 'Unidades',
-                    'fecha_eta_bodega': 'ETA Bodega',
-                    'costo_total_usd': 'USD Total',
-                    'costo_ingreso_clp': 'CLP Total',
-                    'status': 'Estado',
-                }, inplace=True)
-                df_pi_grp = df_pi_grp.sort_values('ETA Bodega', na_position='last')
+            with st.expander("🔍 Detalle SKUs por embarque"):
+                _pi_opts = _df_tr_pi['pi_embarque'].tolist()
+                if _pi_opts:
+                    _pi_sel = st.selectbox("Seleccionar embarque", _pi_opts, key='pi_sel_snap')
+                    _df_sku_sel = _df_tr_sku[_df_tr_sku['pi_embarque'] == _pi_sel].copy()
+                    _df_sku_show = _df_sku_sel[['sku', 'eta_o_desc', 'eta_bodega',
+                                                  'criticos', 'unidades', 'valor_usd']].copy()
+                    _df_sku_show.columns = ['SKU', 'Descripción', 'ETA Bodega',
+                                              'Cobertura', 'Unidades', 'Valor USD']
+                    fmt_sku_tr = {'Valor USD': lambda v: f"${v:,.0f}" if pd.notna(v) else "—"}
+                    st.dataframe(_df_sku_show.style.format(fmt_sku_tr), use_container_width=True, hide_index=True)
 
-                c1t, c2t, c3t = st.columns(3)
-                c1t.metric("Embarques en tránsito", len(df_pi_grp))
-                c2t.metric("SKUs únicos", int(_df_tr['sku'].nunique()))
-                c3t.metric("Unidades totales", f"{int(_df_tr['cantidad'].sum()):,}")
-
-                fmt_pi = {}
-                if 'USD Total' in df_pi_grp.columns:
-                    fmt_pi['USD Total'] = lambda v: f"${v:,.0f}" if pd.notna(v) else "—"
-                if 'CLP Total' in df_pi_grp.columns:
-                    fmt_pi['CLP Total'] = lambda v: f"${v/1e6:.1f}M" if pd.notna(v) else "—"
-                if 'ETA Bodega' in df_pi_grp.columns:
-                    fmt_pi['ETA Bodega'] = lambda v: v.strftime('%d/%m/%Y') if pd.notna(v) else "—"
-
-                st.dataframe(df_pi_grp.style.format(fmt_pi), use_container_width=True, hide_index=True)
-                _dl(df_pi_grp, f"transitos_por_embarque_{_TODAY.strftime('%Y-%m')}.csv")
-
-                with st.expander("🔍 Detalle por SKU dentro de un PI"):
-                    pi_list = df_pi_grp['PI'].tolist()
-                    if pi_list:
-                        pi_sel = st.selectbox("Seleccionar embarque", pi_list, key='pi_sel_tr')
-                        df_det = _df_tr[_df_tr['pi'] == pi_sel].copy()
-                        det_show = ['sku', 'cantidad', 'fecha_eta_bodega']
-                        if has_usd: det_show.append('costo_total_usd')
-                        if 'status' in df_det.columns: det_show.append('status')
-                        st.dataframe(df_det[[c for c in det_show if c in df_det.columns]],
-                                     use_container_width=True, hide_index=True)
-            else:
-                st.dataframe(_df_tr.head(500), use_container_width=True, hide_index=True)
-                _dl(_df_tr, f"transitos_{_TODAY.strftime('%Y-%m')}.csv")
+            _dl(_df_tr_pi_show, "transitos_AGO26.csv")
 
     # ════════════════════════════════════════════════════════════════
-    # TAB 7: NUEVOS EN TRÁNSITO
+    # TAB 8: NUEVOS EN TRÁNSITO
     # ════════════════════════════════════════════════════════════════
     with tab_nv:
-        st.subheader("🆕 Nuevos Productos en Tránsito")
-        st.caption("SKUs con **Categoria Comercial = Nuevo** con llegadas en los próximos meses (FCST + COMEX).")
+        st.subheader("🆕 Nuevos en Tránsito | AGO 2026")
+        st.caption("SKUs con Categoría Comercial = NUEVO con llegadas confirmadas en tránsito.")
 
-        if df_base.empty:
-            st.info("Sin datos de planificación disponibles.")
+        _nv_snap_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_nuevos_transito_snapshot.parquet'
+        if not _nv_snap_path.exists():
+            st.info("⚠️ Parquet no encontrado — ejecutar: `python extract_planif_ago26_snapshot.py`")
         else:
-            # ── Identify Nuevo SKUs via categoria_producto (= Categoria Comercial en FCST Excel) ──
-            if 'categoria_producto' in df_base.columns:
-                _df_nuevos_master = df_base[
-                    df_base['categoria_producto'].str.strip().str.lower() == 'nuevo'
-                ][['sku', 'producto', 'marca', 'categoria_padre', 'categoria_hijo',
-                   'categoria_producto', 'stock_actual']].drop_duplicates('sku').copy()
-            else:
-                _df_nuevos_master = df_base[df_base['stock_actual'] == 0][
-                    ['sku', 'producto', 'marca', 'categoria_padre', 'categoria_hijo', 'stock_actual']
-                ].drop_duplicates('sku').copy()
+            _df_nv_snap = pd.read_parquet(_nv_snap_path)
 
-            _df_nuevos_master['sku'] = _df_nuevos_master['sku'].astype(str)
-            _nuevos_skus_set = set(_df_nuevos_master['sku'].unique())
+            c1n, c2n, c3n = st.columns(3)
+            c1n.metric("SKUs nuevos en tránsito", len(_df_nv_snap))
+            c2n.metric("Total unidades", f"{int(_df_nv_snap['cantidad'].sum()):,}")
+            c3n.metric("Marcas", _df_nv_snap['marca'].nunique())
 
-            n_nuevos_master = len(_df_nuevos_master)
-            st.metric("SKUs Nuevo (Categoria Comercial)", n_nuevos_master)
+            _grupos_nv = _df_nv_snap['grupo'].unique()
+            for _grp in _grupos_nv:
+                _df_grp = _df_nv_snap[_df_nv_snap['grupo'] == _grp].copy()
+                _grp_label = f"▶ {_grp} — {len(_df_grp)} SKUs / {int(_df_grp['cantidad'].sum()):,} unidades"
+                with st.expander(_grp_label, expanded=True):
+                    _df_grp_show = _df_grp[['sku', 'descripcion', 'marca',
+                                              'fecha_eta_bodega', 'cantidad']].copy()
+                    _df_grp_show.columns = ['SKU', 'Descripción', 'Marca', 'ETA Bodega', 'Cantidad']
+                    fmt_nv = {'Cantidad': lambda v: f"{int(v):,}" if pd.notna(v) else "—"}
+                    st.dataframe(_df_grp_show.style.format(fmt_nv), use_container_width=True, hide_index=True)
 
-            if _tr_piv.empty and df_tr_raw.empty:
-                st.info("Sin datos de tránsito disponibles.")
-            else:
-                # ── Build monthly arrivals from the combined transit pivot ──
-                meses_futuros = [ms for ms in meses_plan if ms >= _TODAY.strftime('%Y-%m')]
-                _tr_piv_nuevos = pd.DataFrame()
-                if not _tr_piv.empty:
-                    _tr_piv_nuevos = _tr_piv.loc[
-                        _tr_piv.index.isin(_nuevos_skus_set),
-                        [ms for ms in meses_futuros if ms in _tr_piv.columns]
-                    ].copy()
-                    # Keep only SKUs with at least 1 unit incoming
-                    _tr_piv_nuevos = _tr_piv_nuevos[_tr_piv_nuevos.sum(axis=1) > 0]
-
-                if _tr_piv_nuevos.empty:
-                    st.info("✅ No hay nuevos SKUs con llegadas en el FCST o COMEX para los próximos meses.")
-                else:
-                    _tr_piv_nuevos.index.name = 'sku'
-                    _df_nv_grid = _tr_piv_nuevos.reset_index().merge(
-                        _df_nuevos_master, on='sku', how='left'
-                    )
-
-                    # Friendly column names for month arrivals
-                    mes_rename_nv = {ms: pd.Timestamp(ms + '-01').strftime('%b %y') for ms in meses_futuros if ms in _df_nv_grid.columns}
-                    _df_nv_grid = _df_nv_grid.rename(columns=mes_rename_nv)
-                    _arrival_cols = list(mes_rename_nv.values())
-
-                    # Total col
-                    _df_nv_grid['Total (u)'] = _df_nv_grid[_arrival_cols].sum(axis=1)
-
-                    # Ordered columns
-                    base_cols = ['sku', 'producto', 'marca', 'categoria_padre', 'categoria_hijo']
-                    if 'categoria_producto' in _df_nv_grid.columns:
-                        base_cols.insert(3, 'categoria_producto')
-                    base_cols += ['stock_actual']
-                    rename_base = {
-                        'sku': 'SKU', 'producto': 'Descripción', 'marca': 'Marca',
-                        'categoria_padre': 'Cat. Padre', 'categoria_hijo': 'Cat. Hijo',
-                        'categoria_producto': 'Cat. Comercial', 'stock_actual': 'Stock Hoy',
-                    }
-                    _df_nv_show = (
-                        _df_nv_grid[[c for c in base_cols if c in _df_nv_grid.columns] + _arrival_cols + ['Total (u)']]
-                        .rename(columns=rename_base)
-                        .sort_values(['Marca', 'Total (u)'], ascending=[True, False])
-                        .reset_index(drop=True)
-                    )
-
-                    n_con_llegada = len(_df_nv_show)
-                    c1n, c2n, c3n = st.columns(3)
-                    c1n.metric("Nuevos con llegadas", n_con_llegada)
-                    c2n.metric("Total unidades", f"{int(_df_nv_show['Total (u)'].sum()):,}")
-                    c3n.metric("Marcas", _df_nv_show['Marca'].nunique() if 'Marca' in _df_nv_show.columns else "—")
-
-                    # Int format for arrival cols
-                    fmt_nv_show = {c: lambda v: f"{int(v):,}" if pd.notna(v) and v > 0 else "—" for c in _arrival_cols + ['Total (u)']}
-                    st.dataframe(
-                        _df_nv_show.style.format(fmt_nv_show),
-                        use_container_width=True, hide_index=True
-                    )
-                    _dl(_df_nv_show, f"nuevos_transito_{_TODAY.strftime('%Y-%m')}.csv")
+            _dl(
+                _df_nv_snap[['sku', 'descripcion', 'marca', 'grupo', 'fecha_eta_bodega', 'cantidad']].rename(
+                    columns={'sku': 'SKU', 'descripcion': 'Descripción', 'marca': 'Marca',
+                              'grupo': 'Grupo', 'fecha_eta_bodega': 'ETA Bodega', 'cantidad': 'Cantidad'}
+                ),
+                "nuevos_transito_AGO26.csv"
+            )
