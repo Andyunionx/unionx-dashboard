@@ -84,12 +84,14 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
     df_mes  = _safe_read(path_mes)  if path_mes.exists()  else None
     df_hist = _safe_read(path_hist) if path_hist.exists() else None
 
-    # ventas_mes_actual cubre el mes corriente (live). Los meses cerrados están en
-    # ventas_historico (congelados al cierre). Solo usamos mes_actual para el mes
-    # en curso — si tiene datos de meses anteriores, los descartamos para no
-    # pisar el histórico congelado (que tiene el dato definitivo).
+    # Separación estricta por mes: historico = meses cerrados (<mes corriente),
+    # mes_actual = solo el mes corriente en curso. Esto evita doble conteo si el
+    # parquet de historico fue regenerado incluyendo datos del mes abierto.
+    mes_corriente = _TODAY.to_period('M').strftime('%Y-%m')
+    if df_hist is not None and not df_hist.empty:
+        fechas_hist = pd.to_datetime(df_hist['fecha_venta'], errors='coerce')
+        df_hist = df_hist[fechas_hist.dt.to_period('M').astype(str) < mes_corriente]
     if df_mes is not None and not df_mes.empty:
-        mes_corriente = _TODAY.to_period('M').strftime('%Y-%m')
         fechas_mes = pd.to_datetime(df_mes['fecha_venta'], errors='coerce')
         df_mes = df_mes[fechas_mes.dt.to_period('M').astype(str) == mes_corriente]
 
@@ -358,7 +360,13 @@ def _build_cv_table(real_piv, meta_piv, dim_col, meses_lin, dims_filter=None):
         '% vs Lineal':   (t_r / t_mlin - 1) if t_mlin > 0 else None,
         '% vs Meta':     (t_r / t_m - 1)    if t_m > 0    else None,
     })
-    return pd.DataFrame(rows), lin_header
+    df = pd.DataFrame(rows)
+    total_mask = df[dim_col] == 'TOTAL'
+    df = pd.concat([
+        df[~total_mask].sort_values('Meta Período', ascending=False),
+        df[total_mask]
+    ]).reset_index(drop=True)
+    return df, lin_header
 
 
 def _show_cv(df, dim_col, lin_header):
@@ -484,7 +492,8 @@ _Q_MAP = {'Q1': [1,2,3], 'Q2': [4,5,6], 'Q3': [7,8,9], 'Q4': [10,11,12]}
 
 
 def _lin_for_mes(mes_str: str) -> float:
-    """Linealidad 0→1 for a given month string 'YYYY-MM'."""
+    """Linealidad 0→1 for a given month string 'YYYY-MM'.
+    Uses yesterday (day-1) because sales data closes at end of the prior day."""
     cur = _TODAY.strftime('%Y-%m')
     if mes_str > cur:
         return 0.0
@@ -492,7 +501,7 @@ def _lin_for_mes(mes_str: str) -> float:
         return 1.0
     ts   = pd.Timestamp(mes_str + '-01')
     dias = (ts + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
-    return _TODAY.day / dias
+    return max(0, _TODAY.day - 1) / dias
 
 
 def _periodo_filter(key_prefix: str, yr: str, meses_disp: list,
