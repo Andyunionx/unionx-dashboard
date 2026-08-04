@@ -1,40 +1,54 @@
 {
-  "generado_en": "2026-08-04T05:48:46.094599",
+  "generado_en": "2026-08-04T16:52:51.086729",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.017158494194216403,
-      "total_pickings": 13521,
-      "on_time": 232,
-      "on_time_pct": 0.017158494194216403,
-      "in_full": 13514,
-      "in_full_pct": 0.9994822868131056,
-      "both": 232,
+      "valor": 0.01707985010089363,
+      "total_pickings": 13876,
+      "on_time": 237,
+      "on_time_pct": 0.01707985010089363,
+      "in_full": 13869,
+      "in_full_pct": 0.9994955318535601,
+      "both": 237,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.0891566265060241,
-      "total_pickings": 415,
+      "valor": 0.08409090909090909,
+      "total_pickings": 440,
       "on_time": 41,
-      "on_time_pct": 0.09879518072289156,
-      "in_full": 410,
-      "in_full_pct": 0.9879518072289156,
+      "on_time_pct": 0.09318181818181819,
+      "in_full": 435,
+      "in_full_pct": 0.9886363636363636,
       "both": 37,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992702778557395,
-      "ok": 17802,
-      "total": 17815,
+      "valor": 0.9992892290869327,
+      "ok": 18277,
+      "total": 18290,
       "errores": 13,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 9.792995468873128,
-      "n_recepciones": 282,
+      "valor": 9.724124608763693,
+      "n_recepciones": 284,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00975",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-04 15:41",
+          "done": "2026-08-04 15:42"
+        },
+        {
+          "picking": "CA1/RET/01130",
+          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-08-04 14:23",
+          "done": "2026-08-04 14:23"
+        },
         {
           "picking": "CA1/IN/00972",
           "proveedor": "",
@@ -160,39 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-29 13:34",
           "done": "2026-07-29 13:34"
-        },
-        {
-          "picking": "CA1/RET/01123",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 13:33",
-          "done": "2026-07-29 13:33"
-        },
-        {
-          "picking": "CA1/RET/01121",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 13:32",
-          "done": "2026-07-29 13:32"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8656408847369144,
-      "total_so": 14659,
-      "total_con_pickings": 14558,
-      "cumplidos": 12602,
-      "parciales": 7,
-      "sin_iniciar": 1949,
+      "valor": 0.8806223671694524,
+      "total_so": 14819,
+      "total_con_pickings": 14718,
+      "cumplidos": 12961,
+      "parciales": 8,
+      "sin_iniciar": 1749,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.932977393333005,
-      "n_orders": 13526,
+      "valor": 46.24197129716209,
+      "n_orders": 13903,
       "min_h": 0.0033333333333333335,
       "max_h": 700.2111111111111,
-      "mediana_h": 25.599166666666665,
+      "mediana_h": 25.811666666666667,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 1287,
+      "lineas": 1771,
       "mes": "2026-08",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 39,
-          "tarde": 39,
+          "total": 45,
+          "tarde": 45,
           "on_time_pct": 0.0
         },
         {
@@ -373,14 +373,14 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 156,
-          "tarde": 156,
+          "total": 166,
+          "tarde": 166,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 7,
-          "tarde": 7,
+          "total": 8,
+          "tarde": 8,
           "on_time_pct": 0.0
         },
         {
@@ -391,15 +391,15 @@
         },
         {
           "cliente": "Lokal SpA",
-          "total": 7,
-          "tarde": 7,
+          "total": 8,
+          "tarde": 8,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Sawa SPA",
-          "total": 62,
-          "tarde": 59,
-          "on_time_pct": 0.04838709677419355
+          "total": 66,
+          "tarde": 63,
+          "on_time_pct": 0.045454545454545456
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -7097,42 +7097,56 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.017158494194216403,
-      "total_pickings": 13521,
-      "on_time": 232,
-      "on_time_pct": 0.017158494194216403,
-      "in_full": 13514,
-      "in_full_pct": 0.9994822868131056,
-      "both": 232,
+      "valor": 0.01707985010089363,
+      "total_pickings": 13876,
+      "on_time": 237,
+      "on_time_pct": 0.01707985010089363,
+      "in_full": 13869,
+      "in_full_pct": 0.9994955318535601,
+      "both": 237,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.0891566265060241,
-      "total_pickings": 415,
+      "valor": 0.08409090909090909,
+      "total_pickings": 440,
       "on_time": 41,
-      "on_time_pct": 0.09879518072289156,
-      "in_full": 410,
-      "in_full_pct": 0.9879518072289156,
+      "on_time_pct": 0.09318181818181819,
+      "in_full": 435,
+      "in_full_pct": 0.9886363636363636,
       "both": 37,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992702778557395,
-      "ok": 17802,
-      "total": 17815,
+      "valor": 0.9992892290869327,
+      "ok": 18277,
+      "total": 18290,
       "errores": 13,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 9.792995468873128,
-      "n_recepciones": 282,
+      "valor": 9.724124608763693,
+      "n_recepciones": 284,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00975",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-04 15:41",
+          "done": "2026-08-04 15:42"
+        },
+        {
+          "picking": "CA1/RET/01130",
+          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-08-04 14:23",
+          "done": "2026-08-04 14:23"
+        },
         {
           "picking": "CA1/IN/00972",
           "proveedor": "",
@@ -7258,20 +7272,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-29 13:34",
           "done": "2026-07-29 13:34"
-        },
-        {
-          "picking": "CA1/RET/01123",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 13:33",
-          "done": "2026-07-29 13:33"
-        },
-        {
-          "picking": "CA1/RET/01121",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 13:32",
-          "done": "2026-07-29 13:32"
         }
       ],
       "error": null
