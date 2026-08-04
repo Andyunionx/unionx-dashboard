@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-08-04T13:43:18.970314",
+  "generado_en": "2026-08-04T19:17:28.776668",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13548,
-  "total_monto_pendiente_clp": 801247669.0,
+  "total_documentos_pendientes": 13880,
+  "total_monto_pendiente_clp": 817677018.0,
   "monto_por_aging": {
     "+90 días": 45018917.0,
-    "1-30 días": 425221752.0,
+    "1-30 días": 438497193.0,
     "31-60 días": 167064453.0,
     "61-90 días": 78930045.0,
-    "Vigente": 85012502.0
+    "Vigente": 88166410.0
   },
   "monto_por_tipo": {
-    "BOLETA": 641221721.0,
+    "BOLETA": 657651070.0,
     "FACTURA": 160025948.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 181944685.0
+      "monto": 186471603.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -30,15 +30,15 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 62764990.0
+      "monto": 66872551.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 47168365.0
+      "monto": 47804851.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 38041214.0
+      "monto": 39992674.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,19 +46,19 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 23981982.0
+      "monto": 24183435.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 20705258.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 18347551.0
+      "monto": 20998128.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 18150946.0
+      "monto": 18755173.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 18553985.0
     },
     {
       "partner": "Showtime SpA",
@@ -77,8 +77,12 @@
       "monto": 7152281.0
     },
     {
+      "partner": "Sawa SPA",
+      "monto": 6516480.0
+    },
+    {
       "partner": "Shopping LATAM Pass",
-      "monto": 5691950.0
+      "monto": 5747930.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
@@ -87,10 +91,6 @@
     {
       "partner": "INVERSIONES MAVAPA SPA, INVERSIONES MAVAPA SPA",
       "monto": 4607723.0
-    },
-    {
-      "partner": "Sawa SPA",
-      "monto": 4104800.0
     },
     {
       "partner": "Tecno Mercado Spa",
