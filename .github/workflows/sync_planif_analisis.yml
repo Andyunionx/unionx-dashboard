@@ -1,0 +1,42 @@
+name: "Sync Análisis Planificación snapshots (diario)"
+
+on:
+  schedule:
+    # 10:00 UTC = 07:00 Chile — regenera los 5 snapshots del Excel mensual del repo
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install pandas openpyxl pyarrow
+
+      - name: Generar snapshots desde el Excel del mes (repo)
+        run: python extract_planif_analisis_snapshots.py
+
+      - name: Commit snapshots si cambian
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Planif"
+          git add data/planificacion/snapshots/planif_cst_flat_snapshot.parquet \
+                  data/planificacion/snapshots/planif_critico_marca_snapshot.parquet \
+                  data/planificacion/snapshots/planif_sobrestock_snapshot.parquet \
+                  data/planificacion/snapshots/planif_transitos_snapshot.parquet \
+                  data/planificacion/snapshots/planif_nuevos_transito_snapshot.parquet
+          git diff --staged --quiet || git commit -m "Sync análisis planif snapshots $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
