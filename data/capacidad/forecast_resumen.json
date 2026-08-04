@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-04T15:23:34.261023",
+  "generado_en": "2026-08-04T16:47:17.559676",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1367,
   "capacidad_bodega_m3": 2460.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1367,
-    "posiciones_ocupadas_hoy": 827,
-    "posiciones_libres_hoy": 540,
-    "pct_ocupacion_hoy": 60.5,
-    "m3_stock_calculado": 971.0
+    "posiciones_ocupadas_hoy": 823,
+    "posiciones_libres_hoy": 544,
+    "pct_ocupacion_hoy": 60.2,
+    "m3_stock_calculado": 970.2
   },
   "pico_proyectado": {
     "fecha": "2026-08-04",
-    "posiciones_ocupadas": 827.0,
-    "pct_ocupacion": 60.5
+    "posiciones_ocupadas": 823.0,
+    "pct_ocupacion": 60.2
   },
   "minimo_proyectado": {
     "fecha": "2026-10-03",
-    "posiciones_ocupadas": 622.2,
-    "pct_ocupacion": 45.5
+    "posiciones_ocupadas": 618.4,
+    "pct_ocupacion": 45.2
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -91,17 +91,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 179.9,
-  "pallets_total_salientes_horizonte": 268.4,
+  "pallets_total_salientes_horizonte": 268.2,
   "m3_total_entrante_horizonte": 215.9,
-  "m3_total_saliente_horizonte": 322.1,
+  "m3_total_saliente_horizonte": 321.9,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 876,
+    "sku_con_vol_odoo": 874,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 169404.0,
-    "demanda_cumplida_unidades": 25298.0,
-    "demanda_no_cubierta_unidades_total": 144106.0,
+    "demanda_cumplida_unidades": 25286.0,
+    "demanda_no_cubierta_unidades_total": 144118.0,
     "pct_demanda_cumplida": 14.9,
     "sku_sin_match_stock_count": 43,
     "top_no_cubiertos": [
@@ -162,7 +162,7 @@
       },
       {
         "sku": "1629726117626",
-        "unid_no_cubiertas": 207.0,
+        "unid_no_cubiertas": 208.0,
         "sin_match_stock": true
       },
       {
@@ -177,7 +177,7 @@
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 172.0,
+        "unid_no_cubiertas": 174.0,
         "sin_match_stock": true
       },
       {
@@ -187,12 +187,12 @@
       },
       {
         "sku": "LVTELELE-100",
-        "unid_no_cubiertas": 146.0,
+        "unid_no_cubiertas": 148.0,
         "sin_match_stock": true
       },
       {
         "sku": "1634845754276",
-        "unid_no_cubiertas": 137.0,
+        "unid_no_cubiertas": 138.0,
         "sin_match_stock": true
       },
       {
