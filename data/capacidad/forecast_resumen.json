@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-04T11:15:24.990347",
+  "generado_en": "2026-08-04T13:46:01.383263",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1367,
   "capacidad_bodega_m3": 2460.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1367,
-    "posiciones_ocupadas_hoy": 841,
-    "posiciones_libres_hoy": 526,
-    "pct_ocupacion_hoy": 61.5,
-    "m3_stock_calculado": 979.3
+    "posiciones_ocupadas_hoy": 830,
+    "posiciones_libres_hoy": 537,
+    "pct_ocupacion_hoy": 60.7,
+    "m3_stock_calculado": 977.4
   },
   "pico_proyectado": {
     "fecha": "2026-08-04",
-    "posiciones_ocupadas": 834.2,
-    "pct_ocupacion": 61.0
+    "posiciones_ocupadas": 823.2,
+    "pct_ocupacion": 60.2
   },
   "minimo_proyectado": {
     "fecha": "2026-09-30",
-    "posiciones_ocupadas": 654.2,
-    "pct_ocupacion": 47.9
+    "posiciones_ocupadas": 643.5,
+    "pct_ocupacion": 47.1
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -91,17 +91,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 179.9,
-  "pallets_total_salientes_horizonte": 257.6,
+  "pallets_total_salientes_horizonte": 257.4,
   "m3_total_entrante_horizonte": 215.9,
-  "m3_total_saliente_horizonte": 309.1,
+  "m3_total_saliente_horizonte": 308.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 876,
     "sku_fallback": 0,
     "fallback_vol_m3": 0.00567,
     "demanda_total_unidades_horizonte": 164434.0,
-    "demanda_cumplida_unidades": 25434.0,
-    "demanda_no_cubierta_unidades_total": 139000.0,
+    "demanda_cumplida_unidades": 25424.0,
+    "demanda_no_cubierta_unidades_total": 139010.0,
     "pct_demanda_cumplida": 15.5,
     "sku_sin_match_stock_count": 44,
     "top_no_cubiertos": [
@@ -112,7 +112,7 @@
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 32736.0,
+        "unid_no_cubiertas": 32738.0,
         "sin_match_stock": true
       },
       {
@@ -172,7 +172,7 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 163.0,
+        "unid_no_cubiertas": 164.0,
         "sin_match_stock": true
       },
       {
@@ -187,7 +187,7 @@
       },
       {
         "sku": "LVPROLUM",
-        "unid_no_cubiertas": 116.0,
+        "unid_no_cubiertas": 117.0,
         "sin_match_stock": true
       },
       {
