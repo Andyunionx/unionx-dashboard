@@ -4,17 +4,17 @@ reglas:
 - patron: mkp cobro logístico parcial
   tipo_match: contains_lower
   cuenta_destino: ENVIOS_GRANDES_CUENTA
-  aprobaciones: 2
-  ultima_aprobacion: '2026-07-20'
+  aprobaciones: 3
+  ultima_aprobacion: '2026-08-05'
   aprobado_por: Camila Bustos <camila@unionx.cl>
-  auto: false
+  auto: true
 - patron: mkp cobro despacho logistica
   tipo_match: contains_lower
   cuenta_destino: ENVIOS_GRANDES_CUENTA
-  aprobaciones: 2
-  ultima_aprobacion: '2026-07-20'
+  aprobaciones: 3
+  ultima_aprobacion: '2026-08-05'
   aprobado_por: Camila Bustos <camila@unionx.cl>
-  auto: false
+  auto: true
 - patron: fbr cofinanciamiento logistico
   tipo_match: contains_lower
   cuenta_destino: ENVIOS_GRANDES_CUENTA
@@ -25,17 +25,17 @@ reglas:
 - patron: fbr cobro almacenamiento diario
   tipo_match: contains_lower
   cuenta_destino: COMISION_GRANDES_CUENTAS
-  aprobaciones: 1
-  ultima_aprobacion: '2026-07-14'
+  aprobaciones: 3
+  ultima_aprobacion: '2026-08-05'
   aprobado_por: Camila Bustos <camila@unionx.cl>
-  auto: false
+  auto: true
 - patron: mkp comisión costo fijo
   tipo_match: contains_lower
   cuenta_destino: COMISION_GRANDES_CUENTAS
-  aprobaciones: 2
-  ultima_aprobacion: '2026-07-20'
+  aprobaciones: 3
+  ultima_aprobacion: '2026-08-05'
   aprobado_por: Camila Bustos <camila@unionx.cl>
-  auto: false
+  auto: true
 - patron: 'comision ventas mkp del:'
   tipo_match: contains_lower
   cuenta_destino: COMISION_GRANDES_CUENTAS
@@ -54,7 +54,7 @@ reglas:
 - patron: mkp acuerdo comercial espacios
   tipo_match: contains_lower
   cuenta_destino: MARKETING_DIGITAL
-  aprobaciones: 1
-  ultima_aprobacion: '2026-07-20'
+  aprobaciones: 2
+  ultima_aprobacion: '2026-08-05'
   aprobado_por: Camila Bustos <camila@unionx.cl>
   auto: false
