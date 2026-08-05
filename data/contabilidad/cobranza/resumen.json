@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-05T08:13:51.951107",
+  "generado_en": "2026-08-05T13:39:35.582231",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11947,
-  "total_monto_pendiente_clp": 741735842.0,
+  "total_documentos_pendientes": 11990,
+  "total_monto_pendiente_clp": 753386434.0,
   "monto_por_aging": {
     "+90 días": 45626101.0,
-    "1-30 días": 404212416.0,
+    "1-30 días": 405867028.0,
     "31-60 días": 119750223.0,
     "61-90 días": 83642325.0,
-    "Vigente": 88504777.0
+    "Vigente": 98500757.0
   },
   "monto_por_tipo": {
-    "BOLETA": 581709894.0,
+    "BOLETA": 593360486.0,
     "FACTURA": 160025948.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 100163179.0
+      "monto": 100709483.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,15 +30,15 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 69876533.0
+      "monto": 70171393.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 48625532.0
+      "monto": 48671492.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 41235794.0
+      "monto": 41600234.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,15 +46,15 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 24175443.0
+      "monto": 24237017.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 21489799.0
+      "monto": 21501779.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 20089481.0
+      "monto": 20100451.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -67,6 +67,10 @@
     {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 15132921.0
+    },
+    {
+      "partner": "Cencosud Retail S.A",
+      "monto": 9934406.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -82,7 +86,7 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 6106840.0
+      "monto": 6138330.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
@@ -91,10 +95,6 @@
     {
       "partner": "INVERSIONES MAVAPA SPA, INVERSIONES MAVAPA SPA",
       "monto": 4607723.0
-    },
-    {
-      "partner": "Tecno Mercado Spa",
-      "monto": 3779959.0
     }
   ],
   "notas_credito_count": 560,
