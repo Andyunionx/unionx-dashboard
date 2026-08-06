@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-05T19:12:03.745117",
+  "generado_en": "2026-08-06T01:22:22.988564",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12154,
-  "total_monto_pendiente_clp": 760791547.0,
+  "total_documentos_pendientes": 12196,
+  "total_monto_pendiente_clp": 749943062.0,
   "monto_por_aging": {
-    "+90 días": 45626101.0,
-    "1-30 días": 412341899.0,
-    "31-60 días": 119750223.0,
-    "61-90 días": 83642325.0,
-    "Vigente": 99430999.0
+    "+90 días": 46060989.0,
+    "1-30 días": 417197390.0,
+    "31-60 días": 106909109.0,
+    "61-90 días": 85281489.0,
+    "Vigente": 94494085.0
   },
   "monto_por_tipo": {
-    "BOLETA": 600765599.0,
+    "BOLETA": 589917114.0,
     "FACTURA": 160025948.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 102830760.0
+      "monto": 104520674.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,19 +30,19 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 70776583.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 48841340.0
+      "monto": 71453329.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 42160624.0
+      "monto": 42774494.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 37860493.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 33673001.0
+      "monto": 34052897.0
     },
     {
       "partner": "abc S.A.",
@@ -50,11 +50,11 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 21719699.0
+      "monto": 22075629.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 20506251.0
+      "monto": 20669111.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -78,15 +78,15 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 8157009.0
+      "monto": 8226987.0
     },
     {
       "partner": "Sawa SPA",
-      "monto": 6411495.0
+      "monto": 6516481.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 6189310.0
+      "monto": 6449230.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
@@ -97,6 +97,6 @@
       "monto": 4607723.0
     }
   ],
-  "notas_credito_count": 560,
+  "notas_credito_count": 563,
   "pedidos_venta_count": 10000
 }
