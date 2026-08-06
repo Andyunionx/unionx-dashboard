@@ -39,10 +39,10 @@ reglas:
 - patron: 'comision ventas mkp del:'
   tipo_match: contains_lower
   cuenta_destino: COMISION_GRANDES_CUENTAS
-  aprobaciones: 2
-  ultima_aprobacion: '2026-07-22'
+  aprobaciones: 3
+  ultima_aprobacion: '2026-08-06'
   aprobado_por: Camila Bustos <camila@unionx.cl>
-  auto: false
+  auto: true
 - patron: mkp penalidad cancelacion
   tipo_match: contains_lower
   cuenta_destino: COMISION_GRANDES_CUENTAS
@@ -56,5 +56,12 @@ reglas:
   cuenta_destino: MARKETING_DIGITAL
   aprobaciones: 2
   ultima_aprobacion: '2026-08-05'
+  aprobado_por: Camila Bustos <camila@unionx.cl>
+  auto: false
+- patron: cobro uso b2b centralizacion
+  tipo_match: contains_lower
+  cuenta_destino: COMISION_GRANDES_CUENTAS
+  aprobaciones: 1
+  ultima_aprobacion: '2026-08-06'
   aprobado_por: Camila Bustos <camila@unionx.cl>
   auto: false
