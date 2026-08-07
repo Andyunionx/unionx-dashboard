@@ -1,40 +1,103 @@
 {
-  "generado_en": "2026-08-06T05:50:58.816700",
+  "generado_en": "2026-08-07T04:56:13.387131",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.017097906644129503,
-      "total_pickings": 15382,
-      "on_time": 263,
-      "on_time_pct": 0.017097906644129503,
-      "in_full": 15375,
-      "in_full_pct": 0.9995449226368482,
-      "both": 263,
+      "valor": 0.020744018807910387,
+      "total_pickings": 14462,
+      "on_time": 300,
+      "on_time_pct": 0.020744018807910387,
+      "in_full": 14455,
+      "in_full_pct": 0.9995159728944821,
+      "both": 300,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.0876068376068376,
-      "total_pickings": 468,
+      "valor": 0.09070796460176991,
+      "total_pickings": 452,
       "on_time": 46,
-      "on_time_pct": 0.09829059829059829,
-      "in_full": 460,
-      "in_full_pct": 0.9829059829059829,
+      "on_time_pct": 0.10176991150442478,
+      "in_full": 444,
+      "in_full_pct": 0.9823008849557522,
       "both": 41,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992509363295881,
-      "ok": 20010,
-      "total": 20025,
+      "valor": 0.9992092361220939,
+      "ok": 18954,
+      "total": 18969,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 9.759306049822065,
+      "valor": 9.761968169236852,
       "n_recepciones": 281,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00987",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-06 20:32",
+          "done": "2026-08-06 20:36"
+        },
+        {
+          "picking": "CA1/IN/00986",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 16:38",
+          "done": "2026-08-06 16:41"
+        },
+        {
+          "picking": "CA1/IN/00984",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 15:33",
+          "done": "2026-08-06 15:34"
+        },
+        {
+          "picking": "CA1/IN/00983",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-08-06 15:03",
+          "done": "2026-08-06 15:31"
+        },
+        {
+          "picking": "CA1/IN/00982",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 13:34",
+          "done": "2026-08-06 13:34"
+        },
+        {
+          "picking": "CA1/IN/00981",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 13:33",
+          "done": "2026-08-06 13:33"
+        },
+        {
+          "picking": "CA1/IN/00980",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-08-06 13:20",
+          "done": "2026-08-06 13:32"
+        },
+        {
+          "picking": "CA1/IN/00979",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 13:00",
+          "done": "2026-08-06 13:01"
+        },
+        {
+          "picking": "CA1/IN/00978",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-06 12:55",
+          "done": "2026-08-06 13:00"
+        },
         {
           "picking": "CA1/IN/00977",
           "proveedor": "",
@@ -111,88 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-31 14:10",
           "done": "2026-07-31 14:10"
-        },
-        {
-          "picking": "CA1/IN/00971",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-31 12:28",
-          "done": "2026-07-31 12:39"
-        },
-        {
-          "picking": "CA1/IN/00970",
-          "proveedor": "",
-          "horas": 21.9,
-          "scheduled": "2026-07-30 14:18",
-          "done": "2026-07-31 12:15"
-        },
-        {
-          "picking": "CA1/IN/00969",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 20:36",
-          "done": "2026-07-29 20:37"
-        },
-        {
-          "picking": "CA1/IN/00968",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 20:34",
-          "done": "2026-07-29 20:34"
-        },
-        {
-          "picking": "CA1/IN/00967",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 20:30",
-          "done": "2026-07-29 20:30"
-        },
-        {
-          "picking": "CA1/IN/00966",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-29 20:09",
-          "done": "2026-07-29 20:13"
-        },
-        {
-          "picking": "CA1/IN/00965",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 18:02",
-          "done": "2026-07-29 18:02"
-        },
-        {
-          "picking": "CA1/IN/00964",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-29 17:56",
-          "done": "2026-07-29 18:01"
-        },
-        {
-          "picking": "CA1/IN/00963",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 17:52",
-          "done": "2026-07-29 17:55"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9568247952899777,
-      "total_so": 14877,
-      "total_con_pickings": 14777,
-      "cumplidos": 14139,
+      "valor": 0.9338444836477134,
+      "total_so": 14839,
+      "total_con_pickings": 14738,
+      "cumplidos": 13763,
       "parciales": 9,
-      "sin_iniciar": 629,
+      "sin_iniciar": 966,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.29023583920365,
-      "n_orders": 15426,
+      "valor": 45.60615081008135,
+      "n_orders": 14491,
       "min_h": 0.0033333333333333335,
       "max_h": 700.2111111111111,
-      "mediana_h": 25.814722222222223,
+      "mediana_h": 25.721666666666668,
       "detalle": [
         {
           "so": "S261093",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 4336,
+      "lineas": 4551,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 129,
-      "outgoing": 29429,
-      "internal": 20442,
+      "incoming": 121,
+      "outgoing": 29622,
+      "internal": 20257,
       "total": 50000,
       "error": null
     },
@@ -367,8 +367,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 169,
-          "tarde": 169,
+          "total": 163,
+          "tarde": 163,
           "on_time_pct": 0.0
         },
         {
@@ -378,21 +378,21 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 43,
+          "tarde": 43,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "abc S.A.",
-          "total": 60,
-          "tarde": 60,
+          "total": 51,
+          "tarde": 51,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Lokal SpA",
-          "total": 10,
-          "tarde": 10,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Celmedia Fidelizacion SPA",
-          "total": 45,
-          "tarde": 45,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -589,9 +589,9 @@
         },
         "resumen": {
           "n_ordenes": 6808,
-          "cancelacion_clp": 1354904.5332870001,
+          "cancelacion_clp": 2210089.793777,
           "quiebre_clp": 460132.89873399993,
-          "n_canceladas": 172,
+          "n_canceladas": 194,
           "n_quiebres": 39,
           "ns_empresa_pct": 0.9513807285546416,
           "ns_courier_pct": 0.913924794359577,
@@ -8092,42 +8092,105 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.017097906644129503,
-      "total_pickings": 15382,
-      "on_time": 263,
-      "on_time_pct": 0.017097906644129503,
-      "in_full": 15375,
-      "in_full_pct": 0.9995449226368482,
-      "both": 263,
+      "valor": 0.020744018807910387,
+      "total_pickings": 14462,
+      "on_time": 300,
+      "on_time_pct": 0.020744018807910387,
+      "in_full": 14455,
+      "in_full_pct": 0.9995159728944821,
+      "both": 300,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.0876068376068376,
-      "total_pickings": 468,
+      "valor": 0.09070796460176991,
+      "total_pickings": 452,
       "on_time": 46,
-      "on_time_pct": 0.09829059829059829,
-      "in_full": 460,
-      "in_full_pct": 0.9829059829059829,
+      "on_time_pct": 0.10176991150442478,
+      "in_full": 444,
+      "in_full_pct": 0.9823008849557522,
       "both": 41,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992509363295881,
-      "ok": 20010,
-      "total": 20025,
+      "valor": 0.9992092361220939,
+      "ok": 18954,
+      "total": 18969,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 9.759306049822065,
+      "valor": 9.761968169236852,
       "n_recepciones": 281,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00987",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-06 20:32",
+          "done": "2026-08-06 20:36"
+        },
+        {
+          "picking": "CA1/IN/00986",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 16:38",
+          "done": "2026-08-06 16:41"
+        },
+        {
+          "picking": "CA1/IN/00984",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 15:33",
+          "done": "2026-08-06 15:34"
+        },
+        {
+          "picking": "CA1/IN/00983",
+          "proveedor": "",
+          "horas": 0.5,
+          "scheduled": "2026-08-06 15:03",
+          "done": "2026-08-06 15:31"
+        },
+        {
+          "picking": "CA1/IN/00982",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 13:34",
+          "done": "2026-08-06 13:34"
+        },
+        {
+          "picking": "CA1/IN/00981",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 13:33",
+          "done": "2026-08-06 13:33"
+        },
+        {
+          "picking": "CA1/IN/00980",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-08-06 13:20",
+          "done": "2026-08-06 13:32"
+        },
+        {
+          "picking": "CA1/IN/00979",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-06 13:00",
+          "done": "2026-08-06 13:01"
+        },
+        {
+          "picking": "CA1/IN/00978",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-06 12:55",
+          "done": "2026-08-06 13:00"
+        },
         {
           "picking": "CA1/IN/00977",
           "proveedor": "",
@@ -8204,69 +8267,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-31 14:10",
           "done": "2026-07-31 14:10"
-        },
-        {
-          "picking": "CA1/IN/00971",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-07-31 12:28",
-          "done": "2026-07-31 12:39"
-        },
-        {
-          "picking": "CA1/IN/00970",
-          "proveedor": "",
-          "horas": 21.9,
-          "scheduled": "2026-07-30 14:18",
-          "done": "2026-07-31 12:15"
-        },
-        {
-          "picking": "CA1/IN/00969",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 20:36",
-          "done": "2026-07-29 20:37"
-        },
-        {
-          "picking": "CA1/IN/00968",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 20:34",
-          "done": "2026-07-29 20:34"
-        },
-        {
-          "picking": "CA1/IN/00967",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 20:30",
-          "done": "2026-07-29 20:30"
-        },
-        {
-          "picking": "CA1/IN/00966",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-29 20:09",
-          "done": "2026-07-29 20:13"
-        },
-        {
-          "picking": "CA1/IN/00965",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 18:02",
-          "done": "2026-07-29 18:02"
-        },
-        {
-          "picking": "CA1/IN/00964",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-07-29 17:56",
-          "done": "2026-07-29 18:01"
-        },
-        {
-          "picking": "CA1/IN/00963",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-29 17:52",
-          "done": "2026-07-29 17:55"
         }
       ],
       "error": null
