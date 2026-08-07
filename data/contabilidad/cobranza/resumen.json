@@ -1,19 +1,19 @@
 {
-  "generado_en": "2026-08-07T12:37:36.163632",
+  "generado_en": "2026-08-07T18:38:05.035230",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12351,
-  "total_monto_pendiente_clp": 820148789.0,
+  "total_documentos_pendientes": 12281,
+  "total_monto_pendiente_clp": 811199368.0,
   "monto_por_aging": {
     "+90 días": 46376681.0,
-    "1-30 días": 464937681.0,
-    "31-60 días": 128426433.0,
-    "61-90 días": 84918827.0,
-    "Vigente": 95489167.0
+    "1-30 días": 456959215.0,
+    "31-60 días": 128227395.0,
+    "61-90 días": 84896837.0,
+    "Vigente": 94739240.0
   },
   "monto_por_tipo": {
-    "BOLETA": 594745555.0,
-    "FACTURA": 225403234.0
+    "BOLETA": 589861974.0,
+    "FACTURA": 221337394.0
   },
   "top_20_deudores": [
     {
@@ -22,31 +22,31 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 109893455.0
+      "monto": 110720308.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 84251739.0
+      "monto": 85116896.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 71189046.0
+      "monto": 65837296.0
+    },
+    {
+      "partner": "Cliente Walmart",
+      "monto": 43786144.0
     },
     {
       "partner": "FALABELLA.COM",
       "monto": 43767512.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 43506274.0
-    },
-    {
       "partner": "Cliente Shopify",
-      "monto": 38859119.0
+      "monto": 37702288.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 34052897.0
+      "monto": 34825301.0
     },
     {
       "partner": "abc S.A.",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22439409.0
+      "monto": 22484379.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 19196187.0
+      "monto": 19303140.0
     },
     {
       "partner": "Showtime SpA",
@@ -70,19 +70,19 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 16512440.0
+      "monto": 16629380.0
     },
     {
       "partner": "Cencosud Retail S.A",
-      "monto": 14000246.0
+      "monto": 9934406.0
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 8226987.0
+      "monto": 9650021.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 7137040.0
+      "monto": 7196530.0
     },
     {
       "partner": "Sawa SPA",
@@ -97,6 +97,6 @@
       "monto": 4607723.0
     }
   ],
-  "notas_credito_count": 563,
+  "notas_credito_count": 562,
   "pedidos_venta_count": 10000
 }
