@@ -942,11 +942,11 @@ def render():
                 per_lbl_cm  = _periodo_label(meses_lin_cm, yr)
 
                 # Nota linealidad último mes del período seleccionado
-                _um_cm  = meses_cm[-1]
-                _ts_cm  = pd.Timestamp(_um_cm + '-01')
+                _um_cm   = meses_cm[-1]
+                _ts_cm   = pd.Timestamp(_um_cm + '-01')
                 _dias_cm = (_ts_cm + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
-                _dia_cm  = _TODAY.day if _um_cm >= _TODAY.strftime('%Y-%m') else _dias_cm
-                _lin_cm  = _dia_cm / _dias_cm
+                _lin_cm  = _lin_for_mes(_um_cm)
+                _dia_cm  = round(_lin_cm * _dias_cm) if _um_cm >= _TODAY.strftime('%Y-%m') else _dias_cm
                 st.caption(
                     f"Período: **{per_lbl_cm}** "
                     f"({'parcial al día ' + str(_dia_cm) + ' de ' + str(_dias_cm) + ' — ' if _um_cm >= _TODAY.strftime('%Y-%m') else ''}"
@@ -1008,8 +1008,8 @@ def render():
                 _um_cc   = meses_cc[-1]
                 _ts_cc   = pd.Timestamp(_um_cc + '-01')
                 _dias_cc = (_ts_cc + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
-                _dia_cc  = _TODAY.day if _um_cc >= _TODAY.strftime('%Y-%m') else _dias_cc
-                _lin_cc  = _dia_cc / _dias_cc
+                _lin_cc  = _lin_for_mes(_um_cc)
+                _dia_cc  = round(_lin_cc * _dias_cc) if _um_cc >= _TODAY.strftime('%Y-%m') else _dias_cc
                 st.caption(
                     f"Período: **{per_lbl_cc}** "
                     f"({'parcial al día ' + str(_dia_cc) + ' de ' + str(_dias_cc) + ' — ' if _um_cc >= _TODAY.strftime('%Y-%m') else ''}"
