@@ -684,7 +684,12 @@ def _periodo_filter(key_prefix: str, yr: str, meses_disp: list,
         opts.append(('sem', 'S2', f'S2 {yr}'))
     opts.append(('ano', yr, f'Año {yr}'))
     labels = [o[2] for o in opts]
-    default_idx = (len(meses_yr) - 1) if default_last else 0
+    if default_last:
+        _cur = _TODAY.strftime('%Y-%m')
+        _cur_idx = next((i for i, o in enumerate(opts) if o[0] == 'mes' and o[1] == _cur), None)
+        default_idx = _cur_idx if _cur_idx is not None else len(meses_yr) - 1
+    else:
+        default_idx = 0
     sel = st.selectbox('Período', labels, index=default_idx, key=f'{key_prefix}_periodo')
     kind, val, _ = next(o for o in opts if o[2] == sel)
     if kind == 'mes':
