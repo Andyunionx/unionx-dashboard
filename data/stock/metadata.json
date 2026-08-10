@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-10T07:40:29.608500",
+  "generado_en": "2026-08-10T10:16:49.840769",
   "total_skus": 1852,
   "total_quants": 4697,
   "total_locations": 1420,
@@ -11,9 +11,9 @@
     "n_quiebre_critico": 117,
     "n_bajo": 138,
     "n_optimo": 114,
-    "n_sobrestock": 277,
-    "n_sin_venta": 1206,
-    "rot_30d_promedio": 1.22,
+    "n_sobrestock": 276,
+    "n_sin_venta": 1207,
+    "rot_30d_promedio": 1.23,
     "rot_90d_promedio": 3.3
   },
   "ocupacion": {
@@ -8229,11 +8229,11 @@
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1206
+      "SKUs": 1207
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 277
+      "SKUs": 276
     },
     {
       "Categoria": "BAJO",
