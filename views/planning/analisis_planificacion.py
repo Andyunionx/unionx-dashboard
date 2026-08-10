@@ -787,6 +787,24 @@ def render():
     meta_marca_piv        = _safe_piv(df_ppto_marca, 'marca', 'mes', 'meta_venta_neta')
     meta_canal_piv        = _safe_piv(df_ppto_canal, 'canal', 'mes', 'meta_venta_neta')
 
+    # UMA (Mattel) y Purito aparecen como pseudo-canales en el parquet PPTO.
+    # Redistribuirlos a canales reales según proporciones de venta YTD por canal.
+    _PSEUDO_CANAL_MARCA = {'Purito': 'Purito', 'Mattel': 'UMA'}
+    if not meta_canal_piv.empty and not df_ventas.empty:
+        for _pc, _marca in _PSEUDO_CANAL_MARCA.items():
+            if _pc not in meta_canal_piv.index:
+                continue
+            _budget = meta_canal_piv.loc[_pc].copy()
+            _vtas   = df_ventas[df_ventas['marca_ppto'] == _marca]
+            _ct     = _vtas.groupby('canal_ppto')['venta_neta'].sum()
+            _grand  = _ct.sum()
+            _props  = (_ct / _grand) if _grand > 0 else pd.Series({'Marketplace': 1.0})
+            for _rc, _p in _props.items():
+                if _rc not in meta_canal_piv.index:
+                    meta_canal_piv.loc[_rc] = 0.0
+                meta_canal_piv.loc[_rc] = meta_canal_piv.loc[_rc].add(_budget * _p, fill_value=0)
+            meta_canal_piv = meta_canal_piv.drop(index=_pc)
+
     # ── Planning horizon (6 months from today) ────────────────────────
     N_MESES = 6
     meses_plan  = [(_TODAY + pd.DateOffset(months=i)).strftime('%Y-%m') for i in range(N_MESES)]
