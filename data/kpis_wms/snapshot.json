@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-08-10T04:39:27.930665",
+  "generado_en": "2026-08-10T16:00:55.093361",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.021845174973488864,
-      "total_pickings": 14145,
-      "on_time": 309,
-      "on_time_pct": 0.021845174973488864,
-      "in_full": 14138,
-      "in_full_pct": 0.9995051254860374,
-      "both": 309,
+      "valor": 0.021601722581093285,
+      "total_pickings": 14397,
+      "on_time": 311,
+      "on_time_pct": 0.021601722581093285,
+      "in_full": 14390,
+      "in_full_pct": 0.9995137875946378,
+      "both": 311,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.0948905109489051,
-      "total_pickings": 411,
-      "on_time": 44,
-      "on_time_pct": 0.1070559610705596,
-      "in_full": 403,
-      "in_full_pct": 0.9805352798053528,
-      "both": 39,
+      "valor": 0.0979020979020979,
+      "total_pickings": 429,
+      "on_time": 47,
+      "on_time_pct": 0.10955710955710955,
+      "in_full": 421,
+      "in_full_pct": 0.9813519813519813,
+      "both": 42,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9991872561768531,
-      "ok": 18441,
-      "total": 18456,
+      "valor": 0.9992015755575664,
+      "ok": 18772,
+      "total": 18787,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.044223646723648,
-      "n_recepciones": 273,
+      "valor": 10.50500405515004,
+      "n_recepciones": 274,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00976",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 136.3,
+          "scheduled": "2026-08-04 22:41",
+          "done": "2026-08-10 14:59"
+        },
         {
           "picking": "CA1/IN/00987",
           "proveedor": "",
@@ -135,7 +142,7 @@
         },
         {
           "picking": "CA1/RET/01130",
-          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
+          "proveedor": "Agricola Escargot Premium SpA",
           "horas": 0.0,
           "scheduled": "2026-08-04 14:23",
           "done": "2026-08-04 14:23"
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-07-31 14:11",
           "done": "2026-07-31 14:11"
-        },
-        {
-          "picking": "CA1/RET/01126",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:10",
-          "done": "2026-07-31 14:10"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9062521977635558,
-      "total_so": 14320,
-      "total_con_pickings": 14219,
-      "cumplidos": 12886,
+      "valor": 0.9178426715104094,
+      "total_so": 14415,
+      "total_con_pickings": 14314,
+      "cumplidos": 13138,
       "parciales": 9,
-      "sin_iniciar": 1324,
+      "sin_iniciar": 1167,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.672618494679426,
-      "n_orders": 14138,
+      "valor": 47.50348636858062,
+      "n_orders": 14403,
       "min_h": 0.0033333333333333335,
       "max_h": 700.2111111111111,
-      "mediana_h": 26.976388888888888,
+      "mediana_h": 27.651666666666667,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 5323,
+      "lineas": 5654,
       "mes": "2026-08",
       "error": null
     },
@@ -379,8 +379,8 @@
         },
         {
           "cliente": "abc S.A.",
-          "total": 44,
-          "tarde": 44,
+          "total": 57,
+          "tarde": 57,
           "on_time_pct": 0.0
         },
         {
@@ -434,6 +434,12 @@
         {
           "cliente": "Mercadolibre Chile Limitada",
           "total": 7,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Agricola Escargot Premium SpA",
+          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8092,42 +8098,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.021845174973488864,
-      "total_pickings": 14145,
-      "on_time": 309,
-      "on_time_pct": 0.021845174973488864,
-      "in_full": 14138,
-      "in_full_pct": 0.9995051254860374,
-      "both": 309,
+      "valor": 0.021601722581093285,
+      "total_pickings": 14397,
+      "on_time": 311,
+      "on_time_pct": 0.021601722581093285,
+      "in_full": 14390,
+      "in_full_pct": 0.9995137875946378,
+      "both": 311,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.0948905109489051,
-      "total_pickings": 411,
-      "on_time": 44,
-      "on_time_pct": 0.1070559610705596,
-      "in_full": 403,
-      "in_full_pct": 0.9805352798053528,
-      "both": 39,
+      "valor": 0.0979020979020979,
+      "total_pickings": 429,
+      "on_time": 47,
+      "on_time_pct": 0.10955710955710955,
+      "in_full": 421,
+      "in_full_pct": 0.9813519813519813,
+      "both": 42,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9991872561768531,
-      "ok": 18441,
-      "total": 18456,
+      "valor": 0.9992015755575664,
+      "ok": 18772,
+      "total": 18787,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.044223646723648,
-      "n_recepciones": 273,
+      "valor": 10.50500405515004,
+      "n_recepciones": 274,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00976",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 136.3,
+          "scheduled": "2026-08-04 22:41",
+          "done": "2026-08-10 14:59"
+        },
         {
           "picking": "CA1/IN/00987",
           "proveedor": "",
@@ -8228,7 +8241,7 @@
         },
         {
           "picking": "CA1/RET/01130",
-          "proveedor": "AGRICOLA ESCARGOT PREMIUM LIMITADA",
+          "proveedor": "Agricola Escargot Premium SpA",
           "horas": 0.0,
           "scheduled": "2026-08-04 14:23",
           "done": "2026-08-04 14:23"
@@ -8260,13 +8273,6 @@
           "horas": 0.0,
           "scheduled": "2026-07-31 14:11",
           "done": "2026-07-31 14:11"
-        },
-        {
-          "picking": "CA1/RET/01126",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:10",
-          "done": "2026-07-31 14:10"
         }
       ],
       "error": null
