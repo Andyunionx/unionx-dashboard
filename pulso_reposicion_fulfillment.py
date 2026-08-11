@@ -42,6 +42,11 @@ MES = ROOT / "data/historico/ventas_mes_actual.parquet"
 TRANSITO = ROOT / "data/planificacion/snapshots/planif_forecast_transito.parquet"
 OUT_DIR = ROOT / "data/outputs"
 CANALES = ["Mercado Libre", "Falabella", "Paris", "Walmart"]
+# Gate CA1 (regla Nicolás 10-ago-2026): la reposición a full debe CUIDAR 1 mes de
+# cobertura de CA1 y enviar SOLO la "cola" (excedente). Cobertura CA1 = stock CA1 /
+# (venta semanal L6W × SEM_MES). Si CA1 < TARGET_CA1_MESES → no enviar (repo=0).
+SEM_MES = 4.33
+TARGET_CA1_MESES = 1.0
 SEM_EVENTO = {23, 41}
 AZUL = "4884FC"
 
@@ -255,6 +260,8 @@ def construir(no_download=False, no_live=False) -> Path:
         # v1.1: cobertura de planificación = hoja Plan del panel (incluye tránsito
         # con ETA); packs por componentes (Mapeo packs); sin Plan -> restringido.
         cob_sku = cob_pack.get(sku) if es_pack and sku in cob_pack else cob_plan.get(sku)
+        # ── Pasada 1: reposición "pre-CA1" por canal (objetivo − stock full) ──
+        pre = {}
         for canal in CANALES:
             ume = mult2(float(v_canal.get((sku, canal), 0)))
             manual = manual_map.get((sku, canal))
@@ -266,7 +273,28 @@ def construir(no_download=False, no_live=False) -> Path:
             live_q = float(full_map.get((canal, sku), 0))
             restr = 1 if (cob_sku is None or pd.isna(cob_sku)
                           or cob_sku < reglas.loc[canal, "restr"]) else 0
-            repo = 0 if (black or restr) else max(0, objetivo - live_q)
+            repo0 = 0 if (black or restr) else max(0, objetivo - live_q)
+            pre[canal] = dict(ume=ume, manual=manual, large=large, black=black,
+                              objetivo=objetivo, live_q=live_q, restr=restr, repo0=repo0)
+
+        # ── Gate CA1 (regla Nicolás): cuidar 1 mes de CA1, enviar solo la cola ──
+        # Demanda = venta semanal total L6W (proxy de la demanda digital sobre CA1).
+        # cola_ca1 = stock CA1 por sobre 1 mes; se reparte entre canales (pro-rata).
+        dem_sem = float(v_total.get(sku, 0))
+        cob_ca1 = (stock_p / (dem_sem * SEM_MES)) if dem_sem > 0 else float("inf")
+        cola_ca1 = max(0.0, stock_p - dem_sem * SEM_MES * TARGET_CA1_MESES)
+        total_pre = sum(v["repo0"] for v in pre.values())
+        if cob_ca1 < TARGET_CA1_MESES:
+            factor, restr_ca1 = 0.0, 1          # CA1 bajo 1 mes → no reponer
+        elif total_pre > cola_ca1 and total_pre > 0:
+            factor, restr_ca1 = cola_ca1 / total_pre, 1   # solo la cola disponible
+        else:
+            factor, restr_ca1 = 1.0, 0
+
+        # ── Pasada 2: aplicar cap CA1 + armar filas ──
+        for canal in CANALES:
+            x = pre[canal]
+            repo = mult2(x["repo0"] * factor)
             m3 = (dim_m3.get(sku) or 0) * repo
             kg = (dim_kg.get(sku) or 0) * repo
             filas.append({
@@ -274,11 +302,15 @@ def construir(no_download=False, no_live=False) -> Path:
                 "Marca": marca, "Pack": d.get("Pack", ""), "In/Out": d.get("In/Out", ""),
                 "Sku": sku, "Producto": d.get("Producto", ""),
                 "Categoría Comercial": d.get("Categoría Comercial", ""), "Canal": canal,
-                "UME": ume, "UME MIN": umin, "UME Manual": manual,
-                "Blacklist": black, "Restricción": restr, "Large": large,
-                "Stock objetivo full": objetivo, "Stock Full Live": live_q,
+                "UME": x["ume"], "UME MIN": umin, "UME Manual": x["manual"],
+                "Blacklist": x["black"], "Restricción": x["restr"],
+                "Restricción CA1": restr_ca1, "Large": x["large"],
+                "Stock objetivo full": x["objetivo"], "Stock Full Live": x["live_q"],
                 "Reposición": repo, "Dim m3": round(m3, 4), "Dim peso": round(kg, 2),
                 "Stock bodega principal": stock_p, "Tránsito mes": tra,
+                "Venta sem L6W": round(dem_sem, 1),
+                "Cobertura CA1 (meses)": round(cob_ca1, 2) if cob_ca1 != float("inf") else "SIN VENTA",
+                "Cola CA1 (uds)": round(cola_ca1),
                 "Cobertura plan (meses)": round(cob_sku, 2) if (cob_sku is not None and pd.notna(cob_sku)) else "SIN PLAN",
             })
     df = pd.DataFrame(filas)
