@@ -75,7 +75,20 @@ def cargar_extras():
     nd["dia_semana"] = fv.dt.dayofweek.map(DIAS).fillna("")
     nd["hora_venta_num"] = 0
     nd["tipo_movimiento"] = "Otros costos"
-    nd = nd[nd["canal"].isin(CANALES) & (nd["anio_venta"] == 2026) & nd["mes_venta"].between(1, 6)].copy()
+    # Meses CONGELADOS = hasta el mes anterior al CUTOFF_HISTORICO (views/shared.py).
+    # Dinámico para no editar el rango cada cierre (antes hardcodeado a H1 → julio quedó fuera).
+    import datetime as _dt
+    _max_mes = 6
+    try:
+        for _l in (ROOT / "views" / "shared.py").read_text(encoding="utf-8").splitlines():
+            if _l.strip().startswith("CUTOFF_HISTORICO"):
+                _cut = _dt.date.fromisoformat(_l.split("=", 1)[1].strip().split("#")[0].strip().strip("'\""))
+                _max_mes = (_cut.month - 1) if _cut.day == 1 else _cut.month
+                break
+    except Exception:
+        pass
+    nd = nd[nd["canal"].isin(CANALES) & (nd["anio_venta"] == 2026) & nd["mes_venta"].between(1, _max_mes)].copy()
+    print(f"   (meses congelados a integrar: 1..{_max_mes})")
     return nd
 
 
