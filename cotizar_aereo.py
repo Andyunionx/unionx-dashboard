@@ -336,14 +336,14 @@ def escribir_herramienta(productos, out_path, *, tarifa_default=6.0,
 # Productos con SKU + costo actual Odoo (CLP) — de PI/PL + Odoo std_price (10-ago-2026)
 PRODUCTOS_AEREO = [
     dict(nombre="Secador Multistyler T-Care 5 en 1", model="HD4",   sku="TCMULTSTY5N1", costo_unit_usd=24.00, uds_ctn=6,  cbm_ctn=0.079, gw_ctn=12.10, odoo_cost_clp=21659),
-    dict(nombre="Proyector Smart Lumix 9000lm",      model="AC?",   sku="",             costo_unit_usd=50.00, uds_ctn=8,  cbm_ctn=0.083, gw_ctn=17.60, odoo_cost_clp=0),
+    dict(nombre="Proyector Smart Lumix 9000lm",      model="YG361", sku="LVPROLUM",     costo_unit_usd=50.00, uds_ctn=8,  cbm_ctn=0.083, gw_ctn=17.60, odoo_cost_clp=89443),
     dict(nombre="Proyector Smart Orion 12000lm",     model="AC251", sku="LVPROORI",     costo_unit_usd=60.00, uds_ctn=8,  cbm_ctn=0.083, gw_ctn=19.50, odoo_cost_clp=71625),
     dict(nombre="Proyector Smart Hexa 8000lm",       model="AC201", sku="LVPROHEX",     costo_unit_usd=40.50, uds_ctn=10, cbm_ctn=0.067, gw_ctn=13.50, odoo_cost_clp=37187),
     dict(nombre="Audífono Gamer Zenit Elite",        model="KW-406", sku="LVAUDGM-WH",  costo_unit_usd=19.00, uds_ctn=10, cbm_ctn=0.076, gw_ctn=8.80,  odoo_cost_clp=17185),
     dict(nombre="Proyector Smart Nova 9000lm",       model="AC261", sku="LVPRONOV",     costo_unit_usd=50.00, uds_ctn=8,  cbm_ctn=0.085, gw_ctn=18.60, odoo_cost_clp=56881),
     dict(nombre="Monitor Gamer NexView 15.6\"",       model="TP59", sku="LVMONEXV-15",  costo_unit_usd=37.00, uds_ctn=8,  cbm_ctn=0.073, gw_ctn=12.50, odoo_cost_clp=37116),
     dict(nombre="Mousepad Battlemat XXL 90x40",      model="TP95",  sku="LVMPADXXL-BK", costo_unit_usd=3.40,  uds_ctn=20, cbm_ctn=0.058, gw_ctn=15.00, odoo_cost_clp=3299),
-    dict(nombre="Secador Multistyler AeroFlow Beige", model="~HD4", sku="",             costo_unit_usd=24.00, uds_ctn=6,  cbm_ctn=0.079, gw_ctn=12.10, odoo_cost_clp=0),
+    dict(nombre="Secador Multistyler AeroFlow Beige", model="HD4",  sku="TCMULTSTY5N1-BG", costo_unit_usd=24.00, uds_ctn=6,  cbm_ctn=0.079, gw_ctn=12.10, odoo_cost_clp=21706),
     dict(nombre="Teclado Gamer NovaBlade TKL",       model="KS201", sku="LVTECOFSL-GR", costo_unit_usd=13.80, uds_ctn=20, cbm_ctn=0.051, gw_ctn=13.00, odoo_cost_clp=12029),
 ]
 
