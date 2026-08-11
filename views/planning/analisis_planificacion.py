@@ -25,7 +25,9 @@ from views.planning._data_helpers import (
 )
 from views.planning.triada_cobertura import _preparar_datos
 
-_TODAY = pd.Timestamp.today().normalize()
+_TODAY     = pd.Timestamp.today().normalize()
+_MES_LABEL = _TODAY.strftime('%b %Y').upper()   # "AGO 2026"
+_MES_SLUG  = _TODAY.strftime('%b%y').upper()    # "AGO26"
 
 # ── Marca / Canal mappings ────────────────────────────────────────────
 _TIPO_NEG_TO_PPTO: dict[str, str] = {
@@ -1278,7 +1280,7 @@ def render():
     # TAB 5: CRÍTICOS POR MARCA
     # ════════════════════════════════════════════════════════════════
     with tab_crit:
-        st.subheader("🔴 Críticos por Marca — Cobertura < 1 mes | AGO 2026")
+        st.subheader(f"🔴 Críticos por Marca — Cobertura < 1 mes | {_MES_LABEL}")
 
         _crit_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_critico_marca_snapshot.parquet'
         if not _crit_path.exists():
@@ -1299,23 +1301,24 @@ def render():
             def _fmt_crit_clp(v):
                 return f"${v:,.0f}" if pd.notna(v) and v else "—"
 
+            _venta_col_lbl = f'Venta CST {_MES_LABEL} ($)'
             _df_cm_show = _df_cm[['marca', 'skus', 'cob_prom', 'sin_stock',
-                                    'stock_hoy_cst', 'venta_cst_ago26', 'detalle_llegadas']].copy()
+                                    'stock_hoy_cst', 'venta_cst_mes', 'detalle_llegadas']].copy()
             _df_cm_show.columns = ['Marca', 'SKUs', 'Cob. Prom (m)', 'Sin Stock',
-                                     'Stock Hoy CST ($)', 'Venta CST AGO26 ($)', 'Detalle Llegadas']
+                                     'Stock Hoy CST ($)', _venta_col_lbl, 'Detalle Llegadas']
             fmt_cm = {
                 'Cob. Prom (m)': _fmt_crit_m,
                 'Stock Hoy CST ($)': _fmt_crit_clp,
-                'Venta CST AGO26 ($)': _fmt_crit_clp,
+                _venta_col_lbl: _fmt_crit_clp,
             }
             st.dataframe(_df_cm_show.style.format(fmt_cm), use_container_width=True, hide_index=True)
-            _dl(_df_cm_show, "criticos_por_marca_AGO26.csv")
+            _dl(_df_cm_show, f"criticos_por_marca_{_MES_SLUG}.csv")
 
     # ════════════════════════════════════════════════════════════════
     # TAB 6: SOBRESTOCK
     # ════════════════════════════════════════════════════════════════
     with tab_sob:
-        st.subheader("📦 Sobrestock — Capital Inmovilizado | AGO 2026")
+        st.subheader(f"📦 Sobrestock — Capital Inmovilizado | {_MES_LABEL}")
         st.caption("Exceso sobre 4 meses de cobertura óptimos.")
 
         _sob_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_sobrestock_snapshot.parquet'
@@ -1424,14 +1427,14 @@ def render():
 
             _dl(
                 _df_marcas_sob[_SOB_COLS].rename(columns=dict(zip(_SOB_COLS, _SOB_HEADS))),
-                "sobrestock_AGO26.csv"
+                f"sobrestock_{_MES_SLUG}.csv"
             )
 
     # ════════════════════════════════════════════════════════════════
     # TAB 7: TRÁNSITOS POR EMBARQUE
     # ════════════════════════════════════════════════════════════════
     with tab_tr:
-        st.subheader("🚢 Tránsitos por Embarque | AGO 2026")
+        st.subheader(f"🚢 Tránsitos por Embarque | {_MES_LABEL}")
         st.caption("Cobertura SKUs: 🔴<1m  🟠1-2m  🟢2-4m  🔵4-6m  🟣>6m")
 
         _tr_snap_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_transitos_snapshot.parquet'
@@ -1472,13 +1475,13 @@ def render():
                     fmt_sku_tr = {'Valor USD': lambda v: f"${v:,.0f}" if pd.notna(v) else "—"}
                     st.dataframe(_df_sku_show.style.format(fmt_sku_tr), use_container_width=True, hide_index=True)
 
-            _dl(_df_tr_pi_show, "transitos_AGO26.csv")
+            _dl(_df_tr_pi_show, f"transitos_{_MES_SLUG}.csv")
 
     # ════════════════════════════════════════════════════════════════
     # TAB 8: NUEVOS EN TRÁNSITO
     # ════════════════════════════════════════════════════════════════
     with tab_nv:
-        st.subheader("🆕 Nuevos en Tránsito | AGO 2026")
+        st.subheader(f"🆕 Nuevos en Tránsito | {_MES_LABEL}")
         st.caption("SKUs con Categoría Comercial = NUEVO con llegadas confirmadas en tránsito.")
 
         _nv_snap_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_nuevos_transito_snapshot.parquet'
@@ -1508,5 +1511,5 @@ def render():
                     columns={'sku': 'SKU', 'descripcion': 'Descripción', 'marca': 'Marca',
                               'grupo': 'Grupo', 'fecha_eta_bodega': 'ETA Bodega', 'cantidad': 'Cantidad'}
                 ),
-                "nuevos_transito_AGO26.csv"
+                f"nuevos_transito_{_MES_SLUG}.csv"
             )

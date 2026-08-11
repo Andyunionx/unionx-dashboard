@@ -44,7 +44,7 @@ def _extract_critico():
             'sin_stock':       int(r[3] or 0),
             # cols 4 (Stock Hoy Unidades) y 5 (Venta PPTO Unid) OMITIDOS
             'stock_hoy_cst':   float(r[6] or 0),
-            'venta_cst_ago26': float(r[7] or 0),
+            'venta_cst_mes':   float(r[7] or 0),
             'detalle_llegadas': str(r[8]).strip() if r[8] else '',
             'is_total':        is_total,
         })
