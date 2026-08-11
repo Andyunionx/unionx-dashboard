@@ -1,40 +1,89 @@
 {
-  "generado_en": "2026-08-11T04:21:11.720883",
+  "generado_en": "2026-08-11T16:02:37.751804",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.02257912774679121,
-      "total_pickings": 14881,
-      "on_time": 336,
-      "on_time_pct": 0.02257912774679121,
-      "in_full": 14874,
-      "in_full_pct": 0.9995296015052751,
-      "both": 336,
+      "valor": 0.022014591066171766,
+      "total_pickings": 15626,
+      "on_time": 344,
+      "on_time_pct": 0.022014591066171766,
+      "in_full": 15619,
+      "in_full_pct": 0.9995520286701651,
+      "both": 344,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.09555555555555556,
-      "total_pickings": 450,
-      "on_time": 48,
-      "on_time_pct": 0.10666666666666667,
-      "in_full": 442,
-      "in_full_pct": 0.9822222222222222,
-      "both": 43,
+      "valor": 0.11328976034858387,
+      "total_pickings": 459,
+      "on_time": 57,
+      "on_time_pct": 0.12418300653594772,
+      "in_full": 451,
+      "in_full_pct": 0.9825708061002179,
+      "both": 52,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992295048284364,
-      "ok": 19453,
-      "total": 19468,
+      "valor": 0.9992672561184114,
+      "ok": 20456,
+      "total": 20471,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.466815151515151,
-      "n_recepciones": 275,
+      "valor": 10.2072182821119,
+      "n_recepciones": 282,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01141",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:58",
+          "done": "2026-08-11 14:58"
+        },
+        {
+          "picking": "CA1/RET/01140",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:57",
+          "done": "2026-08-11 14:57"
+        },
+        {
+          "picking": "CA1/RET/01139",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:56",
+          "done": "2026-08-11 14:56"
+        },
+        {
+          "picking": "CA1/RET/01138",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:55",
+          "done": "2026-08-11 14:55"
+        },
+        {
+          "picking": "CA1/RET/01137",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 12:53",
+          "done": "2026-08-11 12:53"
+        },
+        {
+          "picking": "CA1/RET/01136",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 12:52",
+          "done": "2026-08-11 12:52"
+        },
+        {
+          "picking": "CA1/IN/00991",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 12:46",
+          "done": "2026-08-11 12:48"
+        },
         {
           "picking": "CA1/RET/01134",
           "proveedor": "Falabella Retail",
@@ -125,74 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-05 14:28",
           "done": "2026-08-05 14:28"
-        },
-        {
-          "picking": "CA1/RET/01131",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-05 13:47",
-          "done": "2026-08-05 13:47"
-        },
-        {
-          "picking": "CA1/RET/01132",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-05 13:47",
-          "done": "2026-08-05 13:47"
-        },
-        {
-          "picking": "CA1/IN/00975",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-04 15:41",
-          "done": "2026-08-04 15:42"
-        },
-        {
-          "picking": "CA1/RET/01130",
-          "proveedor": "Agricola Escargot Premium SpA",
-          "horas": 0.0,
-          "scheduled": "2026-08-04 14:23",
-          "done": "2026-08-04 14:23"
-        },
-        {
-          "picking": "CA1/IN/00972",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:41",
-          "done": "2026-07-31 14:41"
-        },
-        {
-          "picking": "CA1/RET/01129",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:14",
-          "done": "2026-07-31 14:14"
-        },
-        {
-          "picking": "CA1/RET/01128",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:12",
-          "done": "2026-07-31 14:12"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9274888765294772,
-      "total_so": 14485,
-      "total_con_pickings": 14384,
-      "cumplidos": 13341,
+      "valor": 0.9717580444689959,
+      "total_so": 14583,
+      "total_con_pickings": 14482,
+      "cumplidos": 14073,
       "parciales": 13,
-      "sin_iniciar": 1030,
+      "sin_iniciar": 396,
       "error": null
     },
     "oct_30d": {
-      "valor": 47.28270279436208,
-      "n_orders": 14907,
+      "valor": 47.619278065280966,
+      "n_orders": 15652,
       "min_h": 0.0033333333333333335,
       "max_h": 700.2111111111111,
-      "mediana_h": 27.960277777777776,
+      "mediana_h": 28.78388888888889,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 6335,
+      "lineas": 7352,
       "mes": "2026-08",
       "error": null
     },
@@ -433,13 +433,13 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 15,
+          "total": 19,
           "tarde": 0,
           "on_time_pct": 1.0
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
-          "total": 7,
+          "total": 9,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -8104,42 +8104,91 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.02257912774679121,
-      "total_pickings": 14881,
-      "on_time": 336,
-      "on_time_pct": 0.02257912774679121,
-      "in_full": 14874,
-      "in_full_pct": 0.9995296015052751,
-      "both": 336,
+      "valor": 0.022014591066171766,
+      "total_pickings": 15626,
+      "on_time": 344,
+      "on_time_pct": 0.022014591066171766,
+      "in_full": 15619,
+      "in_full_pct": 0.9995520286701651,
+      "both": 344,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.09555555555555556,
-      "total_pickings": 450,
-      "on_time": 48,
-      "on_time_pct": 0.10666666666666667,
-      "in_full": 442,
-      "in_full_pct": 0.9822222222222222,
-      "both": 43,
+      "valor": 0.11328976034858387,
+      "total_pickings": 459,
+      "on_time": 57,
+      "on_time_pct": 0.12418300653594772,
+      "in_full": 451,
+      "in_full_pct": 0.9825708061002179,
+      "both": 52,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992295048284364,
-      "ok": 19453,
-      "total": 19468,
+      "valor": 0.9992672561184114,
+      "ok": 20456,
+      "total": 20471,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.466815151515151,
-      "n_recepciones": 275,
+      "valor": 10.2072182821119,
+      "n_recepciones": 282,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01141",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:58",
+          "done": "2026-08-11 14:58"
+        },
+        {
+          "picking": "CA1/RET/01140",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:57",
+          "done": "2026-08-11 14:57"
+        },
+        {
+          "picking": "CA1/RET/01139",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:56",
+          "done": "2026-08-11 14:56"
+        },
+        {
+          "picking": "CA1/RET/01138",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 14:55",
+          "done": "2026-08-11 14:55"
+        },
+        {
+          "picking": "CA1/RET/01137",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 12:53",
+          "done": "2026-08-11 12:53"
+        },
+        {
+          "picking": "CA1/RET/01136",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 12:52",
+          "done": "2026-08-11 12:52"
+        },
+        {
+          "picking": "CA1/IN/00991",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-11 12:46",
+          "done": "2026-08-11 12:48"
+        },
         {
           "picking": "CA1/RET/01134",
           "proveedor": "Falabella Retail",
@@ -8230,55 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-05 14:28",
           "done": "2026-08-05 14:28"
-        },
-        {
-          "picking": "CA1/RET/01131",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-05 13:47",
-          "done": "2026-08-05 13:47"
-        },
-        {
-          "picking": "CA1/RET/01132",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-05 13:47",
-          "done": "2026-08-05 13:47"
-        },
-        {
-          "picking": "CA1/IN/00975",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-04 15:41",
-          "done": "2026-08-04 15:42"
-        },
-        {
-          "picking": "CA1/RET/01130",
-          "proveedor": "Agricola Escargot Premium SpA",
-          "horas": 0.0,
-          "scheduled": "2026-08-04 14:23",
-          "done": "2026-08-04 14:23"
-        },
-        {
-          "picking": "CA1/IN/00972",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:41",
-          "done": "2026-07-31 14:41"
-        },
-        {
-          "picking": "CA1/RET/01129",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:14",
-          "done": "2026-07-31 14:14"
-        },
-        {
-          "picking": "CA1/RET/01128",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-07-31 14:12",
-          "done": "2026-07-31 14:12"
         }
       ],
       "error": null
