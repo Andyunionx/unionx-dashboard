@@ -126,6 +126,40 @@ def heal_marca(df, verbose=True):
     return df
 
 
+def unificar_descripcion_por_sku(df, verbose=True):
+    """P1d — un solo `producto` por SKU en TODAS las filas del RAW.
+
+    Motivo (Nicole 12-ago): las filas com/log/mkt (Sheet 'Raw extras') traen el
+    nombre del marketplace y las de Venta el de Odoo; mismo SKU con textos
+    distintos rompe cualquier tabla dinámica agrupada por nombre de producto
+    (64% de los SKU de ML jul-26 tenían ≥2 nombres). Canónico = nombre más
+    frecuente entre las filas de Venta (Odoo, base del 'vs 2025'); si el SKU no
+    tiene fila de Venta con nombre, se usa la moda global de ese SKU.
+    """
+    log = print if verbose else (lambda *a, **k: None)
+    if "sku" not in df.columns or "producto" not in df.columns:
+        return df
+    sk = df["sku"].astype(str).str.strip()
+    prod = df["producto"].astype(str).str.strip()
+    valido = sk.ne("") & ~sk.str.lower().isin(["nan", "none"])
+    es_venta = (df["tipo_movimiento"].astype(str).eq("Venta")
+                if "tipo_movimiento" in df.columns else pd.Series(True, index=df.index))
+    tmp = pd.DataFrame({"_sk": sk, "_prod": prod})
+    def _moda(s):
+        m = s.mode()
+        return m.iat[0] if not m.empty else s.iloc[0]
+    canon_v = tmp[valido & es_venta & prod.ne("")].groupby("_sk")["_prod"].agg(_moda)
+    canon_all = tmp[valido & prod.ne("")].groupby("_sk")["_prod"].agg(_moda)
+    canon = canon_v.combine_first(canon_all)
+    nuevo = sk.map(canon)
+    mask = valido & nuevo.notna() & nuevo.ne("")
+    n_change = int((mask & (prod != nuevo)).sum())
+    df.loc[mask, "producto"] = nuevo[mask].values
+    log(f"  [P1d] descripción única por SKU: {n_change:,} filas homologadas "
+        f"({int(canon.size):,} SKUs)")
+    return df
+
+
 def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     """Aplica P1 (atributos por SKU), P5 (es_despacho) y opcional P3 (backfill NC).
     Vectorizado y sin copia para soportar el histórico (~414k filas)."""
@@ -152,6 +186,10 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
 
     # P1b — self-heal de marca vacía (mismo SKU + prefijo)
     df = heal_marca(df, verbose=verbose)
+
+    # P1d — descripción única por SKU (evita que un pivote por nombre se parta
+    # cuando com/log/mkt traen otro texto para el mismo SKU). Nicole 12-ago.
+    df = unificar_descripcion_por_sku(df, verbose=verbose)
 
     # P1c — tipo_marca SIEMPRE derivado de la marca (Propia/Otras marcas). Evita que
     # quede el crudo In/Out/No aplica de Odoo cuando el paso de clasificación del

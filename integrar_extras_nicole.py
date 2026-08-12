@@ -21,6 +21,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 from extract_mes_actual_a_parquet import RAW_TO_DB
+from mejoras_raw_overlay import unificar_descripcion_por_sku
 
 ROOT = Path(__file__).resolve().parent
 HIST = ROOT / "data" / "historico" / "ventas_historico.parquet"
@@ -117,6 +118,12 @@ def main():
     rm = (h["tipo_movimiento"] == "Otros costos") & h["canal"].isin(CANALES) & (fvh.str[:4] == "2026")
     print(f"[2] Quitando {int(rm.sum()):,} filas Otros costos Fala+ML 2026 (extract viejo)")
     h_new = pd.concat([h[~rm], nd], ignore_index=True)
+
+    # P1d — homologar descripción por SKU: las filas de extras traen el nombre
+    # del marketplace; se pisan con el nombre canónico (Odoo) para que el pivote
+    # por nombre de producto no se parta (Nicole 12-ago).
+    h_new = unificar_descripcion_por_sku(h_new)
+
     for c in cat_cols:
         h_new[c] = h_new[c].astype("category")
 
