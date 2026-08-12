@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-08-12T04:48:16.394974",
+  "generado_en": "2026-08-12T15:59:47.471499",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.021822526885101567,
-      "total_pickings": 15901,
-      "on_time": 347,
-      "on_time_pct": 0.021822526885101567,
-      "in_full": 15893,
-      "in_full_pct": 0.9994968869882397,
-      "both": 347,
+      "valor": 0.022661825466382873,
+      "total_pickings": 15974,
+      "on_time": 362,
+      "on_time_pct": 0.022661825466382873,
+      "in_full": 15966,
+      "in_full_pct": 0.9994991861775385,
+      "both": 362,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11416490486257928,
-      "total_pickings": 473,
-      "on_time": 59,
-      "on_time_pct": 0.12473572938689217,
-      "in_full": 465,
-      "in_full_pct": 0.9830866807610994,
-      "both": 54,
+      "valor": 0.11764705882352941,
+      "total_pickings": 476,
+      "on_time": 61,
+      "on_time_pct": 0.12815126050420167,
+      "in_full": 468,
+      "in_full_pct": 0.9831932773109243,
+      "both": 56,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999283119862359,
-      "ok": 20909,
-      "total": 20924,
+      "valor": 0.9992862920492934,
+      "ok": 21002,
+      "total": 21017,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.773665840561751,
-      "n_recepciones": 269,
+      "valor": 11.893375514403292,
+      "n_recepciones": 270,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00993",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 313.1,
+          "scheduled": "2026-07-30 12:00",
+          "done": "2026-08-12 13:05"
+        },
         {
           "picking": "CA1/RET/01141",
           "proveedor": "Falabella Retail",
@@ -167,32 +174,25 @@
           "horas": 0.2,
           "scheduled": "2026-08-05 19:36",
           "done": "2026-08-05 19:50"
-        },
-        {
-          "picking": "CA1/RET/01133",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-05 14:28",
-          "done": "2026-08-05 14:28"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9746334005142817,
-      "total_so": 14491,
-      "total_con_pickings": 14389,
-      "cumplidos": 14024,
+      "valor": 0.9734568327918711,
+      "total_so": 14568,
+      "total_con_pickings": 14467,
+      "cumplidos": 14083,
       "parciales": 13,
-      "sin_iniciar": 352,
+      "sin_iniciar": 371,
       "error": null
     },
     "oct_30d": {
-      "valor": 47.07765568033684,
-      "n_orders": 15939,
+      "valor": 46.982147699438656,
+      "n_orders": 16013,
       "min_h": 0.0033333333333333335,
       "max_h": 700.2111111111111,
-      "mediana_h": 27.9975,
+      "mediana_h": 27.818055555555556,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 7791,
+      "lineas": 7888,
       "mes": "2026-08",
       "error": null
     },
@@ -396,6 +396,12 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "INVERSIONES MAVAPA SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Celmedia Fidelizacion SPA",
           "total": 42,
           "tarde": 41,
@@ -414,16 +420,16 @@
           "on_time_pct": 0.3333333333333333
         },
         {
-          "cliente": "Cliente Mercado Libre",
-          "total": 13,
-          "tarde": 6,
-          "on_time_pct": 0.5384615384615384
-        },
-        {
           "cliente": "Cencosud Retail S.A",
           "total": 9,
           "tarde": 4,
           "on_time_pct": 0.5555555555555556
+        },
+        {
+          "cliente": "Cliente Mercado Libre",
+          "total": 14,
+          "tarde": 6,
+          "on_time_pct": 0.5714285714285714
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
@@ -440,12 +446,6 @@
         {
           "cliente": "Mercadolibre Chile Limitada",
           "total": 9,
-          "tarde": 0,
-          "on_time_pct": 1.0
-        },
-        {
-          "cliente": "Agricola Escargot Premium SpA",
-          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -602,9 +602,9 @@
         "resumen": {
           "n_ordenes": 6808,
           "cancelacion_clp": 2210089.793777,
-          "quiebre_clp": 460132.89873399993,
+          "quiebre_clp": 547099.8987339999,
           "n_canceladas": 194,
-          "n_quiebres": 39,
+          "n_quiebres": 40,
           "ns_empresa_pct": 0.9513807285546416,
           "ns_courier_pct": 0.913924794359577,
           "otif_total_pct": 0.9023207990599295,
@@ -747,143 +747,143 @@
         "pareto_quiebres": [
           {
             "SKU": "XRESTAENER-OG",
-            "monto": 198352.8649,
-            "n_ordenes": 11,
-            "pct": 0.4310773375382284,
-            "pct_acumulado": 0.4310773375382284
+            "monto": 285319.8649,
+            "n_ordenes": 12,
+            "pct": 0.5215132840642739,
+            "pct_acumulado": 0.5215132840642739
           },
           {
             "SKU": "SIMJULZBRU-30",
             "monto": 50411.76471,
             "n_ordenes": 1,
-            "pct": 0.10955914008474915,
-            "pct_acumulado": 0.5406364776229775
+            "pct": 0.09214361915740403,
+            "pct_acumulado": 0.6136569032216779
           },
           {
             "SKU": "SIMJULZAMA-24",
             "monto": 36126.05042,
             "n_ordenes": 1,
-            "pct": 0.0785122092321511,
-            "pct_acumulado": 0.6191486868551286
+            "pct": 0.06603190843865335,
+            "pct_acumulado": 0.6796888116603312
           },
           {
             "SKU": "IMA-JUN30",
             "monto": 36126.05042,
             "n_ordenes": 1,
-            "pct": 0.0785122092321511,
-            "pct_acumulado": 0.6976608960872797
+            "pct": 0.06603190843865335,
+            "pct_acumulado": 0.7457207200989846
           },
           {
             "SKU": "IMA-P36",
             "monto": 29403.36134,
             "n_ordenes": 1,
-            "pct": 0.06390188882581486,
-            "pct_acumulado": 0.7615627849130945
+            "pct": 0.05374404456670521,
+            "pct_acumulado": 0.7994647646656898
           },
           {
             "SKU": "LTW25-MPT1146-GR",
             "monto": 25201.68067,
             "n_ordenes": 1,
-            "pct": 0.05477043858272116,
-            "pct_acumulado": 0.8163332234958156
+            "pct": 0.04606412965587673,
+            "pct_acumulado": 0.8455288943215665
           },
           {
             "SKU": "LHHEDBEMA-BK",
             "monto": 21000.0,
             "n_ordenes": 1,
-            "pct": 0.04563898833962744,
-            "pct_acumulado": 0.861972211835443
+            "pct": 0.038384214745048245,
+            "pct_acumulado": 0.8839131090666148
           },
           {
             "SKU": "LVFNOTHS15-BK",
             "monto": 21000.0,
             "n_ordenes": 1,
-            "pct": 0.04563898833962744,
-            "pct_acumulado": 0.9076112001750705
+            "pct": 0.038384214745048245,
+            "pct_acumulado": 0.9222973238116631
           },
           {
             "SKU": "68540051413139",
             "monto": 14277.31092,
             "n_ordenes": 1,
-            "pct": 0.031028667933291218,
-            "pct_acumulado": 0.9386398681083616
+            "pct": 0.026096350873100107,
+            "pct_acumulado": 0.9483936746847632
           },
           {
             "SKU": "172462N",
             "monto": 10915.96639,
             "n_ordenes": 1,
-            "pct": 0.023723507751855954,
-            "pct_acumulado": 0.9623633758602176
+            "pct": 0.019952418955404238,
+            "pct_acumulado": 0.9683460936401674
           },
           {
             "SKU": "MTBOHWRA450",
             "monto": 10075.63025,
             "n_ordenes": 1,
-            "pct": 0.021897217690197503,
-            "pct_acumulado": 0.9842605935504151
+            "pct": 0.018416435962271625,
+            "pct_acumulado": 0.986762529602439
           },
           {
             "SKU": "189702",
             "monto": 6720.999714,
             "n_ordenes": 2,
-            "pct": 0.014606648932280255,
-            "pct_acumulado": 0.9988672424826953
+            "pct": 0.012284776015408753,
+            "pct_acumulado": 0.9990473056178478
           },
           {
             "SKU": "LHMALEXPBK-70",
             "monto": 148.723,
             "n_ordenes": 2,
-            "pct": 0.0003232174887064006,
-            "pct_acumulado": 0.9991904599714018
+            "pct": 0.00027183883664418145,
+            "pct_acumulado": 0.999319144454492
           },
           {
             "SKU": "LTW25-MPK09M-BK",
             "monto": 118.46100000000001,
             "n_ordenes": 3,
-            "pct": 0.00025744953322383844,
-            "pct_acumulado": 0.9994479095046256
+            "pct": 0.00021652535537681716,
+            "pct_acumulado": 0.9995356698098689
           },
           {
             "SKU": "LVSPTVUN",
             "monto": 46.992,
             "n_ordenes": 1,
-            "pct": 0.00010212701619313203,
-            "pct_acumulado": 0.9995500365208188
+            "pct": 8.589290568091938e-05,
+            "pct_acumulado": 0.9996215627155498
           },
           {
             "SKU": "BDHELMAD",
             "monto": 33.605,
             "n_ordenes": 1,
-            "pct": 7.303324776919906e-05,
-            "pct_acumulado": 0.999623069768588
+            "pct": 6.1423882690826e-05,
+            "pct_acumulado": 0.9996829865982406
           },
           {
             "SKU": "LTW25-MPK08L-BK",
             "monto": 29.403,
             "n_ordenes": 1,
-            "pct": 6.390110353095551e-05,
-            "pct_acumulado": 0.9996869708721189
+            "pct": 5.374338410231683e-05,
+            "pct_acumulado": 0.999736729982343
           },
           {
             "SKU": "IMA-032",
             "monto": 25.202,
             "n_ordenes": 1,
-            "pct": 5.477113257787099e-05,
-            "pct_acumulado": 0.9997417420046968
+            "pct": 4.606471333355742e-05,
+            "pct_acumulado": 0.9997827946956765
           },
           {
             "SKU": "LVCAMSEGEX-BK",
             "monto": 25.193,
             "n_ordenes": 1,
-            "pct": 5.475157301143972e-05,
-            "pct_acumulado": 0.9997964935777083
+            "pct": 4.604826295580954e-05,
+            "pct_acumulado": 0.9998288429586324
           },
           {
             "SKU": "LTS26-WKF04L-BK",
             "monto": 22.674,
             "n_ordenes": 1,
-            "pct": 4.9277067695843454e-05,
-            "pct_acumulado": 0.9998457706454041
+            "pct": 4.1443985006153515e-05,
+            "pct_acumulado": 0.9998702869436386
           }
         ],
         "opciones_filtros": {
@@ -8104,42 +8104,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.021822526885101567,
-      "total_pickings": 15901,
-      "on_time": 347,
-      "on_time_pct": 0.021822526885101567,
-      "in_full": 15893,
-      "in_full_pct": 0.9994968869882397,
-      "both": 347,
+      "valor": 0.022661825466382873,
+      "total_pickings": 15974,
+      "on_time": 362,
+      "on_time_pct": 0.022661825466382873,
+      "in_full": 15966,
+      "in_full_pct": 0.9994991861775385,
+      "both": 362,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11416490486257928,
-      "total_pickings": 473,
-      "on_time": 59,
-      "on_time_pct": 0.12473572938689217,
-      "in_full": 465,
-      "in_full_pct": 0.9830866807610994,
-      "both": 54,
+      "valor": 0.11764705882352941,
+      "total_pickings": 476,
+      "on_time": 61,
+      "on_time_pct": 0.12815126050420167,
+      "in_full": 468,
+      "in_full_pct": 0.9831932773109243,
+      "both": 56,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999283119862359,
-      "ok": 20909,
-      "total": 20924,
+      "valor": 0.9992862920492934,
+      "ok": 21002,
+      "total": 21017,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.773665840561751,
-      "n_recepciones": 269,
+      "valor": 11.893375514403292,
+      "n_recepciones": 270,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00993",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 313.1,
+          "scheduled": "2026-07-30 12:00",
+          "done": "2026-08-12 13:05"
+        },
         {
           "picking": "CA1/RET/01141",
           "proveedor": "Falabella Retail",
@@ -8272,13 +8279,6 @@
           "horas": 0.2,
           "scheduled": "2026-08-05 19:36",
           "done": "2026-08-05 19:50"
-        },
-        {
-          "picking": "CA1/RET/01133",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-05 14:28",
-          "done": "2026-08-05 14:28"
         }
       ],
       "error": null
