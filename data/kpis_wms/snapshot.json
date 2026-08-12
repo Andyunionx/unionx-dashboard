@@ -1,37 +1,37 @@
 {
-  "generado_en": "2026-08-11T16:02:37.751804",
+  "generado_en": "2026-08-12T04:48:16.394974",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.022014591066171766,
-      "total_pickings": 15626,
-      "on_time": 344,
-      "on_time_pct": 0.022014591066171766,
-      "in_full": 15619,
-      "in_full_pct": 0.9995520286701651,
-      "both": 344,
+      "valor": 0.021822526885101567,
+      "total_pickings": 15901,
+      "on_time": 347,
+      "on_time_pct": 0.021822526885101567,
+      "in_full": 15893,
+      "in_full_pct": 0.9994968869882397,
+      "both": 347,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11328976034858387,
-      "total_pickings": 459,
-      "on_time": 57,
-      "on_time_pct": 0.12418300653594772,
-      "in_full": 451,
-      "in_full_pct": 0.9825708061002179,
-      "both": 52,
+      "valor": 0.11416490486257928,
+      "total_pickings": 473,
+      "on_time": 59,
+      "on_time_pct": 0.12473572938689217,
+      "in_full": 465,
+      "in_full_pct": 0.9830866807610994,
+      "both": 54,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992672561184114,
-      "ok": 20456,
-      "total": 20471,
+      "valor": 0.999283119862359,
+      "ok": 20909,
+      "total": 20924,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 10.2072182821119,
-      "n_recepciones": 282,
+      "valor": 10.773665840561751,
+      "n_recepciones": 269,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9717580444689959,
-      "total_so": 14583,
-      "total_con_pickings": 14482,
-      "cumplidos": 14073,
+      "valor": 0.9746334005142817,
+      "total_so": 14491,
+      "total_con_pickings": 14389,
+      "cumplidos": 14024,
       "parciales": 13,
-      "sin_iniciar": 396,
+      "sin_iniciar": 352,
       "error": null
     },
     "oct_30d": {
-      "valor": 47.619278065280966,
-      "n_orders": 15652,
+      "valor": 47.07765568033684,
+      "n_orders": 15939,
       "min_h": 0.0033333333333333335,
       "max_h": 700.2111111111111,
-      "mediana_h": 28.78388888888889,
+      "mediana_h": 27.9975,
       "detalle": [
         {
           "so": "S261093",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 7352,
+      "lineas": 7791,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 116,
-      "outgoing": 29399,
-      "internal": 20485,
+      "outgoing": 29343,
+      "internal": 20541,
       "total": 50000,
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "Global Reward Solutions",
-          "total": 168,
-          "tarde": 168,
+          "total": 170,
+          "tarde": 170,
           "on_time_pct": 0.0
         },
         {
@@ -373,14 +373,14 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 7,
-          "tarde": 7,
+          "total": 10,
+          "tarde": 10,
           "on_time_pct": 0.0
         },
         {
           "cliente": "abc S.A.",
-          "total": 60,
-          "tarde": 60,
+          "total": 61,
+          "tarde": 61,
           "on_time_pct": 0.0
         },
         {
@@ -391,8 +391,8 @@
         },
         {
           "cliente": "Lokal SpA",
-          "total": 10,
-          "tarde": 10,
+          "total": 11,
+          "tarde": 11,
           "on_time_pct": 0.0
         },
         {
@@ -403,9 +403,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 64,
-          "tarde": 61,
-          "on_time_pct": 0.046875
+          "total": 68,
+          "tarde": 65,
+          "on_time_pct": 0.04411764705882353
         },
         {
           "cliente": "PATAGONIK S.A.",
@@ -414,16 +414,16 @@
           "on_time_pct": 0.3333333333333333
         },
         {
+          "cliente": "Cliente Mercado Libre",
+          "total": 13,
+          "tarde": 6,
+          "on_time_pct": 0.5384615384615384
+        },
+        {
           "cliente": "Cencosud Retail S.A",
           "total": 9,
           "tarde": 4,
           "on_time_pct": 0.5555555555555556
-        },
-        {
-          "cliente": "Cliente Mercado Libre",
-          "total": 12,
-          "tarde": 5,
-          "on_time_pct": 0.5833333333333334
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
@@ -8104,39 +8104,39 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.022014591066171766,
-      "total_pickings": 15626,
-      "on_time": 344,
-      "on_time_pct": 0.022014591066171766,
-      "in_full": 15619,
-      "in_full_pct": 0.9995520286701651,
-      "both": 344,
+      "valor": 0.021822526885101567,
+      "total_pickings": 15901,
+      "on_time": 347,
+      "on_time_pct": 0.021822526885101567,
+      "in_full": 15893,
+      "in_full_pct": 0.9994968869882397,
+      "both": 347,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11328976034858387,
-      "total_pickings": 459,
-      "on_time": 57,
-      "on_time_pct": 0.12418300653594772,
-      "in_full": 451,
-      "in_full_pct": 0.9825708061002179,
-      "both": 52,
+      "valor": 0.11416490486257928,
+      "total_pickings": 473,
+      "on_time": 59,
+      "on_time_pct": 0.12473572938689217,
+      "in_full": 465,
+      "in_full_pct": 0.9830866807610994,
+      "both": 54,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992672561184114,
-      "ok": 20456,
-      "total": 20471,
+      "valor": 0.999283119862359,
+      "ok": 20909,
+      "total": 20924,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 10.2072182821119,
-      "n_recepciones": 282,
+      "valor": 10.773665840561751,
+      "n_recepciones": 269,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
