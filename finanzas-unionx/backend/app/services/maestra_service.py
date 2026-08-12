@@ -962,3 +962,15 @@ class MaestraService:
                 s = df[c].astype(str).str.replace(r'\.0$', '', regex=True)
                 df[c] = s.where(~s.str.lower().isin(['nan', 'none', '<na>', 'nat']), '')
         return df
+
+    def listar_canales(self):
+        """Lista de canales distintos presentes en el RAW (para filtrar la descarga)."""
+        conn = self._conn()
+        sql = "SELECT DISTINCT canal FROM ventas WHERE canal IS NOT NULL AND canal <> '' ORDER BY canal"
+        if hasattr(conn, 'read_df'):
+            df = conn.read_df(sql)
+        else:
+            import pandas as pd
+            df = pd.read_sql_query(sql, conn)
+        conn.close()
+        return [c for c in df['canal'].tolist() if str(c).strip()]

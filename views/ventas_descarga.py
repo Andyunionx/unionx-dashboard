@@ -107,6 +107,19 @@ def render():
     d1, d2 = rango_dl
     dias = (d2 - d1).days + 1
 
+    # Filtro opcional por canal. Vacío = todos los canales.
+    try:
+        canales_disp = get_service().listar_canales()
+    except Exception:
+        canales_disp = []
+    canales_sel = st.multiselect(
+        "Canales (opcional — vacío = todos)",
+        options=canales_disp,
+        default=[],
+        key="canales_dl",
+        help="Filtra la descarga a uno o más canales. Si lo dejas vacío, baja todos.",
+    )
+
     # Formato segun tamano
     excel_permitido = dias <= EXCEL_LIMITE_DIAS
     formatos = []
@@ -139,10 +152,17 @@ def render():
     with st.spinner(f'Consultando {dias} días de ventas...'):
         df_raw = get_service().descargar_raw(d1.strftime('%Y-%m-%d'), d2.strftime('%Y-%m-%d'))
 
+    if canales_sel and 'Canal' in df_raw.columns:
+        df_raw = df_raw[df_raw['Canal'].isin(canales_sel)].copy()
+
     n = len(df_raw)
     if n == 0:
-        st.warning("Sin datos en el período.")
+        aviso = " para los canales seleccionados" if canales_sel else ""
+        st.warning(f"Sin datos en el período{aviso}.")
         return
+
+    if canales_sel:
+        st.caption(f"Filtrado a {len(canales_sel)} canal(es): {', '.join(canales_sel)}")
 
     if n > EXCEL_AVISO_FILAS and fmt.startswith("Excel"):
         st.error(
@@ -151,19 +171,28 @@ def render():
         )
         return
 
+    # Sufijo de canal para el nombre de archivo (1 canal → nombre; varios → "Ncanales").
+    if len(canales_sel) == 1:
+        slug = "".join(ch if ch.isalnum() else "-" for ch in canales_sel[0]).strip("-")
+        canal_sfx = f"_{slug}"
+    elif len(canales_sel) > 1:
+        canal_sfx = f"_{len(canales_sel)}canales"
+    else:
+        canal_sfx = ""
+
     with st.spinner(f'Empaquetando {n:,} filas como {fmt}...'):
         try:
             if fmt.startswith("Excel"):
                 data = _excel_bytes(df_raw)
-                fname = f"Raw_ventas_{d1}_{d2}.xlsx"
+                fname = f"Raw_ventas_{d1}_{d2}{canal_sfx}.xlsx"
                 mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             elif fmt.startswith("CSV"):
                 data = _csv_gz_streamed(df_raw)
-                fname = f"Raw_ventas_{d1}_{d2}.csv.gz"
+                fname = f"Raw_ventas_{d1}_{d2}{canal_sfx}.csv.gz"
                 mime = 'application/gzip'
             else:
                 data = _parquet_bytes(df_raw)
-                fname = f"Raw_ventas_{d1}_{d2}.parquet"
+                fname = f"Raw_ventas_{d1}_{d2}{canal_sfx}.parquet"
                 mime = 'application/octet-stream'
         except MemoryError:
             st.error(
