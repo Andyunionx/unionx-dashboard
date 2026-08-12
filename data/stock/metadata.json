@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-08-11T21:45:47.877185",
+  "generado_en": "2026-08-12T01:54:07.019995",
   "total_skus": 1749,
-  "total_quants": 4594,
+  "total_quants": 4603,
   "total_locations": 1420,
   "kpis": {
     "n_skus": 1749,
-    "valor_total": 928229247.46,
-    "unidades_total": 176664.0,
-    "costo_promedio_sku": 530719.98,
-    "n_quiebre_critico": 116,
-    "n_bajo": 143,
-    "n_optimo": 121,
-    "n_sobrestock": 272,
-    "n_sin_venta": 1097,
+    "valor_total": 927602196.46,
+    "unidades_total": 176591.0,
+    "costo_promedio_sku": 530361.46,
+    "n_quiebre_critico": 115,
+    "n_bajo": 137,
+    "n_optimo": 123,
+    "n_sobrestock": 271,
+    "n_sin_venta": 1103,
     "rot_30d_promedio": 1.48,
-    "rot_90d_promedio": 3.59
+    "rot_90d_promedio": 3.58
   },
   "ocupacion": {
     "positions": [
@@ -8229,37 +8229,37 @@
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1097
+      "SKUs": 1103
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 272
+      "SKUs": 271
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 143
+      "SKUs": 137
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 121
+      "SKUs": 123
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 116
+      "SKUs": 115
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 773176669.88,
-      "Unidades": 160950.0,
+      "Valor": 769938393.88,
+      "Unidades": 160423.0,
       "SKUs": 1235
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 36547089.09,
-      "Unidades": 4131.0,
-      "SKUs": 391
+      "Valor": 35920041.09,
+      "Unidades": 4058.0,
+      "SKUs": 386
     },
     {
       "Bodega": "Bo/Stock",
@@ -8274,16 +8274,16 @@
       "SKUs": 330
     },
     {
-      "Bodega": "BFP/Stock",
-      "Valor": 9450648.51,
-      "Unidades": 658.0,
-      "SKUs": 156
+      "Bodega": "CA1/Output",
+      "Valor": 12408158.39,
+      "Unidades": 1332.0,
+      "SKUs": 343
     },
     {
-      "Bodega": "CA1/Output",
-      "Valor": 9169886.39,
-      "Unidades": 805.0,
-      "SKUs": 326
+      "Bodega": "BFP/Stock",
+      "Valor": 9450649.51,
+      "Unidades": 658.0,
+      "SKUs": 156
     },
     {
       "Bodega": "CA1/Input",
