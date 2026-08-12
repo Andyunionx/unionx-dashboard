@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-11T18:45:01.688545",
+  "generado_en": "2026-08-12T00:57:20.336909",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12990,
-  "total_monto_pendiente_clp": 850959158.0,
+  "total_documentos_pendientes": 13047,
+  "total_monto_pendiente_clp": 975408874.0,
   "monto_por_aging": {
-    "+90 días": 51018300.0,
-    "1-30 días": 469140421.0,
-    "31-60 días": 140118265.0,
-    "61-90 días": 84052584.0,
-    "Vigente": 106629588.0
+    "+90 días": 53430365.0,
+    "1-30 días": 594801133.0,
+    "31-60 días": 144794502.0,
+    "61-90 días": 82563852.0,
+    "Vigente": 99819022.0
   },
   "monto_por_tipo": {
-    "BOLETA": 629621764.0,
+    "BOLETA": 754071480.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -22,7 +22,11 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 122061821.0
+      "monto": 122585733.0
+    },
+    {
+      "partner": "LA VINOTECA SPA",
+      "monto": 122312960.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,11 +34,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 71556802.0
+      "monto": 71922252.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 46788004.0
+      "monto": 47104414.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -42,7 +46,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 41246731.0
+      "monto": 41536523.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -50,7 +54,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23823735.0
+      "monto": 23853715.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -61,12 +65,12 @@
       "monto": 19444951.0
     },
     {
-      "partner": "Showtime SpA",
-      "monto": 17552325.0
+      "partner": "Cliente Ripley",
+      "monto": 17605099.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 17428159.0
+      "partner": "Showtime SpA",
+      "monto": 17552325.0
     },
     {
       "partner": "abc S.A.",
@@ -86,15 +90,11 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 8669111.0
+      "monto": 8993071.0
     },
     {
       "partner": "INVERSIONES MAVAPA SPA, INVERSIONES MAVAPA SPA",
       "monto": 5565211.0
-    },
-    {
-      "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
-      "monto": 5182009.0
     }
   ],
   "notas_credito_count": 562,
