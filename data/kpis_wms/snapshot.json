@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-08-12T15:59:47.471499",
+  "generado_en": "2026-08-13T04:51:58.804078",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.022661825466382873,
-      "total_pickings": 15974,
-      "on_time": 362,
-      "on_time_pct": 0.022661825466382873,
-      "in_full": 15966,
-      "in_full_pct": 0.9994991861775385,
-      "both": 362,
+      "valor": 0.024856331787024857,
+      "total_pickings": 14443,
+      "on_time": 359,
+      "on_time_pct": 0.024856331787024857,
+      "in_full": 14436,
+      "in_full_pct": 0.9995153361489996,
+      "both": 359,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11764705882352941,
-      "total_pickings": 476,
+      "valor": 0.11914893617021277,
+      "total_pickings": 470,
       "on_time": 61,
-      "on_time_pct": 0.12815126050420167,
-      "in_full": 468,
-      "in_full_pct": 0.9831932773109243,
+      "on_time_pct": 0.12978723404255318,
+      "in_full": 462,
+      "in_full_pct": 0.9829787234042553,
       "both": 56,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992862920492934,
-      "ok": 21002,
-      "total": 21017,
+      "valor": 0.9992219513460242,
+      "ok": 19264,
+      "total": 19279,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.893375514403292,
-      "n_recepciones": 270,
+      "valor": 12.068495196324143,
+      "n_recepciones": 266,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00996",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-12 16:36",
+          "done": "2026-08-12 16:37"
+        },
         {
           "picking": "CA1/IN/00993",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -167,32 +174,25 @@
           "horas": 0.1,
           "scheduled": "2026-08-06 12:55",
           "done": "2026-08-06 13:00"
-        },
-        {
-          "picking": "CA1/IN/00977",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-08-05 19:36",
-          "done": "2026-08-05 19:50"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9734568327918711,
-      "total_so": 14568,
-      "total_con_pickings": 14467,
-      "cumplidos": 14083,
-      "parciales": 13,
-      "sin_iniciar": 371,
+      "valor": 0.9686791383219955,
+      "total_so": 14286,
+      "total_con_pickings": 14112,
+      "cumplidos": 13670,
+      "parciales": 12,
+      "sin_iniciar": 430,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.982147699438656,
-      "n_orders": 16013,
-      "min_h": 0.0033333333333333335,
+      "valor": 45.104353661110736,
+      "n_orders": 14739,
+      "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 27.818055555555556,
+      "mediana_h": 26.239444444444445,
       "detalle": [
         {
           "so": "S261093",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 7888,
+      "lineas": 8153,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 116,
-      "outgoing": 29343,
-      "internal": 20541,
+      "incoming": 113,
+      "outgoing": 29348,
+      "internal": 20539,
       "total": 50000,
       "error": null
     },
@@ -361,14 +361,14 @@
       "valor": [
         {
           "cliente": "Global Reward Solutions",
-          "total": 170,
-          "tarde": 170,
+          "total": 154,
+          "tarde": 154,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
-          "total": 8,
-          "tarde": 8,
+          "total": 7,
+          "tarde": 7,
           "on_time_pct": 0.0
         },
         {
@@ -379,8 +379,8 @@
         },
         {
           "cliente": "abc S.A.",
-          "total": 61,
-          "tarde": 61,
+          "total": 68,
+          "tarde": 68,
           "on_time_pct": 0.0
         },
         {
@@ -403,15 +403,15 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 42,
-          "tarde": 41,
-          "on_time_pct": 0.023809523809523808
+          "total": 44,
+          "tarde": 43,
+          "on_time_pct": 0.022727272727272728
         },
         {
           "cliente": "Sawa SPA",
-          "total": 68,
-          "tarde": 65,
-          "on_time_pct": 0.04411764705882353
+          "total": 69,
+          "tarde": 66,
+          "on_time_pct": 0.043478260869565216
         },
         {
           "cliente": "PATAGONIK S.A.",
@@ -420,16 +420,16 @@
           "on_time_pct": 0.3333333333333333
         },
         {
+          "cliente": "Cliente Mercado Libre",
+          "total": 15,
+          "tarde": 7,
+          "on_time_pct": 0.5333333333333333
+        },
+        {
           "cliente": "Cencosud Retail S.A",
           "total": 9,
           "tarde": 4,
           "on_time_pct": 0.5555555555555556
-        },
-        {
-          "cliente": "Cliente Mercado Libre",
-          "total": 14,
-          "tarde": 6,
-          "on_time_pct": 0.5714285714285714
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
@@ -8104,42 +8104,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.022661825466382873,
-      "total_pickings": 15974,
-      "on_time": 362,
-      "on_time_pct": 0.022661825466382873,
-      "in_full": 15966,
-      "in_full_pct": 0.9994991861775385,
-      "both": 362,
+      "valor": 0.024856331787024857,
+      "total_pickings": 14443,
+      "on_time": 359,
+      "on_time_pct": 0.024856331787024857,
+      "in_full": 14436,
+      "in_full_pct": 0.9995153361489996,
+      "both": 359,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11764705882352941,
-      "total_pickings": 476,
+      "valor": 0.11914893617021277,
+      "total_pickings": 470,
       "on_time": 61,
-      "on_time_pct": 0.12815126050420167,
-      "in_full": 468,
-      "in_full_pct": 0.9831932773109243,
+      "on_time_pct": 0.12978723404255318,
+      "in_full": 462,
+      "in_full_pct": 0.9829787234042553,
       "both": 56,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992862920492934,
-      "ok": 21002,
-      "total": 21017,
+      "valor": 0.9992219513460242,
+      "ok": 19264,
+      "total": 19279,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.893375514403292,
-      "n_recepciones": 270,
+      "valor": 12.068495196324143,
+      "n_recepciones": 266,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00996",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-12 16:36",
+          "done": "2026-08-12 16:37"
+        },
         {
           "picking": "CA1/IN/00993",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -8272,13 +8279,6 @@
           "horas": 0.1,
           "scheduled": "2026-08-06 12:55",
           "done": "2026-08-06 13:00"
-        },
-        {
-          "picking": "CA1/IN/00977",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-08-05 19:36",
-          "done": "2026-08-05 19:50"
         }
       ],
       "error": null
