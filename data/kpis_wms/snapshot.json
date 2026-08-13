@@ -1,40 +1,54 @@
 {
-  "generado_en": "2026-08-13T04:51:58.804078",
+  "generado_en": "2026-08-13T16:00:18.599750",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.024856331787024857,
-      "total_pickings": 14443,
+      "valor": 0.024804808954605125,
+      "total_pickings": 14473,
       "on_time": 359,
-      "on_time_pct": 0.024856331787024857,
-      "in_full": 14436,
-      "in_full_pct": 0.9995153361489996,
+      "on_time_pct": 0.024804808954605125,
+      "in_full": 14466,
+      "in_full_pct": 0.9995163407724729,
       "both": 359,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11914893617021277,
-      "total_pickings": 470,
+      "valor": 0.11889596602972399,
+      "total_pickings": 471,
       "on_time": 61,
-      "on_time_pct": 0.12978723404255318,
-      "in_full": 462,
-      "in_full_pct": 0.9829787234042553,
+      "on_time_pct": 0.12951167728237792,
+      "in_full": 463,
+      "in_full_pct": 0.9830148619957537,
       "both": 56,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9992219513460242,
-      "ok": 19264,
-      "total": 19279,
+      "valor": 0.9992255666270845,
+      "ok": 19354,
+      "total": 19369,
       "errores": 15,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.068495196324143,
-      "n_recepciones": 266,
+      "valor": 12.136166044776118,
+      "n_recepciones": 268,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00992",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 65.7,
+          "scheduled": "2026-08-10 20:57",
+          "done": "2026-08-13 14:37"
+        },
+        {
+          "picking": "CA1/IN/00999",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": -23.4,
+          "scheduled": "2026-08-14 14:01",
+          "done": "2026-08-13 14:37"
+        },
         {
           "picking": "CA1/IN/00996",
           "proveedor": "",
@@ -160,39 +174,25 @@
           "horas": 0.2,
           "scheduled": "2026-08-06 13:20",
           "done": "2026-08-06 13:32"
-        },
-        {
-          "picking": "CA1/IN/00979",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 13:00",
-          "done": "2026-08-06 13:01"
-        },
-        {
-          "picking": "CA1/IN/00978",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-06 12:55",
-          "done": "2026-08-06 13:00"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9686791383219955,
-      "total_so": 14286,
-      "total_con_pickings": 14112,
-      "cumplidos": 13670,
+      "valor": 0.9634661410671547,
+      "total_so": 14380,
+      "total_con_pickings": 14206,
+      "cumplidos": 13687,
       "parciales": 12,
-      "sin_iniciar": 430,
+      "sin_iniciar": 507,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.104353661110736,
-      "n_orders": 14739,
+      "valor": 45.10432836831416,
+      "n_orders": 14770,
       "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 26.239444444444445,
+      "mediana_h": 26.201944444444443,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 8153,
+      "lineas": 8243,
       "mes": "2026-08",
       "error": null
     },
@@ -8104,42 +8104,56 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.024856331787024857,
-      "total_pickings": 14443,
+      "valor": 0.024804808954605125,
+      "total_pickings": 14473,
       "on_time": 359,
-      "on_time_pct": 0.024856331787024857,
-      "in_full": 14436,
-      "in_full_pct": 0.9995153361489996,
+      "on_time_pct": 0.024804808954605125,
+      "in_full": 14466,
+      "in_full_pct": 0.9995163407724729,
       "both": 359,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11914893617021277,
-      "total_pickings": 470,
+      "valor": 0.11889596602972399,
+      "total_pickings": 471,
       "on_time": 61,
-      "on_time_pct": 0.12978723404255318,
-      "in_full": 462,
-      "in_full_pct": 0.9829787234042553,
+      "on_time_pct": 0.12951167728237792,
+      "in_full": 463,
+      "in_full_pct": 0.9830148619957537,
       "both": 56,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9992219513460242,
-      "ok": 19264,
-      "total": 19279,
+      "valor": 0.9992255666270845,
+      "ok": 19354,
+      "total": 19369,
       "errores": 15,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.068495196324143,
-      "n_recepciones": 266,
+      "valor": 12.136166044776118,
+      "n_recepciones": 268,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/00992",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 65.7,
+          "scheduled": "2026-08-10 20:57",
+          "done": "2026-08-13 14:37"
+        },
+        {
+          "picking": "CA1/IN/00999",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": -23.4,
+          "scheduled": "2026-08-14 14:01",
+          "done": "2026-08-13 14:37"
+        },
         {
           "picking": "CA1/IN/00996",
           "proveedor": "",
@@ -8265,20 +8279,6 @@
           "horas": 0.2,
           "scheduled": "2026-08-06 13:20",
           "done": "2026-08-06 13:32"
-        },
-        {
-          "picking": "CA1/IN/00979",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 13:00",
-          "done": "2026-08-06 13:01"
-        },
-        {
-          "picking": "CA1/IN/00978",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-06 12:55",
-          "done": "2026-08-06 13:00"
         }
       ],
       "error": null
