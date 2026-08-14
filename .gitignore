@@ -212,3 +212,8 @@ _drive_oauth_setup.py
 
 # Seimex API (token cache JWT)
 data/comex/.seimex_token_cache.json
+
+# Falabella Seller Center (sesión Playwright con tokens de auth)
+fala_session.json
+data/stock/fala_session.json
+data/stock/fala_fbf_live.parquet
