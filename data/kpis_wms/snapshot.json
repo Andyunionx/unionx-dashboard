@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-08-14T04:49:17.531594",
+  "generado_en": "2026-08-14T15:53:46.280527",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.025906002265005664,
-      "total_pickings": 14128,
-      "on_time": 366,
-      "on_time_pct": 0.025906002265005664,
-      "in_full": 14121,
-      "in_full_pct": 0.999504530011325,
-      "both": 366,
+      "valor": 0.026328688467194175,
+      "total_pickings": 14281,
+      "on_time": 376,
+      "on_time_pct": 0.026328688467194175,
+      "in_full": 14274,
+      "in_full_pct": 0.9995098382466214,
+      "both": 376,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,18 +23,25 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9995737879595099,
-      "ok": 18762,
-      "total": 18770,
+      "valor": 0.9995784592686269,
+      "ok": 18970,
+      "total": 18978,
       "errores": 8,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.047083333333333,
-      "n_recepciones": 270,
+      "valor": 12.002833128331282,
+      "n_recepciones": 271,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01004",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-14 13:58",
+          "done": "2026-08-14 14:01"
+        },
         {
           "picking": "CA1/IN/01003",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 0.5,
           "scheduled": "2026-08-06 15:03",
           "done": "2026-08-06 15:31"
-        },
-        {
-          "picking": "CA1/IN/00982",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 13:34",
-          "done": "2026-08-06 13:34"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9648100172711571,
-      "total_so": 14069,
-      "total_con_pickings": 13896,
-      "cumplidos": 13407,
+      "valor": 0.9653550042771599,
+      "total_so": 14201,
+      "total_con_pickings": 14028,
+      "cumplidos": 13542,
       "parciales": 11,
-      "sin_iniciar": 478,
+      "sin_iniciar": 475,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.387730859495235,
-      "n_orders": 14440,
+      "valor": 45.14088973046663,
+      "n_orders": 14589,
       "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 26.461944444444445,
+      "mediana_h": 26.323055555555555,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 8570,
+      "lineas": 8778,
       "mes": "2026-08",
       "error": null
     },
@@ -8104,13 +8104,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.025906002265005664,
-      "total_pickings": 14128,
-      "on_time": 366,
-      "on_time_pct": 0.025906002265005664,
-      "in_full": 14121,
-      "in_full_pct": 0.999504530011325,
-      "both": 366,
+      "valor": 0.026328688467194175,
+      "total_pickings": 14281,
+      "on_time": 376,
+      "on_time_pct": 0.026328688467194175,
+      "in_full": 14274,
+      "in_full_pct": 0.9995098382466214,
+      "both": 376,
       "error": null
     },
     "b2b_30d": {
@@ -8126,20 +8126,27 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9995737879595099,
-      "ok": 18762,
-      "total": 18770,
+      "valor": 0.9995784592686269,
+      "ok": 18970,
+      "total": 18978,
       "errores": 8,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.047083333333333,
-      "n_recepciones": 270,
+      "valor": 12.002833128331282,
+      "n_recepciones": 271,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01004",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-14 13:58",
+          "done": "2026-08-14 14:01"
+        },
         {
           "picking": "CA1/IN/01003",
           "proveedor": "",
@@ -8272,13 +8279,6 @@
           "horas": 0.5,
           "scheduled": "2026-08-06 15:03",
           "done": "2026-08-06 15:31"
-        },
-        {
-          "picking": "CA1/IN/00982",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 13:34",
-          "done": "2026-08-06 13:34"
         }
       ],
       "error": null
