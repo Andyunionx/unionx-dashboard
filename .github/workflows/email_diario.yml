@@ -122,6 +122,24 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Enviar Pulso NC Semanal (solo lunes)
+        # ACTIVO (OK Andrés 14-08-2026 "dejémoslo secuenciado y funcionando"):
+        # NC por emitir por devolución (agente_nc: planillas SAC + Odoo) y por
+        # cancelación (recálculo vivo con criterio Víctor: sin despacho; barridas
+        # del conector auto-detectadas y excluidas). Solo informa, nunca crea NC.
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_NC_ENABLED != 'false' }}
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ "$(date +%u)" = "1" ]; then
+            python agente_nc.py && python pulso_nc_semanal.py
+          else
+            echo "No es lunes — Pulso NC omitido."
+          fi
+        continue-on-error: true
+
       - name: Enviar Pulso KPI Semanal (solo lunes)
         # ACTIVO (OK Andrés 15-jul-2026): corre si vars.PULSO_KPI_ENABLED=='true'
         # Y es lunes. KPIs WMS + COP inferido, semana vs semana vs mes anterior
