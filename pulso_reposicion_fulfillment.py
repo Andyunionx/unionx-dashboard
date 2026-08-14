@@ -34,6 +34,7 @@ PANEL_ID = "1eyxR9KsCgDswZWuSi6DuLq6GqoomuvCc"   # panel Nicole (Reglas/BL/Large
 PRICING_ID = "1gVJmFCR19KbYkZfds7fH-62rJ0Zpt32P"  # drive Pricing (Maestra + Packs)
 LOCAL_PANEL = ROOT / "data/outputs/NICOLE_fulfillment_sugeridos_UME.xlsx"
 LOCAL_PRICING = ROOT / "data/outputs/PRICING_drive.xlsx"
+TEMPLATE_DIN = ROOT / "data/templates/pulso_reposicion_template.xlsx"
 DETALLE = ROOT / "data/stock/detalle.parquet"
 HIST = ROOT / "data/historico/ventas_historico.parquet"
 MES = ROOT / "data/historico/ventas_mes_actual.parquet"
@@ -270,18 +271,26 @@ def construir(no_download=False, no_live=False) -> Path:
         st_ca1 = float(stock_ca1.get(sku, 0))
         dem = float(demanda.get(sku, 0))
         cob_ca1 = st_ca1 / (dem * 4.33) if dem > 0 else np.inf
+        # Cobertura OBJETIVO por SKU (Maestra Pricing, col 'Cob', en meses) y estado In/Out.
+        # Confirmado Andrés 13-ago: Cob = meses objetivo (reemplaza cob por canal); out = no reponer.
+        cob_obj_meses = pd.to_numeric(d.get("Cob"), errors="coerce")
+        es_out = str(d.get("In/Out", "")).strip().lower() == "out"
         for canal in CANALES:
             ume = mult2(float(v_canal.get((sku, canal), 0)))
             manual = manual_map.get((sku, canal))
             large = 1 if (canal, sku) in lgset else 0
             black = bl_panel.get((sku, canal), 1 if (canal, sku) in blset else 0)
+            # Objetivo por cobertura por CANAL (hoja Reglas). OJO: la col 'Cob' de la
+            # Maestra resultó ser cobertura ACTUAL (llega a 158 meses), NO un objetivo,
+            # así que NO se usa como target (inflaba el sugerido 17x). Se muestra como
+            # informativa. Pendiente confirmar con comercial la fuente real del objetivo.
             cob = reglas.loc[canal, "cob_large"] if large else reglas.loc[canal, "cob"]
             candidatos = {"Venta": ume * cob, "Piso mínimo": umin, "Manual": manual or 0}
             origen = max(candidatos, key=candidatos.get)
             objetivo = candidatos[origen]
             live_q = float(full_map.get((canal, sku), 0)) + float(tr_fulls.get((canal, sku), 0))
             restr = 1 if cob_ca1 < reglas.loc[canal, "restr"] else 0
-            repo = 0 if (black or restr) else mult2(max(0, objetivo - live_q))
+            repo = 0 if (black or restr or es_out) else mult2(max(0, objetivo - live_q))
             filas.append({
                 "Categoría": d.get("Categoría", ""), "Tipo de producto": tipo, "Marca": marca,
                 "Pack": d.get("Pack", ""), "In/Out": d.get("In/Out", ""), "Sku": sku,
@@ -295,6 +304,7 @@ def construir(no_download=False, no_live=False) -> Path:
                 "Dim peso": round((dim_kg.get(sku) or 0) * repo, 2),
                 "Stock CA1": st_ca1, "Demanda digital sem (c/packs)": round(dem, 2),
                 "Cobertura CA1 (meses)": round(cob_ca1, 2) if np.isfinite(cob_ca1) else "",
+                "Cob Maestra (info)": round(cob_obj_meses, 2) if pd.notna(cob_obj_meses) else "",
             })
     df = pd.DataFrame(filas)
 
@@ -321,7 +331,9 @@ def construir(no_download=False, no_live=False) -> Path:
             ["Corrida", f"{hoy} (semana ISO {hoy.isocalendar()[1]}) — MOTOR v2 (mesa 11-08)"],
             ["Semanas venta (L6W)", str(sem)],
             ["Venta", "RAW, SOLO canales digitales: Marketplace + Páginas propias + Fidelización"],
-            ["Base de productos", "Drive PRICING, hoja Maestra (refrescada en cada corrida)"],
+            ["Base de productos", "Drive PRICING, hoja Maestra (refrescada en cada corrida). In/Out='out' NO repone."],
+            ["Objetivo de stock full", "Cobertura por CANAL (hoja Reglas) × venta digital semanal. La col 'Cob' de "
+             "la Maestra es cobertura ACTUAL (no objetivo) -> se muestra informativa, no se usa como target."],
             ["Cobertura (restricción)", "Stock CA1/Stock ÷ demanda digital semanal ×4,33; demanda = venta SKU + packs "
              "que lo contienen (hoja Packs de Pricing). Umbral por canal = hoja Reglas."],
             ["Stock full", f"{fuente_live} + TRÁNSITO a fulls (picks internos pendientes hacia BF*)"],
@@ -339,6 +351,57 @@ def construir(no_download=False, no_live=False) -> Path:
     print(f"[pulso v2] {fn.name} | {len(act)} SKU-canal | {tot:,} uds | "
           f"restricción activa en {int((df['Restricción']==1).sum())} filas")
     return fn
+
+
+def construir_excel_dinamico(flat_path=None) -> bytes:
+    """Reporte con TABLA DINÁMICA NATIVA (hoja 'Dinámica': Canal→Marca→SKU; valores
+    Reposición/m³/Stock CA1/Demanda) sobre la sábana 'UME v2'. Inyecta en la plantilla
+    (armada 1 vez con Excel COM) + zip-surgery (refreshOnLoad) — el runtime NO usa Excel.
+    Copia además Resumen canal / Cuadratura / Metodología como hojas planas."""
+    import io as _io, re as _re, zipfile as _zip
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+    if flat_path is None:
+        flat_path = construir()
+    xls = pd.ExcelFile(flat_path)
+    sabana = xls.parse("UME v2")
+    ncols = len(sabana.columns)
+
+    def _clean(row):
+        return [None if (isinstance(v, float) and pd.isna(v)) else v for v in row]
+
+    wb = openpyxl.load_workbook(TEMPLATE_DIN)
+    ws = wb["Datos"]
+    ws.delete_rows(1, ws.max_row)
+    ws.append(list(sabana.columns))
+    for row in sabana.itertuples(index=False):
+        ws.append(_clean(row))
+    for sn in xls.sheet_names:
+        if sn == "UME v2":
+            continue
+        d = xls.parse(sn)
+        w = wb.create_sheet(sn[:31])
+        w.append([str(c) for c in d.columns])
+        for row in d.itertuples(index=False):
+            w.append(_clean(row))
+    buf = _io.BytesIO(); wb.save(buf); buf.seek(0)
+
+    ref = f"A1:{get_column_letter(ncols)}{len(sabana) + 1}"
+    zin = _zip.ZipFile(buf, "r"); out = _io.BytesIO()
+    with _zip.ZipFile(out, "w", _zip.ZIP_DEFLATED) as zout:
+        for it in zin.infolist():
+            d = zin.read(it.filename)
+            if it.filename == "xl/pivotCache/pivotCacheDefinition1.xml":
+                x = d.decode("utf-8")
+                x = _re.sub(r'(<worksheetSource ref=")[^"]+(")', r"\g<1>" + ref + r"\g<2>", x)
+                if "refreshOnLoad" not in x.split(">")[0]:
+                    x = _re.sub(r"(<pivotCacheDefinition )", r'\g<1>refreshOnLoad="1" ', x, count=1)
+                else:
+                    x = _re.sub(r'refreshOnLoad="[^"]*"', 'refreshOnLoad="1"', x)
+                d = x.encode("utf-8")
+            zout.writestr(it, d)
+    zin.close()
+    return out.getvalue()
 
 
 if __name__ == "__main__":

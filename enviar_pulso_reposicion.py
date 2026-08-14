@@ -51,12 +51,12 @@ def main():
         print(f"[transito][WARN] {type(e).__name__}: {e} — se usa el último snapshot", flush=True)
 
     # 2) pulso
-    from pulso_reposicion_fulfillment import construir
+    from pulso_reposicion_fulfillment import construir, construir_excel_dinamico
     fn = construir()
-    xlsx = fn.read_bytes()
+    xlsx = construir_excel_dinamico(fn)   # reporte con tabla dinámica nativa
 
     res = pd.read_excel(fn, sheet_name="Resumen canal")
-    ume = pd.read_excel(fn, sheet_name="UME v1")
+    ume = pd.read_excel(fn, sheet_name="UME v2")
     tot_uds = res["Unidades"].sum(); tot_skus = int((ume["Reposición"] > 0).sum())
     tot_m3 = res["m3"].sum(); tot_costo = res["Costo envío est."].sum()
 
@@ -123,9 +123,10 @@ def main():
 {tr_html}
 {aviso_transito}
 
-<div style="font-size:13px;margin:14px 0;">📎 <b>Excel adjunto:</b> hoja <b>UME v1</b> (sábana completa por
-SKU y canal, con stock live del seller center, stock CA1, tránsito y cobertura) · <b>Cuadratura</b> Odoo vs
-seller center · <b>Metodología</b> (fuentes, reglas y advertencias) · <b>Difs vs planilla</b>.</div>
+<div style="font-size:13px;margin:14px 0;">📎 <b>Excel adjunto (tabla dinámica):</b> hoja <b>Dinámica</b>
+(Canal → Marca → SKU, arrastrable; se refresca sola al abrir) sobre la hoja <b>Datos</b> (sábana completa por
+SKU y canal, con stock live, stock CA1, tránsito y cobertura) · <b>Resumen canal</b> · <b>Cuadratura</b> Odoo
+vs seller center · <b>Metodología</b>.</div>
 
 <div style="font-size:12px;color:#475569;margin-top:14px;">Los parámetros comerciales (Reglas, UME MIN,
 UME Manual, BLACKLIST, LARGE) se leen de la planilla de siempre en cada corrida — cualquier ajuste ahí queda

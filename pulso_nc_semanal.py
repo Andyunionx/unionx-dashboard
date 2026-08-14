@@ -81,6 +81,88 @@ def enviar(asunto, html, adjunto_path, to, cc):
             print(f"send intento {i+1}: {type(e).__name__}"); time.sleep(8)
 
 
+def recompute_cancelados() -> pd.DataFrame:
+    """Recalcula EN VIVO el universo de cancelados 2026 con boleta y sin NC.
+    Filtros de auditoría (04/05-08): sin NC por reversa directa, sin fulfillment,
+    flag despachado (criterio Víctor), y detección de BARRIDAS del conector
+    (>50 cancelaciones con la misma fecha de modificación → resolución masiva de
+    marketplace, se excluyen y se informan aparte)."""
+    import xmlrpc.client, time as _t
+    cfg = json.load(open(ROOT / "odoo/odoo_config.json"))["produccion"]
+    pw = os.environ.get("ANDRES_ODOO_PASSWORD", "") or (ROOT / "odoo/.odoo_pass").read_text().strip()
+    uid = xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/common").authenticate(cfg["db_name"], cfg["username"], pw, {})
+    def rpc(model, method, args, kw=None):
+        for i in range(3):
+            try:
+                return xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/object").execute_kw(
+                    cfg["db_name"], uid, pw, model, method, args, kw or {})
+            except Exception:
+                if i == 2:
+                    raise
+                _t.sleep(5)
+    canc = rpc("sale.order", "search_read",
+               [[("state", "=", "cancel"), ("create_date", ">=", "2026-01-01"), ("invoice_ids", "!=", False)]],
+               {"fields": ["id", "name", "team_id", "invoice_ids", "channel_order_reference", "write_date"]})
+    inv_ids = sorted({i for s in canc for i in s["invoice_ids"]})
+    invs = {}
+    for i in range(0, len(inv_ids), 300):
+        for v in rpc("account.move", "read", [inv_ids[i:i+300]],
+                     {"fields": ["move_type", "state", "payment_state", "name", "amount_total", "invoice_date"]}):
+            invs[v["id"]] = v
+    # NC por reversa directa de las boletas
+    bol_ids = [v["id"] for v in invs.values() if v["move_type"] == "out_invoice" and v["state"] == "posted"]
+    rev = set()
+    for i in range(0, len(bol_ids), 300):
+        for r in rpc("account.move", "search_read",
+                     [[("move_type", "=", "out_refund"), ("state", "=", "posted"),
+                       ("reversed_entry_id", "in", bol_ids[i:i+300])]], {"fields": ["reversed_entry_id"]}):
+            rev.add(r["reversed_entry_id"][0])
+    # fulfillment + despachado por pedido
+    oids = [s["id"] for s in canc]
+    ff, desp = set(), set()
+    for i in range(0, len(oids), 200):
+        for p in rpc("stock.picking", "search_read", [[("sale_id", "in", oids[i:i+200])]],
+                     {"fields": ["sale_id", "location_id", "state", "picking_type_id"]}):
+            bod = str(p["location_id"][1] if p["location_id"] else "").split("/")[0]
+            if bod.startswith("BF"):
+                ff.add(p["sale_id"][0])
+            if p["state"] == "done":
+                desp.add(p["sale_id"][0])
+    def canal_de(s):
+        ref = str(s.get("channel_order_reference") or "")
+        t = s["team_id"][1] if s["team_id"] else ""
+        if ref.startswith("#"): return "Shopify"
+        if ref.startswith("20000"): return "Mercado Libre"
+        if ref.isdigit() and len(ref) == 10: return "Falabella"
+        if t and t != "Melollevo": return t
+        return "Otro marketplace"
+    rows = []
+    for s in canc:
+        if s["id"] in ff:
+            continue
+        ivs = [invs[i] for i in s["invoice_ids"] if i in invs]
+        bol = [v for v in ivs if v["move_type"] == "out_invoice" and v["state"] == "posted"
+               and v["payment_state"] != "reversed" and v["id"] not in rev]
+        ncs = [v for v in ivs if v["move_type"] == "out_refund" and v["state"] == "posted"]
+        if not bol or ncs:
+            continue
+        b = bol[0]
+        rows.append({"pedido": s["name"], "canal": canal_de(s), "mes": str(b["invoice_date"])[:7],
+                     "boleta": b["name"], "monto": b["amount_total"], "pago_boleta": b["payment_state"],
+                     "despachado": s["id"] in desp, "dia_cancel": str(s["write_date"])[:10]})
+    C = pd.DataFrame(rows)
+    if C.empty:
+        C = pd.DataFrame(columns=["pedido", "canal", "mes", "boleta", "monto", "pago_boleta",
+                                  "despachado", "dia_cancel", "origen"])
+        return C
+    # barridas: >50 cancelados con la misma fecha de modificación
+    masivos = C["dia_cancel"].value_counts()
+    dias_barrida = set(masivos[masivos > 50].index)
+    C["origen"] = C["dia_cancel"].map(lambda d: "Barrida conector" if d in dias_barrida else "Cancelación orgánica")
+    print(f"[cancelados-vivo] {len(C)} casos | barridas detectadas: {sorted(dias_barrida)}")
+    return C
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--draft", action="store_true")
@@ -97,11 +179,19 @@ def main():
     piv_dev = em.pivot_table(index="mes", columns="canal", values="monto_NC", aggfunc="sum").fillna(0)
     piv_dev["TOTAL"] = piv_dev.sum(axis=1)
 
-    # --- sección 2: cancelaciones. CRITERIO VÍCTOR (05-08): NC directa = cancelado
-    # + boleta + SIN despacho. Con despacho = validar estado seller. Barridas fuera.
-    C = pd.read_excel(OUT / "NC_cancelados_AUDITADO_v4_20260805.xlsx")
+    # --- sección 2: cancelaciones EN VIVO. CRITERIO VÍCTOR (05-08): NC directa =
+    # cancelado + boleta + SIN despacho. Con despacho = validar estado seller.
+    # Barridas del conector fuera (detección automática >50/día).
+    try:
+        C = recompute_cancelados()
+        C.to_excel(OUT / f"NC_cancelados_vivo_{hoy:%Y%m%d}.xlsx", index=False)
+    except Exception as e:
+        print(f"[cancelados-vivo][WARN] {type(e).__name__}: {e} -> archivo auditado estático")
+        C = pd.read_excel(OUT / "NC_cancelados_AUDITADO_v4_20260805.xlsx")
     barridas = C[C["origen"] != "Cancelación orgánica"]
     C = C[C["origen"] == "Cancelación orgánica"]
+    # dedupe contra la sección devoluciones (un pedido no puede estar en ambas)
+    C = C[~C["pedido"].astype(str).isin(set(em["pedido"].astype(str)))]
     nucleo = C[~C["despachado"]]
     pagados = C[C["despachado"]]  # con despacho: validar estado seller
     piv_can = nucleo.pivot_table(index="mes", columns="canal", values="monto", aggfunc="sum").fillna(0)
