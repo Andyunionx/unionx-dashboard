@@ -112,10 +112,15 @@ jobs:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           SEIMEX_EMAIL: ${{ secrets.SEIMEX_EMAIL }}
           SEIMEX_PASSWORD: ${{ secrets.SEIMEX_PASSWORD }}
+          FALA_USER: ${{ secrets.FALA_USER }}
+          FALA_PASS: ${{ secrets.FALA_PASS }}
           EMAIL_TO: ${{ vars.PULSO_FF_EMAIL_TO || 'nicole@unionx.cl,nicolas@unionx.cl,trinidad@unionx.cl,claudia@unionx.cl,andres@unionx.cl' }}
           PYTHONIOENCODING: utf-8
         run: |
           if [ "$(date +%u)" = "1" ]; then
+            # Playwright solo los lunes (scraper stock Falabella FBF). Si falta o
+            # falla, el pulso cae al fallback Odoo/Martín para Falabella.
+            pip install playwright >/dev/null 2>&1 && python -m playwright install --with-deps chromium || echo "[WARN] playwright no instalado — Falabella usa fallback"
             python enviar_pulso_reposicion.py
           else
             echo "No es lunes — Pulso Reposición FF omitido."
