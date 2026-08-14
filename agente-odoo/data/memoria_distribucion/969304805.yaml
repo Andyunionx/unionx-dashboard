@@ -1,0 +1,10 @@
+rut: 96930480-5
+nombre: Duty Free T C S A
+reglas:
+- patron: acciones comerciales julio
+  tipo_match: contains_lower
+  cuenta_destino: COMISION_GRANDES_CUENTAS
+  aprobaciones: 2
+  ultima_aprobacion: '2026-08-14'
+  aprobado_por: Camila Bustos <camila@unionx.cl>
+  auto: false
