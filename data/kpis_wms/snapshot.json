@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-08-14T15:53:46.280527",
+  "generado_en": "2026-08-15T03:40:38.413387",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.026328688467194175,
-      "total_pickings": 14281,
-      "on_time": 376,
-      "on_time_pct": 0.026328688467194175,
-      "in_full": 14274,
-      "in_full_pct": 0.9995098382466214,
-      "both": 376,
+      "valor": 0.026805605461731944,
+      "total_pickings": 13915,
+      "on_time": 373,
+      "on_time_pct": 0.026805605461731944,
+      "in_full": 13909,
+      "in_full_pct": 0.9995688106360043,
+      "both": 373,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.10570824524312897,
-      "total_pickings": 473,
+      "valor": 0.11286681715575621,
+      "total_pickings": 443,
       "on_time": 54,
-      "on_time_pct": 0.11416490486257928,
-      "in_full": 466,
-      "in_full_pct": 0.985200845665962,
+      "on_time_pct": 0.12189616252821671,
+      "in_full": 436,
+      "in_full_pct": 0.9841986455981941,
       "both": 50,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9995784592686269,
-      "ok": 18970,
-      "total": 18978,
+      "valor": 0.9995675675675676,
+      "ok": 18492,
+      "total": 18500,
       "errores": 8,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.002833128331282,
-      "n_recepciones": 271,
+      "valor": 11.967563316993463,
+      "n_recepciones": 272,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01006",
+          "proveedor": "",
+          "horas": 2.4,
+          "scheduled": "2026-08-14 15:44",
+          "done": "2026-08-14 18:09"
+        },
         {
           "picking": "CA1/IN/01004",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-06 15:33",
           "done": "2026-08-06 15:34"
-        },
-        {
-          "picking": "CA1/IN/00983",
-          "proveedor": "",
-          "horas": 0.5,
-          "scheduled": "2026-08-06 15:03",
-          "done": "2026-08-06 15:31"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9653550042771599,
-      "total_so": 14201,
-      "total_con_pickings": 14028,
-      "cumplidos": 13542,
+      "valor": 0.9538126361655773,
+      "total_so": 13940,
+      "total_con_pickings": 13770,
+      "cumplidos": 13134,
       "parciales": 11,
-      "sin_iniciar": 475,
+      "sin_iniciar": 625,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.14088973046663,
-      "n_orders": 14589,
+      "valor": 45.82653936163552,
+      "n_orders": 14196,
       "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 26.323055555555555,
+      "mediana_h": 26.80638888888889,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 8778,
+      "lineas": 8840,
       "mes": "2026-08",
       "error": null
     },
@@ -361,26 +361,20 @@
       "valor": [
         {
           "cliente": "Global Reward Solutions",
-          "total": 163,
-          "tarde": 163,
+          "total": 139,
+          "tarde": 139,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
-          "total": 7,
-          "tarde": 7,
+          "total": 8,
+          "tarde": 8,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
           "total": 10,
           "tarde": 10,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "abc S.A.",
-          "total": 66,
-          "tarde": 66,
           "on_time_pct": 0.0
         },
         {
@@ -393,6 +387,12 @@
           "cliente": "Lokal SpA",
           "total": 11,
           "tarde": 11,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "abc S.A.",
+          "total": 61,
+          "tarde": 61,
           "on_time_pct": 0.0
         },
         {
@@ -409,9 +409,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 72,
-          "tarde": 69,
-          "on_time_pct": 0.041666666666666664
+          "total": 71,
+          "tarde": 68,
+          "on_time_pct": 0.04225352112676056
         },
         {
           "cliente": "PATAGONIK S.A.",
@@ -8104,42 +8104,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.026328688467194175,
-      "total_pickings": 14281,
-      "on_time": 376,
-      "on_time_pct": 0.026328688467194175,
-      "in_full": 14274,
-      "in_full_pct": 0.9995098382466214,
-      "both": 376,
+      "valor": 0.026805605461731944,
+      "total_pickings": 13915,
+      "on_time": 373,
+      "on_time_pct": 0.026805605461731944,
+      "in_full": 13909,
+      "in_full_pct": 0.9995688106360043,
+      "both": 373,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.10570824524312897,
-      "total_pickings": 473,
+      "valor": 0.11286681715575621,
+      "total_pickings": 443,
       "on_time": 54,
-      "on_time_pct": 0.11416490486257928,
-      "in_full": 466,
-      "in_full_pct": 0.985200845665962,
+      "on_time_pct": 0.12189616252821671,
+      "in_full": 436,
+      "in_full_pct": 0.9841986455981941,
       "both": 50,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9995784592686269,
-      "ok": 18970,
-      "total": 18978,
+      "valor": 0.9995675675675676,
+      "ok": 18492,
+      "total": 18500,
       "errores": 8,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.002833128331282,
-      "n_recepciones": 271,
+      "valor": 11.967563316993463,
+      "n_recepciones": 272,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01006",
+          "proveedor": "",
+          "horas": 2.4,
+          "scheduled": "2026-08-14 15:44",
+          "done": "2026-08-14 18:09"
+        },
         {
           "picking": "CA1/IN/01004",
           "proveedor": "",
@@ -8272,13 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-06 15:33",
           "done": "2026-08-06 15:34"
-        },
-        {
-          "picking": "CA1/IN/00983",
-          "proveedor": "",
-          "horas": 0.5,
-          "scheduled": "2026-08-06 15:03",
-          "done": "2026-08-06 15:31"
         }
       ],
       "error": null
