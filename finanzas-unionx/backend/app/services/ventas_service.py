@@ -289,7 +289,13 @@ class VentasService(BaseOdooService):
             'id', 'name', 'date_order', 'partner_id', 'user_id', 'amount_total',
             'margin', 'state', 'fulfillment', 'channel', 'channel_order_reference',
             'client_order_ref', 'invoice_ids', 'warehouse_id', 'yuju_pack_id',
-            'website_id'
+            'website_id',
+            # Comisión + envío por marketplace (Fase 1 margen final directo, ago-2026+).
+            # Viven a nivel orden → se prorratean por SKU. Falabella no las tiene (Fase 2).
+            'x_meli_sale_fee', 'x_meli_shipping_fee',
+            'x_paris_commission', 'x_paris_shipping_cost',
+            'x_ripley_commission', 'x_walmart_commission_est',
+            'yuju_marketplace_fee', 'yuju_seller_shipping_cost',
         ]
 
         all_orders = []
@@ -886,6 +892,34 @@ class VentasService(BaseOdooService):
                 canal = 'UnionX web' if pn.startswith('cliente ') else 'UnionX B2B'
             return canal
 
+        # ── Fase 1: comisión + logística directo de Odoo (ago-2026+) ──
+        # Campos x_ a nivel ORDEN → se prorratean a cada SKU por su venta. Falabella
+        # no tiene comisión en Odoo (→ Fase 2, matriz). Marketing fuera del margen final
+        # directo. Solo aplica desde CUTOFF_ODOO_COMLOG para NO pisar el histórico
+        # (ene–jul mantiene los valores del sheet de Nicole).
+        CUTOFF_ODOO_COMLOG = '2026-08-01'
+
+        def _com_log_orden(o):
+            ch = str(o.get('channel') or '').lower()
+            if 'mercado libre' in ch or 'meli' in ch:
+                return (o.get('x_meli_sale_fee') or 0), (o.get('x_meli_shipping_fee') or 0)
+            if 'paris' in ch:
+                return (o.get('x_paris_commission') or 0), (o.get('x_paris_shipping_cost') or 0)
+            if 'ripley' in ch:
+                return (o.get('x_ripley_commission') or 0), (o.get('yuju_seller_shipping_cost') or 0)
+            if 'walmart' in ch:
+                return (o.get('x_walmart_commission_est') or 0), (o.get('yuju_seller_shipping_cost') or 0)
+            if 'falabella' in ch:
+                return 0, 0  # Fase 2 (matriz de tarifas por categoría)
+            return (o.get('yuju_marketplace_fee') or 0), (o.get('yuju_seller_shipping_cost') or 0)
+
+        # venta neta por orden (denominador del prorrateo)
+        _venta_neta_orden = {}
+        for _ln in lineas:
+            _oid = _ln['order_id'][0] if _ln.get('order_id') else None
+            if _oid is not None:
+                _venta_neta_orden[_oid] = _venta_neta_orden.get(_oid, 0) + (_ln.get('price_subtotal') or 0)
+
         for linea in lineas:
             orden_id = linea['order_id'][0] if linea['order_id'] else None
             orden = ordenes_dict.get(orden_id, {})
@@ -939,12 +973,21 @@ class VentasService(BaseOdooService):
             estado_despacho = ('Despachado' if (cantidad and qty_del >= cantidad)
                                else ('Parcial' if qty_del > 0 else 'Pendiente'))
 
-            # Márgenes (basados en venta bruta, sin NC)
+            # Márgenes (venta_bruta interno = neto de la línea)
             margen_front = venta_bruta - costo_total
-            comision = linea.get('comision', 0)  # si existe en el modelo
-            logistica = linea.get('logistica', 0)  # si existe en el modelo
-            marketing = linea.get('marketing', 0)  # si existe en el modelo
-            mg_final = margen_front - comision - logistica - marketing
+            # Fase 1: comisión + logística prorrateadas desde Odoo (ago-2026+). Marketing
+            # queda FUERA del margen final directo. Falabella queda en 0 hasta Fase 2.
+            comision = 0.0
+            logistica = 0.0
+            marketing = 0.0
+            if fecha_venta_local >= CUTOFF_ODOO_COMLOG:
+                _com_o, _log_o = _com_log_orden(orden)
+                _vno = _venta_neta_orden.get(orden_id, 0)
+                if _vno:
+                    _frac = venta_bruta / _vno   # neto línea / neto orden
+                    comision = _com_o * _frac
+                    logistica = _log_o * _frac
+            mg_final = margen_front - comision - logistica  # sin marketing (Andrés)
 
             # Comisión %
             comision_pct = (comision / venta_bruta * 100) if venta_bruta > 0 else 0
