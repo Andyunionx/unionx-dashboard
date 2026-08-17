@@ -1001,6 +1001,7 @@ class VentasService(BaseOdooService):
             comision = 0.0
             logistica = 0.0
             marketing = 0.0
+            fuente_comision = ''   # trazabilidad: odoo / matriz / '' (Fase 3a)
             if fecha_venta_local >= CUTOFF_ODOO_COMLOG:
                 _com_o, _log_o = _com_log_orden(orden)
                 _vno = _venta_neta_orden.get(orden_id, 0)
@@ -1008,6 +1009,8 @@ class VentasService(BaseOdooService):
                     _frac = venta_bruta / _vno   # neto línea / neto orden
                     comision = _com_o * _frac
                     logistica = _log_o * _frac
+                    if comision or logistica:
+                        fuente_comision = 'odoo'
             mg_final = margen_front - comision - logistica  # sin marketing (Andrés)
 
             # Comisión %
@@ -1138,6 +1141,7 @@ class VentasService(BaseOdooService):
                         logistica = venta_neta * _pl / 100.0
                         mg_final = (venta_neta - costo_total) - comision - logistica
                         comision_pct = (comision / venta_neta * 100) if venta_neta > 0 else 0
+                        fuente_comision = 'matriz'
 
                 data.append({
                     'Tipo Movimiento': 'Venta',
@@ -1184,6 +1188,7 @@ class VentasService(BaseOdooService):
                     'Comisión': comision,
                     'Logística': logistica,
                     'Marketing': marketing,
+                    'Fuente Comisión': fuente_comision,   # trazabilidad odoo/matriz (Fase 3a)
                     'Mg final': mg_final
                 })
 
@@ -1556,6 +1561,7 @@ class VentasService(BaseOdooService):
             'Año venta', 'Mes venta', 'Semana venta', 'Día semana', 'Hora venta',
             'Cantidad', 'Venta bruta', 'Venta Neta', 'Costo Unitario', 'Costo Total', 'Margen Front',
             'Comision %', 'Comisión', 'Logística', 'Marketing', 'Mg final',
+            'Fuente Comisión',
             'Pedido Marketplace', 'Yuju Pack Id', 'Ref Cliente', 'Linea ID'
         ]
 

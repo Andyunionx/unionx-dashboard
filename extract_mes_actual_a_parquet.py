@@ -37,7 +37,7 @@ COLS_DB = [
     'estado_canal', 'anio_venta', 'mes_venta', 'semana_venta', 'dia_semana',
     'hora_venta_num', 'cantidad', 'venta_bruta', 'venta_neta', 'costo_unitario',
     'costo_total', 'margen_front', 'comision_pct', 'comision', 'logistica',
-    'marketing', 'margen_final',
+    'marketing', 'margen_final', 'fuente_comision',
 ]
 
 # Mapeo RAW Odoo → DB (igual que actualizar_raw_historico.py)
@@ -61,6 +61,7 @@ RAW_TO_DB = {
     'Margen Front': 'margen_front', 'Comision %': 'comision_pct',
     'Comisión': 'comision', 'Logística': 'logistica',
     'Marketing': 'marketing', 'Mg final': 'margen_final',
+    'Fuente Comisión': 'fuente_comision',
 }
 
 

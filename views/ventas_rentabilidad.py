@@ -3,9 +3,14 @@
 Waterfall: Venta neta → Costo → Margen Front → (−) Comisión / Logística / Marketing
 → Margen Final (Contribución), con % sobre venta.
 
-Costos variables (Comisión/Logística/Marketing) = filas 'Otros costos' del RAW. COMPLETOS
-para Falabella + Mercado Libre (planilla de Nicole por SKU+fecha); en otros canales pueden
-venir parciales → su contribución queda subestimada (el Margen Front sí es correcto en todos).
+Fuente Comisión/Logística (ago-2026 en adelante, modelo híbrido — ver `channel_fee_structures`):
+  · Odoo real por marketplace: Mercado Libre, Paris, Ripley, Walmart.
+  · Matriz de tarifas por canal (`data/planillas/matriz_tarifas_canal.xlsx`): Falabella
+    (% tarifario por categoría + % logística por modalidad), Shopify/webs 3%, KC 20%,
+    LATAM Pass 15%, UnionX B2B 3,4%, Global Reward 0.
+  · Columna `fuente_comision` (odoo/matriz) traza el origen de cada fila.
+Histórico ene–jul: mantiene la planilla de Nicole (Fala + Mercado Libre) por SKU+fecha.
+Marketing NO entra al margen final directo (queda fuera; por SKU va en 0 desde ago-2026).
 """
 import calendar
 from datetime import datetime
@@ -31,7 +36,14 @@ DIMS = {
     "Marca": "marca",
     "SKU": "sku",
 }
-CANALES_COMPLETOS = ("Falabella", "Mercado Libre")
+# Canales con comisión/logística cubierta desde ago-2026 (Odoo real + matriz de tarifas).
+# ene–jul solo Fala + ML (planilla Nicole) → el aviso de subestimación se mantiene si el
+# período seleccionado incluye histórico.
+CANALES_COMPLETOS = (
+    "Falabella", "Mercado Libre", "Paris", "Ripley", "Walmart",
+    "Shopify", "Kitchen Center", "LATAM Pass", "UnionX B2B",
+    "UnionX web", "Lhotse web", "Simplit web", "Global Reward",
+)
 
 
 def _periodos():
@@ -114,8 +126,10 @@ def _opciones(_v):
 def render():
     render_health_header("💰 Rentabilidad — Contribución por SKU / canal")
     render_dashboard_actions_sidebar(prefix="rent")
-    st.caption("P&L de contribución desde el RAW (Comisión/Logística/Marketing reales de "
-               "Falabella + Mercado Libre, planilla de Nicole por SKU+fecha).")
+    st.caption("P&L de contribución desde el RAW. Comisión/Logística ago-2026+ = **Odoo real** "
+               "(ML, Paris, Ripley, Walmart) **+ matriz de tarifas** (Falabella, webs, KC, LATAM, "
+               "B2B). Histórico ene–jul = planilla de Nicole (Fala+ML). Marketing fuera del "
+               "margen final.")
 
     v = _parquet_version()
     canales_all, negocios_all = _opciones(v)
@@ -189,8 +203,12 @@ def render():
             "Marketing", "Contribución", "% Contrib", "Líneas"]
     st.dataframe(d[cols], width="stretch", hide_index=True, height=520)
 
-    seleccion_incompleta = (not canales) or any(c not in CANALES_COMPLETOS for c in canales)
-    if seleccion_incompleta:
-        st.caption("⚠️ Comisión/Logística/Marketing están **completos solo para Falabella y Mercado Libre** "
-                   "(planilla de Nicole). En otros canales vienen parciales → su **Contribución queda "
-                   "subestimada** (el Margen Front sí es correcto en todos).")
+    incluye_historico = desde < "2026-08-01"
+    canales_incompletos = [c for c in (canales or canales_all) if c not in CANALES_COMPLETOS]
+    if canales_incompletos:
+        st.caption("⚠️ Comisión/Logística no cubiertas para: **" + ", ".join(canales_incompletos) +
+                   "** (canales sin marketplace, ej. tiendas físicas) → su Contribución ≈ Margen Front.")
+    if incluye_historico:
+        st.caption("ℹ️ El período incluye histórico **ene–jul** (comisión/logística solo Fala + "
+                   "Mercado Libre, planilla de Nicole); desde **ago-2026** la cobertura es híbrida "
+                   "Odoo + matriz. La Contribución de otros canales antes de agosto queda subestimada.")
