@@ -16,7 +16,7 @@ import openpyxl
 import pandas as pd
 from pathlib import Path
 
-EXCEL_PATH = Path(r"C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\Analisis Planificacion\analisis_planificacion_AGO26 v2 subida.xlsx")
+EXCEL_PATH = Path(r"C:\Users\felip\Desktop\UNIONX\FORECAST FINAL SKU\Analisis Planificacion\analisis_planificacion_AGO26.xlsx")
 OUT_DIR    = Path(__file__).parent / "data" / "planificacion" / "snapshots"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
