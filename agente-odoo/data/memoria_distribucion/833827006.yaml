@@ -39,8 +39,8 @@ reglas:
 - patron: 'comision ventas mkp del:'
   tipo_match: contains_lower
   cuenta_destino: COMISION_GRANDES_CUENTAS
-  aprobaciones: 3
-  ultima_aprobacion: '2026-08-06'
+  aprobaciones: 4
+  ultima_aprobacion: '2026-08-17'
   aprobado_por: Camila Bustos <camila@unionx.cl>
   auto: true
 - patron: mkp acuerdo comercial espacios
