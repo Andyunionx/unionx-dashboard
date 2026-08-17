@@ -920,6 +920,27 @@ class VentasService(BaseOdooService):
             if _oid is not None:
                 _venta_neta_orden[_oid] = _venta_neta_orden.get(_oid, 0) + (_ln.get('price_subtotal') or 0)
 
+        # ── Fase 2: matriz de tarifas (canales SIN comisión en Odoo). Falabella por
+        # categoría (tarifario) + logística por modalidad; Shopify/KC % flat. Ver
+        # data/planillas/matriz_tarifas_canal.xlsx y memoria channel_fee_structures.
+        _fala_com, _fala_log, _flat_com, _flat_log = {}, {}, {}, {}
+        _fala_com_default = 0.0
+        try:
+            _mtx = self.planillas_dir / 'matriz_tarifas_canal.xlsx'
+            if _mtx.exists():
+                _cf = pd.read_excel(_mtx, sheet_name='comision_falabella')
+                _fala_com = {str(r['categoria_hijo']).strip(): float(r['pct_comision'])
+                             for _, r in _cf.iterrows() if pd.notna(r.get('pct_comision'))}
+                _fala_com_default = round(float(_cf['pct_comision'].mean()), 1) if len(_cf) else 0.0
+                _lf = pd.read_excel(_mtx, sheet_name='logistica_falabella')
+                _fala_log = {str(r['modalidad']).strip(): float(r['pct_logistica']) for _, r in _lf.iterrows()}
+                _ff = pd.read_excel(_mtx, sheet_name='comision_flat_canal')
+                _flat_com = {str(r['canal']).strip(): float(r['pct_comision']) for _, r in _ff.iterrows()}
+                _flat_log = {str(r['canal']).strip(): float(r.get('pct_logistica', 0) or 0) for _, r in _ff.iterrows()}
+                print(f"  [matriz] Falabella {len(_fala_com)} categorías + flat {list(_flat_com)}")
+        except Exception as _e:
+            print(f"  [matriz] omitida: {type(_e).__name__}: {_e}")
+
         for linea in lineas:
             orden_id = linea['order_id'][0] if linea['order_id'] else None
             orden = ordenes_dict.get(orden_id, {})
@@ -1097,6 +1118,26 @@ class VentasService(BaseOdooService):
                             venta_bruta_post_nc = venta_bruta_pre_nc * ratio
                 # Variables para cálculos margen (basados en NETO, no IVA)
                 venta_neta = venta_neta_post_nc
+
+                # ── Fase 2: comisión/logística de canales SIN dato en Odoo (matriz) ──
+                # Falabella: comisión por categoría (tarifario) + logística por modalidad.
+                # Shopify/KC: % flat. Se calcula sobre la venta neta de la fila (post-NC).
+                if fecha_venta_local >= CUTOFF_ODOO_COMLOG:
+                    _pc = None
+                    _pl = 0.0
+                    if canal_raw == 'Falabella':
+                        _pc = _fala_com.get(str(categoria_hijo).strip(), _fala_com_default)
+                        _mod = ('Full' if ('Fulfillment' in str(bodega_nombre)
+                                or str(bodega_nombre).strip() == 'Bodega Kitchen Center') else 'Seller')
+                        _pl = _fala_log.get(_mod, _fala_log.get('Seller', 0.0))
+                    elif canal_raw in _flat_com:
+                        _pc = _flat_com[canal_raw]
+                        _pl = _flat_log.get(canal_raw, 0.0)
+                    if _pc is not None:
+                        comision = venta_neta * _pc / 100.0
+                        logistica = venta_neta * _pl / 100.0
+                        mg_final = (venta_neta - costo_total) - comision - logistica
+                        comision_pct = (comision / venta_neta * 100) if venta_neta > 0 else 0
 
                 data.append({
                     'Tipo Movimiento': 'Venta',
