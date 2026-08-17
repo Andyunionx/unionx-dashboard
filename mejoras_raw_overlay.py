@@ -228,6 +228,24 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
         df.loc[env, "tipo_compra"] = "Envío"
         log(f"  [P5c] tipo_compra='Envío' en {n_env:,} filas de despacho (fuera de proveedores nacionales)")
 
+    # P7 — etiqueta de sku vacío (OK Andrés 17-08): las filas sin SKU no son
+    # recuperables (diagnóstico 14-08: legacy anónimo 2025-26 + ventas B2B a
+    # pedido sin SKU de catálogo, ej. Sodimac). Se etiquetan para que agrupen
+    # limpio en filtros/reportes en vez de aparecer como ''/0/False.
+    try:
+        sku_v = df["sku"].astype(str).str.strip()
+        vacio = sku_v.isin(["", "nan", "None", "0", "False"])
+        if vacio.any():
+            prod_desc = df["producto"].astype(str).str.strip()
+            con_desc = vacio & ~prod_desc.isin(["", "0", "nan", "None"])
+            b2b = con_desc & df.get("tipo_negocio", pd.Series("", index=df.index)).astype(str).isin(
+                ["Distribución", "Corporativo"]) | (con_desc & df.get("canal", pd.Series("", index=df.index)).astype(str).str.contains("B2B", na=False))
+            df.loc[vacio, "sku"] = "SIN-SKU-LEGACY"
+            df.loc[b2b, "sku"] = "SIN-SKU-B2B-PEDIDO"
+            log(f"  [P7] sku vacío etiquetado: {int(vacio.sum()):,} filas ({int(b2b.sum()):,} B2B a pedido, resto legacy)")
+    except Exception as e:
+        log(f"  [P7] omitido: {type(e).__name__}: {e}")
+
     # P5b — sanity de costo: filas con cruce de campo (cantidad≈venta → costo_total absurdo).
     # Se corrige a cantidad=1 y costo_total=costo_unitario (evita margen −billones).
     try:
