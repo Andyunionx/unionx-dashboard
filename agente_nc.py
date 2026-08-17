@@ -51,14 +51,27 @@ def parse_fecha(s):
     return pd.NaT
 
 def variantes_oc(oc):
+    # variantes de referencia: sin '#', sin sufijo '-A', sin sufijo '_N' (splits de
+    # ML: '2000011909409603_1'), y combinaciones. Ampliado 14-08 (179 sin mapear).
     oc = str(oc or '').strip()
     if not oc: return []
-    v = {oc, oc.lstrip('#'), oc.replace('-A', ''), oc.lstrip('#').replace('-A', '')}
+    base = {oc, oc.lstrip('#')}
+    mas = set()
+    for x in base:
+        mas.add(x.replace('-A', ''))
+        mas.add(re.sub(r'_\d+$', '', x))
+        mas.add(re.sub(r'_\d+$', '', x.replace('-A', '')))
+    v = base | mas | {'#' + x for x in mas if x and not x.startswith('#')}
     return [x for x in v if x]
 
 def main():
-    creds = Credentials.from_authorized_user_file(TOKEN)
-    if not creds.valid: creds.refresh(Request())
+    # CI: GMAIL_TOKEN_JSON (mismo secret de los pulsos); local: token.json agente-comex
+    cj = os.environ.get('GMAIL_TOKEN_JSON', '')
+    if cj:
+        creds = Credentials.from_authorized_user_info(json.loads(cj), json.loads(cj).get('scopes'))
+    else:
+        creds = Credentials.from_authorized_user_file(TOKEN)
+    if creds.expired and creds.refresh_token: creds.refresh(Request())
 
     # ===== 1) CARGA =====
     frames = []
