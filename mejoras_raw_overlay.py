@@ -126,6 +126,40 @@ def heal_marca(df, verbose=True):
     return df
 
 
+def unificar_descripcion_por_sku(df, verbose=True):
+    """P1d — un solo `producto` por SKU en TODAS las filas del RAW.
+
+    Motivo (Nicole 12-ago): las filas com/log/mkt (Sheet 'Raw extras') traen el
+    nombre del marketplace y las de Venta el de Odoo; mismo SKU con textos
+    distintos rompe cualquier tabla dinámica agrupada por nombre de producto
+    (64% de los SKU de ML jul-26 tenían ≥2 nombres). Canónico = nombre más
+    frecuente entre las filas de Venta (Odoo, base del 'vs 2025'); si el SKU no
+    tiene fila de Venta con nombre, se usa la moda global de ese SKU.
+    """
+    log = print if verbose else (lambda *a, **k: None)
+    if "sku" not in df.columns or "producto" not in df.columns:
+        return df
+    sk = df["sku"].astype(str).str.strip()
+    prod = df["producto"].astype(str).str.strip()
+    valido = sk.ne("") & ~sk.str.lower().isin(["nan", "none"])
+    es_venta = (df["tipo_movimiento"].astype(str).eq("Venta")
+                if "tipo_movimiento" in df.columns else pd.Series(True, index=df.index))
+    tmp = pd.DataFrame({"_sk": sk, "_prod": prod})
+    def _moda(s):
+        m = s.mode()
+        return m.iat[0] if not m.empty else s.iloc[0]
+    canon_v = tmp[valido & es_venta & prod.ne("")].groupby("_sk")["_prod"].agg(_moda)
+    canon_all = tmp[valido & prod.ne("")].groupby("_sk")["_prod"].agg(_moda)
+    canon = canon_v.combine_first(canon_all)
+    nuevo = sk.map(canon)
+    mask = valido & nuevo.notna() & nuevo.ne("")
+    n_change = int((mask & (prod != nuevo)).sum())
+    df.loc[mask, "producto"] = nuevo[mask].values
+    log(f"  [P1d] descripción única por SKU: {n_change:,} filas homologadas "
+        f"({int(canon.size):,} SKUs)")
+    return df
+
+
 def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     """Aplica P1 (atributos por SKU), P5 (es_despacho) y opcional P3 (backfill NC).
     Vectorizado y sin copia para soportar el histórico (~414k filas)."""
@@ -152,6 +186,10 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
 
     # P1b — self-heal de marca vacía (mismo SKU + prefijo)
     df = heal_marca(df, verbose=verbose)
+
+    # P1d — descripción única por SKU (evita que un pivote por nombre se parta
+    # cuando com/log/mkt traen otro texto para el mismo SKU). Nicole 12-ago.
+    df = unificar_descripcion_por_sku(df, verbose=verbose)
 
     # P1c — tipo_marca SIEMPRE derivado de la marca (Propia/Otras marcas). Evita que
     # quede el crudo In/Out/No aplica de Odoo cuando el paso de clasificación del
@@ -190,13 +228,36 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
         df.loc[env, "tipo_compra"] = "Envío"
         log(f"  [P5c] tipo_compra='Envío' en {n_env:,} filas de despacho (fuera de proveedores nacionales)")
 
+    # P7 — etiqueta de sku vacío (OK Andrés 17-08): las filas sin SKU no son
+    # recuperables (diagnóstico 14-08: legacy anónimo 2025-26 + ventas B2B a
+    # pedido sin SKU de catálogo, ej. Sodimac). Se etiquetan para que agrupen
+    # limpio en filtros/reportes en vez de aparecer como ''/0/False.
+    try:
+        sku_v = df["sku"].astype(str).str.strip()
+        vacio = sku_v.isin(["", "nan", "None", "0", "False"])
+        if vacio.any():
+            prod_desc = df["producto"].astype(str).str.strip()
+            con_desc = vacio & ~prod_desc.isin(["", "0", "nan", "None"])
+            b2b = con_desc & df.get("tipo_negocio", pd.Series("", index=df.index)).astype(str).isin(
+                ["Distribución", "Corporativo"]) | (con_desc & df.get("canal", pd.Series("", index=df.index)).astype(str).str.contains("B2B", na=False))
+            df.loc[vacio, "sku"] = "SIN-SKU-LEGACY"
+            df.loc[b2b, "sku"] = "SIN-SKU-B2B-PEDIDO"
+            log(f"  [P7] sku vacío etiquetado: {int(vacio.sum()):,} filas ({int(b2b.sum()):,} B2B a pedido, resto legacy)")
+    except Exception as e:
+        log(f"  [P7] omitido: {type(e).__name__}: {e}")
+
     # P5b — sanity de costo: filas con cruce de campo (cantidad≈venta → costo_total absurdo).
     # Se corrige a cantidad=1 y costo_total=costo_unitario (evita margen −billones).
     try:
         vn = pd.to_numeric(df["venta_neta"], errors="coerce")
         ct = pd.to_numeric(df["costo_total"], errors="coerce")
         cu = pd.to_numeric(df["costo_unitario"], errors="coerce")
-        absurd = ct > (10 * vn.abs() + 100000)
+        cant = pd.to_numeric(df["cantidad"], errors="coerce")
+        # Firma REAL del bug: 'cantidad' cruzada con venta_neta → cantidad enorme
+        # (el caso original tenía ~63.017). Se exige cantidad > 1000 para NO tocar
+        # ítems B2B legítimos vendidos a $1 con costo alto (costo≫venta es real ahí),
+        # que antes se corrompían a cantidad=1 (Nicole 17-ago, pedido S273209).
+        absurd = (ct > (10 * vn.abs() + 100000)) & (cant > 1000)
         if absurd.any():
             df.loc[absurd, "cantidad"] = 1
             df.loc[absurd, "costo_total"] = cu[absurd]
