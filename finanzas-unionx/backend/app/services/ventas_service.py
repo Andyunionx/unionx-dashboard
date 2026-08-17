@@ -289,7 +289,7 @@ class VentasService(BaseOdooService):
             'id', 'name', 'date_order', 'partner_id', 'user_id', 'amount_total',
             'margin', 'state', 'fulfillment', 'channel', 'channel_order_reference',
             'client_order_ref', 'invoice_ids', 'warehouse_id', 'yuju_pack_id',
-            'website_id',
+            'website_id', 'partner_shipping_id',   # comuna destino → envío tarifario
             # Comisión + envío por marketplace (Fase 1 margen final directo, ago-2026+).
             # Viven a nivel orden → se prorratean por SKU. Falabella no las tiene (Fase 2).
             'x_meli_sale_fee', 'x_meli_shipping_fee',
@@ -941,6 +941,67 @@ class VentasService(BaseOdooService):
         except Exception as _e:
             print(f"  [matriz] omitida: {type(_e).__name__}: {_e}")
 
+        # ── Envío tarifario BlueX/Recíbelo por comuna×peso (canales que despachamos
+        # nosotros: webs, LATAM Pass, UnionX B2B, Global Reward). El envío es por PEDIDO
+        # → se prorratea a cada SKU por su venta neta. Insumos: matriz hoja `envio_tarifario`
+        # (comuna→9 tramos de peso) + data/planillas/pesos_sku.parquet (peso por SKU,
+        # Odoo weight + fallback mediana por categoría). Comuna desde partner_shipping.
+        import re as _re, unicodedata as _ud
+
+        def _norm_com(s):
+            s = str(s or '').strip().upper()
+            s = ''.join(c for c in _ud.normalize('NFD', s) if _ud.category(c) != 'Mn')
+            return _re.sub(r'\s+', ' ', _re.sub(r'[^A-Z0-9 ]', ' ', s)).strip()
+
+        _ENVIO_CANALES = {'UnionX web', 'Lhotse web', 'Simplit web', 'Shopify',
+                          'LATAM Pass', 'UnionX B2B', 'Global Reward'}
+        _COM_ALIAS = {'SANTIAGO CENTRO': 'SANTIAGO', 'COIHAIQUE': 'COYHAIQUE', 'AISEN': 'AYSEN'}
+        _BOUNDS = [0.5, 1.5, 3, 6, 10, 16, 20]   # tramos fijos t0..t6; t7 (20-50) y t8 (>50) son $/kg
+        _envio_tar, _envio_def, _peso_sku, _peso_def = {}, None, {}, 0.5
+        _peso_orden, _comuna_orden, _envio_orden_val = {}, {}, {}
+        try:
+            _mtx_e = self.planillas_dir / 'matriz_tarifas_canal.xlsx'
+            _et = pd.read_excel(_mtx_e, sheet_name='envio_tarifario')
+            _envio_tar = {str(r['comuna_norm']): [float(r[f't{i}']) for i in range(9)] for _, r in _et.iterrows()}
+            _envio_def = _envio_tar.get('SANTIAGO')
+            _pp = pd.read_parquet(self.planillas_dir / 'pesos_sku.parquet')
+            _peso_sku = dict(zip(_pp['sku'].astype(str), pd.to_numeric(_pp['peso_kg'], errors='coerce').fillna(0)))
+            _peso_def = float(pd.to_numeric(_pp['peso_kg'], errors='coerce').median() or 0.5)
+
+            def _tarifa(comuna_norm, peso):
+                row = _envio_tar.get(comuna_norm) or _envio_tar.get(_COM_ALIAS.get(comuna_norm, ''), _envio_def)
+                if not row:
+                    return 0.0
+                for _i, _b in enumerate(_BOUNDS):
+                    if peso <= _b:
+                        return row[_i]
+                return (row[7] if peso <= 50 else row[8]) * peso
+
+            # peso por orden = Σ(peso_sku × qty)
+            for _ln in lineas:
+                _oid = _ln['order_id'][0] if _ln.get('order_id') else None
+                _pid = _ln['product_id'][0] if _ln.get('product_id') else None
+                if _oid is None:
+                    continue
+                _sk = str(productos_dict.get(_pid, {}).get('default_code', '') or '')
+                _peso_orden[_oid] = _peso_orden.get(_oid, 0) + _peso_sku.get(_sk, _peso_def) * (_ln.get('product_uom_qty') or 0)
+
+            # comuna por orden desde partner_shipping_id (real_city > city)
+            _ship_pid = {oid: o['partner_shipping_id'][0] for oid, o in ordenes_dict.items() if o.get('partner_shipping_id')}
+            _pids = list({p for p in _ship_pid.values() if p})
+            _pcity = {}
+            for _i in range(0, len(_pids), 500):
+                for _r in self.odoo.search_read('res.partner', [('id', 'in', _pids[_i:_i + 500])], ['real_city', 'city']):
+                    _pcity[_r['id']] = _norm_com(_r.get('real_city') or _r.get('city') or '')
+            _comuna_orden = {oid: _pcity.get(pid, '') for oid, pid in _ship_pid.items()}
+
+            # envío por orden (solo se usará en canales _ENVIO_CANALES dentro del loop)
+            for _oid in _peso_orden:
+                _envio_orden_val[_oid] = _tarifa(_comuna_orden.get(_oid, ''), _peso_orden[_oid])
+            print(f"  [envio] tarifario {len(_envio_tar)} comunas · pesos {len(_peso_sku)} SKUs · {len(_envio_orden_val)} pedidos costeados")
+        except Exception as _e:
+            print(f"  [envio] omitido: {type(_e).__name__}: {_e}")
+
         for linea in lineas:
             orden_id = linea['order_id'][0] if linea['order_id'] else None
             orden = ordenes_dict.get(orden_id, {})
@@ -1138,7 +1199,14 @@ class VentasService(BaseOdooService):
                         _pl = _flat_log.get(canal_raw, 0.0)
                     if _pc is not None:
                         comision = venta_neta * _pc / 100.0
-                        logistica = venta_neta * _pl / 100.0
+                        # Logística: canales que despachamos nosotros → envío tarifario
+                        # BlueX/Recíbelo por comuna×peso (envío del pedido prorrateado por
+                        # venta neta de la línea). Resto → % flat de la matriz (hoy 0).
+                        if canal_raw in _ENVIO_CANALES:
+                            _vno = _venta_neta_orden.get(orden_id, 0)
+                            logistica = (_envio_orden_val.get(orden_id, 0.0) * venta_neta / _vno) if _vno else 0.0
+                        else:
+                            logistica = venta_neta * _pl / 100.0
                         mg_final = (venta_neta - costo_total) - comision - logistica
                         comision_pct = (comision / venta_neta * 100) if venta_neta > 0 else 0
                         fuente_comision = 'matriz'
