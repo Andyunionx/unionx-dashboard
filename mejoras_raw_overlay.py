@@ -234,7 +234,12 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
         vn = pd.to_numeric(df["venta_neta"], errors="coerce")
         ct = pd.to_numeric(df["costo_total"], errors="coerce")
         cu = pd.to_numeric(df["costo_unitario"], errors="coerce")
-        absurd = ct > (10 * vn.abs() + 100000)
+        cant = pd.to_numeric(df["cantidad"], errors="coerce")
+        # Firma REAL del bug: 'cantidad' cruzada con venta_neta → cantidad enorme
+        # (el caso original tenía ~63.017). Se exige cantidad > 1000 para NO tocar
+        # ítems B2B legítimos vendidos a $1 con costo alto (costo≫venta es real ahí),
+        # que antes se corrompían a cantidad=1 (Nicole 17-ago, pedido S273209).
+        absurd = (ct > (10 * vn.abs() + 100000)) & (cant > 1000)
         if absurd.any():
             df.loc[absurd, "cantidad"] = 1
             df.loc[absurd, "costo_total"] = cu[absurd]

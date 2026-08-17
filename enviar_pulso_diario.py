@@ -74,6 +74,42 @@ def cargar_metas_negocio():
     return metas
 
 
+def cargar_presupuesto_corp_distrib():
+    """Presupuesto mensual de Distribución y Corporativo (doc de Andrés), en NETA →
+    BRUTA (×IVA). Devuelve {(2026, mes, negocio_norm): meta_bruta}. Sobrescribe las
+    metas V06 para esas dos líneas (es la fuente autoritativa de sus presupuestos)."""
+    path = PROJECT_ROOT / 'data' / 'Presupuesto Venta Distribución y Corporativo 2026.xlsx'
+    if not path.exists():
+        return {}
+    MES_NUM = {'ene': 1, 'feb': 2, 'mar': 3, 'abr': 4, 'may': 5, 'jun': 6,
+               'jul': 7, 'ago': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dic': 12}
+    try:
+        df = pd.read_excel(path, sheet_name=0)
+    except Exception:
+        return {}
+    col_mes = {c: MES_NUM[str(c).strip().lower()[:3]] for c in df.columns
+               if str(c).strip().lower()[:3] in MES_NUM}
+    out = {}
+    for _, r in df.iterrows():
+        lin = str(r.get('Línea de Negocio', '') or '').strip()
+        if lin not in ('Distribución', 'Corporativo'):
+            continue
+        for c, mnum in col_mes.items():
+            v = pd.to_numeric(r.get(c), errors='coerce')
+            if pd.notna(v) and v > 0:
+                out[(2026, mnum, _norm_neg(lin))] = float(v) * FACTOR_IVA_BRUTA
+    return out
+
+
+def _yoy_cell(ty, ly):
+    """Celda HTML de YoY (variación vs mismo período 2025). 'nuevo' si no hubo LY."""
+    if not ly or ly <= 0:
+        return '<td align="right" style="color:#94A3B8">nuevo</td>'
+    v = (ty / ly - 1) * 100
+    c = '#16A34A' if v >= 0 else '#DC2626'
+    return f'<td align="right" style="color:{c};font-weight:600">{v:+.1f}%</td>'
+
+
 def cargar_data():
     """Histórico (foto fija hasta 2026-06-01) + mes_actual (2-jun en adelante).
     Para evitar duplicados, mes_actual se filtra a >= CUTOFF_HISTORICO."""
@@ -107,6 +143,7 @@ def cargar_data():
 def render_html(df):
     metas = cargar_metas_v06()
     metas_neg = cargar_metas_negocio()
+    metas_neg.update(cargar_presupuesto_corp_distrib())  # apertura Corp/Distrib (doc de Andrés)
     ahora_clt = datetime.now(CHILE_TZ)
     hoy = ahora_clt.date()
     ayer = hoy - timedelta(days=1)
@@ -122,6 +159,17 @@ def render_html(df):
     primer_dia_ly = date(ano_actual-1, mes_actual, 1)
     ayer_ly = primer_dia_ly + timedelta(days=dias_acum-1)
     df_ly = df[(df['fv_dt'] >= primer_dia_ly) & (df['fv_dt'] <= ayer_ly)].copy()
+    # YoY por breakdown: venta bruta LY (2025 mismo período) por llave. Misma base
+    # que el pivot vivo (2026 vs 2025, mismo parquet).
+    _lyn = df_ly.assign(_n=df_ly['tipo_negocio'].apply(_norm_neg))
+    ly_neg = _lyn.groupby('_n')['venta_bruta'].sum().to_dict()
+    ly_neg_m = _lyn.groupby('_n')['margen_front'].sum().to_dict()
+    ly_can = df_ly.groupby('canal')['venta_bruta'].sum().to_dict()
+    ly_can_m = df_ly.groupby('canal')['margen_front'].sum().to_dict()
+    ly_mar = df_ly.groupby('marca')['venta_bruta'].sum().to_dict()
+    ly_mar_m = df_ly.groupby('marca')['margen_front'].sum().to_dict()
+    ly_cat = df_ly.groupby('categoria_hijo')['venta_bruta'].sum().to_dict()
+    ly_cat_m = df_ly.groupby('categoria_hijo')['margen_front'].sum().to_dict()
 
     # KPIs
     b_ty = df_mes['venta_bruta'].sum(); n_ty = df_mes['venta_neta'].sum()
@@ -140,7 +188,8 @@ def render_html(df):
     yoy_m = (m_ty/m_ly-1)*100 if m_ly else 0
 
     # Meta mes total
-    meta_mes = sum(v for (a,m,c), v in metas.items() if a==ano_actual and m==mes_actual)
+    # Meta total = por canal V06 ($577M; ya incluye Corp/Distrib — Andrés 17-ago).
+    meta_mes = sum(v for (a, m, c), v in metas.items() if a == ano_actual and m == mes_actual)
     pct_meta = b_ty/meta_mes*100 if meta_mes else 0
     gap_meta = b_ty - meta_mes
 
@@ -172,7 +221,7 @@ def render_html(df):
         pm = r['margen']/r['neta']*100 if r['neta'] else 0
         pmeta = r['bruta']/meta_c*100 if meta_c else 0
         color = '#16A34A' if pmeta >= 80 else ('#EA580C' if pmeta >= 40 else '#DC2626')
-        can_rows += f'<tr><td>{r["canal"][:24]}</td><td align="right">{int(r["sos"]):,}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_c) if meta_c else "—"}</td><td align="right" style="color:{color}">{pmeta:.1f}%</td></tr>'
+        can_rows += f'<tr><td>{r["canal"][:24]}</td><td align="right">{int(r["sos"]):,}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_c) if meta_c else "—"}</td><td align="right" style="color:{color}">{pmeta:.1f}%</td>{_yoy_cell(r["bruta"], ly_can.get(r["canal"], 0))}{_yoy_cell(r["margen"], ly_can_m.get(r["canal"], 0))}</tr>'
 
     # Por línea de negocio (vs Meta V06)
     df_mes = df_mes.copy()
@@ -196,13 +245,16 @@ def render_html(df):
         neg_rows += (f'<tr><td>{neg}</td><td align="right">{int(r["sos"]):,}</td>'
                      f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td>'
                      f'<td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_n) if meta_n else "—"}</td>'
-                     f'<td align="right" style="color:{color}">{pmeta:.1f}%</td></tr>')
-    # fila total
-    pmeta_t = b_ty / meta_neg_tot * 100 if meta_neg_tot else 0
+                     f'<td align="right" style="color:{color}">{pmeta:.1f}%</td>'
+                     f'{_yoy_cell(r["bruta"], ly_neg.get(r["_neg"], 0))}'
+                     f'{_yoy_cell(r["margen"], ly_neg_m.get(r["_neg"], 0))}</tr>')
+    # fila total — meta oficial $577M (canal V06), consistente con el headline; las
+    # líneas individuales son la apertura (Corp/Distrib pueden sumar más: adelanto Sep).
+    pmeta_t = b_ty / meta_mes * 100 if meta_mes else 0
     neg_rows += (f'<tr style="font-weight:700;background:#F8FAFC"><td>TOTAL</td><td align="right">{s_ty:,}</td>'
                  f'<td align="right">{fmt_m(b_ty)}</td><td align="right">{fmt_m(m_ty)}</td>'
-                 f'<td align="right">{pm_ty:.1f}%</td><td align="right">{fmt_m(meta_neg_tot)}</td>'
-                 f'<td align="right">{pmeta_t:.1f}%</td></tr>')
+                 f'<td align="right">{pm_ty:.1f}%</td><td align="right">{fmt_m(meta_mes)}</td>'
+                 f'<td align="right">{pmeta_t:.1f}%</td>{_yoy_cell(b_ty, b_ly)}{_yoy_cell(m_ty, m_ly)}</tr>')
 
     # Top marcas
     g_mar = df_mes.groupby('marca').agg(
@@ -215,7 +267,7 @@ def render_html(df):
         pm = r['margen']/r['neta']*100 if r['neta'] else 0
         sh = r['bruta']/b_ty*100 if b_ty else 0
         ent = str(r['marca'] or '(s/m)')[:30]
-        mar_rows += f'<tr><td>{ent}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{sh:.1f}%</td></tr>'
+        mar_rows += f'<tr><td>{ent}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{sh:.1f}%</td>{_yoy_cell(r["bruta"], ly_mar.get(r["marca"], 0))}{_yoy_cell(r["margen"], ly_mar_m.get(r["marca"], 0))}</tr>'
 
     # Top categorías
     g_cat = df_mes.groupby('categoria_hijo').agg(
@@ -228,7 +280,7 @@ def render_html(df):
         pm = r['margen']/r['neta']*100 if r['neta'] else 0
         sh = r['bruta']/b_ty*100 if b_ty else 0
         ent = str(r['categoria_hijo'] or '(s/cat)')[:30]
-        cat_rows += f'<tr><td>{ent}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{sh:.1f}%</td></tr>'
+        cat_rows += f'<tr><td>{ent}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{sh:.1f}%</td>{_yoy_cell(r["bruta"], ly_cat.get(r["categoria_hijo"], 0))}{_yoy_cell(r["margen"], ly_cat_m.get(r["categoria_hijo"], 0))}</tr>'
 
     mes_nom = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][mes_actual]
     color_av = '#16A34A' if pct_meta >= 80 else ('#EA580C' if pct_meta >= 40 else '#DC2626')
@@ -268,22 +320,22 @@ def render_html(df):
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">🏢 Por línea de negocio (vs Meta V06)</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
-<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Línea de negocio</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th></tr></thead>
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Línea de negocio</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th><th align="right">YoY Vta</th><th align="right">YoY Mg</th></tr></thead>
 <tbody>{neg_rows}</tbody></table>
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">🏆 Top 15 canales acumulado mes (vs Meta V06)</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
-<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Canal</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th></tr></thead>
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Canal</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th><th align="right">YoY Vta</th><th align="right">YoY Mg</th></tr></thead>
 <tbody>{can_rows}</tbody></table>
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Top 10 marcas acumulado mes</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
-<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Marca</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">%Share</th></tr></thead>
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Marca</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">%Share</th><th align="right">YoY Vta</th><th align="right">YoY Mg</th></tr></thead>
 <tbody>{mar_rows}</tbody></table>
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">📂 Top 10 categorías acumulado mes</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
-<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Categoría</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">%Share</th></tr></thead>
+<thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Categoría</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">%Share</th><th align="right">YoY Vta</th><th align="right">YoY Mg</th></tr></thead>
 <tbody>{cat_rows}</tbody></table>
 
 <hr style="border:none;border-top:1px solid #E2E8F0;margin:24px 0">
