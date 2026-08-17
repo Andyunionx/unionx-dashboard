@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-17T12:19:53.572663",
+  "generado_en": "2026-08-17T18:21:19.122570",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13613,
-  "total_monto_pendiente_clp": 990431559.0,
+  "total_documentos_pendientes": 13729,
+  "total_monto_pendiente_clp": 995197888.0,
   "monto_por_aging": {
     "+90 días": 56447099.0,
-    "1-30 días": 557471840.0,
-    "31-60 días": 199567642.0,
+    "1-30 días": 560426261.0,
+    "31-60 días": 198368336.0,
     "61-90 días": 83001638.0,
-    "Vigente": 93943340.0
+    "Vigente": 96954554.0
   },
   "monto_por_tipo": {
-    "BOLETA": 769094165.0,
+    "BOLETA": 773860494.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 137069437.0
+      "monto": 136760996.0
     },
     {
       "partner": "LA VINOTECA SPA",
@@ -30,19 +30,19 @@
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 89186785.0
+      "monto": 91243045.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 68554289.0
+      "monto": 68855349.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 50630114.0
+      "monto": 50748084.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 46906459.0
+      "monto": 46992385.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -54,11 +54,11 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23545729.0
+      "monto": 23759609.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 20922753.0
+      "monto": 21756350.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -74,19 +74,19 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 13923598.0
+      "monto": 13937578.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 12450841.0
+      "monto": 12552301.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 11156184.0
     },
     {
       "partner": "Status Spa",
       "monto": 10837211.0
-    },
-    {
-      "partner": "Global Reward Solutions",
-      "monto": 10600833.0
     },
     {
       "partner": "Cencosud Retail S.A",
@@ -97,6 +97,6 @@
       "monto": 5565211.0
     }
   ],
-  "notas_credito_count": 468,
+  "notas_credito_count": 469,
   "pedidos_venta_count": 10000
 }
