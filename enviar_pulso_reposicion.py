@@ -50,6 +50,14 @@ def main():
         transito_ok = False
         print(f"[transito][WARN] {type(e).__name__}: {e} — se usa el último snapshot", flush=True)
 
+    # 1b) stock FBF de Falabella (API Seller Center, tolerante: si falla, el pulso
+    # cae al fallback Odoo/Martín para ese canal)
+    try:
+        import scrape_fala_fbf
+        scrape_fala_fbf.main()
+    except Exception as e:
+        print(f"[fbf][WARN] {type(e).__name__}: {e} — Falabella usa fallback", flush=True)
+
     # 2) pulso
     from pulso_reposicion_fulfillment import construir, construir_excel_dinamico
     fn = construir()

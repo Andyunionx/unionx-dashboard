@@ -156,6 +156,25 @@ def cargar_venta_digital(sem: list[int]) -> pd.DataFrame:
     return v
 
 
+FALA_FBF = ROOT / "data/stock/fala_fbf_live.parquet"
+
+
+def _override_fala(full_df):
+    """Reemplaza el stock de Falabella por el feed FBF real (scrape_fala_fbf, API
+    del Seller Center) si el parquet existe. Más fiable que el Odoo BF* / Martín."""
+    if not FALA_FBF.exists():
+        return full_df
+    try:
+        f = pd.read_parquet(FALA_FBF)[["canal", "sku", "qty"]].copy()
+        f["qty"] = pd.to_numeric(f["qty"], errors="coerce").fillna(0)
+        base = full_df[full_df["canal"] != "Falabella"]
+        out = pd.concat([base, f], ignore_index=True)
+        return out.groupby(["canal", "sku"], as_index=False)["qty"].sum()
+    except Exception as e:
+        print(f"[fbf][WARN] override Falabella falló: {type(e).__name__}: {e}", flush=True)
+        return full_df
+
+
 def stock_full_live(no_live: bool):
     det = pd.read_parquet(DETALLE)
     bcode = det["Bodega"].astype(str).str.split("/").str[0]
@@ -177,10 +196,15 @@ def stock_full_live(no_live: bool):
             canales_live = set(live["canal"].unique())
             base = pd.concat([live[["canal", "sku", "qty"]],
                               odoo_g[~odoo_g["canal"].isin(canales_live)]], ignore_index=True)
-            return base.groupby(["canal", "sku"], as_index=False)["qty"].sum(), fuente, cruce
+            full = base.groupby(["canal", "sku"], as_index=False)["qty"].sum()
+            if FALA_FBF.exists():
+                fuente += " · Falabella=FBF (API Seller Center)"
+            return _override_fala(full), fuente, cruce
         except Exception as e:
             print(f"[live][WARN] {type(e).__name__}: {e} -> Odoo BF*")
-    return odoo_g, fuente, cruce
+    if FALA_FBF.exists():
+        fuente += " · Falabella=FBF (API Seller Center)"
+    return _override_fala(odoo_g), fuente, cruce
 
 
 def transito_a_fulls():
@@ -338,8 +362,8 @@ def construir(no_download=False, no_live=False) -> Path:
              "que lo contienen (hoja Packs de Pricing). Umbral por canal = hoja Reglas."],
             ["Stock full", f"{fuente_live} + TRÁNSITO a fulls (picks internos pendientes hacia BF*)"],
             ["Blacklist/Large/Manual/MIN", "Panel de Nicole (drive original, actualización de los viernes)"],
-            ["", ""],
-            ["PENDIENTE", "Stock Falabella desde vista no-descarga (scraper de Claudia): se integra cuando exista feed."],
+            ["Stock Falabella", "FBF real desde la API del Seller Center (scrape_fala_fbf, endpoint "
+             "/fby/v2/inbound-shipments/products) — reemplaza el Odoo BF*/feed. Si no hay parquet fresco, cae al fallback."],
         ], columns=["Item", "Detalle"])
         stats.to_excel(w, sheet_name="Metodología", index=False)
         for ws in w.book.worksheets:
