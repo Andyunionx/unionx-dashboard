@@ -81,6 +81,70 @@ def enviar(asunto, html, adjunto_path, to, cc):
             print(f"send intento {i+1}: {type(e).__name__}"); time.sleep(8)
 
 
+def _rpc_conn():
+    import xmlrpc.client, time as _t
+    cfg = json.load(open(ROOT / "odoo/odoo_config.json"))["produccion"]
+    pw = os.environ.get("ANDRES_ODOO_PASSWORD", "") or (ROOT / "odoo/.odoo_pass").read_text().strip()
+    uid = xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/common").authenticate(cfg["db_name"], cfg["username"], pw, {})
+    def rpc(model, method, args, kw=None):
+        for i in range(3):
+            try:
+                return xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/object").execute_kw(
+                    cfg["db_name"], uid, pw, model, method, args, kw or {})
+            except Exception:
+                if i == 2:
+                    raise
+                _t.sleep(5)
+    return rpc
+
+
+def overlay_estado_vivo(df: pd.DataFrame) -> pd.DataFrame:
+    """Clasifica cada OC disponible según Odoo HOY: EMITIBLE (boleta posteada sin
+    NC) / FULFILLMENT (no emitir: liquidación) / SIN BOLETA / YA TIENE NC / SIN
+    PEDIDO MAPEADO. Regla Víctor 04-08."""
+    rpc = _rpc_conn()
+    peds = sorted(set(df["pedido"].dropna().astype(str)))
+    so = rpc("sale.order", "search_read", [[("name", "in", peds)]], {"fields": ["id", "name", "invoice_ids"]})
+    smap = {s["name"]: s for s in so}
+    inv_ids = sorted({i for s in so for i in s["invoice_ids"]})
+    invs = {}
+    for i in range(0, len(inv_ids), 300):
+        for v in rpc("account.move", "read", [inv_ids[i:i+300]], {"fields": ["move_type", "state"]}):
+            invs[v["id"]] = v
+    bol_ids = [v["id"] for v in invs.values() if v["move_type"] == "out_invoice" and v["state"] == "posted"]
+    rev = set()
+    for i in range(0, len(bol_ids), 300):
+        for r in rpc("account.move", "search_read",
+                     [[("move_type", "=", "out_refund"), ("state", "=", "posted"),
+                       ("reversed_entry_id", "in", bol_ids[i:i+300])]], {"fields": ["reversed_entry_id"]}):
+            rev.add(r["reversed_entry_id"][0])
+    oids = [s["id"] for s in so]
+    ffset = set()
+    for i in range(0, len(oids), 200):
+        for p in rpc("stock.picking", "search_read", [[("sale_id", "in", oids[i:i+200])]],
+                     {"fields": ["sale_id", "location_id"]}):
+            if str(p["location_id"][1] if p["location_id"] else "").split("/")[0].startswith("BF"):
+                ffset.add(p["sale_id"][0])
+    def clasificar(r):
+        s = smap.get(str(r["pedido"]))
+        if not s:
+            return "SIN PEDIDO MAPEADO"
+        ivs = [invs[i] for i in s["invoice_ids"] if i in invs]
+        boletas = [v for v in ivs if v["move_type"] == "out_invoice" and v["state"] == "posted"]
+        ncs = [v for v in ivs if v["move_type"] == "out_refund" and v["state"] == "posted"]
+        if s["id"] in ffset:
+            return "FULFILLMENT — no emitir (liquidación)"
+        if ncs or any(b["id"] in rev for b in boletas):
+            return "YA TIENE NC"
+        if not boletas:
+            return "SIN BOLETA — no emitir"
+        return "EMITIBLE"
+    df = df.copy()
+    df["estado_vivo"] = df.apply(clasificar, axis=1)
+    print(f"[devoluciones-vivo] {df['estado_vivo'].value_counts().to_dict()}")
+    return df
+
+
 def recompute_cancelados() -> pd.DataFrame:
     """Recalcula EN VIVO el universo de cancelados 2026 con boleta y sin NC.
     Filtros de auditoría (04/05-08): sin NC por reversa directa, sin fulfillment,
@@ -170,12 +234,16 @@ def main():
     hoy = datetime.date.today()
     semana = hoy.isocalendar()[1]
 
-    # --- sección 1: devoluciones (archivo del agente, hoja EMITIBLES)
+    # --- sección 1: devoluciones. El agente escribe la hoja "N NC a emitir";
+    # el overlay de estado vivo (boleta posteada / fulfillment / ya-NC) se
+    # calcula AQUÍ en cada corrida (el agente pisa el archivo al regenerar).
     F = OUT / "NC_2026_DISPONIBLES_emitir.xlsx"
     xl = pd.ExcelFile(F)
-    em = xl.parse([s for s in xl.sheet_names if "EMITIBLES" in s][0])
-    full_exc = xl.parse([s for s in xl.sheet_names if "revisadas" in s][0])
-    ff = full_exc[full_exc["estado_vivo"].str.startswith("FULFILLMENT")]
+    hoja_emitir = [s for s in xl.sheet_names if "emitir" in s.lower()][0]
+    disp = xl.parse(hoja_emitir)
+    disp = overlay_estado_vivo(disp)
+    em = disp[disp["estado_vivo"] == "EMITIBLE"]
+    ff = disp[disp["estado_vivo"].str.startswith("FULFILLMENT")]
     piv_dev = em.pivot_table(index="mes", columns="canal", values="monto_NC", aggfunc="sum").fillna(0)
     piv_dev["TOTAL"] = piv_dev.sum(axis=1)
 
