@@ -180,6 +180,20 @@ def render_html(df):
     dev_ty = df_mes.loc[df_mes['tipo_movimiento'] == 'Devolución', 'venta_bruta'].sum()
     venta_gross_ty = b_ty - dev_ty  # venta bruta ANTES de devoluciones
 
+    # ── Margen Final (ago-2026+): margen front − comisión − logística (marketing FUERA).
+    # comisión/logística vienen por fila del extract (Odoo real + matriz/tarifario);
+    # margen_final = margen_front − com − log. Ver memoria channel_fee_structures.
+    for _c in ('comision', 'logistica', 'margen_final'):
+        if _c in df_mes.columns:
+            df_mes[_c] = pd.to_numeric(df_mes[_c], errors='coerce').fillna(0)
+        else:
+            df_mes[_c] = 0.0
+    com_ty = df_mes['comision'].sum()
+    log_ty = df_mes['logistica'].sum()
+    mfin_ty = df_mes['margen_final'].sum()
+    pm_final = mfin_ty / n_ty * 100 if n_ty else 0
+    tiene_mfinal = (com_ty + log_ty) > 0   # solo tiene sentido ago-2026+
+
     b_ly = df_ly['venta_bruta'].sum(); m_ly = df_ly['margen_front'].sum()
     n_ly = df_ly['venta_neta'].sum()
     pm_ly = m_ly/n_ly*100 if n_ly else 0
@@ -282,6 +296,59 @@ def render_html(df):
         ent = str(r['categoria_hijo'] or '(s/cat)')[:30]
         cat_rows += f'<tr><td>{ent}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{sh:.1f}%</td>{_yoy_cell(r["bruta"], ly_cat.get(r["categoria_hijo"], 0))}{_yoy_cell(r["margen"], ly_cat_m.get(r["categoria_hijo"], 0))}</tr>'
 
+    # ── Sección Margen Final (ago-2026+): apertura venta→front→comisión→logística→final.
+    # Solo se renderiza si hay comisión/logística en el período (evita ruido pre-agosto).
+    def _mfin_rows(gcol, total_label=None):
+        g = df_mes.groupby(gcol).agg(
+            neta=('venta_neta', 'sum'), mf=('margen_front', 'sum'),
+            com=('comision', 'sum'), log=('logistica', 'sum'), mfin=('margen_final', 'sum'),
+        ).reset_index().sort_values('neta', ascending=False)
+        g = g[g['neta'] != 0].head(15)
+        rows = ''
+        for _, r in g.iterrows():
+            pmf = r['mfin'] / r['neta'] * 100 if r['neta'] else 0
+            colp = '#16A34A' if pmf >= 25 else ('#EA580C' if pmf >= 12 else '#DC2626')
+            ent = str(r[gcol] or '—')[:24]
+            rows += (f'<tr><td>{ent}</td><td align="right">{fmt_m(r["neta"])}</td>'
+                     f'<td align="right">{fmt_m(r["mf"])}</td><td align="right">{fmt_m(r["com"])}</td>'
+                     f'<td align="right">{fmt_m(r["log"])}</td><td align="right"><b>{fmt_m(r["mfin"])}</b></td>'
+                     f'<td align="right" style="color:{colp};font-weight:600">{pmf:.1f}%</td></tr>')
+        if total_label:
+            pmf_t = mfin_ty / n_ty * 100 if n_ty else 0
+            rows += (f'<tr style="font-weight:700;background:#F8FAFC"><td>{total_label}</td>'
+                     f'<td align="right">{fmt_m(n_ty)}</td><td align="right">{fmt_m(m_ty)}</td>'
+                     f'<td align="right">{fmt_m(com_ty)}</td><td align="right">{fmt_m(log_ty)}</td>'
+                     f'<td align="right">{fmt_m(mfin_ty)}</td><td align="right">{pmf_t:.1f}%</td></tr>')
+        return rows
+
+    if tiene_mfinal:
+        _th = ('<thead><tr style="background:#F0FDF4;border-bottom:2px solid #BBF7D0">'
+               '<th align="left">{d}</th><th align="right">Venta neta</th><th align="right">Mg Front</th>'
+               '<th align="right">Comisión</th><th align="right">Logística</th><th align="right">Mg Final</th>'
+               '<th align="right">%MFin</th></tr></thead>')
+        # Box resumen (waterfall) — va como headline tras el YoY.
+        _mfin_box = f"""
+<div style="background:#F0FDF4;border-left:4px solid #16A34A;padding:14px;border-radius:6px;margin:16px 0">
+  <div style="font-size:0.75rem;color:#166534;text-transform:uppercase;letter-spacing:0.05em">💰 Margen Final (contribución directa) · ago-2026+</div>
+  <div style="font-size:1.5rem;font-weight:700;color:#15803D;margin:2px 0">{fmt_m(mfin_ty)} <span style="font-size:0.9rem;font-weight:600;color:#64748B">({pm_final:.1f}% s/neta)</span></div>
+  <div style="font-size:0.85rem;color:#64748B">Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) − Comisión {fmt_m(com_ty)} − Logística {fmt_m(log_ty)} = <b>Margen Final {fmt_m(mfin_ty)}</b><br>
+  <span style="font-size:0.8rem">Comisión: Odoo (ML/Paris/Ripley/Walmart) + tarifario Falabella/flat. Logística: Odoo marketplaces + tarifario BlueX (webs/B2B/LATAM/GRS). Marketing FUERA.</span></div>
+</div>"""
+        # Tabla margen final por línea de negocio — va DESPUÉS de "Por línea de negocio".
+        _mfin_neg = f"""
+<h3 style="margin:16px 0 8px 0;font-size:0.95rem;color:#15803D">💰 Margen Final por línea de negocio (ago-2026+)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+{_th.replace('{d}', 'Línea de negocio')}
+<tbody>{_mfin_rows('tipo_negocio', total_label='TOTAL')}</tbody></table>"""
+        # Tabla margen final por canal — va DESPUÉS de "Top 15 canales".
+        _mfin_can = f"""
+<h3 style="margin:16px 0 8px 0;font-size:0.95rem;color:#15803D">💰 Margen Final — Top 15 canales (ago-2026+)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+{_th.replace('{d}', 'Canal')}
+<tbody>{_mfin_rows('canal')}</tbody></table>"""
+    else:
+        _mfin_box = _mfin_neg = _mfin_can = ''
+
     mes_nom = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][mes_actual]
     color_av = '#16A34A' if pct_meta >= 80 else ('#EA580C' if pct_meta >= 40 else '#DC2626')
 
@@ -301,6 +368,7 @@ def render_html(df):
     Meta {mes_nom}: {fmt_m(meta_mes)} · <b style="color:{color_av}">{pct_meta:.1f}%</b> · gap {fmt_m(gap_meta)} ·
     Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) · {u_ty:,} uds · {s_ty:,} pedidos<br>
     Venta bruta {fmt_m(venta_gross_ty)} · Devoluciones {fmt_m(dev_ty)} · = <b>{fmt_m(b_ty)}</b> neto de devoluciones
+    {f'<br>💰 <b style="color:#15803D">Margen Final {fmt_m(mfin_ty)} ({pm_final:.1f}%)</b> — tras comisión {fmt_m(com_ty)} + logística {fmt_m(log_ty)} (marketing fuera)' if tiene_mfinal else ''}
   </div>
 </div>
 
@@ -312,7 +380,7 @@ def render_html(df):
     <tr style="border-top:1px solid #E2E8F0"><td>YoY:</td><td align="right">Venta <span style="color:{cl(yoy_v)};font-weight:600">{yoy_v:+.1f}%</span> · Margen <span style="color:{cl(yoy_m)};font-weight:600">{yoy_m:+.1f}%</span></td></tr>
   </table>
 </div>
-
+{_mfin_box}
 <h3 style="margin:24px 0 8px 0;font-size:1rem">📅 Por día — {mes_nom} {ano_actual}</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Día</th><th align="right">SOs</th><th align="right">Uds</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th></tr></thead>
@@ -322,11 +390,13 @@ def render_html(df):
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Línea de negocio</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th><th align="right">YoY Vta</th><th align="right">YoY Mg</th></tr></thead>
 <tbody>{neg_rows}</tbody></table>
+{_mfin_neg}
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">🏆 Top 15 canales acumulado mes (vs Meta V06)</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
 <thead><tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0"><th align="left">Canal</th><th align="right">SOs</th><th align="right">Bruta</th><th align="right">Margen</th><th align="right">%M</th><th align="right">Meta</th><th align="right">%Meta</th><th align="right">YoY Vta</th><th align="right">YoY Mg</th></tr></thead>
 <tbody>{can_rows}</tbody></table>
+{_mfin_can}
 
 <h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Top 10 marcas acumulado mes</h3>
 <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
@@ -351,16 +421,49 @@ Fuente: parquet local (Odoo + CMR + manuales) · Sin Delivery_*.
     return html, b_ty, ayer, mes_nom
 
 
+def _resumen_margen_final(df_mes):
+    """Apertura Venta→Front→Comisión→Logística→Final por línea de negocio y por canal.
+    Devuelve DataFrame apilado (dos bloques) o None si no hay comisión/logística (pre-ago)."""
+    d = df_mes.copy()
+    for c in ('venta_neta', 'margen_front', 'comision', 'logistica', 'margen_final'):
+        d[c] = pd.to_numeric(d[c], errors='coerce').fillna(0) if c in d.columns else 0.0
+    if (d['comision'].sum() + d['logistica'].sum()) == 0:
+        return None
+
+    def _bloque(gcol, titulo):
+        g = d.groupby(gcol).agg(
+            **{'Venta neta': ('venta_neta', 'sum'), 'Margen Front': ('margen_front', 'sum'),
+               'Comisión': ('comision', 'sum'), 'Logística': ('logistica', 'sum'),
+               'Margen Final': ('margen_final', 'sum')}).reset_index().rename(columns={gcol: 'Detalle'})
+        g = g[g['Venta neta'] != 0].sort_values('Venta neta', ascending=False)
+        g['% MFin'] = (g['Margen Final'] / g['Venta neta'] * 100).round(1)
+        tot = pd.DataFrame([{'Detalle': 'TOTAL', 'Venta neta': g['Venta neta'].sum(),
+                             'Margen Front': g['Margen Front'].sum(), 'Comisión': g['Comisión'].sum(),
+                             'Logística': g['Logística'].sum(), 'Margen Final': g['Margen Final'].sum(),
+                             '% MFin': round(g['Margen Final'].sum() / g['Venta neta'].sum() * 100, 1) if g['Venta neta'].sum() else 0}])
+        cab = pd.DataFrame([{'Detalle': titulo}])
+        return pd.concat([cab, g, tot], ignore_index=True)
+
+    cols = ['Detalle', 'Venta neta', 'Margen Front', 'Comisión', 'Logística', 'Margen Final', '% MFin']
+    blank = pd.DataFrame([{c: '' for c in cols}])
+    out = pd.concat([_bloque('tipo_negocio', 'POR LÍNEA DE NEGOCIO'), blank,
+                     _bloque('canal', 'POR CANAL')], ignore_index=True)
+    return out[cols]
+
+
 def generar_excel_mes(df, ayer):
-    """Excel RAW acumulado mes 1 al ayer (sin venta_neta)."""
+    """Excel: hoja RAW acumulado mes (sin venta_neta) + hoja 'Resumen Margen Final'."""
     primer_dia = date(ayer.year, ayer.month, 1)
-    df_mes = df[(df['fv_dt'] >= primer_dia) & (df['fv_dt'] <= ayer)].copy()
-    drop_cols = [c for c in ['venta_neta','fv','fv_dt'] if c in df_mes.columns]
-    df_mes = df_mes.drop(columns=drop_cols)
+    df_full = df[(df['fv_dt'] >= primer_dia) & (df['fv_dt'] <= ayer)].copy()
+    resumen = _resumen_margen_final(df_full)  # antes de dropear venta_neta
+    drop_cols = [c for c in ['venta_neta', 'fv', 'fv_dt'] if c in df_full.columns]
+    df_mes = df_full.drop(columns=drop_cols)
     buf = io.BytesIO()
     sheet = f'{ayer.strftime("%Y-%m")} acum {ayer.strftime("%d")}'
     with pd.ExcelWriter(buf, engine='openpyxl') as w:
         df_mes.to_excel(w, index=False, sheet_name=sheet[:31])
+        if resumen is not None:
+            resumen.to_excel(w, index=False, sheet_name='Resumen Margen Final')
     return buf.getvalue(), len(df_mes)
 
 
