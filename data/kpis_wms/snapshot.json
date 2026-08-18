@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-08-18T03:45:51.082135",
+  "generado_en": "2026-08-18T15:33:47.194659",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.02653293498363921,
-      "total_pickings": 14058,
+      "valor": 0.02584713464070404,
+      "total_pickings": 14431,
       "on_time": 373,
-      "on_time_pct": 0.02653293498363921,
-      "in_full": 14051,
-      "in_full_pct": 0.9995020628823446,
+      "on_time_pct": 0.02584713464070404,
+      "in_full": 14424,
+      "in_full_pct": 0.9995149331300672,
       "both": 373,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.13253012048192772,
-      "total_pickings": 415,
-      "on_time": 59,
-      "on_time_pct": 0.14216867469879518,
-      "in_full": 408,
-      "in_full_pct": 0.983132530120482,
-      "both": 55,
+      "valor": 0.13647058823529412,
+      "total_pickings": 425,
+      "on_time": 62,
+      "on_time_pct": 0.14588235294117646,
+      "in_full": 418,
+      "in_full_pct": 0.9835294117647059,
+      "both": 58,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9995706081262412,
-      "ok": 18623,
-      "total": 18631,
+      "valor": 0.9995835935873413,
+      "ok": 19204,
+      "total": 19212,
       "errores": 8,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.707120303756994,
-      "n_recepciones": 278,
+      "valor": 11.66518020708881,
+      "n_recepciones": 279,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01012",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 14:22",
+          "done": "2026-08-18 14:23"
+        },
         {
           "picking": "CA1/IN/01011",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-11 14:56",
           "done": "2026-08-11 14:56"
-        },
-        {
-          "picking": "CA1/RET/01138",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:55",
-          "done": "2026-08-11 14:55"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9194838895696676,
-      "total_so": 14042,
-      "total_con_pickings": 13873,
-      "cumplidos": 12756,
+      "valor": 0.9397866399369943,
+      "total_so": 14136,
+      "total_con_pickings": 13967,
+      "cumplidos": 13126,
       "parciales": 17,
-      "sin_iniciar": 1100,
+      "sin_iniciar": 824,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.038038391040274,
-      "n_orders": 14306,
+      "valor": 46.35308371918834,
+      "n_orders": 14686,
       "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 27.236944444444443,
+      "mediana_h": 28.026666666666667,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9654,
+      "lineas": 10243,
       "mes": "2026-08",
       "error": null
     },
@@ -409,15 +409,15 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 41,
-          "tarde": 40,
-          "on_time_pct": 0.024390243902439025
+          "total": 44,
+          "tarde": 43,
+          "on_time_pct": 0.022727272727272728
         },
         {
           "cliente": "Sawa SPA",
-          "total": 60,
-          "tarde": 57,
-          "on_time_pct": 0.05
+          "total": 64,
+          "tarde": 61,
+          "on_time_pct": 0.046875
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -439,7 +439,7 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 16,
+          "total": 19,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -8104,42 +8104,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.02653293498363921,
-      "total_pickings": 14058,
+      "valor": 0.02584713464070404,
+      "total_pickings": 14431,
       "on_time": 373,
-      "on_time_pct": 0.02653293498363921,
-      "in_full": 14051,
-      "in_full_pct": 0.9995020628823446,
+      "on_time_pct": 0.02584713464070404,
+      "in_full": 14424,
+      "in_full_pct": 0.9995149331300672,
       "both": 373,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.13253012048192772,
-      "total_pickings": 415,
-      "on_time": 59,
-      "on_time_pct": 0.14216867469879518,
-      "in_full": 408,
-      "in_full_pct": 0.983132530120482,
-      "both": 55,
+      "valor": 0.13647058823529412,
+      "total_pickings": 425,
+      "on_time": 62,
+      "on_time_pct": 0.14588235294117646,
+      "in_full": 418,
+      "in_full_pct": 0.9835294117647059,
+      "both": 58,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9995706081262412,
-      "ok": 18623,
-      "total": 18631,
+      "valor": 0.9995835935873413,
+      "ok": 19204,
+      "total": 19212,
       "errores": 8,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.707120303756994,
-      "n_recepciones": 278,
+      "valor": 11.66518020708881,
+      "n_recepciones": 279,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01012",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 14:22",
+          "done": "2026-08-18 14:23"
+        },
         {
           "picking": "CA1/IN/01011",
           "proveedor": "",
@@ -8272,13 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-11 14:56",
           "done": "2026-08-11 14:56"
-        },
-        {
-          "picking": "CA1/RET/01138",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:55",
-          "done": "2026-08-11 14:55"
         }
       ],
       "error": null
