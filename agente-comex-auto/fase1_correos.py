@@ -25,7 +25,13 @@ import estado as st  # noqa: E402
 STEVEN = "topwillsteven@163.com"
 PROCESADO_LABEL = "COMEX/Auto-Procesado"
 INBOX = BASE / "data" / "inbox"
-RE_EMB = re.compile(r"(2[56]TP\d{4})", re.IGNORECASE)
+# Tolerante a typos de Steven: 26TP0815 / 26T0816 (sin P) / "26 TP 0815" → normaliza a 26TP####
+RE_EMB = re.compile(r"(2[56])\s*T\.?\s*P?\.?\s*(\d{4})", re.IGNORECASE)
+
+
+def norm_emb(texto: str) -> str | None:
+    m = RE_EMB.search(texto or "")
+    return f"{m.group(1)}TP{m.group(2)}" if m else None
 
 
 def clasificar_adjunto(filename: str) -> str | None:
@@ -40,12 +46,23 @@ def clasificar_adjunto(filename: str) -> str | None:
     return None
 
 
-def extraer_embarque(*textos: str) -> str | None:
-    for t in textos:
-        m = RE_EMB.search(t or "")
-        if m:
-            return m.group(1).upper()
-    return None
+def score_pi(filename: str) -> int:
+    """Prioridad de variante de PI: A+B gana; si es A+B modificado, ese; luego el resto.
+    (Regla Andrés 17-ago: para 0702 debe ser A+B.)"""
+    f = filename.upper().replace(" ", "")
+    s = 0
+    if "A+B" in f:
+        s += 10
+    if "MODIFIED" in f or "MODIFICAD" in f:
+        s += 1
+    return s
+
+
+def elegir_pi(candidatos: list) -> dict | None:
+    """Elige EL PI a costear entre las variantes: mayor score, desempate por fecha más nueva."""
+    if not candidatos:
+        return None
+    return sorted(candidatos, key=lambda d: (score_pi(d["filename"]), d.get("date", "")), reverse=True)[0]
 
 
 def escanear(dry_run: bool = True) -> dict:
@@ -71,13 +88,24 @@ def escanear(dry_run: bool = True) -> dict:
         if not dry_run and PROCESADO_LABEL_ID(gmail) in c.get("label_ids", []):
             continue
 
-        emb_subj = extraer_embarque(c.get("subject", ""))
+        emb_subj = norm_emb(c.get("subject", ""))
+        # embarques presentes por NOMBRE de archivo (para decidir si el fallback al asunto es seguro)
+        embs_por_archivo = {norm_emb(a["filename"]) for a in c.get("attachments", [])}
+        embs_por_archivo.discard(None)
+        ambiguo = len(embs_por_archivo) > 1  # el correo mezcla varios embarques
+
         encontrados = []
         for att in c.get("attachments", []):
             tipo = clasificar_adjunto(att["filename"])
             if not tipo:
                 continue
-            emb = extraer_embarque(att["filename"]) or emb_subj
+            emb = norm_emb(att["filename"])
+            if not emb:
+                # sin número en el archivo → usar asunto SOLO si el correo no mezcla embarques
+                if ambiguo:
+                    print(f"  [omitido] adjunto sin embarque en nombre y correo mezcla varios: {att['filename']}")
+                    continue
+                emb = emb_subj
             if not emb:
                 continue
             encontrados.append((emb, tipo, att))
@@ -87,22 +115,28 @@ def escanear(dry_run: bool = True) -> dict:
 
         for emb, tipo, att in encontrados:
             reg = st.get_embarque(estado, emb)
-            ya = reg.get(tipo.lower())
-            if ya and ya.get("filename") == att["filename"]:
+            lista = reg[f"{tipo.lower()}_candidatos"]
+            if any(d["filename"] == att["filename"] for d in lista):
                 continue  # ya lo teníamos
             doc = {"msg_id": c["id"], "filename": att["filename"],
-                   "attachment_id": att["attachment_id"], "subject": c.get("subject", "")}
+                   "attachment_id": att["attachment_id"], "subject": c.get("subject", ""),
+                   "date": c.get("date", "")}
             if not dry_run:
                 save_dir = INBOX / emb
                 path = gmail.download_attachment(c["id"], att["attachment_id"], att["filename"], str(save_dir))
                 doc["path"] = str(path)
-            reg[tipo.lower()] = doc
+            lista.append(doc)
             nuevos_docs += 1
+            # recomputar EL elegido: PI por regla A+B; PL por más nuevo
+            if tipo == "PI":
+                reg["pi"] = elegir_pi(reg["pi_candidatos"])
+            else:
+                reg["pl"] = sorted(reg["pl_candidatos"], key=lambda d: d.get("date", ""), reverse=True)[0]
             st.log(reg, f"{tipo} detectado: {att['filename']}" + (" (dry-run)" if dry_run else " · descargado"))
 
             # ¿completó PI+PL? → avanzar a fase 2
             if reg.get("pi") and reg.get("pl") and reg["fase"] == 1:
-                st.set_fase(reg, 2, "PI+PL completos → esperando flete Seimex")
+                st.set_fase(reg, 2, f"PI+PL completos (PI elegido: {reg['pi']['filename']}) → esperando flete Seimex")
 
         # dejar NO LEÍDO + label procesado (solo fuera de dry-run)
         if not dry_run:

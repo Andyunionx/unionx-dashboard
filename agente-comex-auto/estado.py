@@ -44,6 +44,7 @@ def get_embarque(estado: dict, emb: str) -> dict:
         estado[emb] = {
             "embarque": emb, "fase": 1,
             "pi": None, "pl": None,
+            "pi_candidatos": [], "pl_candidatos": [],
             "flete_usd": None, "flete_moneda": None,
             "seimex_ref": None, "eta_puerto": None, "eta_bodega": None,
             "costeo_path": None, "skus": [], "skus_faltantes": None,
