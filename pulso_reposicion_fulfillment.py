@@ -166,7 +166,11 @@ def _override_fala(full_df):
         return full_df
     try:
         f = pd.read_parquet(FALA_FBF)[["canal", "sku", "qty"]].copy()
-        f["qty"] = pd.to_numeric(f["qty"], errors="coerce").fillna(0)
+        # El Seller Center devuelve availableStock NEGATIVO en SKU con overstock/
+        # reservas (55 SKU, -211 uds al 14-ago). Un stock disponible negativo no es
+        # real → se piso a 0. Si no, live_q<0 infla el sugerido (repo=objetivo-live_q
+        # = objetivo+|neg|) en vez de dar 0. (Reporte Claudia, sem 34.)
+        f["qty"] = pd.to_numeric(f["qty"], errors="coerce").fillna(0).clip(lower=0)
         base = full_df[full_df["canal"] != "Falabella"]
         out = pd.concat([base, f], ignore_index=True)
         return out.groupby(["canal", "sku"], as_index=False)["qty"].sum()
@@ -312,7 +316,9 @@ def construir(no_download=False, no_live=False) -> Path:
             candidatos = {"Venta": ume * cob, "Piso mínimo": umin, "Manual": manual or 0}
             origen = max(candidatos, key=candidatos.get)
             objetivo = candidatos[origen]
-            live_q = float(full_map.get((canal, sku), 0)) + float(tr_fulls.get((canal, sku), 0))
+            # Stock disponible en full + tránsito hacia la bodega BF*. Piso a 0: un
+            # stock negativo del canal (overstock/reservas) no debe inflar el objetivo.
+            live_q = max(0.0, float(full_map.get((canal, sku), 0)) + float(tr_fulls.get((canal, sku), 0)))
             restr = 1 if cob_ca1 < reglas.loc[canal, "restr"] else 0
             repo = 0 if (black or restr or es_out) else mult2(max(0, objetivo - live_q))
             filas.append({
