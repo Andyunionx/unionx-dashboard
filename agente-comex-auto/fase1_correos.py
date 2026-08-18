@@ -142,8 +142,8 @@ def escanear(dry_run: bool = True) -> dict:
         if not dry_run:
             gmail.add_label(c["id"], PROCESADO_LABEL)  # NO llamamos mark_as_read → queda sin leer
 
-    if not dry_run:
-        st.guardar(estado)
+    # El estado es un JSON local (no muta Gmail) → se persiste siempre para encadenar fases
+    st.guardar(estado)
 
     print(f"\nDocumentos nuevos detectados: {nuevos_docs}")
     print("Estado actual:")
