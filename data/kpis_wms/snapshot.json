@@ -1,40 +1,96 @@
 {
-  "generado_en": "2026-08-17T15:26:47.908282",
+  "generado_en": "2026-08-18T03:45:51.082135",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.02775091139052154,
-      "total_pickings": 13441,
+      "valor": 0.02653293498363921,
+      "total_pickings": 14058,
       "on_time": 373,
-      "on_time_pct": 0.02775091139052154,
-      "in_full": 13435,
-      "in_full_pct": 0.9995536046425118,
+      "on_time_pct": 0.02653293498363921,
+      "in_full": 14051,
+      "in_full_pct": 0.9995020628823446,
       "both": 373,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.12469437652811736,
-      "total_pickings": 409,
-      "on_time": 55,
-      "on_time_pct": 0.13447432762836187,
-      "in_full": 402,
-      "in_full_pct": 0.9828850855745721,
-      "both": 51,
+      "valor": 0.13253012048192772,
+      "total_pickings": 415,
+      "on_time": 59,
+      "on_time_pct": 0.14216867469879518,
+      "in_full": 408,
+      "in_full_pct": 0.983132530120482,
+      "both": 55,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9995510410236265,
-      "ok": 17811,
-      "total": 17819,
+      "valor": 0.9995706081262412,
+      "ok": 18623,
+      "total": 18631,
       "errores": 8,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.053060699588476,
-      "n_recepciones": 270,
+      "valor": 11.707120303756994,
+      "n_recepciones": 278,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01011",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 17:05",
+          "done": "2026-08-17 17:05"
+        },
+        {
+          "picking": "CA1/IN/01010",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 17:03",
+          "done": "2026-08-17 17:04"
+        },
+        {
+          "picking": "CA1/IN/01009",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 17:02",
+          "done": "2026-08-17 17:02"
+        },
+        {
+          "picking": "CA1/IN/01008",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-17 16:57",
+          "done": "2026-08-17 17:01"
+        },
+        {
+          "picking": "CA1/IN/01007",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-17 16:38",
+          "done": "2026-08-17 16:46"
+        },
+        {
+          "picking": "CA1/RET/01143",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 15:49",
+          "done": "2026-08-17 15:50"
+        },
+        {
+          "picking": "CA1/RET/01144",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 15:50",
+          "done": "2026-08-17 15:50"
+        },
+        {
+          "picking": "CA1/RET/01142",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 15:49",
+          "done": "2026-08-17 15:49"
+        },
         {
           "picking": "CA1/IN/01006",
           "proveedor": "",
@@ -118,81 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-11 14:55",
           "done": "2026-08-11 14:55"
-        },
-        {
-          "picking": "CA1/RET/01137",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 12:53",
-          "done": "2026-08-11 12:53"
-        },
-        {
-          "picking": "CA1/RET/01136",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 12:52",
-          "done": "2026-08-11 12:52"
-        },
-        {
-          "picking": "CA1/IN/00991",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 12:46",
-          "done": "2026-08-11 12:48"
-        },
-        {
-          "picking": "CA1/RET/01134",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-10 20:38",
-          "done": "2026-08-10 20:38"
-        },
-        {
-          "picking": "CA1/IN/00976",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 136.3,
-          "scheduled": "2026-08-04 22:41",
-          "done": "2026-08-10 14:59"
-        },
-        {
-          "picking": "CA1/IN/00987",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-06 20:32",
-          "done": "2026-08-06 20:36"
-        },
-        {
-          "picking": "CA1/IN/00986",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 16:38",
-          "done": "2026-08-06 16:41"
-        },
-        {
-          "picking": "CA1/IN/00984",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 15:33",
-          "done": "2026-08-06 15:34"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8976673647721528,
-      "total_so": 14016,
-      "total_con_pickings": 13847,
-      "cumplidos": 12430,
-      "parciales": 11,
-      "sin_iniciar": 1406,
+      "valor": 0.9194838895696676,
+      "total_so": 14042,
+      "total_con_pickings": 13873,
+      "cumplidos": 12756,
+      "parciales": 17,
+      "sin_iniciar": 1100,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.25753839815559,
-      "n_orders": 13687,
+      "valor": 46.038038391040274,
+      "n_orders": 14306,
       "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 26.685555555555556,
+      "mediana_h": 27.236944444444443,
       "detalle": [
         {
           "so": "S261093",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 8842,
+      "lineas": 9654,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 117,
-      "outgoing": 29200,
-      "internal": 20683,
+      "outgoing": 29226,
+      "internal": 20657,
       "total": 50000,
       "error": null
     },
@@ -402,6 +402,12 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Celmedia Fidelizacion SPA",
           "total": 41,
           "tarde": 40,
@@ -433,19 +439,13 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 15,
+          "total": 16,
           "tarde": 0,
           "on_time_pct": 1.0
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
-          "total": 9,
-          "tarde": 0,
-          "on_time_pct": 1.0
-        },
-        {
-          "cliente": "Agricola Escargot Premium SpA",
-          "total": 3,
+          "total": 12,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8104,42 +8104,98 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.02775091139052154,
-      "total_pickings": 13441,
+      "valor": 0.02653293498363921,
+      "total_pickings": 14058,
       "on_time": 373,
-      "on_time_pct": 0.02775091139052154,
-      "in_full": 13435,
-      "in_full_pct": 0.9995536046425118,
+      "on_time_pct": 0.02653293498363921,
+      "in_full": 14051,
+      "in_full_pct": 0.9995020628823446,
       "both": 373,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.12469437652811736,
-      "total_pickings": 409,
-      "on_time": 55,
-      "on_time_pct": 0.13447432762836187,
-      "in_full": 402,
-      "in_full_pct": 0.9828850855745721,
-      "both": 51,
+      "valor": 0.13253012048192772,
+      "total_pickings": 415,
+      "on_time": 59,
+      "on_time_pct": 0.14216867469879518,
+      "in_full": 408,
+      "in_full_pct": 0.983132530120482,
+      "both": 55,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9995510410236265,
-      "ok": 17811,
-      "total": 17819,
+      "valor": 0.9995706081262412,
+      "ok": 18623,
+      "total": 18631,
       "errores": 8,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.053060699588476,
-      "n_recepciones": 270,
+      "valor": 11.707120303756994,
+      "n_recepciones": 278,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01011",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 17:05",
+          "done": "2026-08-17 17:05"
+        },
+        {
+          "picking": "CA1/IN/01010",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 17:03",
+          "done": "2026-08-17 17:04"
+        },
+        {
+          "picking": "CA1/IN/01009",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 17:02",
+          "done": "2026-08-17 17:02"
+        },
+        {
+          "picking": "CA1/IN/01008",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-17 16:57",
+          "done": "2026-08-17 17:01"
+        },
+        {
+          "picking": "CA1/IN/01007",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-17 16:38",
+          "done": "2026-08-17 16:46"
+        },
+        {
+          "picking": "CA1/RET/01143",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 15:49",
+          "done": "2026-08-17 15:50"
+        },
+        {
+          "picking": "CA1/RET/01144",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 15:50",
+          "done": "2026-08-17 15:50"
+        },
+        {
+          "picking": "CA1/RET/01142",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-17 15:49",
+          "done": "2026-08-17 15:49"
+        },
         {
           "picking": "CA1/IN/01006",
           "proveedor": "",
@@ -8223,62 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-11 14:55",
           "done": "2026-08-11 14:55"
-        },
-        {
-          "picking": "CA1/RET/01137",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 12:53",
-          "done": "2026-08-11 12:53"
-        },
-        {
-          "picking": "CA1/RET/01136",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 12:52",
-          "done": "2026-08-11 12:52"
-        },
-        {
-          "picking": "CA1/IN/00991",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 12:46",
-          "done": "2026-08-11 12:48"
-        },
-        {
-          "picking": "CA1/RET/01134",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-10 20:38",
-          "done": "2026-08-10 20:38"
-        },
-        {
-          "picking": "CA1/IN/00976",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 136.3,
-          "scheduled": "2026-08-04 22:41",
-          "done": "2026-08-10 14:59"
-        },
-        {
-          "picking": "CA1/IN/00987",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-06 20:32",
-          "done": "2026-08-06 20:36"
-        },
-        {
-          "picking": "CA1/IN/00986",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 16:38",
-          "done": "2026-08-06 16:41"
-        },
-        {
-          "picking": "CA1/IN/00984",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-06 15:33",
-          "done": "2026-08-06 15:34"
         }
       ],
       "error": null
