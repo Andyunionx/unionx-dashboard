@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-18T12:21:40.175082",
+  "generado_en": "2026-08-18T18:20:15.633562",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12859,
-  "total_monto_pendiente_clp": 964423157.0,
+  "total_documentos_pendientes": 12929,
+  "total_monto_pendiente_clp": 958067729.0,
   "monto_por_aging": {
     "+90 días": 56628490.0,
-    "1-30 días": 525887647.0,
+    "1-30 días": 527667356.0,
     "31-60 días": 199807987.0,
     "61-90 días": 84775665.0,
-    "Vigente": 97323368.0
+    "Vigente": 89188231.0
   },
   "monto_por_tipo": {
-    "BOLETA": 743085763.0,
+    "BOLETA": 736730335.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 138666764.0
+      "monto": 139289301.0
     },
     {
       "partner": "LA VINOTECA SPA",
@@ -34,27 +34,27 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 57078709.0
+      "monto": 57448357.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 51266884.0
+      "monto": 51365794.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 45509914.0
+      "monto": 45597885.0
     },
     {
       "partner": "FALABELLA.COM",
       "monto": 43767512.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 22341199.0
+      "partner": "Duty Free T C S A",
+      "monto": 22927005.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 22227926.0
+      "partner": "Cliente Paris",
+      "monto": 22499129.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -70,11 +70,11 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 14356738.0
+      "monto": 14441678.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 13189451.0
+      "monto": 13198441.0
     },
     {
       "partner": "abc S.A.",
@@ -85,16 +85,16 @@
       "monto": 10837211.0
     },
     {
-      "partner": "Cencosud Retail S.A",
-      "monto": 9934406.0
-    },
-    {
       "partner": "INVERSIONES MAVAPA SPA, INVERSIONES MAVAPA SPA",
       "monto": 5565211.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
+    },
+    {
+      "partner": "Agricola Escargot Premium SpA",
+      "monto": 3864264.0
     }
   ],
   "notas_credito_count": 466,
