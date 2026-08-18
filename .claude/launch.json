@@ -2,24 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "planif",
+      "name": "unionx-dashboard",
       "runtimeExecutable": "streamlit",
-      "runtimeArgs": ["run", "dashboard_planificacion.py", "--server.port=8501", "--server.headless=true"],
-      "port": 8501
-    },
-    {
-      "name": "backend",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["run.py"],
-      "cwd": "finanzas-unionx/backend",
-      "port": 5001
-    },
-    {
-      "name": "frontend",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "cwd": "finanzas-unionx/frontend",
-      "port": 5173
+      "runtimeArgs": ["run", "dashboard_planificacion.py", "--server.port=8502", "--server.headless=true"],
+      "port": 8502
     }
   ]
 }
