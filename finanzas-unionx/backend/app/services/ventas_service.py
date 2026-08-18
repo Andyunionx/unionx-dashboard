@@ -1002,6 +1002,36 @@ class VentasService(BaseOdooService):
         except Exception as _e:
             print(f"  [envio] omitido: {type(_e).__name__}: {_e}")
 
+        # Helper comisión+logística de una fila (Venta o NC) con la lógica del canal.
+        # venta_neta_signed NEGATIVO (NC) → devuelve com/log negativos = revierte la
+        # comisión de la venta devuelta. Fix: las NC dejaban comisión 0 → tasa efectiva
+        # inflada donde hay devoluciones (Nicole 18-ago, ej. Broadpeak LATAM 30%).
+        def _comlog_fila(canal_f, cat_hijo_f, bodega_f, venta_neta_signed, orden_dict, orden_id_f, fecha_local_f):
+            if not fecha_local_f or fecha_local_f < CUTOFF_ODOO_COMLOG:
+                return 0.0, 0.0, ''
+            if canal_f == 'Falabella':
+                _pc = _fala_com.get(str(cat_hijo_f).strip(), _fala_com_default)
+                _mod = ('Full' if ('Fulfillment' in str(bodega_f)
+                        or str(bodega_f).strip() == 'Bodega Kitchen Center') else 'Seller')
+                _pl = _fala_log.get(_mod, _fala_log.get('Seller', 0.0))
+                return venta_neta_signed * _pc / 100.0, venta_neta_signed * _pl / 100.0, 'matriz'
+            if canal_f in _flat_com:
+                _com = venta_neta_signed * _flat_com[canal_f] / 100.0
+                _log = 0.0
+                if canal_f in _ENVIO_CANALES:
+                    _vno = _venta_neta_orden.get(orden_id_f, 0)
+                    if _vno:
+                        _log = _envio_orden_val.get(orden_id_f, 0.0) * venta_neta_signed / _vno
+                return _com, _log, 'matriz'
+            # canales con comisión/logística en Odoo (ML/Paris/Ripley/Walmart) → prorratea
+            # la comisión de la ORDEN ORIGINAL por la fracción de venta devuelta.
+            _com_o, _log_o = _com_log_orden(orden_dict or {})
+            _vno = _venta_neta_orden.get(orden_id_f, 0)
+            if _vno and (_com_o or _log_o):
+                _frac = venta_neta_signed / _vno
+                return _com_o * _frac, _log_o * _frac, 'odoo'
+            return 0.0, 0.0, ''
+
         for linea in lineas:
             orden_id = linea['order_id'][0] if linea['order_id'] else None
             orden = ordenes_dict.get(orden_id, {})
@@ -1517,6 +1547,13 @@ class VentasService(BaseOdooService):
                                 venta_bruta_ln = -(nl.get('price_total', 0) or (nl.get('price_subtotal', 0) or 0) * 1.19)
                                 costo_total_ln = -(costo_unit_nc * qty_nc)
                                 margen_ln = venta_neta_ln - costo_total_ln  # = -venta + costo recuperado
+                                # Comisión/logística revertidas (negativas): la devolución
+                                # recupera la comisión que se cobró en la venta original.
+                                com_nc, log_nc, fuente_nc = _comlog_fila(
+                                    canal_nc, m['categoria_hijo'], bodega_nc, venta_neta_ln,
+                                    orden_orig or {}, (orden_orig or {}).get('id'), fecha_v_nc)
+                                comision_pct_nc = (com_nc / venta_neta_ln * 100) if venta_neta_ln else 0
+                                mg_final_ln = margen_ln - com_nc - log_nc
 
                                 nc_data.append({
                                     'Tipo Movimiento': 'Devolución',
@@ -1559,14 +1596,19 @@ class VentasService(BaseOdooService):
                                     'Costo Unitario': costo_unit_nc,
                                     'Costo Total': costo_total_ln,
                                     'Margen Front': margen_ln,
-                                    'Comision %': 0,
-                                    'Comisión': 0,
-                                    'Logística': 0,
+                                    'Comision %': comision_pct_nc,
+                                    'Comisión': com_nc,
+                                    'Logística': log_nc,
                                     'Marketing': 0,
-                                    'Mg final': margen_ln,
+                                    'Fuente Comisión': fuente_nc,
+                                    'Mg final': mg_final_ln,
                                 })
                         else:
                             # Fallback legacy: NC sin invoice_line_ids → fila agregada con costo proporcional
+                            com_ncf, log_ncf, fuente_ncf = _comlog_fila(
+                                canal_nc, '', bodega_nc, -nc_amount_abs,
+                                orden_orig or {}, (orden_orig or {}).get('id'), fecha_v_nc)
+                            comision_pct_ncf = (com_ncf / (-nc_amount_abs) * 100) if nc_amount_abs else 0
                             nc_data.append({
                                 'Tipo Movimiento': 'Devolución',
                                 'Bodega': bodega_nc,
@@ -1607,11 +1649,12 @@ class VentasService(BaseOdooService):
                                 'Costo Unitario': 0,
                                 'Costo Total': -costo_nc,
                                 'Margen Front': margen_nc,
-                                'Comision %': 0,
-                                'Comisión': 0,
-                                'Logística': 0,
+                                'Comision %': comision_pct_ncf,
+                                'Comisión': com_ncf,
+                                'Logística': log_ncf,
                                 'Marketing': 0,
-                                'Mg final': margen_nc,
+                                'Fuente Comisión': fuente_ncf,
+                                'Mg final': margen_nc - com_ncf - log_ncf,
                             })
 
             # Agregar las filas de NC al DataFrame
