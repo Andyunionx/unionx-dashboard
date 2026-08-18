@@ -104,32 +104,41 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
     reg["costeo_path"] = str(precosteo)
 
     existentes, faltantes = odoo_sku_check(productos)
+    sin_sku = sorted({p.model for p in productos if not (p.sku or "").strip()})  # productos sin código en el PI
     reg["skus"] = [p.sku for p in productos if p.sku]
     reg["skus_faltantes"] = faltantes
-    st.log(reg, f"costeado · {len(productos)} SKU · sobrecosto {embq.sobrecosto_pct:.1f}% · "
-                f"internado {embq.total_internado_clp:,.0f} CLP · faltantes Odoo: {len(faltantes)}")
-    print(f"  SKU existentes: {len(existentes)} | FALTANTES: {faltantes or '—'}")
+    reg["productos_sin_sku"] = sin_sku
+    pendientes = len(faltantes) + len(sin_sku)
+    st.log(reg, f"costeado · {len(productos)} prod · sobrecosto {embq.sobrecosto_pct:.1f}% · "
+                f"internado {embq.total_internado_clp:,.0f} CLP · SKU por crear: {len(faltantes)} · sin SKU: {len(sin_sku)}")
+    print(f"  SKU existentes: {len(existentes)} | POR CREAR: {faltantes or '—'} | SIN SKU en PI: {sin_sku or '—'}")
 
     if not dry_run:
-        _crear_borrador(embq, reg, out_dir, faltantes)
+        _crear_borrador(embq, reg, out_dir, faltantes, sin_sku)
 
-    # gate a fase 4
-    if not faltantes:
-        st.set_fase(reg, 4, "todos los SKU existen en Odoo → cargar PO")
+    # gate a fase 4: TODOS los productos resueltos (SKU existente en Odoo Y ningún producto sin código)
+    if pendientes == 0:
+        st.set_fase(reg, 4, "todos los productos con SKU en Odoo → cargar PO")
     else:
-        st.log(reg, f"quedan {len(faltantes)} SKU por crear → se re-chequea Odoo mañana")
+        st.log(reg, f"pendientes ({len(faltantes)} por crear + {len(sin_sku)} sin código) → re-chequea Odoo mañana")
 
 
-def _crear_borrador(embq, reg, out_dir, faltantes):
+def _crear_borrador(embq, reg, out_dir, faltantes, sin_sku=None):
     from gmail_client import GmailClient
+    sin_sku = sin_sku or []
     html_path = ce.generar_email_html(embq, out_dir)
     html = Path(html_path).read_text(encoding="utf-8")
     if faltantes:
         html += ("<div style='background:#fef9e7;border-left:4px solid #f1c40f;padding:12px;margin:16px 0'>"
                  f"<b>⚠️ SKU por crear en Odoo ({len(faltantes)}):</b> {', '.join(faltantes)}</div>")
+    if sin_sku:
+        html += ("<div style='background:#fdecea;border-left:4px solid #e74c3c;padding:12px;margin:16px 0'>"
+                 f"<b>⚠️ Productos del PI SIN SKU ({len(sin_sku)}) — asignar código antes de cargar la PO:</b> "
+                 f"{', '.join(sin_sku)}</div>")
     subj = f"[{embq.numero}] Costeo importación — {embq.puerto_nombre} — {embq.sobrecosto_pct:.1f}%"
-    if faltantes:
-        subj += f" · {len(faltantes)} SKU por crear"
+    pend = len(faltantes) + len(sin_sku)
+    if pend:
+        subj += f" · {pend} SKU pendientes"
     gmail = GmailClient()
     draft_id = gmail.create_draft(to=", ".join(DEST), subject=subj, body_html=html)
     st.log(reg, f"borrador creado (draft {draft_id}) → {', '.join(DEST)}")
