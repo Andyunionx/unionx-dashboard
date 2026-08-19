@@ -101,6 +101,7 @@ class VentasService(BaseOdooService):
                 prod_ids_faltantes,
                 ['id', 'name', 'default_code', 'qty_available'],
                 batch_size=100,
+                extra_domain=[('active', 'in', [True, False])],  # incluir archivados
             )
             for p in extras:
                 productos[p['id']] = p
@@ -367,7 +368,11 @@ class VentasService(BaseOdooService):
             'product.product',
             product_ids,
             ['id', 'name', 'default_code', 'qty_available'],
-            batch_size=100
+            batch_size=100,
+            # Incluir productos ARCHIVADOS (active=False): ventas B2B de líneas
+            # descontinuadas (ej. Caracol Natural, FAC 101528 $3,2M) salían sin SKU
+            # porque el search por defecto excluye archivados. (Andrés 19-ago.)
+            extra_domain=[('active', 'in', [True, False])],
         )
         return {p['id']: p for p in productos_list}
 
@@ -875,6 +880,11 @@ class VentasService(BaseOdooService):
                     canal = empresa_a_canal[key]
             if not canal:
                 canal = (channel_raw or '').strip()
+            # Shopify: Martín migró la web de Lhotse a Shopify → el canal llega como
+            # 'Shopify' pero es Lhotse web (Nicolás 19-ago). Unificar para que herede
+            # tipo_negocio 'Páginas propias' (hoy quedaba en blanco).
+            if canal.strip().lower() == 'shopify':
+                canal = 'Lhotse web'
             # Si quedó 'Web' (de Maestra o de Odoo), subdividir por channel_ref
             if canal == 'Web':
                 ref = str(channel_ref or '').upper()

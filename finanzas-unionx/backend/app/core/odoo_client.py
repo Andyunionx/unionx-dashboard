@@ -122,10 +122,12 @@ class OdooClient:
         return all_records
 
     def execute_in_batches(self, model: str, ids: List[int], fields: List[str],
-                          batch_size: int = 100) -> List[Dict]:
+                          batch_size: int = 100, extra_domain: List[tuple] = None) -> List[Dict]:
         """
         Ejecuta search_read en lotes adaptativos.
         Si un lote falla, reduce el tamaño y reintenta.
+        extra_domain: condiciones adicionales al dominio (ej. incluir archivados con
+        [('active','in',[True,False])]).
         """
         all_records = []
         current_batch_size = batch_size
@@ -134,7 +136,7 @@ class OdooClient:
         while i < len(ids):
             batch_ids = ids[i:i + current_batch_size]
             try:
-                domain = [('id', 'in', batch_ids)]
+                domain = [('id', 'in', batch_ids)] + list(extra_domain or [])
                 batch_records = self.search_read(model, domain, fields, limit=len(batch_ids))
                 all_records.extend(batch_records)
                 i += current_batch_size
