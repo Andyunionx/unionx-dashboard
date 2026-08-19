@@ -292,11 +292,15 @@ class VentasService(BaseOdooService):
             'client_order_ref', 'invoice_ids', 'warehouse_id', 'yuju_pack_id',
             'website_id', 'partner_shipping_id',   # comuna destino → envío tarifario
             # Comisión + envío por marketplace (Fase 1 margen final directo, ago-2026+).
-            # Viven a nivel orden → se prorratean por SKU. Falabella no las tiene (Fase 2).
+            # Viven a nivel orden → se prorratean por SKU.
             'x_meli_sale_fee', 'x_meli_shipping_fee',
             'x_paris_commission', 'x_paris_shipping_cost',
             'x_ripley_commission', 'x_walmart_commission_est',
             'yuju_marketplace_fee', 'yuju_seller_shipping_cost',
+            # Falabella: comisión REAL de liquidación Seller Center (entra sola a Odoo
+            # desde 6-ago). Monto BRUTO con IVA → /1.19. is_real=liquidada; si no, 0
+            # (decisión Andrés 19-ago: no estimar no liquidadas). Reemplaza el tarifario.
+            'x_fala_commission_est', 'x_fala_commission_is_real', 'x_fala_shipping_cost',
         ]
 
         all_orders = []
@@ -920,7 +924,11 @@ class VentasService(BaseOdooService):
             if 'walmart' in ch:
                 return (o.get('x_walmart_commission_est') or 0), (o.get('yuju_seller_shipping_cost') or 0)
             if 'falabella' in ch:
-                return 0, 0  # Fase 2 (matriz de tarifas por categoría)
+                # Comisión REAL de liquidación (bruto c/IVA → neto /1.19). Solo si ya
+                # está liquidada (is_real); si no, 0 (no estimar — Andrés 19-ago).
+                if o.get('x_fala_commission_is_real'):
+                    return (o.get('x_fala_commission_est') or 0) / 1.19, abs(o.get('x_fala_shipping_cost') or 0) / 1.19
+                return 0, 0
             return (o.get('yuju_marketplace_fee') or 0), (o.get('yuju_seller_shipping_cost') or 0)
 
         # venta neta por orden (denominador del prorrateo)
@@ -1019,12 +1027,8 @@ class VentasService(BaseOdooService):
         def _comlog_fila(canal_f, cat_hijo_f, bodega_f, venta_neta_signed, orden_dict, orden_id_f, fecha_local_f):
             if not fecha_local_f or fecha_local_f < CUTOFF_ODOO_COMLOG:
                 return 0.0, 0.0, ''
-            if canal_f == 'Falabella':
-                _pc = _fala_com.get(str(cat_hijo_f).strip(), _fala_com_default)
-                _mod = ('Full' if ('Fulfillment' in str(bodega_f)
-                        or str(bodega_f).strip() == 'Bodega Kitchen Center') else 'Seller')
-                _pl = _fala_log.get(_mod, _fala_log.get('Seller', 0.0))
-                return venta_neta_signed * _pc / 100.0, venta_neta_signed * _pl / 100.0, 'matriz'
+            # Falabella ya no va por matriz → cae a la rama Odoo (prorratea la comisión
+            # real de la orden original). Ver _com_log_orden.
             if canal_f in _flat_com:
                 _com = venta_neta_signed * _flat_com[canal_f] / 100.0
                 _log = 0.0
@@ -1224,17 +1228,13 @@ class VentasService(BaseOdooService):
                 venta_neta = venta_neta_post_nc
 
                 # ── Fase 2: comisión/logística de canales SIN dato en Odoo (matriz) ──
-                # Falabella: comisión por categoría (tarifario) + logística por modalidad.
-                # Shopify/KC: % flat. Se calcula sobre la venta neta de la fila (post-NC).
+                # Shopify/KC/LATAM/webs/B2B/GRS: % flat + envío tarifario. Falabella YA NO
+                # va por matriz: su comisión real entra por Odoo (Fase 1, x_fala_*) desde
+                # el 6-ago (Andrés 19-ago). El tarifario queda solo como referencia.
                 if fecha_venta_local >= CUTOFF_ODOO_COMLOG:
                     _pc = None
                     _pl = 0.0
-                    if canal_raw == 'Falabella':
-                        _pc = _fala_com.get(str(categoria_hijo).strip(), _fala_com_default)
-                        _mod = ('Full' if ('Fulfillment' in str(bodega_nombre)
-                                or str(bodega_nombre).strip() == 'Bodega Kitchen Center') else 'Seller')
-                        _pl = _fala_log.get(_mod, _fala_log.get('Seller', 0.0))
-                    elif canal_raw in _flat_com:
+                    if canal_raw in _flat_com:
                         _pc = _flat_com[canal_raw]
                         _pl = _flat_log.get(canal_raw, 0.0)
                     if _pc is not None:
