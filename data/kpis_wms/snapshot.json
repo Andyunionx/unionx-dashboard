@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-08-18T15:33:47.194659",
+  "generado_en": "2026-08-19T03:48:25.431963",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.02584713464070404,
-      "total_pickings": 14431,
-      "on_time": 373,
-      "on_time_pct": 0.02584713464070404,
-      "in_full": 14424,
-      "in_full_pct": 0.9995149331300672,
-      "both": 373,
+      "valor": 0.027101919437685862,
+      "total_pickings": 14796,
+      "on_time": 401,
+      "on_time_pct": 0.027101919437685862,
+      "in_full": 14789,
+      "in_full_pct": 0.9995268991619357,
+      "both": 401,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.13647058823529412,
-      "total_pickings": 425,
-      "on_time": 62,
-      "on_time_pct": 0.14588235294117646,
-      "in_full": 418,
-      "in_full_pct": 0.9835294117647059,
-      "both": 58,
+      "valor": 0.1319910514541387,
+      "total_pickings": 447,
+      "on_time": 63,
+      "on_time_pct": 0.14093959731543623,
+      "in_full": 440,
+      "in_full_pct": 0.9843400447427293,
+      "both": 59,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9995835935873413,
-      "ok": 19204,
-      "total": 19212,
+      "valor": 0.9995934132953852,
+      "ok": 19668,
+      "total": 19676,
       "errores": 8,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.66518020708881,
-      "n_recepciones": 279,
+      "valor": 11.500335689045937,
+      "n_recepciones": 283,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01152",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:38",
+          "done": "2026-08-18 19:38"
+        },
+        {
+          "picking": "CA1/RET/01150",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:36",
+          "done": "2026-08-18 19:37"
+        },
+        {
+          "picking": "CA1/RET/01151",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:37",
+          "done": "2026-08-18 19:37"
+        },
+        {
+          "picking": "CA1/RET/01148",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:35",
+          "done": "2026-08-18 19:35"
+        },
+        {
+          "picking": "CA1/RET/01146",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:33",
+          "done": "2026-08-18 19:33"
+        },
         {
           "picking": "CA1/IN/01012",
           "proveedor": "",
@@ -139,60 +174,25 @@
           "horas": -23.4,
           "scheduled": "2026-08-14 14:01",
           "done": "2026-08-13 14:37"
-        },
-        {
-          "picking": "CA1/IN/00996",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-12 16:36",
-          "done": "2026-08-12 16:37"
-        },
-        {
-          "picking": "CA1/IN/00993",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 313.1,
-          "scheduled": "2026-07-30 12:00",
-          "done": "2026-08-12 13:05"
-        },
-        {
-          "picking": "CA1/RET/01141",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:58",
-          "done": "2026-08-11 14:58"
-        },
-        {
-          "picking": "CA1/RET/01140",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:57",
-          "done": "2026-08-11 14:57"
-        },
-        {
-          "picking": "CA1/RET/01139",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:56",
-          "done": "2026-08-11 14:56"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9397866399369943,
-      "total_so": 14136,
-      "total_con_pickings": 13967,
-      "cumplidos": 13126,
-      "parciales": 17,
-      "sin_iniciar": 824,
+      "valor": 0.9516163870689035,
+      "total_so": 14056,
+      "total_con_pickings": 13889,
+      "cumplidos": 13217,
+      "parciales": 16,
+      "sin_iniciar": 656,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.35308371918834,
-      "n_orders": 14686,
+      "valor": 46.138330678172366,
+      "n_orders": 15065,
       "min_h": 0.013055555555555556,
       "max_h": 700.2111111111111,
-      "mediana_h": 28.026666666666667,
+      "mediana_h": 27.775,
       "detalle": [
         {
           "so": "S261093",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 10243,
+      "lineas": 10699,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 117,
-      "outgoing": 29226,
-      "internal": 20657,
+      "incoming": 116,
+      "outgoing": 29128,
+      "internal": 20756,
       "total": 50000,
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "Global Reward Solutions",
-          "total": 120,
-          "tarde": 120,
+          "total": 136,
+          "tarde": 136,
           "on_time_pct": 0.0
         },
         {
@@ -403,8 +403,8 @@
         },
         {
           "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
-          "total": 3,
-          "tarde": 3,
+          "total": 4,
+          "tarde": 4,
           "on_time_pct": 0.0
         },
         {
@@ -415,14 +415,14 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 64,
-          "tarde": 61,
-          "on_time_pct": 0.046875
+          "total": 65,
+          "tarde": 62,
+          "on_time_pct": 0.046153846153846156
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 14,
-          "tarde": 7,
+          "total": 16,
+          "tarde": 8,
           "on_time_pct": 0.5
         },
         {
@@ -8104,42 +8104,77 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.02584713464070404,
-      "total_pickings": 14431,
-      "on_time": 373,
-      "on_time_pct": 0.02584713464070404,
-      "in_full": 14424,
-      "in_full_pct": 0.9995149331300672,
-      "both": 373,
+      "valor": 0.027101919437685862,
+      "total_pickings": 14796,
+      "on_time": 401,
+      "on_time_pct": 0.027101919437685862,
+      "in_full": 14789,
+      "in_full_pct": 0.9995268991619357,
+      "both": 401,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.13647058823529412,
-      "total_pickings": 425,
-      "on_time": 62,
-      "on_time_pct": 0.14588235294117646,
-      "in_full": 418,
-      "in_full_pct": 0.9835294117647059,
-      "both": 58,
+      "valor": 0.1319910514541387,
+      "total_pickings": 447,
+      "on_time": 63,
+      "on_time_pct": 0.14093959731543623,
+      "in_full": 440,
+      "in_full_pct": 0.9843400447427293,
+      "both": 59,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9995835935873413,
-      "ok": 19204,
-      "total": 19212,
+      "valor": 0.9995934132953852,
+      "ok": 19668,
+      "total": 19676,
       "errores": 8,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.66518020708881,
-      "n_recepciones": 279,
+      "valor": 11.500335689045937,
+      "n_recepciones": 283,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01152",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:38",
+          "done": "2026-08-18 19:38"
+        },
+        {
+          "picking": "CA1/RET/01150",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:36",
+          "done": "2026-08-18 19:37"
+        },
+        {
+          "picking": "CA1/RET/01151",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:37",
+          "done": "2026-08-18 19:37"
+        },
+        {
+          "picking": "CA1/RET/01148",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:35",
+          "done": "2026-08-18 19:35"
+        },
+        {
+          "picking": "CA1/RET/01146",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-08-18 19:33",
+          "done": "2026-08-18 19:33"
+        },
         {
           "picking": "CA1/IN/01012",
           "proveedor": "",
@@ -8244,41 +8279,6 @@
           "horas": -23.4,
           "scheduled": "2026-08-14 14:01",
           "done": "2026-08-13 14:37"
-        },
-        {
-          "picking": "CA1/IN/00996",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-12 16:36",
-          "done": "2026-08-12 16:37"
-        },
-        {
-          "picking": "CA1/IN/00993",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 313.1,
-          "scheduled": "2026-07-30 12:00",
-          "done": "2026-08-12 13:05"
-        },
-        {
-          "picking": "CA1/RET/01141",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:58",
-          "done": "2026-08-11 14:58"
-        },
-        {
-          "picking": "CA1/RET/01140",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:57",
-          "done": "2026-08-11 14:57"
-        },
-        {
-          "picking": "CA1/RET/01139",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-11 14:56",
-          "done": "2026-08-11 14:56"
         }
       ],
       "error": null
