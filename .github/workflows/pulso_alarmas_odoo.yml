@@ -1,0 +1,24 @@
+name: Pulso Alarmas Odoo
+
+on:
+  schedule:
+    # 06:52 CLT (UTC-4) todos los días; GH free tier puede demorar 5-30 min
+    - cron: '52 10 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  pulso-alarmas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: pip install --quiet google-api-python-client google-auth google-auth-oauthlib
+      - name: Correr pulso
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+        run: python pulso_alarmas_odoo.py
