@@ -1,9 +1,9 @@
 name: Pulso Alarmas Odoo
 
 on:
-  schedule:
-    # 06:52 CLT (UTC-4) todos los días; GH free tier puede demorar 5-30 min
-    - cron: '52 10 * * *'
+  # Sin schedule propio: corre L-V 07:30 CLT dentro de email_diario.yml
+  # (mismo trigger Cloudflare que el Pulso de Ventas). Esto queda solo
+  # como respaldo manual.
   workflow_dispatch: {}
 
 jobs:

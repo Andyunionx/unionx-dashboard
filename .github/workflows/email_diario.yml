@@ -82,6 +82,19 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_diario.py
 
+      - name: Enviar Pulso Alarmas Odoo (salud crons + cola SII)
+        # ACTIVO (pedido Andres 20-08-2026): semaforo diario L-V con estado de
+        # crons criticos (envio SII, LdM, 801, Shopify) y cola DTE not_sent.
+        # Origen: cron 26 apagado 11-20 ago -> 2.822 boletas sin enviar al SII.
+        # Deshabilitar con vars.PULSO_ALARMAS_ENABLED='false'.
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_ALARMAS_ENABLED != 'false' }}
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: python pulso_alarmas_odoo.py
+        continue-on-error: true
+
       - name: Enviar Pulso Stock Live (tabla dinámica por bodega)
         # ACTIVO desde 25-jun-2026: corre si vars.PULSO_STOCK_ENABLED == 'true'.
         # Stock fresco: sync_stock c/3h. Fulfillment LIVE de Martín (feed 6 AM,
