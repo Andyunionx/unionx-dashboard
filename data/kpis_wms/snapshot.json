@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-08-21T03:51:38.337262",
+  "generado_en": "2026-08-21T15:35:35.193285",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.030861902283037108,
-      "total_pickings": 13447,
-      "on_time": 416,
-      "on_time_pct": 0.03093626831263479,
-      "in_full": 13437,
-      "in_full_pct": 0.9992563397040232,
-      "both": 415,
+      "valor": 0.030911786508524833,
+      "total_pickings": 13490,
+      "on_time": 419,
+      "on_time_pct": 0.03106004447739066,
+      "in_full": 13479,
+      "in_full_pct": 0.999184581171238,
+      "both": 417,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1407766990291262,
-      "total_pickings": 412,
-      "on_time": 59,
-      "on_time_pct": 0.14320388349514562,
-      "in_full": 408,
-      "in_full_pct": 0.9902912621359223,
-      "both": 58,
+      "valor": 0.14285714285714285,
+      "total_pickings": 413,
+      "on_time": 60,
+      "on_time_pct": 0.14527845036319612,
+      "in_full": 409,
+      "in_full_pct": 0.9903147699757869,
+      "both": 59,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999609745219379,
-      "ok": 17930,
-      "total": 17937,
+      "valor": 0.9996109814382572,
+      "ok": 17987,
+      "total": 17994,
       "errores": 7,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.94837134502924,
-      "n_recepciones": 285,
+      "valor": 12.72793295019157,
+      "n_recepciones": 290,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01018",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-21 14:27",
+          "done": "2026-08-21 14:33"
+        },
+        {
+          "picking": "CA1/IN/01017",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-21 13:58",
+          "done": "2026-08-21 13:58"
+        },
+        {
+          "picking": "CA1/IN/01016",
+          "proveedor": "",
+          "horas": 0.7,
+          "scheduled": "2026-08-21 12:34",
+          "done": "2026-08-21 13:16"
+        },
+        {
+          "picking": "CA1/RET/01161",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-08-21 12:29",
+          "done": "2026-08-21 12:29"
+        },
+        {
+          "picking": "CA1/RET/01160",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-08-21 12:28",
+          "done": "2026-08-21 12:28"
+        },
         {
           "picking": "CA1/IN/01014",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -139,60 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-17 17:02",
           "done": "2026-08-17 17:02"
-        },
-        {
-          "picking": "CA1/IN/01008",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-17 16:57",
-          "done": "2026-08-17 17:01"
-        },
-        {
-          "picking": "CA1/IN/01007",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-17 16:38",
-          "done": "2026-08-17 16:46"
-        },
-        {
-          "picking": "CA1/RET/01143",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 15:49",
-          "done": "2026-08-17 15:50"
-        },
-        {
-          "picking": "CA1/RET/01144",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 15:50",
-          "done": "2026-08-17 15:50"
-        },
-        {
-          "picking": "CA1/RET/01142",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 15:49",
-          "done": "2026-08-17 15:49"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9347652565125898,
-      "total_so": 13853,
-      "total_con_pickings": 13781,
-      "cumplidos": 12882,
-      "parciales": 17,
-      "sin_iniciar": 882,
+      "valor": 0.9282427379925223,
+      "total_so": 13980,
+      "total_con_pickings": 13908,
+      "cumplidos": 12910,
+      "parciales": 18,
+      "sin_iniciar": 980,
       "error": null
     },
     "oct_30d": {
-      "valor": 42.56936005600195,
-      "n_orders": 13690,
+      "valor": 42.591789035375236,
+      "n_orders": 13729,
       "min_h": 0.007222222222222222,
       "max_h": 700.2111111111111,
-      "mediana_h": 26.140833333333333,
+      "mediana_h": 26.145555555555557,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 11443,
+      "lineas": 11517,
       "mes": "2026-08",
       "error": null
     },
@@ -421,9 +421,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 15,
+          "total": 16,
           "tarde": 7,
-          "on_time_pct": 0.5333333333333333
+          "on_time_pct": 0.5625
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -8104,42 +8104,77 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.030861902283037108,
-      "total_pickings": 13447,
-      "on_time": 416,
-      "on_time_pct": 0.03093626831263479,
-      "in_full": 13437,
-      "in_full_pct": 0.9992563397040232,
-      "both": 415,
+      "valor": 0.030911786508524833,
+      "total_pickings": 13490,
+      "on_time": 419,
+      "on_time_pct": 0.03106004447739066,
+      "in_full": 13479,
+      "in_full_pct": 0.999184581171238,
+      "both": 417,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1407766990291262,
-      "total_pickings": 412,
-      "on_time": 59,
-      "on_time_pct": 0.14320388349514562,
-      "in_full": 408,
-      "in_full_pct": 0.9902912621359223,
-      "both": 58,
+      "valor": 0.14285714285714285,
+      "total_pickings": 413,
+      "on_time": 60,
+      "on_time_pct": 0.14527845036319612,
+      "in_full": 409,
+      "in_full_pct": 0.9903147699757869,
+      "both": 59,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999609745219379,
-      "ok": 17930,
-      "total": 17937,
+      "valor": 0.9996109814382572,
+      "ok": 17987,
+      "total": 17994,
       "errores": 7,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.94837134502924,
-      "n_recepciones": 285,
+      "valor": 12.72793295019157,
+      "n_recepciones": 290,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01018",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-21 14:27",
+          "done": "2026-08-21 14:33"
+        },
+        {
+          "picking": "CA1/IN/01017",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-21 13:58",
+          "done": "2026-08-21 13:58"
+        },
+        {
+          "picking": "CA1/IN/01016",
+          "proveedor": "",
+          "horas": 0.7,
+          "scheduled": "2026-08-21 12:34",
+          "done": "2026-08-21 13:16"
+        },
+        {
+          "picking": "CA1/RET/01161",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-08-21 12:29",
+          "done": "2026-08-21 12:29"
+        },
+        {
+          "picking": "CA1/RET/01160",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-08-21 12:28",
+          "done": "2026-08-21 12:28"
+        },
         {
           "picking": "CA1/IN/01014",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -8244,41 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-17 17:02",
           "done": "2026-08-17 17:02"
-        },
-        {
-          "picking": "CA1/IN/01008",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-17 16:57",
-          "done": "2026-08-17 17:01"
-        },
-        {
-          "picking": "CA1/IN/01007",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-17 16:38",
-          "done": "2026-08-17 16:46"
-        },
-        {
-          "picking": "CA1/RET/01143",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 15:49",
-          "done": "2026-08-17 15:50"
-        },
-        {
-          "picking": "CA1/RET/01144",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 15:50",
-          "done": "2026-08-17 15:50"
-        },
-        {
-          "picking": "CA1/RET/01142",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 15:49",
-          "done": "2026-08-17 15:49"
         }
       ],
       "error": null
