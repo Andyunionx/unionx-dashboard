@@ -72,3 +72,10 @@ reglas:
   aprobado_por: Camila Bustos <camila@unionx.cl>
   corregida: true
   auto: false
+- patron: 'comisión ventas del: 13/08/2026'
+  tipo_match: contains_lower
+  cuenta_destino: COMISION_GRANDES_CUENTAS
+  aprobaciones: 1
+  ultima_aprobacion: '2026-08-21'
+  aprobado_por: Camila Bustos <camila@unionx.cl>
+  auto: false
