@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-20T18:21:43.591314",
+  "generado_en": "2026-08-21T00:36:26.909793",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13340,
-  "total_monto_pendiente_clp": 995377349.0,
+  "total_documentos_pendientes": 13428,
+  "total_monto_pendiente_clp": 999784791.0,
   "monto_por_aging": {
-    "+90 días": 56049570.0,
-    "1-30 días": 555226919.0,
-    "31-60 días": 227584220.0,
-    "61-90 días": 86005980.0,
-    "Vigente": 70510660.0
+    "+90 días": 57621721.0,
+    "1-30 días": 553231769.0,
+    "31-60 días": 234275025.0,
+    "61-90 días": 84676759.0,
+    "Vigente": 69979517.0
   },
   "monto_por_tipo": {
-    "BOLETA": 774039955.0,
+    "BOLETA": 778447397.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 142964603.0
+      "monto": 144015486.0
     },
     {
       "partner": "LA VINOTECA SPA",
@@ -34,15 +34,15 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 61149669.0
+      "monto": 62403199.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 52097504.0
+      "monto": 52563804.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 47010314.0
+      "monto": 47275345.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22142937.0
+      "monto": 22638817.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -66,11 +66,11 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 16986298.0
+      "monto": 17044369.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 15155298.0
+      "monto": 15181258.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -97,6 +97,6 @@
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 479,
+  "notas_credito_count": 483,
   "pedidos_venta_count": 10000
 }
