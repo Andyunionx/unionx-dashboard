@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-21T18:20:24.462768",
+  "generado_en": "2026-08-22T00:33:30.796499",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13049,
-  "total_monto_pendiente_clp": 980790772.0,
+  "total_documentos_pendientes": 11548,
+  "total_monto_pendiente_clp": 910853628.0,
   "monto_por_aging": {
     "+90 días": 57621721.0,
-    "1-30 días": 542314809.0,
-    "31-60 días": 224723883.0,
-    "61-90 días": 84221826.0,
-    "Vigente": 71908533.0
+    "1-30 días": 500345951.0,
+    "31-60 días": 196903745.0,
+    "61-90 días": 85534267.0,
+    "Vigente": 70447944.0
   },
   "monto_por_tipo": {
-    "BOLETA": 759453378.0,
+    "BOLETA": 689516234.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -21,12 +21,12 @@
       "monto": 157189181.0
     },
     {
-      "partner": "Cliente Mercado Libre",
-      "monto": 145425658.0
-    },
-    {
       "partner": "LA VINOTECA SPA",
       "monto": 120549380.0
+    },
+    {
+      "partner": "Cliente Mercado Libre",
+      "monto": 105702826.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -34,11 +34,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 63196609.0
+      "monto": 63385529.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 53045684.0
+      "monto": 53187134.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 41503502.0
+      "monto": 25337766.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 20454976.0
+      "monto": 20527916.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -66,7 +66,7 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 17363777.0
+      "monto": 15028676.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -82,19 +82,19 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 9066314.0
+      "monto": 9079304.0
     },
     {
       "partner": "abc S.A.",
       "monto": 7570068.0
     },
     {
-      "partner": "INVERSIONES MAVAPA SPA, INVERSIONES MAVAPA SPA",
-      "monto": 5565211.0
-    },
-    {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
+    },
+    {
+      "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+      "monto": 4525224.0
     }
   ],
   "notas_credito_count": 483,
