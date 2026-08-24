@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-24T12:23:25.467118",
+  "generado_en": "2026-08-24T18:23:03.019251",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11824,
-  "total_monto_pendiente_clp": 920180166.0,
+  "total_documentos_pendientes": 11212,
+  "total_monto_pendiente_clp": 886177658.0,
   "monto_por_aging": {
     "+90 días": 58462301.0,
-    "1-30 días": 501847221.0,
-    "31-60 días": 203378560.0,
+    "1-30 días": 466816047.0,
+    "31-60 días": 200137788.0,
     "61-90 días": 87092540.0,
-    "Vigente": 69399544.0
+    "Vigente": 73668982.0
   },
   "monto_por_tipo": {
-    "BOLETA": 698842772.0,
+    "BOLETA": 664840264.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -26,19 +26,19 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 109921588.0
+      "monto": 102572882.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 94695306.0
+      "monto": 97796293.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 65196909.0
+      "monto": 54195221.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 53838794.0
+      "monto": 54021214.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,31 +46,27 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 26149938.0
-    },
-    {
-      "partner": "Duty Free T C S A",
-      "monto": 21869183.0
+      "monto": 25857005.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 21058606.0
+      "monto": 21075596.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 19444951.0
     },
     {
-      "partner": "Showtime SpA",
-      "monto": 17552325.0
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 15559781.0
     },
     {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 15028676.0
+      "partner": "Duty Free T C S A",
+      "monto": 15453537.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 13812301.0
+      "monto": 13870191.0
     },
     {
       "partner": "Distribución y Logística V&L SpA",
@@ -82,7 +78,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 9342004.0
+      "monto": 9445121.0
     },
     {
       "partner": "abc S.A.",
@@ -95,8 +91,12 @@
     {
       "partner": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
       "monto": 4525224.0
+    },
+    {
+      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+      "monto": 4294360.0
     }
   ],
-  "notas_credito_count": 483,
+  "notas_credito_count": 484,
   "pedidos_venta_count": 10000
 }
