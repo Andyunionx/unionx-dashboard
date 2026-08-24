@@ -1,40 +1,68 @@
 {
-  "generado_en": "2026-08-24T03:55:53.543354",
+  "generado_en": "2026-08-24T15:40:32.839499",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03108009413292218,
-      "total_pickings": 12323,
-      "on_time": 385,
-      "on_time_pct": 0.031242392274608455,
-      "in_full": 12317,
-      "in_full_pct": 0.9995131055749412,
-      "both": 383,
+      "valor": 0.03080114905841047,
+      "total_pickings": 12532,
+      "on_time": 388,
+      "on_time_pct": 0.03096074050430897,
+      "in_full": 12526,
+      "in_full_pct": 0.9995212256623045,
+      "both": 386,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1484593837535014,
-      "total_pickings": 357,
-      "on_time": 54,
-      "on_time_pct": 0.15126050420168066,
-      "in_full": 354,
-      "in_full_pct": 0.9915966386554622,
-      "both": 53,
+      "valor": 0.15135135135135136,
+      "total_pickings": 370,
+      "on_time": 57,
+      "on_time_pct": 0.15405405405405406,
+      "in_full": 367,
+      "in_full_pct": 0.9918918918918919,
+      "both": 56,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.99981660349676,
-      "ok": 16355,
-      "total": 16358,
+      "valor": 0.9998214710783146,
+      "ok": 16801,
+      "total": 16804,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 13.842912835249042,
-      "n_recepciones": 290,
+      "valor": 13.875071806500378,
+      "n_recepciones": 294,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01021",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 64.8,
+          "scheduled": "2026-08-21 19:59",
+          "done": "2026-08-24 12:48"
+        },
+        {
+          "picking": "CA1/RET/01163",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-24 12:42",
+          "done": "2026-08-24 12:43"
+        },
+        {
+          "picking": "CA1/RET/01164",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-24 12:43",
+          "done": "2026-08-24 12:43"
+        },
+        {
+          "picking": "CA1/RET/01162",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-24 12:42",
+          "done": "2026-08-24 12:42"
+        },
         {
           "picking": "CA1/IN/01015",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -146,53 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-18 19:37",
           "done": "2026-08-18 19:37"
-        },
-        {
-          "picking": "CA1/RET/01148",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-18 19:35",
-          "done": "2026-08-18 19:35"
-        },
-        {
-          "picking": "CA1/RET/01146",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-18 19:33",
-          "done": "2026-08-18 19:33"
-        },
-        {
-          "picking": "CA1/IN/01012",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-18 14:22",
-          "done": "2026-08-18 14:23"
-        },
-        {
-          "picking": "CA1/IN/01011",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 17:05",
-          "done": "2026-08-17 17:05"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.885694935661073,
-      "total_so": 13366,
-      "total_con_pickings": 13289,
-      "cumplidos": 11770,
+      "valor": 0.8917330158493936,
+      "total_so": 13515,
+      "total_con_pickings": 13439,
+      "cumplidos": 11984,
       "parciales": 16,
-      "sin_iniciar": 1503,
+      "sin_iniciar": 1439,
       "error": null
     },
     "oct_30d": {
-      "valor": 43.70346832296485,
-      "n_orders": 12538,
+      "valor": 44.365786837405814,
+      "n_orders": 12755,
       "min_h": 0.007222222222222222,
       "max_h": 700.2111111111111,
-      "mediana_h": 27.481666666666666,
+      "mediana_h": 28.101944444444445,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 11600,
+      "lineas": 12055,
       "mes": "2026-08",
       "error": null
     },
@@ -361,8 +361,8 @@
       "valor": [
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 6,
-          "tarde": 6,
+          "total": 7,
+          "tarde": 7,
           "on_time_pct": 0.0
         },
         {
@@ -391,27 +391,33 @@
         },
         {
           "cliente": "abc S.A.",
-          "total": 64,
-          "tarde": 64,
+          "total": 65,
+          "tarde": 65,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
+          "total": 6,
+          "tarde": 6,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
           "total": 5,
           "tarde": 5,
           "on_time_pct": 0.0
         },
         {
-          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
-          "total": 4,
-          "tarde": 4,
+          "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+          "total": 3,
+          "tarde": 3,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 33,
-          "tarde": 32,
-          "on_time_pct": 0.030303030303030304
+          "total": 34,
+          "tarde": 33,
+          "on_time_pct": 0.029411764705882353
         },
         {
           "cliente": "PATAGONIK S.A.",
@@ -439,13 +445,7 @@
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
-          "total": 10,
-          "tarde": 0,
-          "on_time_pct": 1.0
-        },
-        {
-          "cliente": "Agricola Escargot Premium SpA",
-          "total": 3,
+          "total": 13,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8104,42 +8104,70 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03108009413292218,
-      "total_pickings": 12323,
-      "on_time": 385,
-      "on_time_pct": 0.031242392274608455,
-      "in_full": 12317,
-      "in_full_pct": 0.9995131055749412,
-      "both": 383,
+      "valor": 0.03080114905841047,
+      "total_pickings": 12532,
+      "on_time": 388,
+      "on_time_pct": 0.03096074050430897,
+      "in_full": 12526,
+      "in_full_pct": 0.9995212256623045,
+      "both": 386,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1484593837535014,
-      "total_pickings": 357,
-      "on_time": 54,
-      "on_time_pct": 0.15126050420168066,
-      "in_full": 354,
-      "in_full_pct": 0.9915966386554622,
-      "both": 53,
+      "valor": 0.15135135135135136,
+      "total_pickings": 370,
+      "on_time": 57,
+      "on_time_pct": 0.15405405405405406,
+      "in_full": 367,
+      "in_full_pct": 0.9918918918918919,
+      "both": 56,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.99981660349676,
-      "ok": 16355,
-      "total": 16358,
+      "valor": 0.9998214710783146,
+      "ok": 16801,
+      "total": 16804,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 13.842912835249042,
-      "n_recepciones": 290,
+      "valor": 13.875071806500378,
+      "n_recepciones": 294,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01021",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 64.8,
+          "scheduled": "2026-08-21 19:59",
+          "done": "2026-08-24 12:48"
+        },
+        {
+          "picking": "CA1/RET/01163",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-24 12:42",
+          "done": "2026-08-24 12:43"
+        },
+        {
+          "picking": "CA1/RET/01164",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-24 12:43",
+          "done": "2026-08-24 12:43"
+        },
+        {
+          "picking": "CA1/RET/01162",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-08-24 12:42",
+          "done": "2026-08-24 12:42"
+        },
         {
           "picking": "CA1/IN/01015",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -8251,34 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-18 19:37",
           "done": "2026-08-18 19:37"
-        },
-        {
-          "picking": "CA1/RET/01148",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-18 19:35",
-          "done": "2026-08-18 19:35"
-        },
-        {
-          "picking": "CA1/RET/01146",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-08-18 19:33",
-          "done": "2026-08-18 19:33"
-        },
-        {
-          "picking": "CA1/IN/01012",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-18 14:22",
-          "done": "2026-08-18 14:23"
-        },
-        {
-          "picking": "CA1/IN/01011",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-17 17:05",
-          "done": "2026-08-17 17:05"
         }
       ],
       "error": null
