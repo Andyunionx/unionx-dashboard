@@ -31,7 +31,7 @@ EXCLUIR_CANAL = {"eattouch", "postventa", "marketing"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 # Último mes cerrado con datos comercial + contable en el Sheet. Subir a medida que
 # se cargan los meses (define el selector de Mes y el tope de las consultas al RAW).
-MES_MAX = 6  # jun-2026
+MES_MAX = 7  # jul-2026 (contable cargado en el Sheet; ago-dic aún en $0)
 # Selector de período: agregados (YTD/Q1/Q2/1S) + meses individuales cargados.
 MESES_OPT = ["YTD", "Q1", "Q2", "1S"] + MES_NOM[1:MES_MAX + 1]
 
