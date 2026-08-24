@@ -31,7 +31,8 @@ EXCLUIR_CANAL = {"eattouch", "postventa", "marketing"}
 MES_NOM = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 # Último mes cerrado con datos comercial + contable en el Sheet. Subir a medida que
 # se cargan los meses (define el selector de Mes y el tope de las consultas al RAW).
-MES_MAX = 7  # jul-2026 (contable cargado en el Sheet; ago-dic aún en $0)
+MES_MAX = 7  # FALLBACK. Se auto-detecta del Sheet en construir_dataframes()
+# (detectar_mes_max: último mes con Venta Real Contable != 0). No hay que subirlo a mano.
 # Selector de período: agregados (YTD/Q1/Q2/1S) + meses individuales cargados.
 MESES_OPT = ["YTD", "Q1", "Q2", "1S"] + MES_NOM[1:MES_MAX + 1]
 
@@ -80,6 +81,23 @@ def num(s):
         return 0.0
 
 
+def detectar_mes_max(df_ar, anio=2026):
+    """Último mes de `anio` con contable REAL (Venta Real Contable != 0) en el Sheet AR.
+    Auto-avanza al cerrar cada mes → no hay que tocar el código en cada cierre. Si algo
+    falla, cae al MES_MAX vigente."""
+    try:
+        ano = pd.to_numeric(df_ar.iloc[:, IX["ano"]], errors="coerce")
+        mes = pd.to_numeric(df_ar.iloc[:, IX["mes"]], errors="coerce")
+        vc = df_ar.iloc[:, IX["VentaK"]].apply(num)   # col 18 = Venta Real Contable
+        m = pd.DataFrame({"ano": ano, "mes": mes, "v": vc})
+        m = m[(m["ano"] == anio) & m["mes"].between(1, 12)]
+        con = m.groupby("mes")["v"].sum()
+        meses = [int(x) for x in con.index if abs(con[x]) > 0]
+        return max(meses) if meses else MES_MAX
+    except Exception:
+        return MES_MAX
+
+
 def _mes_num(txt):
     t = _norm(txt)
     for nombre, n in MESES_ES.items():
@@ -106,6 +124,13 @@ def _origen_glosa(glosa, mes_arch):
 def construir_dataframes(df_ar, df_glosas, nc_detalle, nc2canal):
     """df_ar: 'Análisis de Resultados' (acceso posicional). df_glosas: 'Detalle Glosas 2026'.
     nc_detalle: parquet NC Odoo (NC, Mes NC, Fecha venta original, Neto). nc2canal: dict NC->canal."""
+    # Auto-detectar el último mes cerrado desde el Sheet y actualizar el tope + el
+    # selector. Así se incluye cada mes nuevo automáticamente (sin editar el código).
+    global MES_MAX, MESES_OPT
+    _mm = detectar_mes_max(df_ar)
+    if _mm and _mm != MES_MAX:
+        MES_MAX = _mm
+        MESES_OPT = ["YTD", "Q1", "Q2", "1S"] + MES_NOM[1:MES_MAX + 1]
     df = df_ar.copy()
     df.columns = range(df.shape[1])
     for k, i in IX.items():

@@ -18,9 +18,11 @@ import pandas as pd
 import streamlit as st
 
 from views.contribucion_loader import cargar_hoja, fmt_pesos
-from views._conciliacion import (construir_dataframes, calcular, construir_workbook, MESES_OPT,
+import views._conciliacion as _conc
+from views._conciliacion import (construir_dataframes, calcular, construir_workbook,
                                  construir_b2b, calcular_b2b, calcular_detalle,
-                                 _norm, _mes_num, _origen_glosa, num, MES_NOM, MES_MAX)
+                                 _norm, _mes_num, _origen_glosa, num, MES_NOM)
+# MES_MAX / MESES_OPT se leen vía _conc.* porque se auto-detectan del Sheet en runtime.
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PARQUET = PROJECT_ROOT / "data" / "historico" / "ventas_historico.parquet"
@@ -91,7 +93,7 @@ def _bundle():
             FROM '{PARQUET.as_posix()}'
             WHERE tipo_movimiento='Devolución'
               AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
-              AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {MES_MAX}
+              AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {_conc.MES_MAX}
             GROUP BY 1,2,3,4
         """).fetchdf()
         conkam = {_norm(c): c for c in b["canales"]}
@@ -119,7 +121,7 @@ def _render_b2b(b):
             "Distribución y Corporativo (UnionX B2B, Sodimac, Dinasty, etc.). No tiene visión comercial "
             "separada, así que **resultado comercial = contable**. El presupuesto es el **total de "
             "Distribución** (cargado bajo Paris tienda); se compara el total vs ese total.")
-    mes = st.selectbox("Mes", MESES_OPT, index=0, key="b2b_mes")
+    mes = st.selectbox("Mes", _conc.MESES_OPT, index=0, key="b2b_mes")
     R = calcular_b2b(b, mes)
     tot = R["tot"]
     c1, c2, c3, c4 = st.columns(4)
@@ -165,7 +167,7 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
         SELECT mes_venta mes, canal,
                CASE WHEN {desp} THEN 'ing_envio' ELSE 'ing_prod' END tipo,
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
-        FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND {MES_MAX} AND tipo_movimiento='Venta'
+        FROM '{P}' WHERE anio_venta=2026 AND mes_venta BETWEEN 1 AND {_conc.MES_MAX} AND tipo_movimiento='Venta'
           AND {SCOPE_SQL}
         GROUP BY 1,2,3""").fetchdf()
     # NC = Devolución del RAW (misma fuente que la venta): venta bruta − NC = neto contable.
@@ -176,7 +178,7 @@ def _detalle_components(canales, canal_kam_items, canal_negocio_items):
                sum(TRY_CAST(venta_neta AS DOUBLE)) venta, sum(TRY_CAST(costo_total AS DOUBLE)) costo
         FROM '{P}' WHERE tipo_movimiento='Devolución'
           AND substr(CAST(fecha_documento AS VARCHAR),1,4)='2026'
-          AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {MES_MAX}
+          AND CAST(substr(CAST(fecha_documento AS VARCHAR),6,2) AS INTEGER) BETWEEN 1 AND {_conc.MES_MAX}
           AND {SCOPE_SQL}
         GROUP BY 1,2,3,4,5""").fetchdf()
     rows = []
@@ -245,7 +247,7 @@ def render():
 
     # ---- filtros (comercial) ----
     c1, c2, c3, c4 = st.columns(4)
-    mes = c1.selectbox("Mes", MESES_OPT, index=0, key="ccon_mes")
+    mes = c1.selectbox("Mes", _conc.MESES_OPT, index=0, key="ccon_mes")
     negocio = c2.selectbox("Línea de Negocio", ["TODOS"] + b.get("negocios", []), index=0, key="ccon_neg")
     canal = c3.selectbox("Canal", ["TODOS"] + b["canales"], index=0, key="ccon_canal")
     kam = c4.selectbox("KAM", ["TODOS"] + b["kams"], index=0, key="ccon_kam")
