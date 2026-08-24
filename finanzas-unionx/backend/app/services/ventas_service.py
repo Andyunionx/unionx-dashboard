@@ -3,6 +3,7 @@ Servicio de extracción y enriquecimiento de datos de ventas.
 Refactor del script descargar_reporte_ventas_completo.py.
 """
 import os
+import re
 import pandas as pd
 from typing import Dict, Callable, Optional
 from datetime import datetime
@@ -17,6 +18,19 @@ except ImportError:
 
 from app.core.odoo_client import OdooClient
 from app.services.base_service import BaseOdooService
+
+
+def _pedido_limpio(name):
+    """Normaliza la columna 'Pedido' (col E del RAW). En la facturación manual el nombre
+    del pedido entra con 3 formatos: SO de Odoo (S######), con prefijo de canal/entidad
+    ('KITCHEN CENTER 912639', 'ITAU-513932', 'SCOTIABANK-14251') o solo número. Se quita
+    el prefijo para dejar SOLO el número; los SO de Odoo (S######) se MANTIENEN (decisión
+    Andrés 24-ago). Gabriela: columna E con un único formato de número de pedido."""
+    s = str(name or '').strip()
+    if re.fullmatch(r'S\d+', s):          # SO interno de Odoo → mantener
+        return s
+    m = re.match(r'^[A-Za-z][A-Za-z0-9 ]*?[\s\-]+(\d+)$', s)  # prefijo + número
+    return m.group(1) if m else s
 
 
 def _utc_to_chile(dt_utc):
@@ -1257,7 +1271,7 @@ class VentasService(BaseOdooService):
                     'Bodega': bodega_nombre,
                     'Documento': factura.get('name', '') if factura else '',
                     'Fecha Documento': factura.get('invoice_date', '') if factura else '',
-                    'Pedido': orden.get('name', ''),
+                    'Pedido': _pedido_limpio(orden.get('name', '')),
                     'Pedido Marketplace': orden.get('channel_order_reference', '') or '',
                     'Yuju Pack Id': orden.get('yuju_pack_id', '') or '',
                     'Ref Cliente': orden.get('client_order_ref', '') or '',
@@ -1517,7 +1531,7 @@ class VentasService(BaseOdooService):
                         margen_nc = -nc_amount_abs + costo_nc
 
                         bodega_nc = orden_orig.get('warehouse_id', [None, ''])[1] if orden_orig.get('warehouse_id') else ''
-                        pedido_nc = orden_orig.get('name', '')
+                        pedido_nc = _pedido_limpio(orden_orig.get('name', ''))
                         estado_ped_nc = orden_orig.get('state', '')
                         # P3 (Nicole 16-jun): Fecha Venta de la NC = fecha de la ORDEN ORIGINAL
                         # (no la de la NC). 'Fecha Documento' conserva la fecha de la NC.
