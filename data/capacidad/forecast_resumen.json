@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-25T09:24:29.211616",
+  "generado_en": "2026-08-25T12:25:50.200094",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 888,
     "posiciones_libres_hoy": 481,
     "pct_ocupacion_hoy": 64.9,
-    "m3_stock_calculado": 899.6
+    "m3_stock_calculado": 899.3
   },
   "pico_proyectado": {
     "fecha": "2026-08-30",
@@ -22,7 +22,7 @@
     "pct_ocupacion": 64.0
   },
   "minimo_proyectado": {
-    "fecha": "2026-10-22",
+    "fecha": "2026-10-23",
     "posiciones_ocupadas": 661.5,
     "pct_ocupacion": 48.3
   },
@@ -62,18 +62,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 99.3,
-  "pallets_total_salientes_horizonte": 274.4,
+  "pallets_total_salientes_horizonte": 274.3,
   "m3_total_entrante_horizonte": 119.1,
-  "m3_total_saliente_horizonte": 329.2,
+  "m3_total_saliente_horizonte": 329.1,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 807,
+    "sku_con_vol_odoo": 806,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 224873.0,
-    "demanda_cumplida_unidades": 38569.0,
-    "demanda_no_cubierta_unidades_total": 186304.0,
-    "pct_demanda_cumplida": 17.2,
+    "demanda_cumplida_unidades": 38563.0,
+    "demanda_no_cubierta_unidades_total": 186310.0,
+    "pct_demanda_cumplida": 17.1,
     "sku_sin_match_stock_count": 49,
     "top_no_cubiertos": [
       {
@@ -158,12 +158,12 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 214.0,
+        "unid_no_cubiertas": 215.0,
         "sin_match_stock": true
       },
       {
         "sku": "1566849947902",
-        "unid_no_cubiertas": 198.0,
+        "unid_no_cubiertas": 202.0,
         "sin_match_stock": true
       },
       {
