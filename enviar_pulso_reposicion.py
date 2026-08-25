@@ -59,9 +59,9 @@ def main():
         print(f"[fbf][WARN] {type(e).__name__}: {e} — Falabella usa fallback", flush=True)
 
     # 2) pulso
-    from pulso_reposicion_fulfillment import construir, construir_excel_dinamico
+    from pulso_reposicion_fulfillment import construir, construir_excel_5pestanas
     fn = construir()
-    xlsx = construir_excel_dinamico(fn)   # reporte con tabla dinámica nativa
+    xlsx = construir_excel_5pestanas(fn)   # 5 pestañas con fórmulas + tabla dinámica
 
     res = pd.read_excel(fn, sheet_name="Resumen canal")
     ume = pd.read_excel(fn, sheet_name="UME v2")
@@ -131,10 +131,11 @@ def main():
 {tr_html}
 {aviso_transito}
 
-<div style="font-size:13px;margin:14px 0;">📎 <b>Excel adjunto (tabla dinámica):</b> hoja <b>Dinámica</b>
-(Canal → Marca → SKU, arrastrable; se refresca sola al abrir) sobre la hoja <b>Datos</b> (sábana completa por
-SKU y canal, con stock live, stock CA1, tránsito y cobertura) · <b>Resumen canal</b> · <b>Cuadratura</b> Odoo
-vs seller center · <b>Metodología</b>.</div>
+<div style="font-size:13px;margin:14px 0;">📎 <b>Excel adjunto — 5 pestañas con fórmulas:</b>
+<b>1. Propuesta Reposición</b> (por fórmula: Máximo − Stock − Tránsito, topado a CA1) ·
+<b>2. Stock inicial marketplace</b> · <b>3. Tránsito marketplace</b> ·
+<b>4. CA1 disponible + Máximos</b> (la <b>UME Manual</b> es editable → el Máximo y la Propuesta se recalculan solos) ·
+<b>5. Dinámica</b> (tabla dinámica de siempre). Debajo van <b>Datos</b>, <b>Resumen canal</b> y <b>Metodología</b>.</div>
 
 <div style="font-size:12px;color:#475569;margin-top:14px;">Los parámetros comerciales (Reglas, UME MIN,
 UME Manual, BLACKLIST, LARGE) se leen de la planilla de siempre en cada corrida — cualquier ajuste ahí queda

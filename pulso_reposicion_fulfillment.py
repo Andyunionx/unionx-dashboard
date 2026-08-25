@@ -360,14 +360,18 @@ def construir(no_download=False, no_live=False) -> Path:
             candidatos = {"Venta": ume * cob, "Piso mínimo": umin, "Manual": manual or 0}
             origen = max(candidatos, key=candidatos.get)
             objetivo = candidatos[origen]
-            # Stock disponible en full + tránsito hacia la bodega BF*. Piso a 0: un
+            # Stock disponible en full + tránsito hacia la bodega BF*. Se exponen por
+            # separado (para las pestañas Stock / Tránsito del reporte). Piso a 0: un
             # stock negativo del canal (overstock/reservas) no debe inflar el objetivo.
-            live_q = max(0.0, float(full_map.get((canal, sku), 0)) + float(tr_fulls.get((canal, sku), 0)))
+            full_q = max(0.0, float(full_map.get((canal, sku), 0)))
+            transito_q = max(0.0, float(tr_fulls.get((canal, sku), 0)))
+            live_q = full_q + transito_q
             restr = 1 if cob_ca1 < reglas.loc[canal, "restr"] else 0
             repo = 0 if (black or restr or es_out) else mult2(max(0, objetivo - live_q))
             canal_rows.append({"canal": canal, "ume": ume, "manual": manual, "umin": umin,
                                "black": black, "restr": restr, "large": large, "origen": origen,
-                               "objetivo": objetivo, "live_q": live_q, "repo": repo})
+                               "objetivo": objetivo, "live_q": live_q, "repo": repo,
+                               "full_q": full_q, "transito_q": transito_q, "cob": float(cob)})
         # ── Tope a CA1 (Claudia 24-ago): la suma del sugerido de los 4 canales por SKU
         # no puede superar el stock DISPONIBLE en CA1 (no se puede enviar lo que no hay).
         # Si excede, se reparte CA1 proporcional al sugerido de cada canal y se piso a
@@ -387,7 +391,9 @@ def construir(no_download=False, no_live=False) -> Path:
                 "UME": r["ume"], "UME MIN": r["umin"], "UME Manual": r["manual"],
                 "Blacklist": r["black"], "Restricción": r["restr"], "Large": r["large"],
                 "Origen del objetivo": r["origen"] if repo > 0 else "",
+                "Cobertura canal": r["cob"],
                 "Stock objetivo full": r["objetivo"],
+                "Stock Full": r["full_q"], "Tránsito": r["transito_q"],
                 "Stock Full Live+tránsito": r["live_q"], "Reposición": repo,
                 "Dim m3": round((dim_m3.get(sku) or 0) * repo, 4),
                 "Dim peso": round((dim_kg.get(sku) or 0) * repo, 2),
@@ -478,6 +484,149 @@ def construir_excel_dinamico(flat_path=None) -> bytes:
     buf = _io.BytesIO(); wb.save(buf); buf.seek(0)
 
     ref = f"A1:{get_column_letter(ncols)}{len(sabana) + 1}"
+    zin = _zip.ZipFile(buf, "r"); out = _io.BytesIO()
+    with _zip.ZipFile(out, "w", _zip.ZIP_DEFLATED) as zout:
+        for it in zin.infolist():
+            d = zin.read(it.filename)
+            if it.filename == "xl/pivotCache/pivotCacheDefinition1.xml":
+                x = d.decode("utf-8")
+                x = _re.sub(r'(<worksheetSource ref=")[^"]+(")', r"\g<1>" + ref + r"\g<2>", x)
+                if "refreshOnLoad" not in x.split(">")[0]:
+                    x = _re.sub(r"(<pivotCacheDefinition )", r'\g<1>refreshOnLoad="1" ', x, count=1)
+                else:
+                    x = _re.sub(r'refreshOnLoad="[^"]*"', 'refreshOnLoad="1"', x)
+                d = x.encode("utf-8")
+            zout.writestr(it, d)
+    zin.close()
+    return out.getvalue()
+
+
+def construir_excel_5pestanas(flat_path=None) -> bytes:
+    """Reporte en 5 pestañas con FÓRMULAS (Andrés/Claudia 25-ago). NO cambia el cálculo
+    (Python arma los componentes en la sábana 'UME v2'); cambia el FORMATO:
+      1. Propuesta Reposición — por FÓRMULA: tope_CA1(MAX(0, Máximo − Stock − Tránsito))
+      2. Stock inicial marketplace (valores)
+      3. Tránsito marketplace (valores)
+      4. CA1 disponible + Máximos — UME manual EDITABLE → Máximo = fórmula
+      5. Dinámica — la tabla dinámica nativa de siempre
+    Al editar la UME manual (pestaña 4) recalcula el Máximo y la Propuesta en vivo."""
+    import io as _io, re as _re, zipfile as _zip
+    import openpyxl
+    from openpyxl.utils import get_column_letter as L
+    from openpyxl.styles import Font, PatternFill
+    if flat_path is None:
+        flat_path = construir()
+    xls = pd.ExcelFile(flat_path)
+    sabana = xls.parse("UME v2")
+    ncols = len(sabana.columns)
+
+    s = sabana.copy()
+    for c in ["Stock Full", "Tránsito", "UME", "UME MIN", "UME Manual", "Cobertura canal",
+              "Stock CA1", "Reposición"]:
+        s[c] = pd.to_numeric(s.get(c), errors="coerce")
+    s["_hab"] = ((pd.to_numeric(s["Blacklist"], errors="coerce").fillna(0) == 0)
+                 & (pd.to_numeric(s["Restricción"], errors="coerce").fillna(0) == 0)
+                 & (s["In/Out"].astype(str).str.strip().str.lower() != "out")).astype(int)
+    orden = s.groupby("Sku")["Reposición"].sum().sort_values(ascending=False).index.tolist()
+    meta = s.groupby("Sku").agg(Producto=("Producto", "first"), Marca=("Marca", "first"),
+                                CA1=("Stock CA1", "first")).reindex(orden)
+    rowmap = {(r["Sku"], r["Canal"]): r for _, r in s.iterrows()}  # lookup O(1)
+
+    def val(sku, canal, col):
+        r = rowmap.get((sku, canal))
+        return float(r[col]) if r is not None and pd.notna(r[col]) else 0.0
+
+    def man(sku, canal):
+        r = rowmap.get((sku, canal))
+        v = r["UME Manual"] if r is not None else None
+        return float(v) if pd.notna(v) else None
+
+    def hab(sku, canal):
+        r = rowmap.get((sku, canal))
+        return int(r["_hab"]) if r is not None else 1
+
+    wb = openpyxl.load_workbook(TEMPLATE_DIN)
+
+    def _clean(row):
+        return [None if (isinstance(v, float) and pd.isna(v)) else v for v in row]
+    wd = wb["Datos"]; wd.delete_rows(1, wd.max_row); wd.append(list(sabana.columns))
+    for row in sabana.itertuples(index=False):
+        wd.append(_clean(row))
+    for sn in xls.sheet_names:
+        if sn == "UME v2":
+            continue
+        dd = xls.parse(sn); w = wb.create_sheet(sn[:31]); w.append([str(c) for c in dd.columns])
+        for row in dd.itertuples(index=False):
+            w.append(_clean(row))
+
+    BOLD = Font(bold=True); HFILL = PatternFill("solid", fgColor="DDEBF7")
+    EDIT = PatternFill("solid", fgColor="FFF2CC")
+
+    def _hdr(ws, headers):
+        for j, h in enumerate(headers, 1):
+            c = ws.cell(1, j, h); c.font = BOLD; c.fill = HFILL
+        ws.freeze_panes = "D2"
+
+    # 2. Stock inicial MKT / 3. Tránsito MKT (valores)
+    for nombre, col in [("2. Stock inicial MKT", "Stock Full"), ("3. Transito MKT", "Tránsito")]:
+        ws = wb.create_sheet(nombre)
+        _hdr(ws, ["SKU", "Producto", "Marca"] + CANALES)
+        for i, sku in enumerate(orden, 2):
+            ws.cell(i, 1, sku); ws.cell(i, 2, meta.loc[sku, "Producto"]); ws.cell(i, 3, meta.loc[sku, "Marca"])
+            for j, canal in enumerate(CANALES, 4):
+                ws.cell(i, j, val(sku, canal, col))
+
+    # 4. CA1 y Máximos (UME manual editable → Máximo fórmula)
+    cm = wb.create_sheet("4. CA1 y Maximos")
+    hdr4 = ["SKU", "Producto", "Marca", "CA1 disp."]
+    for canal in CANALES:
+        hdr4 += [f"UME {canal}", f"Cob {canal}", f"UME MIN {canal}", f"UME Manual {canal}",
+                 f"Habilit {canal}", f"Máximo {canal}"]
+    _hdr(cm, hdr4)
+    maxcol, habcol = {}, {}
+    for k, canal in enumerate(CANALES):
+        base = 5 + k * 6
+        maxcol[canal] = base + 5; habcol[canal] = base + 4
+    for i, sku in enumerate(orden, 2):
+        cm.cell(i, 1, sku); cm.cell(i, 2, meta.loc[sku, "Producto"]); cm.cell(i, 3, meta.loc[sku, "Marca"])
+        cm.cell(i, 4, float(meta.loc[sku, "CA1"]) if pd.notna(meta.loc[sku, "CA1"]) else 0)
+        for k, canal in enumerate(CANALES):
+            base = 5 + k * 6
+            cm.cell(i, base, val(sku, canal, "UME"))
+            cm.cell(i, base + 1, val(sku, canal, "Cobertura canal"))
+            cm.cell(i, base + 2, val(sku, canal, "UME MIN"))
+            mc = cm.cell(i, base + 3, man(sku, canal)); mc.fill = EDIT
+            cm.cell(i, base + 4, hab(sku, canal))
+            uL, cL, mnL, maL = L(base), L(base + 1), L(base + 2), L(base + 3)
+            cm.cell(i, base + 5, f"=MAX({uL}{i}*{cL}{i},{mnL}{i},N({maL}{i}))")
+
+    # 1. Propuesta Reposición (fórmula, con tope CA1) — al inicio
+    pr = wb.create_sheet("1. Propuesta Reposicion", 0)
+    _hdr(pr, ["SKU", "Producto", "Marca"] + CANALES + ["", "raw ML", "raw Fala", "raw Paris", "raw Walmart", "Suma raw"])
+    STK, TRA, CMq = "'2. Stock inicial MKT'", "'3. Transito MKT'", "'4. CA1 y Maximos'"
+    for i, sku in enumerate(orden, 2):
+        pr.cell(i, 1, sku); pr.cell(i, 2, meta.loc[sku, "Producto"]); pr.cell(i, 3, meta.loc[sku, "Marca"])
+        for k, canal in enumerate(CANALES):
+            can = L(4 + k)  # D..G
+            mx, hb = L(maxcol[canal]), L(habcol[canal])
+            pr.cell(i, 9 + k, f"={CMq}!{hb}{i}*MROUND(MAX(0,{CMq}!{mx}{i}-{STK}!{can}{i}-{TRA}!{can}{i}),2)")
+        pr.cell(i, 13, f"=SUM(I{i}:L{i})")
+        for k, canal in enumerate(CANALES):
+            rc = L(9 + k)
+            pr.cell(i, 4 + k, f"=IF($M{i}>{CMq}!$D{i},FLOOR({rc}{i}*{CMq}!$D{i}/$M{i},2),{rc}{i})")
+    for col in "IJKLM":  # ocultar helpers
+        pr.column_dimensions[col].hidden = True
+
+    # orden de pestañas: 1..4 + Dinámica + Datos + resto
+    din = next((w for w in wb.worksheets if "din" in w.title.lower()), None)
+    pref = ["1. Propuesta Reposicion", "2. Stock inicial MKT", "3. Transito MKT", "4. CA1 y Maximos"]
+    if din:
+        pref.append(din.title)
+    pref.append("Datos")
+    wb._sheets.sort(key=lambda w: pref.index(w.title) if w.title in pref else 90)
+
+    buf = _io.BytesIO(); wb.save(buf); buf.seek(0)
+    ref = f"A1:{L(ncols)}{len(sabana) + 1}"
     zin = _zip.ZipFile(buf, "r"); out = _io.BytesIO()
     with _zip.ZipFile(out, "w", _zip.ZIP_DEFLATED) as zout:
         for it in zin.infolist():
