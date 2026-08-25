@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-08-25T03:50:28.415897",
+  "generado_en": "2026-08-25T15:43:31.121655",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.029999222818061708,
-      "total_pickings": 12867,
-      "on_time": 388,
-      "on_time_pct": 0.03015465920572006,
-      "in_full": 12861,
-      "in_full_pct": 0.9995336908370249,
-      "both": 386,
+      "valor": 0.02995445070640006,
+      "total_pickings": 12953,
+      "on_time": 390,
+      "on_time_pct": 0.030108855091484598,
+      "in_full": 12947,
+      "in_full_pct": 0.9995367868447463,
+      "both": 388,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1414141414141414,
-      "total_pickings": 396,
-      "on_time": 57,
-      "on_time_pct": 0.14393939393939395,
-      "in_full": 393,
-      "in_full_pct": 0.9924242424242424,
-      "both": 56,
+      "valor": 0.14786967418546365,
+      "total_pickings": 399,
+      "on_time": 60,
+      "on_time_pct": 0.15037593984962405,
+      "in_full": 396,
+      "in_full_pct": 0.9924812030075187,
+      "both": 59,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999826529432173,
-      "ok": 17291,
-      "total": 17294,
+      "valor": 0.9998277841561424,
+      "ok": 17417,
+      "total": 17420,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 15.803426553672317,
-      "n_recepciones": 295,
+      "valor": 15.727834638329606,
+      "n_recepciones": 298,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01165",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-25 14:16",
+          "done": "2026-08-25 14:16"
+        },
+        {
+          "picking": "CA1/IN/01025",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-25 14:00",
+          "done": "2026-08-25 14:06"
+        },
+        {
+          "picking": "CA1/IN/01022",
+          "proveedor": "",
+          "horas": 24.8,
+          "scheduled": "2026-08-24 12:16",
+          "done": "2026-08-25 13:03"
+        },
         {
           "picking": "CA1/IN/01020",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-20 14:33",
           "done": "2026-08-20 14:33"
-        },
-        {
-          "picking": "CA1/RET/01156",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-20 14:32",
-          "done": "2026-08-20 14:32"
-        },
-        {
-          "picking": "CA1/IN/01013",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-20 14:01",
-          "done": "2026-08-20 14:01"
-        },
-        {
-          "picking": "CA1/RET/01154",
-          "proveedor": "Andres Browne",
-          "horas": 0.0,
-          "scheduled": "2026-08-20 13:41",
-          "done": "2026-08-20 13:41"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8989099596834403,
-      "total_so": 13472,
-      "total_con_pickings": 13394,
-      "cumplidos": 12040,
+      "valor": 0.8962354855410103,
+      "total_so": 13600,
+      "total_con_pickings": 13521,
+      "cumplidos": 12118,
       "parciales": 18,
-      "sin_iniciar": 1336,
+      "sin_iniciar": 1385,
       "error": null
     },
     "oct_30d": {
-      "valor": 44.17105046306888,
-      "n_orders": 13113,
+      "valor": 44.014485383883546,
+      "n_orders": 13197,
       "min_h": 0.007222222222222222,
       "max_h": 700.2111111111111,
-      "mediana_h": 28.134444444444444,
+      "mediana_h": 27.87611111111111,
       "detalle": [
         {
           "so": "S261093",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 12536,
+      "lineas": 12662,
       "mes": "2026-08",
       "error": null
     },
@@ -439,9 +439,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 15,
+          "total": 17,
           "tarde": 6,
-          "on_time_pct": 0.6
+          "on_time_pct": 0.6470588235294118
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
@@ -8104,42 +8104,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.029999222818061708,
-      "total_pickings": 12867,
-      "on_time": 388,
-      "on_time_pct": 0.03015465920572006,
-      "in_full": 12861,
-      "in_full_pct": 0.9995336908370249,
-      "both": 386,
+      "valor": 0.02995445070640006,
+      "total_pickings": 12953,
+      "on_time": 390,
+      "on_time_pct": 0.030108855091484598,
+      "in_full": 12947,
+      "in_full_pct": 0.9995367868447463,
+      "both": 388,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1414141414141414,
-      "total_pickings": 396,
-      "on_time": 57,
-      "on_time_pct": 0.14393939393939395,
-      "in_full": 393,
-      "in_full_pct": 0.9924242424242424,
-      "both": 56,
+      "valor": 0.14786967418546365,
+      "total_pickings": 399,
+      "on_time": 60,
+      "on_time_pct": 0.15037593984962405,
+      "in_full": 396,
+      "in_full_pct": 0.9924812030075187,
+      "both": 59,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999826529432173,
-      "ok": 17291,
-      "total": 17294,
+      "valor": 0.9998277841561424,
+      "ok": 17417,
+      "total": 17420,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 15.803426553672317,
-      "n_recepciones": 295,
+      "valor": 15.727834638329606,
+      "n_recepciones": 298,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01165",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-08-25 14:16",
+          "done": "2026-08-25 14:16"
+        },
+        {
+          "picking": "CA1/IN/01025",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-08-25 14:00",
+          "done": "2026-08-25 14:06"
+        },
+        {
+          "picking": "CA1/IN/01022",
+          "proveedor": "",
+          "horas": 24.8,
+          "scheduled": "2026-08-24 12:16",
+          "done": "2026-08-25 13:03"
+        },
         {
           "picking": "CA1/IN/01020",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -8258,27 +8279,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-20 14:33",
           "done": "2026-08-20 14:33"
-        },
-        {
-          "picking": "CA1/RET/01156",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-20 14:32",
-          "done": "2026-08-20 14:32"
-        },
-        {
-          "picking": "CA1/IN/01013",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-20 14:01",
-          "done": "2026-08-20 14:01"
-        },
-        {
-          "picking": "CA1/RET/01154",
-          "proveedor": "Andres Browne",
-          "horas": 0.0,
-          "scheduled": "2026-08-20 13:41",
-          "done": "2026-08-20 13:41"
         }
       ],
       "error": null
