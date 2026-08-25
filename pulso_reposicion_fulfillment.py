@@ -346,6 +346,7 @@ def construir(no_download=False, no_live=False) -> Path:
         # Confirmado Andrés 13-ago: Cob = meses objetivo (reemplaza cob por canal); out = no reponer.
         cob_obj_meses = pd.to_numeric(d.get("Cob"), errors="coerce")
         es_out = str(d.get("In/Out", "")).strip().lower() == "out"
+        canal_rows = []
         for canal in CANALES:
             ume = mult2(float(v_canal.get((sku, canal), 0)))
             manual = manual_map.get((sku, canal))
@@ -364,21 +365,37 @@ def construir(no_download=False, no_live=False) -> Path:
             live_q = max(0.0, float(full_map.get((canal, sku), 0)) + float(tr_fulls.get((canal, sku), 0)))
             restr = 1 if cob_ca1 < reglas.loc[canal, "restr"] else 0
             repo = 0 if (black or restr or es_out) else mult2(max(0, objetivo - live_q))
+            canal_rows.append({"canal": canal, "ume": ume, "manual": manual, "umin": umin,
+                               "black": black, "restr": restr, "large": large, "origen": origen,
+                               "objetivo": objetivo, "live_q": live_q, "repo": repo})
+        # ── Tope a CA1 (Claudia 24-ago): la suma del sugerido de los 4 canales por SKU
+        # no puede superar el stock DISPONIBLE en CA1 (no se puede enviar lo que no hay).
+        # Si excede, se reparte CA1 proporcional al sugerido de cada canal y se piso a
+        # par (mult2 baja) para no volver a exceder.
+        _tot = sum(r["repo"] for r in canal_rows)
+        _capado = _tot > st_ca1 and _tot > 0
+        if _capado:
+            _factor = st_ca1 / _tot
+            for r in canal_rows:
+                r["repo"] = int(math.floor(r["repo"] * _factor / 2) * 2)
+        for r in canal_rows:
+            repo = r["repo"]
             filas.append({
                 "Categoría": d.get("Categoría", ""), "Tipo de producto": tipo, "Marca": marca,
                 "Pack": d.get("Pack", ""), "In/Out": d.get("In/Out", ""), "Sku": sku,
-                "Producto": d.get("Producto", ""), "Canal": canal,
-                "UME": ume, "UME MIN": umin, "UME Manual": manual,
-                "Blacklist": black, "Restricción": restr, "Large": large,
-                "Origen del objetivo": origen if repo > 0 else "",
-                "Stock objetivo full": objetivo,
-                "Stock Full Live+tránsito": live_q, "Reposición": repo,
+                "Producto": d.get("Producto", ""), "Canal": r["canal"],
+                "UME": r["ume"], "UME MIN": r["umin"], "UME Manual": r["manual"],
+                "Blacklist": r["black"], "Restricción": r["restr"], "Large": r["large"],
+                "Origen del objetivo": r["origen"] if repo > 0 else "",
+                "Stock objetivo full": r["objetivo"],
+                "Stock Full Live+tránsito": r["live_q"], "Reposición": repo,
                 "Dim m3": round((dim_m3.get(sku) or 0) * repo, 4),
                 "Dim peso": round((dim_kg.get(sku) or 0) * repo, 2),
                 "Stock CA1": st_ca1, "Demanda digital sem (c/packs)": round(dem, 2),
                 "Cobertura CA1 (meses)": round(cob_ca1, 2) if np.isfinite(cob_ca1) else "",
                 "Cob Maestra (info)": round(cob_obj_meses, 2) if pd.notna(cob_obj_meses) else "",
                 "En Maestra": "No (nuevo)" if es_nuevo else "Sí",
+                "Tope CA1": "Sí" if _capado else "",
             })
     df = pd.DataFrame(filas)
 
