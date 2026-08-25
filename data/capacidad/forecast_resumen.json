@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-24T21:19:19.857772",
+  "generado_en": "2026-08-25T00:38:01.466219",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 875,
-    "posiciones_libres_hoy": 494,
-    "pct_ocupacion_hoy": 63.9,
-    "m3_stock_calculado": 899.9
+    "posiciones_ocupadas_hoy": 888,
+    "posiciones_libres_hoy": 481,
+    "pct_ocupacion_hoy": 64.9,
+    "m3_stock_calculado": 899.6
   },
   "pico_proyectado": {
-    "fecha": "2026-08-24",
-    "posiciones_ocupadas": 875.0,
-    "pct_ocupacion": 63.9
+    "fecha": "2026-08-30",
+    "posiciones_ocupadas": 876.5,
+    "pct_ocupacion": 64.0
   },
   "minimo_proyectado": {
-    "fecha": "2026-10-23",
-    "posiciones_ocupadas": 648.4,
-    "pct_ocupacion": 47.4
+    "fecha": "2026-10-22",
+    "posiciones_ocupadas": 661.5,
+    "pct_ocupacion": 48.3
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -62,17 +62,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 99.3,
-  "pallets_total_salientes_horizonte": 274.5,
+  "pallets_total_salientes_horizonte": 274.4,
   "m3_total_entrante_horizonte": 119.1,
-  "m3_total_saliente_horizonte": 329.3,
+  "m3_total_saliente_horizonte": 329.2,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 807,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 224873.0,
-    "demanda_cumplida_unidades": 38572.0,
-    "demanda_no_cubierta_unidades_total": 186301.0,
+    "demanda_cumplida_unidades": 38569.0,
+    "demanda_no_cubierta_unidades_total": 186304.0,
     "pct_demanda_cumplida": 17.2,
     "sku_sin_match_stock_count": 49,
     "top_no_cubiertos": [
@@ -167,12 +167,12 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVAUDGM-BK",
-        "unid_no_cubiertas": 197.0,
+        "sku": "1629726117626",
+        "unid_no_cubiertas": 198.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1629726117626",
+        "sku": "LVAUDGM-BK",
         "unid_no_cubiertas": 197.0,
         "sin_match_stock": true
       }
