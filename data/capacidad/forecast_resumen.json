@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-26T13:54:04.093392",
+  "generado_en": "2026-08-26T16:09:43.662804",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 879,
-    "posiciones_libres_hoy": 490,
-    "pct_ocupacion_hoy": 64.2,
-    "m3_stock_calculado": 887.6
+    "posiciones_ocupadas_hoy": 878,
+    "posiciones_libres_hoy": 491,
+    "pct_ocupacion_hoy": 64.1,
+    "m3_stock_calculado": 886.9
   },
   "pico_proyectado": {
     "fecha": "2026-08-30",
-    "posiciones_ocupadas": 891.7,
+    "posiciones_ocupadas": 890.7,
     "pct_ocupacion": 65.1
   },
   "minimo_proyectado": {
     "fecha": "2026-10-25",
-    "posiciones_ocupadas": 652.4,
-    "pct_ocupacion": 47.7
+    "posiciones_ocupadas": 651.5,
+    "pct_ocupacion": 47.6
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -62,17 +62,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 99.3,
-  "pallets_total_salientes_horizonte": 274.4,
+  "pallets_total_salientes_horizonte": 274.3,
   "m3_total_entrante_horizonte": 119.1,
-  "m3_total_saliente_horizonte": 329.3,
+  "m3_total_saliente_horizonte": 329.2,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 806,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 219098.0,
-    "demanda_cumplida_unidades": 38516.0,
-    "demanda_no_cubierta_unidades_total": 180582.0,
+    "demanda_cumplida_unidades": 38507.0,
+    "demanda_no_cubierta_unidades_total": 180591.0,
     "pct_demanda_cumplida": 17.6,
     "sku_sin_match_stock_count": 48,
     "top_no_cubiertos": [
@@ -93,7 +93,7 @@
       },
       {
         "sku": "1597086499840",
-        "unid_no_cubiertas": 20523.0,
+        "unid_no_cubiertas": 20524.0,
         "sin_match_stock": true
       },
       {
@@ -143,7 +143,7 @@
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 246.0,
+        "unid_no_cubiertas": 247.0,
         "sin_match_stock": true
       },
       {
