@@ -58,6 +58,14 @@ def main():
     except Exception as e:
         print(f"[fbf][WARN] {type(e).__name__}: {e} — Falabella usa fallback", flush=True)
 
+    # 1c) stock Walmart Full (WFS) desde el export del Seller Center que manda Trini
+    # (tolerante: si no hay export reciente, Walmart cae al fallback Odoo BFW)
+    try:
+        import ingest_walmart_wfs
+        ingest_walmart_wfs.main()
+    except Exception as e:
+        print(f"[wfs][WARN] {type(e).__name__}: {e} — Walmart usa fallback", flush=True)
+
     # 2) pulso
     from pulso_reposicion_fulfillment import construir, construir_excel_5pestanas
     fn = construir()

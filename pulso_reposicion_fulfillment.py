@@ -194,6 +194,40 @@ def complementar_base_nuevos(prod, venta, full_map):
 
 
 FALA_FBF = ROOT / "data/stock/fala_fbf_live.parquet"
+WFS_LIVE = ROOT / "data/stock/walmart_wfs_live.parquet"
+
+
+def _override_walmart(full_df):
+    """Reemplaza el stock de Walmart por el export WFS del Seller Center
+    (ingest_walmart_wfs, `Available units`) si el parquet existe. Walmart no tiene
+    feed de Martín ni API → el WFS es la única fuente real (vs Odoo BFW, que
+    descuadra bidireccionalmente). Ver [[pulso_reposicion_fulfillment]] sem 34."""
+    if not WFS_LIVE.exists():
+        return full_df
+    try:
+        f = pd.read_parquet(WFS_LIVE)[["canal", "sku", "qty"]].copy()
+        f["qty"] = pd.to_numeric(f["qty"], errors="coerce").fillna(0).clip(lower=0)
+        base = full_df[full_df["canal"] != "Walmart"]
+        out = pd.concat([base, f], ignore_index=True)
+        return out.groupby(["canal", "sku"], as_index=False)["qty"].sum()
+    except Exception as e:
+        print(f"[wfs][WARN] override Walmart falló: {type(e).__name__}: {e}", flush=True)
+        return full_df
+
+
+def _transito_walmart_wfs():
+    """Inbound del WFS = tránsito real de Walmart hacia el Full (reemplaza el
+    tránsito de Odoo para este canal). {(canal, sku): uds}."""
+    if not WFS_LIVE.exists():
+        return {}
+    try:
+        f = pd.read_parquet(WFS_LIVE)
+        f["inbound"] = pd.to_numeric(f["inbound"], errors="coerce").fillna(0).clip(lower=0)
+        f = f[f["inbound"] > 0]
+        return {("Walmart", r.sku): float(r.inbound) for r in f.itertuples(index=False)}
+    except Exception as e:
+        print(f"[wfs][WARN] tránsito Walmart falló: {type(e).__name__}: {e}", flush=True)
+        return {}
 
 
 def _override_fala(full_df):
@@ -240,12 +274,16 @@ def stock_full_live(no_live: bool):
             full = base.groupby(["canal", "sku"], as_index=False)["qty"].sum()
             if FALA_FBF.exists():
                 fuente += " · Falabella=FBF (API Seller Center)"
-            return _override_fala(full), fuente, cruce
+            if WFS_LIVE.exists():
+                fuente += " · Walmart=WFS (export Seller Center)"
+            return _override_walmart(_override_fala(full)), fuente, cruce
         except Exception as e:
             print(f"[live][WARN] {type(e).__name__}: {e} -> Odoo BF*")
     if FALA_FBF.exists():
         fuente += " · Falabella=FBF (API Seller Center)"
-    return _override_fala(odoo_g), fuente, cruce
+    if WFS_LIVE.exists():
+        fuente += " · Walmart=WFS (export Seller Center)"
+    return _override_walmart(_override_fala(odoo_g)), fuente, cruce
 
 
 def transito_a_fulls():
@@ -315,6 +353,13 @@ def construir(no_download=False, no_live=False) -> Path:
     except Exception as e:
         print(f"[transito-fulls][WARN] {type(e).__name__}: {e}")
         tr_fulls = {}
+    # Walmart: el tránsito real es el `Inbound units` del WFS (Seller Center), no
+    # los picks de Odoo → se reemplazan las entradas de Walmart por el WFS.
+    wfs_tr = _transito_walmart_wfs()
+    if wfs_tr:
+        tr_fulls = {k: v for k, v in tr_fulls.items() if k[0] != "Walmart"}
+        tr_fulls.update(wfs_tr)
+        print(f"[transito] Walmart desde WFS: {sum(wfs_tr.values()):,.0f} uds en {len(wfs_tr)} SKU")
 
     det = pd.read_parquet(DETALLE)
     ca1 = det[det["Bodega"].astype(str).str.startswith("CA1")]
