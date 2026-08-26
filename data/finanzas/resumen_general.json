@@ -1,7 +1,7 @@
 {
-  "generado_en": "2026-05-12T09:27:05.929107",
+  "generado_en": "2026-08-26T14:55:16.704342",
   "archivo_origen": "Planificación Financiera 2026.xlsx",
-  "archivo_modificado": "2026-05-12T09:18:24.340000",
+  "archivo_modificado": "2026-08-25T22:14:56.100000",
   "hojas_procesadas": {
     "pyl_mensual": {
       "filas": 6126,
@@ -58,8 +58,8 @@
       "archivo": "data\\finanzas\\kt.parquet",
       "ok": true
     },
-    "deuda": {
-      "filas": 2201,
+    "eeff": {
+      "filas": 1196,
       "columnas": [
         "fecha",
         "year",
@@ -68,7 +68,101 @@
         "linea",
         "valor"
       ],
+      "archivo": "data\\finanzas\\eeff.parquet",
+      "ok": true
+    },
+    "eeff_ratios": {
+      "filas": 995,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "categoria",
+        "ratio",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\eeff_ratios.parquet",
+      "ok": true
+    },
+    "deuda": {
+      "filas": 2733,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "bloque",
+        "seccion",
+        "linea",
+        "valor"
+      ],
       "archivo": "data\\finanzas\\deuda.parquet",
+      "ok": true
+    },
+    "prestamos_comerciales": {
+      "filas": 8,
+      "columnas": [
+        "codigo",
+        "credito",
+        "vencimiento",
+        "total",
+        "corto_plazo",
+        "largo_plazo",
+        "cuotas_pend",
+        "cuota_mensual"
+      ],
+      "archivo": "data\\finanzas\\prestamos_comerciales.parquet",
+      "ok": true
+    },
+    "ppe": {
+      "filas": 459,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "seccion",
+        "linea",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\ppe.parquet",
+      "ok": true
+    },
+    "otros_activos_pasivos": {
+      "filas": 830,
+      "columnas": [
+        "fecha",
+        "year",
+        "month",
+        "seccion",
+        "linea",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\otros_activos_pasivos.parquet",
+      "ok": true
+    },
+    "pl_bancos": {
+      "filas": 197,
+      "columnas": [
+        "year",
+        "seccion",
+        "concepto",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\pl_bancos.parquet",
+      "ok": true
+    },
+    "analisis_fin_2026": {
+      "filas": 63,
+      "columnas": [
+        "seccion",
+        "c0",
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5",
+        "c6"
+      ],
+      "archivo": "data\\finanzas\\analisis_fin_2026.parquet",
       "ok": true
     },
     "metas_2026": {
@@ -85,7 +179,7 @@
       "ok": true
     },
     "fcst_eerr": {
-      "filas": 786,
+      "filas": 790,
       "columnas": [
         "fecha",
         "year",
