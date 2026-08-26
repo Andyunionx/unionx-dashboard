@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-26T12:26:14.633516",
+  "generado_en": "2026-08-26T19:30:24.670838",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11156,
-  "total_monto_pendiente_clp": 848653249.0,
+  "total_documentos_pendientes": 10012,
+  "total_monto_pendiente_clp": 834407162.0,
   "monto_por_aging": {
-    "+90 días": 60268352.0,
-    "1-30 días": 426711909.0,
-    "31-60 días": 192691227.0,
-    "61-90 días": 89643602.0,
-    "Vigente": 79338159.0
+    "+90 días": 59461813.0,
+    "1-30 días": 466250346.0,
+    "31-60 días": 192642267.0,
+    "61-90 días": 34196124.0,
+    "Vigente": 81856612.0
   },
   "monto_por_tipo": {
-    "BOLETA": 627315855.0,
+    "BOLETA": 613069768.0,
     "FACTURA": 221337394.0
   },
   "top_20_deudores": [
@@ -21,24 +21,24 @@
       "monto": 157189181.0
     },
     {
-      "partner": "Cliente Kitchen Center",
-      "monto": 99053796.0
+      "partner": "LA VINOTECA SPA",
+      "monto": 120549380.0
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 93499806.0
-    },
-    {
-      "partner": "LA VINOTECA SPA",
-      "monto": 83855492.0
+      "monto": 94937864.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 56539440.0
+      "monto": 56957270.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 54540554.0
+      "monto": 54403334.0
+    },
+    {
+      "partner": "Cliente Kitchen Center",
+      "monto": 43872342.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,11 +46,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 25043011.0
+      "monto": 24792129.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22148377.0
+      "monto": 22249327.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -62,11 +62,11 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 15821705.0
+      "monto": 16257695.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 15506761.0
+      "monto": 15774131.0
     },
     {
       "partner": "Status Spa",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 9716261.0
+      "monto": 9874093.0
     },
     {
       "partner": "Distribución y Logística V&L SpA",
@@ -97,6 +97,6 @@
       "monto": 4525224.0
     }
   ],
-  "notas_credito_count": 487,
-  "pedidos_venta_count": 10000
+  "notas_credito_count": 488,
+  "pedidos_venta_count": 9452
 }
