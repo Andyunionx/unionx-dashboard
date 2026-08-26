@@ -1,0 +1,57 @@
+name: "Agente COMEX autónomo (diario)"
+
+on:
+  schedule:
+    # 12:00 UTC = 08:00 Chile — diario
+    - cron: '0 12 * * *'
+  workflow_dispatch:        # correr a mano desde la pestaña Actions
+
+permissions:
+  contents: write           # para commitear el estado
+
+concurrency:
+  group: agente-comex-auto  # evita corridas solapadas
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install requests openpyxl pandas google-api-python-client google-auth google-auth-oauthlib
+
+      - name: Escribir token Gmail desde secret
+        env:
+          GMAIL_TOKEN: ${{ secrets.GMAIL_TOKEN }}
+        run: |
+          mkdir -p agente-comex/config
+          printf '%s' "$GMAIL_TOKEN" > agente-comex/config/token.json
+
+      - name: Correr pipeline COMEX
+        working-directory: agente-comex-auto
+        env:
+          SEIMEX_EMAIL: ${{ secrets.SEIMEX_EMAIL }}
+          SEIMEX_PASSWORD: ${{ secrets.SEIMEX_PASSWORD }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          # COMMIT_MODE=1 activa escrituras (Gmail label/borrador + PO Odoo).
+          # Se controla con una Variable de repo (Settings → Variables). Vacía = dry-run.
+          COMMIT_MODE: ${{ vars.COMMIT_MODE }}
+        run: python pipeline.py
+
+      - name: Commitear estado si cambió
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions COMEX"
+          git add agente-comex-auto/data/estado_embarques.json || true
+          git diff --staged --quiet || git commit -m "Sync estado agente COMEX $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push

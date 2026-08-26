@@ -40,19 +40,27 @@ PUERTOS = {"SZ": "Shenzhen", "NB": "Ningbo", "XI": "Xiamen"}
 
 
 def resolver_archivos(reg) -> tuple[Path | None, Path | None]:
-    """Devuelve (pi_path, pl_path): usa el path del estado (descargado) o busca en el repo."""
+    """Devuelve (pi_path, pl_path): path del estado → repo → re-descarga de Gmail on-demand."""
     def buscar(doc):
         if not doc:
             return None
         if doc.get("path") and Path(doc["path"]).exists():
             return Path(doc["path"])
-        # fallback: buscar por nombre de archivo en el repo (para pruebas sin descargar)
         fn = doc["filename"]
+        # buscar por nombre en el repo (local)
         for base in [REPO / "data" / "comex" / "embarques", REPO / "agente-comex" / "data" / "inbox",
                      Path("C:/Users/andre/Downloads")]:
             hits = glob.glob(str(base / "**" / fn), recursive=True)
             if hits:
                 return Path(hits[0])
+        # re-descargar de Gmail (runner efímero en la nube)
+        if doc.get("msg_id") and doc.get("attachment_id"):
+            try:
+                from gmail_client import GmailClient
+                save_dir = BASE / "data" / "inbox" / (reg.get("embarque") or "tmp")
+                return GmailClient().download_attachment(doc["msg_id"], doc["attachment_id"], fn, str(save_dir))
+            except Exception as e:
+                print(f"  (no pude re-descargar {fn} de Gmail: {e})")
         return None
     return buscar(reg.get("pi")), buscar(reg.get("pl"))
 
