@@ -1,0 +1,42 @@
+name: Agente Tickets NC (postventa)
+
+# Decisión Andrés 26-08-2026 (opción B): emisión y posteo automático de NC por
+# devoluciones de postventa, activo desde el LUNES 31-08-2026 (gate en el script:
+# antes de esa fecha corre en dry-run). Reglas de Max 26-08: Motivo=Devolución +
+# Estado in {Nuevo, Outlet, Merma}; excluye Kitchen Center; NC por línea agrupada
+# por OC; si hay NC previa NO emite y reporta a Max los lunes.
+# Deshabilitar con vars.AGENTE_TICKETS_NC_ENABLED='false'.
+
+on:
+  schedule:
+    - cron: '19 11-23 * * 1-6'   # cada hora 07:19-19:19 CLT aprox, lun-sáb
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Barrido completo del histórico (no incremental)"
+        type: boolean
+        default: false
+
+jobs:
+  agente:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ vars.AGENTE_TICKETS_NC_ENABLED != 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: pip install --quiet requests google-api-python-client google-auth google-auth-oauthlib
+      - name: Correr agente
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ "${{ github.event.inputs.full }}" = "true" ]; then
+            python agente_tickets_nc.py --auto --full
+          else
+            python agente_tickets_nc.py --auto
+          fi
