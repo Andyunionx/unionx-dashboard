@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-28T00:09:35.868266",
+  "generado_en": "2026-08-28T14:42:18.911191",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 868,
     "posiciones_libres_hoy": 501,
     "pct_ocupacion_hoy": 63.4,
-    "m3_stock_calculado": 877.7
+    "m3_stock_calculado": 876.8
   },
   "pico_proyectado": {
     "fecha": "2026-08-30",
@@ -23,7 +23,7 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-10-26",
-    "posiciones_ocupadas": 641.9,
+    "posiciones_ocupadas": 642.3,
     "pct_ocupacion": 46.9
   },
   "primer_critico": null,
@@ -70,17 +70,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 99.3,
-  "pallets_total_salientes_horizonte": 273.9,
+  "pallets_total_salientes_horizonte": 273.5,
   "m3_total_entrante_horizonte": 119.1,
-  "m3_total_saliente_horizonte": 328.7,
+  "m3_total_saliente_horizonte": 328.2,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 806,
+    "sku_con_vol_odoo": 805,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 215282.0,
-    "demanda_cumplida_unidades": 38474.0,
-    "demanda_no_cubierta_unidades_total": 176808.0,
+    "demanda_cumplida_unidades": 38461.0,
+    "demanda_no_cubierta_unidades_total": 176821.0,
     "pct_demanda_cumplida": 17.9,
     "sku_sin_match_stock_count": 49,
     "top_no_cubiertos": [
@@ -106,7 +106,7 @@
       },
       {
         "sku": "1592492799236",
-        "unid_no_cubiertas": 18304.0,
+        "unid_no_cubiertas": 18305.0,
         "sin_match_stock": true
       },
       {
@@ -116,7 +116,7 @@
       },
       {
         "sku": "1566335721736",
-        "unid_no_cubiertas": 13617.0,
+        "unid_no_cubiertas": 13618.0,
         "sin_match_stock": true
       },
       {
@@ -126,7 +126,7 @@
       },
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 1370.0,
+        "unid_no_cubiertas": 1371.0,
         "sin_match_stock": true
       },
       {
@@ -140,18 +140,18 @@
         "sin_match_stock": true
       },
       {
+        "sku": "SIMJULZSIE-30",
+        "unid_no_cubiertas": 313.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "LVMPADXXL-BK",
         "unid_no_cubiertas": 312.0,
         "sin_match_stock": true
       },
       {
-        "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 312.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 294.0,
+        "unid_no_cubiertas": 295.0,
         "sin_match_stock": true
       },
       {
