@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-08-27T13:54:11.936045",
+  "generado_en": "2026-08-28T00:17:41.459012",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03119106339764979,
-      "total_pickings": 13786,
-      "on_time": 432,
-      "on_time_pct": 0.03133613811112723,
-      "in_full": 13780,
-      "in_full_pct": 0.9995647758595677,
-      "both": 430,
+      "valor": 0.024664750957854406,
+      "total_pickings": 12528,
+      "on_time": 311,
+      "on_time_pct": 0.024824393358876116,
+      "in_full": 12522,
+      "in_full_pct": 0.9995210727969349,
+      "both": 309,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1486810551558753,
-      "total_pickings": 417,
-      "on_time": 63,
-      "on_time_pct": 0.1510791366906475,
-      "in_full": 413,
-      "in_full_pct": 0.9904076738609112,
-      "both": 62,
+      "valor": 0.14795918367346939,
+      "total_pickings": 392,
+      "on_time": 59,
+      "on_time_pct": 0.15051020408163265,
+      "in_full": 388,
+      "in_full_pct": 0.9897959183673469,
+      "both": 58,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997823010776097,
-      "ok": 18370,
-      "total": 18374,
+      "valor": 0.999762822413282,
+      "ok": 16861,
+      "total": 16865,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 16.25221844293273,
-      "n_recepciones": 294,
+      "valor": 16.17298991628615,
+      "n_recepciones": 292,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01037",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-27 20:48",
+          "done": "2026-08-27 20:48"
+        },
+        {
+          "picking": "CA1/IN/01036",
+          "proveedor": "",
+          "horas": 0.7,
+          "scheduled": "2026-08-27 20:00",
+          "done": "2026-08-27 20:41"
+        },
+        {
+          "picking": "CA1/IN/01034",
+          "proveedor": "",
+          "horas": 0.4,
+          "scheduled": "2026-08-27 13:38",
+          "done": "2026-08-27 14:05"
+        },
         {
           "picking": "CA1/IN/01033",
           "proveedor": "",
@@ -153,152 +174,26 @@
           "horas": 24.8,
           "scheduled": "2026-08-24 12:16",
           "done": "2026-08-25 13:03"
-        },
-        {
-          "picking": "CA1/IN/01020",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 582.8,
-          "scheduled": "2026-07-31 13:00",
-          "done": "2026-08-24 19:48"
-        },
-        {
-          "picking": "CA1/IN/01024",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-24 17:01",
-          "done": "2026-08-24 17:02"
-        },
-        {
-          "picking": "CA1/IN/01023",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-24 16:17",
-          "done": "2026-08-24 16:19"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9473287051011168,
-      "total_so": 13332,
-      "total_con_pickings": 13252,
-      "cumplidos": 12554,
-      "parciales": 19,
-      "sin_iniciar": 679,
+      "valor": 0.9342694028699274,
+      "total_so": 13040,
+      "total_con_pickings": 12962,
+      "cumplidos": 12110,
+      "parciales": 20,
+      "sin_iniciar": 832,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.91222932646261,
-      "n_orders": 14037,
+      "valor": 43.74085536263622,
+      "n_orders": 12786,
       "min_h": 0.005833333333333334,
-      "max_h": 700.2111111111111,
-      "mediana_h": 28.15277777777778,
+      "max_h": 664.3713888888889,
+      "mediana_h": 27.67388888888889,
       "detalle": [
-        {
-          "so": "S261093",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261094",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261091",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261092",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261089",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261090",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261088",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 700.2,
-          "fecha_orden": "2026-06-29 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261101",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261102",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261099",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261100",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261097",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261098",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261095",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
-        {
-          "so": "S261096",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 676.2,
-          "fecha_orden": "2026-06-30 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
-        },
         {
           "so": "S269110",
           "cliente": "Cliente Mercado Libre, Juan Luis Vergara",
@@ -307,32 +202,137 @@
           "fecha_despacho": "2026-08-25 17:19"
         },
         {
-          "so": "S261110",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 652.2,
-          "fecha_orden": "2026-07-01 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
+          "so": "S262757",
+          "cliente": "Cliente Mercado Libre, Valentina gatica",
+          "horas": 611.4,
+          "fecha_orden": "2026-07-13 00:37",
+          "fecha_despacho": "2026-08-07 12:01"
         },
         {
-          "so": "S261108",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 652.2,
-          "fecha_orden": "2026-07-01 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
+          "so": "S271025",
+          "cliente": "Cliente Mercado Libre, Pablo Cristian Soto Figueroa",
+          "horas": 596.4,
+          "fecha_orden": "2026-08-01 01:02",
+          "fecha_despacho": "2026-08-25 21:24"
         },
         {
-          "so": "S261109",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 652.2,
-          "fecha_orden": "2026-07-01 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
+          "so": "S273055",
+          "cliente": "Cliente Mercado Libre, Francisco Ubierna",
+          "horas": 525.1,
+          "fecha_orden": "2026-08-04 00:20",
+          "fecha_despacho": "2026-08-25 21:24"
         },
         {
-          "so": "S261106",
-          "cliente": "Cliente Walmart, ALFONSO MUÑOZ",
-          "horas": 652.2,
-          "fecha_orden": "2026-07-01 16:00",
-          "fecha_despacho": "2026-07-28 20:12"
+          "so": "S273112",
+          "cliente": "Cliente Falabella Fcom, Maria Catalina Poblete Baldessari",
+          "horas": 519.6,
+          "fecha_orden": "2026-08-04 01:27",
+          "fecha_despacho": "2026-08-25 17:04"
+        },
+        {
+          "so": "S273877",
+          "cliente": "Cliente Mercado Libre, Waldo Enrique Silva Acevedo",
+          "horas": 496.3,
+          "fecha_orden": "2026-08-05 01:00",
+          "fecha_despacho": "2026-08-25 17:19"
+        },
+        {
+          "so": "S273707",
+          "cliente": "Cliente Walmart, Paola Alfonso oyarzo",
+          "horas": 472.6,
+          "fecha_orden": "2026-08-04 20:21",
+          "fecha_despacho": "2026-08-24 12:57"
+        },
+        {
+          "so": "S274489",
+          "cliente": "Cliente Mercado Libre, Cristian Fariña Jara",
+          "horas": 471.8,
+          "fecha_orden": "2026-08-06 01:30",
+          "fecha_despacho": "2026-08-25 17:19"
+        },
+        {
+          "so": "S274754",
+          "cliente": "Cliente Mercado Libre, Scarlett sanchez",
+          "horas": 455.0,
+          "fecha_orden": "2026-08-06 18:20",
+          "fecha_despacho": "2026-08-25 17:19"
+        },
+        {
+          "so": "S272946",
+          "cliente": "Gandez SpA",
+          "horas": 454.7,
+          "fecha_orden": "2026-08-05 13:27",
+          "fecha_despacho": "2026-08-24 12:10"
+        },
+        {
+          "so": "S268489",
+          "cliente": "Cliente Kitchen Center",
+          "horas": 423.6,
+          "fecha_orden": "2026-07-13 22:42",
+          "fecha_despacho": "2026-07-31 14:15"
+        },
+        {
+          "so": "S268488",
+          "cliente": "Cliente Kitchen Center",
+          "horas": 415.6,
+          "fecha_orden": "2026-07-14 06:40",
+          "fecha_despacho": "2026-07-31 14:15"
+        },
+        {
+          "so": "S275532",
+          "cliente": "Cliente Mercado Libre, Esteban Teneb Lobos",
+          "horas": 404.5,
+          "fecha_orden": "2026-08-08 20:50",
+          "fecha_despacho": "2026-08-25 17:19"
+        },
+        {
+          "so": "S268487",
+          "cliente": "Cliente Kitchen Center",
+          "horas": 401.2,
+          "fecha_orden": "2026-07-14 21:06",
+          "fecha_despacho": "2026-07-31 14:15"
+        },
+        {
+          "so": "S267933",
+          "cliente": "Cliente Falabella Fcom, Pierre Castillo",
+          "horas": 400.2,
+          "fecha_orden": "2026-07-27 04:05",
+          "fecha_despacho": "2026-08-12 20:18"
+        },
+        {
+          "so": "S268486",
+          "cliente": "Cliente Kitchen Center",
+          "horas": 386.3,
+          "fecha_orden": "2026-07-15 11:58",
+          "fecha_despacho": "2026-07-31 14:15"
+        },
+        {
+          "so": "S268485",
+          "cliente": "Cliente Kitchen Center",
+          "horas": 381.8,
+          "fecha_orden": "2026-07-15 16:25",
+          "fecha_despacho": "2026-07-31 14:15"
+        },
+        {
+          "so": "S268484",
+          "cliente": "Cliente Kitchen Center",
+          "horas": 379.3,
+          "fecha_orden": "2026-07-15 19:00",
+          "fecha_despacho": "2026-07-31 14:15"
+        },
+        {
+          "so": "S276204",
+          "cliente": "Cliente Falabella Fcom, Richard Pozo Valdivia",
+          "horas": 358.1,
+          "fecha_orden": "2026-08-10 18:25",
+          "fecha_despacho": "2026-08-25 16:33"
+        },
+        {
+          "so": "S276356",
+          "cliente": "Cliente Falabella Fcom, Juan Carlos Ahumada Cisternas",
+          "horas": 352.2,
+          "fecha_orden": "2026-08-11 00:53",
+          "fecha_despacho": "2026-08-25 17:04"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14396,
+      "lineas": 14538,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 115,
-      "outgoing": 29205,
-      "internal": 20680,
+      "incoming": 110,
+      "outgoing": 29241,
+      "internal": 20649,
       "total": 50000,
       "error": null
     },
@@ -373,26 +373,26 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 62,
-          "tarde": 62,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "abc S.A.",
-          "total": 70,
-          "tarde": 70,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Global Reward Solutions",
-          "total": 108,
-          "tarde": 108,
+          "total": 55,
+          "tarde": 55,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
           "total": 7,
           "tarde": 7,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Global Reward Solutions",
+          "total": 112,
+          "tarde": 112,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "abc S.A.",
+          "total": 54,
+          "tarde": 54,
           "on_time_pct": 0.0
         },
         {
@@ -427,27 +427,27 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 39,
-          "tarde": 38,
-          "on_time_pct": 0.02564102564102564
-        },
-        {
-          "cliente": "PATAGONIK S.A.",
-          "total": 3,
-          "tarde": 2,
-          "on_time_pct": 0.3333333333333333
+          "total": 35,
+          "tarde": 34,
+          "on_time_pct": 0.02857142857142857
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 18,
-          "tarde": 7,
-          "on_time_pct": 0.6111111111111112
+          "total": 16,
+          "tarde": 8,
+          "on_time_pct": 0.5
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
           "total": 5,
           "tarde": 1,
           "on_time_pct": 0.8
+        },
+        {
+          "cliente": "Falabella Retail",
+          "total": 20,
+          "tarde": 0,
+          "on_time_pct": 1.0
         }
       ],
       "error": null
@@ -8144,42 +8144,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03119106339764979,
-      "total_pickings": 13786,
-      "on_time": 432,
-      "on_time_pct": 0.03133613811112723,
-      "in_full": 13780,
-      "in_full_pct": 0.9995647758595677,
-      "both": 430,
+      "valor": 0.024664750957854406,
+      "total_pickings": 12528,
+      "on_time": 311,
+      "on_time_pct": 0.024824393358876116,
+      "in_full": 12522,
+      "in_full_pct": 0.9995210727969349,
+      "both": 309,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1486810551558753,
-      "total_pickings": 417,
-      "on_time": 63,
-      "on_time_pct": 0.1510791366906475,
-      "in_full": 413,
-      "in_full_pct": 0.9904076738609112,
-      "both": 62,
+      "valor": 0.14795918367346939,
+      "total_pickings": 392,
+      "on_time": 59,
+      "on_time_pct": 0.15051020408163265,
+      "in_full": 388,
+      "in_full_pct": 0.9897959183673469,
+      "both": 58,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997823010776097,
-      "ok": 18370,
-      "total": 18374,
+      "valor": 0.999762822413282,
+      "ok": 16861,
+      "total": 16865,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 16.25221844293273,
-      "n_recepciones": 294,
+      "valor": 16.17298991628615,
+      "n_recepciones": 292,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01037",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-08-27 20:48",
+          "done": "2026-08-27 20:48"
+        },
+        {
+          "picking": "CA1/IN/01036",
+          "proveedor": "",
+          "horas": 0.7,
+          "scheduled": "2026-08-27 20:00",
+          "done": "2026-08-27 20:41"
+        },
+        {
+          "picking": "CA1/IN/01034",
+          "proveedor": "",
+          "horas": 0.4,
+          "scheduled": "2026-08-27 13:38",
+          "done": "2026-08-27 14:05"
+        },
         {
           "picking": "CA1/IN/01033",
           "proveedor": "",
@@ -8298,27 +8319,6 @@
           "horas": 24.8,
           "scheduled": "2026-08-24 12:16",
           "done": "2026-08-25 13:03"
-        },
-        {
-          "picking": "CA1/IN/01020",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 582.8,
-          "scheduled": "2026-07-31 13:00",
-          "done": "2026-08-24 19:48"
-        },
-        {
-          "picking": "CA1/IN/01024",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-24 17:01",
-          "done": "2026-08-24 17:02"
-        },
-        {
-          "picking": "CA1/IN/01023",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-24 16:17",
-          "done": "2026-08-24 16:19"
         }
       ],
       "error": null
