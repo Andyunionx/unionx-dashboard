@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-28T22:57:31.140534",
+  "generado_en": "2026-08-28T23:46:02.048366",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -17,24 +17,18 @@
     "m3_stock_calculado": 926.2
   },
   "pico_proyectado": {
-    "fecha": "2026-08-30",
-    "posiciones_ocupadas": 923.3,
-    "pct_ocupacion": 67.4
+    "fecha": "2026-08-28",
+    "posiciones_ocupadas": 893.0,
+    "pct_ocupacion": 65.2
   },
   "minimo_proyectado": {
-    "fecha": "2026-10-26",
-    "posiciones_ocupadas": 672.3,
-    "pct_ocupacion": 49.1
+    "fecha": "2026-10-27",
+    "posiciones_ocupadas": 624.6,
+    "pct_ocupacion": 45.6
   },
   "primer_critico": null,
   "primer_atencion": null,
-  "dias_con_entrada_transito": [
-    {
-      "fecha": "2026-08-30",
-      "pallets": 47.8,
-      "m3": 57.4
-    }
-  ],
+  "dias_con_entrada_transito": [],
   "pis_entrantes": [
     {
       "pi": "26TP0704PI",
@@ -42,14 +36,6 @@
       "pallets": 0,
       "m3": 0.0,
       "unidades": 27.0,
-      "transporte": ""
-    },
-    {
-      "pi": "26TP0702PI",
-      "fecha_eta": "2026-07-30",
-      "pallets": 47.8,
-      "m3": 57.36,
-      "unidades": 6371.0,
       "transporte": ""
     },
     {
@@ -69,20 +55,20 @@
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 99.3,
-  "pallets_total_salientes_horizonte": 268.6,
-  "m3_total_entrante_horizonte": 119.1,
-  "m3_total_saliente_horizonte": 322.3,
+  "pallets_total_entrantes_horizonte": 51.5,
+  "pallets_total_salientes_horizonte": 268.4,
+  "m3_total_entrante_horizonte": 61.8,
+  "m3_total_saliente_horizonte": 322.1,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 804,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 211996.0,
-    "demanda_cumplida_unidades": 38298.0,
-    "demanda_no_cubierta_unidades_total": 173698.0,
+    "demanda_cumplida_unidades": 38273.0,
+    "demanda_no_cubierta_unidades_total": 173723.0,
     "pct_demanda_cumplida": 18.1,
-    "sku_sin_match_stock_count": 47,
+    "sku_sin_match_stock_count": 48,
     "top_no_cubiertos": [
       {
         "sku": "1564150627423",
