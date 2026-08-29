@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-08-29T15:53:03.222168",
+  "generado_en": "2026-08-29T20:06:39.954254",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10080,
-  "total_monto_pendiente_clp": 716971522.0,
+  "total_documentos_pendientes": 10119,
+  "total_monto_pendiente_clp": 718324920.0,
   "monto_por_aging": {
     "+90 días": 67399917.0,
-    "1-30 días": 422992594.0,
+    "1-30 días": 424345992.0,
     "31-60 días": 121314167.0,
     "61-90 días": 24211179.0,
     "Vigente": 81053665.0
   },
   "monto_por_tipo": {
-    "BOLETA": 612775972.0,
+    "BOLETA": 614129370.0,
     "FACTURA": 104195550.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 101489846.0
+      "monto": 102041106.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 55197454.0
+      "monto": 55209444.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -38,7 +38,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 45152554.0
+      "monto": 45488384.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -50,11 +50,11 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 20948699.0
+      "monto": 21151629.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 19796551.0
+      "monto": 19876511.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -78,7 +78,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 8792934.0
+      "monto": 8831884.0
     },
     {
       "partner": "abc S.A.",
@@ -98,5 +98,5 @@
     }
   ],
   "notas_credito_count": 489,
-  "pedidos_venta_count": 9541
+  "pedidos_venta_count": 9580
 }
