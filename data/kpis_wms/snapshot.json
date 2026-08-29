@@ -1,40 +1,54 @@
 {
-  "generado_en": "2026-08-28T15:06:21.029904",
+  "generado_en": "2026-08-29T09:48:51.279880",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.027552802922026363,
-      "total_pickings": 12594,
-      "on_time": 349,
-      "on_time_pct": 0.027711608702556772,
-      "in_full": 12588,
-      "in_full_pct": 0.9995235826584088,
-      "both": 347,
+      "valor": 0.02877754253901043,
+      "total_pickings": 12753,
+      "on_time": 369,
+      "on_time_pct": 0.02893436838390967,
+      "in_full": 12747,
+      "in_full_pct": 0.9995295224653022,
+      "both": 367,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.14824120603015076,
-      "total_pickings": 398,
-      "on_time": 60,
-      "on_time_pct": 0.1507537688442211,
-      "in_full": 394,
-      "in_full_pct": 0.9899497487437185,
-      "both": 59,
+      "valor": 0.13613861386138615,
+      "total_pickings": 404,
+      "on_time": 56,
+      "on_time_pct": 0.13861386138613863,
+      "in_full": 400,
+      "in_full_pct": 0.9900990099009901,
+      "both": 55,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997640813919197,
-      "ok": 16951,
-      "total": 16955,
+      "valor": 0.9997643593519883,
+      "ok": 16971,
+      "total": 16975,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 16.17298991628615,
-      "n_recepciones": 292,
+      "valor": 18.420160619803475,
+      "n_recepciones": 294,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01039",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 690.6,
+          "scheduled": "2026-07-30 21:34",
+          "done": "2026-08-28 16:12"
+        },
+        {
+          "picking": "CA1/IN/01038",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 2.4,
+          "scheduled": "2026-08-28 13:46",
+          "done": "2026-08-28 16:09"
+        },
         {
           "picking": "CA1/IN/01037",
           "proveedor": "",
@@ -160,39 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-25 14:16",
           "done": "2026-08-25 14:16"
-        },
-        {
-          "picking": "CA1/IN/01025",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-25 14:00",
-          "done": "2026-08-25 14:06"
-        },
-        {
-          "picking": "CA1/IN/01022",
-          "proveedor": "",
-          "horas": 24.8,
-          "scheduled": "2026-08-24 12:16",
-          "done": "2026-08-25 13:03"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.924455242578392,
-      "total_so": 13250,
-      "total_con_pickings": 13171,
-      "cumplidos": 12176,
+      "valor": 0.9612102404965089,
+      "total_so": 12963,
+      "total_con_pickings": 12890,
+      "cumplidos": 12390,
       "parciales": 20,
-      "sin_iniciar": 975,
+      "sin_iniciar": 480,
       "error": null
     },
     "oct_30d": {
-      "valor": 43.59803651991288,
-      "n_orders": 12856,
+      "valor": 44.08876992048867,
+      "n_orders": 13024,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 27.42861111111111,
+      "mediana_h": 28.843055555555555,
       "detalle": [
         {
           "so": "S269110",
@@ -214,6 +214,20 @@
           "horas": 596.4,
           "fecha_orden": "2026-08-01 01:02",
           "fecha_despacho": "2026-08-25 21:24"
+        },
+        {
+          "so": "S274598",
+          "cliente": "Cliente Falabella Fcom, Gabriel Martinez Merino",
+          "horas": 533.5,
+          "fecha_orden": "2026-08-06 09:51",
+          "fecha_despacho": "2026-08-28 15:22"
+        },
+        {
+          "so": "S274624",
+          "cliente": "Cliente Falabella Fcom, Maria belen Lira Toro",
+          "horas": 530.0,
+          "fecha_orden": "2026-08-06 13:22",
+          "fecha_despacho": "2026-08-28 15:22"
         },
         {
           "so": "S273055",
@@ -319,20 +333,6 @@
           "horas": 379.3,
           "fecha_orden": "2026-07-15 19:00",
           "fecha_despacho": "2026-07-31 14:15"
-        },
-        {
-          "so": "S276204",
-          "cliente": "Cliente Falabella Fcom, Richard Pozo Valdivia",
-          "horas": 358.1,
-          "fecha_orden": "2026-08-10 18:25",
-          "fecha_despacho": "2026-08-25 16:33"
-        },
-        {
-          "so": "S276356",
-          "cliente": "Cliente Falabella Fcom, Juan Carlos Ahumada Cisternas",
-          "horas": 352.2,
-          "fecha_orden": "2026-08-11 00:53",
-          "fecha_despacho": "2026-08-25 17:04"
         }
       ],
       "error": null
@@ -346,59 +346,29 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14640,
+      "lineas": 15486,
       "mes": "2026-08",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 110,
-      "outgoing": 29241,
-      "internal": 20649,
+      "outgoing": 29220,
+      "internal": 20670,
       "total": 50000,
       "error": null
     },
     "top_clientes_otif_30d": {
       "valor": [
         {
-          "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 7,
-          "tarde": 7,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "INVERSIONES MAVAPA SPA",
-          "total": 3,
-          "tarde": 3,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Sawa SPA",
-          "total": 58,
-          "tarde": 58,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "ASTORGA SPA",
-          "total": 7,
-          "tarde": 7,
+          "total": 61,
+          "tarde": 61,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 112,
-          "tarde": 112,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "abc S.A.",
-          "total": 54,
-          "tarde": 54,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Lokal SpA",
-          "total": 7,
-          "tarde": 7,
+          "total": 124,
+          "tarde": 124,
           "on_time_pct": 0.0
         },
         {
@@ -408,9 +378,33 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Lokal SpA",
+          "total": 6,
+          "tarde": 6,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 5,
+          "tarde": 5,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "abc S.A.",
+          "total": 52,
+          "tarde": 52,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Comercial Ibarraconnect Ltda",
           "total": 3,
           "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "ASTORGA SPA",
+          "total": 5,
+          "tarde": 5,
           "on_time_pct": 0.0
         },
         {
@@ -427,15 +421,15 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 37,
-          "tarde": 36,
-          "on_time_pct": 0.02702702702702703
+          "total": 40,
+          "tarde": 39,
+          "on_time_pct": 0.025
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 17,
-          "tarde": 8,
-          "on_time_pct": 0.5294117647058824
+          "total": 16,
+          "tarde": 7,
+          "on_time_pct": 0.5625
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
@@ -444,8 +438,14 @@
           "on_time_pct": 0.8
         },
         {
-          "cliente": "Falabella Retail",
-          "total": 20,
+          "cliente": "Mercadolibre Chile Limitada",
+          "total": 12,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Agricola Escargot Premium SpA",
+          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8144,42 +8144,56 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.027552802922026363,
-      "total_pickings": 12594,
-      "on_time": 349,
-      "on_time_pct": 0.027711608702556772,
-      "in_full": 12588,
-      "in_full_pct": 0.9995235826584088,
-      "both": 347,
+      "valor": 0.02877754253901043,
+      "total_pickings": 12753,
+      "on_time": 369,
+      "on_time_pct": 0.02893436838390967,
+      "in_full": 12747,
+      "in_full_pct": 0.9995295224653022,
+      "both": 367,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.14824120603015076,
-      "total_pickings": 398,
-      "on_time": 60,
-      "on_time_pct": 0.1507537688442211,
-      "in_full": 394,
-      "in_full_pct": 0.9899497487437185,
-      "both": 59,
+      "valor": 0.13613861386138615,
+      "total_pickings": 404,
+      "on_time": 56,
+      "on_time_pct": 0.13861386138613863,
+      "in_full": 400,
+      "in_full_pct": 0.9900990099009901,
+      "both": 55,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997640813919197,
-      "ok": 16951,
-      "total": 16955,
+      "valor": 0.9997643593519883,
+      "ok": 16971,
+      "total": 16975,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 16.17298991628615,
-      "n_recepciones": 292,
+      "valor": 18.420160619803475,
+      "n_recepciones": 294,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01039",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 690.6,
+          "scheduled": "2026-07-30 21:34",
+          "done": "2026-08-28 16:12"
+        },
+        {
+          "picking": "CA1/IN/01038",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 2.4,
+          "scheduled": "2026-08-28 13:46",
+          "done": "2026-08-28 16:09"
+        },
         {
           "picking": "CA1/IN/01037",
           "proveedor": "",
@@ -8305,20 +8319,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-25 14:16",
           "done": "2026-08-25 14:16"
-        },
-        {
-          "picking": "CA1/IN/01025",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-08-25 14:00",
-          "done": "2026-08-25 14:06"
-        },
-        {
-          "picking": "CA1/IN/01022",
-          "proveedor": "",
-          "horas": 24.8,
-          "scheduled": "2026-08-24 12:16",
-          "done": "2026-08-25 13:03"
         }
       ],
       "error": null
