@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-29T15:57:43.078380",
+  "generado_en": "2026-08-29T17:04:07.031514",
   "horizonte_dias": 90,
   "ratios_equipo": {
     "uds_por_pedido": 3.5,
@@ -9,71 +9,71 @@
   },
   "capacidad_pedidos_dia": 525.0,
   "totales_horizonte": {
-    "pedidos_proyectados": 60569,
-    "lineas_proyectadas": 78739,
-    "unidades_demanda": 211996,
+    "pedidos_proyectados": 59389,
+    "lineas_proyectadas": 77203,
+    "unidades_demanda": 207870,
     "dias_sobrecarga": 26,
     "dias_atencion": 0
   },
   "pico": {
     "fecha": "2026-09-07",
-    "pedidos_a_procesar": 5349.0,
-    "lineas_a_procesar": 6954.0,
-    "pct_carga_equipo": 1018.9,
+    "pedidos_a_procesar": 5386.0,
+    "lineas_a_procesar": 7001.0,
+    "pct_carga_equipo": 1025.9,
     "alerta": "🔴 SOBRECARGA"
   },
   "primer_sobrecarga": {
     "fecha": "2026-08-31",
-    "pedidos_a_procesar": 5305.0,
-    "pct_carga_equipo": 1010.5,
+    "pedidos_a_procesar": 3712.0,
+    "pct_carga_equipo": 707.0,
     "alerta": "🔴 SOBRECARGA"
   },
   "top_semanas_volumen": [
     {
-      "semana": "2026-W36",
-      "pedidos": 12437,
-      "lineas": 16167,
-      "unidades": 43530,
+      "semana": "2026-W37",
+      "pedidos": 11872,
+      "lineas": 15432,
+      "unidades": 41551,
       "dias_sobrecarga": 5,
       "dias_atencion": 0
     },
     {
-      "semana": "2026-W37",
-      "pedidos": 11792,
-      "lineas": 15329,
-      "unidades": 41272,
+      "semana": "2026-W36",
+      "pedidos": 10891,
+      "lineas": 14158,
+      "unidades": 38124,
       "dias_sobrecarga": 5,
       "dias_atencion": 0
     },
     {
       "semana": "2026-W38",
-      "pedidos": 10764,
-      "lineas": 13994,
-      "unidades": 37679,
+      "pedidos": 10852,
+      "lineas": 14108,
+      "unidades": 37983,
       "dias_sobrecarga": 5,
       "dias_atencion": 0
     },
     {
       "semana": "2026-W40",
-      "pedidos": 10254,
-      "lineas": 13331,
-      "unidades": 35890,
+      "pedidos": 10343,
+      "lineas": 13446,
+      "unidades": 36201,
       "dias_sobrecarga": 5,
       "dias_atencion": 0
     },
     {
       "semana": "2026-W39",
-      "pedidos": 10202,
-      "lineas": 13263,
-      "unidades": 35705,
+      "pedidos": 10288,
+      "lineas": 13374,
+      "unidades": 36009,
       "dias_sobrecarga": 5,
       "dias_atencion": 0
     },
     {
       "semana": "2026-W41",
-      "pedidos": 4036,
-      "lineas": 5246,
-      "unidades": 14126,
+      "pedidos": 4059,
+      "lineas": 5276,
+      "unidades": 14208,
       "dias_sobrecarga": 1,
       "dias_atencion": 0
     },
