@@ -1,37 +1,37 @@
 {
-  "generado_en": "2026-08-30T18:28:56.345076",
+  "generado_en": "2026-08-31T09:26:59.868217",
   "mes_actual": "2026-08",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.028355082970839374,
-      "total_pickings": 12414,
-      "on_time": 354,
-      "on_time_pct": 0.028516191396810053,
-      "in_full": 12408,
-      "in_full_pct": 0.9995166747220879,
-      "both": 352,
+      "valor": 0.029601029601029602,
+      "total_pickings": 11655,
+      "on_time": 347,
+      "on_time_pct": 0.02977262977262977,
+      "in_full": 11649,
+      "in_full_pct": 0.9994851994851995,
+      "both": 345,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.13350125944584382,
-      "total_pickings": 397,
-      "on_time": 54,
-      "on_time_pct": 0.13602015113350127,
-      "in_full": 393,
-      "in_full_pct": 0.9899244332493703,
-      "both": 53,
+      "valor": 0.12176165803108809,
+      "total_pickings": 386,
+      "on_time": 48,
+      "on_time_pct": 0.12435233160621761,
+      "in_full": 382,
+      "in_full_pct": 0.9896373056994818,
+      "both": 47,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997569571029287,
-      "ok": 16454,
-      "total": 16458,
+      "valor": 0.9997417021826166,
+      "ok": 15482,
+      "total": 15486,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 18.482956010618125,
-      "n_recepciones": 293,
+      "valor": 18.60343547155403,
+      "n_recepciones": 291,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9291450165328294,
-      "total_so": 12770,
-      "total_con_pickings": 12702,
-      "cumplidos": 11802,
+      "valor": 0.9026369168356998,
+      "total_so": 12392,
+      "total_con_pickings": 12325,
+      "cumplidos": 11125,
       "parciales": 20,
-      "sin_iniciar": 880,
+      "sin_iniciar": 1180,
       "error": null
     },
     "oct_30d": {
-      "valor": 44.74916896615158,
-      "n_orders": 12684,
+      "valor": 45.580834428506186,
+      "n_orders": 11921,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 29.774722222222223,
+      "mediana_h": 31.61611111111111,
       "detalle": [
         {
           "so": "S269110",
@@ -279,32 +279,11 @@
           "fecha_despacho": "2026-08-24 12:10"
         },
         {
-          "so": "S268489",
-          "cliente": "Cliente Kitchen Center",
-          "horas": 423.6,
-          "fecha_orden": "2026-07-13 22:42",
-          "fecha_despacho": "2026-07-31 14:15"
-        },
-        {
-          "so": "S268488",
-          "cliente": "Cliente Kitchen Center",
-          "horas": 415.6,
-          "fecha_orden": "2026-07-14 06:40",
-          "fecha_despacho": "2026-07-31 14:15"
-        },
-        {
           "so": "S275532",
           "cliente": "Cliente Mercado Libre, Esteban Teneb Lobos",
           "horas": 404.5,
           "fecha_orden": "2026-08-08 20:50",
           "fecha_despacho": "2026-08-25 17:19"
-        },
-        {
-          "so": "S268487",
-          "cliente": "Cliente Kitchen Center",
-          "horas": 401.2,
-          "fecha_orden": "2026-07-14 21:06",
-          "fecha_despacho": "2026-07-31 14:15"
         },
         {
           "so": "S267933",
@@ -314,25 +293,46 @@
           "fecha_despacho": "2026-08-12 20:18"
         },
         {
-          "so": "S268486",
-          "cliente": "Cliente Kitchen Center",
-          "horas": 386.3,
-          "fecha_orden": "2026-07-15 11:58",
-          "fecha_despacho": "2026-07-31 14:15"
+          "so": "S276204",
+          "cliente": "Cliente Falabella Fcom, Richard Pozo Valdivia",
+          "horas": 358.1,
+          "fecha_orden": "2026-08-10 18:25",
+          "fecha_despacho": "2026-08-25 16:33"
         },
         {
-          "so": "S268485",
-          "cliente": "Cliente Kitchen Center",
-          "horas": 381.8,
-          "fecha_orden": "2026-07-15 16:25",
-          "fecha_despacho": "2026-07-31 14:15"
+          "so": "S276356",
+          "cliente": "Cliente Falabella Fcom, Juan Carlos Ahumada Cisternas",
+          "horas": 352.2,
+          "fecha_orden": "2026-08-11 00:53",
+          "fecha_despacho": "2026-08-25 17:04"
         },
         {
-          "so": "S268484",
-          "cliente": "Cliente Kitchen Center",
-          "horas": 379.3,
-          "fecha_orden": "2026-07-15 19:00",
-          "fecha_despacho": "2026-07-31 14:15"
+          "so": "S276506",
+          "cliente": "Cliente Mercado Libre, Javiera Alejandra Yépez González",
+          "horas": 342.9,
+          "fecha_orden": "2026-08-11 14:27",
+          "fecha_despacho": "2026-08-25 21:24"
+        },
+        {
+          "so": "S276507",
+          "cliente": "Cliente Mercado Libre, Javiera Alejandra Yépez González",
+          "horas": 342.9,
+          "fecha_orden": "2026-08-11 14:28",
+          "fecha_despacho": "2026-08-25 21:24"
+        },
+        {
+          "so": "S276551",
+          "cliente": "Cliente Mercado Libre, ELIZABETH MANRIQUEZ",
+          "horas": 341.4,
+          "fecha_orden": "2026-08-11 16:00",
+          "fecha_despacho": "2026-08-25 21:24"
+        },
+        {
+          "so": "S272783",
+          "cliente": "Cliente Mercado Libre, Antonio Betancourt",
+          "horas": 335.8,
+          "fecha_orden": "2026-08-03 16:38",
+          "fecha_despacho": "2026-08-17 16:26"
         }
       ],
       "error": null
@@ -351,30 +351,24 @@
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 109,
-      "outgoing": 29277,
-      "internal": 20614,
+      "incoming": 126,
+      "outgoing": 29450,
+      "internal": 20424,
       "total": 50000,
       "error": null
     },
     "top_clientes_otif_30d": {
       "valor": [
         {
-          "cliente": "Sawa SPA",
-          "total": 61,
-          "tarde": 61,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
-          "total": 6,
-          "tarde": 6,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Lokal SpA",
           "total": 6,
           "tarde": 6,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Sawa SPA",
+          "total": 58,
+          "tarde": 58,
           "on_time_pct": 0.0
         },
         {
@@ -393,6 +387,12 @@
           "cliente": "abc S.A.",
           "total": 52,
           "tarde": 52,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
+          "total": 5,
+          "tarde": 5,
           "on_time_pct": 0.0
         },
         {
@@ -432,20 +432,20 @@
           "on_time_pct": 0.5333333333333333
         },
         {
-          "cliente": "WALMART CHILE COM. LTDA",
-          "total": 4,
-          "tarde": 1,
-          "on_time_pct": 0.75
-        },
-        {
-          "cliente": "Mercadolibre Chile Limitada",
-          "total": 12,
+          "cliente": "Agricola Escargot Premium SpA",
+          "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
         },
         {
-          "cliente": "Agricola Escargot Premium SpA",
-          "total": 3,
+          "cliente": "Falabella Retail",
+          "total": 16,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Mercadolibre Chile Limitada",
+          "total": 8,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8144,39 +8144,39 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.028355082970839374,
-      "total_pickings": 12414,
-      "on_time": 354,
-      "on_time_pct": 0.028516191396810053,
-      "in_full": 12408,
-      "in_full_pct": 0.9995166747220879,
-      "both": 352,
+      "valor": 0.029601029601029602,
+      "total_pickings": 11655,
+      "on_time": 347,
+      "on_time_pct": 0.02977262977262977,
+      "in_full": 11649,
+      "in_full_pct": 0.9994851994851995,
+      "both": 345,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.13350125944584382,
-      "total_pickings": 397,
-      "on_time": 54,
-      "on_time_pct": 0.13602015113350127,
-      "in_full": 393,
-      "in_full_pct": 0.9899244332493703,
-      "both": 53,
+      "valor": 0.12176165803108809,
+      "total_pickings": 386,
+      "on_time": 48,
+      "on_time_pct": 0.12435233160621761,
+      "in_full": 382,
+      "in_full_pct": 0.9896373056994818,
+      "both": 47,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997569571029287,
-      "ok": 16454,
-      "total": 16458,
+      "valor": 0.9997417021826166,
+      "ok": 15482,
+      "total": 15486,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 18.482956010618125,
-      "n_recepciones": 293,
+      "valor": 18.60343547155403,
+      "n_recepciones": 291,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
