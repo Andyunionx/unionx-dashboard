@@ -898,13 +898,13 @@ class VentasService(BaseOdooService):
                     canal = empresa_a_canal[key]
             if not canal:
                 canal = (channel_raw or '').strip()
-            # Shopify: Martín migró la web de Lhotse a Shopify → el canal llega como
-            # 'Shopify' pero es Lhotse web (Nicolás 19-ago). Unificar para que herede
-            # tipo_negocio 'Páginas propias' (hoy quedaba en blanco).
-            if canal.strip().lower() == 'shopify':
-                canal = 'Lhotse web'
-            # Si quedó 'Web' (de Maestra o de Odoo), subdividir por channel_ref
-            if canal == 'Web':
+            # Shopify directo a Odoo (sin Yuju): las tres tiendas propias entran con
+            # canal 'Shopify' y se distinguen por el prefijo del channel_ref. Martín
+            # migró Lhotse (17-ago) y unionx.cl (24-ago) a Shopify-directo. Igual que
+            # el canal 'Web' histórico: LH→Lhotse web, SH→Simplit web, #/otro→UnionX web.
+            # (Antes 'Shopify' se forzaba a 'Lhotse web' y se comía a UnionX web:
+            # "Cliente UnionX.cl", que no está en la Maestra, caía en Lhotse web.)
+            if canal.strip().lower() in ('shopify', 'web'):
                 ref = str(channel_ref or '').upper()
                 if ref.startswith('LH'):
                     return 'Lhotse web'
