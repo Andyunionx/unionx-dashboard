@@ -60,7 +60,7 @@ HOY = datetime.date.today()
 LIVE = ("--ejecutar" in sys.argv) or ("--auto" in sys.argv and HOY >= FECHA_INICIO)
 if "--dry-run" in sys.argv:
     LIVE = False
-FULL = "--full" in sys.argv
+FULL = "--incremental" not in sys.argv  # default: barrido completo (batch, ~5 min); los resueltos se saltan por campo
 print(f"[{HOY}] modo={'LIVE' if LIVE else 'DRY-RUN'} barrido={'FULL' if FULL else f'incremental {VENTANA_H}h'}")
 
 def prop(t, nombre):
