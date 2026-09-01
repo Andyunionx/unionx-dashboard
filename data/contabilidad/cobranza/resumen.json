@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-08-31T22:08:54.711686",
+  "generado_en": "2026-09-01T02:25:03.027208",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10619,
-  "total_monto_pendiente_clp": 641261238.0,
+  "total_documentos_pendientes": 10684,
+  "total_monto_pendiente_clp": 644268690.0,
   "monto_por_aging": {
-    "+90 días": 68619253.0,
-    "1-30 días": 296539167.0,
-    "31-60 días": 130160634.0,
-    "61-90 días": 24833136.0,
-    "Vigente": 121109048.0
+    "+90 días": 69705343.0,
+    "1-30 días": 290819424.0,
+    "31-60 días": 132114312.0,
+    "61-90 días": 26656299.0,
+    "Vigente": 124973312.0
   },
   "monto_por_tipo": {
-    "BOLETA": 537065688.0,
+    "BOLETA": 540073140.0,
     "FACTURA": 104195550.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 110511832.0
+      "monto": 111738275.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -26,15 +26,15 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 56605996.0
+      "monto": 56690436.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 49014355.0
     },
     {
       "partner": "Cliente Kitchen Center",
       "monto": 48396579.0
-    },
-    {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 48133035.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,11 +46,11 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 22020101.0
+      "monto": 22075571.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 21976969.0
+      "monto": 22061839.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 9372164.0
+      "monto": 9566974.0
     },
     {
       "partner": "Distribución y Logística V&L SpA",
@@ -97,6 +97,6 @@
       "monto": 5068418.0
     }
   ],
-  "notas_credito_count": 501,
+  "notas_credito_count": 502,
   "pedidos_venta_count": 10000
 }
