@@ -164,13 +164,20 @@ def extract_from_odoo(desde: str, hasta: str) -> pd.DataFrame:
     planillas_dir = PROJECT_ROOT / 'data' / 'planillas'
     svc = VentasService(client, planillas_dir)
 
-    # Odoo espera 'YYYY-MM-DD HH:MM:SS'. hasta es '<próximo mes>-01'; lo
-    # convertimos a '<último día actual> 23:59:59'.
-    desde_full = f"{desde} 00:00:00"
-    # restar 1 día a 'hasta' para tener último día del mes actual
-    from datetime import datetime, timedelta
-    hasta_dt = datetime.strptime(hasta, '%Y-%m-%d') - timedelta(seconds=1)
-    hasta_full = hasta_dt.strftime('%Y-%m-%d %H:%M:%S')
+    # Odoo espera 'YYYY-MM-DD HH:MM:SS' en UTC. El cierre del día/mes es a las
+    # 00:00 hora CHILE (metodología desde ago-2026, decisión Andrés 01-sep): la
+    # ventana local [desde, hasta) se convierte a instantes UTC. Antes se filtraba
+    # date_order con el día UTC (cierre 20:00 Chile) → la venta de la última
+    # tarde-noche del mes quedaba huérfana (no entraba al freeze del mes y el
+    # CUTOFF la escondía en mes_actual): 31-ago dejó $5,1M invisibles.
+    # ZoneInfo('America/Santiago') maneja el cambio de hora (DST).
+    from datetime import datetime as _dtm, timedelta
+    from zoneinfo import ZoneInfo
+    _CL, _UTC = ZoneInfo('America/Santiago'), ZoneInfo('UTC')
+    desde_utc = _dtm.strptime(desde, '%Y-%m-%d').replace(tzinfo=_CL).astimezone(_UTC)
+    hasta_utc = _dtm.strptime(hasta, '%Y-%m-%d').replace(tzinfo=_CL).astimezone(_UTC) - timedelta(seconds=1)
+    desde_full = desde_utc.strftime('%Y-%m-%d %H:%M:%S')
+    hasta_full = hasta_utc.strftime('%Y-%m-%d %H:%M:%S')
 
     print(f"   [Odoo] Extrayendo {desde_full} a {hasta_full} (puede tardar 3-5 min)...")
     t0 = time.time()
