@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-01T18:03:10.941782",
+  "generado_en": "2026-09-01T22:54:19.787454",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,19 +11,19 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 880,
-    "posiciones_libres_hoy": 489,
-    "pct_ocupacion_hoy": 64.3,
-    "m3_stock_calculado": 910.6
+    "posiciones_ocupadas_hoy": 879,
+    "posiciones_libres_hoy": 490,
+    "pct_ocupacion_hoy": 64.2,
+    "m3_stock_calculado": 908.8
   },
   "pico_proyectado": {
     "fecha": "2026-09-01",
-    "posiciones_ocupadas": 880.0,
-    "pct_ocupacion": 64.3
+    "posiciones_ocupadas": 879.0,
+    "pct_ocupacion": 64.2
   },
   "minimo_proyectado": {
     "fecha": "2026-10-31",
-    "posiciones_ocupadas": 610.7,
+    "posiciones_ocupadas": 610.0,
     "pct_ocupacion": 44.6
   },
   "primer_critico": null,
@@ -56,17 +56,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 51.5,
-  "pallets_total_salientes_horizonte": 269.3,
+  "pallets_total_salientes_horizonte": 269.0,
   "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 323.2,
+  "m3_total_saliente_horizonte": 322.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 801,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 165404.0,
-    "demanda_cumplida_unidades": 36256.0,
-    "demanda_no_cubierta_unidades_total": 129148.0,
+    "demanda_cumplida_unidades": 36240.0,
+    "demanda_no_cubierta_unidades_total": 129164.0,
     "pct_demanda_cumplida": 21.9,
     "sku_sin_match_stock_count": 46,
     "top_no_cubiertos": [
@@ -117,12 +117,12 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 425.0,
+        "unid_no_cubiertas": 430.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUROM-30",
-        "unid_no_cubiertas": 350.0,
+        "unid_no_cubiertas": 354.0,
         "sin_match_stock": true
       },
       {
@@ -131,12 +131,12 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 314.0,
+        "sku": "SMBATOXBK",
+        "unid_no_cubiertas": 316.0,
         "sin_match_stock": true
       },
       {
-        "sku": "SMBATOXBK",
+        "sku": "LVSILLERGO-BL",
         "unid_no_cubiertas": 314.0,
         "sin_match_stock": true
       },
