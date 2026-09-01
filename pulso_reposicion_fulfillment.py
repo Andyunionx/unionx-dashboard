@@ -156,16 +156,50 @@ def cargar_venta_digital(sem: list[int]) -> pd.DataFrame:
     return v
 
 
-def complementar_base_nuevos(prod, venta, full_map):
-    """Complementa la base (hoja Maestra) con SKU que tienen venta digital L6W o
-    stock en algún marketplace pero NO están en la Maestra, para que los productos
-    nuevos no queden fuera del sugerido sin depender de que alguien los cargue al doc.
-    Enriquece marca/categoría/producto desde el RAW (Odoo). Marca las filas con
-    _nuevo=True para poder distinguirlas en el reporte."""
+# Uds mínimas en CA1 para surfacer un SKU no cargado en la Maestra (excluye
+# muestras de 1 unidad y saldos residuales; los productos nuevos reales llegan
+# por cientos). Los descontinuados no entran: ya están en la Maestra (In/Out=out).
+UMBRAL_CA1_NUEVO = 12
+
+
+def _txt(v):
+    """str limpio, tratando NaN/'nan' como vacío (para no pisar con basura)."""
+    s = "" if v is None else str(v).strip()
+    return "" if s.lower() == "nan" else s
+
+
+def complementar_base_nuevos(prod, venta, full_map, ca1=None):
+    """Complementa la base (hoja Maestra) con SKU NO presentes en ella que tengan:
+    venta digital L6W, stock en algún marketplace, o stock en bodega CA1 (productos
+    recién recibidos que pricing aún no carga en la Maestra). Así los productos
+    nuevos no quedan fuera del sugerido sin depender de que alguien los cargue al
+    doc. Enriquece marca/categoría/producto desde el detalle de stock y el RAW
+    (Odoo). Marca las filas con _nuevo=True para distinguirlas en el reporte."""
     maestra = set(prod["Sku"].astype(str).str.strip())
     con_venta = set(venta["sku"].astype(str).str.strip())
     con_stock = {sku for (_c, sku) in full_map.keys()}
-    nuevos = sorted({s for s in (con_venta | con_stock) - maestra if s and s.lower() != "nan"})
+
+    # SKU con stock relevante en CA1 (excluye MUESTRA y saldos < umbral). Se guarda
+    # producto/marca/categoría del detalle para enriquecer los que no están en el RAW.
+    con_ca1, ca1_info = set(), {}
+    if ca1 is not None and len(ca1):
+        c = ca1.copy()
+        c["_sku"] = c["SKU"].astype(str).str.strip()
+        prod_col = c["Producto"].astype(str) if "Producto" in c.columns else pd.Series("", index=c.index)
+        c = c[~prod_col.str.contains("MUESTRA", case=False, na=False)]
+        g = c.groupby("_sku")["Disponible"].sum()
+        con_ca1 = set(g[g >= UMBRAL_CA1_NUEVO].index)
+        info = c.drop_duplicates("_sku").set_index("_sku")
+        for s in con_ca1:
+            r = info.loc[s] if s in info.index else None
+            ca1_info[s] = (
+                _txt(r["Producto"]) if r is not None and "Producto" in info.columns else "",
+                _txt(r["Marca"]) if r is not None and "Marca" in info.columns else "",
+                _txt(r["Categoria"]) if r is not None and "Categoria" in info.columns else "",
+            )
+
+    nuevos = sorted({s for s in (con_venta | con_stock | con_ca1) - maestra
+                     if s and s.lower() != "nan"})
     prod = prod.copy()
     prod["_nuevo"] = False
     if not nuevos:
@@ -178,11 +212,13 @@ def complementar_base_nuevos(prod, venta, full_map):
     rows = []
     for s in nuevos:
         e = enr.loc[s] if s in enr.index else None
+        ci = ca1_info.get(s, ("", "", ""))
+        # RAW primero; si no hay dato (típico de nuevo sin venta), cae al detalle CA1
         rows.append({
             "Sku": s, "In/Out": "in", "_nuevo": True, "Cob": None,
-            "Producto": (str(e["producto"]) if e is not None else ""),
-            "Marca": (str(e["marca"]) if e is not None else ""),
-            "Categoría": (str(e["categoria_hijo"]) if e is not None else ""),
+            "Producto": (_txt(e["producto"]) if e is not None else "") or ci[0],
+            "Marca": (_txt(e["marca"]) if e is not None else "") or ci[1],
+            "Categoría": (_txt(e["categoria_hijo"]) if e is not None else "") or ci[2],
             "Tipo de producto": "", "Pack": "",
         })
     add = pd.DataFrame(rows)
@@ -343,9 +379,15 @@ def construir(no_download=False, no_live=False) -> Path:
     venta = cargar_venta_digital(sem)
     full, fuente_live, cruce = stock_full_live(no_live)
     full_map = {(r.canal, r.sku): r.qty for r in full.itertuples(index=False)}
-    # Complementar la base con productos nuevos (venta digital o stock en marketplace
-    # no presentes en la Maestra) → no depende de que se carguen a mano en el doc.
-    prod, sku_nuevos = complementar_base_nuevos(prod, venta, full_map)
+
+    det = pd.read_parquet(DETALLE)
+    ca1 = det[det["Bodega"].astype(str).str.startswith("CA1")]
+    stock_ca1 = ca1.groupby(ca1["SKU"].astype(str).str.strip())["Disponible"].sum()
+
+    # Complementar la base con productos nuevos no presentes en la Maestra: con venta
+    # digital, stock en marketplace, o stock en bodega CA1 (productos recién recibidos
+    # que pricing aún no carga) → no depende de que se carguen a mano en el doc.
+    prod, sku_nuevos = complementar_base_nuevos(prod, venta, full_map, ca1)
     if sku_nuevos:
         print(f"[complemento] +{len(sku_nuevos)} SKU con venta/stock no presentes en la Maestra")
     try:
@@ -360,10 +402,6 @@ def construir(no_download=False, no_live=False) -> Path:
         tr_fulls = {k: v for k, v in tr_fulls.items() if k[0] != "Walmart"}
         tr_fulls.update(wfs_tr)
         print(f"[transito] Walmart desde WFS: {sum(wfs_tr.values()):,.0f} uds en {len(wfs_tr)} SKU")
-
-    det = pd.read_parquet(DETALLE)
-    ca1 = det[det["Bodega"].astype(str).str.startswith("CA1")]
-    stock_ca1 = ca1.groupby(ca1["SKU"].astype(str).str.strip())["Disponible"].sum()
 
     # venta semanal por sku x canal (para UME) y demanda digital total con packs
     v_canal = venta.groupby(["sku", "canal"])["cantidad"].sum() / len(sem)
