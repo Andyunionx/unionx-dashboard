@@ -271,7 +271,25 @@ def complementar_base_nuevos(prod, venta, full_map, ca1=None):
 
 
 FALA_FBF = ROOT / "data/stock/fala_fbf_live.parquet"
+FALA_TRANSITO = ROOT / "data/stock/fala_transito_live.parquet"
 WFS_LIVE = ROOT / "data/stock/walmart_wfs_live.parquet"
+
+
+def _transito_fala():
+    """Tránsito real de Falabella desde los shipment-intents del Seller Center FBF
+    (scrape_fala_fbf.procesar_transito): envíos a Full en curso (draft/prepared/
+    shipped/in_warehouse) menos lo ya recepcionado. Reemplaza los picks de Odoo
+    para este canal. {(canal, sku): uds}."""
+    if not FALA_TRANSITO.exists():
+        return {}
+    try:
+        f = pd.read_parquet(FALA_TRANSITO)
+        f["qty"] = pd.to_numeric(f["qty"], errors="coerce").fillna(0).clip(lower=0)
+        f = f[f["qty"] > 0]
+        return {("Falabella", str(r.sku)): float(r.qty) for r in f.itertuples(index=False)}
+    except Exception as e:
+        print(f"[fbf][WARN] tránsito Falabella falló: {type(e).__name__}: {e}", flush=True)
+        return {}
 
 
 def _override_walmart(full_df):
@@ -443,6 +461,13 @@ def construir(no_download=False, no_live=False) -> Path:
         tr_fulls = {k: v for k, v in tr_fulls.items() if k[0] != "Walmart"}
         tr_fulls.update(wfs_tr)
         print(f"[transito] Walmart desde WFS: {sum(wfs_tr.values()):,.0f} uds en {len(wfs_tr)} SKU")
+    # Falabella: tránsito real desde los shipment-intents del Seller Center FBF
+    # (envíos a Full en curso) → reemplaza los picks de Odoo para este canal.
+    fala_tr = _transito_fala()
+    if fala_tr:
+        tr_fulls = {k: v for k, v in tr_fulls.items() if k[0] != "Falabella"}
+        tr_fulls.update(fala_tr)
+        print(f"[transito] Falabella desde FBF: {sum(fala_tr.values()):,.0f} uds en {len(fala_tr)} SKU")
 
     # venta semanal por sku x canal (para UME) y demanda digital total con packs
     v_canal = venta.groupby(["sku", "canal"])["cantidad"].sum() / len(sem)
