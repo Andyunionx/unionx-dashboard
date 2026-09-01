@@ -651,6 +651,18 @@ def construir_excel_5pestanas(flat_path=None) -> bytes:
     s["_hab"] = ((pd.to_numeric(s["Blacklist"], errors="coerce").fillna(0) == 0)
                  & (pd.to_numeric(s["Restricción"], errors="coerce").fillna(0) == 0)
                  & (s["In/Out"].astype(str).str.strip().str.lower() != "out")).astype(int)
+
+    def _motivo_row(r):
+        # Motivo del bloqueo (Habilit=0), para que se vea QUÉ criterio bloquea el SKU
+        # (pedido de Claudia: el 'Habilit' agrupaba todo en un 0/1).
+        if str(r["In/Out"]).strip().lower() == "out":
+            return "Descontinuado"
+        if pd.to_numeric(r.get("Blacklist"), errors="coerce") == 1:
+            return "Blacklist"
+        if pd.to_numeric(r.get("Restricción"), errors="coerce") == 1:
+            return "Cobertura CA1"
+        return ""
+    s["_motivo"] = s.apply(_motivo_row, axis=1)
     orden = s.groupby("Sku")["Reposición"].sum().sort_values(ascending=False).index.tolist()
     meta = s.groupby("Sku").agg(Producto=("Producto", "first"), Marca=("Marca", "first"),
                                 CA1=("Stock CA1", "first")).reindex(orden)
@@ -668,6 +680,10 @@ def construir_excel_5pestanas(flat_path=None) -> bytes:
     def hab(sku, canal):
         r = rowmap.get((sku, canal))
         return int(r["_hab"]) if r is not None else 1
+
+    def mot(sku, canal):
+        r = rowmap.get((sku, canal))
+        return (r["_motivo"] if r is not None else "") or ""
 
     wb = openpyxl.load_workbook(TEMPLATE_DIN)
 
@@ -703,19 +719,20 @@ def construir_excel_5pestanas(flat_path=None) -> bytes:
     # 4. CA1 y Máximos (UME manual editable → Máximo fórmula)
     cm = wb.create_sheet("4. CA1 y Maximos")
     hdr4 = ["SKU", "Producto", "Marca", "CA1 disp."]
+    BLK = 7  # columnas por canal (UME, Cob, UME MIN, UME Manual, Habilit, Máximo, Motivo)
     for canal in CANALES:
         hdr4 += [f"UME {canal}", f"Cob {canal}", f"UME MIN {canal}", f"UME Manual {canal}",
-                 f"Habilit {canal}", f"Máximo {canal}"]
+                 f"Habilit {canal}", f"Máximo {canal}", f"Motivo {canal}"]
     _hdr(cm, hdr4)
     maxcol, habcol = {}, {}
     for k, canal in enumerate(CANALES):
-        base = 5 + k * 6
+        base = 5 + k * BLK
         maxcol[canal] = base + 5; habcol[canal] = base + 4
     for i, sku in enumerate(orden, 2):
         cm.cell(i, 1, sku); cm.cell(i, 2, meta.loc[sku, "Producto"]); cm.cell(i, 3, meta.loc[sku, "Marca"])
         cm.cell(i, 4, float(meta.loc[sku, "CA1"]) if pd.notna(meta.loc[sku, "CA1"]) else 0)
         for k, canal in enumerate(CANALES):
-            base = 5 + k * 6
+            base = 5 + k * BLK
             cm.cell(i, base, val(sku, canal, "UME"))
             cm.cell(i, base + 1, val(sku, canal, "Cobertura canal"))
             cm.cell(i, base + 2, val(sku, canal, "UME MIN"))
@@ -723,6 +740,7 @@ def construir_excel_5pestanas(flat_path=None) -> bytes:
             cm.cell(i, base + 4, hab(sku, canal))
             uL, cL, mnL, maL = L(base), L(base + 1), L(base + 2), L(base + 3)
             cm.cell(i, base + 5, f"=MAX({uL}{i}*{cL}{i},{mnL}{i},N({maL}{i}))")
+            cm.cell(i, base + 6, mot(sku, canal))
 
     # 1. Propuesta Reposición (fórmula, con tope CA1) — al inicio
     pr = wb.create_sheet("1. Propuesta Reposicion", 0)
