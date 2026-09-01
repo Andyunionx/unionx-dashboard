@@ -19,7 +19,7 @@ import argparse
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -76,6 +76,21 @@ def _load_env():
 
 def _mes_actual_yyyymm() -> str:
     return datetime.now().strftime('%Y-%m')
+
+
+def _cutoff_historico() -> str:
+    """Lee CUTOFF_HISTORICO desde views/shared.py sin importar el módulo (evita
+    cargar dependencias pesadas). Fallback: inicio del mes actual."""
+    import re
+    shared = Path(__file__).parent / 'views' / 'shared.py'
+    try:
+        m = re.search(r"CUTOFF_HISTORICO\s*=\s*['\"](\d{4}-\d{2}-\d{2})['\"]",
+                      shared.read_text(encoding='utf-8'))
+        if m:
+            return m.group(1)
+    except OSError:
+        pass
+    return _rango_mes(_mes_actual_yyyymm())[0]
 
 
 def _rango_mes(yyyymm: str) -> tuple[str, str]:
@@ -313,8 +328,17 @@ def main():
 
     _load_env()
 
-    mes = args.mes or _mes_actual_yyyymm()
-    desde, hasta = _rango_mes(mes)
+    if args.mes:
+        mes = args.mes
+        desde, hasta = _rango_mes(mes)
+    else:
+        # Refresh diario: desde CUTOFF_HISTORICO hasta mañana (rango, no un solo mes
+        # calendario). Así en el rollover el mes por congelar SIGUE en mes_actual hasta
+        # que el freeze avance el CUTOFF → no hay hueco si el freeze se atrasa/falla.
+        # El app filtra mes_actual por CUTOFF, así que no hay doble conteo con histórico.
+        desde = _cutoff_historico()
+        hasta = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        mes = f"{desde}→hoy"
     print(f"[1] Descargando ventas {mes} ({desde} a {hasta}) — fuente: {args.source.upper()}")
 
     if args.source == 'turso':

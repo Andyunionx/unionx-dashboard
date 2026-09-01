@@ -85,7 +85,13 @@ def validar_ventas_df(df_nuevo: pd.DataFrame, df_previo: pd.DataFrame | None = N
         fv_prev = pd.to_datetime(df_previo['fecha_venta'], errors='coerce')
         mes_nuevo = str(fmax)[:7] if pd.notna(fmax) else None
         mes_prev = str(fv_prev.max())[:7] if fv_prev.notna().any() else None
-        if mes_nuevo and mes_prev and mes_nuevo == mes_prev:
+        # Comparar totales solo si el rango arranca Y termina en el mismo mes. Si el
+        # inicio del rango avanzó (el freeze avanzó CUTOFF y sacó un mes de mes_actual),
+        # los totales no son comparables → daría un falso "caída catastrófica".
+        mes_nuevo_min = str(fv.min())[:7] if fv.notna().any() else None
+        mes_prev_min = str(fv_prev.min())[:7] if fv_prev.notna().any() else None
+        rango_estable = (mes_nuevo_min is not None and mes_nuevo_min == mes_prev_min)
+        if mes_nuevo and mes_prev and mes_nuevo == mes_prev and rango_estable:
             total_prev = float(_num(df_previo['venta_bruta']).fillna(0).sum())
             n_prev = len(df_previo)
             stats['venta_bruta_previo'] = round(total_prev, 0)
@@ -107,7 +113,9 @@ def validar_ventas_df(df_nuevo: pd.DataFrame, df_previo: pd.DataFrame | None = N
                 if rratio > EXPLODE_MAX:
                     problemas.append(f"filas explotaron a {rratio:.1f}x del previo")
         else:
-            stats['comparacion_previo'] = f"saltada (mes nuevo {mes_nuevo} != previo {mes_prev})"
+            stats['comparacion_previo'] = (
+                f"saltada (rango nuevo {mes_nuevo_min}..{mes_nuevo} vs previo "
+                f"{mes_prev_min}..{mes_prev})")
 
     ok = len(problemas) == 0
     return ok, problemas, stats
