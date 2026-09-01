@@ -120,19 +120,60 @@ def cargar_parametros():
 
 
 def cargar_pricing():
-    """Drive Pricing: Maestra (base de productos) + Packs (componentes)."""
+    """Drive Pricing: hoja 'Pricing' (base de productos, la más completa/actual) +
+    'Packs' (componentes).
+
+    Antes la base era la hoja 'Maestra', pero pricing carga los productos nuevos
+    primero en 'Pricing' y la sincronización a 'Maestra' se atrasa → productos con
+    stock (p.ej. Hydrotek, Hot Wheels Legends) quedaban fuera del sugerido. Se toma
+    'Pricing' como fuente. UME/BLACKLIST/LARGE/UME MIN/Reglas NO dependen de esta
+    hoja: salen del panel de Nicole por (SKU, Canal), así que la lógica de sugerido
+    no cambia — solo la lista de productos base es más completa.
+    """
     xl = pd.ExcelFile(LOCAL_PRICING)
-    prod = xl.parse("Maestra")
+    # La hoja 'Pricing' trae 2 filas de encabezado (grupo MARKETPLACE/... + nombres);
+    # se detecta la fila que contiene 'SKU' para ser robustos al layout.
+    raw = xl.parse("Pricing", header=None, nrows=6)
+    hdr = 1
+    for i in range(min(6, len(raw))):
+        if raw.iloc[i].astype(str).str.strip().str.upper().eq("SKU").any():
+            hdr = i
+            break
+    prod = xl.parse("Pricing", header=hdr)
     prod.columns = [str(c).strip() for c in prod.columns]
+    # Mapear al esquema que espera el pulso (la hoja Maestra usaba otros nombres).
+    ren = {"SKU": "Sku", "Descripcion": "Producto",
+           "Cobertura Actual (6 sem)": "Cob", "Categoria Comercial": "Categoría"}
+    prod = prod.rename(columns={k: v for k, v in ren.items() if k in prod.columns})
+    if "Tipo de producto" not in prod.columns:
+        prod["Tipo de producto"] = ""
     prod = prod.dropna(subset=["Sku"]).drop_duplicates("Sku")
     prod["Sku"] = prod["Sku"].astype(str).str.strip()
+    prod = prod[prod["Sku"].str.len() > 0]
+    prod = prod[~prod["Sku"].str.lower().isin(["nan", "sku"])]
+    # Unión con la hoja 'Maestra': se agregan los SKU que viven SOLO en Maestra y aún
+    # no están en Pricing (packs, línea CNS, etc.), para no perder productos activos.
+    try:
+        ma = xl.parse("Maestra")
+        ma.columns = [str(c).strip() for c in ma.columns]
+        ma = ma.dropna(subset=["Sku"]).drop_duplicates("Sku")
+        ma["Sku"] = ma["Sku"].astype(str).str.strip()
+        ma = ma[(ma["Sku"].str.len() > 0) & (~ma["Sku"].isin(set(prod["Sku"])))]
+        if len(ma):
+            for c in prod.columns:
+                if c not in ma.columns:
+                    ma[c] = "" if prod[c].dtype == object else None
+            prod = pd.concat([prod, ma[prod.columns]], ignore_index=True)
+            print(f"[pricing] +{len(ma)} SKU solo en hoja Maestra (unión)")
+    except Exception as e:
+        print(f"[pricing][WARN] unión con Maestra saltada: {type(e).__name__}: {e}")
     packs = xl.parse("Packs")
     packs.columns = [str(c).strip() for c in packs.columns]
     packs["Pack"] = packs["Pack"].astype(str).str.strip()
     packs["SKU"] = packs["SKU"].astype(str).str.strip()
     # componentes por pack (cantidad = nº de filas repetidas del mismo SKU)
     comp = packs.groupby(["Pack", "SKU"]).size().rename("qty").reset_index()
-    print(f"[pricing] Maestra: {len(prod)} SKUs | Packs: {comp['Pack'].nunique()} packs / {len(comp)} componentes")
+    print(f"[pricing] Pricing (base): {len(prod)} SKUs | Packs: {comp['Pack'].nunique()} packs / {len(comp)} componentes")
     return prod, comp
 
 
@@ -511,7 +552,7 @@ def construir(no_download=False, no_live=False) -> Path:
             ["Corrida", f"{hoy} (semana ISO {hoy.isocalendar()[1]}) — MOTOR v2 (mesa 11-08)"],
             ["Semanas venta (L6W)", str(sem)],
             ["Venta", "RAW, SOLO canales digitales: Marketplace + Páginas propias + Fidelización"],
-            ["Base de productos", "Drive PRICING, hoja Maestra (refrescada en cada corrida). In/Out='out' NO repone."],
+            ["Base de productos", "Drive PRICING, hoja Pricing (refrescada en cada corrida). In/Out='out' NO repone."],
             ["Objetivo de stock full", "Cobertura por CANAL (hoja Reglas) × venta digital semanal. La col 'Cob' de "
              "la Maestra es cobertura ACTUAL (no objetivo) -> se muestra informativa, no se usa como target."],
             ["Cobertura (restricción)", "Stock CA1/Stock ÷ demanda digital semanal ×4,33; demanda = venta SKU + packs "
