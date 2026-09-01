@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-09-01T08:24:18.487467",
+  "generado_en": "2026-09-01T18:14:15.653325",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.028449967298888164,
-      "total_pickings": 12232,
-      "on_time": 350,
-      "on_time_pct": 0.028613472858077176,
-      "in_full": 12226,
-      "in_full_pct": 0.999509483322433,
-      "both": 348,
+      "valor": 0.028687196110210696,
+      "total_pickings": 12340,
+      "on_time": 356,
+      "on_time_pct": 0.028849270664505672,
+      "in_full": 12334,
+      "in_full_pct": 0.999513776337115,
+      "both": 354,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,9 +23,9 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997539824097423,
-      "ok": 16255,
-      "total": 16259,
+      "valor": 0.9997562461913467,
+      "ok": 16406,
+      "total": 16410,
       "errores": 4,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9043860362926194,
-      "total_so": 12352,
-      "total_con_pickings": 12289,
-      "cumplidos": 11114,
+      "valor": 0.8987179487179487,
+      "total_so": 12544,
+      "total_con_pickings": 12480,
+      "cumplidos": 11216,
       "parciales": 20,
-      "sin_iniciar": 1155,
+      "sin_iniciar": 1244,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.24806841707761,
-      "n_orders": 12505,
+      "valor": 45.15371317440181,
+      "n_orders": 12612,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 31.61916666666667,
+      "mediana_h": 31.375,
       "detalle": [
         {
           "so": "S269110",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 24,
+      "lineas": 175,
       "mes": "2026-09",
       "error": null
     },
@@ -8144,13 +8144,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.028449967298888164,
-      "total_pickings": 12232,
-      "on_time": 350,
-      "on_time_pct": 0.028613472858077176,
-      "in_full": 12226,
-      "in_full_pct": 0.999509483322433,
-      "both": 348,
+      "valor": 0.028687196110210696,
+      "total_pickings": 12340,
+      "on_time": 356,
+      "on_time_pct": 0.028849270664505672,
+      "in_full": 12334,
+      "in_full_pct": 0.999513776337115,
+      "both": 354,
       "error": null
     },
     "b2b_30d": {
@@ -8166,9 +8166,9 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997539824097423,
-      "ok": 16255,
-      "total": 16259,
+      "valor": 0.9997562461913467,
+      "ok": 16406,
+      "total": 16410,
       "errores": 4,
       "error": null
     }
