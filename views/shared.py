@@ -30,7 +30,7 @@ from db_client import get_db_path
 DB_PATH = get_db_path()
 HISTORICO_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
 MES_ACTUAL_PARQUET = PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'
-CUTOFF_HISTORICO = '2026-08-01'  # jul-2026 congelado en histórico parquet (datos completos); mes_actual = agosto
+CUTOFF_HISTORICO = '2026-09-01'  # jul-2026 congelado en histórico parquet (datos completos); mes_actual = agosto
 
 # ============================================================
 # Schema/columnas compartidos por ambos builders del SQLite local
