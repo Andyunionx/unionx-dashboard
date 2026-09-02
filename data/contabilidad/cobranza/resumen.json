@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-01T20:16:05.230212",
+  "generado_en": "2026-09-02T01:46:39.997782",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 10944,
-  "total_monto_pendiente_clp": 813090812.0,
+  "total_documentos_pendientes": 11038,
+  "total_monto_pendiente_clp": 815992255.0,
   "monto_por_aging": {
-    "+90 días": 69705343.0,
-    "1-30 días": 421857962.0,
-    "31-60 días": 131964332.0,
-    "61-90 días": 26507970.0,
-    "Vigente": 163055205.0
+    "+90 días": 70988132.0,
+    "1-30 días": 420105147.0,
+    "31-60 días": 137357019.0,
+    "61-90 días": 24590736.0,
+    "Vigente": 162951221.0
   },
   "monto_por_tipo": {
-    "BOLETA": 708895262.0,
+    "BOLETA": 711796705.0,
     "FACTURA": 104195550.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 114452896.0
+      "monto": 116121797.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -30,11 +30,11 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 56797296.0
+      "monto": 57028196.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 51638498.0
+      "monto": 52838208.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -49,16 +49,16 @@
       "monto": 30708785.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 23062819.0
-    },
-    {
       "partner": "Cliente Shopify",
-      "monto": 22768016.0
+      "monto": 22793006.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 22729221.0
+      "monto": 22791691.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 22604265.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -78,7 +78,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 9854734.0
+      "monto": 9976624.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -97,6 +97,6 @@
       "monto": 6199603.0
     }
   ],
-  "notas_credito_count": 540,
+  "notas_credito_count": 565,
   "pedidos_venta_count": 10000
 }
