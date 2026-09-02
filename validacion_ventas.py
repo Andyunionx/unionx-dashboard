@@ -80,42 +80,53 @@ def validar_ventas_df(df_nuevo: pd.DataFrame, df_previo: pd.DataFrame | None = N
         if fmax_d < hoy - timedelta(days=DIAS_FRESCURA_MAX):
             problemas.append(f"dato viejo: fecha máxima {fmax_d}, hace > {DIAS_FRESCURA_MAX} días")
 
-    # --- 4. Comparación vs versión previa (solo si es el MISMO mes) ---
+    # --- 4. Comparación vs versión previa (solo DÍAS COMPLETOS COMUNES) ---
+    # Los dos parquets casi nunca cubren el mismo span: el extract arranca en
+    # CUTOFF (que avanza con el freeze), el rollover de mes cambia el rango, y el
+    # último día de cada snapshot está a medio transcurrir. Comparar totales
+    # completos genera falsos positivos en ambos sentidos:
+    #   - "caída catastrófica" al soltar el mes recién congelado,
+    #   - "explosión" contra un previo truncado o capturado temprano en el día
+    #     (01-sep-2026: 9,1x → bloqueó el parquet y el Pulso quedó sin datos).
+    # Se compara SOLO la ventana común excluyendo el día de corte de cada uno
+    # (parcial): ahí los totales sí deben ser casi idénticos, y una caída real
+    # (pérdida de datos) sigue saltando.
     if df_previo is not None and len(df_previo) > 0 and 'venta_bruta' in df_previo.columns:
         fv_prev = pd.to_datetime(df_previo['fecha_venta'], errors='coerce')
-        mes_nuevo = str(fmax)[:7] if pd.notna(fmax) else None
-        mes_prev = str(fv_prev.max())[:7] if fv_prev.notna().any() else None
-        # Comparar totales solo si el rango arranca Y termina en el mismo mes. Si el
-        # inicio del rango avanzó (el freeze avanzó CUTOFF y sacó un mes de mes_actual),
-        # los totales no son comparables → daría un falso "caída catastrófica".
-        mes_nuevo_min = str(fv.min())[:7] if fv.notna().any() else None
-        mes_prev_min = str(fv_prev.min())[:7] if fv_prev.notna().any() else None
-        rango_estable = (mes_nuevo_min is not None and mes_nuevo_min == mes_prev_min)
-        if mes_nuevo and mes_prev and mes_nuevo == mes_prev and rango_estable:
-            total_prev = float(_num(df_previo['venta_bruta']).fillna(0).sum())
-            n_prev = len(df_previo)
+        ini = max(fv.min(), fv_prev.min()) if fv.notna().any() and fv_prev.notna().any() else pd.NaT
+        fin = (min(fmax, fv_prev.max()).normalize() - timedelta(days=1)) if pd.notna(fmax) and fv_prev.notna().any() else pd.NaT
+        if pd.notna(ini) and pd.notna(fin) and ini <= fin:
+            m_new, m_prev = (fv >= ini) & (fv <= fin), (fv_prev >= ini) & (fv_prev <= fin)
+            total_new = float(_num(df_nuevo.loc[m_new, 'venta_bruta']).fillna(0).sum())
+            total_prev = float(_num(df_previo.loc[m_prev, 'venta_bruta']).fillna(0).sum())
+            n_new, n_prev = int(m_new.sum()), int(m_prev.sum())
+            stats['ventana_comparada'] = f"{str(ini)[:10]}..{str(fin)[:10]}"
             stats['venta_bruta_previo'] = round(total_prev, 0)
-            stats['filas_previo'] = int(n_prev)
+            stats['filas_previo'] = n_prev
             if total_prev > 0:
-                ratio = total_vb / total_prev
+                ratio = total_new / total_prev
                 stats['ratio_venta'] = round(ratio, 3)
                 if ratio < DROP_MIN:
                     problemas.append(
-                        f"caída catastrófica de venta: {total_vb:,.0f} es {ratio:.0%} del previo "
-                        f"{total_prev:,.0f} (umbral {DROP_MIN:.0%})")
+                        f"caída catastrófica de venta en {stats['ventana_comparada']}: "
+                        f"{total_new:,.0f} es {ratio:.0%} del previo {total_prev:,.0f} "
+                        f"(umbral {DROP_MIN:.0%})")
                 if ratio > EXPLODE_MAX:
                     problemas.append(
-                        f"explosión sospechosa de venta: {ratio:.1f}x el previo")
+                        f"explosión sospechosa de venta en {stats['ventana_comparada']}: "
+                        f"{ratio:.1f}x el previo")
             if n_prev > 0:
-                rratio = n / n_prev
+                rratio = n_new / n_prev
                 if rratio < 0.30:
-                    problemas.append(f"filas cayeron a {rratio:.0%} del previo ({n} vs {n_prev})")
+                    problemas.append(f"filas cayeron a {rratio:.0%} del previo "
+                                     f"({n_new} vs {n_prev}) en {stats['ventana_comparada']}")
                 if rratio > EXPLODE_MAX:
-                    problemas.append(f"filas explotaron a {rratio:.1f}x del previo")
+                    problemas.append(f"filas explotaron a {rratio:.1f}x del previo "
+                                     f"en {stats['ventana_comparada']}")
         else:
             stats['comparacion_previo'] = (
-                f"saltada (rango nuevo {mes_nuevo_min}..{mes_nuevo} vs previo "
-                f"{mes_prev_min}..{mes_prev})")
+                f"saltada (sin días completos comunes: nuevo {str(fv.min())[:10]}..{str(fmax)[:10]}"
+                f" vs previo {str(fv_prev.min())[:10]}..{str(fv_prev.max())[:10]})")
 
     ok = len(problemas) == 0
     return ok, problemas, stats
