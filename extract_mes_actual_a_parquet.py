@@ -368,6 +368,18 @@ def main():
     except Exception as e:
         print(f"   [WARN] CMR enrichment saltado: {type(e).__name__}: {str(e)[:100]}")
 
+    # El parquet debe contener SOLO el rango pedido. Los enriquecimientos posteriores
+    # (CMR agrega filas con la fecha del sheet, overlays manuales, etc.) pueden meter
+    # filas de meses ya congelados: quedan invisibles en la app (que filtra por CUTOFF)
+    # pero ensucian el parquet y descuadran el GATE contra el snapshot previo.
+    _fv = pd.to_datetime(df['fecha_venta'], errors='coerce')
+    _fuera = _fv.notna() & (_fv < pd.Timestamp(desde))
+    if _fuera.any():
+        _vb = pd.to_numeric(df.loc[_fuera, 'venta_bruta'], errors='coerce').fillna(0).sum()
+        print(f"   [rango] {int(_fuera.sum())} filas anteriores a {desde} descartadas "
+              f"(${_vb:,.0f}) — pertenecen a meses ya congelados")
+        df = df[~_fuera].copy()
+
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     # GATE 1 (mecanismo de seguridad): validar contra el último parquet bueno.
