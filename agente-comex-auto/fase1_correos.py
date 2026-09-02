@@ -16,8 +16,8 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 
 BASE = Path(__file__).parent
-# Reusar el GmailClient del agente existente (mismo token/credenciales)
-sys.path.insert(0, str(BASE.parent / "agente-comex" / "src"))
+# GmailClient vendorizado en este paquete (self-contained para el cron cloud)
+sys.path.insert(0, str(BASE))
 from gmail_client import GmailClient  # noqa: E402
 
 import estado as st  # noqa: E402

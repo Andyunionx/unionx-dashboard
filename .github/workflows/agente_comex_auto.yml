@@ -34,8 +34,8 @@ jobs:
         env:
           GMAIL_TOKEN: ${{ secrets.GMAIL_TOKEN }}
         run: |
-          mkdir -p agente-comex/config
-          printf '%s' "$GMAIL_TOKEN" > agente-comex/config/token.json
+          mkdir -p agente-comex-auto/config
+          printf '%s' "$GMAIL_TOKEN" > agente-comex-auto/config/token.json
 
       - name: Correr pipeline COMEX
         working-directory: agente-comex-auto

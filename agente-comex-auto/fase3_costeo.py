@@ -22,7 +22,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 BASE = Path(__file__).parent
 REPO = BASE.parent
 sys.path.insert(0, str(REPO / "_REACTIVAR_NUEVO_PC"))
-sys.path.insert(0, str(BASE.parent / "agente-comex" / "src"))
+sys.path.insert(0, str(BASE))  # GmailClient vendorizado en este paquete
 import costear_embarque as ce           # noqa: E402
 import estado as st                       # noqa: E402
 
