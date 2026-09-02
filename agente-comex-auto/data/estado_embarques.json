@@ -45,12 +45,13 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:29:24Z",
+    "ts_actualizado": "2026-09-02 15:42:27Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0826PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0826PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0826PI SZ 40HQ.xlsx) → esperando flete Seimex",
-      "2026-09-02 15:29:24Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
+      "2026-09-02 15:29:24Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana",
+      "2026-09-02 15:42:27Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
     ]
   },
   "26TP0806": {
@@ -128,7 +129,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:29:34Z",
+    "ts_actualizado": "2026-09-02 15:42:36Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
@@ -137,7 +138,9 @@
       "2026-09-02 15:29:24Z · flete FINAL 5650 USD · ref 413-26 - PI0806 · ETA 2026-09-14 → bodega 2026-09-19",
       "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
       "2026-09-02 15:29:34Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
-      "2026-09-02 15:29:34Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:29:34Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-09-02 15:42:36Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
+      "2026-09-02 15:42:36Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "T2",
@@ -214,7 +217,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:29:41Z",
+    "ts_actualizado": "2026-09-02 15:42:42Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -223,7 +226,9 @@
       "2026-09-02 15:29:24Z · flete FINAL 5900 None · ref 489-26 - PI0818 · ETA 2026-10-09 → bodega 2026-10-14",
       "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
       "2026-09-02 15:29:41Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
-      "2026-09-02 15:29:41Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:29:41Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-02 15:42:42Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-09-02 15:42:42Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
@@ -288,7 +293,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:29:47Z",
+    "ts_actualizado": "2026-09-02 15:42:47Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -296,7 +301,9 @@
       "2026-09-02 15:29:24Z · flete FINAL 5900 USD · ref 490-26 - PI0819 · ETA 2026-10-09 → bodega 2026-10-14",
       "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
       "2026-09-02 15:29:47Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
-      "2026-09-02 15:29:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:29:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-09-02 15:42:47Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-09-02 15:42:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -361,7 +368,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:29:51Z",
+    "ts_actualizado": "2026-09-02 15:42:52Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
@@ -369,7 +376,9 @@
       "2026-09-02 15:29:24Z · flete FINAL 5650 USD · ref 414-26 - PI0815 · ETA 2026-09-19 → bodega 2026-09-24",
       "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
       "2026-09-02 15:29:51Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
-      "2026-09-02 15:29:51Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:29:51Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-02 15:42:52Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
+      "2026-09-02 15:42:52Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": []
   },
@@ -530,7 +539,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:29:58Z",
+    "ts_actualizado": "2026-09-02 15:42:58Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0811PI NB 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0811PI PL.xlsx (dry-run)",
@@ -538,7 +547,9 @@
       "2026-09-02 15:29:24Z · flete FINAL 5650 USD · ref 410-26 - PI0811 · ETA 2026-09-25 → bodega 2026-09-30",
       "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
       "2026-09-02 15:29:58Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
-      "2026-09-02 15:29:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:29:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-02 15:42:58Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-09-02 15:42:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "HD4 Khaki",
