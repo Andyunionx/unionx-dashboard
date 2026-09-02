@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-02T18:13:45.329630",
+  "generado_en": "2026-09-02T22:55:01.183488",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 879,
-    "posiciones_libres_hoy": 490,
-    "pct_ocupacion_hoy": 64.2,
-    "m3_stock_calculado": 905.5
+    "posiciones_ocupadas_hoy": 878,
+    "posiciones_libres_hoy": 491,
+    "pct_ocupacion_hoy": 64.1,
+    "m3_stock_calculado": 900.0
   },
   "pico_proyectado": {
     "fecha": "2026-09-02",
-    "posiciones_ocupadas": 879.0,
-    "pct_ocupacion": 64.2
+    "posiciones_ocupadas": 878.0,
+    "pct_ocupacion": 64.1
   },
   "minimo_proyectado": {
     "fecha": "2026-11-01",
-    "posiciones_ocupadas": 617.5,
-    "pct_ocupacion": 45.1
+    "posiciones_ocupadas": 620.5,
+    "pct_ocupacion": 45.3
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -56,17 +56,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 51.5,
-  "pallets_total_salientes_horizonte": 261.5,
+  "pallets_total_salientes_horizonte": 257.5,
   "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 313.8,
+  "m3_total_saliente_horizonte": 309.0,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 800,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 158695.0,
-    "demanda_cumplida_unidades": 35886.0,
-    "demanda_no_cubierta_unidades_total": 122809.0,
+    "demanda_cumplida_unidades": 35839.0,
+    "demanda_no_cubierta_unidades_total": 122856.0,
     "pct_demanda_cumplida": 22.6,
     "sku_sin_match_stock_count": 46,
     "top_no_cubiertos": [
@@ -92,7 +92,7 @@
       },
       {
         "sku": "1566335721736",
-        "unid_no_cubiertas": 13493.0,
+        "unid_no_cubiertas": 13494.0,
         "sin_match_stock": true
       },
       {
@@ -117,7 +117,12 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 425.0,
+        "unid_no_cubiertas": 429.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVSILLERGO-BL",
+        "unid_no_cubiertas": 352.0,
         "sin_match_stock": true
       },
       {
@@ -132,12 +137,7 @@
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 329.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 313.0,
+        "unid_no_cubiertas": 330.0,
         "sin_match_stock": true
       },
       {
@@ -167,7 +167,7 @@
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 182.0,
+        "unid_no_cubiertas": 184.0,
         "sin_match_stock": true
       }
     ],
