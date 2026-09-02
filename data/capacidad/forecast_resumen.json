@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-02T17:04:42.974213",
+  "generado_en": "2026-09-02T18:13:45.329630",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 879,
     "posiciones_libres_hoy": 490,
     "pct_ocupacion_hoy": 64.2,
-    "m3_stock_calculado": 905.9
+    "m3_stock_calculado": 905.5
   },
   "pico_proyectado": {
     "fecha": "2026-09-02",
@@ -23,7 +23,7 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-11-01",
-    "posiciones_ocupadas": 617.4,
+    "posiciones_ocupadas": 617.5,
     "pct_ocupacion": 45.1
   },
   "primer_critico": null,
@@ -56,17 +56,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 51.5,
-  "pallets_total_salientes_horizonte": 261.6,
+  "pallets_total_salientes_horizonte": 261.5,
   "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 314.0,
+  "m3_total_saliente_horizonte": 313.8,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 801,
+    "sku_con_vol_odoo": 800,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 158695.0,
-    "demanda_cumplida_unidades": 35891.0,
-    "demanda_no_cubierta_unidades_total": 122804.0,
+    "demanda_cumplida_unidades": 35886.0,
+    "demanda_no_cubierta_unidades_total": 122809.0,
     "pct_demanda_cumplida": 22.6,
     "sku_sin_match_stock_count": 46,
     "top_no_cubiertos": [
@@ -127,7 +127,7 @@
       },
       {
         "sku": "SIMCUROM-30",
-        "unid_no_cubiertas": 338.0,
+        "unid_no_cubiertas": 339.0,
         "sin_match_stock": true
       },
       {
@@ -137,7 +137,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 312.0,
+        "unid_no_cubiertas": 313.0,
         "sin_match_stock": true
       },
       {
@@ -162,7 +162,7 @@
       },
       {
         "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 193.0,
+        "unid_no_cubiertas": 194.0,
         "sin_match_stock": true
       },
       {
@@ -175,7 +175,7 @@
       "Delivery_007"
     ]
   },
-  "stock_anomalies_count": 68,
+  "stock_anomalies_count": 67,
   "top_stock_anomalies": [
     {
       "sku": "6902221386601",
