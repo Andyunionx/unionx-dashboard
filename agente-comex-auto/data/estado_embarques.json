@@ -1,1 +1,585 @@
-{}
+{
+  "26TP0826": {
+    "embarque": "26TP0826",
+    "fase": 2,
+    "pi": {
+      "msg_id": "1a04d3f22033f8fe",
+      "filename": "26TP0826PI SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ-ycyksrKkqe8RiRZMkhTixYdV8_-iC141AAiTvqJ5p6Q_IdJ7qiwM5ywLVXBmSTLf9DhxtbD4HAuC9SrwR5FLOK40BQJs_otCkot6PEOLzg3DHsEIt491yZotP5okC6UdvY2CpQwb48KKoEva0gKD2n0Cq5C9aWMPk3V-ROpfLG75hIYcOy8c2PpjGVs4MOOapcZe3wg5SJW4179ou_S_Ot6JvbmQbi6AUvbgWsIPYr_SVQ0yd88df9R6zevhQTOz7v5wz1ZhP_zBQGgx5-gMf2BDxJv0cwmtwQ6jQ9XXcWjsZgFjBNxyleIDBBe79Od8Sv5sMNEJYudcKZ8eJaa9RCuhhWK0j7yVbCGohPs3YKMxt49JPP6IDj2i9QmA9Rza24S6T9CIWYc4rsV2F5WEtnRwrCPhOFk_0jA",
+      "subject": "26TP0826PI",
+      "date": "Sat, 29 Aug 2026 19:19:00 +0800 (GMT+08:00)"
+    },
+    "pl": {
+      "msg_id": "1a04d3f22033f8fe",
+      "filename": "26TP0826PI PL.xlsx",
+      "attachment_id": "ANGjdJ9lC5BciYehdTiQQX2o3kn2YvnD1HXsZr-poRmsRjvdlNMeWrVALsCQiYSWnF4uz5alXzh2Ip3ArHxW3G3_wC3K58D7YnsxF_UvvYQpQWpJ24-mXh1sMI1omNDwwB_KPiEbaR6iZnVIiFoc2p6rqDej-kOfBH-2GSiQ_D7N4hbgdUjcPhIwLTA7BJd_JxH7IHoBWLx9PYUtJSACqFlT-_7lTU18Ry8oaKyZFExImI4oKLueMzKI1Pi8SoWzjgRzilk1n7K110AblEp3XBFLqa2ZC3um8YkBHIw8t1pH7O4elhZChixjWlYgLSXkXz5gYQLujdHo-TkP8Emc7grKRVVFxY98aKPt3V3oBp0wTXmveuEaJefzwVYgypIszMDavfIKwKE415I5Ihze",
+      "subject": "26TP0826PI",
+      "date": "Sat, 29 Aug 2026 19:19:00 +0800 (GMT+08:00)"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "1a04d3f22033f8fe",
+        "filename": "26TP0826PI SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ-ycyksrKkqe8RiRZMkhTixYdV8_-iC141AAiTvqJ5p6Q_IdJ7qiwM5ywLVXBmSTLf9DhxtbD4HAuC9SrwR5FLOK40BQJs_otCkot6PEOLzg3DHsEIt491yZotP5okC6UdvY2CpQwb48KKoEva0gKD2n0Cq5C9aWMPk3V-ROpfLG75hIYcOy8c2PpjGVs4MOOapcZe3wg5SJW4179ou_S_Ot6JvbmQbi6AUvbgWsIPYr_SVQ0yd88df9R6zevhQTOz7v5wz1ZhP_zBQGgx5-gMf2BDxJv0cwmtwQ6jQ9XXcWjsZgFjBNxyleIDBBe79Od8Sv5sMNEJYudcKZ8eJaa9RCuhhWK0j7yVbCGohPs3YKMxt49JPP6IDj2i9QmA9Rza24S6T9CIWYc4rsV2F5WEtnRwrCPhOFk_0jA",
+        "subject": "26TP0826PI",
+        "date": "Sat, 29 Aug 2026 19:19:00 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "1a04d3f22033f8fe",
+        "filename": "26TP0826PI PL.xlsx",
+        "attachment_id": "ANGjdJ9lC5BciYehdTiQQX2o3kn2YvnD1HXsZr-poRmsRjvdlNMeWrVALsCQiYSWnF4uz5alXzh2Ip3ArHxW3G3_wC3K58D7YnsxF_UvvYQpQWpJ24-mXh1sMI1omNDwwB_KPiEbaR6iZnVIiFoc2p6rqDej-kOfBH-2GSiQ_D7N4hbgdUjcPhIwLTA7BJd_JxH7IHoBWLx9PYUtJSACqFlT-_7lTU18Ry8oaKyZFExImI4oKLueMzKI1Pi8SoWzjgRzilk1n7K110AblEp3XBFLqa2ZC3um8YkBHIw8t1pH7O4elhZChixjWlYgLSXkXz5gYQLujdHo-TkP8Emc7grKRVVFxY98aKPt3V3oBp0wTXmveuEaJefzwVYgypIszMDavfIKwKE415I5Ihze",
+        "subject": "26TP0826PI",
+        "date": "Sat, 29 Aug 2026 19:19:00 +0800 (GMT+08:00)"
+      }
+    ],
+    "flete_usd": null,
+    "flete_moneda": null,
+    "seimex_ref": null,
+    "eta_puerto": null,
+    "eta_bodega": null,
+    "costeo_path": null,
+    "skus": [],
+    "skus_faltantes": null,
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:24Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PL detectado: 26TP0826PI PL.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0826PI SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0826PI SZ 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-02 15:29:24Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
+    ]
+  },
+  "26TP0806": {
+    "embarque": "26TP0806",
+    "fase": 3,
+    "pi": {
+      "msg_id": "1a03debfb6b1220f",
+      "filename": "26TP0806PI (A+B) SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ9gop3veoY-f0DPgEbG4edcJw-ZCQ06SXJWJbHIo57VSbYb_qY73piZWU-w25iJxTbA9o4mWnRygSfG9x7tm4UfaCAZTeFIsfuaNCRMo2UYeCzxA961ehfJsASDqHAuPZyjqislgiFLuHDAe-0niFx9W50w59dH1hiljEQe-tHyB-TCvZVUFVXIihDdaj0t_RqRxrnEeyQmbvycFN4baK6wk99NFmubF9gML4uYwDNFvMEbgk5bZ9RHH9m0vqnpDV3hwngdaJPYpOWYmFL3hK3YpghCartt_DafqccbTz4sfJJ1ByCaiEmtEXZMwL-r3qhuu06tFaY2X3JE5RbFHweaNgIM4Wg7mOcy2-TOFxcEiVvETXF0IzO6to16Pr1_lUwOt5lOzdNwKdhu",
+      "subject": "about 26TP0806PI",
+      "date": "Wed, 26 Aug 2026 19:54:10 +0800 (GMT+08:00)"
+    },
+    "pl": {
+      "msg_id": "19ff013d44ad6987",
+      "filename": "26TP0806PI PL.xlsx",
+      "attachment_id": "ANGjdJ8LVmAZ5q-1CZ1V52Axq4kfbFJu-LtC0cfWc-Acg-Xj4gSTqxkSRAitKTelm832oFJlbasFY2MmEeiWqJaH3bDPcA7dZsQWljycOyQnARouHuLAzX6qDZ90zyYu3w01chSwJi4eehTBuK6KXVYkSjWXpKG2dV8NGtlguGQ2BO1pFUi9mtc1niOfU4CSKbasEvMQJ82gUyICvY6bSKd70BK50Naw0QDn1uvHKdxxV-t5Ytd-qSIvf_Z1ohg22iu63BBt0wEm1YkCabQOtQEUMN86o0nG2NnU-LSpoW9bvMHjZ4uBdSte17q4eDGESPLJeQKcTka1qjYMcLBXMV4l1amKzQTmbRsnmm39yzvpMOn-zqHEFZFLgso_bRsXdCKL8qOitAE7oMtOiOIdyyVrrCahtJT7VWH4B9czpA",
+      "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+      "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "1a03debfb6b1220f",
+        "filename": "26TP0806PI (A+B) SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ9gop3veoY-f0DPgEbG4edcJw-ZCQ06SXJWJbHIo57VSbYb_qY73piZWU-w25iJxTbA9o4mWnRygSfG9x7tm4UfaCAZTeFIsfuaNCRMo2UYeCzxA961ehfJsASDqHAuPZyjqislgiFLuHDAe-0niFx9W50w59dH1hiljEQe-tHyB-TCvZVUFVXIihDdaj0t_RqRxrnEeyQmbvycFN4baK6wk99NFmubF9gML4uYwDNFvMEbgk5bZ9RHH9m0vqnpDV3hwngdaJPYpOWYmFL3hK3YpghCartt_DafqccbTz4sfJJ1ByCaiEmtEXZMwL-r3qhuu06tFaY2X3JE5RbFHweaNgIM4Wg7mOcy2-TOFxcEiVvETXF0IzO6to16Pr1_lUwOt5lOzdNwKdhu",
+        "subject": "about 26TP0806PI",
+        "date": "Wed, 26 Aug 2026 19:54:10 +0800 (GMT+08:00)"
+      },
+      {
+        "msg_id": "19ff013d44ad6987",
+        "filename": "26TP0806PI-A SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ_J9oGWaYR9KorFvS70OtPE_yeuN5G3TnjHfzmo6VtIEbPA_RFtFfDZnJRiRl5KMySL0RDkTjytw7Vwiz7IqbqGtYMDZP-bVGsomMqxwDQIAJCcVTBqcn7duHcih_EILi5p6rjs2HymFRgNs69lM5qCLwujnUQ4rnczlZ9dyzUiD4C3McXGAf2LFwmBHqEp3ul_TFM7f7Go8u5oMwKo_677mwnAfekfYTj3GNLpiHamqVFmBUfBLHVzy0fo5OIt2C8lKcJO8A0lSTy-txSyDb89LpDTofeOQ_k5zqdIV9BVCC0-uzZshl1d0G5gxKQjPXdwj3roRA7LFUTFRSl5LcqJsO79Xga1n7jY-MJHlFV2qPi87ztShistbap660lIc_jZg_qJ5Wabcxnh6BbS9hA0-CCSawOI4vYCnQ",
+        "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+        "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "19ff013d44ad6987",
+        "filename": "26TP0806PI PL.xlsx",
+        "attachment_id": "ANGjdJ8LVmAZ5q-1CZ1V52Axq4kfbFJu-LtC0cfWc-Acg-Xj4gSTqxkSRAitKTelm832oFJlbasFY2MmEeiWqJaH3bDPcA7dZsQWljycOyQnARouHuLAzX6qDZ90zyYu3w01chSwJi4eehTBuK6KXVYkSjWXpKG2dV8NGtlguGQ2BO1pFUi9mtc1niOfU4CSKbasEvMQJ82gUyICvY6bSKd70BK50Naw0QDn1uvHKdxxV-t5Ytd-qSIvf_Z1ohg22iu63BBt0wEm1YkCabQOtQEUMN86o0nG2NnU-LSpoW9bvMHjZ4uBdSte17q4eDGESPLJeQKcTka1qjYMcLBXMV4l1amKzQTmbRsnmm39yzvpMOn-zqHEFZFLgso_bRsXdCKL8qOitAE7oMtOiOIdyyVrrCahtJT7VWH4B9czpA",
+        "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+        "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+      }
+    ],
+    "flete_usd": 5650.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "413-26 - PI0806",
+    "eta_puerto": "2026-09-14",
+    "eta_bodega": "2026-09-19",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0806/Pre-costeo_x_CBM_26TP0806.xlsx",
+    "skus": [
+      "LHBOADV-BL",
+      "LHBOADV-WH",
+      "LHTRMU-BK",
+      "SIMDECROU",
+      "1659990828178",
+      "66436804863605",
+      "XRHYDLAV-OR",
+      "BDGIMPIK",
+      "SMVABOR4",
+      "1628018206370",
+      "SIMJULZOPO-30",
+      "SIMPLSIE-4",
+      "SIMJULZBRU-30",
+      "SIMCUROM-30",
+      "SIMCUHOL-5",
+      "SIMCUMAR-BK",
+      "LHMOBI001-BK",
+      "LHMOBROBK",
+      "LHBANK2BK",
+      "XRPARTBAT-GR",
+      "LVSILLERGO-BL"
+    ],
+    "skus_faltantes": [],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:34Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0806PI (A+B) SZ 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI-A SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:24Z · flete FINAL 5650 USD · ref 413-26 - PI0806 · ETA 2026-09-14 → bodega 2026-09-19",
+      "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-02 15:29:34Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
+      "2026-09-02 15:29:34Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [
+      "T2",
+      "TP248",
+      "TP289",
+      "TP610",
+      "TP691",
+      "TP936"
+    ]
+  },
+  "26TP0818": {
+    "embarque": "26TP0818",
+    "fase": 3,
+    "pi": {
+      "msg_id": "1a023a3a71c8654a",
+      "filename": "26TP0818PI (A+B) SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ-afE1_3bIBsXSZoEMJyrb4-8lUGW6EHtn2mPf7r7In3DjwWAn5VgxGRnAKdHvWCuee1X7epyQ2Gjl3UV4eZHEXrqxOZ4K0yM8hi70bLisbOTGH2cJ37K97A_nnFiBuOmbkW44bkchYsgFarIoNkO-DK9mvm2X-AmlF-s1zlajZSp4lVHtCpawO-0XQUskVUaW79x4j2sC7rwzvceCc32hrd4vx4JxctXL9TqLJ5cLoqZCeEhaxwSNf0uQgNgrSKQXhZkSjbw5GxOfNLwIOvhmieIkX9Ywp0LS96tFTSCaOhvSpz89akWbn1YV1sI_VGiKLY8fmnpb1e1-qJj_jO8BIV9Upbih8UQ0u-FuN_taJHQTmJTzuOzg4hJ8OGUDAowerjxLmQBaHIsQKK_ZYm8Lyu-8QwfkaxyJgYA",
+      "subject": "26TP0818PI+26TP0819PI+ Balance list",
+      "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+    },
+    "pl": {
+      "msg_id": "1a023a3a71c8654a",
+      "filename": "26TP0818PI PL.xlsx",
+      "attachment_id": "ANGjdJ9nAoAFr0KVZQrFVk7t52QdaHeH2hAioY66F2Webyv2Ell5WJkYXCopzKEXEwp6J25o9gZ8wxbknZqf-CP7rEBPhiog1eXyQLswl_YGqMCjH0FRqTbgvm__-bhM2p4XlRIS0NDnrKdtQSvtKnLvpc-FfwFAezVnl7TYDG343e1CDf5brDJ-kiz_T8MDX9NiXPn55-XVdCRlk-ySpwi_-kA-cNl0P9nTuUk3hJuWQEidm0LdU9X5zmPmz5b7pxYMpin8RXSquTaprUpi0jtCWzF6w_CKd4s83cMXgn4Xa02KlyZla7bUQPIGK1x_UbzAlmagKJR5g4E4-GJsilp-ycBGcyVRHoJrKVlyrF_IEWyJtPKh9NRJh-mrozui0ULhWH-bVmKtoBEYRG-9SsWok6LfNGhX_CrI-Niyhg",
+      "subject": "26TP0818PI+26TP0819PI+ Balance list",
+      "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "1a023a3a71c8654a",
+        "filename": "26TP0818PI (A+B) SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ-afE1_3bIBsXSZoEMJyrb4-8lUGW6EHtn2mPf7r7In3DjwWAn5VgxGRnAKdHvWCuee1X7epyQ2Gjl3UV4eZHEXrqxOZ4K0yM8hi70bLisbOTGH2cJ37K97A_nnFiBuOmbkW44bkchYsgFarIoNkO-DK9mvm2X-AmlF-s1zlajZSp4lVHtCpawO-0XQUskVUaW79x4j2sC7rwzvceCc32hrd4vx4JxctXL9TqLJ5cLoqZCeEhaxwSNf0uQgNgrSKQXhZkSjbw5GxOfNLwIOvhmieIkX9Ywp0LS96tFTSCaOhvSpz89akWbn1YV1sI_VGiKLY8fmnpb1e1-qJj_jO8BIV9Upbih8UQ0u-FuN_taJHQTmJTzuOzg4hJ8OGUDAowerjxLmQBaHIsQKK_ZYm8Lyu-8QwfkaxyJgYA",
+        "subject": "26TP0818PI+26TP0819PI+ Balance list",
+        "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+      },
+      {
+        "msg_id": "1a023a3a71c8654a",
+        "filename": "26TP0818PI A Innocatek SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ-ih3yFRC_joqNjwbvCjO_Gpw2k_MRRGC8seX8aLC_oK8hBBV4pUM2UqYAiwBgsAHL2zX3AlN2hQRr9EUFRKzGobkg7l1mIPkKOFtLYTVZf76saA5iMSI6B7T03KIKxq_01iXDncK5zAXysDlh6QobISq6CAi_6yVUjZK-c_cWNL2_3H30RMqjqDryl6Dhae9943pM348hm6SZ3v8yXlNBrJPu3Lc_39-M9orEhHsKz2bEzzukS10gNs1phKfYTk1GrFEyPnH0aXgIUneUq9S1KZa2tXqFMZWzPzi2my6h8_-H9X5XQbzoo7B8JeQxTzY4VloERYyRhst_lv9E6SNZtM7iJ0aqb0vTBQZhDCaKileXDiQy6lWuHOkT_0kJZRl8OIW28VCpThHb1vZGKi6vvQKQtWiiGzhFTQA",
+        "subject": "26TP0818PI+26TP0819PI+ Balance list",
+        "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "1a023a3a71c8654a",
+        "filename": "26TP0818PI PL.xlsx",
+        "attachment_id": "ANGjdJ9nAoAFr0KVZQrFVk7t52QdaHeH2hAioY66F2Webyv2Ell5WJkYXCopzKEXEwp6J25o9gZ8wxbknZqf-CP7rEBPhiog1eXyQLswl_YGqMCjH0FRqTbgvm__-bhM2p4XlRIS0NDnrKdtQSvtKnLvpc-FfwFAezVnl7TYDG343e1CDf5brDJ-kiz_T8MDX9NiXPn55-XVdCRlk-ySpwi_-kA-cNl0P9nTuUk3hJuWQEidm0LdU9X5zmPmz5b7pxYMpin8RXSquTaprUpi0jtCWzF6w_CKd4s83cMXgn4Xa02KlyZla7bUQPIGK1x_UbzAlmagKJR5g4E4-GJsilp-ycBGcyVRHoJrKVlyrF_IEWyJtPKh9NRJh-mrozui0ULhWH-bVmKtoBEYRG-9SsWok6LfNGhX_CrI-Niyhg",
+        "subject": "26TP0818PI+26TP0819PI+ Balance list",
+        "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+      }
+    ],
+    "flete_usd": 5900.0,
+    "flete_moneda": null,
+    "seimex_ref": "489-26 - PI0818",
+    "eta_puerto": "2026-10-09",
+    "eta_bodega": "2026-10-14",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0818/Pre-costeo_x_CBM_26TP0818.xlsx",
+    "skus": [
+      "SIMBOWAMA-4",
+      "SIMBOWTAZ-4",
+      "SIMBOWTAZ-4",
+      "SIMJULZSIE-30",
+      "SIMJULZOPO-30",
+      "1564150627423",
+      "1564150661249",
+      "DYNTALSPER",
+      "1629726159155",
+      "XRCARINF34-CL"
+    ],
+    "skus_faltantes": [
+      "XRCARINF34-CL"
+    ],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:41Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PL detectado: 26TP0818PI PL.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0818PI (A+B) SZ 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-02 15:29:24Z · flete FINAL 5900 None · ref 489-26 - PI0818 · ETA 2026-10-09 → bodega 2026-10-14",
+      "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-02 15:29:41Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-09-02 15:29:41Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [
+      "TP101",
+      "TP140"
+    ]
+  },
+  "26TP0819": {
+    "embarque": "26TP0819",
+    "fase": 3,
+    "pi": {
+      "msg_id": "1a023a3a71c8654a",
+      "filename": "26TP0819PI SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ_es9vXcIt3Z4ZwrtQREBQsp1e-EJX325aPcKK6dIZVEG3CxUb0aF4bHnPAG_1--FXtuCpCLtxeLBsi6jBpNanqHTHNWEZkmjJkKesJnuHVr-IWnZZcLn39wgYA0Z3ND4e9gvBUK3bN6OmHoBBWU2EetL_49bXfrDetXix3dkXG2iCng9k1o2RPON0St1jDd3dVi0Nkdu77-vMbfyQgc75lEnSM6iZdlnAzUjaL0vtX2fDSJ2Bx59zI0mbZwVqBIEnmaZqzFW20NMFtXrVJbyw3cdfzZQI4QHDdgtjnYi24Nn7cuC4RRagIOfMl45zQwjtV-iipj6OCC404vT1FN1d6p-fqjiL4P4d-Jkq7Iqo_Xfh6PKgD-mKtpoexyL1ng--agkvKGTv4NiXeKQc4ug_YaVWv_ikUMdF4Nw",
+      "subject": "26TP0818PI+26TP0819PI+ Balance list",
+      "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+    },
+    "pl": {
+      "msg_id": "1a023a3a71c8654a",
+      "filename": "26TP0819PI PL.xlsx",
+      "attachment_id": "ANGjdJ8eXKUXGYXhKj0Wg70W9skTXSKlvQPDxa44oAopt3dP8SsR7gvSHWc8CIWR1UkLT3YlU1FxwBEqzO5iXTEARxYegKwaqwYBGBBO95OHn2MkadE8Ks9zewst9zmqT8OD4A5Wv9-aDCbP3n0aXv4xs9ptpsUyvWC47mrJtYP3ooj6k4ZzliRwBUIUCDOk0nVwSAuyieD6FtZ_g6yJ0DIV2ePGwZ9IPmX4UtEFV8tdCc_G2khag06Vje6G4CM0LwzugJ2LEEk1HUQhbSaBPWgn8msX7Xr545CBDsqMbL7OYta11wJc60FiU4DjJbIvoI23pov_oKGlcazDalFMdh30G0gUQVOnzzmXYnsFQa4J0NHelPgBHyy5StaJcsSQoqvkmcBilieoSq49MFwDtcg95VnV1xQrKTrQxNSnag",
+      "subject": "26TP0818PI+26TP0819PI+ Balance list",
+      "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "1a023a3a71c8654a",
+        "filename": "26TP0819PI SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ_es9vXcIt3Z4ZwrtQREBQsp1e-EJX325aPcKK6dIZVEG3CxUb0aF4bHnPAG_1--FXtuCpCLtxeLBsi6jBpNanqHTHNWEZkmjJkKesJnuHVr-IWnZZcLn39wgYA0Z3ND4e9gvBUK3bN6OmHoBBWU2EetL_49bXfrDetXix3dkXG2iCng9k1o2RPON0St1jDd3dVi0Nkdu77-vMbfyQgc75lEnSM6iZdlnAzUjaL0vtX2fDSJ2Bx59zI0mbZwVqBIEnmaZqzFW20NMFtXrVJbyw3cdfzZQI4QHDdgtjnYi24Nn7cuC4RRagIOfMl45zQwjtV-iipj6OCC404vT1FN1d6p-fqjiL4P4d-Jkq7Iqo_Xfh6PKgD-mKtpoexyL1ng--agkvKGTv4NiXeKQc4ug_YaVWv_ikUMdF4Nw",
+        "subject": "26TP0818PI+26TP0819PI+ Balance list",
+        "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "1a023a3a71c8654a",
+        "filename": "26TP0819PI PL.xlsx",
+        "attachment_id": "ANGjdJ8eXKUXGYXhKj0Wg70W9skTXSKlvQPDxa44oAopt3dP8SsR7gvSHWc8CIWR1UkLT3YlU1FxwBEqzO5iXTEARxYegKwaqwYBGBBO95OHn2MkadE8Ks9zewst9zmqT8OD4A5Wv9-aDCbP3n0aXv4xs9ptpsUyvWC47mrJtYP3ooj6k4ZzliRwBUIUCDOk0nVwSAuyieD6FtZ_g6yJ0DIV2ePGwZ9IPmX4UtEFV8tdCc_G2khag06Vje6G4CM0LwzugJ2LEEk1HUQhbSaBPWgn8msX7Xr545CBDsqMbL7OYta11wJc60FiU4DjJbIvoI23pov_oKGlcazDalFMdh30G0gUQVOnzzmXYnsFQa4J0NHelPgBHyy5StaJcsSQoqvkmcBilieoSq49MFwDtcg95VnV1xQrKTrQxNSnag",
+        "subject": "26TP0818PI+26TP0819PI+ Balance list",
+        "date": "Fri, 21 Aug 2026 17:24:16 +0800 (GMT+08:00)"
+      }
+    ],
+    "flete_usd": 5900.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "490-26 - PI0819",
+    "eta_puerto": "2026-10-09",
+    "eta_bodega": "2026-10-14",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0819/Pre-costeo_x_CBM_26TP0819.xlsx",
+    "skus": [
+      "LVSILLERGO-BL",
+      "1615383366170",
+      "1660857800718",
+      "LHMOMAK-BK",
+      "LHMOPUM-BK",
+      "LVPANTOTPUB-43",
+      "LVPANTOTPUB-50",
+      "1650301031879",
+      "XRCOOLPOR45-GR"
+    ],
+    "skus_faltantes": [
+      "XRCOOLPOR45-GR"
+    ],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:47Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0819PI SZ 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-02 15:29:24Z · flete FINAL 5900 USD · ref 490-26 - PI0819 · ETA 2026-10-09 → bodega 2026-10-14",
+      "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-02 15:29:47Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-09-02 15:29:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [
+      "702-2",
+      "TP146",
+      "TP371"
+    ]
+  },
+  "26TP0815": {
+    "embarque": "26TP0815",
+    "fase": 3,
+    "pi": {
+      "msg_id": "1a00ed3d924fd309",
+      "filename": "26TP0815PI NB 40HQ.xlsx",
+      "attachment_id": "ANGjdJ-uMuwj3ZV2ddkYPTxtTFwXTB8S7UihT5JajU1zLTOyjSh2gPkkqoIpha6tok_lV-8pYx3eMhHrlQvFo4taMzdSOOspUgX4LAZxCrTU2GgarDwnrnIAcuQI6_QrSQpgLS8Et9xG4yL1OoWhvfg6ExfnDONkKSI-3lLs8_FPSnk-83pvcnG3fNcTeSDojpjsj956MuXrv12SxmkbFhuMuQohiYeORoWQHfOHU9_9rp0LJUI7B65gf6f5DWeVj66loBPxnCXAboPvLJMjWr-OL4qApygk46VGY7FJi8XKiBgyn0hiZLv5I90bTVDVnqPiMKlvfjFwvg_aPJ8wSa97kO2ZRe90WHT24eIqiUplbvvnRduifo-6TZMjX8bZnc_fwwPVmTYYyMGl1gMfDDhs26MWeVU3Jsh1b_wcvA",
+      "subject": "26TP0815PI  26TP0816PI  and balance list",
+      "date": "Mon, 17 Aug 2026 16:25:15 +0800 (GMT+08:00)"
+    },
+    "pl": {
+      "msg_id": "1a00ed3d924fd309",
+      "filename": "26TP0815PI PL.xlsx",
+      "attachment_id": "ANGjdJ_F-OK_lyknoU3M1iL71ghxPT9mktukANK2DEgWA1IXlQQh2kI7Q8CW-t-OPENMQX-QhnKZgj-dJL4GTFRaTpjRQ7KHbiEFRdK9pWLjhmb9RtkBI9oFrygd-azCYvE4zFzK5lmgxW7_ZW2wKN_PoQL04IkcyTTnM05d0zAzhMplpnqN5tRE42mKhjgEfPCK1w4BESVkBgvc_KJAG46or8z2gfr4M1eK_7Et7nrXSo4YzExlf6cR_lfrpz0LicOQGCXxTSsnkxFZ3k3qO1v0CK5ewN78jM7DQ-zU1u9_-U7eAqy5eakwMGKkjHCgBHdCJvi8iqsGE9C3aAQMvdC_reniRj9xfBbppfPF6zM5OTc4jmElP2VnqfEIb003cNvUZjtH3V0wyOQAzklN",
+      "subject": "26TP0815PI  26TP0816PI  and balance list",
+      "date": "Mon, 17 Aug 2026 16:25:15 +0800 (GMT+08:00)"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "1a00ed3d924fd309",
+        "filename": "26TP0815PI NB 40HQ.xlsx",
+        "attachment_id": "ANGjdJ-uMuwj3ZV2ddkYPTxtTFwXTB8S7UihT5JajU1zLTOyjSh2gPkkqoIpha6tok_lV-8pYx3eMhHrlQvFo4taMzdSOOspUgX4LAZxCrTU2GgarDwnrnIAcuQI6_QrSQpgLS8Et9xG4yL1OoWhvfg6ExfnDONkKSI-3lLs8_FPSnk-83pvcnG3fNcTeSDojpjsj956MuXrv12SxmkbFhuMuQohiYeORoWQHfOHU9_9rp0LJUI7B65gf6f5DWeVj66loBPxnCXAboPvLJMjWr-OL4qApygk46VGY7FJi8XKiBgyn0hiZLv5I90bTVDVnqPiMKlvfjFwvg_aPJ8wSa97kO2ZRe90WHT24eIqiUplbvvnRduifo-6TZMjX8bZnc_fwwPVmTYYyMGl1gMfDDhs26MWeVU3Jsh1b_wcvA",
+        "subject": "26TP0815PI  26TP0816PI  and balance list",
+        "date": "Mon, 17 Aug 2026 16:25:15 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "1a00ed3d924fd309",
+        "filename": "26TP0815PI PL.xlsx",
+        "attachment_id": "ANGjdJ_F-OK_lyknoU3M1iL71ghxPT9mktukANK2DEgWA1IXlQQh2kI7Q8CW-t-OPENMQX-QhnKZgj-dJL4GTFRaTpjRQ7KHbiEFRdK9pWLjhmb9RtkBI9oFrygd-azCYvE4zFzK5lmgxW7_ZW2wKN_PoQL04IkcyTTnM05d0zAzhMplpnqN5tRE42mKhjgEfPCK1w4BESVkBgvc_KJAG46or8z2gfr4M1eK_7Et7nrXSo4YzExlf6cR_lfrpz0LicOQGCXxTSsnkxFZ3k3qO1v0CK5ewN78jM7DQ-zU1u9_-U7eAqy5eakwMGKkjHCgBHdCJvi8iqsGE9C3aAQMvdC_reniRj9xfBbppfPF6zM5OTc4jmElP2VnqfEIb003cNvUZjtH3V0wyOQAzklN",
+        "subject": "26TP0815PI  26TP0816PI  and balance list",
+        "date": "Mon, 17 Aug 2026 16:25:15 +0800 (GMT+08:00)"
+      }
+    ],
+    "flete_usd": 5650.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "414-26 - PI0815",
+    "eta_puerto": "2026-09-19",
+    "eta_bodega": "2026-09-24",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0815/Pre-costeo_x_CBM_26TP0815.xlsx",
+    "skus": [
+      "SMBATSAV9-CR",
+      "SMBATOXBG",
+      "XRTOLLAT270-CL",
+      "1650302269777",
+      "XRCOOLPORTF40-GR",
+      "XRCOOLPORT-GR"
+    ],
+    "skus_faltantes": [
+      "SMBATOXBG",
+      "XRCOOLPORTF40-GR",
+      "XRTOLLAT270-CL"
+    ],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:51Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0815PI NB 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-02 15:29:24Z · flete FINAL 5650 USD · ref 414-26 - PI0815 · ETA 2026-09-19 → bodega 2026-09-24",
+      "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-02 15:29:51Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
+      "2026-09-02 15:29:51Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": []
+  },
+  "26TP0816": {
+    "embarque": "26TP0816",
+    "fase": 1,
+    "pi": {
+      "msg_id": "1a00ed3d924fd309",
+      "filename": "26T0816PI  DHL.xlsx",
+      "attachment_id": "ANGjdJ8vxHWjFFxPECo6b0TT4yUCFNgOU5WyhuK7pbnbV_CBlMsCnk0sFBQLS3Fw9R9J3W_A7DH4frCLWRHWpgBWU2-z2N1ADA9Epfh4TAyKFSs-X6oUURaIbOuLzTd-z34lD0YWz_JtSq3gUUpI9RtGFdBkvSuoxJp_2HxJwbR4UKriziDMvNMv8ysO6sQy-9ZUXmK17FPF0mLYzUcl0EmUHuA0bJ_Jk6gB8gA0hY83dPXktjZWjUa8bwiqsW1MBgQyDR_aWztbVRM2Tzk1A7BIYqEGr7UdhG3yb3Y8_iwnVaD0mByRyFKBmArboN4w8X_xcJHSOz7izaCWA2IBQqSz8ZxIpzm6_nKVNlpqTVo2Od9o8_QZBWAXuKwRvbs3kX_N69FFWpEPbvCtfPvh1VO6SUJ3I4XVzbqeFF5DNw",
+      "subject": "26TP0815PI  26TP0816PI  and balance list",
+      "date": "Mon, 17 Aug 2026 16:25:15 +0800 (GMT+08:00)"
+    },
+    "pl": null,
+    "pi_candidatos": [
+      {
+        "msg_id": "1a00ed3d924fd309",
+        "filename": "26T0816PI  DHL.xlsx",
+        "attachment_id": "ANGjdJ8vxHWjFFxPECo6b0TT4yUCFNgOU5WyhuK7pbnbV_CBlMsCnk0sFBQLS3Fw9R9J3W_A7DH4frCLWRHWpgBWU2-z2N1ADA9Epfh4TAyKFSs-X6oUURaIbOuLzTd-z34lD0YWz_JtSq3gUUpI9RtGFdBkvSuoxJp_2HxJwbR4UKriziDMvNMv8ysO6sQy-9ZUXmK17FPF0mLYzUcl0EmUHuA0bJ_Jk6gB8gA0hY83dPXktjZWjUa8bwiqsW1MBgQyDR_aWztbVRM2Tzk1A7BIYqEGr7UdhG3yb3Y8_iwnVaD0mByRyFKBmArboN4w8X_xcJHSOz7izaCWA2IBQqSz8ZxIpzm6_nKVNlpqTVo2Od9o8_QZBWAXuKwRvbs3kX_N69FFWpEPbvCtfPvh1VO6SUJ3I4XVzbqeFF5DNw",
+        "subject": "26TP0815PI  26TP0816PI  and balance list",
+        "date": "Mon, 17 Aug 2026 16:25:15 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [],
+    "flete_usd": null,
+    "flete_moneda": null,
+    "seimex_ref": null,
+    "eta_puerto": null,
+    "eta_bodega": null,
+    "costeo_path": null,
+    "skus": [],
+    "skus_faltantes": null,
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:23Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26T0816PI  DHL.xlsx (dry-run)"
+    ]
+  },
+  "26TP0702": {
+    "embarque": "26TP0702",
+    "fase": 1,
+    "pi": {
+      "msg_id": "19ffad19f0c57e47",
+      "filename": "26TP0702PI（A+B) SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ83yXKwHkmUg-4Ka0wP85lZ7b8epHerOTMgtJka3EodFtnAuhB-u6052wN5jZUxL5Y0oECSQlMyhZKpg3GJWd6XuG08a3IkH0Oe-kDS8XDmKf5eFMz3UZo62ipwzaygn4EdG53PUs54kX0x7AqznrkIKcT8A-fpVjEGphpWKs0hAanGKdzY49Voj7Eiz4-Os4qrjLhobT0A1cG-V0588GcfWxnZu_rHpOz2GVuaNbiZMBm0R8uI8oA5zOei2Ix08fhGlBzl9UV4RZu9Jub7pdreIKEyq040QZtZY6JFl8Yijcv8wV1FH7Y_aRIAanxJlwfxbxOcts8jjw09Bs86qPAIjpaBhIuyDMepX1X1lL6epvqQJ0MJl3VnAx0zvHPzkTwdtGBskdnDn_T60GkYecJxnxtBWEUOK3dANA",
+      "subject": "26TP0702PI",
+      "date": "Thu, 13 Aug 2026 19:09:56 +0800 (GMT+08:00)"
+    },
+    "pl": null,
+    "pi_candidatos": [
+      {
+        "msg_id": "19ffad19f0c57e47",
+        "filename": "26TP0702PI（A+B) SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ83yXKwHkmUg-4Ka0wP85lZ7b8epHerOTMgtJka3EodFtnAuhB-u6052wN5jZUxL5Y0oECSQlMyhZKpg3GJWd6XuG08a3IkH0Oe-kDS8XDmKf5eFMz3UZo62ipwzaygn4EdG53PUs54kX0x7AqznrkIKcT8A-fpVjEGphpWKs0hAanGKdzY49Voj7Eiz4-Os4qrjLhobT0A1cG-V0588GcfWxnZu_rHpOz2GVuaNbiZMBm0R8uI8oA5zOei2Ix08fhGlBzl9UV4RZu9Jub7pdreIKEyq040QZtZY6JFl8Yijcv8wV1FH7Y_aRIAanxJlwfxbxOcts8jjw09Bs86qPAIjpaBhIuyDMepX1X1lL6epvqQJ0MJl3VnAx0zvHPzkTwdtGBskdnDn_T60GkYecJxnxtBWEUOK3dANA",
+        "subject": "26TP0702PI",
+        "date": "Thu, 13 Aug 2026 19:09:56 +0800 (GMT+08:00)"
+      },
+      {
+        "msg_id": "19ffad19f0c57e47",
+        "filename": "26TP0702PI A  SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ9NM6ollQqzjyT83O1eaDpbNCqn-jHa02CpZwI9ov8jb1w1uDUSZtr6O-9W8SBfNQWSXfMdmpcWr_qmJFxYXVczYt8mQgP1RrhwGgzD9ah78OwlKSP1p2o9cVFyarSDG7GilJvI2PpvmM3XZPa-G2yWE4DFOWlFN2wtme3LNSG1uxY1-8YAB2Rc6XqlQKMCYlaNv3MrTKceuK72cPxboUS0iRs0wZgre0gcQbaKrjiwQFysldcSKdpcuHjcoZvj4u8LY02h3WZA4sR6EpP8uGpA0nSgs5AGUPn9J5CNrbjghbhEK0Kp3EMBj-TIo14W65WbXhkCue6okDNr0fgPKQrbjaylfayzdoJUNvN0o7K4FlQzwVyiZipj2fftPoo8sow3zHrFMla6f-KrTviCqSqXOnsGnJpTBG0Zdg",
+        "subject": "26TP0702PI",
+        "date": "Thu, 13 Aug 2026 19:09:56 +0800 (GMT+08:00)"
+      },
+      {
+        "msg_id": "19ffad19f0c57e47",
+        "filename": "26TP0702PI B SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ8v4Wb1flUBYpBK8wnkyNFsjeLFuc9wAJfXZlXbSFcspTsXb2hqKM8uBL6WZ_uapwLNkDdM2tQWJ0ri7fZlqQyobjEOPL836GUj0c6RWJJtUse0ah9qbG1WOMQUEgTG07T6z-fgaf2oUUltMMpMmfPoHeHSY0pG622GHSXw72FYfeVb2O4rXHxWdLJyBM5LlbERAq6PCWh_hEyvVXDZe2tzBG1_GjeM_QETzUtu_Y9j5-VrpiOrLZLxE_HNVPaOpj4E7TZge7G24VudFJ4-36Sp8EbdrBEYHPsiqJ8r2MCuy9ped3vqzrv07yqad3WtiuhPF3hPCADZchGXQFudhHc3j0hxrGduLLmQKQb6OkB2blq4y0yP0g1Cgb54GraMFdNGCFviMkQ7KacTeTvpdvFDYDnaBpZA99NLfA",
+        "subject": "26TP0702PI",
+        "date": "Thu, 13 Aug 2026 19:09:56 +0800 (GMT+08:00)"
+      },
+      {
+        "msg_id": "19fcc2f283696d32",
+        "filename": "26TP0702PI A(modified)  SZ 40HQ(.xlsx",
+        "attachment_id": "ANGjdJ_8B-Xzklc0UAct7Kd87IsGuLul4VsFwgz6xiz8MtgOnp6QnzIXA405vAvvwXTGapTDrQyrI_4VEcNy_MKpGUZvKrHfI3VZuVpXN7Xp1EaGevCYK1Mvj_jZFoduQl0upPFSXRfbXkn3N7vRXH76K5-K6aHa6DVmQv7vjqTUU_lbG7DBvpt-pXA1ox4qzbct3KhzWHXF7_8tXcKiha3MCx44BmKp4624FSM_G1tLfdYmRZYKBZkHGJXrAU_XX6hlFYEoRqbyLRiYqy5VLfHpqK6Hg_4sYp3QQP0oov3yLZrr5qUOGd0rbbxfCdJjX21Pc3rBTrh5DfLvxMbs6BUvyxz7gwneYZLk43C_zSk-SiKoy6_WbJU3rI-qRV40X9X9p6P_AwmdEDzNxB20QIAH6VxixqgKL1FjipfKvg",
+        "subject": "balance list +26TP0702PI(modified)A + 26TP0703PI",
+        "date": "Tue, 4 Aug 2026 17:50:24 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [],
+    "flete_usd": null,
+    "flete_moneda": null,
+    "seimex_ref": null,
+    "eta_puerto": null,
+    "eta_bodega": null,
+    "costeo_path": null,
+    "skus": [],
+    "skus_faltantes": null,
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:23Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0702PI（A+B) SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0702PI A  SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0702PI B SZ 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0702PI A(modified)  SZ 40HQ(.xlsx (dry-run)"
+    ]
+  },
+  "26TP0811": {
+    "embarque": "26TP0811",
+    "fase": 3,
+    "pi": {
+      "msg_id": "19ff013d44ad6987",
+      "filename": "26TP0811PI NB 40HQ.xlsx",
+      "attachment_id": "ANGjdJ_gKpkPus4AIWYEv3YR6iuKjGuBaYZAqH7rWlL7kHzNpCmU40yarUYZyvJffcQOWMLvcUXSk74DBK6WCNyJTJooON2RfY7NGylt5NVMrIE5fL5yHhF3nrFrxd4EgYwRKUUb1AH2BpFSJsNRPOvbr4B9qsCElSIxIiNoreYN7aohzqWZwKLfqDp02wOP9U5E95FDP1dV_BO2ywSJhq1DIPyHh8Mg_YphKLeodGkkl8W3PEAN125dPsCh8RSAvCukwXdHph7rjZm5IlPJqiBuPhwKR946qtoMrWnTO-QJnn7j248S-T7m0-xXuRFLVpki7pyHCoTPOwhwyvPpxXgyH0k8-E5CVU1k1X9p34p7cCnXsdtTYBkIoZVuDE0iOZuQ1PQTalin80USK3NfJBxhO7p93hu6VG_-mUGaeQ",
+      "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+      "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+    },
+    "pl": {
+      "msg_id": "19ff013d44ad6987",
+      "filename": "26TP0811PI PL.xlsx",
+      "attachment_id": "ANGjdJ_DzNrIozRJNIyg1wi-2GiYGEibz8xjJNBZMBggwYJQ-vMwpgM6ctB4boNK2SPfsHuQIx4YavsxwVOiArEMnCsl3Ig3s0FjJlV6bXs2bopJZ-XrbZflaV0LLfzxK7mwNtXOzI7i3whnYWrfn2SoaTY3sBY8TmsZk75XZwsg3ys8r__XuoZita73_qKbcz8OX2fNSQSGSsd3SXim17jWfx5oZiGigztyB_eIxl_7VqXrWNDtTztSRVGqbG-jo-mUALpsJh6LQdSG6RHgHm9WbO0m5qZhSOM9wUtjhecgaSzlq0C3YD-WRZhgEgiAIvvhlDAJtDSkigDhTMgfJHUU7Yxvjsl2-0zPc5aQV5by1LchFCJXaAkQaNT3NQxSId6aGPMZXZ1ZQ1tKCyIwK8QADfCJ6FB8k7tRkahPKA",
+      "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+      "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "19ff013d44ad6987",
+        "filename": "26TP0811PI NB 40HQ.xlsx",
+        "attachment_id": "ANGjdJ_gKpkPus4AIWYEv3YR6iuKjGuBaYZAqH7rWlL7kHzNpCmU40yarUYZyvJffcQOWMLvcUXSk74DBK6WCNyJTJooON2RfY7NGylt5NVMrIE5fL5yHhF3nrFrxd4EgYwRKUUb1AH2BpFSJsNRPOvbr4B9qsCElSIxIiNoreYN7aohzqWZwKLfqDp02wOP9U5E95FDP1dV_BO2ywSJhq1DIPyHh8Mg_YphKLeodGkkl8W3PEAN125dPsCh8RSAvCukwXdHph7rjZm5IlPJqiBuPhwKR946qtoMrWnTO-QJnn7j248S-T7m0-xXuRFLVpki7pyHCoTPOwhwyvPpxXgyH0k8-E5CVU1k1X9p34p7cCnXsdtTYBkIoZVuDE0iOZuQ1PQTalin80USK3NfJBxhO7p93hu6VG_-mUGaeQ",
+        "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+        "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "19ff013d44ad6987",
+        "filename": "26TP0811PI PL.xlsx",
+        "attachment_id": "ANGjdJ_DzNrIozRJNIyg1wi-2GiYGEibz8xjJNBZMBggwYJQ-vMwpgM6ctB4boNK2SPfsHuQIx4YavsxwVOiArEMnCsl3Ig3s0FjJlV6bXs2bopJZ-XrbZflaV0LLfzxK7mwNtXOzI7i3whnYWrfn2SoaTY3sBY8TmsZk75XZwsg3ys8r__XuoZita73_qKbcz8OX2fNSQSGSsd3SXim17jWfx5oZiGigztyB_eIxl_7VqXrWNDtTztSRVGqbG-jo-mUALpsJh6LQdSG6RHgHm9WbO0m5qZhSOM9wUtjhecgaSzlq0C3YD-WRZhgEgiAIvvhlDAJtDSkigDhTMgfJHUU7Yxvjsl2-0zPc5aQV5by1LchFCJXaAkQaNT3NQxSId6aGPMZXZ1ZQ1tKCyIwK8QADfCJ6FB8k7tRkahPKA",
+        "subject": "26TP080PI-A+26TP0811PI+ Balance list",
+        "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+      }
+    ],
+    "flete_usd": 5650.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "410-26 - PI0811",
+    "eta_puerto": "2026-09-25",
+    "eta_bodega": "2026-09-30",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0811/Pre-costeo_x_CBM_26TP0811.xlsx",
+    "skus": [
+      "67327712330533",
+      "BDCOCMEDI",
+      "BDCOCPQMD",
+      "BDCOCGRND",
+      "BDSETDOC",
+      "BDJUETRE",
+      "BDTOCMD-WH",
+      "BDPZMG2E1",
+      "BDCASMUÑEC-WD",
+      "BDGMNMVBB",
+      "BDMESHERRA",
+      "TCMULTSTY5N1"
+    ],
+    "skus_faltantes": [],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:58Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0811PI NB 40HQ.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · PL detectado: 26TP0811PI PL.xlsx (dry-run)",
+      "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0811PI NB 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-02 15:29:24Z · flete FINAL 5650 USD · ref 410-26 - PI0811 · ETA 2026-09-25 → bodega 2026-09-30",
+      "2026-09-02 15:29:24Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-02 15:29:58Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-09-02 15:29:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [
+      "HD4 Khaki",
+      "TP30"
+    ]
+  },
+  "26TP0803": {
+    "embarque": "26TP0803",
+    "fase": 1,
+    "pi": {
+      "msg_id": "19fcc2f283696d32",
+      "filename": "26TP0803PI.xlsx",
+      "attachment_id": "ANGjdJ8YzPF3Gxgdff3QdelLxbW95u1OQgcU56DLf9T3Ez_Lp19eoSRt5Lx5Ysw2Ou_J156KJQNAijONWPKsGxERe6VxP3hpFhFwifa1khrzAQiLWEuLuspo6Zr97BFNJWjqJmKwosj-8pD-Zz1TmsxXP-Qj3NYDHpuVc1jvvfw7OeeqQ8D5lh6iNXEbOABWQ_lk9DvLM2lktNLJ3q00dU4NxluYdt5mFfs8Wx7pmqw_tG9BE024fVM4lY7IP8kJangN5lI21gP4dwUWbe7TbJM9K6DXKQekkYs7uKoLguqpWVq4Vm8e5Rk0ONHajNZtHgrVXbE1sT6Ml642qNp4WG9lrKDXo-gIngiUqk2N8cP1W3tcJ2wH_4WPNj4x_tlYXKfScVjxnpq2DZFQAbPf9IE5OzlGyibAjsM9HSodLQ",
+      "subject": "balance list +26TP0702PI(modified)A + 26TP0703PI",
+      "date": "Tue, 4 Aug 2026 17:50:24 +0800 (GMT+08:00)"
+    },
+    "pl": null,
+    "pi_candidatos": [
+      {
+        "msg_id": "19fcc2f283696d32",
+        "filename": "26TP0803PI.xlsx",
+        "attachment_id": "ANGjdJ8YzPF3Gxgdff3QdelLxbW95u1OQgcU56DLf9T3Ez_Lp19eoSRt5Lx5Ysw2Ou_J156KJQNAijONWPKsGxERe6VxP3hpFhFwifa1khrzAQiLWEuLuspo6Zr97BFNJWjqJmKwosj-8pD-Zz1TmsxXP-Qj3NYDHpuVc1jvvfw7OeeqQ8D5lh6iNXEbOABWQ_lk9DvLM2lktNLJ3q00dU4NxluYdt5mFfs8Wx7pmqw_tG9BE024fVM4lY7IP8kJangN5lI21gP4dwUWbe7TbJM9K6DXKQekkYs7uKoLguqpWVq4Vm8e5Rk0ONHajNZtHgrVXbE1sT6Ml642qNp4WG9lrKDXo-gIngiUqk2N8cP1W3tcJ2wH_4WPNj4x_tlYXKfScVjxnpq2DZFQAbPf9IE5OzlGyibAjsM9HSodLQ",
+        "subject": "balance list +26TP0702PI(modified)A + 26TP0703PI",
+        "date": "Tue, 4 Aug 2026 17:50:24 +0800 (GMT+08:00)"
+      }
+    ],
+    "pl_candidatos": [],
+    "flete_usd": null,
+    "flete_moneda": null,
+    "seimex_ref": null,
+    "eta_puerto": null,
+    "eta_bodega": null,
+    "costeo_path": null,
+    "skus": [],
+    "skus_faltantes": null,
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-02 15:29:23Z",
+    "ts_actualizado": "2026-09-02 15:29:23Z",
+    "log": [
+      "2026-09-02 15:29:23Z · PI detectado: 26TP0803PI.xlsx (dry-run)"
+    ]
+  }
+}
