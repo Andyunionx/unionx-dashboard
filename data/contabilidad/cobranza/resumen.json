@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-02T10:06:34.990224",
+  "generado_en": "2026-09-02T20:13:59.140794",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11086,
-  "total_monto_pendiente_clp": 817933760.0,
+  "total_documentos_pendientes": 11265,
+  "total_monto_pendiente_clp": 894975365.0,
   "monto_por_aging": {
     "+90 días": 70988132.0,
-    "1-30 días": 422046652.0,
-    "31-60 días": 137357019.0,
-    "61-90 días": 24590736.0,
-    "Vigente": 162951221.0
+    "1-30 días": 430397996.0,
+    "31-60 días": 136908109.0,
+    "61-90 días": 21288451.0,
+    "Vigente": 235392677.0
   },
   "monto_por_tipo": {
-    "BOLETA": 713738210.0,
+    "BOLETA": 790779815.0,
     "FACTURA": 104195550.0
   },
   "top_20_deudores": [
@@ -22,7 +22,11 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 117042021.0
+      "monto": 118537478.0
+    },
+    {
+      "partner": "WALMART CHILE COM. LTDA",
+      "monto": 104846616.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -30,19 +34,15 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 57141156.0
+      "monto": 57364506.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 53140888.0
+      "monto": 54820298.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 49442300.0
-    },
-    {
-      "partner": "WALMART CHILE COM. LTDA",
-      "monto": 34948872.0
+      "monto": 50194041.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -50,27 +50,27 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 22987621.0
+      "monto": 23069071.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 22793006.0
+      "monto": 22878181.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22713308.0
+      "monto": 22285443.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 18669005.0
     },
     {
       "partner": "AUTOBAHN S A",
       "monto": 18565083.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 18230686.0
-    },
-    {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 15279378.0
+      "monto": 15588917.0
     },
     {
       "partner": "Status Spa",
@@ -78,7 +78,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 10006584.0
+      "monto": 10083504.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -97,6 +97,6 @@
       "monto": 6199603.0
     }
   ],
-  "notas_credito_count": 565,
+  "notas_credito_count": 610,
   "pedidos_venta_count": 10000
 }
