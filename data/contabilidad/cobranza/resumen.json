@@ -1,28 +1,28 @@
 {
-  "generado_en": "2026-09-03T10:17:22.146118",
+  "generado_en": "2026-09-03T15:24:13.130985",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11293,
-  "total_monto_pendiente_clp": 771258851.0,
+  "total_documentos_pendientes": 11381,
+  "total_monto_pendiente_clp": 787218888.0,
   "monto_por_aging": {
     "+90 días": 71818997.0,
-    "1-30 días": 312351843.0,
-    "31-60 días": 139925505.0,
-    "61-90 días": 19745076.0,
-    "Vigente": 227417430.0
+    "1-30 días": 316932902.0,
+    "31-60 días": 139308625.0,
+    "61-90 días": 19713106.0,
+    "Vigente": 239445258.0
   },
   "monto_por_tipo": {
-    "BOLETA": 667063301.0,
+    "BOLETA": 683023338.0,
     "FACTURA": 104195550.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 121706392.0
+      "monto": 122399683.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
-      "monto": 104846616.0
+      "monto": 116496223.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -30,15 +30,15 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 57499956.0
+      "monto": 57517936.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 52027674.0
+      "monto": 52629374.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 50185051.0
+      "monto": 51511646.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,15 +46,15 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 23280461.0
+      "monto": 23297951.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 23074884.0
+      "monto": 23131834.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22527656.0
+      "monto": 22280677.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 10353364.0
+      "monto": 10480304.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -97,6 +97,6 @@
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 659,
+  "notas_credito_count": 685,
   "pedidos_venta_count": 10000
 }
