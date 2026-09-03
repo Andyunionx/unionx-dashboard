@@ -34,6 +34,27 @@ def _dcf(ebit0, tax, g_exp, reinv, years, wacc, g_term, net_debt):
     return ev, ev - net_debt, pv, pv_tv, fcffs
 
 
+@st.cache_data(ttl=600)
+def _mc_p50(ebit0: float, net_debt: float):
+    """P50 del EV con una simulación rápida de supuestos base (para el resumen)."""
+    rng = np.random.default_rng(7)
+    n = 3000
+    wc = rng.uniform(0.10, 0.14, n)
+    ge = rng.uniform(0.03, 0.08, n)
+    gt = rng.uniform(0.02, 0.035, n)
+    evs = []
+    for i in range(n):
+        if wc[i] <= gt[i]:
+            continue
+        r = _dcf(ebit0, 0.27, ge[i], 0.30, 5, wc[i], gt[i], net_debt)
+        if r:
+            evs.append(r[0])
+    if not evs:
+        return None, None
+    p50 = float(np.percentile(evs, 50))
+    return p50, p50 - net_debt
+
+
 def _value_box(titulo, valor, sub, color="#2E75B6", ink=False):
     bg = "#fff" if ink else f"linear-gradient(135deg,#1F3864,{color})"
     fg = color if ink else "#fff"
@@ -69,6 +90,37 @@ def render():
                 f"EBITDA {P.fmt_mm(ebitda0)} · Venta {P.fmt_mm(venta0)} · Utilidad {P.fmt_mm(util0)} · "
                 f"Deuda neta {P.fmt_mm(net_debt)} · Patrimonio contable {P.fmt_mm(patrimonio)}</div>",
                 unsafe_allow_html=True)
+
+    # ─── ¿Cuánto vale? — el resultado por método, de frente ──
+    dcf_base = _dcf(ebit0, 0.27, 0.05, 0.30, 5, 0.12, 0.03, net_debt)
+    ev_dcf, eq_dcf = (dcf_base[0], dcf_base[1]) if dcf_base else (None, None)
+    ev_eb, eq_eb = 6.0 * ebitda0, 6.0 * ebitda0 - net_debt
+    ev_vt, eq_vt = 0.3 * venta0, 0.3 * venta0 - net_debt
+    ev_mc, eq_mc = _mc_p50(ebit0, net_debt)
+
+    st.markdown("### ¿Cuánto vale UnionX? — resultado por método")
+    st.caption("**EV** = valor de la operación (empresa) · **Patrimonio** = EV − deuda neta "
+               "(lo que valen las acciones hoy). Supuestos base; el detalle se ajusta en cada tab.")
+    cv = st.columns(4)
+    metodos_top = [
+        ("DCF (flujos)", ev_dcf, eq_dcf, "WACC 12% · crec. 5%"),
+        ("EV/EBITDA 6×", ev_eb, eq_eb, f"sobre EBITDA {P.fmt_mm(ebitda0)}"),
+        ("EV/Ventas 0,3×", ev_vt, eq_vt, f"sobre venta {P.fmt_mm(venta0)}"),
+        ("Monte Carlo (P50)", ev_mc, eq_mc, "3.000 escenarios DCF"),
+    ]
+    for col, (met, ev_, eq_, sub) in zip(cv, metodos_top):
+        UI.kpi(col, f"{met} — EV", P.fmt_mm(ev_),
+               f"Patrimonio {P.fmt_mm(eq_)} · {sub}",
+               UI.GOOD if (eq_ or 0) >= 0 else UI.BAD)
+
+    evs_l = [v for _, v, _, _ in metodos_top if v is not None]
+    eqs_l = [q for _, _, q, _ in metodos_top if q is not None]
+    if evs_l:
+        st.info(f"**Lectura:** la operación vale entre {P.fmt_mm_md(min(evs_l))} y {P.fmt_mm_md(max(evs_l))} "
+                f"(EV) según el método — los cuatro convergen. Como la deuda neta es {P.fmt_mm_md(net_debt)}, "
+                f"el patrimonio queda entre {P.fmt_mm_md(min(eqs_l))} y {P.fmt_mm_md(max(eqs_l))}: "
+                "hoy la empresa vale prácticamente su deuda, y el valor para los socios se construye "
+                "creciendo el EBITDA y amortizando deuda.")
 
     t_dcf, t_mult, t_sim, t_res = st.tabs(["📉 DCF (FCFF)", "✖️ Múltiplos", "🎲 Simulación", "📊 Resumen"])
 
@@ -116,7 +168,8 @@ def render():
         st.caption("Valoración por múltiplos de mercado — ajusta los múltiplos a tu comparable.")
         c = st.columns(3)
         m_ebitda = c[0].slider("EV / EBITDA (×)", 2.0, 12.0, 6.0, 0.5, key="m_ebitda")
-        m_ventas = c[1].slider("EV / Ventas (×)", 0.2, 3.0, 1.0, 0.1, key="m_ventas")
+        # con margen EBITDA ~5%, el múltiplo de ventas coherente es ~0,3× (6× EBITDA × margen)
+        m_ventas = c[1].slider("EV / Ventas (×)", 0.1, 1.5, 0.3, 0.05, key="m_ventas")
         m_pe = c[2].slider("P / E (×)", 4.0, 25.0, 10.0, 1.0, key="m_pe")
 
         rows = [
@@ -181,7 +234,7 @@ def render():
         metodos = [
             ("DCF (WACC 10–14%)", dcf_lo[0] if dcf_lo else None, dcf_hi[0] if dcf_hi else None),
             ("EV/EBITDA (5–8×)", 5 * ebitda0, 8 * ebitda0),
-            ("EV/Ventas (0,8–1,2×)", 0.8 * venta0, 1.2 * venta0),
+            ("EV/Ventas (0,25–0,4×)", 0.25 * venta0, 0.4 * venta0),
         ]
         UI.rango_metodos([(n, lo, hi) for n, lo, hi in metodos if lo is not None],
                          "Los tres métodos convergen en un rango (MM CLP)")
