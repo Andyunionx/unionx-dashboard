@@ -732,6 +732,67 @@ def _periodo_label(meses_lin: list, yr: str) -> str:
 # ══════════════════════════════════════════════════════════════════════
 # Main
 # ══════════════════════════════════════════════════════════════════════
+def _render_transito_live():
+    """Embarques + stock en tránsito LIVE desde Odoo (transito.parquet, alimentado por el
+    agente COMEX al confirmar cada PO). Gráficos con el motor ECharts de la app Finanzas."""
+    from views import _fin_echarts as ECH  # convención "MD Gráficos": ECharts, #2E75B6, es-CL
+    df = cargar_planif_transito_live()
+    if df is None or df.empty:
+        st.info("Sin datos de tránsito en Odoo todavía (transito.parquet vacío).")
+        return
+    d = df.copy()
+    d['pi'] = d.get('pi', '(s/PI)').fillna('(s/PI)').astype(str)
+    for c in ('cantidad', 'costo_ingreso_clp'):
+        if c not in d.columns:
+            d[c] = 0.0
+        d[c] = pd.to_numeric(d[c], errors='coerce').fillna(0)
+    if 'marca' not in d.columns:
+        d['marca'] = ''
+    if 'po_state' not in d.columns:
+        d['po_state'] = ''
+
+    g = (d.groupby('pi')
+           .agg(skus=('sku', 'nunique'), unidades=('cantidad', 'sum'),
+                valor=('costo_ingreso_clp', 'sum'), eta=('fecha_eta_bodega', 'max'),
+                estado=('po_state', lambda s: ', '.join(sorted({str(x) for x in s if str(x) not in ('', 'nan', 'None')}))),
+                marcas=('marca', lambda s: ', '.join(sorted({str(x) for x in s if str(x) not in ('', 'nan', 'None')})[:4])))
+           .reset_index().sort_values('eta'))
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Embarques en tránsito", len(g))
+    c2.metric("Unidades en tránsito", f"{int(g['unidades'].sum()):,}")
+    c3.metric("Valor internado CLP", f"${g['valor'].sum():,.0f}")
+
+    # Gráfico: unidades llegando por mes de ETA bodega (título afirma la conclusión)
+    d['mes_eta'] = pd.to_datetime(d['fecha_eta_bodega'], errors='coerce').dt.strftime('%Y-%m')
+    porm = d.dropna(subset=['mes_eta']).groupby('mes_eta')['cantidad'].sum().sort_index()
+    if not porm.empty:
+        cats = list(porm.index)
+        vals = [int(v) for v in porm.values]
+        pico = cats[int(porm.values.argmax())]
+        st.markdown(f"**El grueso del stock en tránsito llega en {pico}** ({int(porm.max()):,} uds)")
+        ECH.render(ECH.barras(cats, [("Unidades", vals)], unidad="uds"), height=300)
+
+    show = g.rename(columns={'pi': 'Embarque', 'eta': 'ETA Bodega', 'skus': 'SKUs',
+                             'unidades': 'Unidades', 'valor': 'Valor internado CLP',
+                             'estado': 'Estado PO', 'marcas': 'Marcas'}).copy()
+    show['ETA Bodega'] = pd.to_datetime(show['ETA Bodega'], errors='coerce').dt.strftime('%d-%m-%Y')
+    st.dataframe(
+        show[['Embarque', 'ETA Bodega', 'SKUs', 'Unidades', 'Valor internado CLP', 'Estado PO', 'Marcas']]
+        .style.format({'Unidades': '{:,.0f}', 'Valor internado CLP': '${:,.0f}'}),
+        use_container_width=True, hide_index=True)
+
+    with st.expander("🔍 Detalle SKUs por embarque"):
+        pi_sel = st.selectbox("Embarque", g['pi'].tolist(), key='pi_sel_live')
+        ds = d[d['pi'] == pi_sel][['sku', 'producto', 'cantidad', 'fecha_eta_bodega', 'po_state']].copy()
+        ds.columns = ['SKU', 'Producto', 'Unidades', 'ETA Bodega', 'Estado']
+        ds['ETA Bodega'] = pd.to_datetime(ds['ETA Bodega'], errors='coerce').dt.strftime('%d-%m-%Y')
+        st.dataframe(ds.style.format({'Unidades': '{:,.0f}'}), use_container_width=True, hide_index=True)
+
+    st.caption("Fuente: Odoo (POs en tránsito) vía `transito.parquet` — alimentado por el agente COMEX; "
+               "se actualiza al confirmar cada PO.")
+
+
 def render():
     st.title("📊 Análisis de Planificación")
     st.caption("Seguimiento comercial vs PPTO + estado supply chain.")
@@ -1435,12 +1496,16 @@ def render():
     # ════════════════════════════════════════════════════════════════
     with tab_tr:
         st.subheader(f"🚢 Tránsitos por Embarque | {_MES_LABEL}")
-        st.caption("Cobertura SKUs: 🔴<1m  🟠1-2m  🟢2-4m  🔵4-6m  🟣>6m")
+        _fuente_tr = st.radio("Fuente de datos", ["🟢 Live (Odoo · agente COMEX)", "📄 Snapshot (Excel mensual)"],
+                              horizontal=True, key="fuente_tr")
 
         _tr_snap_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_transitos_snapshot.parquet'
-        if not _tr_snap_path.exists():
+        if _fuente_tr.startswith("🟢"):
+            _render_transito_live()
+        elif not _tr_snap_path.exists():
             st.info("⚠️ Parquet no encontrado — ejecutar: `python extract_planif_ago26_snapshot.py`")
         else:
+            st.caption("Cobertura SKUs: 🔴<1m  🟠1-2m  🟢2-4m  🔵4-6m  🟣>6m")
             _df_tr_snap = pd.read_parquet(_tr_snap_path)
             _df_tr_pi  = _df_tr_snap[_df_tr_snap['row_type'] == 'pi'].copy()
             _df_tr_sku = _df_tr_snap[_df_tr_snap['row_type'] == 'sku'].copy()
