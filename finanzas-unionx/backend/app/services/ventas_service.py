@@ -1436,10 +1436,14 @@ class VentasService(BaseOdooService):
                                 'warehouse_id': [None, 'Bodega Central'],
                             }
 
-                        # Parsear fechas de la NC — convertir UTC → Chile
+                        # Fecha de la NC. OJO: `invoice_date` es un DATE de Odoo (sin
+                        # hora ni zona), NO un timestamp UTC → convertirlo a hora Chile
+                        # le resta 4 h y lo manda al día ANTERIOR. Eso hacía que las NC
+                        # emitidas un día restaran del día previo: el 02-sep-2026, 132 NC
+                        # ($5,8 M) cayeron en el 01-sep y se "comieron" la venta del día
+                        # (Falabella -$3,7 M, Meli -$2,2 M). Se usa tal cual.
                         fecha_nc = nc.get('invoice_date', '')
-                        fecha_dt_utc = pd.to_datetime(fecha_nc) if fecha_nc else pd.NaT
-                        fecha_dt = _utc_to_chile(fecha_dt_utc)
+                        fecha_dt = pd.to_datetime(fecha_nc) if fecha_nc else pd.NaT
                         hora_nc = fecha_dt.strftime('%H:%M:%S') if pd.notna(fecha_dt) else ''
                         hora_nc_num = int(fecha_dt.hour) if pd.notna(fecha_dt) else 0
 
