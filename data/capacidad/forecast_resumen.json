@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-03T13:06:27.132080",
+  "generado_en": "2026-09-03T18:13:20.481513",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 875,
-    "posiciones_libres_hoy": 494,
-    "pct_ocupacion_hoy": 63.9,
-    "m3_stock_calculado": 900.0
+    "posiciones_ocupadas_hoy": 871,
+    "posiciones_libres_hoy": 498,
+    "pct_ocupacion_hoy": 63.6,
+    "m3_stock_calculado": 899.4
   },
   "pico_proyectado": {
     "fecha": "2026-09-03",
-    "posiciones_ocupadas": 865.9,
-    "pct_ocupacion": 63.2
+    "posiciones_ocupadas": 861.9,
+    "pct_ocupacion": 63.0
   },
   "minimo_proyectado": {
     "fecha": "2026-11-01",
-    "posiciones_ocupadas": 617.5,
-    "pct_ocupacion": 45.1
+    "posiciones_ocupadas": 613.7,
+    "pct_ocupacion": 44.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -56,23 +56,23 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 51.5,
-  "pallets_total_salientes_horizonte": 257.5,
+  "pallets_total_salientes_horizonte": 257.3,
   "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 309.0,
+  "m3_total_saliente_horizonte": 308.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 800,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 158695.0,
-    "demanda_cumplida_unidades": 35839.0,
-    "demanda_no_cubierta_unidades_total": 122856.0,
+    "demanda_cumplida_unidades": 35829.0,
+    "demanda_no_cubierta_unidades_total": 122866.0,
     "pct_demanda_cumplida": 22.6,
     "sku_sin_match_stock_count": 46,
     "top_no_cubiertos": [
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 29120.0,
+        "unid_no_cubiertas": 29121.0,
         "sin_match_stock": true
       },
       {
@@ -117,7 +117,7 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 429.0,
+        "unid_no_cubiertas": 433.0,
         "sin_match_stock": true
       },
       {
@@ -162,12 +162,12 @@
       },
       {
         "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 194.0,
+        "unid_no_cubiertas": 196.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 184.0,
+        "unid_no_cubiertas": 185.0,
         "sin_match_stock": true
       }
     ],
