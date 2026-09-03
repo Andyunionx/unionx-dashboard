@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-02T20:13:59.140794",
+  "generado_en": "2026-09-03T01:52:07.774445",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11265,
-  "total_monto_pendiente_clp": 894975365.0,
+  "total_documentos_pendientes": 11347,
+  "total_monto_pendiente_clp": 893640762.0,
   "monto_por_aging": {
-    "+90 días": 70988132.0,
-    "1-30 días": 430397996.0,
-    "31-60 días": 136908109.0,
-    "61-90 días": 21288451.0,
-    "Vigente": 235392677.0
+    "+90 días": 72207897.0,
+    "1-30 días": 434059934.0,
+    "31-60 días": 139951495.0,
+    "61-90 días": 20004006.0,
+    "Vigente": 227417430.0
   },
   "monto_por_tipo": {
-    "BOLETA": 790779815.0,
+    "BOLETA": 789445212.0,
     "FACTURA": 104195550.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 118537478.0
+      "monto": 120190317.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -34,15 +34,15 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 57364506.0
+      "monto": 57436996.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 54820298.0
+      "monto": 55781728.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 50194041.0
+      "monto": 50185051.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 23069071.0
+      "monto": 23153031.0
     },
     {
       "partner": "Cliente Shopify",
@@ -58,7 +58,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22285443.0
+      "monto": 22447193.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -78,15 +78,11 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 10083504.0
+      "monto": 10138434.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 9579647.0
-    },
-    {
-      "partner": "Distribución y Logística V&L SpA",
-      "monto": 9139200.0
     },
     {
       "partner": "abc S.A.",
@@ -95,8 +91,12 @@
     {
       "partner": "Falabella Retail",
       "monto": 6199603.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 5717953.0
     }
   ],
-  "notas_credito_count": 610,
+  "notas_credito_count": 634,
   "pedidos_venta_count": 10000
 }
