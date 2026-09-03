@@ -793,6 +793,60 @@ def _render_transito_live():
                "se actualiza al confirmar cada PO.")
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def _categoria_comercial_map() -> dict:
+    """SKU → última categoría comercial del sistema (Diamante/Oro/.../Nuevo), desde ventas_historico."""
+    p = DATA_DIR / 'historico' / 'ventas_historico.parquet'
+    if not p.exists():
+        return {}
+    import pyarrow.parquet as pq
+    cols = set(pq.ParquetFile(str(p)).schema.names)
+    if 'categoria_comercial' not in cols:
+        return {}
+    use = ['sku', 'categoria_comercial'] + (['fecha_venta'] if 'fecha_venta' in cols else [])
+    v = pd.read_parquet(p, columns=use).dropna(subset=['sku'])
+    if 'fecha_venta' in v.columns:
+        v = v.sort_values('fecha_venta')
+    return v.groupby(v['sku'].astype(str))['categoria_comercial'].last().astype(str).to_dict()
+
+
+def _render_nuevos_transito_live():
+    """SKUs de categoría comercial NUEVO en tránsito LIVE (Odoo × clasificación del sistema)."""
+    df = cargar_planif_transito_live()
+    if df is None or df.empty:
+        st.info("Sin datos de tránsito en Odoo todavía.")
+        return
+    cc = _categoria_comercial_map()
+    d = df.copy()
+    d['sku'] = d['sku'].astype(str)
+    d['cat_com'] = d['sku'].map(lambda s: cc.get(s, '')).astype(str)
+    d = d[d['cat_com'].str.upper() == 'NUEVO'].copy()
+    if d.empty:
+        st.info("Sin SKUs de categoría comercial NUEVO en tránsito en este momento.")
+        return
+    for c in ('cantidad', 'costo_ingreso_clp'):
+        d[c] = pd.to_numeric(d.get(c, 0), errors='coerce').fillna(0)
+    if 'marca' not in d.columns:
+        d['marca'] = ''
+    d['mes_eta'] = pd.to_datetime(d['fecha_eta_bodega'], errors='coerce').dt.strftime('%Y-%m').fillna('s/ETA')
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("SKUs nuevos en tránsito", d['sku'].nunique())
+    c2.metric("Unidades", f"{int(d['cantidad'].sum()):,}")
+    c3.metric("Marcas", int(d['marca'].nunique()))
+
+    for mes in sorted(d['mes_eta'].unique()):
+        dm = d[d['mes_eta'] == mes]
+        with st.expander(f"▶ Llegada {mes} — {dm['sku'].nunique()} SKUs / {int(dm['cantidad'].sum()):,} uds", expanded=True):
+            show = dm[['sku', 'producto', 'marca', 'fecha_eta_bodega', 'cantidad']].copy()
+            show.columns = ['SKU', 'Descripción', 'Marca', 'ETA Bodega', 'Cantidad']
+            show['ETA Bodega'] = pd.to_datetime(show['ETA Bodega'], errors='coerce').dt.strftime('%d-%m-%Y')
+            st.dataframe(show.style.format({'Cantidad': '{:,.0f}'}), use_container_width=True, hide_index=True)
+
+    st.caption("Fuente: Odoo (`transito.parquet`, agente COMEX) × categoría comercial 'Nuevo' del sistema. "
+               "Live — se actualiza al confirmar POs.")
+
+
 def render():
     st.title("📊 Análisis de Planificación")
     st.caption("Seguimiento comercial vs PPTO + estado supply chain.")
@@ -1547,12 +1601,16 @@ def render():
     # ════════════════════════════════════════════════════════════════
     with tab_nv:
         st.subheader(f"🆕 Nuevos en Tránsito | {_MES_LABEL}")
-        st.caption("SKUs con Categoría Comercial = NUEVO con llegadas confirmadas en tránsito.")
+        _fuente_nv = st.radio("Fuente de datos", ["📄 Snapshot (Excel mensual)", "🟢 Live (Odoo · agente COMEX)"],
+                              horizontal=True, key="fuente_nv")
 
         _nv_snap_path = DATA_DIR / 'planificacion' / 'snapshots' / 'planif_nuevos_transito_snapshot.parquet'
-        if not _nv_snap_path.exists():
+        if _fuente_nv.startswith("🟢"):
+            _render_nuevos_transito_live()
+        elif not _nv_snap_path.exists():
             st.info("⚠️ Parquet no encontrado — ejecutar: `python extract_planif_ago26_snapshot.py`")
         else:
+            st.caption("SKUs con Categoría Comercial = NUEVO con llegadas confirmadas en tránsito.")
             _df_nv_snap = pd.read_parquet(_nv_snap_path)
 
             c1n, c2n, c3n = st.columns(3)
