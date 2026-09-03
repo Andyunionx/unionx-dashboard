@@ -45,13 +45,14 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:42:27Z",
+    "ts_actualizado": "2026-09-03 16:28:34Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0826PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0826PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0826PI SZ 40HQ.xlsx) → esperando flete Seimex",
       "2026-09-02 15:29:24Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana",
-      "2026-09-02 15:42:27Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
+      "2026-09-02 15:42:27Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana",
+      "2026-09-03 16:28:34Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
     ]
   },
   "26TP0806": {
@@ -129,7 +130,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:42:36Z",
+    "ts_actualizado": "2026-09-03 16:28:44Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
@@ -140,7 +141,10 @@
       "2026-09-02 15:29:34Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
       "2026-09-02 15:29:34Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-09-02 15:42:36Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
-      "2026-09-02 15:42:36Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:42:36Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 16:28:43Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
+      "2026-09-03 16:28:44Z · borrador creado (draft r2922623889138189471) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 16:28:44Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "T2",
@@ -217,7 +221,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:42:42Z",
+    "ts_actualizado": "2026-09-03 16:28:51Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -228,7 +232,10 @@
       "2026-09-02 15:29:41Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-09-02 15:29:41Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-09-02 15:42:42Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
-      "2026-09-02 15:42:42Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:42:42Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 16:28:50Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-09-03 16:28:51Z · borrador creado (draft r4120482987023893856) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 16:28:51Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
@@ -293,7 +300,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:42:47Z",
+    "ts_actualizado": "2026-09-03 16:28:58Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -303,7 +310,10 @@
       "2026-09-02 15:29:47Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-09-02 15:29:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-09-02 15:42:47Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
-      "2026-09-02 15:42:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:42:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 16:28:57Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-09-03 16:28:58Z · borrador creado (draft r-81441214492894351) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 16:28:58Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -368,7 +378,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:42:52Z",
+    "ts_actualizado": "2026-09-03 16:29:04Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
@@ -378,7 +388,10 @@
       "2026-09-02 15:29:51Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
       "2026-09-02 15:29:51Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-09-02 15:42:52Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
-      "2026-09-02 15:42:52Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:42:52Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 16:29:02Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
+      "2026-09-03 16:29:04Z · borrador creado (draft r8054558686661424789) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 16:29:04Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": []
   },
@@ -539,7 +552,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-02 15:42:58Z",
+    "ts_actualizado": "2026-09-03 16:29:11Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0811PI NB 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0811PI PL.xlsx (dry-run)",
@@ -549,7 +562,10 @@
       "2026-09-02 15:29:58Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
       "2026-09-02 15:29:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-09-02 15:42:58Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
-      "2026-09-02 15:42:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-02 15:42:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 16:29:11Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-09-03 16:29:11Z · borrador creado (draft r-3579568790609884115) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 16:29:11Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "HD4 Khaki",
