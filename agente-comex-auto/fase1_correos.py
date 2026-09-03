@@ -74,7 +74,7 @@ def escanear(dry_run: bool = True) -> dict:
     # Filtramos por AUSENCIA del label (no por unread) → así los dejamos sin leer.
     query_extra = None if dry_run else f"-label:{PROCESADO_LABEL}"
     correos = gmail.search_emails(
-        sender=STEVEN, has_attachment=True, is_unread=False, max_results=40,
+        sender=STEVEN, has_attachment=True, is_unread=False, max_results=80,
     )
     # (search_emails arma la query con from+has:attachment; el filtro de label lo
     #  aplicamos abajo revisando label_ids para no depender de que exista el label)

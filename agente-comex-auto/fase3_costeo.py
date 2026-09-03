@@ -122,7 +122,7 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
     print(f"  SKU existentes: {len(existentes)} | POR CREAR: {faltantes or '—'} | SIN SKU en PI: {sin_sku or '—'}")
 
     if not dry_run:
-        _crear_borrador(embq, reg, out_dir, faltantes, sin_sku)
+        _enviar_correo(embq, reg, out_dir, faltantes, sin_sku)
 
     # gate a fase 4: TODOS los productos resueltos (SKU existente en Odoo Y ningún producto sin código)
     if pendientes == 0:
@@ -131,9 +131,15 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
         st.log(reg, f"pendientes ({len(faltantes)} por crear + {len(sin_sku)} sin código) → re-chequea Odoo mañana")
 
 
-def _crear_borrador(embq, reg, out_dir, faltantes, sin_sku=None):
+def _enviar_correo(embq, reg, out_dir, faltantes, sin_sku=None):
+    """Opción B (100% autónomo): ENVÍA el correo al equipo (no borrador).
+    Idempotente: solo re-envía si cambió la lista de pendientes (no spamea cada día)."""
     from gmail_client import GmailClient
     sin_sku = sin_sku or []
+    firma = f"{sorted(faltantes)}|{sorted(sin_sku)}"
+    if reg.get("correo_firma") == firma:
+        st.log(reg, "correo ya enviado con estos pendientes → no re-envío")
+        return
     html_path = ce.generar_email_html(embq, out_dir)
     html = Path(html_path).read_text(encoding="utf-8")
     if faltantes:
@@ -148,8 +154,12 @@ def _crear_borrador(embq, reg, out_dir, faltantes, sin_sku=None):
     if pend:
         subj += f" · {pend} SKU pendientes"
     gmail = GmailClient()
-    draft_id = gmail.create_draft(to=", ".join(DEST), subject=subj, body_html=html)
-    st.log(reg, f"borrador creado (draft {draft_id}) → {', '.join(DEST)}")
+    adjuntos = [reg["costeo_path"]] if reg.get("costeo_path") and Path(reg["costeo_path"]).exists() else []
+    msg_id = gmail.send_email_with_attachments(
+        to=", ".join(DEST), subject=subj, body_html=html, attachments=adjuntos)
+    reg["correo_firma"] = firma
+    accion = "borrador con planilla" if str(msg_id).startswith("[DRAFT]") else "correo ENVIADO con planilla"
+    st.log(reg, f"{accion} ({msg_id}, {len(adjuntos)} adj) → {', '.join(DEST)}")
 
 
 def procesar(dry_run: bool = True) -> dict:

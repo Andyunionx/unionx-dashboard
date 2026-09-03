@@ -96,10 +96,12 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
         "partner_ref": f"{embq.numero}PI", "date_planned": date_planned,
         "order_line": lineas,
     }])
-    po = models.execute_kw(DB, uid, pwd, "purchase.order", "read", [[po_id]], {"fields": ["name"]})[0]
+    # Opción B (100% autónomo): auto-CONFIRMAR la PO (draft → purchase)
+    models.execute_kw(DB, uid, pwd, "purchase.order", "button_confirm", [[po_id]])
+    po = models.execute_kw(DB, uid, pwd, "purchase.order", "read", [[po_id]], {"fields": ["name", "state"]})[0]
     reg["po_id"] = po_id; reg["po_name"] = po["name"]
-    st.log(reg, f"PO {po['name']} creada en BORRADOR ({len(lineas)} líneas, {total_clp:,.0f} CLP)")
-    st.set_fase(reg, 9, f"PO {po['name']} cargada en borrador → COMPLETADO")
+    st.log(reg, f"PO {po['name']} creada y CONFIRMADA ({po.get('state')}, {len(lineas)} líneas, {total_clp:,.0f} CLP)")
+    st.set_fase(reg, 9, f"PO {po['name']} confirmada → COMPLETADO")
 
 
 def procesar(dry_run: bool = True) -> dict:

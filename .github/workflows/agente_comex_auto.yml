@@ -43,9 +43,12 @@ jobs:
           SEIMEX_EMAIL: ${{ secrets.SEIMEX_EMAIL }}
           SEIMEX_PASSWORD: ${{ secrets.SEIMEX_PASSWORD }}
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
-          # COMMIT_MODE=1 activa escrituras (Gmail label/borrador + PO Odoo).
+          # COMMIT_MODE=1 activa escrituras (correo al equipo + PO Odoo).
           # Se controla con una Variable de repo (Settings → Variables). Vacía = dry-run.
           COMMIT_MODE: ${{ vars.COMMIT_MODE }}
+          # EMAIL_DRAFT=1 → el correo de costeo se deja como BORRADOR (con planilla adjunta)
+          # para validar. Vacía = se ENVÍA al equipo (Opción B full).
+          GMAIL_DRY_RUN: ${{ vars.EMAIL_DRAFT }}
         run: python pipeline.py
 
       - name: Commitear estado si cambió
@@ -53,5 +56,8 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions COMEX"
           git add agente-comex-auto/data/estado_embarques.json || true
-          git diff --staged --quiet || git commit -m "Sync estado agente COMEX $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
+          if ! git diff --staged --quiet; then
+            git commit -m "Sync estado agente COMEX $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git pull --rebase origin main   # evita el race con otros commits en main
+            git push
+          fi
