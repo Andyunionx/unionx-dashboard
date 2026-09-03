@@ -70,6 +70,46 @@ def analisis_financiero() -> pd.DataFrame:
     return _load_parquet("analisis_financiero")
 
 
+def eeff() -> pd.DataFrame:
+    """Balance General EEFF mensual (formato largo: fecha/seccion/linea/valor, en miles)."""
+    return _load_parquet("eeff")
+
+
+def eeff_ratios() -> pd.DataFrame:
+    """Ratios financieros del EEFF (fecha/categoria/ratio/valor)."""
+    return _load_parquet("eeff_ratios")
+
+
+def prestamos() -> pd.DataFrame:
+    """Detalle de préstamos comerciales: crédito, saldo, CP/LP, cuotas, cuota mensual."""
+    return _load_parquet("prestamos_comerciales")
+
+
+def ppe() -> pd.DataFrame:
+    """PP&E: activo fijo bruto + depreciación + neto (mensual, miles)."""
+    return _load_parquet("ppe")
+
+
+def otros_activos_pasivos() -> pd.DataFrame:
+    """Otros activos y pasivos (mensual, miles)."""
+    return _load_parquet("otros_activos_pasivos")
+
+
+def pl_bancos() -> pd.DataFrame:
+    """P&L Bancos: EERR anual histórico 2019-2025 + márgenes + ratios."""
+    return _load_parquet("pl_bancos")
+
+
+def analisis_fin_2026() -> pd.DataFrame:
+    """Análisis Financiero 2026: flujo de caja + deuda + KPIs + recomendaciones (formato c0..c6)."""
+    return _load_parquet("analisis_fin_2026")
+
+
+def control_gestion() -> pd.DataFrame:
+    """P&L Drive (Sheet de Gabriela): PPTO vs FCST por KPI/canal/área/centro de costo."""
+    return _load_parquet("control_gestion")
+
+
 @st.cache_data(ttl=300)
 def resumen_general() -> dict:
     """Metadata: cuándo se generó, qué hojas se procesaron, etc."""

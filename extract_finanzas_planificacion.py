@@ -254,8 +254,24 @@ def extract_kt(wb) -> pd.DataFrame:
     return df
 
 
+def _bloque_deuda(texto: str) -> str | None:
+    """Identifica el tipo de deuda desde un encabezado de bloque (col B/C)."""
+    t = texto.lower()
+    if "deuda financiera total" in t:
+        return "Total"
+    if "tipo cr" in t or "tipo créd" in t or "tipo cred" in t:
+        return "Comercial"
+    if "tipo co" in t:  # Tipo Comercio exterior (COMEX)
+        return "COMEX"
+    if "mutuo" in t or "préstamo mutuo" in t or "socios" in t:
+        return "Socios"
+    return None
+
+
 def extract_deuda(wb) -> pd.DataFrame:
-    """Deuda Financiera: saldos + intereses + cronograma."""
+    """Deuda Financiera: saldos + intereses + cronograma, con `bloque`
+    (Total / Comercial / COMEX / Socios) para poder componer la deuda.
+    """
     ws = wb["Deuda financiera"]
     fila_fechas, rdata = _encontrar_fila_fechas(ws, max_filas=10)
     if fila_fechas is None:
@@ -264,12 +280,14 @@ def extract_deuda(wb) -> pd.DataFrame:
 
     rows = []
     seccion = ""
-    for i, row in enumerate(ws.iter_rows(values_only=True,
-                                          min_row=fila_fechas + 1, max_row=90)):
-        c = (row[2] if len(row) > 2 else "") or ""
-        d = (row[3] if len(row) > 3 else "") or ""
-        c = str(c).strip()
-        d = str(d).strip()
+    bloque = ""
+    for i, row in enumerate(ws.iter_rows(values_only=True, min_row=1, max_row=90)):
+        b = str((row[1] if len(row) > 1 else "") or "").strip()
+        c = str((row[2] if len(row) > 2 else "") or "").strip()
+        d = str((row[3] if len(row) > 3 else "") or "").strip()
+        nb = _bloque_deuda(b + " " + c)
+        if nb:
+            bloque = nb
         if c and not d:
             seccion = c
             continue
@@ -286,6 +304,7 @@ def extract_deuda(wb) -> pd.DataFrame:
                 "fecha": fecha,
                 "year": fecha.year,
                 "month": fecha.month,
+                "bloque": bloque,
                 "seccion": seccion,
                 "linea": linea,
                 "valor": float(v),
@@ -454,6 +473,224 @@ def extract_analisis_financiero(wb) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def extract_eeff(wb) -> pd.DataFrame:
+    """EEFF: Balance General mensual (Activos / Pasivos + Patrimonio).
+    Sección en col C, línea en col D, meses en la fila de fechas (fila 3).
+    Unidades: miles de CLP (÷1000 = MM). Header idx0-based: jun-26 = idx 95.
+    """
+    ws = wb["EEFF"]
+    fila_fechas, rdata = _encontrar_fila_fechas(ws, max_filas=8)
+    if fila_fechas is None:
+        return pd.DataFrame()
+    cols_fecha = _columnas_fecha(rdata)
+
+    rows = []
+    seccion = ""
+    for row in ws.iter_rows(values_only=True, min_row=fila_fechas + 1, max_row=45):
+        c = str((row[2] if len(row) > 2 else "") or "").strip()
+        d = str((row[3] if len(row) > 3 else "") or "").strip()
+        if c and not d:
+            seccion = c
+            continue
+        linea = d or c
+        if not linea:
+            continue
+        for col_idx, fecha in cols_fecha:
+            if col_idx >= len(row):
+                continue
+            v = row[col_idx]
+            if v is None or not isinstance(v, (int, float)):
+                continue
+            rows.append({
+                "fecha": fecha, "year": fecha.year, "month": fecha.month,
+                "seccion": seccion, "linea": linea, "valor": float(v),
+            })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df["fecha"] = pd.to_datetime(df["fecha"])
+    return df
+
+
+def extract_eeff_ratios(wb) -> pd.DataFrame:
+    """Ratios financieros del EEFF (filas 138-157): Liquidez, Gestión,
+    Endeudamiento/Cobertura, Rentabilidad. Categoría en col A, ratio en col D,
+    valores en las mismas columnas de fecha que el balance.
+    """
+    ws = wb["EEFF"]
+    fila_fechas, rdata = _encontrar_fila_fechas(ws, max_filas=8)
+    if fila_fechas is None:
+        return pd.DataFrame()
+    cols_fecha = _columnas_fecha(rdata)
+
+    rows = []
+    categoria = ""
+    for row in ws.iter_rows(values_only=True, min_row=137, max_row=158):
+        a = str((row[0] if len(row) > 0 else "") or "").strip()
+        d = str((row[3] if len(row) > 3 else "") or "").strip()
+        if a:
+            categoria = a
+        if not d or d.lower().startswith("ratios financ"):
+            continue
+        for col_idx, fecha in cols_fecha:
+            if col_idx >= len(row):
+                continue
+            v = row[col_idx]
+            if v is None or not isinstance(v, (int, float)):
+                continue
+            rows.append({
+                "fecha": fecha, "year": fecha.year, "month": fecha.month,
+                "categoria": categoria, "ratio": d, "valor": float(v),
+            })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df["fecha"] = pd.to_datetime(df["fecha"])
+    return df
+
+
+def extract_prestamos(wb) -> pd.DataFrame:
+    """PRESTAMOS COMERCIALES: detalle crédito a crédito (rows 4-11) unido con el
+    plan de pago (rows 44-51) por posición. Un registro por crédito con saldo,
+    CP/LP, vencimiento, cuotas pendientes y cuota mensual (CLP crudo).
+    """
+    ws = wb["PRESTAMOS COMERCIALES"]
+    detalle = list(ws.iter_rows(values_only=True, min_row=4, max_row=11))
+    plan = list(ws.iter_rows(values_only=True, min_row=44, max_row=51))
+
+    def _num(v):
+        return float(v) if isinstance(v, (int, float)) else None
+
+    rows = []
+    for i, dr in enumerate(detalle):
+        nombre = str((dr[1] if len(dr) > 1 else "") or "").strip()
+        if not nombre:
+            continue
+        pr = plan[i] if i < len(plan) else ()
+        venc = dr[3] if len(dr) > 3 else None
+        rows.append({
+            "codigo": str((dr[0] if len(dr) > 0 else "") or "").strip(),
+            "credito": nombre,
+            "vencimiento": (str(venc)[:10] if venc is not None else ""),
+            "total": _num(dr[4]) if len(dr) > 4 else None,
+            "corto_plazo": _num(dr[5]) if len(dr) > 5 else None,
+            "largo_plazo": _num(dr[6]) if len(dr) > 6 else None,
+            "cuotas_pend": (_num(pr[2]) if len(pr) > 2 else None) or (_num(dr[7]) if len(dr) > 7 else None),
+            "cuota_mensual": _num(pr[3]) if len(pr) > 3 else None,
+        })
+    return pd.DataFrame(rows)
+
+
+def _extract_schedule_largo(ws, min_row, max_row, header_max=12) -> pd.DataFrame:
+    """Extractor genérico de schedule mensual (sección col C, línea col D)."""
+    fila_fechas, rdata = _encontrar_fila_fechas(ws, max_filas=header_max)
+    if fila_fechas is None:
+        return pd.DataFrame()
+    cols_fecha = _columnas_fecha(rdata)
+    rows = []
+    seccion = ""
+    for row in ws.iter_rows(values_only=True, min_row=min_row, max_row=max_row):
+        c = str((row[2] if len(row) > 2 else "") or "").strip()
+        d = str((row[3] if len(row) > 3 else "") or "").strip()
+        if c and not d:
+            seccion = c
+            continue
+        linea = d or c
+        if not linea:
+            continue
+        for col_idx, fecha in cols_fecha:
+            if col_idx >= len(row):
+                continue
+            v = row[col_idx]
+            if v is None or not isinstance(v, (int, float)):
+                continue
+            rows.append({
+                "fecha": fecha, "year": fecha.year, "month": fecha.month,
+                "seccion": seccion, "linea": linea, "valor": float(v),
+            })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df["fecha"] = pd.to_datetime(df["fecha"])
+    return df
+
+
+def extract_ppe(wb) -> pd.DataFrame:
+    """PP&E: activo fijo bruto + depreciación + activo fijo neto (mensual, miles)."""
+    return _extract_schedule_largo(wb["PP&E"], 6, 18)
+
+
+def extract_otros(wb) -> pd.DataFrame:
+    """Otros Activos y Pasivos (mensual, miles)."""
+    return _extract_schedule_largo(wb["Otros"], 7, 26)
+
+
+def extract_analisis_fin_2026(wb) -> pd.DataFrame:
+    """Hoja 'Análisis Financiero 2026' completa: flujo de caja, estructura de deuda,
+    KPIs con benchmark/semáforo, comparación 2026 vs 2025 y recomendaciones.
+    Formato genérico {seccion, c0..c6} (7 columnas), interpretado por la vista.
+    """
+    if "Análisis Financiero 2026" not in wb.sheetnames:
+        return pd.DataFrame()
+    ws = wb["Análisis Financiero 2026"]
+
+    def _s(v):
+        if v is None:
+            return ""
+        if isinstance(v, float):
+            return str(int(v)) if v == int(v) else f"{v:.4f}".rstrip("0").rstrip(".")
+        if isinstance(v, int):
+            return str(v)
+        return str(v).strip()
+
+    rows = []
+    seccion = ""
+    for row in ws.iter_rows(values_only=True, min_row=1, max_row=96):
+        vals = [row[j] if j < len(row) else None for j in range(7)]
+        c0 = str(vals[0] or "").strip()
+        if not c0 and not any(v is not None for v in vals[1:]):
+            continue
+        if re.match(r"^\d+\.", c0) or c0.startswith("Todas las cifras") or c0.startswith("ANÁLISIS"):
+            if re.match(r"^\d+\.", c0):
+                seccion = c0
+            continue
+        if c0 in ("CONCEPTO", "KPI", "INDICADOR", "PRIORIDAD"):
+            continue
+        rows.append({
+            "seccion": seccion, "c0": c0,
+            "c1": _s(vals[1]), "c2": _s(vals[2]), "c3": _s(vals[3]),
+            "c4": _s(vals[4]), "c5": _s(vals[5]), "c6": _s(vals[6]),
+        })
+    return pd.DataFrame(rows)
+
+
+def extract_pl_bancos(wb) -> pd.DataFrame:
+    """P&L Bancos: EERR anual histórico (2019-2025) + márgenes + ratios.
+    Años enteros en la fila 2 (cols B-H). Formato largo {year, seccion, concepto, valor}.
+    """
+    ws = wb["P&L Bancos"]
+    hdr = list(ws.iter_rows(values_only=True, min_row=2, max_row=2))[0]
+    cols_year = [(j, int(v)) for j, v in enumerate(hdr)
+                 if isinstance(v, (int, float)) and 2000 <= v <= 2100]
+    if not cols_year:
+        return pd.DataFrame()
+    rows = []
+    seccion = ""
+    for row in ws.iter_rows(values_only=True, min_row=3, max_row=48):
+        a = str((row[0] if len(row) > 0 else "") or "").strip()
+        if not a:
+            continue
+        vals = [row[j] for j, _ in cols_year if j < len(row)]
+        if not any(isinstance(v, (int, float)) for v in vals):
+            seccion = a
+            continue
+        for j, year in cols_year:
+            if j >= len(row):
+                continue
+            v = row[j]
+            if v is None or not isinstance(v, (int, float)):
+                continue
+            rows.append({"year": year, "seccion": seccion, "concepto": a, "valor": float(v)})
+    return pd.DataFrame(rows)
+
+
 # ============================================================
 # MAIN
 # ============================================================
@@ -469,7 +706,14 @@ def main():
         ("ppto_2026", extract_ppto_2026, "Ppto 2026 por código contable"),
         ("resumen_ytd", extract_resumen_ytd, "Resumen YTD vs Ppto vs YoY"),
         ("kt", extract_kt, "Capital de Trabajo"),
+        ("eeff", extract_eeff, "Balance EEFF mensual"),
+        ("eeff_ratios", extract_eeff_ratios, "Ratios financieros EEFF"),
         ("deuda", extract_deuda, "Deuda financiera"),
+        ("prestamos_comerciales", extract_prestamos, "Detalle préstamos + cuotas"),
+        ("ppe", extract_ppe, "PP&E activo fijo"),
+        ("otros_activos_pasivos", extract_otros, "Otros activos y pasivos"),
+        ("pl_bancos", extract_pl_bancos, "P&L Bancos anual + ratios"),
+        ("analisis_fin_2026", extract_analisis_fin_2026, "Análisis Financiero 2026 (flujo+KPIs+recom.)"),
         ("metas_2026", extract_metas_2026, "Metas 2026 mensuales"),
         ("fcst_eerr", extract_fcst_eerr, "Forecast EERR"),
         ("dashboard_data", extract_dashboard_data, "Dashboard Data pre-cocinada"),

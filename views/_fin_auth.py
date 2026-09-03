@@ -166,6 +166,10 @@ def _login_form():
 
 
 def require_login_fin():
+    # Bypass SOLO local (gated por env var; nunca se activa en producción)
+    if os.environ.get("FIN_DEV_BYPASS") == "1":
+        st.session_state.setdefault("fin_user", {"email": "andres@unionx.cl", "uid": 0})
+        return
     if st.session_state.get("fin_user"):
         return
     cookie = _leer_cookie()

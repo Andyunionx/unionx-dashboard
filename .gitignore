@@ -220,3 +220,6 @@ data/stock/fala_fbf_live.parquet
 data/stock/fala_transito_live.parquet
 data/stock/walmart_wfs_live.parquet
 data/stock/walmart_session.json
+
+# App Finanzas: modulos compartidos van al repo (excepcion a _*.py)
+!views/_fin_*.py
