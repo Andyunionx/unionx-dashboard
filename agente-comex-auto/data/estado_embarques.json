@@ -45,14 +45,15 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-03 16:28:34Z",
+    "ts_actualizado": "2026-09-03 17:29:49Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0826PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0826PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0826PI SZ 40HQ.xlsx) → esperando flete Seimex",
       "2026-09-02 15:29:24Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana",
       "2026-09-02 15:42:27Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana",
-      "2026-09-03 16:28:34Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
+      "2026-09-03 16:28:34Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana",
+      "2026-09-03 17:29:49Z · aún no aparece en Seimex (busqué PI0826) → reintenta mañana"
     ]
   },
   "26TP0806": {
@@ -130,7 +131,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-03 16:28:44Z",
+    "ts_actualizado": "2026-09-03 17:29:59Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
@@ -144,7 +145,10 @@
       "2026-09-02 15:42:36Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-09-03 16:28:43Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
       "2026-09-03 16:28:44Z · borrador creado (draft r2922623889138189471) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-09-03 16:28:44Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-09-03 16:28:44Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 17:29:58Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
+      "2026-09-03 17:29:59Z · borrador con planilla ([DRAFT] r5234381199612197281, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:29:59Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "T2",
@@ -153,7 +157,8 @@
       "TP610",
       "TP691",
       "TP936"
-    ]
+    ],
+    "correo_firma": "[]|['T2', 'TP248', 'TP289', 'TP610', 'TP691', 'TP936']"
   },
   "26TP0818": {
     "embarque": "26TP0818",
@@ -221,7 +226,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-03 16:28:51Z",
+    "ts_actualizado": "2026-09-03 17:30:06Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -235,12 +240,16 @@
       "2026-09-02 15:42:42Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-09-03 16:28:50Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-09-03 16:28:51Z · borrador creado (draft r4120482987023893856) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-09-03 16:28:51Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-03 16:28:51Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 17:30:05Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-09-03 17:30:06Z · borrador con planilla ([DRAFT] r-8276727822680971751, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:06Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
       "TP140"
-    ]
+    ],
+    "correo_firma": "['XRCARINF34-CL']|['TP101', 'TP140']"
   },
   "26TP0819": {
     "embarque": "26TP0819",
@@ -300,7 +309,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-03 16:28:58Z",
+    "ts_actualizado": "2026-09-03 17:30:13Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -313,13 +322,17 @@
       "2026-09-02 15:42:47Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-09-03 16:28:57Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-09-03 16:28:58Z · borrador creado (draft r-81441214492894351) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-09-03 16:28:58Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-09-03 16:28:58Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 17:30:12Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-09-03 17:30:13Z · borrador con planilla ([DRAFT] r836291725239649160, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:13Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
       "TP146",
       "TP371"
-    ]
+    ],
+    "correo_firma": "['XRCOOLPOR45-GR']|['702-2', 'TP146', 'TP371']"
   },
   "26TP0815": {
     "embarque": "26TP0815",
@@ -378,7 +391,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-03 16:29:04Z",
+    "ts_actualizado": "2026-09-03 17:30:19Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
@@ -391,9 +404,13 @@
       "2026-09-02 15:42:52Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-09-03 16:29:02Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
       "2026-09-03 16:29:04Z · borrador creado (draft r8054558686661424789) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-09-03 16:29:04Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-03 16:29:04Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 17:30:18Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
+      "2026-09-03 17:30:19Z · borrador con planilla ([DRAFT] r-4978666622683740329, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:19Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
-    "productos_sin_sku": []
+    "productos_sin_sku": [],
+    "correo_firma": "['SMBATOXBG', 'XRCOOLPORTF40-GR', 'XRTOLLAT270-CL']|[]"
   },
   "26TP0816": {
     "embarque": "26TP0816",
@@ -552,7 +569,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-03 16:29:11Z",
+    "ts_actualizado": "2026-09-03 17:30:27Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0811PI NB 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0811PI PL.xlsx (dry-run)",
@@ -565,12 +582,16 @@
       "2026-09-02 15:42:58Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-09-03 16:29:11Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
       "2026-09-03 16:29:11Z · borrador creado (draft r-3579568790609884115) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-09-03 16:29:11Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-03 16:29:11Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-03 17:30:26Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-09-03 17:30:27Z · borrador con planilla ([DRAFT] r-5215471098498670228, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:27Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "HD4 Khaki",
       "TP30"
-    ]
+    ],
+    "correo_firma": "[]|['HD4 Khaki', 'TP30']"
   },
   "26TP0803": {
     "embarque": "26TP0803",
@@ -608,5 +629,263 @@
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0803PI.xlsx (dry-run)"
     ]
+  },
+  "26TP0716": {
+    "embarque": "26TP0716",
+    "fase": 3,
+    "pi": {
+      "msg_id": "19f8eab353138c17",
+      "filename": "26TP0716PI SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ_nN3HPm0EDwgQ2QWvVetJYejpbVb5c8t2TQ8qKuDfcknK0HzqHp4Zwe1BdZWNt-ieoOE7UMfR8E3WRCEW1J-cilkK8z8MyoNsv9hLidCAdpJnKTwcUDZzVQtr1QtGIBg-1qYeMgymdBpO65Sp8cB4x5Bq2VSdiblI81MrDwmtxPqgiH_tKulSo8fYRJJfvtI1bqSB6RmaSVhLya7nQ5xb6ga0lNcLdWG3_AG3bO9zCS-txTpVgDljNVzznwVy3IBabG4zFbMRt8Br7vyFvWvITVa2A828LGGedNg6JlxbcqJXbFGroyxA2hW6s_onAOQDhu69tXSmmrvllX-R1LnOt9GJ_exKn52t7VP57ddccAccKn3jCdxkj1zlCE_xJjkzECBARgtQCAN6yoqhZC3cPXcBk9oOjAv9djg",
+      "subject": "cash details",
+      "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0716/26TP0716PI SZ 40HQ.xlsx"
+    },
+    "pl": {
+      "msg_id": "19f8eab353138c17",
+      "filename": "26TP0716PI PL.xlsx",
+      "attachment_id": "ANGjdJ8C5GY-PJq-pFX6CrodVbpuHkbnhDKOxJIN3uBQKwFQrlW6E41sQXTQNaNW7JXyr3p1eVw45L1fXbUlIyNUoPu3r6G69WGS8kmnrmEi1QhKdhz03_9wFlihuywWlU8MXDiQVDB4PlFFzrue1AtONXK7PTqE4N3gC41thN5pTZaylMlCxR9vpzGRv3ITSKXjWWd5Uc71b2_cTeRwEqQK-lOGzBn1p3K334fO_AXgZkMBlB-GuEfstth5KpN0oxH43oxVDTr9QfpGtWuOW9fOVM6hS65ZeiQKWfBdIpOofPVcMcqfCXHAerEUVWGdE2xgclkEusOiPPeT3NN7Mkb1fY08A0vIxM9CtcDYcMFh71SS5go1PJXsSLUSSsc3_eW3cOcv9WLrnUFTEoKmfkVYGfxxpm6V9A_LGYRW1g",
+      "subject": "cash details",
+      "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0716/26TP0716PI PL.xlsx"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "19f8eab353138c17",
+        "filename": "26TP0716PI SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ_nN3HPm0EDwgQ2QWvVetJYejpbVb5c8t2TQ8qKuDfcknK0HzqHp4Zwe1BdZWNt-ieoOE7UMfR8E3WRCEW1J-cilkK8z8MyoNsv9hLidCAdpJnKTwcUDZzVQtr1QtGIBg-1qYeMgymdBpO65Sp8cB4x5Bq2VSdiblI81MrDwmtxPqgiH_tKulSo8fYRJJfvtI1bqSB6RmaSVhLya7nQ5xb6ga0lNcLdWG3_AG3bO9zCS-txTpVgDljNVzznwVy3IBabG4zFbMRt8Br7vyFvWvITVa2A828LGGedNg6JlxbcqJXbFGroyxA2hW6s_onAOQDhu69tXSmmrvllX-R1LnOt9GJ_exKn52t7VP57ddccAccKn3jCdxkj1zlCE_xJjkzECBARgtQCAN6yoqhZC3cPXcBk9oOjAv9djg",
+        "subject": "cash details",
+        "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0716/26TP0716PI SZ 40HQ.xlsx"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "19f8eab353138c17",
+        "filename": "26TP0716PI PL.xlsx",
+        "attachment_id": "ANGjdJ8C5GY-PJq-pFX6CrodVbpuHkbnhDKOxJIN3uBQKwFQrlW6E41sQXTQNaNW7JXyr3p1eVw45L1fXbUlIyNUoPu3r6G69WGS8kmnrmEi1QhKdhz03_9wFlihuywWlU8MXDiQVDB4PlFFzrue1AtONXK7PTqE4N3gC41thN5pTZaylMlCxR9vpzGRv3ITSKXjWWd5Uc71b2_cTeRwEqQK-lOGzBn1p3K334fO_AXgZkMBlB-GuEfstth5KpN0oxH43oxVDTr9QfpGtWuOW9fOVM6hS65ZeiQKWfBdIpOofPVcMcqfCXHAerEUVWGdE2xgclkEusOiPPeT3NN7Mkb1fY08A0vIxM9CtcDYcMFh71SS5go1PJXsSLUSSsc3_eW3cOcv9WLrnUFTEoKmfkVYGfxxpm6V9A_LGYRW1g",
+        "subject": "cash details",
+        "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0716/26TP0716PI PL.xlsx"
+      }
+    ],
+    "flete_usd": 5200.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "302-26 PI0716",
+    "eta_puerto": "2026-09-03",
+    "eta_bodega": "2026-09-08",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0716/Pre-costeo_x_CBM_26TP0716.xlsx",
+    "skus": [
+      "SIMCUPGL-30",
+      "SIMJULZOPO-30",
+      "SIMJULZSIE-30",
+      "SIMBOWSIE-4",
+      "SIMBOWSIE-4",
+      "SIMJULZAMA-24",
+      "SIMTAZSIE-4",
+      "SIMCUTOL-2",
+      "LVPANTOTPUB-43",
+      "67327559384453",
+      "1623703861303",
+      "LHNECKHUM-GR",
+      "LHNECKHUM-BK",
+      "LVAUDGM-BK",
+      "LVTECMCL-BK",
+      "1629726091782",
+      "1660859171584",
+      "68432930518995",
+      "67933859111971",
+      "XRCOBMOT-BS",
+      "1660859424566",
+      "1660858702400",
+      "SIMDESSOM"
+    ],
+    "skus_faltantes": [
+      "LVTECMCL-BK",
+      "SIMCUTOL-2"
+    ],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-03 17:29:42Z",
+    "ts_actualizado": "2026-09-03 17:30:36Z",
+    "log": [
+      "2026-09-03 17:29:43Z · PL detectado: 26TP0716PI PL.xlsx · descargado",
+      "2026-09-03 17:29:43Z · PI detectado: 26TP0716PI SZ 40HQ.xlsx · descargado",
+      "2026-09-03 17:29:43Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0716PI SZ 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-03 17:29:49Z · flete FINAL 5200 USD · ref 302-26 PI0716 · ETA 2026-09-03 → bodega 2026-09-08",
+      "2026-09-03 17:29:49Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-03 17:30:35Z · costeado · 23 prod · sobrecosto 16.7% · internado 79,884,267 CLP · SKU por crear: 2 · sin SKU: 0",
+      "2026-09-03 17:30:36Z · borrador con planilla ([DRAFT] r7812983358347833492, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:36Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [],
+    "correo_firma": "['LVTECMCL-BK', 'SIMCUTOL-2']|[]"
+  },
+  "26TP0720": {
+    "embarque": "26TP0720",
+    "fase": 3,
+    "pi": {
+      "msg_id": "19f8eab353138c17",
+      "filename": "26TP0720PI SZ 40HQ.xlsx",
+      "attachment_id": "ANGjdJ9Xnsywq-nXnL9UjbM0QioOozuItMs3VnHCS_6yRHH7qenMoGJHkorZM2eCq24jhMM5UZC5LybP7wiaVM1uisfFQbqeaXGn0pM-ibOkMdKryTP49-DO4spaDw4oxl9yAfq0_v8lNCk_yXK0da9J4SogkE48FP0UrKkNZWPbFTTQkzq2wIH8ao1l3A_zjkktDCOxTPv_HMh3gVK4uYnrGnK56eVFRFr74WyWRhWd8amfc90PZ8gwiNqa8cCU-Ve9myFvuTDs2C5AQZEP497QAIXnV0jeXXAirn7s5GlbU4KyJRNvAuOKMg8xg1CPLcgvdhPMApuk9hrBNm4gK0fwj4uUJMBiXsyohJAMOdRRmj3xZuJNzzLH2lAx4gOt9bgSNnVqtwowUuUVlQtH5exQnKHmt5rx70KTMLhc6g",
+      "subject": "cash details",
+      "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0720/26TP0720PI SZ 40HQ.xlsx"
+    },
+    "pl": {
+      "msg_id": "19f8eab353138c17",
+      "filename": "26TP0720PI PL.xlsx",
+      "attachment_id": "ANGjdJ-VM9pCQXuvLOmJbmgJ9U7_btHYdc0eIhGgYTGuEJ84hsUoPIMSdRXcnIpP7UJ2W0PAHx39WvnNuraZ2zPxKioUx-5iD12gKqVkCAH8Ku_GDSi0dylnVEiFZDDGqzOTJNc0ftRElv-r0UMd3lmSKaxLLzu73hVVN-AOR7LZxGX-vnLiE0hlEQy2rMBnjWtrpTcBhdXmHSOa2ub58iPB2RuJ5DIxv6vdZUthPc0jou_JXEenG-6j6zzCDvWgUR5-IVIdv_yBE5yttWpZibvlWravs1s9mJfUkdh17mAYuCNRIO5c_YW-1AtLo-dQz32ln3XsV0NMIM_YTdRAJa4Ty9y6_bqdhytbuIfUL7bY98vcGvTmyoY4v2d--9fBCILgYjST1KrDLJIx5ruxMEWevc0tHc6ELNccUY5g0A",
+      "subject": "cash details",
+      "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0720/26TP0720PI PL.xlsx"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "19f8eab353138c17",
+        "filename": "26TP0720PI SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ9Xnsywq-nXnL9UjbM0QioOozuItMs3VnHCS_6yRHH7qenMoGJHkorZM2eCq24jhMM5UZC5LybP7wiaVM1uisfFQbqeaXGn0pM-ibOkMdKryTP49-DO4spaDw4oxl9yAfq0_v8lNCk_yXK0da9J4SogkE48FP0UrKkNZWPbFTTQkzq2wIH8ao1l3A_zjkktDCOxTPv_HMh3gVK4uYnrGnK56eVFRFr74WyWRhWd8amfc90PZ8gwiNqa8cCU-Ve9myFvuTDs2C5AQZEP497QAIXnV0jeXXAirn7s5GlbU4KyJRNvAuOKMg8xg1CPLcgvdhPMApuk9hrBNm4gK0fwj4uUJMBiXsyohJAMOdRRmj3xZuJNzzLH2lAx4gOt9bgSNnVqtwowUuUVlQtH5exQnKHmt5rx70KTMLhc6g",
+        "subject": "cash details",
+        "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0720/26TP0720PI SZ 40HQ.xlsx"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "19f8eab353138c17",
+        "filename": "26TP0720PI PL.xlsx",
+        "attachment_id": "ANGjdJ-VM9pCQXuvLOmJbmgJ9U7_btHYdc0eIhGgYTGuEJ84hsUoPIMSdRXcnIpP7UJ2W0PAHx39WvnNuraZ2zPxKioUx-5iD12gKqVkCAH8Ku_GDSi0dylnVEiFZDDGqzOTJNc0ftRElv-r0UMd3lmSKaxLLzu73hVVN-AOR7LZxGX-vnLiE0hlEQy2rMBnjWtrpTcBhdXmHSOa2ub58iPB2RuJ5DIxv6vdZUthPc0jou_JXEenG-6j6zzCDvWgUR5-IVIdv_yBE5yttWpZibvlWravs1s9mJfUkdh17mAYuCNRIO5c_YW-1AtLo-dQz32ln3XsV0NMIM_YTdRAJa4Ty9y6_bqdhytbuIfUL7bY98vcGvTmyoY4v2d--9fBCILgYjST1KrDLJIx5ruxMEWevc0tHc6ELNccUY5g0A",
+        "subject": "cash details",
+        "date": "Thu, 23 Jul 2026 19:09:16 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0720/26TP0720PI PL.xlsx"
+      }
+    ],
+    "flete_usd": 5650.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "409-26 PI0720",
+    "eta_puerto": "2026-09-10",
+    "eta_bodega": "2026-09-15",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0720/Pre-costeo_x_CBM_26TP0720.xlsx",
+    "skus": [
+      "1571423280815",
+      "SIMVASLARGINE",
+      "1627418180602",
+      "1660859424566",
+      "XRCOBSUV-BS",
+      "1630369674271",
+      "SIMOREXBAS-35",
+      "SIMOREXBAS-WD",
+      "TCRANEBL",
+      "SIMJULZSIE-30",
+      "LVMPADXXL-BK",
+      "XRPISUNIS3-BK"
+    ],
+    "skus_faltantes": [
+      "SIMOREXBAS-35"
+    ],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-03 17:29:43Z",
+    "ts_actualizado": "2026-09-03 17:30:42Z",
+    "log": [
+      "2026-09-03 17:29:44Z · PL detectado: 26TP0720PI PL.xlsx · descargado",
+      "2026-09-03 17:29:44Z · PI detectado: 26TP0720PI SZ 40HQ.xlsx · descargado",
+      "2026-09-03 17:29:44Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0720PI SZ 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-03 17:29:49Z · flete FINAL 5650 USD · ref 409-26 PI0720 · ETA 2026-09-10 → bodega 2026-09-15",
+      "2026-09-03 17:29:49Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-03 17:30:41Z · costeado · 12 prod · sobrecosto 37.6% · internado 40,362,625 CLP · SKU por crear: 1 · sin SKU: 0",
+      "2026-09-03 17:30:42Z · borrador con planilla ([DRAFT] r-8195525371664750924, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:42Z · pendientes (1 por crear + 0 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [],
+    "correo_firma": "['SIMOREXBAS-35']|[]"
+  },
+  "26TP0706": {
+    "embarque": "26TP0706",
+    "fase": 3,
+    "pi": {
+      "msg_id": "19f3b44cf0eaadd3",
+      "filename": "26TP0706PI NB 40HQ.xlsx",
+      "attachment_id": "ANGjdJ8SmSDQvl3YwpMbdN95tzCO-OkyC8EUg6DZOsJKfYcz7O90vMXouzphiMmMnb84GkJg9wTvrwlNjFI8caO7s-g44X3o495oJ2aNvNXKEloJrGV8H17wsAqCZPNhEPAvewiOR5i-QxtDw5XffFzvF0EZO12413Eyl25NxZenWvT_5j9hRKw9yfr677o3CD3dsPp_ou1icYclUIvW8iLBYFumGXza1uGigXi5F9edfLGc0wxd9elY74wirZ_rcsheuhxp3Mw0Aow4SJ_6fHsMdygnniWBzZcU3noUznX1bNLi0yimpGg4IaDlb3uNg6ts2dHnwe8xlMGg0eirDPaFa8IS-qlZbdF14_fiSVLXPFz6rGrrig5uGBcFIF0z6H0JBPzTwfYi5Uv1gpw2MRz6QPl1D08-RIeSJbs8UA",
+      "subject": "26TP0706PI",
+      "date": "Tue, 7 Jul 2026 14:28:51 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0706/26TP0706PI NB 40HQ.xlsx"
+    },
+    "pl": {
+      "msg_id": "19f3b44cf0eaadd3",
+      "filename": "26TP0706PI PL.xlsx",
+      "attachment_id": "ANGjdJ9pgn8jHrA86jjU38X5e0HM_wn5EG3Kb4NakH8Lr9pzpHCDkJecAdx7NcJFWDlac3XqpQUowROmx3XYWU95FzKaFzzsOGDVMP79xfF6eYDR9gftjRB7l7B2ajvQh2u0CFoIi4PG04yrvBwaGY8bp5IdOxfF86tInQhffZVI4OLubsYLcIH27_1pyrBrlVQbxJEvYUCihzNeaD_-yi7oVYiMZ8cacRsd_TIG9X790F455kg57OkLNy6z69Hm1a18KEHvslNJo3MEntfsegln1mY0EBwyQ9knNFddWphWsL6t5t8492oLPQm-1gZGbN0eWo9l4t37RB30A9B0skhmvLihmwV04rjxLt92MOz-7HI-RhwmkZhLzOD0-fd-POmuyvbGm7B2bQ6s2Qzj0klUXjLWenN9aYoGlnzEZg",
+      "subject": "26TP0706PI",
+      "date": "Tue, 7 Jul 2026 14:28:51 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0706/26TP0706PI PL.xlsx"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "19f3b44cf0eaadd3",
+        "filename": "26TP0706PI NB 40HQ.xlsx",
+        "attachment_id": "ANGjdJ8SmSDQvl3YwpMbdN95tzCO-OkyC8EUg6DZOsJKfYcz7O90vMXouzphiMmMnb84GkJg9wTvrwlNjFI8caO7s-g44X3o495oJ2aNvNXKEloJrGV8H17wsAqCZPNhEPAvewiOR5i-QxtDw5XffFzvF0EZO12413Eyl25NxZenWvT_5j9hRKw9yfr677o3CD3dsPp_ou1icYclUIvW8iLBYFumGXza1uGigXi5F9edfLGc0wxd9elY74wirZ_rcsheuhxp3Mw0Aow4SJ_6fHsMdygnniWBzZcU3noUznX1bNLi0yimpGg4IaDlb3uNg6ts2dHnwe8xlMGg0eirDPaFa8IS-qlZbdF14_fiSVLXPFz6rGrrig5uGBcFIF0z6H0JBPzTwfYi5Uv1gpw2MRz6QPl1D08-RIeSJbs8UA",
+        "subject": "26TP0706PI",
+        "date": "Tue, 7 Jul 2026 14:28:51 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0706/26TP0706PI NB 40HQ.xlsx"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "19f3b44cf0eaadd3",
+        "filename": "26TP0706PI PL.xlsx",
+        "attachment_id": "ANGjdJ9pgn8jHrA86jjU38X5e0HM_wn5EG3Kb4NakH8Lr9pzpHCDkJecAdx7NcJFWDlac3XqpQUowROmx3XYWU95FzKaFzzsOGDVMP79xfF6eYDR9gftjRB7l7B2ajvQh2u0CFoIi4PG04yrvBwaGY8bp5IdOxfF86tInQhffZVI4OLubsYLcIH27_1pyrBrlVQbxJEvYUCihzNeaD_-yi7oVYiMZ8cacRsd_TIG9X790F455kg57OkLNy6z69Hm1a18KEHvslNJo3MEntfsegln1mY0EBwyQ9knNFddWphWsL6t5t8492oLPQm-1gZGbN0eWo9l4t37RB30A9B0skhmvLihmwV04rjxLt92MOz-7HI-RhwmkZhLzOD0-fd-POmuyvbGm7B2bQ6s2Qzj0klUXjLWenN9aYoGlnzEZg",
+        "subject": "26TP0706PI",
+        "date": "Tue, 7 Jul 2026 14:28:51 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0706/26TP0706PI PL.xlsx"
+      }
+    ],
+    "flete_usd": 6700.0,
+    "flete_moneda": "USD",
+    "seimex_ref": "350-26 - PI0706",
+    "eta_puerto": "2026-08-14",
+    "eta_bodega": "2026-08-19",
+    "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0706/Pre-costeo_x_CBM_26TP0706.xlsx",
+    "skus": [
+      "SMBATSAV9-CR",
+      "SMBATOXBK",
+      "XRCADCANRR",
+      "LHBOTHYDTEK-BK",
+      "LHBOTHYDTEK-BG",
+      "LHBOTHYDTEK-PK",
+      "LHBOTHYDTEK-NY",
+      "LHBOTHYDTEK-GR"
+    ],
+    "skus_faltantes": [
+      "LHBOTHYDTEK-BG",
+      "LHBOTHYDTEK-BK",
+      "LHBOTHYDTEK-GR",
+      "LHBOTHYDTEK-NY",
+      "LHBOTHYDTEK-PK"
+    ],
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-03 17:29:46Z",
+    "ts_actualizado": "2026-09-03 17:30:48Z",
+    "log": [
+      "2026-09-03 17:29:46Z · PI detectado: 26TP0706PI NB 40HQ.xlsx · descargado",
+      "2026-09-03 17:29:47Z · PL detectado: 26TP0706PI PL.xlsx · descargado",
+      "2026-09-03 17:29:47Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0706PI NB 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-03 17:29:49Z · flete FINAL 6700 USD · ref 350-26 - PI0706 · ETA 2026-08-14 → bodega 2026-08-19",
+      "2026-09-03 17:29:49Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
+      "2026-09-03 17:30:47Z · costeado · 16 prod · sobrecosto 14.1% · internado 94,409,419 CLP · SKU por crear: 5 · sin SKU: 8",
+      "2026-09-03 17:30:48Z · borrador con planilla ([DRAFT] r3536494996710919219, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-09-03 17:30:48Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana"
+    ],
+    "productos_sin_sku": [
+      "MTHWLGBT590-AM",
+      "MTHWLGBT590-BK",
+      "MTHWLGBT750-BK",
+      "MTHWLGBT750-BY",
+      "MTHWLGBT750-YW",
+      "MTHWLGVT590-BG",
+      "MTHWLGVT590-BK",
+      "MTHWLGVT590-YW"
+    ],
+    "correo_firma": "['LHBOTHYDTEK-BG', 'LHBOTHYDTEK-BK', 'LHBOTHYDTEK-GR', 'LHBOTHYDTEK-NY', 'LHBOTHYDTEK-PK']|['MTHWLGBT590-AM', 'MTHWLGBT590-BK', 'MTHWLGBT750-BK', 'MTHWLGBT750-BY', 'MTHWLGBT750-YW', 'MTHWLGVT590-BG', 'MTHWLGVT590-BK', 'MTHWLGVT590-YW']"
   }
 }
