@@ -196,6 +196,19 @@ for oc, cs in por_oc.items():
         continue
     bol = boletas[0]
     ncs = nc_por_bol.get(bol["id"], [])
+    # Un BORRADOR propio (de una corrida que falló al postear) NO debe contar como
+    # "NC ya existe": si no, el ticket queda marcado con_nc y se salta para siempre
+    # sin que la NC llegue a emitirse (41 borradores huérfanos, 01-03 sep 2026).
+    # Se elimina —no tiene efecto fiscal, nunca se posteó— y se reemite abajo.
+    propios_draft = [n for n in ncs if n["state"] == "draft" and TAG in str(n.get("ref") or "")]
+    if propios_draft and not [n for n in ncs if n["state"] == "posted"]:
+        if LIVE:
+            try:
+                ex("account.move", "unlink", [n["id"] for n in propios_draft])
+                print(f"  ♻ boleta {bol['name']}: {len(propios_draft)} borrador(es) huérfano(s) eliminados → se reemite")
+            except Exception as e:
+                print(f"  ⚠ boleta {bol['name']}: no se pudo limpiar borrador huérfano: {str(e)[:120]}")
+        ncs = [n for n in ncs if n not in propios_draft]
     if ncs:
         if any(TAG in str(n.get("ref") or "") for n in ncs):
             marcas["con_nc"] += [(i, f"NC del agente ya existe: {ncs[0]['name']}") for i in tids]
@@ -280,12 +293,27 @@ for a in acciones[:MAX_NC_POR_CORRIDA]:
             ls = ex("account.move.line", "search_read",
                     [("move_id", "=", nc["id"]), ("display_type", "=", "product")],
                     fields=["id", "product_id", "quantity"])
+            # La cantidad devuelta se REPARTE entre las líneas del mismo producto: una
+            # boleta puede traer el producto repetido en varias líneas (qty 1 + qty 1).
+            # Antes se escribía el total en CADA línea → se acreditaba el doble (4 NC
+            # con $190.930 de exceso, 01-02 sep 2026). Además nunca se asigna más de lo
+            # que trae la línea original, así la NC no puede superar a la boleta.
+            pendiente = dict(a["lineas"])
             for l in ls:
                 pid = l["product_id"][0] if l["product_id"] else 0
-                if pid not in a["lineas"]:
+                resta = pendiente.get(pid, 0)
+                if resta <= 0:
                     ex("account.move.line", "unlink", [l["id"]])
-                elif abs(l["quantity"] - a["lineas"][pid]) > 0.001:
-                    ex("account.move.line", "write", [l["id"]], {"quantity": a["lineas"][pid]})
+                    continue
+                asignar = min(l["quantity"], resta)
+                pendiente[pid] = resta - asignar
+                if abs(l["quantity"] - asignar) > 0.001:
+                    ex("account.move.line", "write", [l["id"]], {"quantity": asignar})
+            sobra = {p: q for p, q in pendiente.items() if q > 0.001}
+            if sobra:
+                # El ticket pide devolver más unidades de las que tiene la boleta.
+                print(f"  ⚠ boleta {bol['name']}: el ticket pide {sobra} unidades de más "
+                      f"que la boleta — se acredita solo lo facturado")
         ex("account.move", "write", [nc["id"]],
            {"ref": f"{nc.get('ref') or ''} {TAG} {','.join('#'+str(r) for r in a['trefs'])}]".strip()})
         chk = ex("account.move", "read", [nc["id"]], fields=["amount_total"])[0]
