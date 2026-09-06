@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-09-05T17:12:05.998746",
+  "generado_en": "2026-09-06T07:43:12.817749",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03943917692152511,
-      "total_pickings": 9914,
-      "on_time": 393,
-      "on_time_pct": 0.03964091184183982,
-      "in_full": 9907,
-      "in_full_pct": 0.9992939277788985,
-      "both": 391,
+      "valor": 0.035988140271955835,
+      "total_pickings": 9781,
+      "on_time": 354,
+      "on_time_pct": 0.03619261834168285,
+      "in_full": 9774,
+      "in_full_pct": 0.9992843267559555,
+      "both": 352,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11488250652741515,
-      "total_pickings": 383,
+      "valor": 0.11548556430446194,
+      "total_pickings": 381,
       "on_time": 44,
-      "on_time_pct": 0.11488250652741515,
-      "in_full": 382,
-      "in_full_pct": 0.9973890339425587,
+      "on_time_pct": 0.11548556430446194,
+      "in_full": 380,
+      "in_full_pct": 0.9973753280839895,
       "both": 44,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998519395913533,
-      "ok": 13506,
-      "total": 13508,
+      "valor": 0.9998495448732415,
+      "ok": 13291,
+      "total": 13293,
       "errores": 2,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8613582712910841,
-      "total_so": 11060,
-      "total_con_pickings": 11014,
-      "cumplidos": 9487,
-      "parciales": 20,
-      "sin_iniciar": 1507,
+      "valor": 0.8406419108042545,
+      "total_so": 10763,
+      "total_con_pickings": 10718,
+      "cumplidos": 9010,
+      "parciales": 18,
+      "sin_iniciar": 1690,
       "error": null
     },
     "oct_30d": {
-      "valor": 44.45980566200474,
-      "n_orders": 10177,
+      "valor": 44.63019033331123,
+      "n_orders": 10054,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 30.163888888888888,
+      "mediana_h": 30.838055555555556,
       "detalle": [
         {
           "so": "S269110",
@@ -366,12 +366,6 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
-          "total": 6,
-          "tarde": 6,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Global Reward Solutions",
           "total": 127,
           "tarde": 127,
@@ -381,12 +375,6 @@
           "cliente": "Lokal SpA",
           "total": 4,
           "tarde": 4,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Comercial Ibarraconnect Ltda",
-          "total": 3,
-          "tarde": 3,
           "on_time_pct": 0.0
         },
         {
@@ -417,6 +405,12 @@
           "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
           "total": 3,
           "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
+          "total": 5,
+          "tarde": 5,
           "on_time_pct": 0.0
         },
         {
@@ -8144,31 +8138,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03943917692152511,
-      "total_pickings": 9914,
-      "on_time": 393,
-      "on_time_pct": 0.03964091184183982,
-      "in_full": 9907,
-      "in_full_pct": 0.9992939277788985,
-      "both": 391,
+      "valor": 0.035988140271955835,
+      "total_pickings": 9781,
+      "on_time": 354,
+      "on_time_pct": 0.03619261834168285,
+      "in_full": 9774,
+      "in_full_pct": 0.9992843267559555,
+      "both": 352,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11488250652741515,
-      "total_pickings": 383,
+      "valor": 0.11548556430446194,
+      "total_pickings": 381,
       "on_time": 44,
-      "on_time_pct": 0.11488250652741515,
-      "in_full": 382,
-      "in_full_pct": 0.9973890339425587,
+      "on_time_pct": 0.11548556430446194,
+      "in_full": 380,
+      "in_full_pct": 0.9973753280839895,
       "both": 44,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998519395913533,
-      "ok": 13506,
-      "total": 13508,
+      "valor": 0.9998495448732415,
+      "ok": 13291,
+      "total": 13293,
       "errores": 2,
       "error": null
     }
