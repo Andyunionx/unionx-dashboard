@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-09-06T17:32:03.301176",
+  "generado_en": "2026-09-07T08:01:40.236313",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.035988140271955835,
-      "total_pickings": 9781,
-      "on_time": 354,
-      "on_time_pct": 0.03619261834168285,
-      "in_full": 9774,
-      "in_full_pct": 0.9992843267559555,
-      "both": 352,
+      "valor": 0.03708971553610503,
+      "total_pickings": 9140,
+      "on_time": 341,
+      "on_time_pct": 0.03730853391684902,
+      "in_full": 9133,
+      "in_full_pct": 0.999234135667396,
+      "both": 339,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11548556430446194,
-      "total_pickings": 381,
-      "on_time": 44,
-      "on_time_pct": 0.11548556430446194,
-      "in_full": 380,
-      "in_full_pct": 0.9973753280839895,
-      "both": 44,
+      "valor": 0.1178082191780822,
+      "total_pickings": 365,
+      "on_time": 43,
+      "on_time_pct": 0.1178082191780822,
+      "in_full": 364,
+      "in_full_pct": 0.9972602739726028,
+      "both": 43,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998495448732415,
-      "ok": 13291,
-      "total": 13293,
+      "valor": 0.9998402683491734,
+      "ok": 12519,
+      "total": 12521,
       "errores": 2,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8331174838112858,
-      "total_so": 10855,
-      "total_con_pickings": 10810,
-      "cumplidos": 9006,
-      "parciales": 18,
-      "sin_iniciar": 1786,
+      "valor": 0.807753534975185,
+      "total_so": 10722,
+      "total_con_pickings": 10679,
+      "cumplidos": 8626,
+      "parciales": 17,
+      "sin_iniciar": 2036,
       "error": null
     },
     "oct_30d": {
-      "valor": 44.63019033331123,
-      "n_orders": 10054,
+      "valor": 45.28359435579196,
+      "n_orders": 9400,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 30.838055555555556,
+      "mediana_h": 29.368333333333332,
       "detalle": [
         {
           "so": "S269110",
@@ -200,13 +200,6 @@
           "horas": 664.4,
           "fecha_orden": "2026-07-29 00:56",
           "fecha_despacho": "2026-08-25 17:19"
-        },
-        {
-          "so": "S262757",
-          "cliente": "Cliente Mercado Libre, Valentina gatica",
-          "horas": 611.4,
-          "fecha_orden": "2026-07-13 00:37",
-          "fecha_despacho": "2026-08-07 12:01"
         },
         {
           "so": "S271025",
@@ -333,6 +326,13 @@
           "horas": 335.8,
           "fecha_orden": "2026-08-03 16:38",
           "fecha_despacho": "2026-08-17 16:26"
+        },
+        {
+          "so": "S269721",
+          "cliente": "Cliente Falabella Fcom, CARLOS ISMAEL DIOCARES",
+          "horas": 322.2,
+          "fecha_orden": "2026-07-30 03:04",
+          "fecha_despacho": "2026-08-12 13:18"
         }
       ],
       "error": null
@@ -351,9 +351,9 @@
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 208,
-      "outgoing": 30207,
-      "internal": 19585,
+      "incoming": 211,
+      "outgoing": 29296,
+      "internal": 20493,
       "total": 50000,
       "error": null
     },
@@ -366,15 +366,9 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "Global Reward Solutions",
-          "total": 127,
-          "tarde": 127,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Lokal SpA",
-          "total": 4,
-          "tarde": 4,
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 36,
+          "tarde": 36,
           "on_time_pct": 0.0
         },
         {
@@ -390,9 +384,9 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "ASTORGA SPA",
-          "total": 7,
-          "tarde": 7,
+          "cliente": "Global Reward Solutions",
+          "total": 115,
+          "tarde": 115,
           "on_time_pct": 0.0
         },
         {
@@ -408,16 +402,16 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "ASTORGA SPA",
+          "total": 6,
+          "tarde": 6,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
           "total": 5,
           "tarde": 5,
           "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Celmedia Fidelizacion SPA",
-          "total": 37,
-          "tarde": 36,
-          "on_time_pct": 0.02702702702702703
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -8138,31 +8132,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.035988140271955835,
-      "total_pickings": 9781,
-      "on_time": 354,
-      "on_time_pct": 0.03619261834168285,
-      "in_full": 9774,
-      "in_full_pct": 0.9992843267559555,
-      "both": 352,
+      "valor": 0.03708971553610503,
+      "total_pickings": 9140,
+      "on_time": 341,
+      "on_time_pct": 0.03730853391684902,
+      "in_full": 9133,
+      "in_full_pct": 0.999234135667396,
+      "both": 339,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11548556430446194,
-      "total_pickings": 381,
-      "on_time": 44,
-      "on_time_pct": 0.11548556430446194,
-      "in_full": 380,
-      "in_full_pct": 0.9973753280839895,
-      "both": 44,
+      "valor": 0.1178082191780822,
+      "total_pickings": 365,
+      "on_time": 43,
+      "on_time_pct": 0.1178082191780822,
+      "in_full": 364,
+      "in_full_pct": 0.9972602739726028,
+      "both": 43,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998495448732415,
-      "ok": 13291,
-      "total": 13293,
+      "valor": 0.9998402683491734,
+      "ok": 12519,
+      "total": 12521,
       "errores": 2,
       "error": null
     }
