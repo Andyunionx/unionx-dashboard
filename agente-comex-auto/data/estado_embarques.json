@@ -59,7 +59,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-06 14:42:03Z",
+    "ts_actualizado": "2026-09-07 16:56:47Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0826PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0826PI SZ 40HQ.xlsx (dry-run)",
@@ -74,7 +74,10 @@
       "2026-09-06 14:41:56Z · fase 2 (ESPERANDO_FLETE) → 3 (COSTEO_Y_SKUS) flete OK → costeo",
       "2026-09-06 14:42:02Z · costeado · 15 prod · sobrecosto 26.9% · internado 58,395,127 CLP · SKU por crear: 0 · sin SKU: 2",
       "2026-09-06 14:42:03Z · correo ENVIADO con planilla (1a0772b5528dc9ef, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-09-06 14:42:03Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:03Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:56:47Z · costeado · 15 prod · sobrecosto 26.9% · internado 58,395,127 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-09-07 16:56:47Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:56:47Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP033E",
@@ -157,7 +160,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-06 14:42:13Z",
+    "ts_actualizado": "2026-09-07 16:56:56Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
@@ -183,7 +186,10 @@
       "2026-09-05 14:18:47Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:13Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
       "2026-09-06 14:42:13Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:13Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:13Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:56:56Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
+      "2026-09-07 16:56:56Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:56:56Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "T2",
@@ -261,7 +267,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-06 14:42:19Z",
+    "ts_actualizado": "2026-09-07 16:57:01Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -287,7 +293,10 @@
       "2026-09-05 14:18:53Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:19Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-09-06 14:42:19Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:19Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:19Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:01Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-09-07 16:57:01Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:01Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
@@ -353,7 +362,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-06 14:42:25Z",
+    "ts_actualizado": "2026-09-07 16:57:07Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -378,7 +387,10 @@
       "2026-09-05 14:18:59Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:25Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-09-06 14:42:25Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:25Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:25Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:07Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-09-07 16:57:07Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:07Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -444,7 +456,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-06 14:42:29Z",
+    "ts_actualizado": "2026-09-07 16:57:11Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
@@ -469,7 +481,10 @@
       "2026-09-05 14:19:03Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:29Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
       "2026-09-06 14:42:29Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:29Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:29Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:11Z · costeado · 6 prod · sobrecosto 38.5% · internado 49,644,121 CLP · SKU por crear: 3 · sin SKU: 0",
+      "2026-09-07 16:57:11Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:11Z · pendientes (3 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "correo_firma": "['SMBATOXBG', 'XRCOOLPORTF40-GR', 'XRTOLLAT270-CL']|[]"
@@ -631,7 +646,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-06 14:42:35Z",
+    "ts_actualizado": "2026-09-07 16:57:17Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0811PI NB 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0811PI PL.xlsx (dry-run)",
@@ -656,7 +671,10 @@
       "2026-09-05 14:19:08Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:35Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
       "2026-09-06 14:42:35Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:35Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:35Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:17Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-09-07 16:57:17Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:17Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "HD4 Khaki",
@@ -778,7 +796,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-03 17:29:42Z",
-    "ts_actualizado": "2026-09-06 14:42:44Z",
+    "ts_actualizado": "2026-09-07 16:57:25Z",
     "log": [
       "2026-09-03 17:29:43Z · PL detectado: 26TP0716PI PL.xlsx · descargado",
       "2026-09-03 17:29:43Z · PI detectado: 26TP0716PI SZ 40HQ.xlsx · descargado",
@@ -796,7 +814,10 @@
       "2026-09-05 14:19:17Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:44Z · costeado · 23 prod · sobrecosto 16.7% · internado 79,884,267 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-09-06 14:42:44Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:44Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:44Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:25Z · costeado · 23 prod · sobrecosto 16.7% · internado 79,884,267 CLP · SKU por crear: 2 · sin SKU: 0",
+      "2026-09-07 16:57:25Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:25Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "correo_firma": "['LVTECMCL-BK', 'SIMCUTOL-2']|[]"
@@ -866,7 +887,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-03 17:29:43Z",
-    "ts_actualizado": "2026-09-06 14:42:50Z",
+    "ts_actualizado": "2026-09-07 16:57:31Z",
     "log": [
       "2026-09-03 17:29:44Z · PL detectado: 26TP0720PI PL.xlsx · descargado",
       "2026-09-03 17:29:44Z · PI detectado: 26TP0720PI SZ 40HQ.xlsx · descargado",
@@ -884,7 +905,10 @@
       "2026-09-05 14:19:23Z · pendientes (1 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:50Z · costeado · 12 prod · sobrecosto 37.6% · internado 40,362,625 CLP · SKU por crear: 1 · sin SKU: 0",
       "2026-09-06 14:42:50Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:50Z · pendientes (1 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:50Z · pendientes (1 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:31Z · costeado · 12 prod · sobrecosto 37.6% · internado 40,362,625 CLP · SKU por crear: 1 · sin SKU: 0",
+      "2026-09-07 16:57:31Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:31Z · pendientes (1 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "correo_firma": "['SIMOREXBAS-35']|[]"
@@ -954,7 +978,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-03 17:29:46Z",
-    "ts_actualizado": "2026-09-06 14:42:56Z",
+    "ts_actualizado": "2026-09-07 16:57:37Z",
     "log": [
       "2026-09-03 17:29:46Z · PI detectado: 26TP0706PI NB 40HQ.xlsx · descargado",
       "2026-09-03 17:29:47Z · PL detectado: 26TP0706PI PL.xlsx · descargado",
@@ -972,7 +996,10 @@
       "2026-09-05 14:19:28Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana",
       "2026-09-06 14:42:56Z · costeado · 16 prod · sobrecosto 14.1% · internado 94,409,419 CLP · SKU por crear: 5 · sin SKU: 8",
       "2026-09-06 14:42:56Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-06 14:42:56Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana"
+      "2026-09-06 14:42:56Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana",
+      "2026-09-07 16:57:37Z · costeado · 16 prod · sobrecosto 14.1% · internado 94,409,419 CLP · SKU por crear: 5 · sin SKU: 8",
+      "2026-09-07 16:57:37Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-07 16:57:37Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "MTHWLGBT590-AM",
