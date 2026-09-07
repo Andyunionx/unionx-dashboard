@@ -1,0 +1,39 @@
+name: "Recordatorio: Walmart WFS con bodega Carrascal"
+
+# Recordatorio de UNA sola vez, el lunes 14-09-2026 a las 08:10 CLT (12:10 UTC).
+# Gerardo y Yohana están de vacaciones cuando se envía el aviso original (07-09),
+# así que el seguimiento NO puede depender del notebook de Andrés ni de una tarea
+# de Windows (que falla ~60% de las veces por el logon interactivo). Corre acá.
+#
+# Responde en el mismo hilo del aviso original, cuyo threadId quedó guardado en
+# data/outputs/_aviso_walmart_wfs.json (versionado junto con este workflow).
+#
+# Después del 14-09 este workflow queda inerte: borrarlo o dejarlo, no vuelve a
+# dispararse porque el cron está pineado a ese día.
+
+on:
+  schedule:
+    - cron: '10 12 14 9 *'   # 14 de septiembre, 08:10 CLT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recordar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar deps
+        run: pip install --quiet google-auth google-auth-oauthlib google-api-python-client
+
+      - name: Enviar recordatorio en el hilo
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: python -u aviso_walmart_wfs_bodega.py --recordatorio
