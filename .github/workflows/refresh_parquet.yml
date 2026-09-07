@@ -28,7 +28,10 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 20 min no alcanzaron en la primera prueba (07-sep): el extract sigue
+    # corriendo cuando el job se cancela. El Pulso Diario tiene el mismo límite
+    # pero corre a las 11:30 UTC, con Odoo descargado.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -56,7 +59,8 @@ jobs:
         env:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           PYTHONIOENCODING: utf-8
-        run: python extract_mes_actual_a_parquet.py --source odoo
+        # -u = sin buffer, para ver el avance en el log si vuelve a colgarse
+        run: python -u extract_mes_actual_a_parquet.py --source odoo
 
       - name: Commit + push
         run: |
