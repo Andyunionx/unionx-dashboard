@@ -128,6 +128,37 @@ if n_rej > UMBRAL_RECHAZADOS:
 if n_obj > UMBRAL_OBJETADOS:
     advertencias.append(f"DTEs aceptados con reparos últimas 48 h: {n_obj} (umbral {UMBRAL_OBJETADOS}).")
 
+# 6) stock NEGATIVO en ubicaciones internas (firma de recepciones/correcciones a medias:
+#    casos cajas Vinoteca, decantador -599, Celiv 07-sep). Input/Output = crítico
+#    (físicamente imposible); resto = advertencia si es material.
+try:
+    negs = rpc("stock.quant", "search_read",
+               [[("location_id.usage", "=", "internal"), ("quantity", "<", 0)]],
+               {"fields": ["product_id", "location_id", "quantity"], "limit": 500})
+    if negs:
+        prods = list({q["product_id"][0] for q in negs if q["product_id"]})
+        std = {}
+        for i in range(0, len(prods), 300):
+            for p in rpc("product.product", "read", [prods[i:i+300]],
+                         {"fields": ["standard_price"], "context": {"active_test": False}}):
+                std[p["id"]] = p["standard_price"] or 0
+        io_negs, otros_val = [], 0.0
+        for q in negs:
+            loc = q["location_id"][1]
+            val = abs(q["quantity"]) * std.get(q["product_id"][0] if q["product_id"] else 0, 0)
+            if any(x in loc for x in ("/Input", "/Output", "/Entrada", "/Salida")):
+                io_negs.append((q["product_id"][1][:40] if q["product_id"] else "?", loc, q["quantity"], val))
+            else:
+                otros_val += val
+        if io_negs:
+            top = sorted(io_negs, key=lambda x: -x[3])[:8]
+            det = "; ".join(f"{n} en {l} ({c:g}u ~${v:,.0f})" for n, l, c, v in top)
+            criticas.append(f"STOCK NEGATIVO EN ZONA ENTRADA/SALIDA ({len(io_negs)} casos — recepción o corrección a medias): {det}")
+        if otros_val > 500000:
+            advertencias.append(f"Stock negativo en bodegas internas: {len(negs)-len(io_negs)} quants por ~${otros_val:,.0f} a costo (revisar ajustes pendientes).")
+except Exception as e:
+    advertencias.append(f"Chequeo de negativos falló: {str(e)[:80]}")
+
 # ---- armar correo ----
 estado_gral = "🔴" if criticas else ("🟡" if advertencias else "✅")
 fecha = (HOY - datetime.timedelta(hours=4)).strftime("%d-%m-%Y %H:%M")  # CLT
