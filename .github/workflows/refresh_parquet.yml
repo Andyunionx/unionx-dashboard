@@ -1,0 +1,75 @@
+name: "Refresh parquet mes actual (intradía)"
+
+# Complementa al Pulso Diario (email_diario.yml), que refresca el parquet una
+# sola vez al día a las 07:30 CLT vía el Cloudflare Worker "patient-cloud-327e".
+# Todo lo vendido después de esa hora no aparecía hasta la mañana siguiente, y
+# los fines de semana no se refrescaba nada hasta el lunes.
+#
+# Este workflow SOLO refresca el parquet: no envía ningún correo. Por eso acá sí
+# se puede usar el cron nativo de GitHub Actions — el incidente del 11-jun-2026
+# (cron con 3,5h de atraso que duplicó el mail del pulso) no aplica: un refresh
+# atrasado simplemente refresca más tarde, no duplica nada.
+
+on:
+  schedule:
+    - cron: '30 16 * * *'   # 12:30 CLT — media mañana
+    - cron: '30 21 * * *'   # 17:30 CLT — cierre de jornada
+    - cron: '30 13 * * 6,0' # 09:30 CLT sábado y domingo (el pulso no corre)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Nunca dos refresh a la vez, ni pisar el commit del Pulso Diario.
+  group: parquet-mes-actual
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install google-auth google-auth-oauthlib google-api-python-client
+
+      - name: Restaurar credentials.json (enriquecimiento CMR)
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+          else
+            echo "[WARN] GOOGLE_CREDENTIALS_JSON no configurado — CMR se omitirá"
+          fi
+
+      - name: Extract Odoo -> parquet
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python extract_mes_actual_a_parquet.py --source odoo
+
+      - name: Commit + push
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Refresh Parquet"
+          git add data/historico/ventas_mes_actual.parquet || true
+          if git diff --staged --quiet; then
+            echo "Sin cambios en el parquet"
+            exit 0
+          fi
+          git commit -m "Refresh parquet intradía: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            echo "reintento $i"; sleep 10
+          done
+          echo "[WARN] no se pudo pushear tras 3 intentos"
