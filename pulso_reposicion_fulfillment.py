@@ -500,7 +500,15 @@ def construir(no_download=False, no_live=False) -> Path:
             ume = mult2(float(v_canal.get((sku, canal), 0)))
             manual = manual_map.get((sku, canal))
             large = 1 if (canal, sku) in lgset else 0
-            black = bl_panel.get((sku, canal), 1 if (canal, sku) in blset else 0)
+            # Blacklist: manda el 1 de CUALQUIERA de las dos hojas del panel.
+            # Antes la hoja UME tenía precedencia y su 0 anulaba a la hoja
+            # BLACKLIST: 251 pares canal-SKU marcados por Trinidad (175 ML, 76
+            # Walmart) seguían entrando al sugerido. (Reporte Trinidad 07-09.)
+            # Blacklist: manda el 1 de CUALQUIERA de las dos hojas del panel.
+            # Antes la hoja UME tenía precedencia y su 0 anulaba a la hoja
+            # BLACKLIST: 251 pares canal-SKU marcados por Trinidad (175 ML, 76
+            # Walmart) seguían entrando al sugerido. (Reporte Trinidad 07-09.)
+            black = 1 if ((canal, sku) in blset or bl_panel.get((sku, canal)) == 1) else 0
             # Objetivo por cobertura por CANAL (hoja Reglas). OJO: la col 'Cob' de la
             # Maestra resultó ser cobertura ACTUAL (llega a 158 meses), NO un objetivo,
             # así que NO se usa como target (inflaba el sugerido 17x). Se muestra como
