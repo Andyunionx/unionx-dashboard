@@ -211,7 +211,7 @@ if not creds.valid:
     creds.refresh(Request())
 svc = build("gmail", "v1", credentials=creds)
 msg = EmailMessage()
-msg["To"] = "andres@unionx.cl"
+msg["To"] = os.environ.get("ALARMAS_EMAIL_TO", "andres@unionx.cl, gerardo@unionx.cl, operaciones@unionx.cl")
 msg["From"] = "andres@unionx.cl"
 msg["Subject"] = f"{estado_gral} Pulso Alarmas Odoo · {(HOY - datetime.timedelta(hours=4)).strftime('%d-%b')} · {len(criticas)} críticas"
 msg.set_content("Pulso Alarmas Odoo (ver versión HTML).")
