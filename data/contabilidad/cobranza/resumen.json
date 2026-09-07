@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-09-07T16:47:12.218435",
+  "generado_en": "2026-09-07T20:53:14.552861",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12309,
-  "total_monto_pendiente_clp": 952330244.0,
+  "total_documentos_pendientes": 12297,
+  "total_monto_pendiente_clp": 944338502.0,
   "monto_por_aging": {
     "+90 días": 72306729.0,
-    "1-30 días": 363591667.0,
-    "31-60 días": 232271352.0,
+    "1-30 días": 363226754.0,
+    "31-60 días": 230400365.0,
     "61-90 días": 30334873.0,
-    "Vigente": 253825623.0
+    "Vigente": 248069781.0
   },
   "monto_por_tipo": {
-    "BOLETA": 723474225.0,
-    "FACTURA": 228856019.0
+    "BOLETA": 721651453.0,
+    "FACTURA": 222687049.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 136001719.0
+      "monto": 136385195.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,11 +34,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 60909857.0
+      "monto": 61567427.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 58277366.0
+      "monto": 58412176.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -46,15 +46,15 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 25702391.0
+      "monto": 26043351.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23990324.0
+      "monto": 24263204.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 23210474.0
+      "monto": 19462495.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 17249257.0
+      "monto": 17225257.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -70,11 +70,11 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 13741773.0
+      "monto": 14188900.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 11749326.0
+      "monto": 11806266.0
     },
     {
       "partner": "Status Spa",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 7795269.0
+      "monto": 7825262.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -97,6 +97,6 @@
       "monto": 6199603.0
     }
   ],
-  "notas_credito_count": 771,
+  "notas_credito_count": 773,
   "pedidos_venta_count": 10000
 }
