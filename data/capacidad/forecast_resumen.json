@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-07T18:09:44.116075",
+  "generado_en": "2026-09-07T18:55:49.976692",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 857,
-    "posiciones_libres_hoy": 512,
-    "pct_ocupacion_hoy": 62.6,
-    "m3_stock_calculado": 882.9
+    "posiciones_ocupadas_hoy": 856,
+    "posiciones_libres_hoy": 513,
+    "pct_ocupacion_hoy": 62.5,
+    "m3_stock_calculado": 882.8
   },
   "pico_proyectado": {
     "fecha": "2026-09-07",
-    "posiciones_ocupadas": 857.0,
-    "pct_ocupacion": 62.6
+    "posiciones_ocupadas": 856.0,
+    "pct_ocupacion": 62.5
   },
   "minimo_proyectado": {
     "fecha": "2026-11-06",
-    "posiciones_ocupadas": 600.7,
-    "pct_ocupacion": 43.9
+    "posiciones_ocupadas": 599.7,
+    "pct_ocupacion": 43.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -58,15 +58,15 @@
   "pallets_total_entrantes_horizonte": 51.5,
   "pallets_total_salientes_horizonte": 256.3,
   "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 307.6,
+  "m3_total_saliente_horizonte": 307.5,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 798,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 135583.0,
-    "demanda_cumplida_unidades": 35815.0,
-    "demanda_no_cubierta_unidades_total": 99768.0,
+    "demanda_cumplida_unidades": 35811.0,
+    "demanda_no_cubierta_unidades_total": 99772.0,
     "pct_demanda_cumplida": 26.4,
     "sku_sin_match_stock_count": 47,
     "top_no_cubiertos": [
@@ -147,7 +147,7 @@
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 241.0,
+        "unid_no_cubiertas": 242.0,
         "sin_match_stock": true
       },
       {
@@ -162,7 +162,7 @@
       },
       {
         "sku": "LVPROORI",
-        "unid_no_cubiertas": 195.0,
+        "unid_no_cubiertas": 196.0,
         "sin_match_stock": true
       },
       {
