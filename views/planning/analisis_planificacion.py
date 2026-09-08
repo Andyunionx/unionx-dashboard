@@ -241,7 +241,8 @@ def _fmt_cob(v):
     if v <= 6: return f"🔵 {v:.1f}m"
     return f"🟣 {v:.1f}m"
 
-_REPORT_EXCEL_PATH = DATA_DIR / 'planificacion' / 'analisis_planificacion_AGO26.xlsx'
+_excels_planif = sorted((DATA_DIR / 'planificacion').glob('analisis_planificacion_*.xlsx'), reverse=True)
+_REPORT_EXCEL_PATH = _excels_planif[0] if _excels_planif else DATA_DIR / 'planificacion' / 'analisis_planificacion_SEP26.xlsx'
 
 
 def _dl_excel(key: str, label="⬇️ Descargar Reporte"):
