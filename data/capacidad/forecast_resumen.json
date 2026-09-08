@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-08T17:03:51.178831",
+  "generado_en": "2026-09-08T18:11:41.012740",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 854,
-    "posiciones_libres_hoy": 515,
-    "pct_ocupacion_hoy": 62.4,
-    "m3_stock_calculado": 872.8
+    "posiciones_ocupadas_hoy": 846,
+    "posiciones_libres_hoy": 523,
+    "pct_ocupacion_hoy": 61.8,
+    "m3_stock_calculado": 872.7
   },
   "pico_proyectado": {
     "fecha": "2026-09-08",
-    "posiciones_ocupadas": 854.0,
-    "pct_ocupacion": 62.4
+    "posiciones_ocupadas": 846.0,
+    "pct_ocupacion": 61.8
   },
   "minimo_proyectado": {
     "fecha": "2026-11-07",
-    "posiciones_ocupadas": 602.3,
-    "pct_ocupacion": 44.0
+    "posiciones_ocupadas": 594.3,
+    "pct_ocupacion": 43.4
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -58,15 +58,15 @@
   "pallets_total_entrantes_horizonte": 51.5,
   "pallets_total_salientes_horizonte": 251.7,
   "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 302.1,
+  "m3_total_saliente_horizonte": 302.0,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 798,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 133065.0,
-    "demanda_cumplida_unidades": 35801.0,
-    "demanda_no_cubierta_unidades_total": 97264.0,
+    "demanda_cumplida_unidades": 35798.0,
+    "demanda_no_cubierta_unidades_total": 97267.0,
     "pct_demanda_cumplida": 26.9,
     "sku_sin_match_stock_count": 46,
     "top_no_cubiertos": [
@@ -117,12 +117,12 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 456.0,
+        "unid_no_cubiertas": 457.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUROM-30",
-        "unid_no_cubiertas": 376.0,
+        "unid_no_cubiertas": 378.0,
         "sin_match_stock": true
       },
       {
