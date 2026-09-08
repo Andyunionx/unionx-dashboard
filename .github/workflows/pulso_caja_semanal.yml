@@ -1,0 +1,25 @@
+name: Pulso Caja Semanal
+
+on:
+  schedule:
+    # Lunes 08:00 CLT verano (UTC-3) = 11:00 UTC; en invierno (UTC-4) queda 07:00 CLT.
+    # GH free tier puede demorar 5-30 min.
+    - cron: '0 11 * * 1'
+  workflow_dispatch: {}
+
+jobs:
+  pulso-caja:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: pip install --quiet pandas pyarrow openpyxl google-api-python-client google-auth google-auth-oauthlib
+      - name: Correr pulso
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+        run: python pulso_caja_semanal.py
