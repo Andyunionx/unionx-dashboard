@@ -33,6 +33,7 @@ _MES_SLUG  = _TODAY.strftime('%b%y').upper()    # "AGO26"
 _TIPO_NEG_TO_PPTO: dict[str, str] = {
     'Marketplace':      'Marketplace',
     'Páginas propias':  'P.Web',
+    'Páginas Propias':  'P.Web',
     'Fidelización':     'Fidelización',
     'Fidelización CMR': 'Fidelización',
     'Distribución':     'Distribución',
@@ -112,7 +113,8 @@ def _cargar_ventas_ytd() -> pd.DataFrame:
         df['fecha_venta'] = pd.to_datetime(df['fecha_venta'], errors='coerce')
         df = df[df['fecha_venta'].dt.year == _TODAY.year].copy()
         df['mes']        = df['fecha_venta'].dt.to_period('M').astype(str)
-        df['canal_ppto'] = df['tipo_negocio'].map(_TIPO_NEG_TO_PPTO).fillna('Otros')
+        df['canal_ppto'] = df['tipo_negocio'].map(_TIPO_NEG_TO_PPTO)
+        df = df[df['canal_ppto'].notna()]
         # Ventas Distribución cuyo canal real sea 'UnionX B2B' se separan de Distribución
         if 'canal' in df.columns:
             mask_b2b = (df['tipo_negocio'] == 'Distribución') & (df['canal'] == 'UnionX B2B')
