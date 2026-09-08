@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-08T03:16:28.541961",
+  "generado_en": "2026-09-08T10:40:43.999845",
   "total_skus": 1749,
   "total_quants": 4622,
   "total_locations": 1423,
@@ -9,9 +9,9 @@
     "unidades_total": 193041.0,
     "costo_promedio_sku": 579777.7,
     "n_quiebre_critico": 86,
-    "n_bajo": 162,
-    "n_optimo": 120,
-    "n_sobrestock": 303,
+    "n_bajo": 163,
+    "n_optimo": 121,
+    "n_sobrestock": 301,
     "n_sin_venta": 1078,
     "rot_30d_promedio": 1.37,
     "rot_90d_promedio": 3.32
@@ -124,7 +124,7 @@
         "Posicion": "101A18",
         "Ubicacion": "CA1/Stock/101A18",
         "Estado": "Ocupada",
-        "SKUs": 3
+        "SKUs": 2
       },
       {
         "Posicion": "101A19",
@@ -1972,7 +1972,7 @@
         "Posicion": "1M0210",
         "Ubicacion": "CA1/Stock/1M0210",
         "Estado": "Ocupada",
-        "SKUs": 3
+        "SKUs": 2
       },
       {
         "Posicion": "1M0220",
@@ -8245,15 +8245,15 @@
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 303
+      "SKUs": 301
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 162
+      "SKUs": 163
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 120
+      "SKUs": 121
     },
     {
       "Categoria": "CRITICO",
