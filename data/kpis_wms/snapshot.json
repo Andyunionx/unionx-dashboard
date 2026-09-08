@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-09-08T07:53:54.955327",
+  "generado_en": "2026-09-08T18:23:04.944226",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.035162327559381805,
-      "total_pickings": 9641,
-      "on_time": 341,
-      "on_time_pct": 0.03536977491961415,
-      "in_full": 9634,
-      "in_full_pct": 0.9992739342391868,
-      "both": 339,
+      "valor": 0.035470390378146976,
+      "total_pickings": 9811,
+      "on_time": 350,
+      "on_time_pct": 0.03567424319641219,
+      "in_full": 9804,
+      "in_full_pct": 0.9992865151360718,
+      "both": 348,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,18 +23,39 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998486453761163,
-      "ok": 13212,
-      "total": 13214,
+      "valor": 0.9998511461744567,
+      "ok": 13434,
+      "total": 13436,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 18.59499331806033,
-      "n_recepciones": 291,
+      "valor": 18.41156746031746,
+      "n_recepciones": 294,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01049",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-09-08 14:31",
+          "done": "2026-09-08 14:32"
+        },
+        {
+          "picking": "CA1/IN/01048",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-09-08 13:45",
+          "done": "2026-09-08 13:59"
+        },
+        {
+          "picking": "CA1/IN/01047",
+          "proveedor": "",
+          "horas": 1.6,
+          "scheduled": "2026-09-08 11:26",
+          "done": "2026-09-08 13:04"
+        },
         {
           "picking": "CA1/IN/01044",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-08-26 15:39",
           "done": "2026-08-26 15:39"
-        },
-        {
-          "picking": "CA1/RET/01174",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-26 15:38",
-          "done": "2026-08-26 15:38"
-        },
-        {
-          "picking": "CA1/IN/01030",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-25 21:24",
-          "done": "2026-08-25 21:25"
-        },
-        {
-          "picking": "CA1/IN/01029",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-25 21:23",
-          "done": "2026-08-25 21:24"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8120989917506874,
-      "total_so": 10951,
-      "total_con_pickings": 10910,
-      "cumplidos": 8860,
+      "valor": 0.8178273485672832,
+      "total_so": 11070,
+      "total_con_pickings": 11028,
+      "cumplidos": 9019,
       "parciales": 17,
-      "sin_iniciar": 2033,
+      "sin_iniciar": 1992,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.12841124217271,
-      "n_orders": 9919,
+      "valor": 44.921802182795346,
+      "n_orders": 10089,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 29.738055555555555,
+      "mediana_h": 29.315277777777776,
       "detalle": [
         {
           "so": "S269110",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 2302,
+      "lineas": 2527,
       "mes": "2026-09",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 215,
-      "outgoing": 29401,
-      "internal": 20384,
+      "outgoing": 29400,
+      "internal": 20385,
       "total": 50000,
       "error": null
     },
@@ -8110,13 +8110,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.035162327559381805,
-      "total_pickings": 9641,
-      "on_time": 341,
-      "on_time_pct": 0.03536977491961415,
-      "in_full": 9634,
-      "in_full_pct": 0.9992739342391868,
-      "both": 339,
+      "valor": 0.035470390378146976,
+      "total_pickings": 9811,
+      "on_time": 350,
+      "on_time_pct": 0.03567424319641219,
+      "in_full": 9804,
+      "in_full_pct": 0.9992865151360718,
+      "both": 348,
       "error": null
     },
     "b2b_30d": {
@@ -8132,20 +8132,41 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998486453761163,
-      "ok": 13212,
-      "total": 13214,
+      "valor": 0.9998511461744567,
+      "ok": 13434,
+      "total": 13436,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 18.59499331806033,
-      "n_recepciones": 291,
+      "valor": 18.41156746031746,
+      "n_recepciones": 294,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01049",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-09-08 14:31",
+          "done": "2026-09-08 14:32"
+        },
+        {
+          "picking": "CA1/IN/01048",
+          "proveedor": "",
+          "horas": 0.2,
+          "scheduled": "2026-09-08 13:45",
+          "done": "2026-09-08 13:59"
+        },
+        {
+          "picking": "CA1/IN/01047",
+          "proveedor": "",
+          "horas": 1.6,
+          "scheduled": "2026-09-08 11:26",
+          "done": "2026-09-08 13:04"
+        },
         {
           "picking": "CA1/IN/01044",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
@@ -8264,27 +8285,6 @@
           "horas": 0.0,
           "scheduled": "2026-08-26 15:39",
           "done": "2026-08-26 15:39"
-        },
-        {
-          "picking": "CA1/RET/01174",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-26 15:38",
-          "done": "2026-08-26 15:38"
-        },
-        {
-          "picking": "CA1/IN/01030",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-25 21:24",
-          "done": "2026-08-25 21:25"
-        },
-        {
-          "picking": "CA1/IN/01029",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-08-25 21:23",
-          "done": "2026-08-25 21:24"
         }
       ],
       "error": null
