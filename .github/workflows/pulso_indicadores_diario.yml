@@ -1,0 +1,23 @@
+name: Pulso Indicadores Diario
+
+on:
+  schedule:
+    # L-V 08:00 CLT verano (UTC-3) = 11:00 UTC; en invierno (UTC-4) queda 07:00 CLT.
+    - cron: '0 11 * * 1-5'
+  workflow_dispatch: {}
+
+jobs:
+  pulso-indicadores:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: pip install --quiet google-api-python-client google-auth google-auth-oauthlib
+      - name: Correr pulso
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+        run: python pulso_indicadores_diario.py
