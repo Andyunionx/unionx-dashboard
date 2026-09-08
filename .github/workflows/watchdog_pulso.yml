@@ -1,0 +1,56 @@
+name: "Watchdog Pulso Diario"
+
+# Red de seguridad del Pulso Diario.
+#
+# El disparador oficial es el Cloudflare Worker "patient-cloud-327e"
+# (cron 30 11 * * MON-FRI). Funcionó sin fallar desde el 06-08-2026 hasta que el
+# 08-09-2026 no disparó y el pulso no salió. Es un punto único de falla que no
+# podemos ver ni monitorear desde el repo.
+#
+# Este watchdog revisa si el Pulso Diario YA corrió hoy. Si corrió, no hace nada.
+# Si no corrió, lo ejecuta él. Por eso NO reintroduce el incidente del 11-jun
+# (correo duplicado por cron atrasado): el cron de GHA puede llegar tarde, pero
+# solo dispara cuando falta.
+#
+# Se ejecuta con workflow_call en vez de workflow_dispatch porque el GITHUB_TOKEN
+# de Actions no puede gatillar otro workflow (GitHub lo bloquea para evitar
+# recursión). Con workflow_call corre dentro de esta misma ejecución.
+
+on:
+  schedule:
+    - cron: '17 13 * * 1-5'   # 09:17 CLT — ~1h45 después del Worker
+    - cron: '23 16 * * 1-5'   # 12:23 CLT — segundo intento si el primero llegó tarde
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    outputs:
+      falta: ${{ steps.chk.outputs.falta }}
+    steps:
+      - name: ¿Corrió hoy el Pulso Diario?
+        id: chk
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          HOY=$(date -u +%Y-%m-%d)
+          N=$(gh api "repos/${{ github.repository }}/actions/workflows/email_diario.yml/runs?per_page=30" \
+                --jq "[.workflow_runs[] | select(.created_at | startswith(\"$HOY\")) | select(.conclusion == \"success\" or .status == \"in_progress\")] | length")
+          echo "Corridas del Pulso Diario hoy ($HOY): $N"
+          if [ "$N" -gt 0 ]; then
+            echo "falta=false" >> $GITHUB_OUTPUT
+            echo "El pulso ya salió — el watchdog no hace nada."
+          else
+            echo "falta=true" >> $GITHUB_OUTPUT
+            echo "::warning::El Pulso Diario no corrió hoy. El Cloudflare Worker no disparó; el watchdog lo ejecuta."
+          fi
+
+  pulso:
+    needs: revisar
+    if: needs.revisar.outputs.falta == 'true'
+    uses: ./.github/workflows/email_diario.yml
+    secrets: inherit

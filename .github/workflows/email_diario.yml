@@ -16,6 +16,16 @@ on:
         description: "Solo refrescar parquet + LIVE en Drive, SIN enviar el mail del pulso"
         type: boolean
         default: false
+  # Red de seguridad: `watchdog_pulso.yml` llama a este workflow si el Worker no
+  # disparó (08-09-2026 falló por primera vez tras un mes sin fallar y el pulso
+  # no salió). Se usa workflow_call y no un dispatch porque el GITHUB_TOKEN de
+  # Actions no puede gatillar otro workflow — GitHub lo bloquea para evitar
+  # recursión.
+  workflow_call:
+    inputs:
+      solo_live:
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -81,19 +91,6 @@ jobs:
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_diario.py
-
-      - name: Enviar Pulso Alarmas Odoo (salud crons + cola SII)
-        # ACTIVO (pedido Andres 20-08-2026): semaforo diario L-V con estado de
-        # crons criticos (envio SII, LdM, 801, Shopify) y cola DTE not_sent.
-        # Origen: cron 26 apagado 11-20 ago -> 2.822 boletas sin enviar al SII.
-        # Deshabilitar con vars.PULSO_ALARMAS_ENABLED='false'.
-        if: ${{ github.event.inputs.solo_live != 'true' && vars.PULSO_ALARMAS_ENABLED != 'false' }}
-        env:
-          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
-          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
-          PYTHONIOENCODING: utf-8
-        run: python pulso_alarmas_odoo.py
-        continue-on-error: true
 
       - name: Enviar Pulso Stock Live (tabla dinámica por bodega)
         # ACTIVO desde 25-jun-2026: corre si vars.PULSO_STOCK_ENABLED == 'true'.
