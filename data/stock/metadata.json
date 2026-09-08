@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-08T20:46:43.517278",
+  "generado_en": "2026-09-08T23:13:32.262114",
   "total_skus": 1750,
   "total_quants": 4660,
   "total_locations": 1423,
@@ -9,10 +9,10 @@
     "unidades_total": 192747.0,
     "costo_promedio_sku": 577573.64,
     "n_quiebre_critico": 91,
-    "n_bajo": 161,
-    "n_optimo": 126,
-    "n_sobrestock": 297,
-    "n_sin_venta": 1075,
+    "n_bajo": 162,
+    "n_optimo": 127,
+    "n_sobrestock": 296,
+    "n_sin_venta": 1074,
     "rot_30d_promedio": 1.38,
     "rot_90d_promedio": 3.32
   },
@@ -1761,8 +1761,8 @@
       {
         "Posicion": "1L0950",
         "Ubicacion": "CA1/Stock/1L0950",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "1L1010",
@@ -1978,7 +1978,7 @@
         "Posicion": "1M0220",
         "Ubicacion": "CA1/Stock/1M0220",
         "Estado": "Ocupada",
-        "SKUs": 2
+        "SKUs": 1
       },
       {
         "Posicion": "1M0230",
@@ -2025,14 +2025,14 @@
       {
         "Posicion": "1M0420",
         "Ubicacion": "CA1/Stock/1M0420",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "1M0430",
         "Ubicacion": "CA1/Stock/1M0430",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "1M0440",
@@ -6483,8 +6483,8 @@
       {
         "Posicion": "301H02",
         "Ubicacion": "CA1/Stock/301H02",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "301H03",
@@ -8234,26 +8234,26 @@
       }
     ],
     "total": 1369,
-    "occupied": 845,
-    "empty": 524,
-    "pct": 61.7
+    "occupied": 841,
+    "empty": 528,
+    "pct": 61.4
   },
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1075
+      "SKUs": 1074
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 297
+      "SKUs": 296
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 161
+      "SKUs": 162
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 126
+      "SKUs": 127
     },
     {
       "Categoria": "CRITICO",
