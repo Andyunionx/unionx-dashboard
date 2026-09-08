@@ -172,3 +172,18 @@ jobs:
             echo "No es lunes — Pulso KPI semanal omitido."
           fi
         continue-on-error: true
+
+      - name: Enviar Reporte Diario Operación (L-V)
+        # ACTIVO (OK Andrés 08-sep-2026): sensibilidad diaria de la operación del
+        # día anterior desde Odoo directo. 4 bloques: entregas por canal/modalidad/
+        # línea · recepciones por marca/producto · ajustes por marca/producto ·
+        # cambios de stock por bodega (+ merma con bodega y responsable). El lunes
+        # reporta el viernes (último día hábil).
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.REPORTE_DIARIO_OP_ENABLED != 'false' }}
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          EMAIL_TO: ${{ vars.REPORTE_DIARIO_OP_EMAIL_TO || 'andres@unionx.cl,gerardo@unionx.cl' }}
+          PYTHONIOENCODING: utf-8
+        run: SEND=1 python reporte_diario_operacion.py
+        continue-on-error: true
