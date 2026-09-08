@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-08T15:34:01.145599",
+  "generado_en": "2026-09-08T20:25:57.286231",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11333,
-  "total_monto_pendiente_clp": 906022810.0,
+  "total_documentos_pendientes": 11397,
+  "total_monto_pendiente_clp": 908945038.0,
   "monto_por_aging": {
     "+90 días": 71617029.0,
-    "1-30 días": 344015758.0,
+    "1-30 días": 346574807.0,
     "31-60 días": 208818276.0,
     "61-90 días": 32791444.0,
-    "Vigente": 248780303.0
+    "Vigente": 249143482.0
   },
   "monto_por_tipo": {
-    "BOLETA": 683335761.0,
+    "BOLETA": 686257989.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 106868617.0
+      "monto": 107559774.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -34,11 +34,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 59125377.0
+      "monto": 59268088.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 58314186.0
+      "monto": 58336166.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -46,11 +46,11 @@
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 26949661.0
+      "monto": 27039131.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 24658744.0
+      "monto": 24755698.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -58,11 +58,11 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 17225257.0
+      "monto": 17441224.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14333505.0
+      "monto": 14357998.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 11979066.0
+      "monto": 12096776.0
     },
     {
       "partner": "Status Spa",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 7825262.0
+      "monto": 7972474.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -97,6 +97,6 @@
       "monto": 6199603.0
     }
   ],
-  "notas_credito_count": 775,
+  "notas_credito_count": 778,
   "pedidos_venta_count": 10000
 }
