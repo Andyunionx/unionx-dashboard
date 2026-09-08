@@ -1,23 +1,23 @@
 {
-  "generado_en": "2026-09-07T23:09:20.322149",
+  "generado_en": "2026-09-08T01:58:00.887027",
   "total_pis": 3,
-  "pis_ingresados": 0,
-  "pis_parciales": 1,
+  "pis_ingresados": 1,
+  "pis_parciales": 0,
   "pis_pendientes": 2,
   "sku_no_match_odoo": 1,
   "por_pi": [
     {
       "pi": "26TP0608PI",
       "fecha_embarque": "2026-06-15",
-      "skus_total": 43,
-      "skus_ingresados": 4,
-      "skus_parciales": 7,
-      "skus_pendientes": 32,
+      "skus_total": 45,
+      "skus_ingresados": 20,
+      "skus_parciales": 11,
+      "skus_pendientes": 14,
       "skus_sin_info": 0,
-      "unidades_esperadas": 6206.0,
-      "unidades_recibidas": 1681.0,
-      "ratio_pi": 0.271,
-      "status_pi": "\ud83d\udfe1 INICIANDO"
+      "unidades_esperadas": 6606.0,
+      "unidades_recibidas": 6576.0,
+      "ratio_pi": 0.995,
+      "status_pi": "\ud83d\udfe2 INGRESADO"
     },
     {
       "pi": "26TP0704PI",
