@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-09T07:39:55.416327",
+  "generado_en": "2026-09-09T13:15:05.879397",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -11,19 +11,19 @@
   },
   "estado_actual": {
     "posiciones_total": 1369,
-    "posiciones_ocupadas_hoy": 836,
-    "posiciones_libres_hoy": 533,
-    "pct_ocupacion_hoy": 61.1,
+    "posiciones_ocupadas_hoy": 835,
+    "posiciones_libres_hoy": 534,
+    "pct_ocupacion_hoy": 61.0,
     "m3_stock_calculado": 870.8
   },
   "pico_proyectado": {
     "fecha": "2026-09-09",
-    "posiciones_ocupadas": 822.7,
-    "pct_ocupacion": 60.1
+    "posiciones_ocupadas": 821.7,
+    "pct_ocupacion": 60.0
   },
   "minimo_proyectado": {
     "fecha": "2026-11-07",
-    "posiciones_ocupadas": 584.9,
+    "posiciones_ocupadas": 583.9,
     "pct_ocupacion": 42.7
   },
   "primer_critico": null,
