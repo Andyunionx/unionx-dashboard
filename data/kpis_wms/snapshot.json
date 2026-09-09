@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-09-09T07:57:03.291332",
+  "generado_en": "2026-09-09T18:22:02.976556",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03833704228201497,
-      "total_pickings": 9886,
-      "on_time": 381,
-      "on_time_pct": 0.038539348573740646,
-      "in_full": 9879,
-      "in_full_pct": 0.9992919279789602,
-      "both": 379,
+      "valor": 0.039385110017080276,
+      "total_pickings": 9953,
+      "on_time": 394,
+      "on_time_pct": 0.03958605445594293,
+      "in_full": 9946,
+      "in_full_pct": 0.9992966944639807,
+      "both": 392,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11886304909560723,
-      "total_pickings": 387,
+      "valor": 0.11794871794871795,
+      "total_pickings": 390,
       "on_time": 46,
-      "on_time_pct": 0.11886304909560723,
-      "in_full": 386,
-      "in_full_pct": 0.9974160206718347,
+      "on_time_pct": 0.11794871794871795,
+      "in_full": 388,
+      "in_full_pct": 0.9948717948717949,
       "both": 46,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998523440383905,
-      "ok": 13543,
-      "total": 13545,
+      "valor": 0.9998535227772082,
+      "ok": 13652,
+      "total": 13654,
       "errores": 2,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.8028130422869668,
-      "total_so": 10991,
-      "total_con_pickings": 10949,
-      "cumplidos": 8790,
+      "valor": 0.7969031328772056,
+      "total_so": 11151,
+      "total_con_pickings": 11108,
+      "cumplidos": 8852,
       "parciales": 17,
-      "sin_iniciar": 2142,
+      "sin_iniciar": 2239,
       "error": null
     },
     "oct_30d": {
-      "valor": 44.854387352966896,
-      "n_orders": 10164,
+      "valor": 44.67582459340325,
+      "n_orders": 10234,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 29.23361111111111,
+      "mediana_h": 28.9425,
       "detalle": [
         {
           "so": "S269110",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 2633,
+      "lineas": 2742,
       "mes": "2026-09",
       "error": null
     },
@@ -409,8 +409,8 @@
         },
         {
           "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
-          "total": 5,
-          "tarde": 5,
+          "total": 6,
+          "tarde": 6,
           "on_time_pct": 0.0
         },
         {
@@ -8110,31 +8110,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03833704228201497,
-      "total_pickings": 9886,
-      "on_time": 381,
-      "on_time_pct": 0.038539348573740646,
-      "in_full": 9879,
-      "in_full_pct": 0.9992919279789602,
-      "both": 379,
+      "valor": 0.039385110017080276,
+      "total_pickings": 9953,
+      "on_time": 394,
+      "on_time_pct": 0.03958605445594293,
+      "in_full": 9946,
+      "in_full_pct": 0.9992966944639807,
+      "both": 392,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11886304909560723,
-      "total_pickings": 387,
+      "valor": 0.11794871794871795,
+      "total_pickings": 390,
       "on_time": 46,
-      "on_time_pct": 0.11886304909560723,
-      "in_full": 386,
-      "in_full_pct": 0.9974160206718347,
+      "on_time_pct": 0.11794871794871795,
+      "in_full": 388,
+      "in_full_pct": 0.9948717948717949,
       "both": 46,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998523440383905,
-      "ok": 13543,
-      "total": 13545,
+      "valor": 0.9998535227772082,
+      "ok": 13652,
+      "total": 13654,
       "errores": 2,
       "error": null
     }
