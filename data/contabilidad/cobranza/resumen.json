@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-09T15:28:40.959069",
+  "generado_en": "2026-09-09T20:09:43.765154",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11430,
-  "total_monto_pendiente_clp": 909415283.0,
+  "total_documentos_pendientes": 11509,
+  "total_monto_pendiente_clp": 913441254.0,
   "monto_por_aging": {
     "+90 días": 72556173.0,
-    "1-30 días": 334613638.0,
+    "1-30 días": 337783109.0,
     "31-60 días": 228034550.0,
-    "61-90 días": 32753522.0,
-    "Vigente": 241457400.0
+    "61-90 días": 32723532.0,
+    "Vigente": 242343890.0
   },
   "monto_por_tipo": {
-    "BOLETA": 686728234.0,
+    "BOLETA": 690754205.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
@@ -26,31 +26,31 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 110825069.0
+      "monto": 111991330.0
     },
     {
       "partner": "FALABELLA.COM",
       "monto": 73519941.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 58394126.0
+      "partner": "Cliente Kitchen Center",
+      "monto": 58996547.0
     },
     {
-      "partner": "Cliente Kitchen Center",
-      "monto": 58060114.0
+      "partner": "Cliente Walmart",
+      "monto": 58364136.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 56533978.0
+      "monto": 56798788.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 27360521.0
+      "monto": 27375011.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23817114.0
+      "monto": 23738114.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -58,23 +58,23 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 17441224.0
+      "monto": 17595582.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 14334439.0
+      "monto": 14821512.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 14320836.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 14300166.0
     },
     {
-      "partner": "Cliente Shopify",
-      "monto": 14260846.0
-    },
-    {
       "partner": "Cliente Ripley",
-      "monto": 12355696.0
+      "monto": 12443636.0
     },
     {
       "partner": "Status Spa",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 7972474.0
+      "monto": 7984466.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 6472772.0
+      "monto": 6514732.0
     }
   ],
-  "notas_credito_count": 775,
+  "notas_credito_count": 778,
   "pedidos_venta_count": 10000
 }
