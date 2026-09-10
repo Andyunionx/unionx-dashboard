@@ -31,8 +31,23 @@ def es(v, dec=2):
 
 
 def api(path):
-    with urllib.request.urlopen(f"https://mindicador.cl/api/{path}", timeout=30) as r:
-        return json.loads(r.read())
+    """GET mindicador con User-Agent de navegador (Cloudflare bloquea urllib pelado
+    desde IPs de datacenter, ej. GitHub Actions) + 3 reintentos con backoff."""
+    import time
+    req = urllib.request.Request(
+        f"https://mindicador.cl/api/{path}",
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                               "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+                 "Accept": "application/json"})
+    ultimo = None
+    for intento in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return json.loads(r.read())
+        except Exception as e:
+            ultimo = e
+            time.sleep(5 * (intento + 1))
+    raise ultimo
 
 
 def serie_anual(ind):
@@ -73,6 +88,9 @@ try:
 except Exception:
     ipc_v, ipc_f = None, ""
 
+if not usd:
+    raise SystemExit("mindicador.cl no entregó la serie del dólar (¿bloqueo/caída de la API?). "
+                     "Sin datos no se envía pulso — revisar conectividad de la fuente.")
 spot = usd[-1][1]
 usd_d1, usd_d7, usd_d30 = var_pct(usd, 1), var_pct(usd, 5), var_pct(usd, 21)
 
