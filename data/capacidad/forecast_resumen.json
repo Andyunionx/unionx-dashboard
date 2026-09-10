@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-10T07:36:21.552227",
+  "generado_en": "2026-09-10T13:12:29.170841",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1369,
   "capacidad_bodega_m3": 2464.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 834,
     "posiciones_libres_hoy": 535,
     "pct_ocupacion_hoy": 60.9,
-    "m3_stock_calculado": 869.2
+    "m3_stock_calculado": 930.7
   },
   "pico_proyectado": {
     "fecha": "2026-09-10",
@@ -23,21 +23,13 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-11-08",
-    "posiciones_ocupadas": 585.4,
+    "posiciones_ocupadas": 585.5,
     "pct_ocupacion": 42.8
   },
   "primer_critico": null,
   "primer_atencion": null,
   "dias_con_entrada_transito": [],
   "pis_entrantes": [
-    {
-      "pi": "26TP0608PI",
-      "fecha_eta": "2026-06-15",
-      "pallets": 51.5,
-      "m3": 61.77,
-      "unidades": 6606.0,
-      "transporte": ""
-    },
     {
       "pi": "26TP0704PI",
       "fecha_eta": "2026-07-13",
@@ -55,18 +47,18 @@
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 51.5,
-  "pallets_total_salientes_horizonte": 248.6,
-  "m3_total_entrante_horizonte": 61.8,
-  "m3_total_saliente_horizonte": 298.3,
+  "pallets_total_entrantes_horizonte": 0.0,
+  "pallets_total_salientes_horizonte": 248.5,
+  "m3_total_entrante_horizonte": 0.0,
+  "m3_total_saliente_horizonte": 298.2,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 798,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00572,
     "demanda_total_unidades_horizonte": 125698.0,
-    "demanda_cumplida_unidades": 35358.0,
-    "demanda_no_cubierta_unidades_total": 90340.0,
+    "demanda_cumplida_unidades": 35352.0,
+    "demanda_no_cubierta_unidades_total": 90346.0,
     "pct_demanda_cumplida": 28.1,
     "sku_sin_match_stock_count": 47,
     "top_no_cubiertos": [
@@ -117,7 +109,7 @@
       },
       {
         "sku": "SIMCUROM-30",
-        "unid_no_cubiertas": 421.0,
+        "unid_no_cubiertas": 422.0,
         "sin_match_stock": true
       },
       {
@@ -147,7 +139,7 @@
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 253.0,
+        "unid_no_cubiertas": 254.0,
         "sin_match_stock": true
       },
       {
@@ -156,13 +148,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVPROORI",
-        "unid_no_cubiertas": 197.0,
+        "sku": "SIMCUPGL-30",
+        "unid_no_cubiertas": 198.0,
         "sin_match_stock": true
       },
       {
-        "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 196.0,
+        "sku": "LVPROORI",
+        "unid_no_cubiertas": 197.0,
         "sin_match_stock": true
       },
       {
