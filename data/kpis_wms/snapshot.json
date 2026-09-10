@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-09-10T07:56:26.787952",
+  "generado_en": "2026-09-10T18:12:11.533270",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03928803993922292,
-      "total_pickings": 9214,
-      "on_time": 364,
-      "on_time_pct": 0.03950510093336228,
-      "in_full": 9207,
-      "in_full_pct": 0.9992402865205122,
-      "both": 362,
+      "valor": 0.037508918560799104,
+      "total_pickings": 9811,
+      "on_time": 370,
+      "on_time_pct": 0.037712771379064314,
+      "in_full": 9804,
+      "in_full_pct": 0.9992865151360718,
+      "both": 368,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1271186440677966,
-      "total_pickings": 354,
+      "valor": 0.11873350923482849,
+      "total_pickings": 379,
       "on_time": 45,
-      "on_time_pct": 0.1271186440677966,
-      "in_full": 352,
-      "in_full_pct": 0.9943502824858758,
+      "on_time_pct": 0.11873350923482849,
+      "in_full": 377,
+      "in_full_pct": 0.9947229551451188,
       "both": 45,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998417971839899,
-      "ok": 12640,
-      "total": 12642,
+      "valor": 0.9998505119964123,
+      "ok": 13377,
+      "total": 13379,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 18.939523391812866,
-      "n_recepciones": 285,
+      "valor": 19.10250971250971,
+      "n_recepciones": 286,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01045",
+          "proveedor": "Celiv Spa",
+          "horas": 65.6,
+          "scheduled": "2026-09-07 20:14",
+          "done": "2026-09-10 13:47"
+        },
         {
           "picking": "CA1/IN/01049",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 2.0,
           "scheduled": "2026-08-26 18:52",
           "done": "2026-08-26 20:55"
-        },
-        {
-          "picking": "CA1/RET/01175",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-26 15:39",
-          "done": "2026-08-26 15:39"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.7748821735514277,
-      "total_so": 10863,
-      "total_con_pickings": 10821,
-      "cumplidos": 8385,
+      "valor": 0.8207349320689341,
+      "total_so": 11013,
+      "total_con_pickings": 10967,
+      "cumplidos": 9001,
       "parciales": 15,
-      "sin_iniciar": 2421,
+      "sin_iniciar": 1951,
       "error": null
     },
     "oct_30d": {
-      "valor": 43.56851527102848,
-      "n_orders": 9466,
+      "valor": 43.506981321744114,
+      "n_orders": 10086,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 27.37638888888889,
+      "mediana_h": 27.86111111111111,
       "detalle": [
         {
           "so": "S269110",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 2742,
+      "lineas": 3479,
       "mes": "2026-09",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 214,
+      "incoming": 215,
       "outgoing": 29686,
-      "internal": 20100,
+      "internal": 20099,
       "total": 50000,
       "error": null
     },
@@ -367,20 +367,20 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 63,
-          "tarde": 63,
+          "total": 70,
+          "tarde": 70,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 123,
-          "tarde": 123,
+          "total": 134,
+          "tarde": 134,
           "on_time_pct": 0.0
         },
         {
           "cliente": "abc S.A.",
-          "total": 33,
-          "tarde": 33,
+          "total": 39,
+          "tarde": 39,
           "on_time_pct": 0.0
         },
         {
@@ -409,9 +409,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 11,
-          "tarde": 5,
-          "on_time_pct": 0.5454545454545454
+          "total": 12,
+          "tarde": 6,
+          "on_time_pct": 0.5
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
@@ -8201,42 +8201,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03928803993922292,
-      "total_pickings": 9214,
-      "on_time": 364,
-      "on_time_pct": 0.03950510093336228,
-      "in_full": 9207,
-      "in_full_pct": 0.9992402865205122,
-      "both": 362,
+      "valor": 0.037508918560799104,
+      "total_pickings": 9811,
+      "on_time": 370,
+      "on_time_pct": 0.037712771379064314,
+      "in_full": 9804,
+      "in_full_pct": 0.9992865151360718,
+      "both": 368,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1271186440677966,
-      "total_pickings": 354,
+      "valor": 0.11873350923482849,
+      "total_pickings": 379,
       "on_time": 45,
-      "on_time_pct": 0.1271186440677966,
-      "in_full": 352,
-      "in_full_pct": 0.9943502824858758,
+      "on_time_pct": 0.11873350923482849,
+      "in_full": 377,
+      "in_full_pct": 0.9947229551451188,
       "both": 45,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998417971839899,
-      "ok": 12640,
-      "total": 12642,
+      "valor": 0.9998505119964123,
+      "ok": 13377,
+      "total": 13379,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 18.939523391812866,
-      "n_recepciones": 285,
+      "valor": 19.10250971250971,
+      "n_recepciones": 286,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01045",
+          "proveedor": "Celiv Spa",
+          "horas": 65.6,
+          "scheduled": "2026-09-07 20:14",
+          "done": "2026-09-10 13:47"
+        },
         {
           "picking": "CA1/IN/01049",
           "proveedor": "",
@@ -8369,13 +8376,6 @@
           "horas": 2.0,
           "scheduled": "2026-08-26 18:52",
           "done": "2026-08-26 20:55"
-        },
-        {
-          "picking": "CA1/RET/01175",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-08-26 15:39",
-          "done": "2026-08-26 15:39"
         }
       ],
       "error": null
