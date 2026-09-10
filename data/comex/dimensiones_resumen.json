@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-09-10T13:12:23.309324",
+  "generado_en": "2026-09-10T17:57:24.486256",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 4,
-  "sku_match_odoo": 3,
-  "sku_con_peso": 0,
-  "sku_con_volumen": 0,
-  "sku_volumen_anomalo": 0,
+  "sku_input": 53,
+  "sku_match_odoo": 52,
+  "sku_con_peso": 42,
+  "sku_con_volumen": 42,
+  "sku_volumen_anomalo": 2,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 0.0,
-  "cobertura_volumen_pct": 0.0,
-  "cobertura_volumen_confiable_pct": 0.0,
-  "unidades_totales": 30.0,
-  "peso_total_kg": 0.0,
-  "volumen_total_m3": 0.0,
-  "volumen_total_m3_raw": 0.0,
-  "pallets_totales_estim": 0,
+  "cobertura_peso_pct": 79.2,
+  "cobertura_volumen_pct": 79.2,
+  "cobertura_volumen_confiable_pct": 75.5,
+  "unidades_totales": 6765.0,
+  "peso_total_kg": 6809.0,
+  "volumen_total_m3": 61.77,
+  "volumen_total_m3_raw": 1659459.27,
+  "pallets_totales_estim": 51.5,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -22,6 +22,26 @@
     "umbral_volumen_anomalo_m3": 1.0
   },
   "por_pi": [
+    {
+      "pi": "26TP0608PI",
+      "transporte": "",
+      "fecha_embarque": "2026-06-15",
+      "fecha_eta_bodega": "2026-06-15",
+      "skus_distintos": 49,
+      "unidades_totales": 6735.0,
+      "peso_total_kg": 6809.0,
+      "volumen_total_m3": 61.77,
+      "volumen_total_m3_raw": 1659459.27,
+      "pallets_estim": 51.5,
+      "containers_20_estim": 2.21,
+      "containers_40hc_estim": 0.92,
+      "skus_con_match_odoo": 50,
+      "skus_con_peso": 43,
+      "skus_con_volumen": 43,
+      "skus_volumen_anomalo": 2,
+      "cobertura_peso_pct": 87.8,
+      "cobertura_volumen_pct": 87.8
+    },
     {
       "pi": "26TP0704PI",
       "transporte": "",
@@ -66,5 +86,16 @@
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": []
+  "skus_volumen_anomalo_top": [
+    {
+      "sku": "XRCOBSUV-BS",
+      "producto": "Carpa Funda Cubre SUV Impermeable Premium con Felpa Xroad",
+      "volumen_unit_m3": 17010.0
+    },
+    {
+      "sku": "XRCOBMOT-BS",
+      "producto": "Carpa funda Cubre Moto Impermeable Premium con Felpa XRoad",
+      "volumen_unit_m3": 7522.5
+    }
+  ]
 }
