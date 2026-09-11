@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-10T20:11:23.711771",
+  "generado_en": "2026-09-11T01:51:07.542405",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11726,
-  "total_monto_pendiente_clp": 922809302.0,
+  "total_documentos_pendientes": 11782,
+  "total_monto_pendiente_clp": 924828811.0,
   "monto_por_aging": {
-    "+90 días": 72585863.0,
-    "1-30 días": 344248310.0,
-    "31-60 días": 232371006.0,
-    "61-90 días": 32530762.0,
-    "Vigente": 241073361.0
+    "+90 días": 72870345.0,
+    "1-30 días": 346217035.0,
+    "31-60 días": 234005244.0,
+    "61-90 días": 32905489.0,
+    "Vigente": 238830698.0
   },
   "monto_por_tipo": {
-    "BOLETA": 700122253.0,
+    "BOLETA": 702141762.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
@@ -21,12 +21,12 @@
       "monto": 130322053.0
     },
     {
-      "partner": "WALMART CHILE COM. LTDA",
-      "monto": 116496223.0
+      "partner": "Cliente Mercado Libre",
+      "monto": 116643408.0
     },
     {
-      "partner": "Cliente Mercado Libre",
-      "monto": 115706700.0
+      "partner": "WALMART CHILE COM. LTDA",
+      "monto": 116496223.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -37,12 +37,12 @@
       "monto": 59386305.0
     },
     {
-      "partner": "Cliente Walmart",
-      "monto": 58614117.0
+      "partner": "Cliente Falabella Fcom",
+      "monto": 59125217.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 58471878.0
+      "partner": "Cliente Walmart",
+      "monto": 58629107.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23985954.0
+      "monto": 24134554.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 12850392.0
+      "monto": 12904342.0
     },
     {
       "partner": "Status Spa",
@@ -94,7 +94,7 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 6880349.0
+      "monto": 7005321.0
     }
   ],
   "notas_credito_count": 780,
