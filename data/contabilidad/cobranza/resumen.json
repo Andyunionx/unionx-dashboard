@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-11T15:26:03.259564",
+  "generado_en": "2026-09-11T20:10:47.137624",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11762,
-  "total_monto_pendiente_clp": 925222430.0,
+  "total_documentos_pendientes": 11571,
+  "total_monto_pendiente_clp": 916874453.0,
   "monto_por_aging": {
     "+90 días": 72870345.0,
-    "1-30 días": 346233156.0,
-    "31-60 días": 233814328.0,
+    "1-30 días": 341621700.0,
+    "31-60 días": 229837448.0,
     "61-90 días": 32905489.0,
-    "Vigente": 239399112.0
+    "Vigente": 239639471.0
   },
   "monto_por_tipo": {
-    "BOLETA": 702535381.0,
+    "BOLETA": 694187404.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 117970961.0
+      "monto": 118725753.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -34,23 +34,23 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 59505540.0
+      "monto": 60130400.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 59386305.0
+      "monto": 60021950.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 58629107.0
+      "monto": 58774097.0
     },
     {
       "partner": "Shopping LATAM Pass",
-      "monto": 27355021.0
+      "monto": 23378141.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 24088504.0
+      "monto": 21186227.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -58,23 +58,23 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 17867526.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 15461136.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 14320836.0
+      "monto": 17178414.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 14300166.0
     },
     {
+      "partner": "Cliente Shopify",
+      "monto": 14169595.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 12211048.0
+    },
+    {
       "partner": "Cliente Ripley",
-      "monto": 11242002.0
+      "monto": 11268982.0
     },
     {
       "partner": "Status Spa",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 7236513.0
+      "monto": 6349490.0
     }
   ],
-  "notas_credito_count": 782,
+  "notas_credito_count": 788,
   "pedidos_venta_count": 10000
 }
