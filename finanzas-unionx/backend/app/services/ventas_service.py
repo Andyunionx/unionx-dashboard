@@ -427,11 +427,26 @@ class VentasService(BaseOdooService):
         ncs = []
         try:
             print(f"    [INFO] Buscando notas de crédito del período...")
+            # NC de re-facturación que NETEAN con su factura re-emitida y por lo
+            # tanto NO deben entrar al RAW (criterio Andrés 11-09-2026).
+            # Caso Walmart 10-09: se anularon 4 facturas del 1 al 3 de septiembre
+            # ($116.496.223) y se re-emitieron el mismo día por el monto exacto.
+            # Las facturas nuevas (FAC 102328-102331) quedaron SIN pedido asociado
+            # (invoice_origin vacío), así que el extract —que parte de sale.order—
+            # no las ve. Si dejáramos entrar solo las NC, restaríamos $116,5M que
+            # nadie vuelve a sumar y septiembre quedaría subvaluado.
+            # Económicamente netean: la venta original del 1-3 sep queda como está.
+            # PENDIENTE: vincular FAC 102328-102331 a su pedido en Odoo y sacar
+            # esta exclusión.
+            NC_REFACTURACION_NETEADA = {
+                'N/C 041867', 'N/C 041868', 'N/C 041869', 'N/C 041870',
+            }
             nc_domain = [
                 ('move_type', '=', 'out_refund'),
                 ('invoice_date', '>=', periodo_inicio),
                 ('invoice_date', '<=', periodo_fin),
                 ('state', '=', 'posted'),
+                ('name', 'not in', sorted(NC_REFACTURACION_NETEADA)),
             ]
 
             # Primero buscar solo IDs (rápido)
