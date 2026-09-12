@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-12T01:56:36.651764",
+  "generado_en": "2026-09-12T09:43:22.506555",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11610,
-  "total_monto_pendiente_clp": 918261705.0,
+  "total_documentos_pendientes": 11471,
+  "total_monto_pendiente_clp": 913674293.0,
   "monto_por_aging": {
     "+90 días": 73211445.0,
-    "1-30 días": 340657839.0,
-    "31-60 días": 231632139.0,
+    "1-30 días": 336431187.0,
+    "31-60 días": 231271379.0,
     "61-90 días": 34788393.0,
     "Vigente": 237971889.0
   },
   "monto_por_tipo": {
-    "BOLETA": 695574656.0,
+    "BOLETA": 690987244.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 119560995.0
+      "monto": 119838765.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -33,16 +33,16 @@
       "monto": 73519941.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 60372670.0
-    },
-    {
       "partner": "Cliente Kitchen Center",
       "monto": 60021950.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 58801077.0
+      "monto": 58830057.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 57244235.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 21262187.0
+      "monto": 21362167.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -73,12 +73,12 @@
       "monto": 12211048.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 11330832.0
-    },
-    {
       "partner": "Status Spa",
       "monto": 10837211.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 9441652.0
     },
     {
       "partner": "Comercial ECCSA S A",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 6431460.0
+      "monto": 6485451.0
     }
   ],
-  "notas_credito_count": 789,
+  "notas_credito_count": 787,
   "pedidos_venta_count": 10000
 }
