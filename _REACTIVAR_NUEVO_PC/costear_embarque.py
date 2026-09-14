@@ -60,7 +60,7 @@ BENCHMARKS = {
 CONCEPTOS_INLAND_CHINA_KNOWN = {
     "form_f":         ["form f", "ff", "f f", "form-f", "f.f"],
     "local_charge":   ["local charge", "storage", "local-charge",
-                        "monitor", "loading fee", "monitor loading",
+                        "loading fee", "monitor loading",  # 'monitor' suelto sacado: colisiona con "Soporte Monitor" (bug 26TP0608)
                         "syntrans", "loading"],
     "long_vehicle":   ["long vehicle", "long vechile",  # typo común en PIs Steven
                         "cleaning custom", "customs cleaning", "cleaing custom",
@@ -285,7 +285,13 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
         # 1) Detectar conceptos Inland China (busca en descripcion + model,
         # con word boundaries para evitar falsos positivos de patterns cortos
         # como 'ff' matcheando dentro de 'duffel', 'shutoff', 'power off').
-        concepto_inland, _pat_match = _matches_concepto_inland(texto_busqueda)
+        # Solo buscar conceptos Inland China en filas SIN SKU de producto: los gastos
+        # de Steven nunca traen SKU. Evita que palabras genéricas de los patrones
+        # ('monitor', 'loading', etc.) hagan desaparecer un producto legítimo cuya
+        # descripción las contenga (ej. "Soporte Brazo Doble Monitor" en 26TP0608).
+        _sku_row = str(row[headers.get("sku", -1)] or "").strip() if "sku" in headers else ""
+        concepto_inland, _pat_match = (
+            (None, None) if _sku_row else _matches_concepto_inland(texto_busqueda))
 
         if concepto_inland:
             if concepto_inland == "form_f":
