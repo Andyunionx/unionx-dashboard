@@ -333,10 +333,16 @@ for a in acciones[:MAX_NC_POR_CORRIDA]:
 
 print(f"\nEMITIDAS: {emitidas} | errores: {len(errores)} | pendientes próxima corrida: {max(0, len(acciones)-MAX_NC_POR_CORRIDA)}")
 
-# ---- 4) reporte semanal a Max (lunes) ----
-if HOY.weekday() == 0 and LIVE:
+# ---- 4) reporte semanal a Max (lunes, SOLO la primera corrida del día) ----
+# Fix 15-sep: (a) antes salía en CADA corrida horaria del lunes (3+ mails/día);
+# ahora solo en la ventana de la primera corrida (07:19 CLT = 11:00-12:30 UTC).
+# (b) antes listaba TODOS los nc_previa históricos; ahora solo los NUEVOS de la semana.
+hora_utc = datetime.datetime.utcnow().hour
+if HOY.weekday() == 0 and LIVE and 11 <= hora_utc < 13:
     try:
-        casos = ex("helpdesk.ticket", "search_read", [("x_estado_nc", "=", "nc_previa")],
+        d7 = (datetime.datetime.utcnow() - datetime.timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
+        casos = ex("helpdesk.ticket", "search_read",
+                   [("x_estado_nc", "=", "nc_previa"), ("write_date", ">=", d7)],
                    fields=["ticket_ref", "name"], limit=200)
         if casos:
             import base64
@@ -350,14 +356,14 @@ if HOY.weekday() == 0 and LIVE:
             if not creds.valid:
                 creds.refresh(Request())
             svc = build("gmail", "v1", credentials=creds)
-            cuerpo = "Hola Max,\n\nCasos con NC PREVIA detectados por el agente (devolución llegó con NC ya emitida) — para investigar:\n\n"
+            cuerpo = "Hola Max,\n\nCasos NUEVOS de la última semana con NC PREVIA detectados por el agente (devolución llegó con NC ya emitida) — para investigar:\n\n"
             cuerpo += "\n".join(f"- #{c['ticket_ref']} {c['name']}" for c in casos)
-            cuerpo += "\n\nSaludos,\nAgente NC Postventa"
+            cuerpo += "\n\n(Solo se listan los detectados en los últimos 7 días; el histórico completo queda filtrable en el Helpdesk por Estado NC = 'NC previa'.)\n\nSaludos,\nAgente NC Postventa"
             msg = EmailMessage()
             msg["To"] = "maximiliano@unionx.cl"
             msg["Cc"] = "andres@unionx.cl"
             msg["From"] = "andres@unionx.cl"
-            msg["Subject"] = f"[Agente NC] Reporte semanal: {len(casos)} tickets con NC previa a investigar"
+            msg["Subject"] = f"[Agente NC] Reporte semanal: {len(casos)} tickets NUEVOS con NC previa"
             msg.set_content(cuerpo)
             svc.users().messages().send(userId="me", body={"raw": base64.urlsafe_b64encode(msg.as_bytes()).decode()}).execute()
             print(f"reporte semanal a Max enviado ({len(casos)} casos)")
