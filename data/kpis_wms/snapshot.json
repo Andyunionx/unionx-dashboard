@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-09-15T08:28:09.665527",
+  "generado_en": "2026-09-15T18:45:17.748634",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03929585462805224,
-      "total_pickings": 8805,
-      "on_time": 348,
-      "on_time_pct": 0.03952299829642249,
-      "in_full": 8799,
-      "in_full_pct": 0.9993185689948892,
-      "both": 346,
+      "valor": 0.04107142857142857,
+      "total_pickings": 8960,
+      "on_time": 370,
+      "on_time_pct": 0.041294642857142856,
+      "in_full": 8954,
+      "in_full_pct": 0.9993303571428571,
+      "both": 368,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.10059171597633136,
-      "total_pickings": 338,
-      "on_time": 34,
-      "on_time_pct": 0.10059171597633136,
-      "in_full": 336,
-      "in_full_pct": 0.9940828402366864,
-      "both": 34,
+      "valor": 0.10818713450292397,
+      "total_pickings": 342,
+      "on_time": 37,
+      "on_time_pct": 0.10818713450292397,
+      "in_full": 340,
+      "in_full_pct": 0.9941520467836257,
+      "both": 37,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998359310910583,
-      "ok": 12188,
-      "total": 12190,
+      "valor": 0.9998401278976818,
+      "ok": 12508,
+      "total": 12510,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 19.30527679623086,
-      "n_recepciones": 283,
+      "valor": 19.240173122065727,
+      "n_recepciones": 284,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01054",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-09-15 12:44",
+          "done": "2026-09-15 13:33"
+        },
         {
           "picking": "CA1/IN/01053",
           "proveedor": "",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-09-02 15:05",
           "done": "2026-09-02 15:05"
-        },
-        {
-          "picking": "CA1/IN/01039",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 690.6,
-          "scheduled": "2026-07-30 21:34",
-          "done": "2026-08-28 16:12"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.7587041519270155,
-      "total_so": 10804,
-      "total_con_pickings": 10742,
-      "cumplidos": 8150,
+      "valor": 0.7630562706877528,
+      "total_so": 10941,
+      "total_con_pickings": 10876,
+      "cumplidos": 8299,
       "parciales": 12,
-      "sin_iniciar": 2580,
+      "sin_iniciar": 2565,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.90969339448865,
-      "n_orders": 9048,
+      "valor": 46.724190146796076,
+      "n_orders": 9204,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 32.6675,
+      "mediana_h": 32.16777777777778,
       "detalle": [
         {
           "so": "S269110",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 4795,
+      "lineas": 5115,
       "mes": "2026-09",
       "error": null
     },
@@ -409,7 +409,7 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 15,
+          "total": 18,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -580,45 +580,45 @@
         },
         "resumen": {
           "n_ordenes": 7289,
-          "cancelacion_clp": 247793.838602,
+          "cancelacion_clp": 247753.544602,
           "quiebre_clp": 152709.88382000002,
-          "n_canceladas": 193,
+          "n_canceladas": 189,
           "n_quiebres": 25,
-          "ns_empresa_pct": 0.9408698038139662,
-          "ns_courier_pct": 0.8403073123885306,
-          "otif_total_pct": 0.8267252023597201,
-          "n_empresa_ok": 6858,
-          "n_courier_ok": 6125,
-          "n_otif_ok": 6026
+          "ns_empresa_pct": 0.9467691041295102,
+          "ns_courier_pct": 0.8795445191384278,
+          "otif_total_pct": 0.8698038139662505,
+          "n_empresa_ok": 6901,
+          "n_courier_ok": 6411,
+          "n_otif_ok": 6340
         },
         "por_cliente": [
           {
             "CLIENTE": "MERCADO LIBRE F",
             "ORDENES": 1777,
-            "A_TPO_EMP": 1707,
-            "A_TPO_COU": 1704,
+            "A_TPO_EMP": 1706,
+            "A_TPO_COU": 1669,
             "OTIF": 1661,
-            "NS_EMP_PCT": 0.9606,
-            "NS_COU_PCT": 0.9589,
+            "NS_EMP_PCT": 0.96,
+            "NS_COU_PCT": 0.9392,
             "OTIF_PCT": 0.9347
           },
           {
             "CLIENTE": "FALABELLA HDC",
             "ORDENES": 1325,
-            "A_TPO_EMP": 1316,
-            "A_TPO_COU": 1317,
-            "OTIF": 1316,
-            "NS_EMP_PCT": 0.9932,
-            "NS_COU_PCT": 0.994,
-            "OTIF_PCT": 0.9932
+            "A_TPO_EMP": 1258,
+            "A_TPO_COU": 1259,
+            "OTIF": 1258,
+            "NS_EMP_PCT": 0.9494,
+            "NS_COU_PCT": 0.9502,
+            "OTIF_PCT": 0.9494
           },
           {
             "CLIENTE": "MERCADO LIBRE C",
             "ORDENES": 988,
-            "A_TPO_EMP": 980,
+            "A_TPO_EMP": 967,
             "A_TPO_COU": 950,
             "OTIF": 950,
-            "NS_EMP_PCT": 0.9919,
+            "NS_EMP_PCT": 0.9787,
             "NS_COU_PCT": 0.9615,
             "OTIF_PCT": 0.9615
           },
@@ -635,22 +635,22 @@
           {
             "CLIENTE": "PAGINAS",
             "ORDENES": 620,
-            "A_TPO_EMP": 424,
-            "A_TPO_COU": 432,
-            "OTIF": 411,
-            "NS_EMP_PCT": 0.6839,
-            "NS_COU_PCT": 0.6968,
-            "OTIF_PCT": 0.6629
+            "A_TPO_EMP": 540,
+            "A_TPO_COU": 543,
+            "OTIF": 517,
+            "NS_EMP_PCT": 0.871,
+            "NS_COU_PCT": 0.8758,
+            "OTIF_PCT": 0.8339
           },
           {
             "CLIENTE": "FALABELLA F",
             "ORDENES": 505,
             "A_TPO_EMP": 491,
-            "A_TPO_COU": 195,
-            "OTIF": 195,
+            "A_TPO_COU": 463,
+            "OTIF": 461,
             "NS_EMP_PCT": 0.9723,
-            "NS_COU_PCT": 0.3861,
-            "OTIF_PCT": 0.3861
+            "NS_COU_PCT": 0.9168,
+            "OTIF_PCT": 0.9129
           },
           {
             "CLIENTE": "RIPLEY",
@@ -675,10 +675,10 @@
           {
             "CLIENTE": "LATAM PASS",
             "ORDENES": 267,
-            "A_TPO_EMP": 241,
+            "A_TPO_EMP": 240,
             "A_TPO_COU": 102,
             "OTIF": 102,
-            "NS_EMP_PCT": 0.9026,
+            "NS_EMP_PCT": 0.8989,
             "NS_COU_PCT": 0.382,
             "OTIF_PCT": 0.382
           },
@@ -735,12 +735,12 @@
           {
             "CLIENTE": "TOTAL",
             "ORDENES": 7289,
-            "A_TPO_EMP": 6858,
-            "NS_EMP_PCT": 0.9408698038139662,
-            "A_TPO_COU": 6125,
-            "NS_COU_PCT": 0.8403073123885306,
-            "OTIF": 6026,
-            "OTIF_PCT": 0.8267252023597201
+            "A_TPO_EMP": 6901,
+            "NS_EMP_PCT": 0.9467691041295102,
+            "A_TPO_COU": 6411,
+            "NS_COU_PCT": 0.8795445191384278,
+            "OTIF": 6340,
+            "OTIF_PCT": 0.8698038139662505
           }
         ],
         "pareto_quiebres": [
@@ -2544,9 +2544,9 @@
         {
           "CURIER": "RECIBELO",
           "n_pedidos": 2814,
-          "ns_courier_pct": 75.8,
-          "ns_empresa_pct": 91.2,
-          "otif_total_pct": 74.2
+          "ns_courier_pct": 88.1,
+          "ns_empresa_pct": 95.3,
+          "otif_total_pct": 87.4
         },
         {
           "CURIER": "BLUEXPRESS",
@@ -2558,15 +2558,15 @@
         {
           "CURIER": "HOME DELIVERY CORP",
           "n_pedidos": 1325,
-          "ns_courier_pct": 99.4,
-          "ns_empresa_pct": 99.3,
-          "otif_total_pct": 99.3
+          "ns_courier_pct": 95.0,
+          "ns_empresa_pct": 94.9,
+          "otif_total_pct": 94.9
         },
         {
           "CURIER": "COLECTA",
           "n_pedidos": 988,
           "ns_courier_pct": 96.2,
-          "ns_empresa_pct": 99.2,
+          "ns_empresa_pct": 97.9,
           "otif_total_pct": 96.2
         },
         {
@@ -3199,12 +3199,12 @@
           "hasta": "2026-08-25"
         },
         "n_ordenes": 61273,
-        "n_empresa_ok": 58956,
-        "n_courier_ok": 55602,
-        "n_otif_ok": 55088,
-        "ns_empresa_pct": 96.2,
-        "ns_courier_pct": 90.7,
-        "otif_total_pct": 89.9,
+        "n_empresa_ok": 58999,
+        "n_courier_ok": 55888,
+        "n_otif_ok": 55402,
+        "ns_empresa_pct": 96.3,
+        "ns_courier_pct": 91.2,
+        "otif_total_pct": 90.4,
         "trend": [
           {
             "key": "2026-01",
@@ -3282,9 +3282,9 @@
             "anio": 2026,
             "label_corto": "08/26",
             "n_ordenes": 7289,
-            "ns_empresa_pct": 94.1,
-            "ns_courier_pct": 84.0,
-            "otif_total_pct": 82.7
+            "ns_empresa_pct": 94.7,
+            "ns_courier_pct": 88.0,
+            "otif_total_pct": 87.0
           }
         ],
         "por_courier": [
@@ -3292,9 +3292,9 @@
             "CURIER": "RECIBELO",
             "n_pedidos": 22511,
             "pct_volumen": 36.8,
-            "ns_courier_pct": 89.9,
-            "otif_total_pct": 89.1,
-            "ns_empresa_pct": 96.4
+            "ns_courier_pct": 91.4,
+            "otif_total_pct": 90.8,
+            "ns_empresa_pct": 96.9
           },
           {
             "CURIER": "BLUEXPRESS",
@@ -3308,9 +3308,9 @@
             "CURIER": "HOME DELIVERY CORP",
             "n_pedidos": 10669,
             "pct_volumen": 17.4,
-            "ns_courier_pct": 96.2,
-            "otif_total_pct": 96.2,
-            "ns_empresa_pct": 96.2
+            "ns_courier_pct": 95.6,
+            "otif_total_pct": 95.6,
+            "ns_empresa_pct": 95.6
           },
           {
             "CURIER": "COLECTA",
@@ -3318,7 +3318,7 @@
             "pct_volumen": 10.9,
             "ns_courier_pct": 96.7,
             "otif_total_pct": 96.7,
-            "ns_empresa_pct": 97.2
+            "ns_empresa_pct": 97.0
           },
           {
             "CURIER": "STARKEN",
@@ -3375,30 +3375,30 @@
             "n_pedidos": 13705,
             "pct_volumen": 22.4,
             "ns_empresa_pct": 97.1,
-            "ns_courier_pct": 94.0,
+            "ns_courier_pct": 93.8,
             "otif_total_pct": 93.5
           },
           {
             "CANAL": "FALABELLA HDC",
             "n_pedidos": 10631,
             "pct_volumen": 17.4,
-            "ns_empresa_pct": 96.2,
-            "ns_courier_pct": 96.2,
-            "otif_total_pct": 96.2
+            "ns_empresa_pct": 95.6,
+            "ns_courier_pct": 95.6,
+            "otif_total_pct": 95.6
           },
           {
             "CANAL": "PAGINAS",
             "n_pedidos": 7332,
             "pct_volumen": 12.0,
-            "ns_empresa_pct": 94.5,
-            "ns_courier_pct": 88.0,
-            "otif_total_pct": 85.5
+            "ns_empresa_pct": 96.1,
+            "ns_courier_pct": 89.5,
+            "otif_total_pct": 86.9
           },
           {
             "CANAL": "MERCADO LIBRE C",
             "n_pedidos": 6689,
             "pct_volumen": 10.9,
-            "ns_empresa_pct": 97.2,
+            "ns_empresa_pct": 97.0,
             "ns_courier_pct": 96.7,
             "otif_total_pct": 96.7
           },
@@ -3407,8 +3407,8 @@
             "n_pedidos": 4518,
             "pct_volumen": 7.4,
             "ns_empresa_pct": 96.7,
-            "ns_courier_pct": 86.7,
-            "otif_total_pct": 86.1
+            "ns_courier_pct": 92.6,
+            "otif_total_pct": 91.9
           },
           {
             "CANAL": "PARIS",
@@ -3454,7 +3454,7 @@
             "CANAL": "LATAM PASS",
             "n_pedidos": 267,
             "pct_volumen": 0.4,
-            "ns_empresa_pct": 90.3,
+            "ns_empresa_pct": 89.9,
             "ns_courier_pct": 38.2,
             "otif_total_pct": 38.2
           },
@@ -4058,12 +4058,12 @@
       {
         "MES": "2026-08",
         "n_pedidos": 6968,
-        "otif_empresa": 0.8870551090700345,
-        "otif_courier": 0.802812858783008,
-        "otif_total": 0.7650688863375431,
-        "otif_empresa_pct": 88.7,
-        "otif_courier_pct": 80.3,
-        "otif_total_pct": 76.5
+        "otif_empresa": 0.9055683122847302,
+        "otif_courier": 0.8663892078071183,
+        "otif_total": 0.8224741676234214,
+        "otif_empresa_pct": 90.6,
+        "otif_courier_pct": 86.6,
+        "otif_total_pct": 82.2
       },
       {
         "MES": "2026-11",
@@ -4089,14 +4089,14 @@
     "resumen_por_mes": {
       "2026-08": {
         "n_pedidos": 6968,
-        "otif_empresa_pct": 0.8870551090700345,
-        "otif_courier_pct": 0.802812858783008,
-        "otif_total_pct": 0.7650688863375431,
-        "n_empresa_ok": 6181,
-        "n_courier_ok": 5594,
-        "n_otif_ok": 5331,
-        "dias_empresa_promedio": -4799.698048220436,
-        "dias_courier_promedio": -1984.4141791044776,
+        "otif_empresa_pct": 0.9055683122847302,
+        "otif_courier_pct": 0.8663892078071183,
+        "otif_total_pct": 0.8224741676234214,
+        "n_empresa_ok": 6310,
+        "n_courier_ok": 6037,
+        "n_otif_ok": 5731,
+        "dias_empresa_promedio": -2828.9188593267677,
+        "dias_courier_promedio": 917.6905776863149,
         "mes": "2026-08",
         "error": null
       },
@@ -4171,32 +4171,32 @@
         {
           "CLIENTE": "MERCADO LIBRE F",
           "n_pedidos": 1711,
-          "otif_empresa": 0.8445353594389247,
-          "otif_courier": 0.9567504383401519,
+          "otif_empresa": 0.8439509059029807,
+          "otif_courier": 0.9345412039742841,
           "otif_total": 0.8199883109292812,
-          "otif_empresa_pct": 84.5,
-          "otif_courier_pct": 95.7,
+          "otif_empresa_pct": 84.4,
+          "otif_courier_pct": 93.5,
           "otif_total_pct": 82.0
         },
         {
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 1341,
-          "otif_empresa": 1.0,
-          "otif_courier": 1.0,
-          "otif_total": 1.0,
-          "otif_empresa_pct": 100.0,
-          "otif_courier_pct": 100.0,
-          "otif_total_pct": 100.0
+          "otif_empresa": 0.9522744220730798,
+          "otif_courier": 0.9522744220730798,
+          "otif_total": 0.9522744220730798,
+          "otif_empresa_pct": 95.2,
+          "otif_courier_pct": 95.2,
+          "otif_total_pct": 95.2
         },
         {
           "CLIENTE": "MERCADO LIBRE C",
           "n_pedidos": 937,
-          "otif_empresa": 1.0,
-          "otif_courier": 0.9626467449306296,
-          "otif_total": 0.9626467449306296,
-          "otif_empresa_pct": 100.0,
-          "otif_courier_pct": 96.3,
-          "otif_total_pct": 96.3
+          "otif_empresa": 0.9818569903948773,
+          "otif_courier": 0.9615795090715048,
+          "otif_total": 0.9615795090715048,
+          "otif_empresa_pct": 98.2,
+          "otif_courier_pct": 96.2,
+          "otif_total_pct": 96.2
         },
         {
           "CLIENTE": "WALMART",
@@ -4212,31 +4212,31 @@
           "CLIENTE": "FALABELLA F",
           "n_pedidos": 512,
           "otif_empresa": 0.888671875,
-          "otif_courier": 0.3203125,
-          "otif_total": 0.3203125,
+          "otif_courier": 0.927734375,
+          "otif_total": 0.83984375,
           "otif_empresa_pct": 88.9,
-          "otif_courier_pct": 32.0,
-          "otif_total_pct": 32.0
+          "otif_courier_pct": 92.8,
+          "otif_total_pct": 84.0
         },
         {
           "CLIENTE": "PAGINAS",
           "n_pedidos": 506,
-          "otif_empresa": 0.5138339920948617,
-          "otif_courier": 0.5158102766798419,
-          "otif_total": 0.5079051383399209,
-          "otif_empresa_pct": 51.4,
-          "otif_courier_pct": 51.6,
-          "otif_total_pct": 50.8
+          "otif_empresa": 0.8043478260869565,
+          "otif_courier": 0.8537549407114624,
+          "otif_total": 0.7747035573122529,
+          "otif_empresa_pct": 80.4,
+          "otif_courier_pct": 85.4,
+          "otif_total_pct": 77.5
         },
         {
           "CLIENTE": "LATAM PASS",
           "n_pedidos": 421,
-          "otif_empresa": 0.7505938242280285,
-          "otif_courier": 0.30403800475059384,
-          "otif_total": 0.30403800475059384,
-          "otif_empresa_pct": 75.1,
-          "otif_courier_pct": 30.4,
-          "otif_total_pct": 30.4
+          "otif_empresa": 0.8218527315914489,
+          "otif_courier": 0.3752969121140142,
+          "otif_total": 0.3752969121140142,
+          "otif_empresa_pct": 82.2,
+          "otif_courier_pct": 37.5,
+          "otif_total_pct": 37.5
         },
         {
           "CLIENTE": "RIPLEY",
@@ -4261,12 +4261,12 @@
         {
           "CLIENTE": "GRS",
           "n_pedidos": 143,
-          "otif_empresa": 0.5454545454545454,
-          "otif_courier": 0.6013986013986014,
-          "otif_total": 0.5314685314685315,
-          "otif_empresa_pct": 54.5,
-          "otif_courier_pct": 60.1,
-          "otif_total_pct": 53.1
+          "otif_empresa": 0.7832167832167832,
+          "otif_courier": 0.8391608391608392,
+          "otif_total": 0.7692307692307693,
+          "otif_empresa_pct": 78.3,
+          "otif_courier_pct": 83.9,
+          "otif_total_pct": 76.9
         },
         {
           "CLIENTE": "BICE",
@@ -4854,44 +4854,44 @@
       "2026-08": [
         {
           "CURIER": "RECIBELO",
-          "n_pedidos": 2743,
-          "otif_courier": 0.7072548304775793,
-          "dias_promedio": -3759.0,
-          "otif_courier_pct": 70.7
+          "n_pedidos": 2773,
+          "otif_courier": 0.8492607284529391,
+          "dias_promedio": 3613.3,
+          "otif_courier_pct": 84.9
         },
         {
           "CURIER": "BLUEXPRESS",
-          "n_pedidos": 1764,
-          "otif_courier": 0.7998866213151927,
-          "dias_promedio": -1757.4,
-          "otif_courier_pct": 80.0
+          "n_pedidos": 1832,
+          "otif_courier": 0.8209606986899564,
+          "dias_promedio": -1693.2,
+          "otif_courier_pct": 82.1
         },
         {
           "CURIER": "HDC",
           "n_pedidos": 1341,
-          "otif_courier": 1.0,
+          "otif_courier": 0.9522744220730798,
           "dias_promedio": 0.0,
-          "otif_courier_pct": 100.0
+          "otif_courier_pct": 95.2
         },
         {
           "CURIER": "COLECTA",
           "n_pedidos": 937,
-          "otif_courier": 0.9626467449306296,
+          "otif_courier": 0.9615795090715048,
           "dias_promedio": 0.0,
-          "otif_courier_pct": 96.3
+          "otif_courier_pct": 96.2
         },
         {
           "CURIER": "",
-          "n_pedidos": 172,
+          "n_pedidos": 75,
           "otif_courier": 0.0,
-          "dias_promedio": -2420.1,
+          "dias_promedio": -5625.1,
           "otif_courier_pct": 0.0
         },
         {
           "CURIER": "Blue Express (regiones)",
-          "n_pedidos": 11,
+          "n_pedidos": 10,
           "otif_courier": 0.0,
-          "dias_promedio": 0.0,
+          "dias_promedio": NaN,
           "otif_courier_pct": 0.0
         }
       ],
@@ -5175,6 +5175,266 @@
     "tarde_por_mes": {
       "2026-08": [
         {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283196",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46268.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283540",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283539",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283535",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283521",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283496",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283451",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283162",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46267.0
+        },
+        {
+          "FECHA": "2026-08-31",
+          "ORDEN": "S283097",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46267.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-30",
+          "ORDEN": "S282913",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-30",
+          "ORDEN": "S282852",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-30",
+          "ORDEN": "S282829",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-30",
+          "ORDEN": "S282787",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-29",
+          "ORDEN": "S282642",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-29",
+          "ORDEN": "S282622",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-29",
+          "ORDEN": "S282385",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282316",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282251",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282196",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282173",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282172",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282153",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282120",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282110",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282080",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
+          "FECHA": "2026-08-28",
+          "ORDEN": "S282063",
+          "CLIENTE": "LATAM PASS",
+          "CURIER": "RECIBELO",
+          "Estado Empresa": "Incumplimiento",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -46266.0,
+          "dias_courier": 46266.0
+        },
+        {
           "FECHA": "2026-08-27",
           "ORDEN": "S281803",
           "CLIENTE": "LATAM PASS",
@@ -5413,266 +5673,6 @@
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": -3.0,
           "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281801",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281799",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281794",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281791",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281792",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281790",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281782",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281777",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281760",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281757",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281696",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281694",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281691",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281668",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -3.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281529",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-25",
-          "ORDEN": "S281109",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 46262.0
-        },
-        {
-          "FECHA": "2026-08-27",
-          "ORDEN": "S281616",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -4.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281583",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281568",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281560",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281533",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281491",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281449",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281404",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281399",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
-        },
-        {
-          "FECHA": "2026-08-26",
-          "ORDEN": "S281367",
-          "CLIENTE": "LATAM PASS",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
-          "dias_courier": 46261.0
         }
       ],
       "2026-07": [
@@ -8189,42 +8189,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03929585462805224,
-      "total_pickings": 8805,
-      "on_time": 348,
-      "on_time_pct": 0.03952299829642249,
-      "in_full": 8799,
-      "in_full_pct": 0.9993185689948892,
-      "both": 346,
+      "valor": 0.04107142857142857,
+      "total_pickings": 8960,
+      "on_time": 370,
+      "on_time_pct": 0.041294642857142856,
+      "in_full": 8954,
+      "in_full_pct": 0.9993303571428571,
+      "both": 368,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.10059171597633136,
-      "total_pickings": 338,
-      "on_time": 34,
-      "on_time_pct": 0.10059171597633136,
-      "in_full": 336,
-      "in_full_pct": 0.9940828402366864,
-      "both": 34,
+      "valor": 0.10818713450292397,
+      "total_pickings": 342,
+      "on_time": 37,
+      "on_time_pct": 0.10818713450292397,
+      "in_full": 340,
+      "in_full_pct": 0.9941520467836257,
+      "both": 37,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998359310910583,
-      "ok": 12188,
-      "total": 12190,
+      "valor": 0.9998401278976818,
+      "ok": 12508,
+      "total": 12510,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 19.30527679623086,
-      "n_recepciones": 283,
+      "valor": 19.240173122065727,
+      "n_recepciones": 284,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/IN/01054",
+          "proveedor": "",
+          "horas": 0.8,
+          "scheduled": "2026-09-15 12:44",
+          "done": "2026-09-15 13:33"
+        },
         {
           "picking": "CA1/IN/01053",
           "proveedor": "",
@@ -8357,13 +8364,6 @@
           "horas": 0.0,
           "scheduled": "2026-09-02 15:05",
           "done": "2026-09-02 15:05"
-        },
-        {
-          "picking": "CA1/IN/01039",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 690.6,
-          "scheduled": "2026-07-30 21:34",
-          "done": "2026-08-28 16:12"
         }
       ],
       "error": null
