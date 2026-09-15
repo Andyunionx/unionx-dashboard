@@ -1,14 +1,14 @@
 {
-  "generado_en": "2026-09-14T19:45:17.203657",
+  "generado_en": "2026-09-15T08:28:09.665527",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.03930031803725579,
-      "total_pickings": 8804,
+      "valor": 0.03929585462805224,
+      "total_pickings": 8805,
       "on_time": 348,
-      "on_time_pct": 0.039527487505679235,
-      "in_full": 8798,
-      "in_full_pct": 0.9993184915947296,
+      "on_time_pct": 0.03952299829642249,
+      "in_full": 8799,
+      "in_full_pct": 0.9993185689948892,
       "both": 346,
       "error": null
     },
@@ -23,9 +23,9 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998359041680341,
-      "ok": 12186,
-      "total": 12188,
+      "valor": 0.9998359310910583,
+      "ok": 12188,
+      "total": 12190,
       "errores": 2,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.7809674713393606,
-      "total_so": 10788,
-      "total_con_pickings": 10729,
-      "cumplidos": 8379,
-      "parciales": 15,
-      "sin_iniciar": 2335,
+      "valor": 0.7587041519270155,
+      "total_so": 10804,
+      "total_con_pickings": 10742,
+      "cumplidos": 8150,
+      "parciales": 12,
+      "sin_iniciar": 2580,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.907462050035,
-      "n_orders": 9047,
+      "valor": 46.90969339448865,
+      "n_orders": 9048,
       "min_h": 0.005833333333333334,
       "max_h": 664.3713888888889,
-      "mediana_h": 32.64111111111111,
+      "mediana_h": 32.6675,
       "detalle": [
         {
           "so": "S269110",
@@ -351,9 +351,9 @@
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 219,
-      "outgoing": 29730,
-      "internal": 20051,
+      "incoming": 227,
+      "outgoing": 29639,
+      "internal": 20134,
       "total": 50000,
       "error": null
     },
@@ -8189,12 +8189,12 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.03930031803725579,
-      "total_pickings": 8804,
+      "valor": 0.03929585462805224,
+      "total_pickings": 8805,
       "on_time": 348,
-      "on_time_pct": 0.039527487505679235,
-      "in_full": 8798,
-      "in_full_pct": 0.9993184915947296,
+      "on_time_pct": 0.03952299829642249,
+      "in_full": 8799,
+      "in_full_pct": 0.9993185689948892,
       "both": 346,
       "error": null
     },
@@ -8211,9 +8211,9 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998359041680341,
-      "ok": 12186,
-      "total": 12188,
+      "valor": 0.9998359310910583,
+      "ok": 12188,
+      "total": 12190,
       "errores": 2,
       "error": null
     }
