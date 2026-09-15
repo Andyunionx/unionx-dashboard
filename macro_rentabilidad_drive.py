@@ -43,7 +43,7 @@ sys.path.insert(0, str(ROOT))
 from macro_rentabilidad_canal import (construir, COLS, CC_GABRIELA,  # noqa: E402
                                       SIGNO, MOD_GABRIELA)
 
-H_BASE, H_DIN = '5. Base dinámica', '6. Rentabilidad'
+H_BASE, H_DIN, H_PCT = '5. Base dinámica', '6. Rentabilidad', '7. Rentabilidad %'
 COLS_BASE = COLS[:-1] + ['Monto', 'Fuente']   # Valor -> + columna Monto con signo
 
 
@@ -139,6 +139,92 @@ def poner_dinamica(sh, ws_base, n_filas):
         'start': {'sheetId': wd.id, 'rowIndex': 0, 'columnIndex': 0},
         'fields': 'pivotTable'}}]})
     return wd
+
+
+def poner_vista_pct(sh, base):
+    """Vista en % sobre el ingreso: es la que permite comparar canales de tamaño
+    distinto. Una dinámica nativa no puede hacerla (Sheets solo sabe % del total
+    de fila/columna, no % de una línea concreta), así que se renderiza acá y se
+    rehace en cada corrida.
+
+    Tres bloques con el mismo formato: línea de negocio, canal, y canal por
+    modalidad. La última columna es la variación del margen en puntos
+    porcentuales entre los dos últimos meses, que es lo que dispara la pregunta.
+    """
+    meses = sorted(base['Mes'].unique())
+    ING = 'Ingreso venta'
+    COM = ['Comisión venta', 'Comisión envío', 'Marketing']
+
+    def bloque(dims, titulo):
+        filas = [[titulo] + [''] * (len(dims) - 1 + 5 * len(meses) + 1)]
+        enc = list(dims)
+        for m in meses:
+            enc += [f'{m} Ingreso', f'{m} % Devol', f'{m} % Costo', f'{m} % Com+Mkt', f'{m} % Margen']
+        enc += ['Δ margen p.p.']
+        filas.append(enc)
+        g = base.groupby(dims + ['Mes', 'Centro de costo'], as_index=False)['Monto'].sum()
+        cuerpo = []
+        for clave, sub in g.groupby(dims):
+            clave = clave if isinstance(clave, tuple) else (clave,)
+            fila, mg = list(clave), {}
+            for m in meses:
+                s = sub[sub['Mes'] == m]
+                pick = lambda cc: float(s[s['Centro de costo'] == cc]['Monto'].sum())  # noqa: E731
+                ing = pick(ING)
+                if not ing:
+                    fila += ['', '', '', '', '']
+                    continue
+                dev, cos = pick('Devolución'), pick('Costo venta') + pick('Otros costos')
+                com = sum(pick(c) for c in COM)
+                margen = float(s['Monto'].sum())
+                mg[m] = margen / ing
+                fila += [round(ing), dev / ing, cos / ing, com / ing, margen / ing]
+            delta = (mg[meses[-1]] - mg[meses[-2]]) if len(meses) > 1 and meses[-1] in mg and meses[-2] in mg else ''
+            fila.append(delta)
+            cuerpo.append(fila)
+        # ordenado por el ingreso del último mes con dato
+        col_ing = len(dims) + 5 * (len(meses) - 1)
+        cuerpo.sort(key=lambda r: r[col_ing] if isinstance(r[col_ing], (int, float)) else -1, reverse=True)
+        return filas + cuerpo + [[''] * len(enc)]
+
+    todo, bloques = [], []
+    for dims, titulo in [(['Línea de negocio'], 'POR LÍNEA DE NEGOCIO'),
+                         (['Canal'], 'POR CANAL'),
+                         (['Canal', 'Modalidad'], 'POR CANAL Y MODALIDAD')]:
+        f = bloque(dims, titulo)
+        bloques.append({'ini': len(todo) + 1, 'fin': len(todo) + len(f), 'nd': len(dims)})
+        todo += f
+    ancho = max(len(r) for r in todo)
+    todo = [r + [''] * (ancho - len(r)) for r in todo]
+
+    ws = _hoja(sh, H_PCT, filas=max(len(todo) + 20, 300), cols=max(ancho + 2, 26))
+    ws.clear()
+    ws.update(todo, value_input_option='RAW')
+    ws.freeze(rows=2, cols=2)
+
+    az = {'red': .118, 'green': .227, 'blue': .373}
+    blanco = {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}}
+    col = lambda i: chr(64 + i)                                   # noqa: E731  (1 -> 'A')
+    pesos = {'numberFormat': {'type': 'CURRENCY', 'pattern': '$#,##0'}}
+    pct = {'numberFormat': {'type': 'PERCENT', 'pattern': '0.0%'}}
+
+    for b in bloques:
+        ini, fin, nd = b['ini'], b['fin'], b['nd']
+        ws.format(f'A{ini}:{col(ancho)}{ini}', {'textFormat': blanco, 'backgroundColor': az})
+        ws.format(f'A{ini + 1}:{col(ancho)}{ini + 1}',
+                  {'textFormat': {'bold': True}, 'wrapStrategy': 'WRAP',
+                   'backgroundColor': {'red': .922, 'green': .941, 'blue': .973}})
+        datos_ini, datos_fin = ini + 2, fin
+        if datos_fin < datos_ini:
+            continue
+        for k in range(len(meses)):
+            c_ing = nd + 5 * k + 1                    # Ingreso del mes k
+            ws.format(f'{col(c_ing)}{datos_ini}:{col(c_ing)}{datos_fin}', pesos)
+            ws.format(f'{col(c_ing + 1)}{datos_ini}:{col(c_ing + 4)}{datos_fin}', pct)
+        c_delta = nd + 5 * len(meses) + 1             # Δ margen, en puntos porcentuales
+        ws.format(f'{col(c_delta)}{datos_ini}:{col(c_delta)}{datos_fin}', pct)
+    print(f'[{H_PCT}] {len(todo)} filas · 3 bloques')
+    return ws
 
 
 def _cli():
@@ -256,6 +342,9 @@ def main():
     # ---- 6. Rentabilidad: tabla dinámica NATIVA ----
     poner_dinamica(sh, wb_, len(base))
     print(f'[{H_DIN}] dinámica nativa apuntando a {H_BASE}')
+
+    # ---- 7. Rentabilidad %: la vista que permite comparar canales distintos ----
+    poner_vista_pct(sh, base)
 
     # ---- 4. Instrucciones ----
     wi = _hoja(sh, H_INS, filas=60, cols=2)
