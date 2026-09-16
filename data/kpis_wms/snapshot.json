@@ -1,205 +1,296 @@
 {
-  "generado_en": "2026-09-16T08:21:55.701701",
+  "generado_en": "2026-09-16T18:44:25.613391",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.04439655172413793,
-      "total_pickings": 9280,
-      "on_time": 414,
-      "on_time_pct": 0.04461206896551724,
-      "in_full": 9274,
-      "in_full_pct": 0.999353448275862,
-      "both": 412,
+      "valor": 0.04682330986512851,
+      "total_pickings": 11789,
+      "on_time": 554,
+      "on_time_pct": 0.04699295953855289,
+      "in_full": 11783,
+      "in_full_pct": 0.9994910509797269,
+      "both": 552,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.10833333333333334,
-      "total_pickings": 360,
-      "on_time": 39,
-      "on_time_pct": 0.10833333333333334,
-      "in_full": 358,
-      "in_full_pct": 0.9944444444444445,
-      "both": 39,
+      "valor": 0.12871287128712872,
+      "total_pickings": 404,
+      "on_time": 52,
+      "on_time_pct": 0.12871287128712872,
+      "in_full": 401,
+      "in_full_pct": 0.9925742574257426,
+      "both": 52,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998457623197348,
-      "ok": 12965,
-      "total": 12967,
-      "errores": 2,
+      "valor": 0.9998137340121693,
+      "ok": 16103,
+      "total": 16106,
+      "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 19.178590277777776,
-      "n_recepciones": 280,
+      "valor": 17.9610209959123,
+      "n_recepciones": 299,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01205",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:55",
+          "done": "2026-09-16 15:56"
+        },
+        {
+          "picking": "CA1/RET/01204",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:55",
+          "done": "2026-09-16 15:55"
+        },
+        {
+          "picking": "CA1/RET/01203",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:54",
+          "done": "2026-09-16 15:54"
+        },
+        {
+          "picking": "CA1/RET/01202",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:24",
+          "done": "2026-09-16 15:24"
+        },
+        {
+          "picking": "CA1/RET/01200",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:21",
+          "done": "2026-09-16 15:22"
+        },
+        {
+          "picking": "CA1/RET/01201",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:22",
+          "done": "2026-09-16 15:22"
+        },
+        {
+          "picking": "CA1/RET/01199",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:16",
+          "done": "2026-09-16 15:16"
+        },
+        {
+          "picking": "CA1/RET/01198",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:14",
+          "done": "2026-09-16 15:15"
+        },
+        {
+          "picking": "CA1/RET/01197",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:13",
+          "done": "2026-09-16 15:14"
+        },
+        {
+          "picking": "CA1/RET/01196",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:12",
+          "done": "2026-09-16 15:12"
+        },
+        {
+          "picking": "CA1/RET/01195",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:39",
+          "done": "2026-09-16 14:39"
+        },
+        {
+          "picking": "CA1/RET/01193",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:37",
+          "done": "2026-09-16 14:38"
+        },
+        {
+          "picking": "CA1/RET/01194",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:38",
+          "done": "2026-09-16 14:38"
+        },
+        {
+          "picking": "CA1/RET/01192",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:36",
+          "done": "2026-09-16 14:37"
+        },
+        {
+          "picking": "CA1/RET/01190",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:36",
+          "done": "2026-09-16 14:36"
+        },
+        {
+          "picking": "CA1/RET/01191",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:36",
+          "done": "2026-09-16 14:36"
+        },
+        {
+          "picking": "CA1/IN/01058",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-09-16 13:07",
+          "done": "2026-09-16 13:23"
+        },
+        {
+          "picking": "CA1/RET/01187",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 13:09",
+          "done": "2026-09-16 13:09"
+        },
+        {
+          "picking": "CA1/IN/01057",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 11:46",
+          "done": "2026-09-16 11:46"
+        },
         {
           "picking": "CA1/IN/01056",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
           "horas": 0.3,
           "scheduled": "2026-09-15 19:33",
           "done": "2026-09-15 19:52"
-        },
-        {
-          "picking": "CA1/IN/01054",
-          "proveedor": "",
-          "horas": 0.8,
-          "scheduled": "2026-09-15 12:44",
-          "done": "2026-09-15 13:33"
-        },
-        {
-          "picking": "CA1/IN/01053",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-14 19:19",
-          "done": "2026-09-14 19:25"
-        },
-        {
-          "picking": "CA1/RET/01186",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 16:02",
-          "done": "2026-09-14 16:03"
-        },
-        {
-          "picking": "CA1/RET/01185",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 16:01",
-          "done": "2026-09-14 16:02"
-        },
-        {
-          "picking": "CA1/RET/01184",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 15:57",
-          "done": "2026-09-14 15:58"
-        },
-        {
-          "picking": "CA1/RET/01181",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 15:53",
-          "done": "2026-09-14 15:54"
-        },
-        {
-          "picking": "CA1/RET/01180",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 15:52",
-          "done": "2026-09-14 15:52"
-        },
-        {
-          "picking": "CA1/IN/01045",
-          "proveedor": "Celiv Spa",
-          "horas": 65.6,
-          "scheduled": "2026-09-07 20:14",
-          "done": "2026-09-10 13:47"
-        },
-        {
-          "picking": "CA1/IN/01049",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-08 14:31",
-          "done": "2026-09-08 14:32"
-        },
-        {
-          "picking": "CA1/IN/01048",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-09-08 13:45",
-          "done": "2026-09-08 13:59"
-        },
-        {
-          "picking": "CA1/IN/01047",
-          "proveedor": "",
-          "horas": 1.6,
-          "scheduled": "2026-09-08 11:26",
-          "done": "2026-09-08 13:04"
-        },
-        {
-          "picking": "CA1/IN/01044",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 18:20",
-          "done": "2026-09-07 18:22"
-        },
-        {
-          "picking": "CA1/IN/01043",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-07 17:20",
-          "done": "2026-09-07 17:26"
-        },
-        {
-          "picking": "CA1/IN/01042",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 15:46",
-          "done": "2026-09-07 15:46"
-        },
-        {
-          "picking": "CA1/IN/01041",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 15:24",
-          "done": "2026-09-07 15:25"
-        },
-        {
-          "picking": "CA1/RET/01179",
-          "proveedor": "Distribución y Logística V&L SpA",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 14:15",
-          "done": "2026-09-07 14:15"
-        },
-        {
-          "picking": "CA1/IN/01040",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 13:20",
-          "done": "2026-09-07 13:21"
-        },
-        {
-          "picking": "CA1/RET/01178",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 13:00",
-          "done": "2026-09-07 13:01"
-        },
-        {
-          "picking": "CA1/RET/01177",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 12:51",
-          "done": "2026-09-07 12:51"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.771441774491682,
-      "total_so": 10887,
-      "total_con_pickings": 10820,
-      "cumplidos": 8347,
-      "parciales": 13,
-      "sin_iniciar": 2460,
+      "valor": 0.9689227145057534,
+      "total_so": 11058,
+      "total_con_pickings": 11037,
+      "cumplidos": 10694,
+      "parciales": 17,
+      "sin_iniciar": 326,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.30982380552052,
-      "n_orders": 9516,
+      "valor": 83.1804553496209,
+      "n_orders": 11870,
       "min_h": 0.005833333333333334,
-      "max_h": 664.3713888888889,
-      "mediana_h": 30.88277777777778,
+      "max_h": 700.1955555555555,
+      "mediana_h": 41.59861111111111,
       "detalle": [
+        {
+          "so": "S278911",
+          "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+          "horas": 700.2,
+          "fecha_orden": "2026-08-18 12:03",
+          "fecha_despacho": "2026-09-16 16:15"
+        },
+        {
+          "so": "S279137",
+          "cliente": "COMERCIAL DITEN LIMITADA",
+          "horas": 686.1,
+          "fecha_orden": "2026-08-19 02:08",
+          "fecha_despacho": "2026-09-16 16:15"
+        },
+        {
+          "so": "S279138",
+          "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+          "horas": 686.1,
+          "fecha_orden": "2026-08-19 02:08",
+          "fecha_despacho": "2026-09-16 16:15"
+        },
+        {
+          "so": "S279139",
+          "cliente": "COMERCIAL DITEN LIMITADA",
+          "horas": 686.1,
+          "fecha_orden": "2026-08-19 02:08",
+          "fecha_despacho": "2026-09-16 16:15"
+        },
+        {
+          "so": "S279292",
+          "cliente": "Cliente Walmart, Camila Vega garrido",
+          "horas": 671.1,
+          "fecha_orden": "2026-08-19 17:01",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
+        {
+          "so": "S279352",
+          "cliente": "Cliente Walmart,",
+          "horas": 668.6,
+          "fecha_orden": "2026-08-19 19:31",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
+        {
+          "so": "S279395",
+          "cliente": "Cliente Walmart,",
+          "horas": 665.4,
+          "fecha_orden": "2026-08-19 22:41",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
         {
           "so": "S269110",
           "cliente": "Cliente Mercado Libre, Juan Luis Vergara",
           "horas": 664.4,
           "fecha_orden": "2026-07-29 00:56",
           "fecha_despacho": "2026-08-25 17:19"
+        },
+        {
+          "so": "S279464",
+          "cliente": "Cliente Walmart, Camila Ignacia Riquelme Fuentes",
+          "horas": 661.7,
+          "fecha_orden": "2026-08-20 02:21",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
+        {
+          "so": "S279492",
+          "cliente": "Cliente Walmart, Denisse Jara",
+          "horas": 659.2,
+          "fecha_orden": "2026-08-20 04:51",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
+        {
+          "so": "S279518",
+          "cliente": "Cliente Walmart, Marcia Castillo",
+          "horas": 650.9,
+          "fecha_orden": "2026-08-20 13:10",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
+        {
+          "so": "S279869",
+          "cliente": "Cliente Marketing",
+          "horas": 625.2,
+          "fecha_orden": "2026-08-21 15:18",
+          "fecha_despacho": "2026-09-16 16:27"
+        },
+        {
+          "so": "S279956",
+          "cliente": "Cliente Walmart,",
+          "horas": 620.8,
+          "fecha_orden": "2026-08-21 19:20",
+          "fecha_despacho": "2026-09-16 16:05"
+        },
+        {
+          "so": "S279959",
+          "cliente": "Cliente Walmart,",
+          "horas": 620.6,
+          "fecha_orden": "2026-08-21 19:31",
+          "fecha_despacho": "2026-09-16 16:05"
         },
         {
           "so": "S271025",
@@ -209,130 +300,39 @@
           "fecha_despacho": "2026-08-25 21:24"
         },
         {
-          "so": "S274598",
-          "cliente": "Cliente Falabella Fcom, Gabriel Martinez Merino",
-          "horas": 533.5,
-          "fecha_orden": "2026-08-06 09:51",
-          "fecha_despacho": "2026-08-28 15:22"
+          "so": "S280183",
+          "cliente": "Cliente Walmart, Camila Jasen Serón",
+          "horas": 594.1,
+          "fecha_orden": "2026-08-22 22:00",
+          "fecha_despacho": "2026-09-16 16:05"
         },
         {
-          "so": "S274624",
-          "cliente": "Cliente Falabella Fcom, Maria belen Lira Toro",
-          "horas": 530.0,
-          "fecha_orden": "2026-08-06 13:22",
-          "fecha_despacho": "2026-08-28 15:22"
+          "so": "S280275",
+          "cliente": "Cliente Walmart, JUAN CARLOS ORTEGA",
+          "horas": 579.6,
+          "fecha_orden": "2026-08-23 12:31",
+          "fecha_despacho": "2026-09-16 16:05"
         },
         {
-          "so": "S273055",
-          "cliente": "Cliente Mercado Libre, Francisco Ubierna",
-          "horas": 525.1,
-          "fecha_orden": "2026-08-04 00:20",
-          "fecha_despacho": "2026-08-25 21:24"
+          "so": "S280282",
+          "cliente": "Cliente Walmart, Dayna Vega Vega",
+          "horas": 578.4,
+          "fecha_orden": "2026-08-23 13:40",
+          "fecha_despacho": "2026-09-16 16:05"
         },
         {
-          "so": "S273112",
-          "cliente": "Cliente Falabella Fcom, Maria Catalina Poblete Baldessari",
-          "horas": 519.6,
-          "fecha_orden": "2026-08-04 01:27",
-          "fecha_despacho": "2026-08-25 17:04"
+          "so": "S280346",
+          "cliente": "Cliente Walmart, Benjamín Araneda Lobos",
+          "horas": 572.6,
+          "fecha_orden": "2026-08-23 19:30",
+          "fecha_despacho": "2026-09-16 16:05"
         },
         {
-          "so": "S273877",
-          "cliente": "Cliente Mercado Libre, Waldo Enrique Silva Acevedo",
-          "horas": 496.3,
-          "fecha_orden": "2026-08-05 01:00",
-          "fecha_despacho": "2026-08-25 17:19"
-        },
-        {
-          "so": "S273707",
-          "cliente": "Cliente Walmart, Paola Alfonso oyarzo",
-          "horas": 472.6,
-          "fecha_orden": "2026-08-04 20:21",
-          "fecha_despacho": "2026-08-24 12:57"
-        },
-        {
-          "so": "S274489",
-          "cliente": "Cliente Mercado Libre, Cristian Fariña Jara",
-          "horas": 471.8,
-          "fecha_orden": "2026-08-06 01:30",
-          "fecha_despacho": "2026-08-25 17:19"
-        },
-        {
-          "so": "S274754",
-          "cliente": "Cliente Mercado Libre, Scarlett sanchez",
-          "horas": 455.0,
-          "fecha_orden": "2026-08-06 18:20",
-          "fecha_despacho": "2026-08-25 17:19"
-        },
-        {
-          "so": "S272946",
-          "cliente": "Gandez SpA",
-          "horas": 454.7,
-          "fecha_orden": "2026-08-05 13:27",
-          "fecha_despacho": "2026-08-24 12:10"
-        },
-        {
-          "so": "S219260",
-          "cliente": "Distribución y Logística V&L SpA",
-          "horas": 432.2,
-          "fecha_orden": "2026-08-20 13:53",
-          "fecha_despacho": "2026-09-07 14:08"
-        },
-        {
-          "so": "S275532",
-          "cliente": "Cliente Mercado Libre, Esteban Teneb Lobos",
-          "horas": 404.5,
-          "fecha_orden": "2026-08-08 20:50",
-          "fecha_despacho": "2026-08-25 17:19"
-        },
-        {
-          "so": "S282165",
-          "cliente": "Cliente Paris, Carlos Marin",
-          "horas": 403.2,
-          "fecha_orden": "2026-08-28 17:24",
-          "fecha_despacho": "2026-09-14 12:38"
-        },
-        {
-          "so": "S282246",
-          "cliente": "Cliente Paris, alyson canales",
-          "horas": 399.5,
-          "fecha_orden": "2026-08-28 21:08",
-          "fecha_despacho": "2026-09-14 12:38"
-        },
-        {
-          "so": "S282566",
-          "cliente": "Cliente Paris, Franco Chianale",
-          "horas": 372.8,
-          "fecha_orden": "2026-08-29 23:52",
-          "fecha_despacho": "2026-09-14 12:38"
-        },
-        {
-          "so": "S282690",
-          "cliente": "Cliente Paris, María Fernanda Cares Corvalán",
-          "horas": 360.0,
-          "fecha_orden": "2026-08-30 12:39",
-          "fecha_despacho": "2026-09-14 12:38"
-        },
-        {
-          "so": "S282707",
-          "cliente": "Cliente Paris, Daniela Durán",
-          "horas": 358.4,
-          "fecha_orden": "2026-08-30 14:14",
-          "fecha_despacho": "2026-09-14 12:38"
-        },
-        {
-          "so": "S276204",
-          "cliente": "Cliente Falabella Fcom, Richard Pozo Valdivia",
-          "horas": 358.1,
-          "fecha_orden": "2026-08-10 18:25",
-          "fecha_despacho": "2026-08-25 16:33"
-        },
-        {
-          "so": "S282828",
-          "cliente": "Cliente Paris, Andrea Galdames",
-          "horas": 352.9,
-          "fecha_orden": "2026-08-30 19:42",
-          "fecha_despacho": "2026-09-14 12:38"
+          "so": "S280474",
+          "cliente": "Cliente Walmart, Ana Uribe Valenzuela",
+          "horas": 566.4,
+          "fecha_orden": "2026-08-24 01:41",
+          "fecha_despacho": "2026-09-16 16:05"
         }
       ],
       "error": null
@@ -346,29 +346,47 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 5572,
+      "lineas": 8711,
       "mes": "2026-09",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 228,
-      "outgoing": 29598,
-      "internal": 20174,
+      "incoming": 229,
+      "outgoing": 29556,
+      "internal": 20215,
       "total": 50000,
       "error": null
     },
     "top_clientes_otif_30d": {
       "valor": [
         {
+          "cliente": "Casa Mila SpA",
+          "total": 4,
+          "tarde": 4,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Global Reward Solutions",
-          "total": 128,
-          "tarde": 128,
+          "total": 143,
+          "tarde": 143,
           "on_time_pct": 0.0
         },
         {
           "cliente": "DISTRIBUIDORA IMPORTADORA DIMARSA LIMITADA",
+          "total": 5,
+          "tarde": 5,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "COMERCIAL DITEN LIMITADA",
           "total": 3,
           "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Relacional Consultoría Estratégica LTDA.",
+          "total": 5,
+          "tarde": 5,
           "on_time_pct": 0.0
         },
         {
@@ -385,8 +403,8 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 64,
-          "tarde": 64,
+          "total": 66,
+          "tarde": 66,
           "on_time_pct": 0.0
         },
         {
@@ -402,20 +420,26 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Lokal SpA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Cliente Mercado Libre",
-          "total": 12,
+          "total": 13,
           "tarde": 5,
-          "on_time_pct": 0.5833333333333334
+          "on_time_pct": 0.6153846153846154
         },
         {
           "cliente": "Falabella Retail",
-          "total": 18,
+          "total": 23,
           "tarde": 0,
           "on_time_pct": 1.0
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
-          "total": 6,
+          "total": 11,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8189,181 +8213,181 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.04439655172413793,
-      "total_pickings": 9280,
-      "on_time": 414,
-      "on_time_pct": 0.04461206896551724,
-      "in_full": 9274,
-      "in_full_pct": 0.999353448275862,
-      "both": 412,
+      "valor": 0.04682330986512851,
+      "total_pickings": 11789,
+      "on_time": 554,
+      "on_time_pct": 0.04699295953855289,
+      "in_full": 11783,
+      "in_full_pct": 0.9994910509797269,
+      "both": 552,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.10833333333333334,
-      "total_pickings": 360,
-      "on_time": 39,
-      "on_time_pct": 0.10833333333333334,
-      "in_full": 358,
-      "in_full_pct": 0.9944444444444445,
-      "both": 39,
+      "valor": 0.12871287128712872,
+      "total_pickings": 404,
+      "on_time": 52,
+      "on_time_pct": 0.12871287128712872,
+      "in_full": 401,
+      "in_full_pct": 0.9925742574257426,
+      "both": 52,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998457623197348,
-      "ok": 12965,
-      "total": 12967,
-      "errores": 2,
+      "valor": 0.9998137340121693,
+      "ok": 16103,
+      "total": 16106,
+      "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 19.178590277777776,
-      "n_recepciones": 280,
+      "valor": 17.9610209959123,
+      "n_recepciones": 299,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01205",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:55",
+          "done": "2026-09-16 15:56"
+        },
+        {
+          "picking": "CA1/RET/01204",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:55",
+          "done": "2026-09-16 15:55"
+        },
+        {
+          "picking": "CA1/RET/01203",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:54",
+          "done": "2026-09-16 15:54"
+        },
+        {
+          "picking": "CA1/RET/01202",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:24",
+          "done": "2026-09-16 15:24"
+        },
+        {
+          "picking": "CA1/RET/01200",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:21",
+          "done": "2026-09-16 15:22"
+        },
+        {
+          "picking": "CA1/RET/01201",
+          "proveedor": "Mercadolibre Chile Limitada",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:22",
+          "done": "2026-09-16 15:22"
+        },
+        {
+          "picking": "CA1/RET/01199",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:16",
+          "done": "2026-09-16 15:16"
+        },
+        {
+          "picking": "CA1/RET/01198",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:14",
+          "done": "2026-09-16 15:15"
+        },
+        {
+          "picking": "CA1/RET/01197",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:13",
+          "done": "2026-09-16 15:14"
+        },
+        {
+          "picking": "CA1/RET/01196",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 15:12",
+          "done": "2026-09-16 15:12"
+        },
+        {
+          "picking": "CA1/RET/01195",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:39",
+          "done": "2026-09-16 14:39"
+        },
+        {
+          "picking": "CA1/RET/01193",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:37",
+          "done": "2026-09-16 14:38"
+        },
+        {
+          "picking": "CA1/RET/01194",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:38",
+          "done": "2026-09-16 14:38"
+        },
+        {
+          "picking": "CA1/RET/01192",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:36",
+          "done": "2026-09-16 14:37"
+        },
+        {
+          "picking": "CA1/RET/01190",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:36",
+          "done": "2026-09-16 14:36"
+        },
+        {
+          "picking": "CA1/RET/01191",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 14:36",
+          "done": "2026-09-16 14:36"
+        },
+        {
+          "picking": "CA1/IN/01058",
+          "proveedor": "",
+          "horas": 0.3,
+          "scheduled": "2026-09-16 13:07",
+          "done": "2026-09-16 13:23"
+        },
+        {
+          "picking": "CA1/RET/01187",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 13:09",
+          "done": "2026-09-16 13:09"
+        },
+        {
+          "picking": "CA1/IN/01057",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-09-16 11:46",
+          "done": "2026-09-16 11:46"
+        },
         {
           "picking": "CA1/IN/01056",
           "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
           "horas": 0.3,
           "scheduled": "2026-09-15 19:33",
           "done": "2026-09-15 19:52"
-        },
-        {
-          "picking": "CA1/IN/01054",
-          "proveedor": "",
-          "horas": 0.8,
-          "scheduled": "2026-09-15 12:44",
-          "done": "2026-09-15 13:33"
-        },
-        {
-          "picking": "CA1/IN/01053",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-14 19:19",
-          "done": "2026-09-14 19:25"
-        },
-        {
-          "picking": "CA1/RET/01186",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 16:02",
-          "done": "2026-09-14 16:03"
-        },
-        {
-          "picking": "CA1/RET/01185",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 16:01",
-          "done": "2026-09-14 16:02"
-        },
-        {
-          "picking": "CA1/RET/01184",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 15:57",
-          "done": "2026-09-14 15:58"
-        },
-        {
-          "picking": "CA1/RET/01181",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 15:53",
-          "done": "2026-09-14 15:54"
-        },
-        {
-          "picking": "CA1/RET/01180",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-14 15:52",
-          "done": "2026-09-14 15:52"
-        },
-        {
-          "picking": "CA1/IN/01045",
-          "proveedor": "Celiv Spa",
-          "horas": 65.6,
-          "scheduled": "2026-09-07 20:14",
-          "done": "2026-09-10 13:47"
-        },
-        {
-          "picking": "CA1/IN/01049",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-08 14:31",
-          "done": "2026-09-08 14:32"
-        },
-        {
-          "picking": "CA1/IN/01048",
-          "proveedor": "",
-          "horas": 0.2,
-          "scheduled": "2026-09-08 13:45",
-          "done": "2026-09-08 13:59"
-        },
-        {
-          "picking": "CA1/IN/01047",
-          "proveedor": "",
-          "horas": 1.6,
-          "scheduled": "2026-09-08 11:26",
-          "done": "2026-09-08 13:04"
-        },
-        {
-          "picking": "CA1/IN/01044",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 18:20",
-          "done": "2026-09-07 18:22"
-        },
-        {
-          "picking": "CA1/IN/01043",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-07 17:20",
-          "done": "2026-09-07 17:26"
-        },
-        {
-          "picking": "CA1/IN/01042",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 15:46",
-          "done": "2026-09-07 15:46"
-        },
-        {
-          "picking": "CA1/IN/01041",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 15:24",
-          "done": "2026-09-07 15:25"
-        },
-        {
-          "picking": "CA1/RET/01179",
-          "proveedor": "Distribución y Logística V&L SpA",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 14:15",
-          "done": "2026-09-07 14:15"
-        },
-        {
-          "picking": "CA1/IN/01040",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 13:20",
-          "done": "2026-09-07 13:21"
-        },
-        {
-          "picking": "CA1/RET/01178",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 13:00",
-          "done": "2026-09-07 13:01"
-        },
-        {
-          "picking": "CA1/RET/01177",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-07 12:51",
-          "done": "2026-09-07 12:51"
         }
       ],
       "error": null
