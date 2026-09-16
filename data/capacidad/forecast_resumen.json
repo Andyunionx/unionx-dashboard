@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-16T18:33:00.305402",
+  "generado_en": "2026-09-16T23:23:01.156950",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1370,
   "capacidad_bodega_m3": 2465.9999999999995,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 812,
     "posiciones_libres_hoy": 558,
     "pct_ocupacion_hoy": 59.3,
-    "m3_stock_calculado": 841.5
+    "m3_stock_calculado": 839.9
   },
   "pico_proyectado": {
     "fecha": "2026-09-16",
@@ -23,8 +23,8 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-11-15",
-    "posiciones_ocupadas": 583.9,
-    "pct_ocupacion": 42.6
+    "posiciones_ocupadas": 584.3,
+    "pct_ocupacion": 42.7
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -48,28 +48,28 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 0.0,
-  "pallets_total_salientes_horizonte": 228.1,
+  "pallets_total_salientes_horizonte": 227.7,
   "m3_total_entrante_horizonte": 0.0,
-  "m3_total_saliente_horizonte": 273.7,
+  "m3_total_saliente_horizonte": 273.2,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 813,
+    "sku_con_vol_odoo": 812,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 96339.0,
-    "demanda_cumplida_unidades": 33533.0,
-    "demanda_no_cubierta_unidades_total": 62806.0,
+    "demanda_cumplida_unidades": 33511.0,
+    "demanda_no_cubierta_unidades_total": 62828.0,
     "pct_demanda_cumplida": 34.8,
     "sku_sin_match_stock_count": 51,
     "top_no_cubiertos": [
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 14708.0,
+        "unid_no_cubiertas": 14709.0,
         "sin_match_stock": true
       },
       {
         "sku": "1597098592591",
-        "unid_no_cubiertas": 14029.0,
+        "unid_no_cubiertas": 14030.0,
         "sin_match_stock": true
       },
       {
@@ -94,7 +94,7 @@
       },
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 925.0,
+        "unid_no_cubiertas": 926.0,
         "sin_match_stock": true
       },
       {
@@ -104,12 +104,12 @@
       },
       {
         "sku": "SIMJULZSIE-30",
-        "unid_no_cubiertas": 788.0,
+        "unid_no_cubiertas": 792.0,
         "sin_match_stock": true
       },
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 677.0,
+        "unid_no_cubiertas": 678.0,
         "sin_match_stock": true
       },
       {
@@ -124,7 +124,7 @@
       },
       {
         "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 355.0,
+        "unid_no_cubiertas": 356.0,
         "sin_match_stock": true
       },
       {
@@ -154,7 +154,7 @@
       },
       {
         "sku": "1660859424566",
-        "unid_no_cubiertas": 284.0,
+        "unid_no_cubiertas": 285.0,
         "sin_match_stock": true
       },
       {
