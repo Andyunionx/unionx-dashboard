@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-09-17T08:28:03.156489",
+  "generado_en": "2026-09-17T18:51:28.388798",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.04906230557283797,
-      "total_pickings": 11251,
-      "on_time": 554,
-      "on_time_pct": 0.04924006754955115,
-      "in_full": 11246,
-      "in_full_pct": 0.999555595058217,
-      "both": 552,
+      "valor": 0.04987727910238429,
+      "total_pickings": 11408,
+      "on_time": 571,
+      "on_time_pct": 0.05005259467040673,
+      "in_full": 11403,
+      "in_full_pct": 0.9995617110799438,
+      "both": 569,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11519607843137254,
-      "total_pickings": 408,
+      "valor": 0.11407766990291263,
+      "total_pickings": 412,
       "on_time": 47,
-      "on_time_pct": 0.11519607843137254,
-      "in_full": 405,
-      "in_full_pct": 0.9926470588235294,
+      "on_time_pct": 0.11407766990291263,
+      "in_full": 408,
+      "in_full_pct": 0.9902912621359223,
       "both": 47,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998051821546854,
-      "ok": 15396,
-      "total": 15399,
-      "errores": 3,
+      "valor": 0.9997439836149513,
+      "ok": 15620,
+      "total": 15624,
+      "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 17.9610209959123,
-      "n_recepciones": 299,
+      "valor": 17.901153703703702,
+      "n_recepciones": 300,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01206",
+          "proveedor": "Gabriela Pastran, Shanik Pastran Pastran",
+          "horas": 0.0,
+          "scheduled": "2026-09-17 12:33",
+          "done": "2026-09-17 12:33"
+        },
         {
           "picking": "CA1/RET/01205",
           "proveedor": "Mercadolibre Chile Limitada",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-09-16 11:46",
           "done": "2026-09-16 11:46"
-        },
-        {
-          "picking": "CA1/IN/01056",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 0.3,
-          "scheduled": "2026-09-15 19:33",
-          "done": "2026-09-15 19:52"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9699071904003,
-      "total_so": 10689,
-      "total_con_pickings": 10667,
-      "cumplidos": 10346,
+      "valor": 0.9732888146911519,
+      "total_so": 10807,
+      "total_con_pickings": 10782,
+      "cumplidos": 10494,
       "parciales": 15,
-      "sin_iniciar": 306,
+      "sin_iniciar": 273,
       "error": null
     },
     "oct_30d": {
-      "valor": 83.89232696453067,
-      "n_orders": 11340,
+      "valor": 82.92746856121019,
+      "n_orders": 11495,
       "min_h": 0.005833333333333334,
       "max_h": 700.1955555555555,
-      "mediana_h": 40.24638888888889,
+      "mediana_h": 39.485,
       "detalle": [
         {
           "so": "S278911",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 8818,
+      "lineas": 9043,
       "mes": "2026-09",
       "error": null
     },
@@ -367,8 +367,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 143,
-          "tarde": 143,
+          "total": 145,
+          "tarde": 145,
           "on_time_pct": 0.0
         },
         {
@@ -397,8 +397,8 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 38,
-          "tarde": 38,
+          "total": 39,
+          "tarde": 39,
           "on_time_pct": 0.0
         },
         {
@@ -8213,42 +8213,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.04906230557283797,
-      "total_pickings": 11251,
-      "on_time": 554,
-      "on_time_pct": 0.04924006754955115,
-      "in_full": 11246,
-      "in_full_pct": 0.999555595058217,
-      "both": 552,
+      "valor": 0.04987727910238429,
+      "total_pickings": 11408,
+      "on_time": 571,
+      "on_time_pct": 0.05005259467040673,
+      "in_full": 11403,
+      "in_full_pct": 0.9995617110799438,
+      "both": 569,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11519607843137254,
-      "total_pickings": 408,
+      "valor": 0.11407766990291263,
+      "total_pickings": 412,
       "on_time": 47,
-      "on_time_pct": 0.11519607843137254,
-      "in_full": 405,
-      "in_full_pct": 0.9926470588235294,
+      "on_time_pct": 0.11407766990291263,
+      "in_full": 408,
+      "in_full_pct": 0.9902912621359223,
       "both": 47,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998051821546854,
-      "ok": 15396,
-      "total": 15399,
-      "errores": 3,
+      "valor": 0.9997439836149513,
+      "ok": 15620,
+      "total": 15624,
+      "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 17.9610209959123,
-      "n_recepciones": 299,
+      "valor": 17.901153703703702,
+      "n_recepciones": 300,
       "min": -210.61166666666668,
       "max": 717.2755555555556,
       "detalle": [
+        {
+          "picking": "CA1/RET/01206",
+          "proveedor": "Gabriela Pastran, Shanik Pastran Pastran",
+          "horas": 0.0,
+          "scheduled": "2026-09-17 12:33",
+          "done": "2026-09-17 12:33"
+        },
         {
           "picking": "CA1/RET/01205",
           "proveedor": "Mercadolibre Chile Limitada",
@@ -8381,13 +8388,6 @@
           "horas": 0.0,
           "scheduled": "2026-09-16 11:46",
           "done": "2026-09-16 11:46"
-        },
-        {
-          "picking": "CA1/IN/01056",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 0.3,
-          "scheduled": "2026-09-15 19:33",
-          "done": "2026-09-15 19:52"
         }
       ],
       "error": null
