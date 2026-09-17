@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-09-17T15:48:54.402075",
+  "generado_en": "2026-09-17T20:41:58.287502",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12454,
-  "total_monto_pendiente_clp": 947445322.0,
+  "total_documentos_pendientes": 12340,
+  "total_monto_pendiente_clp": 941462999.0,
   "monto_por_aging": {
     "+90 días": 77248503.0,
-    "1-30 días": 331922400.0,
+    "1-30 días": 328542355.0,
     "31-60 días": 251828417.0,
     "61-90 días": 44840515.0,
-    "Vigente": 241605487.0
+    "Vigente": 239003209.0
   },
   "monto_por_tipo": {
-    "BOLETA": 724758273.0,
+    "BOLETA": 718775950.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 136505149.0
+      "monto": 136703089.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 64083834.0
+      "monto": 64134704.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -57,16 +57,16 @@
       "monto": 18565083.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 17439276.0
-    },
-    {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 14300166.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
       "monto": 13302389.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 12622569.0
     },
     {
       "partner": "Cliente Shopify",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 8808514.0
+      "monto": 8786507.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -94,7 +94,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 8134035.0
+      "monto": 8115051.0
     }
   ],
   "notas_credito_count": 804,
