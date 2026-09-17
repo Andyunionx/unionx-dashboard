@@ -1,11 +1,24 @@
 {
-  "generado_en": "2026-09-17T13:55:26.458916",
-  "total_pis": 2,
+  "generado_en": "2026-09-17T18:41:42.715451",
+  "total_pis": 4,
   "pis_ingresados": 0,
-  "pis_parciales": 0,
-  "pis_pendientes": 2,
+  "pis_parciales": 1,
+  "pis_pendientes": 3,
   "sku_no_match_odoo": 1,
   "por_pi": [
+    {
+      "pi": "26TP0608PI",
+      "fecha_embarque": "2026-09-17",
+      "skus_total": 1,
+      "skus_ingresados": 0,
+      "skus_parciales": 0,
+      "skus_pendientes": 1,
+      "skus_sin_info": 0,
+      "unidades_esperadas": 241.0,
+      "unidades_recibidas": 2.0,
+      "ratio_pi": 0.008,
+      "status_pi": "\ud83d\udd34 PENDIENTE"
+    },
     {
       "pi": "26TP0704PI",
       "fecha_embarque": "2026-07-13",
@@ -18,6 +31,19 @@
       "unidades_recibidas": 0.0,
       "ratio_pi": 0.0,
       "status_pi": "\ud83d\udd34 PENDIENTE"
+    },
+    {
+      "pi": "26TP0716PI",
+      "fecha_embarque": "2026-09-17",
+      "skus_total": 46,
+      "skus_ingresados": 5,
+      "skus_parciales": 4,
+      "skus_pendientes": 36,
+      "skus_sin_info": 1,
+      "unidades_esperadas": 13636.0,
+      "unidades_recibidas": 1849.0,
+      "ratio_pi": 0.136,
+      "status_pi": "\ud83d\udfe1 INICIANDO"
     },
     {
       "pi": "26TP0816PI",
