@@ -1,39 +1,39 @@
 {
-  "generado_en": "2026-09-17T18:51:28.388798",
+  "generado_en": "2026-09-18T08:02:34.761722",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.04987727910238429,
-      "total_pickings": 11408,
-      "on_time": 571,
-      "on_time_pct": 0.05005259467040673,
-      "in_full": 11403,
-      "in_full_pct": 0.9995617110799438,
-      "both": 569,
+      "valor": 0.0507029053420806,
+      "total_pickings": 10670,
+      "on_time": 543,
+      "on_time_pct": 0.050890346766635425,
+      "in_full": 10665,
+      "in_full_pct": 0.9995313964386129,
+      "both": 541,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11407766990291263,
-      "total_pickings": 412,
-      "on_time": 47,
-      "on_time_pct": 0.11407766990291263,
-      "in_full": 408,
-      "in_full_pct": 0.9902912621359223,
-      "both": 47,
+      "valor": 0.11315789473684211,
+      "total_pickings": 380,
+      "on_time": 43,
+      "on_time_pct": 0.11315789473684211,
+      "in_full": 376,
+      "in_full_pct": 0.9894736842105263,
+      "both": 43,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997439836149513,
-      "ok": 15620,
-      "total": 15624,
+      "valor": 0.9997256327594485,
+      "ok": 14575,
+      "total": 14579,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 17.901153703703702,
-      "n_recepciones": 300,
+      "valor": 15.562108881456709,
+      "n_recepciones": 299,
       "min": -210.61166666666668,
-      "max": 717.2755555555556,
+      "max": 690.62,
       "detalle": [
         {
           "picking": "CA1/RET/01206",
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9732888146911519,
-      "total_so": 10807,
-      "total_con_pickings": 10782,
-      "cumplidos": 10494,
-      "parciales": 15,
-      "sin_iniciar": 273,
+      "valor": 0.9648307896483079,
+      "total_so": 10574,
+      "total_con_pickings": 10549,
+      "cumplidos": 10178,
+      "parciales": 13,
+      "sin_iniciar": 358,
       "error": null
     },
     "oct_30d": {
-      "valor": 82.92746856121019,
-      "n_orders": 11495,
+      "valor": 85.38467906122239,
+      "n_orders": 10735,
       "min_h": 0.005833333333333334,
       "max_h": 700.1955555555555,
-      "mediana_h": 39.485,
+      "mediana_h": 39.49944444444444,
       "detalle": [
         {
           "so": "S278911",
@@ -351,9 +351,9 @@
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 229,
-      "outgoing": 29726,
-      "internal": 20045,
+      "incoming": 235,
+      "outgoing": 29699,
+      "internal": 20066,
       "total": 50000,
       "error": null
     },
@@ -363,12 +363,6 @@
           "cliente": "Casa Mila SpA",
           "total": 4,
           "tarde": 4,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Global Reward Solutions",
-          "total": 145,
-          "tarde": 145,
           "on_time_pct": 0.0
         },
         {
@@ -390,27 +384,33 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
-          "total": 5,
-          "tarde": 5,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 39,
-          "tarde": 39,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Sawa SPA",
-          "total": 75,
-          "tarde": 75,
+          "total": 36,
+          "tarde": 36,
           "on_time_pct": 0.0
         },
         {
           "cliente": "abc S.A.",
           "total": 34,
           "tarde": 34,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Sawa SPA",
+          "total": 70,
+          "tarde": 70,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Global Reward Solutions",
+          "total": 129,
+          "tarde": 129,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "SOLUCIONES INFORMÁTICAS JATECH LIMITADA",
+          "total": 4,
+          "tarde": 4,
           "on_time_pct": 0.0
         },
         {
@@ -427,13 +427,13 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 13,
-          "tarde": 5,
-          "on_time_pct": 0.6153846153846154
+          "total": 11,
+          "tarde": 4,
+          "on_time_pct": 0.6363636363636364
         },
         {
           "cliente": "Falabella Retail",
-          "total": 21,
+          "total": 18,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -8213,41 +8213,41 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.04987727910238429,
-      "total_pickings": 11408,
-      "on_time": 571,
-      "on_time_pct": 0.05005259467040673,
-      "in_full": 11403,
-      "in_full_pct": 0.9995617110799438,
-      "both": 569,
+      "valor": 0.0507029053420806,
+      "total_pickings": 10670,
+      "on_time": 543,
+      "on_time_pct": 0.050890346766635425,
+      "in_full": 10665,
+      "in_full_pct": 0.9995313964386129,
+      "both": 541,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11407766990291263,
-      "total_pickings": 412,
-      "on_time": 47,
-      "on_time_pct": 0.11407766990291263,
-      "in_full": 408,
-      "in_full_pct": 0.9902912621359223,
-      "both": 47,
+      "valor": 0.11315789473684211,
+      "total_pickings": 380,
+      "on_time": 43,
+      "on_time_pct": 0.11315789473684211,
+      "in_full": 376,
+      "in_full_pct": 0.9894736842105263,
+      "both": 43,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997439836149513,
-      "ok": 15620,
-      "total": 15624,
+      "valor": 0.9997256327594485,
+      "ok": 14575,
+      "total": 14579,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 17.901153703703702,
-      "n_recepciones": 300,
+      "valor": 15.562108881456709,
+      "n_recepciones": 299,
       "min": -210.61166666666668,
-      "max": 717.2755555555556,
+      "max": 690.62,
       "detalle": [
         {
           "picking": "CA1/RET/01206",
