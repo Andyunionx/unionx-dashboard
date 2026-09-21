@@ -44,10 +44,18 @@ export default {
     console.log(`[pulso-scheduler] pulso disparado OK @ ${new Date().toISOString()} (cron ${event.cron})`);
   },
 
-  // Endpoint manual opcional: GET /trigger dispara el pulso a mano (para pruebas).
+  // Endpoint manual opcional: GET /trigger?k=<TRIGGER_KEY> dispara el pulso.
+  //
+  // El Worker tiene URL pública en workers.dev y los bots escanean ese dominio:
+  // sin llave, cualquiera que diera con la URL mandaba el pulso a las 13 personas
+  // del Pulso Diario. Se exige TRIGGER_KEY (wrangler secret put TRIGGER_KEY).
+  // Si no está configurada, el endpoint queda cerrado — el cron no se ve afectado.
   async fetch(request, env, ctx) {
     const u = new URL(request.url);
     if (u.pathname === '/trigger') {
+      if (!env.TRIGGER_KEY || u.searchParams.get('k') !== env.TRIGGER_KEY) {
+        return new Response('no autorizado', { status: 401 });
+      }
       await this.scheduled({ cron: 'manual' }, env, ctx);
       return new Response('pulso disparado', { status: 200 });
     }

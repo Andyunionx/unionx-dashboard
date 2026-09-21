@@ -41,6 +41,19 @@ jobs:
           N=$(gh api "repos/${{ github.repository }}/actions/workflows/email_diario.yml/runs?per_page=30" \
                 --jq "[.workflow_runs[] | select(.created_at | startswith(\"$HOY\")) | select(.conclusion == \"success\" or .status == \"in_progress\")] | length")
           echo "Corridas del Pulso Diario hoy ($HOY): $N"
+          # Cuando ESTE watchdog dispara el pulso, lo hace con workflow_call: corre
+          # como job anidado y NO aparece en las corridas de email_diario.yml. Sin
+          # esta segunda revisión, el watchdog de las 12:23 no vería lo que hizo el
+          # de las 09:17 y mandaría el pulso por segunda vez.
+          for R in $(gh api "repos/${{ github.repository }}/actions/workflows/watchdog_pulso.yml/runs?per_page=20" \
+                       --jq "[.workflow_runs[] | select(.created_at | startswith(\"$HOY\")) | select(.id < ${{ github.run_id }}) | .id] | .[]"); do
+            J=$(gh api "repos/${{ github.repository }}/actions/runs/$R/jobs" \
+                  --jq "[.jobs[] | select(.name | startswith(\"pulso\")) | select(.conclusion != \"skipped\")] | length")
+            if [ "$J" -gt 0 ]; then
+              echo "El watchdog anterior (run $R) ya ejecutó el pulso hoy."
+              N=$((N + 1))
+            fi
+          done
           if [ "$N" -gt 0 ]; then
             echo "falta=false" >> $GITHUB_OUTPUT
             echo "El pulso ya salió — el watchdog no hace nada."
