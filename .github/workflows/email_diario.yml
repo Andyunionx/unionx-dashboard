@@ -65,13 +65,17 @@ jobs:
             echo "forzar=true — se envía sin revisar duplicados."
             exit 0
           fi
-          HOY=$(date -u +%Y-%m-%d)
+          # Ventana de 60 min y no "el día entero": un duplicado de cron llega a
+          # segundos de distancia, mientras que un `solo_live` de la mañana o un
+          # reenvío a mano horas después son legítimos y no deben bloquearse. Con
+          # ventana de día completo, un solo_live temprano dejaba sin pulso al día.
+          CORTE=$(date -u -d '60 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
           PREVIAS=$(gh api "repos/${{ github.repository }}/actions/workflows/email_diario.yml/runs?per_page=50" \
             --jq "[.workflow_runs[]
-                   | select(.created_at | startswith(\"$HOY\"))
                    | select(.id < ${{ github.run_id }})
+                   | select(.created_at > \"$CORTE\")
                    | select(.conclusion == \"success\" or .status == \"in_progress\")] | length")
-          echo "Corridas de hoy ($HOY) anteriores a ésta: $PREVIAS"
+          echo "Corridas anteriores a ésta desde $CORTE: $PREVIAS"
           if [ "$PREVIAS" -gt 0 ]; then
             echo "duplicado=true" >> $GITHUB_OUTPUT
             echo "::warning::Ya hay una corrida del Pulso Diario de hoy en curso o terminada. Ésta se salta para no duplicar el correo."
