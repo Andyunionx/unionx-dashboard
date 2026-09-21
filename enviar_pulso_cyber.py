@@ -829,10 +829,13 @@ def descargar_excel_raw_hoy():
     return buf.getvalue(), len(df), hoy_str
 
 
-def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachments=None):
+def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachments=None,
+                      cc_list=None, thread_id=None, in_reply_to=None):
     """Envío vía Gmail API usando credentials del agente-comex.
     extra_attachments: lista opcional de (bytes, nombre_exacto.xlsx) que se adjuntan
-    con su nombre tal cual (sin el prefijo 'Raw Cyber')."""
+    con su nombre tal cual (sin el prefijo 'Raw Cyber').
+    thread_id + in_reply_to: para responder DENTRO de una cadena existente (una
+    corrección de pulso va en el mismo hilo que el pulso original, no como mail nuevo)."""
     import json as _json
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
@@ -860,7 +863,12 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachme
     service = build('gmail', 'v1', credentials=creds)
     msg = MIMEMultipart()
     msg['to'] = ','.join(to_list)
+    if cc_list:
+        msg['cc'] = ','.join(cc_list)
     msg['subject'] = asunto
+    if in_reply_to:
+        msg['In-Reply-To'] = in_reply_to
+        msg['References'] = in_reply_to
     msg.attach(MIMEText(html, 'html'))
 
     if xlsx_bytes:
@@ -891,7 +899,10 @@ def _enviar_via_gmail(asunto, html, xlsx_bytes, hoy_str, to_list, extra_attachme
         msg.attach(ep)
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-    sent = service.users().messages().send(userId='me', body={'raw': raw}).execute()
+    body = {'raw': raw}
+    if thread_id:
+        body['threadId'] = thread_id
+    sent = service.users().messages().send(userId='me', body=body).execute()
     return sent.get('id', '?')
 
 
