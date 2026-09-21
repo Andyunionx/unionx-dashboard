@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-09-21T08:20:49.856827",
+  "generado_en": "2026-09-21T15:27:47.718827",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 27,
-  "sku_match_odoo": 26,
-  "sku_con_peso": 22,
-  "sku_con_volumen": 22,
-  "sku_volumen_anomalo": 3,
+  "sku_input": 4,
+  "sku_match_odoo": 3,
+  "sku_con_peso": 0,
+  "sku_con_volumen": 0,
+  "sku_volumen_anomalo": 0,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 81.5,
-  "cobertura_volumen_pct": 81.5,
-  "cobertura_volumen_confiable_pct": 70.4,
-  "unidades_totales": 13907.0,
-  "peso_total_kg": 52312.2,
-  "volumen_total_m3": 100.28,
-  "volumen_total_m3_raw": 30798575.48,
-  "pallets_totales_estim": 83.6,
+  "cobertura_peso_pct": 0.0,
+  "cobertura_volumen_pct": 0.0,
+  "cobertura_volumen_confiable_pct": 0.0,
+  "unidades_totales": 30.0,
+  "peso_total_kg": 0.0,
+  "volumen_total_m3": 0.0,
+  "volumen_total_m3_raw": 0.0,
+  "pallets_totales_estim": 0,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -61,66 +61,10 @@
       "skus_volumen_anomalo": 0,
       "cobertura_peso_pct": 0.0,
       "cobertura_volumen_pct": 0.0
-    },
-    {
-      "pi": "26TP0608PI",
-      "transporte": "",
-      "fecha_embarque": "2026-09-17",
-      "fecha_eta_bodega": "2026-09-17",
-      "skus_distintos": 1,
-      "unidades_totales": 241.0,
-      "peso_total_kg": 0.0,
-      "volumen_total_m3": 0.0,
-      "volumen_total_m3_raw": 0.0,
-      "pallets_estim": 0,
-      "containers_20_estim": 0,
-      "containers_40hc_estim": 0,
-      "skus_con_match_odoo": 1,
-      "skus_con_peso": 0,
-      "skus_con_volumen": 0,
-      "skus_volumen_anomalo": 0,
-      "cobertura_peso_pct": 0.0,
-      "cobertura_volumen_pct": 0.0
-    },
-    {
-      "pi": "26TP0716PI",
-      "transporte": "",
-      "fecha_embarque": "2026-09-17",
-      "fecha_eta_bodega": "2026-09-17",
-      "skus_distintos": 23,
-      "unidades_totales": 13636.0,
-      "peso_total_kg": 52312.2,
-      "volumen_total_m3": 100.28,
-      "volumen_total_m3_raw": 30798575.48,
-      "pallets_estim": 83.6,
-      "containers_20_estim": 3.58,
-      "containers_40hc_estim": 1.5,
-      "skus_con_match_odoo": 45,
-      "skus_con_peso": 45,
-      "skus_con_volumen": 45,
-      "skus_volumen_anomalo": 6,
-      "cobertura_peso_pct": 195.7,
-      "cobertura_volumen_pct": 195.7
     }
   ],
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": [
-    {
-      "sku": "LVTECMCL-BK",
-      "producto": "Teclado Gamer NovaBlade Red Switch Mecánico Español RGB LEVO",
-      "volumen_unit_m3": 13651.2
-    },
-    {
-      "sku": "XRCOBMOT-BS",
-      "producto": "Carpa funda Cubre Moto Impermeable Premium con Felpa XRoad",
-      "volumen_unit_m3": 7522.5
-    },
-    {
-      "sku": "SIMCUTOL-2",
-      "producto": "Set Parrillero Cuchillo 21cm y Tenedor Acero Inox Toledo Simplit",
-      "volumen_unit_m3": 1596.0
-    }
-  ]
+  "skus_volumen_anomalo_top": []
 }
