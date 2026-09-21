@@ -15,7 +15,13 @@ name: "Macro Rentabilidad por Canal (lunes)"
 
 on:
   schedule:
+    # Dos ventanas el lunes. El cron de GHA free no es confiable: el 21-09 la
+    # ventana de las 13:00 UTC simplemente no disparó. A diferencia del pulso,
+    # aquí correr dos veces NO molesta a nadie: el proceso es idempotente
+    # (reescribe las mismas pestañas, no manda correo), y la segunda pasada
+    # además recoge lo que Gabriela haya cargado durante la mañana.
     - cron: '0 13 * * 1'      # 09:00 CLT lunes (GHA free suele atrasarse 5-30 min)
+    - cron: '0 16 * * 1'      # 12:00 CLT lunes — segunda ventana si la primera no disparó
   workflow_dispatch:
     inputs:
       desde:
