@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-22T08:03:17.664218",
+  "generado_en": "2026-09-22T13:46:17.980632",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1371,
   "capacidad_bodega_m3": 2467.7999999999997,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1371,
-    "posiciones_ocupadas_hoy": 804,
-    "posiciones_libres_hoy": 567,
+    "posiciones_ocupadas_hoy": 803,
+    "posiciones_libres_hoy": 568,
     "pct_ocupacion_hoy": 58.6,
-    "m3_stock_calculado": 871.1
+    "m3_stock_calculado": 866.3
   },
   "pico_proyectado": {
     "fecha": "2026-09-22",
-    "posiciones_ocupadas": 789.7,
-    "pct_ocupacion": 57.6
+    "posiciones_ocupadas": 788.7,
+    "pct_ocupacion": 57.5
   },
   "minimo_proyectado": {
     "fecha": "2026-11-20",
-    "posiciones_ocupadas": 576.3,
-    "pct_ocupacion": 42.0
+    "posiciones_ocupadas": 576.6,
+    "pct_ocupacion": 42.1
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -48,18 +48,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 0.0,
-  "pallets_total_salientes_horizonte": 227.7,
+  "pallets_total_salientes_horizonte": 226.4,
   "m3_total_entrante_horizonte": 0.0,
-  "m3_total_saliente_horizonte": 273.2,
+  "m3_total_saliente_horizonte": 271.7,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 811,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 74948.0,
-    "demanda_cumplida_unidades": 34389.0,
-    "demanda_no_cubierta_unidades_total": 40559.0,
-    "pct_demanda_cumplida": 45.9,
+    "demanda_cumplida_unidades": 34306.0,
+    "demanda_no_cubierta_unidades_total": 40642.0,
+    "pct_demanda_cumplida": 45.8,
     "sku_sin_match_stock_count": 48,
     "top_no_cubiertos": [
       {
@@ -104,17 +104,17 @@
       },
       {
         "sku": "SIMCUROM-30",
-        "unid_no_cubiertas": 567.0,
+        "unid_no_cubiertas": 568.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 334.0,
+        "unid_no_cubiertas": 339.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 307.0,
+        "unid_no_cubiertas": 324.0,
         "sin_match_stock": true
       },
       {
@@ -139,7 +139,7 @@
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 236.0,
+        "unid_no_cubiertas": 239.0,
         "sin_match_stock": true
       },
       {
