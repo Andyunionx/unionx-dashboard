@@ -12,6 +12,12 @@ Chequeos:
   4. ADVERTENCIA — DTEs rechazados/objetados de las últimas 48 h sobre umbral.
   5. ADVERTENCIA — failure_count > 0 en cualquier cron activo.
   6. Tabla informativa: watchlist con estado, última y próxima ejecución.
+  7. YUJU (stock → marketplaces). Origen: incidente 17→22 sep 2026 (rebuild Odoo.sh
+     dejó código que respeta un flag que nació en False el 4-jun; 5 días sin webhooks
+     de stock, nadie lo vio). CRÍTICO si el flag está apagado, si Multi Stock Src está
+     vacío, o si hubo movimientos de stock en 24 h y NINGÚN webhook salió.
+     ADVERTENCIA si la config o el módulo cambiaron en 24 h (quién y qué), o si hay
+     endpoints raros (≠1 activo de stock, o id_shop=0).
 
 Envío: Gmail API (token agente-comex local o GMAIL_TOKEN_JSON en CI).
 Destinatario: andres@unionx.cl (edición inicial; ampliar destinatarios con OK).
@@ -51,7 +57,12 @@ WATCHLIST = {
     159: "Peso packs desde LdM (UnionX)",
     149: "Shopify Directo: reconciliar pedidos",
     152: "Shopify Directo: sentinel sin-pedidos",
+    115: "Yuju: envío de webhooks de stock a marketplaces",
 }
+# Yuju: mínimo de movimientos de stock en 24 h para exigir que haya salido algún webhook
+# (día hábil normal ≈ 900; fin de semana puede ser ~0 y no debe alarmar)
+YUJU_MIN_MOVES = 20
+YUJU_ID_SHOP = 1090300
 UMBRAL_NOT_SENT = 150
 UMBRAL_RECHAZADOS = 10
 UMBRAL_OBJETADOS = 40
@@ -159,6 +170,73 @@ try:
 except Exception as e:
     advertencias.append(f"Chequeo de negativos falló: {str(e)[:80]}")
 
+# 7) YUJU — el stock que ven los marketplaces sale de Odoo por webhook (módulo madkting).
+#    Se vigila la config, los endpoints, el flujo real de las últimas 24 h y cambios del módulo.
+yuju_resumen = "Yuju: sin datos"
+try:
+    d1 = (HOY - datetime.timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
+    ycfg = rpc("madkting.config", "search_read", [[]],
+               {"fields": ["webhook_stock_enabled", "stock_source_multi", "simple_stock_locations",
+                           "webhook_auto_send_enabled", "webhook_stock_cron_enabled",
+                           "webhook_product_batchsize", "write_date", "write_uid"]})
+    if not ycfg:
+        criticas.append("YUJU: no existe registro de configuración (madkting.config) — el módulo no puede enviar nada.")
+    else:
+        yc = ycfg[0]
+        if not yc["webhook_stock_enabled"]:
+            criticas.append("YUJU: «Stock webhooks enabled» está APAGADO en madkting.config → ningún webhook de stock sale a los marketplaces "
+                            "(fue exactamente la causa del congelamiento 17→22 sep 2026).")
+        if not yc["stock_source_multi"]:
+            criticas.append("YUJU: «Multi Stock Src» (stock_source_multi) está VACÍO → desde la versión 2.8.x el envío lo exige aunque "
+                            "simple_stock_locations esté activo. Valor histórico que funcionaba: 8 (CA1/Stock).")
+        if edad(yc["write_date"]) is not None and edad(yc["write_date"]) < 86400:
+            quien = yc["write_uid"][1] if yc["write_uid"] else "?"
+            advertencias.append(
+                f"YUJU: la configuración madkting.config fue MODIFICADA {fmt_edad(edad(yc['write_date']))} por {quien}. "
+                f"Estado ahora → stock_enabled={yc['webhook_stock_enabled']} · src={yc['stock_source_multi']} · "
+                f"auto_send={yc['webhook_auto_send_enabled']} · cron_enabled={yc['webhook_stock_cron_enabled']} · "
+                f"batch={yc['webhook_product_batchsize']}. Verificar que fue intencional.")
+        # endpoints
+        hooks = rpc("madkting.webhook", "search_read", [[("hook_type", "=", "stock")]],
+                    {"fields": ["id", "active", "id_shop", "url"], "context": {"active_test": False}})
+        activos = [h for h in hooks if h["active"]]
+        # id_shop es char en el módulo → comparar como texto
+        if len(activos) != 1 or any(str(h["id_shop"] or "").strip() != str(YUJU_ID_SHOP) for h in activos):
+            det = "; ".join(f"id {h['id']} shop={h['id_shop']} {'ON' if h['active'] else 'off'}" for h in hooks) or "ninguno"
+            advertencias.append(f"YUJU: endpoints de stock anómalos (se espera 1 activo con id_shop={YUJU_ID_SHOP}): {det}. "
+                                f"Un upgrade del módulo puede crear uno fantasma con id_shop=0.")
+        # flujo real 24 h
+        n_wh = rpc("yuju.webhook.record", "search_count", [[("date_webhook", ">=", d1), ("event", "=", "stock_update")]])
+        n_wh_done = rpc("yuju.webhook.record", "search_count",
+                        [[("date_webhook", ">=", d1), ("event", "=", "stock_update"), ("state", "=", "done")]])
+        prods_wh = rpc("yuju.webhook.record", "read_group",
+                       [[("date_webhook", ">=", d1), ("event", "=", "stock_update")], ["total_products:sum"], []],
+                       {"lazy": False})
+        n_prod_wh = int((prods_wh[0].get("total_products") or 0) if prods_wh else 0)
+        n_moves = rpc("stock.move", "search_count",
+                      [[("state", "=", "done"), ("date", ">=", d1),
+                        ("product_id.id_product_madkting", "!=", False), ("product_id.active", "=", True)]])
+        ult = rpc("yuju.webhook.record", "search_read", [[("event", "=", "stock_update"), ("state", "=", "done")]],
+                  {"fields": ["date_webhook"], "order": "date_webhook desc", "limit": 1})
+        ult_txt = fmt_edad(edad(ult[0]["date_webhook"])) if ult else "nunca"
+        if n_moves >= YUJU_MIN_MOVES and n_wh_done == 0:
+            criticas.append(f"YUJU: {n_moves:,} movimientos de stock en productos publicados en las últimas 24 h y CERO webhooks "
+                            f"de stock enviados → el stock en los marketplaces está congelado (último envío exitoso {ult_txt}). "
+                            f"Riesgo de sobreventa y cancelaciones.")
+        elif n_wh and n_wh_done < n_wh:
+            advertencias.append(f"YUJU: {n_wh - n_wh_done} de {n_wh} webhooks de stock de las últimas 24 h NO quedaron en estado done.")
+        yuju_resumen = (f"Yuju 24h: {n_wh_done} webhooks / {n_prod_wh:,} productos · {n_moves:,} movs · "
+                        f"flag {'ON' if yc['webhook_stock_enabled'] else 'OFF'} · último envío {ult_txt}")
+    # versión / reinstalación del módulo
+    mod = rpc("ir.module.module", "search_read", [[("name", "=", "madkting")]],
+              {"fields": ["installed_version", "state", "write_date"]})
+    if mod and edad(mod[0]["write_date"]) is not None and edad(mod[0]["write_date"]) < 86400:
+        advertencias.append(f"YUJU: el módulo madkting fue actualizado/reinstalado {fmt_edad(edad(mod[0]['write_date']))} "
+                            f"(versión {mod[0]['installed_version']}, estado {mod[0]['state']}). Un upgrade puede recrear la "
+                            f"config con valores por defecto (flag de stock en False) o crear endpoints fantasma: revisar hoy.")
+except Exception as e:
+    advertencias.append(f"Chequeo Yuju falló: {str(e)[:100]}")
+
 # ---- armar correo ----
 estado_gral = "🔴" if criticas else ("🟡" if advertencias else "✅")
 fecha = (HOY - datetime.timedelta(hours=4)).strftime("%d-%m-%Y %H:%M")  # CLT
@@ -178,7 +256,7 @@ def bloque(titulo, items, color):
 
 html = f"""<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#1e293b;max-width:860px'>
 <h2 style='margin:0 0 4px'>{estado_gral} Pulso Alarmas Odoo · {fecha} CLT</h2>
-<p style='margin:0 0 14px;color:#64748b'>Salud de crons y cola DTE · {len(crons)} crons ({sum(1 for c in crons if c['active'])} activos) · cola SII: {n_pend:,} sin enviar · rechazados 48h: {n_rej} · reparos 48h: {n_obj}</p>
+<p style='margin:0 0 14px;color:#64748b'>Salud de crons, cola DTE y Yuju · {len(crons)} crons ({sum(1 for c in crons if c['active'])} activos) · cola SII: {n_pend:,} sin enviar · rechazados 48h: {n_rej} · reparos 48h: {n_obj}<br>{yuju_resumen}</p>
 {bloque('🔴 CRÍTICAS — requieren acción hoy', criticas, '#fee2e2')}
 {bloque('🟡 Advertencias', advertencias, '#fef9c3')}
 {"<p style='margin:0 0 14px'>✅ Sin alarmas: todos los crons vigilados corriendo y cola SII normal.</p>" if not criticas and not advertencias else ""}
@@ -188,7 +266,7 @@ html = f"""<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;colo
 <p style='margin:14px 0 0;color:#94a3b8;font-size:12px'>Generado automáticamente (pulso_alarmas_odoo.py). Origen: incidente boletas sin enviar 11→20 ago 2026.</p>
 </div>"""
 
-print(f"[{estado_gral}] críticas: {len(criticas)} | advertencias: {len(advertencias)} | cola SII: {n_pend}")
+print(f"[{estado_gral}] críticas: {len(criticas)} | advertencias: {len(advertencias)} | cola SII: {n_pend} | {yuju_resumen}")
 for x in criticas: print("  CRIT:", x)
 for x in advertencias: print("  ADV :", x)
 
