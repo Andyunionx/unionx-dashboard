@@ -547,6 +547,17 @@ def main():
     except Exception as e:
         print(f"   [WARN] clasificacion marca no aplicada: {type(e).__name__}: {str(e)[:80]}")
 
+    # Normalización canónica de SKU + producto (22-sep-2026, ver normalizar_raw.py):
+    # un solo nombre por SKU en TODA la historia (P1d solo unifica dentro de este
+    # archivo; sin esto, cada renombre en la Matriz partía el SKU en dos entre el
+    # histórico y el mes actual). Además arregla SKUs con formato numérico de Excel
+    # (CMR) y variantes de mayúscula, y guarda el nombre original en producto_origen.
+    try:
+        from normalizar_raw import aplicar as _normalizar_raw
+        df = _normalizar_raw(df, verbose=True)
+    except Exception as e:
+        print(f"   [WARN] normalizar_raw no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     # _line_id era transitorio (solo para dedup) → no va al parquet (mantiene schema).
     df = df.drop(columns=['_line_id'], errors='ignore')
 

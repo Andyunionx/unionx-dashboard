@@ -1,0 +1,73 @@
+name: "Normalizar RAW (nombres canónicos por SKU)"
+
+# Guardián semanal del RAW de ventas.
+#
+# El nombre de `producto` se resuelve por SKU desde la Matriz de Nicole (respaldo
+# Odoo). Cuando ella renombra algo en la Matriz, el mes actual sale con el nombre
+# nuevo y el histórico congelado se queda con el viejo: el mismo SKU aparece dos
+# veces en cualquier dinámica (22-09-2026: 243 SKUs, 32% de la venta).
+#
+# Este workflow reconstruye el mapa SKU→nombre y, SOLO si cambió respecto del
+# cacheado, re-alinea el histórico y lo commitea. Si no cambió nada, no toca el
+# parquet (17 MB) y no genera commit. El mes actual lo normaliza el extract diario.
+
+on:
+  schedule:
+    - cron: '30 12 * * 1'     # lunes 08:30 CLT, antes de la macro de rentabilidad
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  normalizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # La Matriz que usa el pipeline es la COPIA DEL REPO (data/planillas/Matriz
+      # productos.xlsx): no hay descarga desde Drive. Llega por commit manual (último
+      # de datos: 10-ago-2026, que es cuando aparecieron los nombres largos). O sea:
+      # un renombre de Nicole entra al RAW cuando alguien commitea la Matriz, y este
+      # guardián lo detecta el lunes siguiente.
+      - name: ¿Cambió algún nombre? Si sí, re-alinear el histórico
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          cp data/maestra/nombres_canonicos.parquet /tmp/mapa_antes.parquet 2>/dev/null || true
+          python -u normalizar_raw.py --fuente matriz --solo-mapa
+          python - <<'EOF'
+          import pandas as pd, sys, os
+          try:
+              a = pd.read_parquet('/tmp/mapa_antes.parquet').set_index('sku')['producto']
+          except Exception:
+              a = pd.Series(dtype=str)
+          b = pd.read_parquet('data/maestra/nombres_canonicos.parquet').set_index('sku')['producto']
+          cambios = int((a.reindex(b.index) != b).sum()) if len(a) else len(b)
+          print(f"nombres que cambiaron desde la semana pasada: {cambios}")
+          open(os.environ['GITHUB_ENV'], 'a').write(f"CAMBIOS={cambios}\n")
+          EOF
+          if [ "$CAMBIOS" -gt 0 ]; then
+            python -u normalizar_raw.py --fuente matriz --aplicar
+            rm -f data/historico/*.bak_normalizar_*
+          else
+            echo "Sin cambios de nombre: el histórico no se toca."
+          fi
+
+      - name: Commit si cambió algo
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Normalizar RAW"
+          git add data/historico/ventas_historico.parquet data/historico/ventas_mes_actual.parquet data/maestra/nombres_canonicos.parquet
+          git diff --staged --quiet || git commit -m "Normalizar RAW: nombres canónicos por SKU $(date -u +'%Y-%m-%d')"
+          git push

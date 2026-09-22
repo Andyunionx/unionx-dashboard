@@ -114,6 +114,15 @@ def main():
     except Exception as e:
         print(f"   [WARN] rebuild CMR omitido: {type(e).__name__}: {str(e)[:80]}")
 
+    # Normalización canónica de SKU + producto (ver normalizar_raw.py). El histórico ya
+    # está normalizado; esto deja el mes que entra con los mismos nombres, así el
+    # freeze no vuelve a partir un SKU en dos.
+    try:
+        from normalizar_raw import aplicar as _normalizar_raw
+        nu_mes = _normalizar_raw(nu_mes, verbose=True)
+    except Exception as e:
+        print(f"   [WARN] normalizar_raw no aplicado: {type(e).__name__}: {str(e)[:80]}")
+
     # Alinear dtypes de nu_mes al histórico ANTES del concat. El extract produce
     # 'dia_semana' como int (0-6) mientras el histórico usa el NOMBRE del día
     # ("Lunes"...) → sin esto, el concat deja la columna object mixta y
