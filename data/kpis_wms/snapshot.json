@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-09-22T08:20:02.143831",
+  "generado_en": "2026-09-22T18:35:06.546449",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0503741558678591,
-      "total_pickings": 10958,
-      "on_time": 552,
-      "on_time_pct": 0.0503741558678591,
-      "in_full": 10957,
-      "in_full_pct": 0.9999087424712538,
-      "both": 552,
+      "valor": 0.05021892592261639,
+      "total_pickings": 11191,
+      "on_time": 562,
+      "on_time_pct": 0.05021892592261639,
+      "in_full": 11190,
+      "in_full_pct": 0.9999106424805647,
+      "both": 562,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1092896174863388,
-      "total_pickings": 366,
+      "valor": 0.10723860589812333,
+      "total_pickings": 373,
       "on_time": 40,
-      "on_time_pct": 0.1092896174863388,
-      "in_full": 362,
-      "in_full_pct": 0.9890710382513661,
+      "on_time_pct": 0.10723860589812333,
+      "in_full": 369,
+      "in_full_pct": 0.9892761394101877,
       "both": 40,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997971328103868,
-      "ok": 14785,
-      "total": 14788,
+      "valor": 0.9998025666337611,
+      "ok": 15192,
+      "total": 15195,
       "errores": 3,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9551474142097631,
-      "total_so": 10384,
-      "total_con_pickings": 10345,
-      "cumplidos": 9881,
-      "parciales": 13,
-      "sin_iniciar": 451,
+      "valor": 0.9585231586940015,
+      "total_so": 10578,
+      "total_con_pickings": 10536,
+      "cumplidos": 10099,
+      "parciales": 15,
+      "sin_iniciar": 422,
       "error": null
     },
     "oct_30d": {
-      "valor": 86.75952728116083,
-      "n_orders": 11019,
+      "valor": 85.62978956228956,
+      "n_orders": 11253,
       "min_h": 0.005833333333333334,
       "max_h": 700.1955555555555,
-      "mediana_h": 42.37833333333333,
+      "mediana_h": 41.50194444444445,
       "detalle": [
         {
           "so": "S278911",
@@ -343,17 +343,16 @@
     },
     "ajustes_inventario": {
       "n_ajustes": 0,
-      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
     },
     "lineas_mes_actual": {
-      "lineas": 10153,
-      "mes": "2026-09",
-      "error": null
+      "lineas": 0,
+      "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
     },
     "volumen_movs_90d": {
       "incoming": 247,
-      "outgoing": 29634,
-      "internal": 20119,
+      "outgoing": 29636,
+      "internal": 20117,
       "total": 50000,
       "error": null
     },
@@ -415,8 +414,8 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 73,
-          "tarde": 73,
+          "total": 77,
+          "tarde": 77,
           "on_time_pct": 0.0
         },
         {
@@ -427,9 +426,9 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 10,
-          "tarde": 4,
-          "on_time_pct": 0.6
+          "total": 11,
+          "tarde": 5,
+          "on_time_pct": 0.5454545454545454
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
@@ -449,7 +448,8 @@
   },
   "errores": [
     "merma_odoo_90d: RuntimeError: Error después de 10 intentos en stock.scrap.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/od",
-    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
+    "ajustes_inventario: RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n",
+    "lineas_mes_actual: RuntimeError: Error después de 10 intentos en stock.move.search_read: <!doctype html>\n"
   ],
   "otif_drive": {
     "meses_disponibles": [
@@ -8228,31 +8228,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0503741558678591,
-      "total_pickings": 10958,
-      "on_time": 552,
-      "on_time_pct": 0.0503741558678591,
-      "in_full": 10957,
-      "in_full_pct": 0.9999087424712538,
-      "both": 552,
+      "valor": 0.05021892592261639,
+      "total_pickings": 11191,
+      "on_time": 562,
+      "on_time_pct": 0.05021892592261639,
+      "in_full": 11190,
+      "in_full_pct": 0.9999106424805647,
+      "both": 562,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1092896174863388,
-      "total_pickings": 366,
+      "valor": 0.10723860589812333,
+      "total_pickings": 373,
       "on_time": 40,
-      "on_time_pct": 0.1092896174863388,
-      "in_full": 362,
-      "in_full_pct": 0.9890710382513661,
+      "on_time_pct": 0.10723860589812333,
+      "in_full": 369,
+      "in_full_pct": 0.9892761394101877,
       "both": 40,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997971328103868,
-      "ok": 14785,
-      "total": 14788,
+      "valor": 0.9998025666337611,
+      "ok": 15192,
+      "total": 15195,
       "errores": 3,
       "error": null
     }
