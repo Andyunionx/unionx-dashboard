@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-09-23T15:43:01.313128",
+  "generado_en": "2026-09-23T20:47:12.785817",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13222,
-  "total_monto_pendiente_clp": 996251201.0,
+  "total_documentos_pendientes": 12998,
+  "total_monto_pendiente_clp": 988919512.0,
   "monto_por_aging": {
     "+90 días": 79985821.0,
-    "1-30 días": 363983726.0,
-    "31-60 días": 259409114.0,
-    "61-90 días": 69653487.0,
-    "Vigente": 223219053.0
+    "1-30 días": 362798616.0,
+    "31-60 días": 256357390.0,
+    "61-90 días": 68113957.0,
+    "Vigente": 221663728.0
   },
   "monto_por_tipo": {
-    "BOLETA": 773564152.0,
+    "BOLETA": 766232463.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 151572987.0
+      "monto": 152803239.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 69343909.0
+      "monto": 70237491.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -49,20 +49,20 @@
       "monto": 23378141.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 22578474.0
-    },
-    {
       "partner": "AUTOBAHN S A",
       "monto": 18565083.0
     },
     {
+      "partner": "Cliente Paris",
+      "monto": 18075138.0
+    },
+    {
       "partner": "GOPOINTS CHILE SPA",
-      "monto": 18335142.0
+      "monto": 17802060.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 14631820.0
+      "monto": 14583828.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -70,33 +70,33 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 12366434.0
+      "monto": 12397911.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 11981460.0
+      "monto": 12025836.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 11183131.0
+      "monto": 11213111.0
     },
     {
       "partner": "Status Spa",
       "monto": 10837211.0
     },
     {
+      "partner": "Cliente Simplit Home",
+      "monto": 10828211.0
+    },
+    {
       "partner": "Comercial ECCSA S A",
       "monto": 10704701.0
     },
     {
-      "partner": "Cliente Simplit Home",
-      "monto": 10656440.0
-    },
-    {
-      "partner": "Global Reward Solutions",
-      "monto": 9316639.0
+      "partner": "abc S.A.",
+      "monto": 8253960.0
     }
   ],
-  "notas_credito_count": 804,
+  "notas_credito_count": 806,
   "pedidos_venta_count": 10000
 }
