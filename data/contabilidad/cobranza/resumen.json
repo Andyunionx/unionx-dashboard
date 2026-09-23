@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-22T20:37:39.273556",
+  "generado_en": "2026-09-23T02:12:55.408249",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13058,
-  "total_monto_pendiente_clp": 1111924059.0,
+  "total_documentos_pendientes": 13131,
+  "total_monto_pendiente_clp": 1114561992.0,
   "monto_por_aging": {
-    "+90 días": 79738911.0,
-    "1-30 días": 372454165.0,
-    "31-60 días": 246687548.0,
-    "61-90 días": 67651258.0,
-    "Vigente": 345392177.0
+    "+90 días": 79985821.0,
+    "1-30 días": 365521275.0,
+    "31-60 días": 259409114.0,
+    "61-90 días": 69653487.0,
+    "Vigente": 339992295.0
   },
   "monto_por_tipo": {
-    "BOLETA": 889237010.0,
+    "BOLETA": 891874943.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
@@ -22,7 +22,7 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 149066395.0
+      "monto": 150152528.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 68594480.0
+      "monto": 68942999.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 59618077.0
+      "monto": 59720027.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22239894.0
+      "monto": 22420804.0
     },
     {
       "partner": "AUTOBAHN S A",
@@ -61,6 +61,10 @@
       "monto": 18335142.0
     },
     {
+      "partner": "Duty Free T C S A",
+      "monto": 14416076.0
+    },
+    {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 14300166.0
     },
@@ -69,16 +73,12 @@
       "monto": 13968146.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 13678605.0
-    },
-    {
       "partner": "Cliente Shopify",
-      "monto": 12811470.0
+      "monto": 12831450.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 11104201.0
+      "monto": 11117191.0
     },
     {
       "partner": "Status Spa",
@@ -97,6 +97,6 @@
       "monto": 8784018.0
     }
   ],
-  "notas_credito_count": 805,
+  "notas_credito_count": 804,
   "pedidos_venta_count": 10000
 }
