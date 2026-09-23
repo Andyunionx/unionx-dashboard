@@ -4,6 +4,7 @@ name: "Macro Rentabilidad por Canal (lunes)"
 #   1. RAW ventas    -> lo reescribe entero desde el parquet + modalidad de Odoo
 #   5. Base dinámica -> RAW + carga de Gabriela, con el monto ya con signo
 #   6. Rentabilidad  -> tabla dinámica nativa sobre la base
+#   8. Plan de acción -> indicadores del plan del informe (macro_plan_accion.py)
 #
 # NUNCA escribe en "2. Carga Gabriela". Esa pestaña es de ella y el script solo
 # la lee. Por eso puede correr sin riesgo de pisarle el trabajo.
@@ -62,3 +63,13 @@ jobs:
           HASTA=$(date -u +%Y-%m)
           echo "Rango: $DESDE a $HASTA"
           python -u macro_rentabilidad_drive.py --desde "$DESDE" --hasta "$HASTA"
+
+      # 8. Plan de acción: recalcula los indicadores de cada acción del informe
+      # de rentabilidad y conserva las columnas de gestión (responsable, fecha,
+      # estado, última gestión). Si falla no tumba la macro.
+      - name: Seguimiento del plan de acción
+        continue-on-error: true
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: python -u macro_plan_accion.py
