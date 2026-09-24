@@ -15,7 +15,11 @@ data/planillas/reglas_margen_final.csv:
     (ej. matriz de Hites); los SKU que no están usan com_pct como respaldo.
   · com_pct_evento + meses_evento (ej. '2026-10'): tasa distinta en meses de evento
     (Abc: 14% normal, 28% en el mes de Cyber — Nicole 24-09).
-  · Las líneas de envío (SKU Delivery_*) no llevan comisión de canal.
+  · Las líneas de envío (SKU Delivery_*) no llevan costos: son lo que paga el
+    comprador por el despacho. Los % manuales se calculan solo sobre la venta de
+    productos, y lo que viene por pedido (Odoo, tarifario) y quedó en la línea de
+    envío se reasigna a los productos del mismo pedido (Andrés 24-09). El total del
+    pedido no cambia.
 
   · com_pct / log_pct / mkt_pct vacíos = no tocar lo que trae el extract.
   · modo_com = 'forzar' reemplaza la comisión; 'si_vacio' solo la pone si la fila
@@ -94,19 +98,58 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
                 df.loc[m & sel.reindex(df.index, fill_value=False), 'comision'] = nueva[sel]
             else:
                 df.loc[m, 'comision'] = nueva
+        es_env = df.loc[m, 'sku'].astype(str).str.startswith('Delivery')
         if pd.notna(r['log_pct']):
-            df.loc[m, 'logistica'] = vn * r['log_pct'] / 100.0
+            df.loc[m, 'logistica'] = (vn * r['log_pct'] / 100.0).where(~es_env, 0.0)
         if pd.notna(r['mkt_pct']):
-            df.loc[m, 'marketing'] = vn * r['mkt_pct'] / 100.0
+            df.loc[m, 'marketing'] = (vn * r['mkt_pct'] / 100.0).where(~es_env, 0.0)
         df.loc[m, 'margen_final'] = (df.loc[m, 'margen_front'] - df.loc[m, 'comision']
                                      - df.loc[m, 'logistica'] - df.loc[m, 'marketing'])
         df.loc[m, 'comision_pct'] = (df.loc[m, 'comision'] / vn.where(vn != 0) * 100).fillna(0)
         f = df.loc[m, 'fuente_comision']
         df.loc[m, 'fuente_comision'] = f.where(f.str.contains('regla'), (f + '+regla').str.lstrip('+'))
         tocadas += int(m.sum())
+    movido = _sacar_envio_del_reparto(df, base)
+    # Identidad en TODAS las filas desde el corte (no solo las con regla): había filas
+    # corregidas por pasos previos del RAW con margen_final = margen_front (24-09: 119
+    # filas, $0,5M en septiembre).
+    df.loc[base, 'margen_final'] = (df.loc[base, 'margen_front'] - df.loc[base, 'comision']
+                                    - df.loc[base, 'logistica'] - df.loc[base, 'marketing'])
     if verbose:
-        print(f"   [margen_final_reglas] {tocadas:,} filas con regla de canal ({len(reglas)} canales en la tabla)")
+        print(f"   [margen_final_reglas] {tocadas:,} filas con regla de canal ({len(reglas)} canales en la tabla)"
+              f" · ${movido:,.0f} de costos movidos de líneas de envío a productos")
     return df
+
+
+def _sacar_envio_del_reparto(df: pd.DataFrame, base: pd.Series) -> float:
+    """Costos que quedaron en líneas Delivery_* → a los productos del mismo pedido,
+    en proporción a su venta neta. Si el pedido no tiene productos, se quedan."""
+    env = base & df['sku'].astype(str).str.startswith('Delivery')
+    costo = df[['comision', 'logistica', 'marketing']].abs().sum(axis=1) > 0
+    env_c = env & costo
+    if not env_c.any():
+        return 0.0
+    key = df['pedido'].astype(str) + '|' + df['tipo_movimiento'].astype(str)
+    prod = base & ~df['sku'].astype(str).str.startswith('Delivery') & (df['venta_neta'] != 0)
+    peds = set(key[env_c])
+    pm = prod & key.isin(peds)
+    if not pm.any():
+        return 0.0
+    w = df.loc[pm, 'venta_neta'] / df.loc[pm].groupby(key[pm])['venta_neta'].transform('sum')
+    movido = 0.0
+    tiene_prod = key[env_c].isin(set(key[pm]))
+    ec = env_c.copy(); ec[env_c] = tiene_prod.values
+    for c in ('comision', 'logistica', 'marketing'):
+        tot = df.loc[ec].groupby(key[ec])[c].sum()
+        df.loc[pm, c] = df.loc[pm, c] + key[pm].map(tot).fillna(0) * w
+        movido += float(df.loc[ec, c].abs().sum())
+        df.loc[ec, c] = 0.0
+    for idx in (pm, ec):
+        df.loc[idx, 'margen_final'] = (df.loc[idx, 'margen_front'] - df.loc[idx, 'comision']
+                                       - df.loc[idx, 'logistica'] - df.loc[idx, 'marketing'])
+        v = df.loc[idx, 'venta_neta']
+        df.loc[idx, 'comision_pct'] = (df.loc[idx, 'comision'] / v.where(v != 0) * 100).fillna(0)
+    return movido
 
 
 if __name__ == '__main__':
