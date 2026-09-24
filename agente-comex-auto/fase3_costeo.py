@@ -15,6 +15,7 @@ import re
 import sys
 import glob
 import xmlrpc.client
+from datetime import datetime
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -65,6 +66,17 @@ def resolver_archivos(reg) -> tuple[Path | None, Path | None]:
     return buscar(reg.get("pi")), buscar(reg.get("pl"))
 
 
+def aplicar_alias(productos, reg):
+    """Corrige SKU mal escritos en el PI de Steven: reg['sku_alias'] = {sku_pi: sku_odoo}.
+    Ej. 26TP0720: SIMOREXBAS-35 → SIMOREXOSL-WD (confirmado por Andrés 24-sep)."""
+    alias = {k.upper(): v for k, v in (reg.get("sku_alias") or {}).items()}
+    for p in productos:
+        s = (p.sku or "").strip().upper()
+        if s in alias:
+            p.sku = alias[s]
+    return productos
+
+
 def construir_tarifas(reg, puerto: str) -> ce.Tarifas:
     return ce.Tarifas(
         puerto=puerto, puerto_nombre=PUERTOS.get(puerto, puerto),
@@ -98,6 +110,7 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
 
     productos, inland, numero, puerto = ce.leer_pi(pi_path)
     ce.leer_pl(pl_path, productos)
+    aplicar_alias(productos, reg)
     tar = construir_tarifas(reg, puerto)
     embq = ce.Embarque(numero=numero or emb_num, puerto=puerto,
                        puerto_nombre=PUERTOS.get(puerto, puerto),
@@ -123,6 +136,8 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
 
     if not dry_run:
         _enviar_correo(embq, reg, out_dir, faltantes, sin_sku)
+        if pendientes:
+            _escalar(embq, reg, faltantes, sin_sku)
 
     # gate a fase 4: TODOS los productos resueltos (SKU existente en Odoo Y ningún producto sin código)
     if pendientes == 0:
@@ -160,6 +175,65 @@ def _enviar_correo(embq, reg, out_dir, faltantes, sin_sku=None):
     reg["correo_firma"] = firma
     accion = "borrador con planilla" if str(msg_id).startswith("[DRAFT]") else "correo ENVIADO con planilla"
     st.log(reg, f"{accion} ({msg_id}, {len(adjuntos)} adj) → {', '.join(DEST)}")
+
+
+ESCALAR_DIAS = 3          # días trabado en fase 3 antes de escalar
+CC_ESCALA = ["andres@unionx.cl"]
+
+
+def _dias_en_fase3(reg) -> int:
+    ts = reg.get("ts_creado")
+    for l in reg.get("log", []):
+        if "→ 3 (" in l:
+            ts = l[:20]; break
+    try:
+        t0 = datetime.strptime(str(ts)[:19], "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return 0
+    return (datetime.utcnow() - t0).days
+
+
+def _escalar(embq, reg, faltantes, sin_sku):
+    """Re-avisa como URGENTE (con copia a Andrés) si el embarque lleva >= ESCALAR_DIAS trabado
+    o ya pasó su ETA bodega sin PO completa. Máximo una vez cada ESCALAR_DIAS días."""
+    dias = _dias_en_fase3(reg)
+    eta = (reg.get("eta_bodega") or "")[:10]
+    hoy = datetime.utcnow().strftime("%Y-%m-%d")
+    eta_vencida = bool(eta) and hoy > eta
+    if dias < ESCALAR_DIAS and not eta_vencida:
+        return
+    ult = reg.get("escalado_ts")
+    if ult:
+        try:
+            if (datetime.utcnow() - datetime.strptime(ult[:19], "%Y-%m-%d %H:%M:%S")).days < ESCALAR_DIAS:
+                return
+        except Exception:
+            pass
+    from gmail_client import GmailClient
+    pend = [*faltantes, *[f"{m} (sin código)" for m in sin_sku]]
+    motivo = (f"el contenedor ya debía estar en bodega ({eta})" if eta_vencida
+              else f"lleva {dias} días esperando")
+    po_txt = (f"<p>Hay una <b>PO parcial {reg.get('po_name')}</b> cargada; al crear los SKU se completa sola.</p>"
+              if reg.get("po_parcial") and reg.get("po_name") else
+              "<p>Mientras no se creen, <b>no hay PO en Odoo</b> para recepcionar.</p>")
+    filas = "".join(
+        f"<tr><td style='padding:6px;border:1px solid #ddd'>{p.model}</td>"
+        f"<td style='padding:6px;border:1px solid #ddd'>{p.sku or '(sin código)'}</td>"
+        f"<td style='padding:6px;border:1px solid #ddd'>{int(p.qty)}</td>"
+        f"<td style='padding:6px;border:1px solid #ddd'>{str(p.descripcion).splitlines()[0][:60]}</td></tr>"
+        for p in embq.productos if (p.sku or "").strip() in faltantes or (not (p.sku or "").strip() and p.model in sin_sku))
+    html = ("<div style='font-family:Arial,sans-serif;font-size:14px;color:#333'>"
+            f"<p><b>🔴 El embarque {embq.numero} está detenido: {motivo}.</b></p>"
+            f"<p>Para cargar la PO faltan estos SKU en Odoo ({len(pend)}):</p>"
+            "<table style='border-collapse:collapse'><tr style='background:#1F3864;color:#fff'>"
+            "<th style='padding:6px'>Model</th><th style='padding:6px'>SKU</th><th style='padding:6px'>Qty</th>"
+            f"<th style='padding:6px'>Producto</th></tr>{filas}</table>{po_txt}"
+            "<p>Favor crearlos en Odoo con ese código exacto. Saludos.</p></div>")
+    subj = f"🔴 URGENTE [{embq.numero}] PO detenida — faltan {len(pend)} SKU en Odoo"
+    mid = GmailClient().send_email_with_attachments(to=", ".join(DEST), subject=subj,
+                                                    body_html=html, cc=CC_ESCALA)
+    reg["escalado_ts"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    st.log(reg, f"ESCALADO ({motivo}) → {', '.join(DEST)} cc {', '.join(CC_ESCALA)} ({mid})")
 
 
 def procesar(dry_run: bool = True) -> dict:

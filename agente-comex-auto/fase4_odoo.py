@@ -5,7 +5,7 @@ Con todos los SKU creados (fase 3), esta fase:
 2. Arma la PO en Odoo: Topwill (1664), moneda CLP (45), picking type 1 (Carrascal),
    una línea por producto con price_unit = costo_internado_unit (CLP), qty del PI.
 3. date_planned (recepción) = ETA bodega del estado (Seimex + 5).
-4. La deja en BORRADOR (state=draft) para el OK de Andrés.
+4. La CONFIRMA (Opción B). Si ya existe PO del embarque (parcial), la completa en vez de duplicar.
 
 ⚠️ Escribe en Odoo PRODUCCIÓN. dry_run=True (default) solo muestra la PO que crearía.
 """
@@ -39,6 +39,7 @@ def _costear(reg, emb_num) -> ce.Embarque:
     pi_path, pl_path = f3.resolver_archivos(reg)
     productos, inland, numero, puerto = ce.leer_pi(pi_path)
     ce.leer_pl(pl_path, productos)
+    f3.aplicar_alias(productos, reg)
     tar = f3.construir_tarifas(reg, puerto)
     embq = ce.Embarque(numero=numero or emb_num, puerto=puerto,
                        puerto_nombre=f3.PUERTOS.get(puerto, puerto),
@@ -47,9 +48,33 @@ def _costear(reg, emb_num) -> ce.Embarque:
     return embq
 
 
-def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
+def _po_existente(models, uid, pwd, reg, numero):
+    """PO ya creada para este embarque (estado o partner_ref en Odoo) → evita duplicar."""
+    if reg.get("po_id"):
+        r = models.execute_kw(DB, uid, pwd, "purchase.order", "search_read",
+                              [[["id", "=", reg["po_id"]], ["state", "!=", "cancel"]]],
+                              {"fields": ["id", "name", "state", "order_line"]})
+        if r:
+            return r[0]
+    r = models.execute_kw(DB, uid, pwd, "purchase.order", "search_read",
+                          [[["partner_ref", "=", f"{numero}PI"], ["state", "!=", "cancel"]]],
+                          {"fields": ["id", "name", "state", "order_line"], "limit": 1})
+    return r[0] if r else None
+
+
+def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True, parcial: bool = False):
+    """parcial=True: crea la PO solo con los productos que ya tienen SKU en Odoo (el embarque
+    sigue en fase 3 esperando los faltantes). Cuando luego llegue a fase 4 con una PO ya
+    existente, se AGREGAN las líneas que falten en vez de crear otra PO."""
     embq = _costear(reg, emb_num)
     models, uid, pwd = _odoo()
+    po_prev = _po_existente(models, uid, pwd, reg, embq.numero)
+    ya_en_po = set()
+    if po_prev and po_prev["order_line"]:
+        for l in models.execute_kw(DB, uid, pwd, "purchase.order.line", "read",
+                                   [po_prev["order_line"]], {"fields": ["product_id"]}):
+            if l.get("product_id"):
+                ya_en_po.add(l["product_id"][0])
 
     # resolver product_id por SKU y armar líneas
     lineas, sin_producto = [], []
@@ -63,6 +88,8 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
         if not pid:
             sin_producto.append(f"{p.model}/{sku or 'SIN-SKU'}")
             continue
+        if pid in ya_en_po:
+            continue  # ya está en la PO existente
         lineas.append((0, 0, {
             "product_id": pid, "name": p.descripcion or p.model,
             "product_qty": p.qty, "price_unit": round(p.costo_internado_unit, 2),
@@ -87,8 +114,21 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
         st.log(reg, f"PO dry-run: {len(lineas)} líneas · {total_clp:,.0f} CLP · ETA {date_planned} (NO escrita)")
         return
 
+    if po_prev:
+        # completar la PO existente con las líneas que faltaban
+        if lineas:
+            models.execute_kw(DB, uid, pwd, "purchase.order", "write", [[po_prev["id"]], {"order_line": lineas}])
+        reg["po_id"] = po_prev["id"]; reg["po_name"] = po_prev["name"]
+        st.log(reg, f"PO {po_prev['name']} COMPLETADA: +{len(lineas)} líneas ({total_clp:,.0f} CLP)"
+                    + (f" · aún sin producto: {sin_producto}" if sin_producto else ""))
+        if not sin_producto:
+            st.set_fase(reg, 9, f"PO {po_prev['name']} completa → COMPLETADO")
+        return
     if not lineas:
         st.log(reg, "PO NO creada: sin líneas resolubles")
+        return
+    if sin_producto and not parcial:
+        st.log(reg, f"PO NO creada: faltan productos {sin_producto} (usar parcial)")
         return
     po_id = models.execute_kw(DB, uid, pwd, "purchase.order", "create", [{
         "partner_id": PARTNER_TOPWILL, "picking_type_id": PICKING_CARRASCAL,
@@ -100,8 +140,12 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
     models.execute_kw(DB, uid, pwd, "purchase.order", "button_confirm", [[po_id]])
     po = models.execute_kw(DB, uid, pwd, "purchase.order", "read", [[po_id]], {"fields": ["name", "state"]})[0]
     reg["po_id"] = po_id; reg["po_name"] = po["name"]
-    st.log(reg, f"PO {po['name']} creada y CONFIRMADA ({po.get('state')}, {len(lineas)} líneas, {total_clp:,.0f} CLP)")
-    st.set_fase(reg, 9, f"PO {po['name']} confirmada → COMPLETADO")
+    st.log(reg, f"PO {po['name']} creada y CONFIRMADA ({po.get('state')}, {len(lineas)} líneas, {total_clp:,.0f} CLP)"
+                + (f" · PARCIAL, faltan: {sin_producto}" if sin_producto else ""))
+    if sin_producto:
+        reg["po_parcial"] = True  # sigue en fase 3; al crearse los SKU, fase 4 completa esta PO
+    else:
+        st.set_fase(reg, 9, f"PO {po['name']} confirmada → COMPLETADO")
 
 
 def procesar(dry_run: bool = True) -> dict:
@@ -123,4 +167,11 @@ def procesar(dry_run: bool = True) -> dict:
 if __name__ == "__main__":
     dry = "--commit" not in sys.argv
     print(f"=== FASE 4 · carga PO Odoo {'(DRY-RUN, no escribe)' if dry else '(COMMIT — escribe en Odoo)'} ===")
-    procesar(dry_run=dry)
+    if "--parcial" in sys.argv:
+        # uso manual: python fase4_odoo.py --parcial 26TP0720 [--commit]
+        emb = sys.argv[sys.argv.index("--parcial") + 1]
+        estado = st.cargar()
+        procesar_embarque(emb, estado[emb], dry_run=dry, parcial=True)
+        st.guardar(estado)
+    else:
+        procesar(dry_run=dry)
