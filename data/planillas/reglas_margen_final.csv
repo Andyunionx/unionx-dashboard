@@ -1,9 +1,12 @@
-canal,com_pct,log_pct,mkt_pct,modo_com,fuente,nota
-UnionX web,,,10,forzar,Andrés 24-09,Marketing 10% de la venta neta. Comisión 3% y envío tarifario BlueX vienen del extract.
-Lhotse web,,,10,forzar,Andrés 24-09,Marketing 10% de la venta neta. Comisión 3% y envío tarifario BlueX vienen del extract.
-Simplit web,,,10,forzar,Andrés 24-09,Marketing 10% de la venta neta. Comisión 3% y envío tarifario BlueX vienen del extract.
-LATAM Pass,,3.3,,forzar,Andrés 24-09 · histórico contable jul-26,Logística = tasa histórica (Análisis de Contribución). Solo julio tiene venta contable: base débil. Comisión 15% viene del extract.
-Celmedia,0,3.1,,forzar,Andrés 24-09 · histórico contable ene-jul-26,Sin comisión. Logística = tasa histórica 3.1%.
-Banco Bice,0,8.8,,forzar,Andrés 24-09 · histórico contable ene-jul-26,Sin comisión. Logística = tasa histórica 8.8%.
-CMR,15,13.7,,si_vacio,Andrés 24-09 · histórico contable ene-jul-26,Comisión 15% solo si la fila no trae la real del Drive CMR. Logística = tasa histórica 13.7%.
-Gran Venta Garage,20,0,,forzar,Andrés 24-09,Comisión 20%.
+canal,com_pct,log_pct,mkt_pct,modo_com,com_pct_evento,meses_evento,fuente,nota
+UnionX web,,,10.0,forzar,,,Andrés 24-09,Marketing 10% de la venta neta. Comisión 3% y envío tarifario BlueX vienen del extract.
+Lhotse web,,,10.0,forzar,,,Andrés 24-09,Marketing 10% de la venta neta. Comisión 3% y envío tarifario BlueX vienen del extract.
+Simplit web,,,10.0,forzar,,,Andrés 24-09,Marketing 10% de la venta neta. Comisión 3% y envío tarifario BlueX vienen del extract.
+LATAM Pass,,3.3,,forzar,,,Andrés 24-09 · histórico contable jul-26,Logística = tasa histórica (Análisis de Contribución). Solo julio tiene venta contable: base débil. Comisión 15% viene del extract.
+Celmedia,0.0,3.1,,forzar,,,Andrés 24-09 · histórico contable ene-jul-26,Sin comisión. Logística = tasa histórica 3.1%.
+Banco Bice,0.0,8.8,,forzar,,,Andrés 24-09 · histórico contable ene-jul-26,Sin comisión. Logística = tasa histórica 8.8%.
+CMR,15.0,13.7,,si_vacio,,,Andrés 24-09 · histórico contable ene-jul-26,Comisión 15% solo si la fila no trae la real del Drive CMR. Logística = tasa histórica 13.7%.
+Gran Venta Garage,20.0,0.0,,forzar,,,Andrés 24-09,Comisión 20%.
+Travel Duty,30.0,,,forzar,,,Nicole 24-09 (OK Andrés),Provisión = comisión + aportes comerciales; aportes en torno al 30%. Tasa sugerida a robustecer con los KAM.
+Abc,14.0,,,forzar,28,2026-10,Nicole 24-09 (OK Andrés),Provisión = comisión + aportes; 14% en mes normal y el doble en mes de evento (Cyber).
+Hites,15.9,,,sku,,,Matriz Hites ago-26 (Claudia vía Nicole),Comisión por SKU (comision_sku_canal.csv). Respaldo 15.9% = ponderado por venta de la matriz para SKU no listados.

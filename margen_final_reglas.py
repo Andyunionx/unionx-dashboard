@@ -9,7 +9,13 @@ marketplaces (campos de Odoo del agente de Martín) y para los canales de la mat
 definió Andrés el 24-09-2026 (Excel "Canales sin regla de comisión"), que viven en
 data/planillas/reglas_margen_final.csv:
 
-  canal, com_pct, log_pct, mkt_pct, modo_com, fuente, nota
+  canal, com_pct, log_pct, mkt_pct, modo_com, com_pct_evento, meses_evento, fuente, nota
+
+  · modo_com = 'sku': comisión por SKU desde data/planillas/comision_sku_canal.csv
+    (ej. matriz de Hites); los SKU que no están usan com_pct como respaldo.
+  · com_pct_evento + meses_evento (ej. '2026-10'): tasa distinta en meses de evento
+    (Abc: 14% normal, 28% en el mes de Cyber — Nicole 24-09).
+  · Las líneas de envío (SKU Delivery_*) no llevan comisión de canal.
 
   · com_pct / log_pct / mkt_pct vacíos = no tocar lo que trae el extract.
   · modo_com = 'forzar' reemplaza la comisión; 'si_vacio' solo la pone si la fila
@@ -28,14 +34,20 @@ import pandas as pd
 
 ROOT = Path(__file__).parent
 REGLAS = ROOT / 'data' / 'planillas' / 'reglas_margen_final.csv'
+COM_SKU = ROOT / 'data' / 'planillas' / 'comision_sku_canal.csv'
 CUTOFF = '2026-08-01'
 
 
 def cargar_reglas(path: Path = REGLAS) -> pd.DataFrame:
     r = pd.read_csv(path, dtype={'canal': str})
     r['canal'] = r['canal'].str.strip()
-    for c in ('com_pct', 'log_pct', 'mkt_pct'):
+    for c in ('com_pct', 'log_pct', 'mkt_pct', 'com_pct_evento'):
+        if c not in r.columns:
+            r[c] = None
         r[c] = pd.to_numeric(r[c], errors='coerce')
+    if 'meses_evento' not in r.columns:
+        r['meses_evento'] = ''
+    r['meses_evento'] = r['meses_evento'].fillna('').astype(str)
     r['modo_com'] = r['modo_com'].fillna('forzar').str.strip()
     return r.set_index('canal')
 
@@ -44,6 +56,11 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
     if df is None or df.empty:
         return df
     reglas = cargar_reglas() if reglas is None else reglas
+    com_sku = {}
+    if COM_SKU.exists():
+        _cs = pd.read_csv(COM_SKU, dtype={'sku': str, 'canal': str})
+        for _, x in _cs.iterrows():
+            com_sku.setdefault(str(x['canal']).strip(), {})[str(x['sku']).strip()] = float(x['com_pct'])
     df = df.copy()
     for c in ('venta_neta', 'costo_total', 'margen_front', 'comision', 'logistica', 'marketing', 'margen_final', 'comision_pct'):
         if c in df.columns:
@@ -62,8 +79,16 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
         if not m.any():
             continue
         vn = df.loc[m, 'venta_neta']
-        if pd.notna(r['com_pct']):
-            nueva = vn * r['com_pct'] / 100.0
+        if pd.notna(r['com_pct']) or r['modo_com'] == 'sku':
+            pct = pd.Series(r['com_pct'] if pd.notna(r['com_pct']) else 0.0, index=vn.index, dtype=float)
+            if r['meses_evento'] and pd.notna(r['com_pct_evento']):
+                ev = fv[m].str[:7].isin([x.strip() for x in r['meses_evento'].split(';') if x.strip()])
+                pct[ev] = r['com_pct_evento']
+            if r['modo_com'] == 'sku' and canal in com_sku:
+                sk = df.loc[m, 'sku'].astype(str).str.strip().map(com_sku[canal])
+                pct = sk.fillna(pct)
+            pct[df.loc[m, 'sku'].astype(str).str.startswith('Delivery')] = 0.0
+            nueva = vn * pct / 100.0
             if r['modo_com'] == 'si_vacio':
                 sel = df.loc[m, 'comision'] == 0
                 df.loc[m & sel.reindex(df.index, fill_value=False), 'comision'] = nueva[sel]
