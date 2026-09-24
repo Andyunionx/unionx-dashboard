@@ -55,7 +55,7 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions COMEX"
-          git add agente-comex-auto/data/estado_embarques.json || true
+          git add agente-comex-auto/data/estado_embarques.json agente-comex-auto/data/digest_semanal.json || true
           if ! git diff --staged --quiet; then
             git commit -m "Sync estado agente COMEX $(date -u +'%Y-%m-%d %H:%M UTC')"
             git pull --rebase origin main   # evita el race con otros commits en main

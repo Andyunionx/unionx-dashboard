@@ -5,8 +5,10 @@ Con PI+PL (fase 1) y flete final (fase 2), esta fase:
 2. Corre el motor de costeo (reusa _REACTIVAR_NUEVO_PC/costear_embarque.py, con fix CBM).
 3. Genera el Pre-costeo + compara con la Maestra.
 4. Chequea en Odoo qué SKU existen (por default_code) → lista de FALTANTES.
-5. Deja BORRADOR de correo a Felipe/Seba/Gerardo (los tres) con costeo + faltantes.
-6. Gate: si NO hay faltantes → fase 4. Si faltan, se queda y re-chequea Odoo cada día.
+5. Envía el correo de costeo a Felipe/Seba/bodega (una vez por cada cambio de pendientes).
+6. Gate: sin pendientes → fase 4. Solo ítems SIN código → PO parcial (no bloquean).
+   SKU por crear → se queda y re-chequea Odoo cada día.
+7. Lunes: UN resumen consolidado de embarques detenidos (URGENTE si ETA <= 7 días).
 
 dry_run=True: costea y reporta, NO crea el borrador en Gmail.
 """
@@ -67,13 +69,17 @@ def resolver_archivos(reg) -> tuple[Path | None, Path | None]:
 
 
 def aplicar_alias(productos, reg):
-    """Corrige SKU mal escritos en el PI de Steven: reg['sku_alias'] = {sku_pi: sku_odoo}.
+    """Corrige SKU del PI de Steven: reg['sku_alias'] = {sku_pi_o_modelo: sku_odoo}.
+    Clave = SKU mal escrito, o MODELO si el ítem viene sin código (ej. {"HD4 Khaki": "..."}).
     Ej. 26TP0720: SIMOREXBAS-35 → SIMOREXOSL-WD (confirmado por Andrés 24-sep)."""
-    alias = {k.upper(): v for k, v in (reg.get("sku_alias") or {}).items()}
+    alias = {k.strip().upper(): v for k, v in (reg.get("sku_alias") or {}).items()}
     for p in productos:
         s = (p.sku or "").strip().upper()
-        if s in alias:
+        m = str(p.model or "").strip().upper()
+        if s and s in alias:
             p.sku = alias[s]
+        elif not s and m in alias:      # ítem SIN código en el PI → se mapea por MODELO
+            p.sku = alias[m]
     return productos
 
 
@@ -113,7 +119,7 @@ def po_manual_existente(emb_num: str):
 
 def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
     pos = po_manual_existente(emb_num)
-    if pos:
+    if pos and not reg.get("po_parcial"):
         # Cargado a mano en Odoo → no costear/escalar más (evita falsas alarmas y PO duplicada)
         reg["po_name"] = ",".join(pos)
         st.set_fase(reg, 9, f"PO ya existente en Odoo ({', '.join(pos)}) → COMPLETADO")
@@ -150,14 +156,25 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
                 f"internado {embq.total_internado_clp:,.0f} CLP · SKU por crear: {len(faltantes)} · sin SKU: {len(sin_sku)}")
     print(f"  SKU existentes: {len(existentes)} | POR CREAR: {faltantes or '—'} | SIN SKU en PI: {sin_sku or '—'}")
 
+    reg["pendientes_detalle"] = [
+        {"model": p.model, "sku": (p.sku or "").strip() or "(sin código)", "qty": int(p.qty),
+         "desc": str(p.descripcion).splitlines()[0][:60] if p.descripcion else ""}
+        for p in productos
+        if (p.sku or "").strip() in faltantes or not (p.sku or "").strip()]
+
     if not dry_run:
         _enviar_correo(embq, reg, out_dir, faltantes, sin_sku)
-        if pendientes:
-            _escalar(embq, reg, faltantes, sin_sku)
 
-    # gate a fase 4: TODOS los productos resueltos (SKU existente en Odoo Y ningún producto sin código)
+    # gate a fase 4: todos los SKU existen y ningún producto sin código
     if pendientes == 0:
         st.set_fase(reg, 4, "todos los productos con SKU en Odoo → cargar PO")
+    elif not faltantes and not reg.get("po_parcial"):
+        # Solo quedan ítems SIN código (muestras, etc.): NO bloquean → PO parcial con lo que tiene SKU
+        if dry_run:
+            st.log(reg, f"(dry-run) cargaría PO parcial sin {sin_sku}")
+        else:
+            import fase4_odoo as f4  # import local: fase4 importa este módulo
+            f4.procesar_embarque(emb_num, reg, dry_run=False, parcial=True)
     else:
         st.log(reg, f"pendientes ({len(faltantes)} por crear + {len(sin_sku)} sin código) → re-chequea Odoo mañana")
 
@@ -178,7 +195,7 @@ def _enviar_correo(embq, reg, out_dir, faltantes, sin_sku=None):
                  f"<b>⚠️ SKU por crear en Odoo ({len(faltantes)}):</b> {', '.join(faltantes)}</div>")
     if sin_sku:
         html += ("<div style='background:#fdecea;border-left:4px solid #e74c3c;padding:12px;margin:16px 0'>"
-                 f"<b>⚠️ Productos del PI SIN SKU ({len(sin_sku)}) — asignar código antes de cargar la PO:</b> "
+                 f"<b>⚠️ Productos del PI SIN SKU ({len(sin_sku)}) — no van en la PO (se carga parcial con el resto):</b> "
                  f"{', '.join(sin_sku)}</div>")
     subj = f"[{embq.numero}] Costeo importación — {embq.puerto_nombre} — {embq.sobrecosto_pct:.1f}%"
     pend = len(faltantes) + len(sin_sku)
@@ -193,63 +210,74 @@ def _enviar_correo(embq, reg, out_dir, faltantes, sin_sku=None):
     st.log(reg, f"{accion} ({msg_id}, {len(adjuntos)} adj) → {', '.join(DEST)}")
 
 
-ESCALAR_DIAS = 3          # días trabado en fase 3 antes de escalar
-CC_ESCALA = ["andres@unionx.cl"]
+CC_RESUMEN = ["andres@unionx.cl"]
+DIAS_URGENTE = 7                                  # ETA bodega a <= 7 días (o vencida) → URGENTE
+DIGEST_FILE = BASE / "data" / "digest_semanal.json"
 
 
-def _dias_en_fase3(reg) -> int:
-    ts = reg.get("ts_creado")
-    for l in reg.get("log", []):
-        if "→ 3 (" in l:
-            ts = l[:20]; break
-    try:
-        t0 = datetime.strptime(str(ts)[:19], "%Y-%m-%d %H:%M:%S")
-    except Exception:
-        return 0
-    return (datetime.utcnow() - t0).days
-
-
-def _escalar(embq, reg, faltantes, sin_sku):
-    """Re-avisa como URGENTE (con copia a Andrés) si el embarque lleva >= ESCALAR_DIAS trabado
-    o ya pasó su ETA bodega sin PO completa. Máximo una vez cada ESCALAR_DIAS días."""
-    dias = _dias_en_fase3(reg)
-    eta = (reg.get("eta_bodega") or "")[:10]
-    hoy = datetime.utcnow().strftime("%Y-%m-%d")
-    eta_vencida = bool(eta) and hoy > eta
-    if dias < ESCALAR_DIAS and not eta_vencida:
+def resumen_lunes(estado: dict, dry_run: bool = True):
+    """UN solo correo, los LUNES (hora Chile), con todos los embarques detenidos en fase 3,
+    ordenados por ETA bodega. URGENTE solo si la ETA es en <= DIAS_URGENTE días o ya pasó.
+    Una vez por lunes (DIGEST_FILE). FORZAR_RESUMEN=1 lo fuerza (pruebas)."""
+    import json
+    from zoneinfo import ZoneInfo
+    hoy = datetime.now(ZoneInfo("America/Santiago")).date()
+    forzar = os.environ.get("FORZAR_RESUMEN") == "1"
+    if hoy.weekday() != 0 and not forzar:
         return
-    ult = reg.get("escalado_ts")
-    if ult:
+    meta = json.loads(DIGEST_FILE.read_text(encoding="utf-8")) if DIGEST_FILE.exists() else {}
+    if meta.get("ultimo") == hoy.isoformat() and not forzar:
+        return
+    filas = []
+    for emb, r in estado.items():
+        if r.get("fase") != 3:
+            continue
+        eta = (r.get("eta_bodega") or "")[:10]
         try:
-            if (datetime.utcnow() - datetime.strptime(ult[:19], "%Y-%m-%d %H:%M:%S")).days < ESCALAR_DIAS:
-                return
+            dias = (datetime.strptime(eta, "%Y-%m-%d").date() - hoy).days
         except Exception:
-            pass
-    from gmail_client import GmailClient
-    pend = [*faltantes, *[f"{m} (sin código)" for m in sin_sku]]
-    motivo = (f"el contenedor ya debía estar en bodega ({eta})" if eta_vencida
-              else f"lleva {dias} días esperando")
-    po_txt = (f"<p>Hay una <b>PO parcial {reg.get('po_name')}</b> cargada; al crear los SKU se completa sola.</p>"
-              if reg.get("po_parcial") and reg.get("po_name") else
-              "<p>Mientras no se creen, <b>no hay PO en Odoo</b> para recepcionar.</p>")
-    filas = "".join(
-        f"<tr><td style='padding:6px;border:1px solid #ddd'>{p.model}</td>"
-        f"<td style='padding:6px;border:1px solid #ddd'>{p.sku or '(sin código)'}</td>"
-        f"<td style='padding:6px;border:1px solid #ddd'>{int(p.qty)}</td>"
-        f"<td style='padding:6px;border:1px solid #ddd'>{str(p.descripcion).splitlines()[0][:60]}</td></tr>"
-        for p in embq.productos if (p.sku or "").strip() in faltantes or (not (p.sku or "").strip() and p.model in sin_sku))
+            dias = None
+        urg = dias is not None and dias <= DIAS_URGENTE
+        filas.append((dias if dias is not None else 999, emb, eta, urg, r))
+    if not filas:
+        return
+    filas.sort(key=lambda f: (f[0], f[1]))
+    td = "padding:6px;border:1px solid #ddd;vertical-align:top"
+    html_filas = ""
+    for dias, emb, eta, urg, r in filas:
+        det = r.get("pendientes_detalle")
+        if det:
+            items = "<br>".join(f"{d['sku']} · {d['model']} · {d['qty']} u · {d['desc']}" for d in det)
+        else:  # registro previo al detalle: solo códigos
+            items = "<br>".join([*(r.get("skus_faltantes") or []),
+                                 *[f"{m} (sin código)" for m in (r.get("productos_sin_sku") or [])]]) or "—"
+        estado_txt = "🔴 URGENTE" if urg else "Informativo"
+        cuando = "s/ETA" if dias == 999 else ("vencida" if dias < 0 else f"en {dias} días")
+        po = f"PO parcial {r['po_name']}" if r.get("po_parcial") and r.get("po_name") else "sin PO"
+        html_filas += (f"<tr><td style='{td}'><b>{emb}</b></td><td style='{td}'>{eta} ({cuando})</td>"
+                       f"<td style='{td}'>{estado_txt}</td><td style='{td}'>{po}</td>"
+                       f"<td style='{td};font-size:12px'>{items}</td></tr>")
+    n_urg = sum(1 for f in filas if f[3])
     html = ("<div style='font-family:Arial,sans-serif;font-size:14px;color:#333'>"
-            f"<p><b>🔴 El embarque {embq.numero} está detenido: {motivo}.</b></p>"
-            f"<p>Para cargar la PO faltan estos SKU en Odoo ({len(pend)}):</p>"
-            "<table style='border-collapse:collapse'><tr style='background:#1F3864;color:#fff'>"
-            "<th style='padding:6px'>Model</th><th style='padding:6px'>SKU</th><th style='padding:6px'>Qty</th>"
-            f"<th style='padding:6px'>Producto</th></tr>{filas}</table>{po_txt}"
-            "<p>Favor crearlos en Odoo con ese código exacto. Saludos.</p></div>")
-    subj = f"🔴 URGENTE [{embq.numero}] PO detenida — faltan {len(pend)} SKU en Odoo"
+            f"<p>Resumen semanal: <b>{len(filas)} embarque(s) detenidos</b> esperando SKU en Odoo"
+            + (f", <b>{n_urg} urgente(s)</b> (ETA en {DIAS_URGENTE} días o menos, o vencida)" if n_urg else "")
+            + ".</p><table style='border-collapse:collapse'><tr style='background:#1F3864;color:#fff'>"
+            "<th style='padding:6px'>Embarque</th><th style='padding:6px'>ETA bodega</th>"
+            "<th style='padding:6px'>Estado</th><th style='padding:6px'>PO</th>"
+            f"<th style='padding:6px'>Pendiente (SKU · modelo · qty · producto)</th></tr>{html_filas}</table>"
+            "<p>Los SKU por crear bloquean la PO: favor crearlos en Odoo con ese código exacto. "
+            "Los ítems <i>sin código</i> no bloquean (la PO se carga parcial sin ellos). Saludos.</p></div>")
+    subj = (f"Resumen semanal COMEX — {len(filas)} embarque(s) detenidos"
+            + (f" · 🔴 {n_urg} urgente(s)" if n_urg else ""))
+    if dry_run:
+        print(f"(dry-run) resumen lunes: {subj}")
+        return html
+    from gmail_client import GmailClient
     mid = GmailClient().send_email_with_attachments(to=", ".join(DEST), subject=subj,
-                                                    body_html=html, cc=CC_ESCALA)
-    reg["escalado_ts"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    st.log(reg, f"ESCALADO ({motivo}) → {', '.join(DEST)} cc {', '.join(CC_ESCALA)} ({mid})")
+                                                    body_html=html, cc=CC_RESUMEN)
+    DIGEST_FILE.write_text(json.dumps({"ultimo": hoy.isoformat(), "msg_id": mid,
+                                       "embarques": [f[1] for f in filas]}, indent=2), encoding="utf-8")
+    print(f"Resumen semanal enviado ({mid}) · {len(filas)} embarques · {n_urg} urgentes")
 
 
 def procesar(dry_run: bool = True) -> dict:
@@ -264,6 +292,10 @@ def procesar(dry_run: bool = True) -> dict:
             procesar_embarque(emb, estado[emb], dry_run=dry_run)
         except Exception as e:
             st.log(estado[emb], f"ERROR costeo: {type(e).__name__}: {e}")
+    try:
+        resumen_lunes(estado, dry_run=dry_run)
+    except Exception as e:
+        print(f"  (resumen semanal falló: {type(e).__name__}: {e})")
     st.guardar(estado)
     print("\nEstado actual:")
     print(st.resumen(estado))
