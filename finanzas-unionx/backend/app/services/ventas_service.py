@@ -436,10 +436,14 @@ class VentasService(BaseOdooService):
             # no las ve. Si dejáramos entrar solo las NC, restaríamos $116,5M que
             # nadie vuelve a sumar y septiembre quedaría subvaluado.
             # Económicamente netean: la venta original del 1-3 sep queda como está.
-            # PENDIENTE: vincular FAC 102328-102331 a su pedido en Odoo y sacar
-            # esta exclusión.
+            # Segunda ronda (23-09): Walmart reclamó en el SII las FAC 102328-102331
+            # (sin referencia a la OC) y se anularon con N/C 042186-042189. La venta
+            # vigente es FAC 102513 (21-09, ligada a los 4 pedidos). Mismo criterio
+            # (Andrés 24-09): la venta del 1-3 sep se mantiene activa y estas NC no
+            # restan, porque revierten facturas que nunca entraron al RAW.
             NC_REFACTURACION_NETEADA = {
                 'N/C 041867', 'N/C 041868', 'N/C 041869', 'N/C 041870',
+                'N/C 042186', 'N/C 042187', 'N/C 042188', 'N/C 042189',
             }
             nc_domain = [
                 ('move_type', '=', 'out_refund'),
