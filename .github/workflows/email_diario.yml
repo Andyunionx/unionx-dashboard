@@ -146,6 +146,22 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_diario.py
 
+      - name: Enviar Dashboard Cierre del Mes (L-V, junto al Pulso de Ventas)
+        # ACTIVO (OK Andrés 24-sep-2026): proyección de cierre del mes vs FCST vigente.
+        # Venta del parquet recién refrescado arriba; FCST/PPTO/GAV desde data/finanzas
+        # (sync de la planilla); margen de contribución base desde el Drive "Seguimiento
+        # contribuciones 2026" (DRIVE_OAUTH_TOKEN_JSON). Ajustes caso a caso en
+        # data/finanzas/cierre_mes_ajustes.json. Deshabilitar con vars.DASH_CIERRE_ENABLED='false'.
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.DASH_CIERRE_ENABLED != 'false' }}
+        env:
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          DASH_CIERRE_TO: ${{ vars.DASH_CIERRE_TO || 'andres@unionx.cl' }}
+          DASH_CIERRE_CC: ${{ vars.DASH_CIERRE_CC || 'martin@unionx.cl,erich@unionx.cl,nicolas@unionx.cl,sguzman@unionx.cl' }}
+          PYTHONIOENCODING: utf-8
+        run: python dashboard_cierre.py --enviar
+        continue-on-error: true
+
       - name: Enviar Pulso Stock Live (tabla dinámica por bodega)
         # ACTIVO desde 25-jun-2026: corre si vars.PULSO_STOCK_ENABLED == 'true'.
         # Stock fresco: sync_stock c/3h. Fulfillment LIVE de Martín (feed 6 AM,

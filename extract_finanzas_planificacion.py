@@ -353,6 +353,78 @@ def extract_metas_2026(wb) -> pd.DataFrame:
     return df
 
 
+LINEAS_VENTAS = ("Distribución", "Fidelización", "Marketplace", "Páginas Web", "Corporativo")
+
+
+def _extract_ventas_por_linea(wb, hoja: str) -> pd.DataFrame:
+    """Hojas 'FCST VENTAS 2026' / 'PPTO VENTAS 2026': primer bloque de venta (── VENTAS ──)
+    y de margen de contribución (── MARGEN DE CON...) por línea de negocio, Ene-Dic.
+    Valores en CLP. Salida larga: year, month, linea_negocio, kpi (venta|contribucion), valor."""
+    if hoja not in wb.sheetnames:
+        return pd.DataFrame()
+    ws = wb[hoja]
+    rows, bloque, vistos = [], None, set()
+    for row in ws.iter_rows(values_only=True, max_row=70, max_col=14):
+        c0 = str(row[0] or "").strip()
+        if c0.startswith("──"):
+            u = c0.upper()
+            bloque = ("venta" if "VENTAS" in u else
+                      "contribucion" if u.startswith("── MARGEN DE CON") else
+                      "margen_directo" if u.startswith("── MARGEN DIRECT") else None)
+            if bloque in vistos:
+                bloque = None
+            continue
+        if bloque and c0 in LINEAS_VENTAS:
+            for mes in range(1, 13):
+                v = row[mes]
+                if isinstance(v, (int, float)):
+                    rows.append({"year": 2026, "month": mes, "linea_negocio": c0,
+                                 "kpi": bloque, "valor": float(v)})
+        if bloque and c0.upper().startswith("TOTAL"):
+            vistos.add(bloque)
+            bloque = None
+    return pd.DataFrame(rows)
+
+
+def extract_fcst_ventas_2026(wb) -> pd.DataFrame:
+    return _extract_ventas_por_linea(wb, "FCST VENTAS 2026")
+
+
+def extract_ppto_ventas_2026(wb) -> pd.DataFrame:
+    return _extract_ventas_por_linea(wb, "PPTO VENTAS 2026")
+
+
+def extract_fcst_gasto_2026(wb) -> pd.DataFrame:
+    """Hoja 'FCST GASTO 2026', Tabla 2 (valores fijos = forecast del gasto; la Tabla 1 está
+    enlazada al Fcst EERR). Columnas B..L = Feb..Dic. Salida: year, month, centro_costo, valor
+    (CLP, signo positivo = gasto). Filas 'GAV' (subtotal sin insumos/medios de pago) y 'TOTAL'."""
+    if "FCST GASTO 2026" not in wb.sheetnames:
+        return pd.DataFrame()
+    ws = wb["FCST GASTO 2026"]
+    rows, n_tabla = [], 0
+    for row in ws.iter_rows(values_only=True, max_row=60, max_col=13):
+        c0 = str(row[0] or "").strip()
+        if c0.startswith("Resumen Ajuste"):
+            n_tabla += 1
+            continue
+        if c0.startswith("Diferencia"):
+            break
+        if n_tabla != 2 or c0 == "Centro de Costos" or c0.startswith("Nota"):
+            continue
+        if c0:
+            etiqueta = c0
+        elif not any(r["centro_costo"] == "GAV" for r in rows) and any(r["centro_costo"] == "TOTAL" for r in rows):
+            # primera fila sin etiqueta tras TOTAL = subtotal GAV (sin insumos ni medios de pago)
+            etiqueta = "GAV"
+        else:
+            continue
+        for j in range(1, 12):
+            v = row[j]
+            if isinstance(v, (int, float)):
+                rows.append({"year": 2026, "month": j + 1, "centro_costo": etiqueta, "valor": -float(v)})
+    return pd.DataFrame(rows)
+
+
 def extract_fcst_eerr(wb) -> pd.DataFrame:
     """Fcst EERR: forecast línea por línea, mismo formato que P&L."""
     if "Fcst EERR" not in wb.sheetnames:
@@ -716,6 +788,9 @@ def main():
         ("analisis_fin_2026", extract_analisis_fin_2026, "Análisis Financiero 2026 (flujo+KPIs+recom.)"),
         ("metas_2026", extract_metas_2026, "Metas 2026 mensuales"),
         ("fcst_eerr", extract_fcst_eerr, "Forecast EERR"),
+        ("fcst_ventas_2026", extract_fcst_ventas_2026, "Fcst ventas y margen contribución por línea"),
+        ("ppto_ventas_2026", extract_ppto_ventas_2026, "Ppto ventas y margen contribución por línea"),
+        ("fcst_gasto_2026", extract_fcst_gasto_2026, "Fcst gasto (GAV) por centro de costo"),
         ("dashboard_data", extract_dashboard_data, "Dashboard Data pre-cocinada"),
         ("analisis_financiero", extract_analisis_financiero, "Análisis Financiero YTD"),
     ]
