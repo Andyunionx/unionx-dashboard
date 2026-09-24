@@ -308,7 +308,10 @@ class VentasService(BaseOdooService):
             # Comisión + envío por marketplace (Fase 1 margen final directo, ago-2026+).
             # Viven a nivel orden → se prorratean por SKU.
             'x_meli_sale_fee', 'x_meli_shipping_fee',
-            'x_paris_commission', 'x_paris_shipping_cost',
+            # Paris: x_paris_shipping_charge = lo que Paris NOS descuenta por despacho
+            # (ledger shipmentCharge, negativo) + logística inversa. x_paris_shipping_cost
+            # es lo que pagó el COMPRADOR: no es costo nuestro (auditoría 24-sep).
+            'x_paris_commission', 'x_paris_shipping_charge', 'x_paris_reverse_logistics',
             'x_ripley_commission', 'x_walmart_commission_est',
             'yuju_marketplace_fee', 'yuju_seller_shipping_cost',
             # Falabella: comisión REAL de liquidación Seller Center (entra sola a Odoo
@@ -951,7 +954,8 @@ class VentasService(BaseOdooService):
             if 'mercado libre' in ch or 'meli' in ch:
                 return (o.get('x_meli_sale_fee') or 0), (o.get('x_meli_shipping_fee') or 0)
             if 'paris' in ch:
-                return (o.get('x_paris_commission') or 0), (o.get('x_paris_shipping_cost') or 0)
+                return (o.get('x_paris_commission') or 0), (abs(o.get('x_paris_shipping_charge') or 0)
+                                                            + abs(o.get('x_paris_reverse_logistics') or 0))
             if 'ripley' in ch:
                 return (o.get('x_ripley_commission') or 0), (o.get('yuju_seller_shipping_cost') or 0)
             if 'walmart' in ch:
