@@ -1012,12 +1012,18 @@ class VentasService(BaseOdooService):
             s = ''.join(c for c in _ud.normalize('NFD', s) if _ud.category(c) != 'Mn')
             return _re.sub(r'\s+', ' ', _re.sub(r'[^A-Z0-9 ]', ' ', s)).strip()
 
-        _ENVIO_CANALES = {'UnionX web', 'Lhotse web', 'Simplit web', 'Shopify',
-                          'LATAM Pass', 'UnionX B2B', 'Global Reward'}
+        # Courier por canal (Andrés 24-09): LATAM, CMR y páginas web despachan con
+        # Recíbelo (solo Región Metropolitana; hacia regiones cae a BlueX). El resto de
+        # los canales que despachamos nosotros va por BlueX.
+        _RECIBELO_CANALES = {'UnionX web', 'Lhotse web', 'Simplit web', 'Shopify', 'LATAM Pass', 'CMR'}
+        _BLUEX_CANALES = {'UnionX B2B', 'Global Reward', 'Celmedia', 'Banco Bice'}
+        _ENVIO_CANALES = _RECIBELO_CANALES | _BLUEX_CANALES
         _COM_ALIAS = {'SANTIAGO CENTRO': 'SANTIAGO', 'COIHAIQUE': 'COYHAIQUE', 'AISEN': 'AYSEN'}
         _BOUNDS = [0.5, 1.5, 3, 6, 10, 16, 20]   # tramos fijos t0..t6; t7 (20-50) y t8 (>50) son $/kg
         _envio_tar, _envio_def, _peso_sku, _peso_def = {}, None, {}, 0.5
         _peso_orden, _comuna_orden, _envio_orden_val = {}, {}, {}
+        _envio_orden_rec, _venta_prod_orden = {}, {}
+        _rec_zona, _rec_recargo, _REC_RECARGO_DEF = {}, {}, 0.0
         try:
             _mtx_e = self.planillas_dir / 'matriz_tarifas_canal.xlsx'
             _et = pd.read_excel(_mtx_e, sheet_name='envio_tarifario')
@@ -1043,7 +1049,10 @@ class VentasService(BaseOdooService):
                 if _oid is None:
                     continue
                 _sk = str(productos_dict.get(_pid, {}).get('default_code', '') or '')
+                if _sk.startswith('Delivery'):
+                    continue   # la línea de envío no pesa ni recibe logística (Andrés 24-09)
                 _peso_orden[_oid] = _peso_orden.get(_oid, 0) + _peso_sku.get(_sk, _peso_def) * (_ln.get('product_uom_qty') or 0)
+                _venta_prod_orden[_oid] = _venta_prod_orden.get(_oid, 0) + (_ln.get('price_subtotal') or 0)
 
             # comuna por orden desde partner_shipping_id (real_city > city)
             _ship_pid = {oid: o['partner_shipping_id'][0] for oid, o in ordenes_dict.items() if o.get('partner_shipping_id')}
@@ -1057,9 +1066,54 @@ class VentasService(BaseOdooService):
             # envío por orden (solo se usará en canales _ENVIO_CANALES dentro del loop)
             for _oid in _peso_orden:
                 _envio_orden_val[_oid] = _tarifa(_comuna_orden.get(_oid, ''), _peso_orden[_oid])
+
+            # Recíbelo: tarifa plana por zona (centro/Colina/rural) + recargo por tamaño.
+            # Reconstruido del detalle de la factura de agosto-26 (2.891 entregas):
+            # data/planillas/tarifario_recibelo.csv (comuna -> zona -> tarifa) y
+            # recibelo_recargo_sku.csv (SKU -> recargo XL/3XL). Pedidos sin SKU mapeado llevan el
+            # recargo promedio residual ($371) para que el total cuadre con la factura.
+            try:
+                _tr = pd.read_csv(self.planillas_dir / 'tarifario_recibelo.csv')
+                _rec_zona = {str(r['comuna_norm']): float(r['tarifa']) for _, r in _tr.iterrows()}
+                _rr = pd.read_csv(self.planillas_dir / 'recibelo_recargo_sku.csv', dtype={'sku': str})
+                _rec_recargo = {str(r['sku']).strip(): float(r['recargo']) for _, r in _rr.iterrows()}
+                _REC_RECARGO_DEF = 371.0
+                _skus_orden = {}
+                for _ln in lineas:
+                    _oid = _ln['order_id'][0] if _ln.get('order_id') else None
+                    _pid = _ln['product_id'][0] if _ln.get('product_id') else None
+                    if _oid is not None:
+                        _skus_orden.setdefault(_oid, []).append(str(productos_dict.get(_pid, {}).get('default_code', '') or ''))
+                for _oid, _sks in _skus_orden.items():
+                    _cn = _comuna_orden.get(_oid, '')
+                    _cn = _COM_ALIAS.get(_cn, _cn)
+                    if _cn in _rec_zona:
+                        _rc = max([_rec_recargo.get(x, 0.0) for x in _sks] or [0.0])
+                        _envio_orden_rec[_oid] = _rec_zona[_cn] + (_rc if _rc else _REC_RECARGO_DEF)
+                print(f"  [envio] Recíbelo {len(_rec_zona)} comunas RM · {len(_rec_recargo)} SKUs con recargo · {len(_envio_orden_rec)} pedidos en cobertura")
+            except Exception as _e:
+                print(f"  [envio] Recíbelo omitido: {type(_e).__name__}: {_e}")
             print(f"  [envio] tarifario {len(_envio_tar)} comunas · pesos {len(_peso_sku)} SKUs · {len(_envio_orden_val)} pedidos costeados")
         except Exception as _e:
             print(f"  [envio] omitido: {type(_e).__name__}: {_e}")
+
+        def _envio_linea(canal_f, orden_id_f, sku_f, qty_f, venta_f):
+            """Logística de una línea de un canal que despachamos nosotros.
+            Envío del pedido (Recíbelo si el canal lo usa y la comuna está en su cobertura;
+            si no, BlueX) repartido por PESO de la línea (peso_sku x cantidad) sobre el peso
+            de los productos del pedido; sin peso, por venta. Líneas de envío = 0.
+            qty/venta negativos (NC) -> logística negativa: revierte la del producto devuelto."""
+            if canal_f not in _ENVIO_CANALES or str(sku_f or '').startswith('Delivery'):
+                return 0.0
+            _tot = _envio_orden_val.get(orden_id_f, 0.0)
+            if canal_f in _RECIBELO_CANALES and orden_id_f in _envio_orden_rec:
+                _tot = _envio_orden_rec[orden_id_f]
+            _po = _peso_orden.get(orden_id_f, 0)
+            _pl = _peso_sku.get(str(sku_f or ''), _peso_def) * (qty_f or 0)
+            if _po > 0 and qty_f:
+                return _tot * _pl / _po
+            _vp = _venta_prod_orden.get(orden_id_f, 0)
+            return _tot * venta_f / _vp if _vp else 0.0
 
         # Helper comisión+logística de una fila (Venta o NC) con la lógica del canal.
         # venta_neta_signed NEGATIVO (NC) → devuelve com/log negativos = revierte la
@@ -1074,9 +1128,8 @@ class VentasService(BaseOdooService):
                 _com = venta_neta_signed * _flat_com[canal_f] / 100.0
                 _log = 0.0
                 if canal_f in _ENVIO_CANALES:
-                    _vno = _venta_neta_orden.get(orden_id_f, 0)
-                    if _vno:
-                        _log = _envio_orden_val.get(orden_id_f, 0.0) * venta_neta_signed / _vno
+                    # NC: sin SKU a mano -> reparto por venta de productos del pedido
+                    _log = _envio_linea(canal_f, orden_id_f, '', 0, venta_neta_signed)
                 return _com, _log, 'matriz'
             # canales con comisión/logística en Odoo (ML/Paris/Ripley/Walmart) → prorratea
             # la comisión de la ORDEN ORIGINAL por la fracción de venta devuelta.
@@ -1278,14 +1331,17 @@ class VentasService(BaseOdooService):
                     if canal_raw in _flat_com:
                         _pc = _flat_com[canal_raw]
                         _pl = _flat_log.get(canal_raw, 0.0)
+                    elif canal_raw in _ENVIO_CANALES:
+                        _pc = 0.0   # despachamos nosotros pero sin comisión en la matriz (Celmedia, Banco Bice)
                     if _pc is not None:
                         comision = venta_neta * _pc / 100.0
                         # Logística: canales que despachamos nosotros → envío tarifario
                         # BlueX/Recíbelo por comuna×peso (envío del pedido prorrateado por
                         # venta neta de la línea). Resto → % flat de la matriz (hoy 0).
                         if canal_raw in _ENVIO_CANALES:
-                            _vno = _venta_neta_orden.get(orden_id, 0)
-                            logistica = (_envio_orden_val.get(orden_id, 0.0) * venta_neta / _vno) if _vno else 0.0
+                            _vl = linea.get('price_subtotal') or 0
+                            _ratio = (venta_neta / _vl) if _vl else 1.0   # neteo de NC en la misma línea
+                            logistica = _envio_linea(canal_raw, orden_id, sku, cantidad, venta_neta) * _ratio
                         else:
                             logistica = venta_neta * _pl / 100.0
                         mg_final = (venta_neta - costo_total) - comision - logistica

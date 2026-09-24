@@ -9,7 +9,8 @@ marketplaces (campos de Odoo del agente de Martín) y para los canales de la mat
 definió Andrés el 24-09-2026 (Excel "Canales sin regla de comisión"), que viven en
 data/planillas/reglas_margen_final.csv:
 
-  canal, com_pct, log_pct, mkt_pct, modo_com, com_pct_evento, meses_evento, fuente, nota
+  canal, com_pct, log_pct, mkt_pct, modo_com, modo_log, com_pct_evento, meses_evento, fuente, nota
+  · modo_log = 'si_vacio': la logística % solo se pone si la fila no trae (CMR tras el rebuild del Drive).
 
   · modo_com = 'sku': comisión por SKU desde data/planillas/comision_sku_canal.csv
     (ej. matriz de Hites); los SKU que no están usan com_pct como respaldo.
@@ -53,6 +54,9 @@ def cargar_reglas(path: Path = REGLAS) -> pd.DataFrame:
         r['meses_evento'] = ''
     r['meses_evento'] = r['meses_evento'].fillna('').astype(str)
     r['modo_com'] = r['modo_com'].fillna('forzar').str.strip()
+    if 'modo_log' not in r.columns:
+        r['modo_log'] = 'forzar'
+    r['modo_log'] = r['modo_log'].fillna('forzar').astype(str).str.strip()
     return r.set_index('canal')
 
 
@@ -100,7 +104,12 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
                 df.loc[m, 'comision'] = nueva
         es_env = df.loc[m, 'sku'].astype(str).str.startswith('Delivery')
         if pd.notna(r['log_pct']):
-            df.loc[m, 'logistica'] = (vn * r['log_pct'] / 100.0).where(~es_env, 0.0)
+            nueva_log = (vn * r['log_pct'] / 100.0).where(~es_env, 0.0)
+            if r.get('modo_log', 'forzar') == 'si_vacio':
+                sel_l = df.loc[m, 'logistica'] == 0
+                df.loc[m & sel_l.reindex(df.index, fill_value=False), 'logistica'] = nueva_log[sel_l]
+            else:
+                df.loc[m, 'logistica'] = nueva_log
         if pd.notna(r['mkt_pct']):
             df.loc[m, 'marketing'] = (vn * r['mkt_pct'] / 100.0).where(~es_env, 0.0)
         df.loc[m, 'margen_final'] = (df.loc[m, 'margen_front'] - df.loc[m, 'comision']
