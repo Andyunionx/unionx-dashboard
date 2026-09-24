@@ -333,7 +333,7 @@ def render_html(df):
   <div style="font-size:0.75rem;color:#166534;text-transform:uppercase;letter-spacing:0.05em">💰 Margen Final (contribución directa) · ago-2026+</div>
   <div style="font-size:1.5rem;font-weight:700;color:#15803D;margin:2px 0">{fmt_m(mfin_ty)} <span style="font-size:0.9rem;font-weight:600;color:#64748B">({pm_final:.1f}% s/neta)</span></div>
   <div style="font-size:0.85rem;color:#64748B">Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) − Comisión {fmt_m(com_ty)} − Logística {fmt_m(log_ty)} − Marketing {fmt_m(mkt_ty)} = <b>Margen Final {fmt_m(mfin_ty)}</b><br>
-  <span style="font-size:0.8rem">Comisión: Odoo (ML/Paris/Ripley/Walmart) + tarifario Falabella/flat. Logística: Odoo marketplaces + tarifario BlueX (webs/B2B/GRS) + tasa histórica (LATAM/Celmedia/Bice/CMR). Marketing: webs 10%.</span></div>
+  <span style="font-size:0.8rem">Comisión: Odoo (ML/Paris/Ripley/Walmart) + tarifario Falabella/flat. Logística: Odoo marketplaces + tarifario Recíbelo (webs/LATAM/CMR en RM) y BlueX (B2B/GRS/Celmedia/Bice y regiones), repartida por peso; Hites/Abc % histórico. Marketing: webs 10%. Líneas de envío sin costo.</span></div>
 </div>"""
         # Tabla margen final por línea de negocio — va DESPUÉS de "Por línea de negocio".
         _mfin_neg = f"""
