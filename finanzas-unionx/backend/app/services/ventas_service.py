@@ -447,6 +447,10 @@ class VentasService(BaseOdooService):
             NC_REFACTURACION_NETEADA = {
                 'N/C 041867', 'N/C 041868', 'N/C 041869', 'N/C 041870',
                 'N/C 042186', 'N/C 042187', 'N/C 042188', 'N/C 042189',
+                # Tercera ronda (24-09): Yohana anuló también FAC 102513 ("reclamada").
+                # Andrés 24-09: excluir, la venta del 1-3 sep sigue activa hasta la
+                # refacturación definitiva.
+                'N/C 042231',
             }
             nc_domain = [
                 ('move_type', '=', 'out_refund'),
