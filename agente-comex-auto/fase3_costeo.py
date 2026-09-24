@@ -101,7 +101,23 @@ def odoo_sku_check(productos) -> tuple[list, list]:
     return existentes, faltantes
 
 
+def po_manual_existente(emb_num: str):
+    """PO ya cargada a mano en Odoo para este embarque (partner_ref contiene 26TP####)."""
+    pwd = os.environ.get("ANDRES_ODOO_PASSWORD")
+    url = "https://unionxb2b.odoo.com"; db = "bmya-innovatek-sh-prd-6981800"
+    uid = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common").authenticate(db, "andres@grupoeter.cl", pwd, {})
+    models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
+    return [p["name"] for p in models.execute_kw(db, uid, pwd, "purchase.order", "search_read",
+            [[["partner_ref", "ilike", emb_num], ["state", "!=", "cancel"]]], {"fields": ["name"]})]
+
+
 def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
+    pos = po_manual_existente(emb_num)
+    if pos:
+        # Cargado a mano en Odoo → no costear/escalar más (evita falsas alarmas y PO duplicada)
+        reg["po_name"] = ",".join(pos)
+        st.set_fase(reg, 9, f"PO ya existente en Odoo ({', '.join(pos)}) → COMPLETADO")
+        return
     pi_path, pl_path = resolver_archivos(reg)
     if not pi_path or not pl_path:
         st.log(reg, f"FALTA archivo local (PI={bool(pi_path)} PL={bool(pl_path)}) → no puedo costear aún")
