@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-09-23T20:47:12.785817",
+  "generado_en": "2026-09-24T01:59:19.823772",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12998,
-  "total_monto_pendiente_clp": 988919512.0,
+  "total_documentos_pendientes": 12715,
+  "total_monto_pendiente_clp": 975927942.0,
   "monto_por_aging": {
-    "+90 días": 79985821.0,
-    "1-30 días": 362798616.0,
-    "31-60 días": 256357390.0,
-    "61-90 días": 68113957.0,
-    "Vigente": 221663728.0
+    "+90 días": 80342261.0,
+    "1-30 días": 361490341.0,
+    "31-60 días": 254052149.0,
+    "61-90 días": 64411436.0,
+    "Vigente": 215631755.0
   },
   "monto_por_tipo": {
-    "BOLETA": 766232463.0,
+    "BOLETA": 753240893.0,
     "FACTURA": 222687049.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 152803239.0
+      "monto": 153729826.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 70237491.0
+      "monto": 70666731.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 59786997.0
+      "monto": 45108633.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18075138.0
+      "monto": 18260728.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -74,19 +74,19 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 12025836.0
+      "monto": 12048512.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 11213111.0
+      "monto": 11233071.0
+    },
+    {
+      "partner": "Cliente Simplit Home",
+      "monto": 10896691.0
     },
     {
       "partner": "Status Spa",
       "monto": 10837211.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 10828211.0
     },
     {
       "partner": "Comercial ECCSA S A",
@@ -97,6 +97,6 @@
       "monto": 8253960.0
     }
   ],
-  "notas_credito_count": 806,
+  "notas_credito_count": 814,
   "pedidos_venta_count": 10000
 }
