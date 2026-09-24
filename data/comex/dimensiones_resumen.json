@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-09-24T13:54:05.653354",
+  "generado_en": "2026-09-24T18:45:00.849026",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 4,
-  "sku_match_odoo": 3,
-  "sku_con_peso": 0,
-  "sku_con_volumen": 0,
-  "sku_volumen_anomalo": 0,
+  "sku_input": 49,
+  "sku_match_odoo": 48,
+  "sku_con_peso": 44,
+  "sku_con_volumen": 44,
+  "sku_volumen_anomalo": 3,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 0.0,
-  "cobertura_volumen_pct": 0.0,
-  "cobertura_volumen_confiable_pct": 0.0,
-  "unidades_totales": 30.0,
-  "peso_total_kg": 0.0,
-  "volumen_total_m3": 0.0,
-  "volumen_total_m3_raw": 0.0,
-  "pallets_totales_estim": 0,
+  "cobertura_peso_pct": 89.8,
+  "cobertura_volumen_pct": 89.8,
+  "cobertura_volumen_confiable_pct": 83.7,
+  "unidades_totales": 11438.0,
+  "peso_total_kg": 33468.5,
+  "volumen_total_m3": 139.84,
+  "volumen_total_m3_raw": 889999.91,
+  "pallets_totales_estim": 116.5,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -61,10 +61,86 @@
       "skus_volumen_anomalo": 0,
       "cobertura_peso_pct": 0.0,
       "cobertura_volumen_pct": 0.0
+    },
+    {
+      "pi": "26TP0806PI",
+      "transporte": "",
+      "fecha_embarque": "2026-09-24",
+      "fecha_eta_bodega": "2026-09-24",
+      "skus_distintos": 21,
+      "unidades_totales": 4191.0,
+      "peso_total_kg": 17052.7,
+      "volumen_total_m3": 58.93,
+      "volumen_total_m3_raw": 58.93,
+      "pallets_estim": 49.1,
+      "containers_20_estim": 2.1,
+      "containers_40hc_estim": 0.88,
+      "skus_con_match_odoo": 21,
+      "skus_con_peso": 20,
+      "skus_con_volumen": 20,
+      "skus_volumen_anomalo": 0,
+      "cobertura_peso_pct": 95.2,
+      "cobertura_volumen_pct": 95.2
+    },
+    {
+      "pi": "26TP0811PI",
+      "transporte": "",
+      "fecha_embarque": "2026-09-24",
+      "fecha_eta_bodega": "2026-09-24",
+      "skus_distintos": 12,
+      "unidades_totales": 2886.0,
+      "peso_total_kg": 6766.3,
+      "volumen_total_m3": 41.53,
+      "volumen_total_m3_raw": 889901.6,
+      "pallets_estim": 34.6,
+      "containers_20_estim": 1.48,
+      "containers_40hc_estim": 0.62,
+      "skus_con_match_odoo": 12,
+      "skus_con_peso": 12,
+      "skus_con_volumen": 12,
+      "skus_volumen_anomalo": 3,
+      "cobertura_peso_pct": 100.0,
+      "cobertura_volumen_pct": 100.0
+    },
+    {
+      "pi": "26TP0826PI",
+      "transporte": "",
+      "fecha_embarque": "2026-09-24",
+      "fecha_eta_bodega": "2026-09-24",
+      "skus_distintos": 13,
+      "unidades_totales": 4331.0,
+      "peso_total_kg": 9649.5,
+      "volumen_total_m3": 39.38,
+      "volumen_total_m3_raw": 39.38,
+      "pallets_estim": 32.8,
+      "containers_20_estim": 1.41,
+      "containers_40hc_estim": 0.59,
+      "skus_con_match_odoo": 13,
+      "skus_con_peso": 13,
+      "skus_con_volumen": 13,
+      "skus_volumen_anomalo": 0,
+      "cobertura_peso_pct": 100.0,
+      "cobertura_volumen_pct": 100.0
     }
   ],
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": []
+  "skus_volumen_anomalo_top": [
+    {
+      "sku": "BDCASMUÑEC-WD",
+      "producto": "Casa de Muñecas Madera 3 Pisos con Muebles y Muñecos Bandú",
+      "volumen_unit_m3": 31438.125
+    },
+    {
+      "sku": "BDPZMG2E1",
+      "producto": "Pizarra Infantil Madera 2 en 1 Magnética Doble Cara Bandú",
+      "volumen_unit_m3": 11000.0
+    },
+    {
+      "sku": "BDGMNMVBB",
+      "producto": "Gimnasio Madera Bebé Montessori Juguetes Colgantes Bandú",
+      "volumen_unit_m3": 4414.41
+    }
+  ]
 }

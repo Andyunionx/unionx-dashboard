@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-09-24T17:49:32.888261",
+  "generado_en": "2026-09-24T18:45:07.217083",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1371,
   "capacidad_bodega_m3": 2467.7999999999997,
@@ -18,17 +18,23 @@
   },
   "pico_proyectado": {
     "fecha": "2026-09-24",
-    "posiciones_ocupadas": 780.0,
-    "pct_ocupacion": 56.9
+    "posiciones_ocupadas": 896.5,
+    "pct_ocupacion": 65.4
   },
   "minimo_proyectado": {
     "fecha": "2026-11-23",
-    "posiciones_ocupadas": 555.7,
-    "pct_ocupacion": 40.5
+    "posiciones_ocupadas": 642.2,
+    "pct_ocupacion": 46.8
   },
   "primer_critico": null,
   "primer_atencion": null,
-  "dias_con_entrada_transito": [],
+  "dias_con_entrada_transito": [
+    {
+      "fecha": "2026-09-24",
+      "pallets": 116.5,
+      "m3": 139.8
+    }
+  ],
   "pis_entrantes": [
     {
       "pi": "26TP0704PI",
@@ -45,22 +51,46 @@
       "m3": 0.0,
       "unidades": 3.0,
       "transporte": ""
+    },
+    {
+      "pi": "26TP0806PI",
+      "fecha_eta": "2026-09-24",
+      "pallets": 49.1,
+      "m3": 58.93,
+      "unidades": 4191.0,
+      "transporte": ""
+    },
+    {
+      "pi": "26TP0811PI",
+      "fecha_eta": "2026-09-24",
+      "pallets": 34.6,
+      "m3": 41.53,
+      "unidades": 2886.0,
+      "transporte": ""
+    },
+    {
+      "pi": "26TP0826PI",
+      "fecha_eta": "2026-09-24",
+      "pallets": 32.8,
+      "m3": 39.38,
+      "unidades": 4331.0,
+      "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 0.0,
-  "pallets_total_salientes_horizonte": 224.3,
-  "m3_total_entrante_horizonte": 0.0,
-  "m3_total_saliente_horizonte": 269.1,
+  "pallets_total_entrantes_horizonte": 116.5,
+  "pallets_total_salientes_horizonte": 254.3,
+  "m3_total_entrante_horizonte": 139.8,
+  "m3_total_saliente_horizonte": 305.2,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 809,
     "sku_fallback": 2,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 63350.0,
-    "demanda_cumplida_unidades": 33808.0,
-    "demanda_no_cubierta_unidades_total": 29542.0,
-    "pct_demanda_cumplida": 53.4,
-    "sku_sin_match_stock_count": 43,
+    "demanda_cumplida_unidades": 36191.0,
+    "demanda_no_cubierta_unidades_total": 27159.0,
+    "pct_demanda_cumplida": 57.1,
+    "sku_sin_match_stock_count": 35,
     "top_no_cubiertos": [
       {
         "sku": "1597098592591",
@@ -93,38 +123,18 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVSPTVUN",
-        "unid_no_cubiertas": 826.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "DYNTALSPER",
         "unid_no_cubiertas": 654.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 563.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SIMCUROM-30",
-        "unid_no_cubiertas": 546.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 297.0,
+        "unid_no_cubiertas": 466.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVPRONOV",
         "unid_no_cubiertas": 258.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "1629726117626",
-        "unid_no_cubiertas": 225.0,
         "sin_match_stock": true
       },
       {
@@ -143,11 +153,6 @@
         "sin_match_stock": true
       },
       {
-        "sku": "SIMJULZBRU-30",
-        "unid_no_cubiertas": 179.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "SMBATSAV9-CR",
         "unid_no_cubiertas": 173.0,
         "sin_match_stock": true
@@ -160,6 +165,31 @@
       {
         "sku": "1566849947902",
         "unid_no_cubiertas": 151.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1635956574926",
+        "unid_no_cubiertas": 150.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVPROLUM",
+        "unid_no_cubiertas": 147.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "68540051413139",
+        "unid_no_cubiertas": 129.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SIMSECVALBK",
+        "unid_no_cubiertas": 128.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "Pack261",
+        "unid_no_cubiertas": 119.0,
         "sin_match_stock": true
       }
     ],
