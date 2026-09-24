@@ -183,13 +183,14 @@ def render_html(df):
     # ── Margen Final (ago-2026+): margen front − comisión − logística (marketing FUERA).
     # comisión/logística vienen por fila del extract (Odoo real + matriz/tarifario);
     # margen_final = margen_front − com − log. Ver memoria channel_fee_structures.
-    for _c in ('comision', 'logistica', 'margen_final'):
+    for _c in ('comision', 'logistica', 'marketing', 'margen_final'):
         if _c in df_mes.columns:
             df_mes[_c] = pd.to_numeric(df_mes[_c], errors='coerce').fillna(0)
         else:
             df_mes[_c] = 0.0
     com_ty = df_mes['comision'].sum()
     log_ty = df_mes['logistica'].sum()
+    mkt_ty = df_mes['marketing'].sum()   # webs 10% (Andrés 24-09); resto 0
     mfin_ty = df_mes['margen_final'].sum()
     pm_final = mfin_ty / n_ty * 100 if n_ty else 0
     tiene_mfinal = (com_ty + log_ty) > 0   # solo tiene sentido ago-2026+
@@ -301,7 +302,7 @@ def render_html(df):
     def _mfin_rows(gcol, total_label=None):
         g = df_mes.groupby(gcol).agg(
             neta=('venta_neta', 'sum'), mf=('margen_front', 'sum'),
-            com=('comision', 'sum'), log=('logistica', 'sum'), mfin=('margen_final', 'sum'),
+            com=('comision', 'sum'), log=('logistica', 'sum'), mkt=('marketing', 'sum'), mfin=('margen_final', 'sum'),
         ).reset_index().sort_values('neta', ascending=False)
         g = g[g['neta'] != 0].head(15)
         rows = ''
@@ -311,28 +312,28 @@ def render_html(df):
             ent = str(r[gcol] or '—')[:24]
             rows += (f'<tr><td>{ent}</td><td align="right">{fmt_m(r["neta"])}</td>'
                      f'<td align="right">{fmt_m(r["mf"])}</td><td align="right">{fmt_m(r["com"])}</td>'
-                     f'<td align="right">{fmt_m(r["log"])}</td><td align="right"><b>{fmt_m(r["mfin"])}</b></td>'
+                     f'<td align="right">{fmt_m(r["log"])}</td><td align="right">{fmt_m(r["mkt"])}</td><td align="right"><b>{fmt_m(r["mfin"])}</b></td>'
                      f'<td align="right" style="color:{colp};font-weight:600">{pmf:.1f}%</td></tr>')
         if total_label:
             pmf_t = mfin_ty / n_ty * 100 if n_ty else 0
             rows += (f'<tr style="font-weight:700;background:#F8FAFC"><td>{total_label}</td>'
                      f'<td align="right">{fmt_m(n_ty)}</td><td align="right">{fmt_m(m_ty)}</td>'
-                     f'<td align="right">{fmt_m(com_ty)}</td><td align="right">{fmt_m(log_ty)}</td>'
+                     f'<td align="right">{fmt_m(com_ty)}</td><td align="right">{fmt_m(log_ty)}</td><td align="right">{fmt_m(mkt_ty)}</td>'
                      f'<td align="right">{fmt_m(mfin_ty)}</td><td align="right">{pmf_t:.1f}%</td></tr>')
         return rows
 
     if tiene_mfinal:
         _th = ('<thead><tr style="background:#F0FDF4;border-bottom:2px solid #BBF7D0">'
                '<th align="left">{d}</th><th align="right">Venta neta</th><th align="right">Mg Front</th>'
-               '<th align="right">Comisión</th><th align="right">Logística</th><th align="right">Mg Final</th>'
+               '<th align="right">Comisión</th><th align="right">Logística</th><th align="right">Marketing</th><th align="right">Mg Final</th>'
                '<th align="right">%MFin</th></tr></thead>')
         # Box resumen (waterfall) — va como headline tras el YoY.
         _mfin_box = f"""
 <div style="background:#F0FDF4;border-left:4px solid #16A34A;padding:14px;border-radius:6px;margin:16px 0">
   <div style="font-size:0.75rem;color:#166534;text-transform:uppercase;letter-spacing:0.05em">💰 Margen Final (contribución directa) · ago-2026+</div>
   <div style="font-size:1.5rem;font-weight:700;color:#15803D;margin:2px 0">{fmt_m(mfin_ty)} <span style="font-size:0.9rem;font-weight:600;color:#64748B">({pm_final:.1f}% s/neta)</span></div>
-  <div style="font-size:0.85rem;color:#64748B">Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) − Comisión {fmt_m(com_ty)} − Logística {fmt_m(log_ty)} = <b>Margen Final {fmt_m(mfin_ty)}</b><br>
-  <span style="font-size:0.8rem">Comisión: Odoo (ML/Paris/Ripley/Walmart) + tarifario Falabella/flat. Logística: Odoo marketplaces + tarifario BlueX (webs/B2B/LATAM/GRS). Marketing FUERA.</span></div>
+  <div style="font-size:0.85rem;color:#64748B">Margen Front {fmt_m(m_ty)} ({pm_ty:.1f}%) − Comisión {fmt_m(com_ty)} − Logística {fmt_m(log_ty)} − Marketing {fmt_m(mkt_ty)} = <b>Margen Final {fmt_m(mfin_ty)}</b><br>
+  <span style="font-size:0.8rem">Comisión: Odoo (ML/Paris/Ripley/Walmart) + tarifario Falabella/flat. Logística: Odoo marketplaces + tarifario BlueX (webs/B2B/GRS) + tasa histórica (LATAM/Celmedia/Bice/CMR). Marketing: webs 10%.</span></div>
 </div>"""
         # Tabla margen final por línea de negocio — va DESPUÉS de "Por línea de negocio".
         _mfin_neg = f"""

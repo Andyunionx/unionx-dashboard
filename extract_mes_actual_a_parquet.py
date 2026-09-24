@@ -557,6 +557,13 @@ def main():
         df = _normalizar_raw(df, verbose=True)
     except Exception as e:
         print(f"   [WARN] normalizar_raw no aplicado: {type(e).__name__}: {str(e)[:80]}")
+    # Reglas por canal del margen final (Andrés 24-09): comisión/logística/marketing de
+    # los canales fuera de Odoo. Ver margen_final_reglas.py y data/planillas/reglas_margen_final.csv.
+    try:
+        from margen_final_reglas import aplicar as _reglas_mf
+        df = _reglas_mf(df, verbose=True)
+    except Exception as e:
+        print(f"   [WARN] margen_final_reglas no aplicado: {type(e).__name__}: {str(e)[:80]}")
 
     # _line_id era transitorio (solo para dedup) → no va al parquet (mantiene schema).
     df = df.drop(columns=['_line_id'], errors='ignore')

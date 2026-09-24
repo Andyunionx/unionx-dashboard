@@ -98,6 +98,13 @@ def main():
     rows_fuera_pre = int(fuera_mask.sum())
     vneta_fuera_pre = float(pd.to_numeric(h.loc[fuera_mask, 'venta_neta'], errors='coerce').sum())
 
+    # Columnas nuevas del extract que el histórico todavía no tiene (ej. fuente_comision):
+    # se agregan vacías al histórico en vez de descartarlas del mes que entra. Antes el
+    # reindex las botaba y el mes congelado perdía la trazabilidad (auditoría 24-09).
+    for c in nu.columns:
+        if c not in h.columns and not c.startswith('_'):
+            h[c] = '' if nu[c].dtype == object else 0
+    cols = list(h.columns)
     nu_mes = nu[(nufv >= desde) & (nufv < hasta)].reindex(columns=cols)
     for c in cols:
         if nu_mes[c].isna().all() and h[c].dtype == object:
@@ -122,6 +129,11 @@ def main():
         nu_mes = _normalizar_raw(nu_mes, verbose=True)
     except Exception as e:
         print(f"   [WARN] normalizar_raw no aplicado: {type(e).__name__}: {str(e)[:80]}")
+    try:
+        from margen_final_reglas import aplicar as _reglas_mf
+        nu_mes = _reglas_mf(nu_mes, verbose=True)
+    except Exception as e:
+        print(f"   [WARN] margen_final_reglas no aplicado: {type(e).__name__}: {str(e)[:80]}")
 
     # Alinear dtypes de nu_mes al histórico ANTES del concat. El extract produce
     # 'dia_semana' como int (0-6) mientras el histórico usa el NOMBRE del día
