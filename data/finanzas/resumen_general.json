@@ -1,7 +1,7 @@
 {
-  "generado_en": "2026-09-14T11:00:02.676589",
+  "generado_en": "2026-09-25T10:59:40.206645",
   "archivo_origen": "Planificación Financiera 2026.xlsx",
-  "archivo_modificado": "2026-09-11T12:45:56.146000",
+  "archivo_modificado": "2026-09-24T12:29:43.048000",
   "hojas_procesadas": {
     "pyl_mensual": {
       "filas": 6126,
@@ -179,7 +179,7 @@
       "ok": true
     },
     "fcst_eerr": {
-      "filas": 790,
+      "filas": 791,
       "columnas": [
         "fecha",
         "year",
@@ -189,6 +189,41 @@
         "valor_fcst"
       ],
       "archivo": "data\\finanzas\\fcst_eerr.parquet",
+      "ok": true
+    },
+    "fcst_ventas_2026": {
+      "filas": 170,
+      "columnas": [
+        "year",
+        "month",
+        "linea_negocio",
+        "kpi",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\fcst_ventas_2026.parquet",
+      "ok": true
+    },
+    "ppto_ventas_2026": {
+      "filas": 120,
+      "columnas": [
+        "year",
+        "month",
+        "linea_negocio",
+        "kpi",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\ppto_ventas_2026.parquet",
+      "ok": true
+    },
+    "fcst_gasto_2026": {
+      "filas": 209,
+      "columnas": [
+        "year",
+        "month",
+        "centro_costo",
+        "valor"
+      ],
+      "archivo": "data\\finanzas\\fcst_gasto_2026.parquet",
       "ok": true
     },
     "dashboard_data": {
