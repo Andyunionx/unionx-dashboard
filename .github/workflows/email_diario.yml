@@ -146,6 +146,19 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_diario.py
 
+      - name: Planilla finanzas fresca desde Drive (para el dashboard de cierre)
+        # Andrés 25-sep: el dashboard no debe depender de que el notebook corra el sync de las 07:00.
+        # Baja la planilla vigente de Drive y regenera data/finanzas/*.parquet en este runner (no se commitea).
+        # Si falla, el dashboard usa los parquets del repo.
+        if: ${{ github.event.inputs.solo_live != 'true' && vars.DASH_CIERRE_ENABLED != 'false' }}
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          python bajar_planilla_finanzas.py
+          python extract_finanzas_planificacion.py
+        continue-on-error: true
+
       - name: Enviar Dashboard Cierre del Mes (L-V a Andrés; copias solo los lunes)
         # ACTIVO (OK Andrés 24-sep-2026): proyección de cierre del mes vs FCST vigente.
         # Andrés 25-sep: diario para él, semanal (lunes, hora Chile) para los de copia.
