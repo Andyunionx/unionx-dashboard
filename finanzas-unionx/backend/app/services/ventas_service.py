@@ -318,6 +318,7 @@ class VentasService(BaseOdooService):
             # desde 6-ago). Monto BRUTO con IVA → /1.19. is_real=liquidada; si no, 0
             # (decisión Andrés 19-ago: no estimar no liquidadas). Reemplaza el tarifario.
             'x_fala_commission_est', 'x_fala_commission_is_real', 'x_fala_shipping_cost',
+            'x_walmart_commission_is_real', 'x_meli_logistic_type',
         ]
 
         all_orders = []
@@ -953,17 +954,30 @@ class VentasService(BaseOdooService):
         # (ene–jul mantiene los valores del sheet de Nicole).
         CUTOFF_ODOO_COMLOG = '2026-08-01'
 
+        # IVA (Martín 25-09): los campos de los cinco marketplaces guardan el monto CON
+        # IVA (lo que el canal descuenta del pago; cuadrado al peso contra sus facturas).
+        # El RAW es neto → todos se dividen por 1,19, no solo Falabella.
+        _IVA = 1.19
+
         def _com_log_orden(o):
             ch = str(o.get('channel') or '').lower()
             if 'mercado libre' in ch or 'meli' in ch:
-                return (o.get('x_meli_sale_fee') or 0), (o.get('x_meli_shipping_fee') or 0)
+                # En Flex x_meli_shipping_fee = 0 desde el 24-09 (MELI no lo cobra); el
+                # courier del Flex se agrega aparte con el tarifario de Recíbelo.
+                return (o.get('x_meli_sale_fee') or 0) / _IVA, (o.get('x_meli_shipping_fee') or 0) / _IVA
             if 'paris' in ch:
-                return (o.get('x_paris_commission') or 0), (abs(o.get('x_paris_shipping_charge') or 0)
-                                                            + abs(o.get('x_paris_reverse_logistics') or 0))
+                return (o.get('x_paris_commission') or 0) / _IVA, (abs(o.get('x_paris_shipping_charge') or 0)
+                                                                   + abs(o.get('x_paris_reverse_logistics') or 0)) / _IVA
             if 'ripley' in ch:
-                return (o.get('x_ripley_commission') or 0), (o.get('yuju_seller_shipping_cost') or 0)
+                # x_ripley_commission == _fee: en Mirakl el IVA de comisión viene en 0 y el
+                # monto ya trae IVA. Logística: sin campo aún (Martín la puede agregar).
+                return (o.get('x_ripley_commission') or 0) / _IVA, 0.0
             if 'walmart' in ch:
-                return (o.get('x_walmart_commission_est') or 0), (o.get('yuju_seller_shipping_cost') or 0)
+                # Solo comisión REAL de la liquidación (automática desde el 25-09). La
+                # estimada (15% plano) queda en 0: "no estimar no liquidadas" (Andrés 17/19-ago).
+                if o.get('x_walmart_commission_is_real'):
+                    return (o.get('x_walmart_commission_est') or 0) / _IVA, 0.0
+                return 0.0, 0.0
             if 'falabella' in ch:
                 # Comisión REAL de liquidación (bruto c/IVA → neto /1.19). Solo si ya
                 # está liquidada (is_real); si no, 0 (no estimar — Andrés 19-ago).
@@ -1206,8 +1220,19 @@ class VentasService(BaseOdooService):
                 _vno = _venta_neta_orden.get(orden_id, 0)
                 if _vno:
                     _frac = venta_bruta / _vno   # neto línea / neto orden
-                    comision = _com_o * _frac
-                    logistica = _log_o * _frac
+                    comision = _com_o * _frac     # comisión = % del precio → por venta
+                    # Logística del pedido → por PESO de la línea; la línea de envío no lleva.
+                    _sk_l = str(producto.get('default_code', '') or '')
+                    if _sk_l.startswith('Delivery'):
+                        _frac_log = 0.0
+                    else:
+                        _po_l = _peso_orden.get(orden_id, 0)
+                        _frac_log = (_peso_sku.get(_sk_l, _peso_def) * (cantidad or 0) / _po_l) if _po_l > 0 else _frac
+                    logistica = _log_o * _frac_log
+                    # MELI Flex: el courier (Recíbelo en RM) es factura aparte, no de MELI.
+                    if (str(orden.get('x_meli_logistic_type') or '') == 'self_service'
+                            and orden_id in _envio_orden_rec):
+                        logistica += _envio_orden_rec[orden_id] * _frac_log
                     if comision or logistica:
                         fuente_comision = 'odoo'
             mg_final = margen_front - comision - logistica  # sin marketing (Andrés)
