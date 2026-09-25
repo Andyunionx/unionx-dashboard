@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-09-25T08:36:49.220262",
+  "generado_en": "2026-09-25T19:09:55.230469",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.055893426006371275,
-      "total_pickings": 10359,
-      "on_time": 579,
-      "on_time_pct": 0.055893426006371275,
-      "in_full": 10358,
-      "in_full_pct": 0.9999034655854813,
-      "both": 579,
+      "valor": 0.0562581365073461,
+      "total_pickings": 10754,
+      "on_time": 605,
+      "on_time_pct": 0.0562581365073461,
+      "in_full": 10753,
+      "in_full_pct": 0.9999070113446159,
+      "both": 605,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1078167115902965,
-      "total_pickings": 371,
+      "valor": 0.10498687664041995,
+      "total_pickings": 381,
       "on_time": 40,
-      "on_time_pct": 0.1078167115902965,
-      "in_full": 366,
-      "in_full_pct": 0.9865229110512129,
+      "on_time_pct": 0.10498687664041995,
+      "in_full": 376,
+      "in_full_pct": 0.9868766404199475,
       "both": 40,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999790341742959,
-      "ok": 14306,
-      "total": 14309,
+      "valor": 0.9997970916469394,
+      "ok": 14782,
+      "total": 14785,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.871053639846743,
-      "n_recepciones": 290,
+      "valor": 12.827099083619702,
+      "n_recepciones": 291,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01069",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-09-25 15:05",
+          "done": "2026-09-25 15:10"
+        },
         {
           "picking": "CA1/RET/01217",
           "proveedor": "Mercadolibre Chile Limitada",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-09-16 15:24",
           "done": "2026-09-16 15:24"
-        },
-        {
-          "picking": "CA1/RET/01200",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:21",
-          "done": "2026-09-16 15:22"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9607297167546808,
-      "total_so": 10467,
-      "total_con_pickings": 10415,
-      "cumplidos": 10006,
+      "valor": 0.9830684827847144,
+      "total_so": 10625,
+      "total_con_pickings": 10572,
+      "cumplidos": 10393,
       "parciales": 17,
-      "sin_iniciar": 392,
+      "sin_iniciar": 162,
       "error": null
     },
     "oct_30d": {
-      "valor": 82.44850308641976,
-      "n_orders": 10422,
+      "valor": 80.21734430486278,
+      "n_orders": 10826,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 34.16694444444445,
+      "mediana_h": 31.565555555555555,
       "detalle": [
         {
           "so": "S278911",
@@ -314,6 +314,13 @@
           "fecha_despacho": "2026-09-16 16:05"
         },
         {
+          "so": "S282835",
+          "cliente": "Cliente Mercado Libre, cristopher jara",
+          "horas": 618.8,
+          "fecha_orden": "2026-08-30 20:08",
+          "fecha_despacho": "2026-09-25 14:55"
+        },
+        {
           "so": "S280183",
           "cliente": "Cliente Walmart, Camila Jasen Serón",
           "horas": 594.1,
@@ -325,13 +332,6 @@
           "cliente": "Cliente Walmart, JUAN CARLOS ORTEGA",
           "horas": 579.6,
           "fecha_orden": "2026-08-23 12:31",
-          "fecha_despacho": "2026-09-16 16:05"
-        },
-        {
-          "so": "S280282",
-          "cliente": "Cliente Walmart, Dayna Vega Vega",
-          "horas": 578.4,
-          "fecha_orden": "2026-08-23 13:40",
           "fecha_despacho": "2026-09-16 16:05"
         }
       ],
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 11990,
+      "lineas": 12466,
       "mes": "2026-09",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 241,
-      "outgoing": 29851,
-      "internal": 19908,
+      "outgoing": 29852,
+      "internal": 19907,
       "total": 50000,
       "error": null
     },
@@ -373,26 +373,26 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 132,
-          "tarde": 132,
+          "total": 136,
+          "tarde": 136,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 34,
-          "tarde": 34,
+          "total": 35,
+          "tarde": 35,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Lokal SpA",
-          "total": 3,
-          "tarde": 3,
+          "total": 4,
+          "tarde": 4,
           "on_time_pct": 0.0
         },
         {
           "cliente": "ASTORGA SPA",
-          "total": 7,
-          "tarde": 7,
+          "total": 8,
+          "tarde": 8,
           "on_time_pct": 0.0
         },
         {
@@ -403,6 +403,18 @@
         },
         {
           "cliente": "INVERSIONES MAVAPA SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Gluky Group SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Sociedad Punta de Lobos S.A.",
           "total": 3,
           "tarde": 3,
           "on_time_pct": 0.0
@@ -8216,42 +8228,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.055893426006371275,
-      "total_pickings": 10359,
-      "on_time": 579,
-      "on_time_pct": 0.055893426006371275,
-      "in_full": 10358,
-      "in_full_pct": 0.9999034655854813,
-      "both": 579,
+      "valor": 0.0562581365073461,
+      "total_pickings": 10754,
+      "on_time": 605,
+      "on_time_pct": 0.0562581365073461,
+      "in_full": 10753,
+      "in_full_pct": 0.9999070113446159,
+      "both": 605,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1078167115902965,
-      "total_pickings": 371,
+      "valor": 0.10498687664041995,
+      "total_pickings": 381,
       "on_time": 40,
-      "on_time_pct": 0.1078167115902965,
-      "in_full": 366,
-      "in_full_pct": 0.9865229110512129,
+      "on_time_pct": 0.10498687664041995,
+      "in_full": 376,
+      "in_full_pct": 0.9868766404199475,
       "both": 40,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999790341742959,
-      "ok": 14306,
-      "total": 14309,
+      "valor": 0.9997970916469394,
+      "ok": 14782,
+      "total": 14785,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.871053639846743,
-      "n_recepciones": 290,
+      "valor": 12.827099083619702,
+      "n_recepciones": 291,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01069",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-09-25 15:05",
+          "done": "2026-09-25 15:10"
+        },
         {
           "picking": "CA1/RET/01217",
           "proveedor": "Mercadolibre Chile Limitada",
@@ -8384,13 +8403,6 @@
           "horas": 0.0,
           "scheduled": "2026-09-16 15:24",
           "done": "2026-09-16 15:24"
-        },
-        {
-          "picking": "CA1/RET/01200",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:21",
-          "done": "2026-09-16 15:22"
         }
       ],
       "error": null
