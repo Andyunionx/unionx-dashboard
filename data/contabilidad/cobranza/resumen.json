@@ -1,44 +1,44 @@
 {
-  "generado_en": "2026-09-24T20:53:15.170412",
+  "generado_en": "2026-09-25T02:16:05.678043",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12594,
-  "total_monto_pendiente_clp": 824997258.0,
+  "total_documentos_pendientes": 12639,
+  "total_monto_pendiente_clp": 702752055.0,
   "monto_por_aging": {
-    "+90 días": 80342261.0,
-    "1-30 días": 364174681.0,
-    "31-60 días": 233865440.0,
-    "61-90 días": 64411436.0,
-    "Vigente": 82203440.0
+    "+90 días": 80876132.0,
+    "1-30 días": 352808002.0,
+    "31-60 días": 157511334.0,
+    "61-90 días": 40645531.0,
+    "Vigente": 70911056.0
   },
   "monto_por_tipo": {
-    "BOLETA": 602310209.0,
-    "FACTURA": 222687049.0
+    "BOLETA": 604197271.0,
+    "FACTURA": 98554784.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 154925921.0
-    },
-    {
-      "partner": "Mercadolibre Chile Limitada",
-      "monto": 130322053.0
-    },
-    {
-      "partner": "FALABELLA.COM",
-      "monto": 73519941.0
+      "monto": 156104359.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 70100803.0
+      "monto": 70215506.0
     },
     {
       "partner": "Cliente Kitchen Center",
       "monto": 68222200.0
     },
     {
+      "partner": "Mercadolibre Chile Limitada",
+      "monto": 55893449.0
+    },
+    {
       "partner": "Cliente Walmart",
-      "monto": 25315203.0
+      "monto": 25362193.0
+    },
+    {
+      "partner": "FALABELLA.COM",
+      "monto": 23816280.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18498598.0
+      "monto": 18650508.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -66,11 +66,15 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 12206699.0
+      "monto": 12247943.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 11363742.0
+      "monto": 11394702.0
+    },
+    {
+      "partner": "Cliente Simplit Home",
+      "monto": 10872492.0
     },
     {
       "partner": "Status Spa",
@@ -79,10 +83,6 @@
     {
       "partner": "Comercial ECCSA S A",
       "monto": 10704701.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 10583057.0
     },
     {
       "partner": "abc S.A.",
