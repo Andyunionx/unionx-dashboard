@@ -1,19 +1,19 @@
 {
-  "generado_en": "2026-09-26T18:51:46.822586",
+  "generado_en": "2026-09-27T09:31:08.972652",
   "rango_desde": "2025-08-25",
-  "rango_hasta": "2026-09-24",
+  "rango_hasta": "2026-09-25",
   "buffer_dias_vivo": 2,
-  "n_pickings": 274368,
+  "n_pickings": 275235,
   "fecha_done_min": "2025-08-25 12:21:40",
-  "fecha_done_max": "2026-09-23 20:34:57",
-  "n_unidades_total": 1906232.0,
-  "n_lineas_total": 394412,
+  "fecha_done_max": "2026-09-24 20:16:11",
+  "n_unidades_total": 1912528.0,
+  "n_lineas_total": 395695,
   "top_picking_types": {
-    "Bodega Carrascal N°9-10: Pick": 110446,
-    "Bodega Carrascal N°9-10: Delivery Orders": 109509,
-    "Bodega Fulfillment Mercado Libre: Órdenes de entrega": 28359,
-    "Bodega Fulfillment Falabella: Órdenes de entrega": 9301,
-    "Bodega Carrascal N°9-10: Internal Transfers": 4085,
+    "Bodega Carrascal N°9-10: Pick": 110701,
+    "Bodega Carrascal N°9-10: Delivery Orders": 109948,
+    "Bodega Fulfillment Mercado Libre: Órdenes de entrega": 28439,
+    "Bodega Fulfillment Falabella: Órdenes de entrega": 9387,
+    "Bodega Carrascal N°9-10: Internal Transfers": 4087,
     "Bodega Duty Travel: Elegir": 2216,
     "Bodega Duty Travel: Órdenes de entrega": 2193,
     "Bodega Kitchen Center: Elegir": 1511,
@@ -21,15 +21,15 @@
     "Bodega Carrascal N°9-10: Órdenes de entrega": 1411
   },
   "uds_por_categoria": {
-    "entrega_ca1": 456273.0,
+    "entrega_ca1": 459768.0,
     "entrega_reserva": 2365.0,
-    "fulfillment_marketplace": 45641.0,
+    "fulfillment_marketplace": 45837.0,
     "interno_ca1_otro": 14119.0,
-    "otra_bodega": 17300.0,
-    "pick_ca1": 493666.0,
+    "otra_bodega": 17304.0,
+    "pick_ca1": 494544.0,
     "pick_reserva": 2363.0,
-    "recepcion_putaway": 446598.0,
+    "recepcion_putaway": 448298.0,
     "reposicion_fulfillment": 29980.0,
-    "reslotting": 397927.0
+    "reslotting": 397950.0
   }
 }
