@@ -1,7 +1,7 @@
 {
   "26TP0826": {
     "embarque": "26TP0826",
-    "fase": 3,
+    "fase": 9,
     "pi": {
       "msg_id": "1a04d3f22033f8fe",
       "filename": "26TP0826PI SZ 40HQ.xlsx",
@@ -57,9 +57,9 @@
     ],
     "skus_faltantes": [],
     "po_id": null,
-    "po_name": null,
+    "po_name": "P00736",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-24 12:22:05Z",
+    "ts_actualizado": "2026-09-28 19:01:27Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0826PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0826PI SZ 40HQ.xlsx (dry-run)",
@@ -129,7 +129,8 @@
       "2026-09-24 12:22:04Z · costeado · 15 prod · sobrecosto 26.9% · internado 58,395,127 CLP · SKU por crear: 0 · sin SKU: 2",
       "2026-09-24 12:22:04Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:05Z · ESCALADO (lleva 17 días esperando) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35da64d2d9ab)",
-      "2026-09-24 12:22:05Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:05Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:27Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00736) → COMPLETADO"
     ],
     "productos_sin_sku": [
       "TP033E",
@@ -140,7 +141,7 @@
   },
   "26TP0806": {
     "embarque": "26TP0806",
-    "fase": 3,
+    "fase": 9,
     "pi": {
       "msg_id": "1a03debfb6b1220f",
       "filename": "26TP0806PI (A+B) SZ 40HQ.xlsx",
@@ -211,9 +212,9 @@
     ],
     "skus_faltantes": [],
     "po_id": null,
-    "po_name": null,
+    "po_name": "P00737",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-24 12:22:15Z",
+    "ts_actualizado": "2026-09-28 19:01:28Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
@@ -294,7 +295,8 @@
       "2026-09-24 12:22:14Z · costeado · 27 prod · sobrecosto 24.1% · internado 60,462,722 CLP · SKU por crear: 0 · sin SKU: 6",
       "2026-09-24 12:22:14Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:15Z · ESCALADO (el contenedor ya debía estar en bodega (2026-09-19)) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35dcc85fab22)",
-      "2026-09-24 12:22:15Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:15Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:28Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00737) → COMPLETADO"
     ],
     "productos_sin_sku": [
       "T2",
@@ -373,7 +375,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-24 12:22:21Z",
+    "ts_actualizado": "2026-09-28 19:01:35Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -454,14 +456,49 @@
       "2026-09-24 12:22:21Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-09-24 12:22:21Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:21Z · ESCALADO (lleva 21 días esperando) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35de6cd085e9)",
-      "2026-09-24 12:22:21Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:21Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:35Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-09-28 19:01:35Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-28 19:01:35Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
       "TP140"
     ],
     "correo_firma": "['XRCARINF34-CL']|['TP101', 'TP140']",
-    "escalado_ts": "2026-09-24 12:22:21"
+    "escalado_ts": "2026-09-24 12:22:21",
+    "pendientes_detalle": [
+      {
+        "model": "TP-T002",
+        "sku": "XRCARINF34-CL",
+        "qty": 20,
+        "desc": "Xroad Inflatable Tent 3-4 People"
+      },
+      {
+        "model": "TP140",
+        "sku": "(sin código)",
+        "qty": 17100,
+        "desc": "40g"
+      },
+      {
+        "model": "TP140",
+        "sku": "(sin código)",
+        "qty": 7,
+        "desc": "print version cost"
+      },
+      {
+        "model": "TP101",
+        "sku": "(sin código)",
+        "qty": 16900,
+        "desc": "10 g"
+      },
+      {
+        "model": "TP101",
+        "sku": "(sin código)",
+        "qty": 5,
+        "desc": "print version cost"
+      }
+    ]
   },
   "26TP0819": {
     "embarque": "26TP0819",
@@ -521,7 +558,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-24 12:22:28Z",
+    "ts_actualizado": "2026-09-28 19:01:41Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -601,7 +638,10 @@
       "2026-09-24 12:22:27Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-09-24 12:22:27Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:28Z · ESCALADO (lleva 21 días esperando) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35e0038baead)",
-      "2026-09-24 12:22:28Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:28Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:41Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-09-28 19:01:41Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-28 19:01:41Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -609,7 +649,39 @@
       "TP371"
     ],
     "correo_firma": "['XRCOOLPOR45-GR']|['702-2', 'TP146', 'TP371']",
-    "escalado_ts": "2026-09-24 12:22:28"
+    "escalado_ts": "2026-09-24 12:22:28",
+    "pendientes_detalle": [
+      {
+        "model": "TP146",
+        "sku": "(sin código)",
+        "qty": 150,
+        "desc": "1.PC/PBT Shell"
+      },
+      {
+        "model": "702-2",
+        "sku": "(sin código)",
+        "qty": 1,
+        "desc": "Seba, wechat, Apr.30th"
+      },
+      {
+        "model": "TP371",
+        "sku": "(sin código)",
+        "qty": 251,
+        "desc": "Outdoor backpack"
+      },
+      {
+        "model": "TP371",
+        "sku": "(sin código)",
+        "qty": 251,
+        "desc": "Outdoor backpack"
+      },
+      {
+        "model": "TP770-50L",
+        "sku": "XRCOOLPOR45-GR",
+        "qty": 200,
+        "desc": "Portable Cooler 45L Gray Xroad"
+      }
+    ]
   },
   "26TP0815": {
     "embarque": "26TP0815",
@@ -668,7 +740,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-24 12:22:34Z",
+    "ts_actualizado": "2026-09-28 19:01:47Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
@@ -748,11 +820,28 @@
       "2026-09-24 12:22:33Z · costeado · 7 prod · sobrecosto 24.0% · internado 49,997,925 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-09-24 12:22:34Z · correo ENVIADO con planilla (1a0d35e17e3a8f9c, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
       "2026-09-24 12:22:34Z · ESCALADO (lleva 21 días esperando) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35e18b343349)",
-      "2026-09-24 12:22:34Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:34Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:47Z · costeado · 7 prod · sobrecosto 24.0% · internado 49,997,925 CLP · SKU por crear: 2 · sin SKU: 0",
+      "2026-09-28 19:01:47Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-28 19:01:47Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "correo_firma": "['SMBATOXBG', 'XRTOLLAT270-CL']|[]",
-    "escalado_ts": "2026-09-24 12:22:34"
+    "escalado_ts": "2026-09-24 12:22:34",
+    "pendientes_detalle": [
+      {
+        "model": "C15SETS",
+        "sku": "SMBATOXBG",
+        "qty": 600,
+        "desc": "Batería de Cocina Antiadherente Oxford Granito 15 pcs Beige"
+      },
+      {
+        "model": "TPT004",
+        "sku": "XRTOLLAT270-CL",
+        "qty": 10,
+        "desc": "Xroad 270° Side Roof Car Camping Awning"
+      }
+    ]
   },
   "26TP0816": {
     "embarque": "26TP0816",
@@ -854,7 +943,7 @@
   },
   "26TP0811": {
     "embarque": "26TP0811",
-    "fase": 3,
+    "fase": 9,
     "pi": {
       "msg_id": "19ff013d44ad6987",
       "filename": "26TP0811PI NB 40HQ.xlsx",
@@ -909,9 +998,9 @@
     ],
     "skus_faltantes": [],
     "po_id": null,
-    "po_name": null,
+    "po_name": "P00738",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-24 12:22:41Z",
+    "ts_actualizado": "2026-09-28 19:01:48Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0811PI NB 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0811PI PL.xlsx (dry-run)",
@@ -991,7 +1080,8 @@
       "2026-09-24 12:22:41Z · costeado · 15 prod · sobrecosto 13.2% · internado 92,525,608 CLP · SKU por crear: 0 · sin SKU: 2",
       "2026-09-24 12:22:41Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:41Z · ESCALADO (lleva 21 días esperando) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35e3248059af)",
-      "2026-09-24 12:22:41Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:41Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:48Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00738) → COMPLETADO"
     ],
     "productos_sin_sku": [
       "HD4 Khaki",
@@ -1316,7 +1406,7 @@
   },
   "26TP0706": {
     "embarque": "26TP0706",
-    "fase": 3,
+    "fase": 9,
     "pi": {
       "msg_id": "19f3b44cf0eaadd3",
       "filename": "26TP0706PI NB 40HQ.xlsx",
@@ -1377,9 +1467,9 @@
       "LHBOTHYDTEK-PK"
     ],
     "po_id": null,
-    "po_name": null,
+    "po_name": "P00725,P00719",
     "ts_creado": "2026-09-03 17:29:46Z",
-    "ts_actualizado": "2026-09-24 12:22:55Z",
+    "ts_actualizado": "2026-09-28 19:01:48Z",
     "log": [
       "2026-09-03 17:29:46Z · PI detectado: 26TP0706PI NB 40HQ.xlsx · descargado",
       "2026-09-03 17:29:47Z · PL detectado: 26TP0706PI PL.xlsx · descargado",
@@ -1452,7 +1542,8 @@
       "2026-09-24 12:22:55Z · costeado · 16 prod · sobrecosto 14.1% · internado 94,409,419 CLP · SKU por crear: 5 · sin SKU: 8",
       "2026-09-24 12:22:55Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:55Z · ESCALADO (el contenedor ya debía estar en bodega (2026-08-19)) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35e6ab5e67b1)",
-      "2026-09-24 12:22:55Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:22:55Z · pendientes (5 por crear + 8 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:01:48Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00725, P00719) → COMPLETADO"
     ],
     "productos_sin_sku": [
       "MTHWLGBT590-AM",
@@ -1573,7 +1664,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-12 14:43:03Z",
-    "ts_actualizado": "2026-09-24 12:23:07Z",
+    "ts_actualizado": "2026-09-28 19:02:00Z",
     "log": [
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-A SZ 40HQ.xlsx · descargado",
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-B Dinasty  SZ 40HQ.xlsx · descargado",
@@ -1600,7 +1691,10 @@
       "2026-09-23 15:52:30Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-09-24 12:23:07Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 9 · sin SKU: 6",
       "2026-09-24 12:23:07Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-09-24 12:23:07Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-09-24 12:23:07Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-09-28 19:02:00Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 9 · sin SKU: 6",
+      "2026-09-28 19:02:00Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-09-28 19:02:00Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "LTS27-MFZH01",
@@ -1610,6 +1704,192 @@
       "LTS27-WFL02",
       "LTS27-WSB02"
     ],
-    "correo_firma": "['MTBOTBARCL-500', 'MTBOTBARDR-500', 'MTBOTCLBARDAPR-750', 'MTBOTCLBARLIN-750', 'MTBOTCLBARLIPR-750', 'MTBOTFIBARDAPR-900', 'MTBOTFIBARFL-900', 'MTBOTFIBARLIPR-900', 'MTSHBARLIPR-500']|['LTS27-MFZH01', 'LTS27-MPT02', 'LTS27-MTS02', 'LTS27-WBS02', 'LTS27-WFL02', 'LTS27-WSB02']"
+    "correo_firma": "['MTBOTBARCL-500', 'MTBOTBARDR-500', 'MTBOTCLBARDAPR-750', 'MTBOTCLBARLIN-750', 'MTBOTCLBARLIPR-750', 'MTBOTFIBARDAPR-900', 'MTBOTFIBARFL-900', 'MTBOTFIBARLIPR-900', 'MTSHBARLIPR-500']|['LTS27-MFZH01', 'LTS27-MPT02', 'LTS27-MTS02', 'LTS27-WBS02', 'LTS27-WFL02', 'LTS27-WSB02']",
+    "pendientes_detalle": [
+      {
+        "model": "LTS27-MFZH01",
+        "sku": "(sin código)",
+        "qty": 110,
+        "desc": "MEN'S SWEATSHIRT HOOD"
+      },
+      {
+        "model": "LTS27-MFZH01",
+        "sku": "(sin código)",
+        "qty": 101,
+        "desc": "MEN'S SWEATSHIRT HOOD"
+      },
+      {
+        "model": "LTS27-MTS02",
+        "sku": "(sin código)",
+        "qty": 147,
+        "desc": "MEN'S T-SHIRT"
+      },
+      {
+        "model": "LTS27-MTS02",
+        "sku": "(sin código)",
+        "qty": 137,
+        "desc": "MEN'S T-SHIRT"
+      },
+      {
+        "model": "LTS27-MTS02",
+        "sku": "(sin código)",
+        "qty": 142,
+        "desc": "MEN'S T-SHIRT"
+      },
+      {
+        "model": "LTS27-MTS02",
+        "sku": "(sin código)",
+        "qty": 148,
+        "desc": "MEN'S T-SHIRT"
+      },
+      {
+        "model": "LTS27-MTS02",
+        "sku": "(sin código)",
+        "qty": 151,
+        "desc": "MEN'S T-SHIRT"
+      },
+      {
+        "model": "LTS27-WSB02",
+        "sku": "(sin código)",
+        "qty": 102,
+        "desc": "WOMEN'S SPORT BRA"
+      },
+      {
+        "model": "LTS27-MPT02",
+        "sku": "(sin código)",
+        "qty": 153,
+        "desc": "MEN'S TECHNICAL TREKKING PANTS"
+      },
+      {
+        "model": "LTS27-MPT02",
+        "sku": "(sin código)",
+        "qty": 53,
+        "desc": "MEN'S TECHNICAL TREKKING PANTS"
+      },
+      {
+        "model": "LTS27-WFL02",
+        "sku": "(sin código)",
+        "qty": 101,
+        "desc": "WOMEN'S HIGH RISE LEGGING"
+      },
+      {
+        "model": "LTS27-WBS02",
+        "sku": "(sin código)",
+        "qty": 101,
+        "desc": "WOMEN'S BIKER SHORT"
+      },
+      {
+        "model": "TP611",
+        "sku": "MTBOTFIBARLIPR-900",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Fit Barbie Light Print 750ml"
+      },
+      {
+        "model": "TP612",
+        "sku": "MTBOTFIBARFL-900",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Fit Barbie Flow 750ml"
+      },
+      {
+        "model": "TP614",
+        "sku": "MTBOTCLBARLIPR-750",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Classic Barbie Light Print 750ml"
+      },
+      {
+        "model": "TP615",
+        "sku": "MTBOTCLBARLIN-750",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Classic Barbie Lines 750ml"
+      },
+      {
+        "model": "TP616",
+        "sku": "MTBOTBARCL-500",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Barbie Club 500ml"
+      },
+      {
+        "model": "TP617",
+        "sku": "MTBOTBARDR-500",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Barbie Dream 500ml"
+      },
+      {
+        "model": "TP610",
+        "sku": "MTBOTFIBARDAPR-900",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Fit Barbie Dark Print 750ml"
+      },
+      {
+        "model": "TP613",
+        "sku": "MTBOTCLBARDAPR-750",
+        "qty": 4,
+        "desc": "Botella Termica Insulada Classic Barbie Dark Print 750ml"
+      },
+      {
+        "model": "TP618",
+        "sku": "MTSHBARLIPR-500",
+        "qty": 4,
+        "desc": "Shaker Vaso Proteina Acero Inoxidable Barbie Dark Print 500m"
+      }
+    ]
+  },
+  "26TP0927": {
+    "embarque": "26TP0927",
+    "fase": 2,
+    "pi": {
+      "msg_id": "1a0e78e0026eb103",
+      "filename": "26TP0927PI NB 40HQ.xlsx",
+      "attachment_id": "ANGjdJ9Wz9D9ugpak8QVwi_Ecwt5xeI2uH9C9zTU1x8S7yqsog7-_8wYZ2668s8Uk376-KlUFE2EKcwdllw2CVBqTKN-Tknc6vIillVi9Z6mowM6m4k8kHAIFzwvO3T4lb45ZOqOPNVUUbDquL0MR1Yf-EAoCCkVoneadGhJsffjg4QLWRUrBjigm3dIcPxCm0pHjIdyKVfZ1ajglXNo-o9fGL8eLbO1wxMVNyE54zRSNlHe0sjkekrisBdRtcxWa2Qdg0DOSEqxAZYfhbtfOH83T6TV2J0o1rb7SHlApZToTgI6vUJpKHTSuX8SXJk4Xgk7JOLijvRyaCHp7kxkck6uPtNKRfbl4IWWaQYCAuLXFBVDmlv2w2iSjJl-eXjuzExRu7V4Y-71HYxLJQ1y",
+      "subject": "order state",
+      "date": "Mon, 28 Sep 2026 18:24:59 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0927/26TP0927PI NB 40HQ.xlsx"
+    },
+    "pl": {
+      "msg_id": "1a0e78e0026eb103",
+      "filename": "26TP0927PI PL.xlsx",
+      "attachment_id": "ANGjdJ8VoebSnkWN622NjfhXj2PkCuJJSRMIdHPH78yod6ws6AAHeqbQctlFH7xL12sl6Mxp6bo9iSQIEK533vug73t-yutWXkgXlVeRjcvizD07GwT8T4jwCMgOdsDNcrM-OjcRAVQMwnZ44wjHjk5KZetT3e0eF2JYZ1V5xmQqd8X3vLzY2CR8JLlSWOrv9z-lYwMGIJWdaOxD59uBqMwha5LxRPnn-Zuoe43ii2YoQOgXZEooquFd3Ne491-8spbOjhlfR6Wk5ZTu4wbf81r9SV5jokp_Cv_hQFF65ErA8eu6DB9_2ORoLHKYa37Pv-JMVwoUDjT4-uDd8QNb0zyaFZYEPEF_B8JttPwyfuwZKIYVoPf9L5a6eYaFNDBZbWu228QG7wmEBvUo1yjJdY48v934RWOs2aUA49iK_w",
+      "subject": "order state",
+      "date": "Mon, 28 Sep 2026 18:24:59 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0927/26TP0927PI PL.xlsx"
+    },
+    "pi_candidatos": [
+      {
+        "msg_id": "1a0e78e0026eb103",
+        "filename": "26TP0927PI NB 40HQ.xlsx",
+        "attachment_id": "ANGjdJ9Wz9D9ugpak8QVwi_Ecwt5xeI2uH9C9zTU1x8S7yqsog7-_8wYZ2668s8Uk376-KlUFE2EKcwdllw2CVBqTKN-Tknc6vIillVi9Z6mowM6m4k8kHAIFzwvO3T4lb45ZOqOPNVUUbDquL0MR1Yf-EAoCCkVoneadGhJsffjg4QLWRUrBjigm3dIcPxCm0pHjIdyKVfZ1ajglXNo-o9fGL8eLbO1wxMVNyE54zRSNlHe0sjkekrisBdRtcxWa2Qdg0DOSEqxAZYfhbtfOH83T6TV2J0o1rb7SHlApZToTgI6vUJpKHTSuX8SXJk4Xgk7JOLijvRyaCHp7kxkck6uPtNKRfbl4IWWaQYCAuLXFBVDmlv2w2iSjJl-eXjuzExRu7V4Y-71HYxLJQ1y",
+        "subject": "order state",
+        "date": "Mon, 28 Sep 2026 18:24:59 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0927/26TP0927PI NB 40HQ.xlsx"
+      }
+    ],
+    "pl_candidatos": [
+      {
+        "msg_id": "1a0e78e0026eb103",
+        "filename": "26TP0927PI PL.xlsx",
+        "attachment_id": "ANGjdJ8VoebSnkWN622NjfhXj2PkCuJJSRMIdHPH78yod6ws6AAHeqbQctlFH7xL12sl6Mxp6bo9iSQIEK533vug73t-yutWXkgXlVeRjcvizD07GwT8T4jwCMgOdsDNcrM-OjcRAVQMwnZ44wjHjk5KZetT3e0eF2JYZ1V5xmQqd8X3vLzY2CR8JLlSWOrv9z-lYwMGIJWdaOxD59uBqMwha5LxRPnn-Zuoe43ii2YoQOgXZEooquFd3Ne491-8spbOjhlfR6Wk5ZTu4wbf81r9SV5jokp_Cv_hQFF65ErA8eu6DB9_2ORoLHKYa37Pv-JMVwoUDjT4-uDd8QNb0zyaFZYEPEF_B8JttPwyfuwZKIYVoPf9L5a6eYaFNDBZbWu228QG7wmEBvUo1yjJdY48v934RWOs2aUA49iK_w",
+        "subject": "order state",
+        "date": "Mon, 28 Sep 2026 18:24:59 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0927/26TP0927PI PL.xlsx"
+      }
+    ],
+    "flete_usd": null,
+    "flete_moneda": null,
+    "seimex_ref": null,
+    "eta_puerto": null,
+    "eta_bodega": null,
+    "costeo_path": null,
+    "skus": [],
+    "skus_faltantes": null,
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-09-28 19:01:24Z",
+    "ts_actualizado": "2026-09-28 19:01:26Z",
+    "log": [
+      "2026-09-28 19:01:24Z · PI detectado: 26TP0927PI NB 40HQ.xlsx · descargado",
+      "2026-09-28 19:01:24Z · PL detectado: 26TP0927PI PL.xlsx · descargado",
+      "2026-09-28 19:01:24Z · fase 1 (ESPERANDO_DOCS) → 2 (ESPERANDO_FLETE) PI+PL completos (PI elegido: 26TP0927PI NB 40HQ.xlsx) → esperando flete Seimex",
+      "2026-09-28 19:01:26Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
+    ]
   }
 }
