@@ -2,9 +2,10 @@ name: Pulso Caja Semanal
 
 on:
   schedule:
-    # Lunes 08:00 CLT verano (UTC-3) = 11:00 UTC; en invierno (UTC-4) queda 07:00 CLT.
-    # GH free tier puede demorar 5-30 min.
-    - cron: '0 11 * * 1'
+    # Objetivo ~08:00 CLT del lunes. Se programa 09:47 UTC (06:47 CLT) con minuto impar porque
+    # GH free tier retrasa 1-4h los crons (peor en minuto 0): con el delay típico
+    # aterriza entre 07:30 y 09:00 CLT (mismo ajuste que pulso_indicadores_diario, 5c3257d8).
+    - cron: '47 9 * * 1'
   workflow_dispatch: {}
 
 jobs:
