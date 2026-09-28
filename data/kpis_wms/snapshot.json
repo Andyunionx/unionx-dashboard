@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-09-27T18:55:46.409948",
+  "generado_en": "2026-09-28T09:28:45.861425",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.05387432536622976,
-      "total_pickings": 10376,
-      "on_time": 559,
-      "on_time_pct": 0.05387432536622976,
-      "in_full": 10375,
-      "in_full_pct": 0.9999036237471087,
-      "both": 559,
+      "valor": 0.05183720204017904,
+      "total_pickings": 9607,
+      "on_time": 498,
+      "on_time_pct": 0.05183720204017904,
+      "in_full": 9606,
+      "in_full_pct": 0.9998959092328511,
+      "both": 498,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.09915014164305949,
-      "total_pickings": 353,
-      "on_time": 35,
-      "on_time_pct": 0.09915014164305949,
-      "in_full": 349,
-      "in_full_pct": 0.9886685552407932,
-      "both": 35,
+      "valor": 0.1059190031152648,
+      "total_pickings": 321,
+      "on_time": 34,
+      "on_time_pct": 0.1059190031152648,
+      "in_full": 317,
+      "in_full_pct": 0.9875389408099688,
+      "both": 34,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998587869801596,
-      "ok": 14161,
-      "total": 14163,
+      "valor": 0.9998486568293605,
+      "ok": 13213,
+      "total": 13215,
       "errores": 2,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9374144337962057,
-      "total_so": 10287,
-      "total_con_pickings": 10226,
-      "cumplidos": 9586,
+      "valor": 0.9174970107612594,
+      "total_so": 10100,
+      "total_con_pickings": 10036,
+      "cumplidos": 9208,
       "parciales": 16,
-      "sin_iniciar": 624,
+      "sin_iniciar": 812,
       "error": null
     },
     "oct_30d": {
-      "valor": 82.59073411177134,
-      "n_orders": 10434,
+      "valor": 86.82494396596451,
+      "n_orders": 9637,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 34.077222222222225,
+      "mediana_h": 35.38,
       "detalle": [
         {
           "so": "S278911",
@@ -366,12 +366,6 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "Celmedia Fidelizacion SPA",
-          "total": 34,
-          "tarde": 34,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Lokal SpA",
           "total": 4,
           "tarde": 4,
@@ -385,8 +379,14 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 124,
-          "tarde": 124,
+          "total": 108,
+          "tarde": 108,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 27,
+          "tarde": 27,
           "on_time_pct": 0.0
         },
         {
@@ -421,15 +421,15 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 76,
-          "tarde": 75,
-          "on_time_pct": 0.013157894736842105
+          "total": 69,
+          "tarde": 68,
+          "on_time_pct": 0.014492753623188406
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 8,
+          "total": 7,
           "tarde": 4,
-          "on_time_pct": 0.5
+          "on_time_pct": 0.42857142857142855
         },
         {
           "cliente": "Falabella Retail",
@@ -8228,31 +8228,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.05387432536622976,
-      "total_pickings": 10376,
-      "on_time": 559,
-      "on_time_pct": 0.05387432536622976,
-      "in_full": 10375,
-      "in_full_pct": 0.9999036237471087,
-      "both": 559,
+      "valor": 0.05183720204017904,
+      "total_pickings": 9607,
+      "on_time": 498,
+      "on_time_pct": 0.05183720204017904,
+      "in_full": 9606,
+      "in_full_pct": 0.9998959092328511,
+      "both": 498,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.09915014164305949,
-      "total_pickings": 353,
-      "on_time": 35,
-      "on_time_pct": 0.09915014164305949,
-      "in_full": 349,
-      "in_full_pct": 0.9886685552407932,
-      "both": 35,
+      "valor": 0.1059190031152648,
+      "total_pickings": 321,
+      "on_time": 34,
+      "on_time_pct": 0.1059190031152648,
+      "in_full": 317,
+      "in_full_pct": 0.9875389408099688,
+      "both": 34,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998587869801596,
-      "ok": 14161,
-      "total": 14163,
+      "valor": 0.9998486568293605,
+      "ok": 13213,
+      "total": 13215,
       "errores": 2,
       "error": null
     }
