@@ -163,34 +163,45 @@ def poner_vista_pct(sh, base):
         enc += ['Δ margen p.p.']
         filas.append(enc)
         g = base.groupby(dims + ['Mes', 'Centro de costo'], as_index=False)['Monto'].sum()
+        # Cada celda es una FÓRMULA sobre '5. Base dinámica' (pedido Andrés 28-09: que se
+        # vea cómo se construye). Monto = col I, Mes = B, LN = C, Canal = D, Modalidad = E,
+        # Centro = F. Locale es_ES → separador ';'. El orden de filas sí lo fija el script.
+        B = f"'{H_BASE}'!"
+        dimcol = {'Línea de negocio': 'C', 'Canal': 'D', 'Modalidad': 'E'}
         cuerpo = []
         for clave, sub in g.groupby(dims):
             clave = clave if isinstance(clave, tuple) else (clave,)
-            fila, mg = list(clave), {}
-            for m in meses:
-                s = sub[sub['Mes'] == m]
-                pick = lambda cc: float(s[s['Centro de costo'] == cc]['Monto'].sum())  # noqa: E731
-                ing = pick(ING)
-                if not ing:
-                    fila += ['', '', '', '', '']
-                    continue
-                dev, cos = pick('Devolución'), pick('Costo venta') + pick('Otros costos')
-                com = sum(pick(c) for c in COM)
-                margen = float(s['Monto'].sum())
-                mg[m] = margen / ing
-                fila += [round(ing), dev / ing, cos / ing, com / ing, margen / ing]
-            delta = (mg[meses[-1]] - mg[meses[-2]]) if len(meses) > 1 and meses[-1] in mg and meses[-2] in mg else ''
-            fila.append(delta)
-            cuerpo.append(fila)
-        # ordenado por el ingreso del último mes con dato
-        col_ing = len(dims) + 5 * (len(meses) - 1)
-        cuerpo.sort(key=lambda r: r[col_ing] if isinstance(r[col_ing], (int, float)) else -1, reverse=True)
-        return filas + cuerpo + [[''] * len(enc)]
+            orden = float(sub[(sub['Mes'] == meses[-1]) & (sub['Centro de costo'] == ING)]['Monto'].sum()) if meses else 0
+            cuerpo.append((orden, clave))
+        cuerpo.sort(key=lambda t: t[0], reverse=True)
+        out = []
+        for _, clave in cuerpo:
+            r = len(filas) + len(out) + 1 + fila0[0]          # fila en la hoja (1-based)
+            crit = ';'.join(f'{B}${dimcol[d]}:${dimcol[d]};"{str(v).replace(chr(34), "")}"' for d, v in zip(dims, clave))
+            fila = list(clave)
+            refs = []
+            for k, m in enumerate(meses):
+                c0 = len(dims) + 5 * k + 1                      # columna del Ingreso del mes (1-based)
+                ci = col(c0)
+                sm = lambda cc: f'SUMIFS({B}$I:$I;{crit};{B}$B:$B;"{m}";{B}$F:$F;"{cc}")'  # noqa: E731
+                ing = f'={sm(ING)}'
+                pdev = f'=IFERROR({sm("Devolución")}/{ci}{r};"")'
+                pcos = f'=IFERROR(({sm("Costo venta")}+{sm("Otros costos")})/{ci}{r};"")'
+                pcom = f'=IFERROR(({"+".join(sm(c) for c in COM)})/{ci}{r};"")'
+                pmg = f'=IFERROR(SUMIFS({B}$I:$I;{crit};{B}$B:$B;"{m}")/{ci}{r};"")'
+                fila += [ing, pdev, pcos, pcom, pmg]
+                refs.append(f'{col(c0 + 4)}{r}')
+            fila.append(f'=IFERROR({refs[-1]}-{refs[-2]};"")' if len(refs) > 1 else '')
+            out.append(fila)
+        return filas + out + [[''] * len(enc)]
 
+    col = lambda i: chr(64 + i) if i <= 26 else chr(64 + (i - 1) // 26) + chr(65 + (i - 1) % 26)  # noqa: E731
     todo, bloques = [], []
+    fila0 = [0]
     for dims, titulo in [(['Línea de negocio'], 'POR LÍNEA DE NEGOCIO'),
                          (['Canal'], 'POR CANAL'),
                          (['Canal', 'Modalidad'], 'POR CANAL Y MODALIDAD')]:
+        fila0[0] = len(todo)
         f = bloque(dims, titulo)
         bloques.append({'ini': len(todo) + 1, 'fin': len(todo) + len(f), 'nd': len(dims)})
         todo += f
@@ -199,12 +210,11 @@ def poner_vista_pct(sh, base):
 
     ws = _hoja(sh, H_PCT, filas=max(len(todo) + 20, 300), cols=max(ancho + 2, 26))
     ws.clear()
-    ws.update(todo, value_input_option='RAW')
+    ws.update(todo, value_input_option='USER_ENTERED')
     ws.freeze(rows=2, cols=2)
 
     az = {'red': .118, 'green': .227, 'blue': .373}
     blanco = {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}}
-    col = lambda i: chr(64 + i)                                   # noqa: E731  (1 -> 'A')
     pesos = {'numberFormat': {'type': 'CURRENCY', 'pattern': '$#,##0'}}
     pct = {'numberFormat': {'type': 'PERCENT', 'pattern': '0.0%'}}
 
