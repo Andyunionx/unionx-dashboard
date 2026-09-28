@@ -1,40 +1,68 @@
 {
-  "generado_en": "2026-09-28T09:28:45.861425",
+  "generado_en": "2026-09-28T21:06:58.155000",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.05183720204017904,
-      "total_pickings": 9607,
-      "on_time": 498,
-      "on_time_pct": 0.05183720204017904,
-      "in_full": 9606,
-      "in_full_pct": 0.9998959092328511,
-      "both": 498,
+      "valor": 0.06640256555366912,
+      "total_pickings": 10602,
+      "on_time": 704,
+      "on_time_pct": 0.06640256555366912,
+      "in_full": 10600,
+      "in_full_pct": 0.9998113563478589,
+      "both": 704,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.1059190031152648,
-      "total_pickings": 321,
+      "valor": 0.10365853658536585,
+      "total_pickings": 328,
       "on_time": 34,
-      "on_time_pct": 0.1059190031152648,
-      "in_full": 317,
-      "in_full_pct": 0.9875389408099688,
+      "on_time_pct": 0.10365853658536585,
+      "in_full": 321,
+      "in_full_pct": 0.9786585365853658,
       "both": 34,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998486568293605,
-      "ok": 13213,
-      "total": 13215,
+      "valor": 0.9998612845054793,
+      "ok": 14416,
+      "total": 14418,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.827099083619702,
-      "n_recepciones": 291,
+      "valor": 12.653424670433145,
+      "n_recepciones": 295,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/RET/01221",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-09-28 20:34",
+          "done": "2026-09-28 20:34"
+        },
+        {
+          "picking": "CA1/RET/01219",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-09-28 20:27",
+          "done": "2026-09-28 20:27"
+        },
+        {
+          "picking": "CA1/IN/01070",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-09-28 19:52",
+          "done": "2026-09-28 19:55"
+        },
+        {
+          "picking": "CA1/RET/01218",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-28 14:40",
+          "done": "2026-09-28 14:41"
+        },
         {
           "picking": "CA1/IN/01069",
           "proveedor": "",
@@ -146,53 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-09-17 12:33",
           "done": "2026-09-17 12:33"
-        },
-        {
-          "picking": "CA1/RET/01205",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:55",
-          "done": "2026-09-16 15:56"
-        },
-        {
-          "picking": "CA1/RET/01204",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:55",
-          "done": "2026-09-16 15:55"
-        },
-        {
-          "picking": "CA1/RET/01203",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:54",
-          "done": "2026-09-16 15:54"
-        },
-        {
-          "picking": "CA1/RET/01202",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:24",
-          "done": "2026-09-16 15:24"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9174970107612594,
-      "total_so": 10100,
-      "total_con_pickings": 10036,
-      "cumplidos": 9208,
-      "parciales": 16,
-      "sin_iniciar": 812,
+      "valor": 0.9748360971847281,
+      "total_so": 10374,
+      "total_con_pickings": 10372,
+      "cumplidos": 10111,
+      "parciales": 17,
+      "sin_iniciar": 244,
       "error": null
     },
     "oct_30d": {
-      "valor": 86.82494396596451,
-      "n_orders": 9637,
+      "valor": 83.53621998883305,
+      "n_orders": 10547,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 35.38,
+      "mediana_h": 35.659444444444446,
       "detalle": [
         {
           "so": "S278911",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 12466,
+      "lineas": 13669,
       "mes": "2026-09",
       "error": null
     },
@@ -361,14 +361,14 @@
       "valor": [
         {
           "cliente": "Casa Mila SpA",
-          "total": 4,
-          "tarde": 4,
+          "total": 8,
+          "tarde": 8,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Lokal SpA",
-          "total": 4,
-          "tarde": 4,
+          "total": 5,
+          "tarde": 5,
           "on_time_pct": 0.0
         },
         {
@@ -8228,42 +8228,70 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.05183720204017904,
-      "total_pickings": 9607,
-      "on_time": 498,
-      "on_time_pct": 0.05183720204017904,
-      "in_full": 9606,
-      "in_full_pct": 0.9998959092328511,
-      "both": 498,
+      "valor": 0.06640256555366912,
+      "total_pickings": 10602,
+      "on_time": 704,
+      "on_time_pct": 0.06640256555366912,
+      "in_full": 10600,
+      "in_full_pct": 0.9998113563478589,
+      "both": 704,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.1059190031152648,
-      "total_pickings": 321,
+      "valor": 0.10365853658536585,
+      "total_pickings": 328,
       "on_time": 34,
-      "on_time_pct": 0.1059190031152648,
-      "in_full": 317,
-      "in_full_pct": 0.9875389408099688,
+      "on_time_pct": 0.10365853658536585,
+      "in_full": 321,
+      "in_full_pct": 0.9786585365853658,
       "both": 34,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998486568293605,
-      "ok": 13213,
-      "total": 13215,
+      "valor": 0.9998612845054793,
+      "ok": 14416,
+      "total": 14418,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.827099083619702,
-      "n_recepciones": 291,
+      "valor": 12.653424670433145,
+      "n_recepciones": 295,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/RET/01221",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-09-28 20:34",
+          "done": "2026-09-28 20:34"
+        },
+        {
+          "picking": "CA1/RET/01219",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-09-28 20:27",
+          "done": "2026-09-28 20:27"
+        },
+        {
+          "picking": "CA1/IN/01070",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-09-28 19:52",
+          "done": "2026-09-28 19:55"
+        },
+        {
+          "picking": "CA1/RET/01218",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-28 14:40",
+          "done": "2026-09-28 14:41"
+        },
         {
           "picking": "CA1/IN/01069",
           "proveedor": "",
@@ -8375,34 +8403,6 @@
           "horas": 0.0,
           "scheduled": "2026-09-17 12:33",
           "done": "2026-09-17 12:33"
-        },
-        {
-          "picking": "CA1/RET/01205",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:55",
-          "done": "2026-09-16 15:56"
-        },
-        {
-          "picking": "CA1/RET/01204",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:55",
-          "done": "2026-09-16 15:55"
-        },
-        {
-          "picking": "CA1/RET/01203",
-          "proveedor": "Mercadolibre Chile Limitada",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:54",
-          "done": "2026-09-16 15:54"
-        },
-        {
-          "picking": "CA1/RET/01202",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-16 15:24",
-          "done": "2026-09-16 15:24"
         }
       ],
       "error": null
