@@ -1,6 +1,16 @@
 [
  {
   "tipo_doc": "33",
+  "rut_emisor": "76243813-5",
+  "razon_social": "Walmart Serv. Generales Ltda.",
+  "folio": "595208",
+  "fecha": "2026-08-31",
+  "monto_neto": 1197888.0,
+  "monto_iva": 227599.0,
+  "monto_total": 1425487.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "96720830-2",
   "razon_social": "BCI FACTORING S.A.",
   "folio": "666611",
@@ -8,86 +18,6 @@
   "monto_neto": 77628.0,
   "monto_iva": 14749.0,
   "monto_total": 92377.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "88824300-3",
-  "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
-  "folio": "357066",
-  "fecha": "2026-08-31",
-  "monto_neto": 266860.0,
-  "monto_iva": 50703.0,
-  "monto_total": 317563.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76827283-2",
-  "razon_social": "Global 81 SPA",
-  "folio": "22795",
-  "fecha": "2026-08-31",
-  "monto_neto": 15624.0,
-  "monto_iva": 2969.0,
-  "monto_total": 18593.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77594824-8",
-  "razon_social": "LOKAL SPA",
-  "folio": "35951",
-  "fecha": "2026-08-31",
-  "monto_neto": 9657.0,
-  "monto_iva": 1835.0,
-  "monto_total": 11492.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77261280-K",
-  "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5765291",
-  "fecha": "2026-08-31",
-  "monto_neto": 20000.0,
-  "monto_iva": 3800.0,
-  "monto_total": 23800.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "97004000-5",
-  "razon_social": "Banco de Chile",
-  "folio": "48519127",
-  "fecha": "2026-08-31",
-  "monto_neto": 20437.0,
-  "monto_iva": 3883.0,
-  "monto_total": 24320.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "81201000-K",
-  "razon_social": "Cencosud_Retail_S.A.",
-  "folio": "27477259",
-  "fecha": "2026-08-31",
-  "monto_neto": 579982.0,
-  "monto_iva": 110197.0,
-  "monto_total": 690179.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76756653-0",
-  "razon_social": "VENTI PAY SPA",
-  "folio": "47704",
-  "fecha": "2026-08-31",
-  "monto_neto": 50290.0,
-  "monto_iva": 9555.0,
-  "monto_total": 59845.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76756653-0",
-  "razon_social": "VENTI PAY SPA",
-  "folio": "48273",
-  "fecha": "2026-08-31",
-  "monto_neto": 49999.0,
-  "monto_iva": 9500.0,
-  "monto_total": 59499.0
  },
  {
   "tipo_doc": "33",
@@ -101,6 +31,36 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "76756653-0",
+  "razon_social": "VENTI PAY SPA",
+  "folio": "48273",
+  "fecha": "2026-08-31",
+  "monto_neto": 49999.0,
+  "monto_iva": 9500.0,
+  "monto_total": 59499.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "88824300-3",
+  "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
+  "folio": "357066",
+  "fecha": "2026-08-31",
+  "monto_neto": 266860.0,
+  "monto_iva": 50703.0,
+  "monto_total": 317563.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "81201000-K",
+  "razon_social": "Cencosud_Retail_S.A.",
+  "folio": "27477259",
+  "fecha": "2026-08-31",
+  "monto_neto": 579982.0,
+  "monto_iva": 110197.0,
+  "monto_total": 690179.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "77594824-8",
   "razon_social": "LOKAL SPA",
   "folio": "35952",
@@ -108,16 +68,6 @@
   "monto_neto": 5560.0,
   "monto_iva": 1056.0,
   "monto_total": 6616.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "81675600-6",
-  "razon_social": "Hites S.A.",
-  "folio": "294653",
-  "fecha": "2026-08-31",
-  "monto_neto": 134359.0,
-  "monto_iva": 25528.0,
-  "monto_total": 159887.0
  },
  {
   "tipo_doc": "33",
@@ -131,13 +81,23 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76243813-5",
-  "razon_social": "Walmart Serv. Generales Ltda.",
-  "folio": "595208",
+  "rut_emisor": "81675600-6",
+  "razon_social": "Hites S.A.",
+  "folio": "294653",
   "fecha": "2026-08-31",
-  "monto_neto": 1197888.0,
-  "monto_iva": 227599.0,
-  "monto_total": 1425487.0
+  "monto_neto": 134359.0,
+  "monto_iva": 25528.0,
+  "monto_total": 159887.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "76827283-2",
+  "razon_social": "Global 81 SPA",
+  "folio": "22795",
+  "fecha": "2026-08-31",
+  "monto_neto": 15624.0,
+  "monto_iva": 2969.0,
+  "monto_total": 18593.0
  },
  {
   "tipo_doc": "33",
@@ -151,10 +111,150 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "97004000-5",
+  "razon_social": "Banco de Chile",
+  "folio": "48519127",
+  "fecha": "2026-08-31",
+  "monto_neto": 20437.0,
+  "monto_iva": 3883.0,
+  "monto_total": 24320.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "88824300-3",
   "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
   "folio": "357539",
   "fecha": "2026-08-31",
+  "monto_neto": 0.0,
+  "monto_iva": 0.0,
+  "monto_total": 0.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77261280-K",
+  "razon_social": "FALABELLA RETAIL S.A.",
+  "folio": "5765291",
+  "fecha": "2026-08-31",
+  "monto_neto": 20000.0,
+  "monto_iva": 3800.0,
+  "monto_total": 23800.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "76756653-0",
+  "razon_social": "VENTI PAY SPA",
+  "folio": "47704",
+  "fecha": "2026-08-31",
+  "monto_neto": 50290.0,
+  "monto_iva": 9555.0,
+  "monto_total": 59845.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77594824-8",
+  "razon_social": "LOKAL SPA",
+  "folio": "35951",
+  "fecha": "2026-08-31",
+  "monto_neto": 9657.0,
+  "monto_iva": 1835.0,
+  "monto_total": 11492.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "96653890-2",
+  "razon_social": "MAERSK CHILE SPA",
+  "folio": "289543",
+  "fecha": "2026-09-29",
+  "monto_neto": 101231.0,
+  "monto_iva": 19234.0,
+  "monto_total": 120465.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "97036000-K",
+  "razon_social": "Santander - Chile",
+  "folio": "57321002",
+  "fecha": "2026-09-28",
+  "monto_neto": 8886.0,
+  "monto_iva": 1688.0,
+  "monto_total": 10574.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "92642000-3",
+  "razon_social": "Artel S.A",
+  "folio": "1248073",
+  "fecha": "2026-09-28",
+  "monto_neto": 42008.0,
+  "monto_iva": 7982.0,
+  "monto_total": 49990.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2473145",
+  "fecha": "2026-09-28",
+  "monto_neto": 43832.0,
+  "monto_iva": 8328.0,
+  "monto_total": 52160.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2473144",
+  "fecha": "2026-09-28",
+  "monto_neto": 130606.0,
+  "monto_iva": 24815.0,
+  "monto_total": 155421.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "99520000-7",
+  "razon_social": "COPEC S.A.",
+  "folio": "32974348",
+  "fecha": "2026-09-28",
+  "monto_neto": 627459.0,
+  "monto_iva": 119218.0,
+  "monto_total": 600000.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77096952-2",
+  "razon_social": "FID CHILE SEGUROS GENERALES S.A.",
+  "folio": "494768",
+  "fecha": "2026-09-28",
+  "monto_neto": 40503.0,
+  "monto_iva": 7696.0,
+  "monto_total": 48199.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "81201000-K",
+  "razon_social": "Cencosud_Retail_S.A.",
+  "folio": "27496464",
+  "fecha": "2026-09-28",
+  "monto_neto": 42815.0,
+  "monto_iva": 8135.0,
+  "monto_total": 50950.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "96999930-7",
+  "razon_social": "KITCHEN CENTER SPA",
+  "folio": "11397872",
+  "fecha": "2026-09-28",
+  "monto_neto": 507500.0,
+  "monto_iva": 96425.0,
+  "monto_total": 603925.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "88824300-3",
+  "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
+  "folio": "358812",
+  "fecha": "2026-09-28",
   "monto_neto": 0.0,
   "monto_iva": 0.0,
   "monto_total": 0.0
@@ -191,6 +291,56 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "96908970-K",
+  "razon_social": "San Antonio Terminal Internacional S.A.",
+  "folio": "4275960",
+  "fecha": "2026-09-26",
+  "monto_neto": 17035.0,
+  "monto_iva": 3237.0,
+  "monto_total": 20272.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "81201000-K",
+  "razon_social": "Cencosud_Retail_S.A.",
+  "folio": "27488105",
+  "fecha": "2026-09-26",
+  "monto_neto": 2864513.0,
+  "monto_iva": 544257.0,
+  "monto_total": 3408770.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77097814-9",
+  "razon_social": "GESTION LOGISTICA INTEGRAL SPA",
+  "folio": "14226",
+  "fecha": "2026-09-25",
+  "monto_neto": 415000.0,
+  "monto_iva": 78850.0,
+  "monto_total": 493850.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2480827",
+  "fecha": "2026-09-25",
+  "monto_neto": 48070.0,
+  "monto_iva": 9133.0,
+  "monto_total": 57203.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2481093",
+  "fecha": "2026-09-25",
+  "monto_neto": 965.0,
+  "monto_iva": 183.0,
+  "monto_total": 1148.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
   "folio": "2480409",
@@ -201,53 +351,63 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77884129-0",
-  "razon_social": "GOPOINTS CHILE SPA.",
-  "folio": "247",
-  "fecha": "2026-09-23",
-  "monto_neto": 447968.0,
-  "monto_iva": 85114.0,
-  "monto_total": 533082.0
+  "rut_emisor": "76593490-7",
+  "razon_social": "Craft Multimodal Chile SPA",
+  "folio": "270586",
+  "fecha": "2026-09-25",
+  "monto_neto": 220000.0,
+  "monto_iva": 41800.0,
+  "monto_total": 261800.0
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77398220-1",
-  "razon_social": "MercadoLibre Chile Ltda.",
-  "folio": "15337091",
-  "fecha": "2026-09-23",
-  "monto_neto": 4036268.0,
-  "monto_iva": 766891.0,
-  "monto_total": 4803160.0
+  "rut_emisor": "76144408-5",
+  "razon_social": "ECOSERVICIOS DE HIGIENE AMBIENTAL PALMONT LIMITADA",
+  "folio": "12962",
+  "fecha": "2026-09-24",
+  "monto_neto": 225500.0,
+  "monto_iva": 42845.0,
+  "monto_total": 268345.0
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76516950-K",
-  "razon_social": "Mercado Pago Operadora S.A.",
-  "folio": "3008247",
-  "fecha": "2026-09-23",
-  "monto_neto": 266.0,
-  "monto_iva": 51.0,
-  "monto_total": 317.0
+  "rut_emisor": "76476830-2",
+  "razon_social": "Cencosud_Fidelidad_S.A",
+  "folio": "38139",
+  "fecha": "2026-09-24",
+  "monto_neto": 246891.0,
+  "monto_iva": 46909.0,
+  "monto_total": 293800.0
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77884129-0",
-  "razon_social": "GOPOINTS CHILE SPA.",
-  "folio": "248",
-  "fecha": "2026-09-23",
-  "monto_neto": 2023306.0,
-  "monto_iva": 384428.0,
-  "monto_total": 2407734.0
+  "rut_emisor": "88824300-3",
+  "razon_social": "AG. DE AD. PEDRO SERRANO SOLAR Y CIA LTDA.",
+  "folio": "358612",
+  "fecha": "2026-09-24",
+  "monto_neto": 162629.0,
+  "monto_iva": 30900.0,
+  "monto_total": 193529.0
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "96930480-5",
-  "razon_social": "DUTY FREE T C S A",
-  "folio": "173792",
-  "fecha": "2026-09-23",
-  "monto_neto": 1831820.0,
-  "monto_iva": 348046.0,
-  "monto_total": 2179866.0
+  "rut_emisor": "77261280-K",
+  "razon_social": "FALABELLA RETAIL S.A.",
+  "folio": "5867991",
+  "fecha": "2026-09-24",
+  "monto_neto": 20000.0,
+  "monto_iva": 3800.0,
+  "monto_total": 23800.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "76476830-2",
+  "razon_social": "Cencosud_Fidelidad_S.A",
+  "folio": "38140",
+  "fecha": "2026-09-24",
+  "monto_neto": 125890.0,
+  "monto_iva": 23919.0,
+  "monto_total": 149809.0
  },
  {
   "tipo_doc": "33",
@@ -261,23 +421,53 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77029396-0",
-  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
-  "folio": "2515",
-  "fecha": "2026-09-22",
-  "monto_neto": 245952.0,
-  "monto_iva": 46731.0,
-  "monto_total": 292683.0
+  "rut_emisor": "76516950-K",
+  "razon_social": "Mercado Pago Operadora S.A.",
+  "folio": "3008247",
+  "fecha": "2026-09-23",
+  "monto_neto": 266.0,
+  "monto_iva": 51.0,
+  "monto_total": 317.0
  },
  {
   "tipo_doc": "33",
   "rut_emisor": "96930480-5",
   "razon_social": "DUTY FREE T C S A",
-  "folio": "173736",
-  "fecha": "2026-09-22",
-  "monto_neto": 259409.0,
-  "monto_iva": 49288.0,
-  "monto_total": 308697.0
+  "folio": "173792",
+  "fecha": "2026-09-23",
+  "monto_neto": 1831820.0,
+  "monto_iva": 348046.0,
+  "monto_total": 2179866.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77884129-0",
+  "razon_social": "GOPOINTS CHILE SPA.",
+  "folio": "248",
+  "fecha": "2026-09-23",
+  "monto_neto": 2023306.0,
+  "monto_iva": 384428.0,
+  "monto_total": 2407734.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77398220-1",
+  "razon_social": "MercadoLibre Chile Ltda.",
+  "folio": "15337091",
+  "fecha": "2026-09-23",
+  "monto_neto": 4036268.0,
+  "monto_iva": 766891.0,
+  "monto_total": 4803160.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77884129-0",
+  "razon_social": "GOPOINTS CHILE SPA.",
+  "folio": "247",
+  "fecha": "2026-09-23",
+  "monto_neto": 447968.0,
+  "monto_iva": 85114.0,
+  "monto_total": 533082.0
  },
  {
   "tipo_doc": "33",
@@ -291,13 +481,23 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77047629-1",
-  "razon_social": "VILLENA & MOLINA SPA",
-  "folio": "373",
+  "rut_emisor": "77029396-0",
+  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
+  "folio": "2515",
   "fecha": "2026-09-22",
-  "monto_neto": 2521008.0,
-  "monto_iva": 478992.0,
-  "monto_total": 3000000.0
+  "monto_neto": 245952.0,
+  "monto_iva": 46731.0,
+  "monto_total": 292683.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "76478242-9",
+  "razon_social": "URBAN COMERCIAL SPA",
+  "folio": "27698",
+  "fecha": "2026-09-22",
+  "monto_neto": 26056.0,
+  "monto_iva": 4951.0,
+  "monto_total": 31007.0
  },
  {
   "tipo_doc": "33",
@@ -311,6 +511,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "77047629-1",
+  "razon_social": "VILLENA & MOLINA SPA",
+  "folio": "373",
+  "fecha": "2026-09-22",
+  "monto_neto": 2521008.0,
+  "monto_iva": 478992.0,
+  "monto_total": 3000000.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "96930480-5",
   "razon_social": "DUTY FREE T C S A",
   "folio": "173745",
@@ -321,6 +531,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "96930480-5",
+  "razon_social": "DUTY FREE T C S A",
+  "folio": "173736",
+  "fecha": "2026-09-22",
+  "monto_neto": 259409.0,
+  "monto_iva": 49288.0,
+  "monto_total": 308697.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "76212492-0",
   "razon_social": "Falabella.com SpA",
   "folio": "499550",
@@ -328,16 +548,6 @@
   "monto_neto": 23919887.0,
   "monto_iva": 4544779.0,
   "monto_total": 28464666.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76478242-9",
-  "razon_social": "URBAN COMERCIAL SPA",
-  "folio": "27698",
-  "fecha": "2026-09-22",
-  "monto_neto": 26056.0,
-  "monto_iva": 4951.0,
-  "monto_total": 31007.0
  },
  {
   "tipo_doc": "33",
@@ -361,6 +571,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "76593490-7",
+  "razon_social": "Craft Multimodal Chile SPA",
+  "folio": "270291",
+  "fecha": "2026-09-21",
+  "monto_neto": 220000.0,
+  "monto_iva": 41800.0,
+  "monto_total": 261800.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "77505511-1",
   "razon_social": "INVERSIONES JM FERRETODO SPA",
   "folio": "18388",
@@ -371,13 +591,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76593490-7",
-  "razon_social": "Craft Multimodal Chile SPA",
-  "folio": "270291",
-  "fecha": "2026-09-21",
-  "monto_neto": 220000.0,
-  "monto_iva": 41800.0,
-  "monto_total": 261800.0
+  "rut_emisor": "81201000-K",
+  "razon_social": "CENCOSUD RETAIL S.A.",
+  "folio": "27043866",
+  "fecha": "2026-09-20",
+  "monto_neto": 168061.0,
+  "monto_iva": 31932.0,
+  "monto_total": 199993.0
  },
  {
   "tipo_doc": "33",
@@ -401,16 +621,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "81201000-K",
-  "razon_social": "CENCOSUD RETAIL S.A.",
-  "folio": "27043866",
-  "fecha": "2026-09-20",
-  "monto_neto": 168061.0,
-  "monto_iva": 31932.0,
-  "monto_total": 199993.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "76124890-1",
   "razon_social": "Telefónica Móviles Chile S.A.",
   "folio": "73906828",
@@ -431,23 +641,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76172595-5",
-  "razon_social": "MEDLOG CHILE S.A",
-  "folio": "984433",
+  "rut_emisor": "76771632-K",
+  "razon_social": "CART PAPER LIMITADA",
+  "folio": "74470",
   "fecha": "2026-09-17",
-  "monto_neto": 168000.0,
-  "monto_iva": 31920.0,
-  "monto_total": 199920.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76993859-1",
-  "razon_social": "IKEA",
-  "folio": "851034",
-  "fecha": "2026-09-17",
-  "monto_neto": 613345.0,
-  "monto_iva": 116535.0,
-  "monto_total": 729880.0
+  "monto_neto": 1328000.0,
+  "monto_iva": 252320.0,
+  "monto_total": 1580320.0
  },
  {
   "tipo_doc": "33",
@@ -471,33 +671,23 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76771632-K",
-  "razon_social": "CART PAPER LIMITADA",
-  "folio": "74470",
+  "rut_emisor": "76172595-5",
+  "razon_social": "MEDLOG CHILE S.A",
+  "folio": "984433",
   "fecha": "2026-09-17",
-  "monto_neto": 1328000.0,
-  "monto_iva": 252320.0,
-  "monto_total": 1580320.0
+  "monto_neto": 168000.0,
+  "monto_iva": 31920.0,
+  "monto_total": 199920.0
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77029396-0",
-  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
-  "folio": "2502",
-  "fecha": "2026-09-16",
-  "monto_neto": 245656.0,
-  "monto_iva": 46675.0,
-  "monto_total": 292331.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "83382700-6",
-  "razon_social": "Comercial Eccsa S.A.",
-  "folio": "2479427",
-  "fecha": "2026-09-16",
-  "monto_neto": 26167.0,
-  "monto_iva": 4972.0,
-  "monto_total": 31139.0
+  "rut_emisor": "76993859-1",
+  "razon_social": "IKEA",
+  "folio": "851034",
+  "fecha": "2026-09-17",
+  "monto_neto": 613345.0,
+  "monto_iva": 116535.0,
+  "monto_total": 729880.0
  },
  {
   "tipo_doc": "33",
@@ -511,6 +701,26 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "83382700-6",
+  "razon_social": "Comercial Eccsa S.A.",
+  "folio": "2479427",
+  "fecha": "2026-09-16",
+  "monto_neto": 26167.0,
+  "monto_iva": 4972.0,
+  "monto_total": 31139.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77029396-0",
+  "razon_social": "SERVICIOS DE IMPORTACION Y EXPORTACION SEIMEX SPA",
+  "folio": "2502",
+  "fecha": "2026-09-16",
+  "monto_neto": 245656.0,
+  "monto_iva": 46675.0,
+  "monto_total": 292331.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "76857988-1",
   "razon_social": "SEGURIDAD GRUPO SEGUR SPA",
   "folio": "11484",
@@ -518,6 +728,36 @@
   "monto_neto": 344005.0,
   "monto_iva": 65361.0,
   "monto_total": 409366.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "76593490-7",
+  "razon_social": "Craft Multimodal Chile SPA",
+  "folio": "270014",
+  "fecha": "2026-09-14",
+  "monto_neto": 220000.0,
+  "monto_iva": 41800.0,
+  "monto_total": 261800.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77242733-6",
+  "razon_social": "INVERSIONES ICCM SPA",
+  "folio": "168",
+  "fecha": "2026-09-14",
+  "monto_neto": 480000.0,
+  "monto_iva": 91200.0,
+  "monto_total": 571200.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "96874030-K",
+  "razon_social": "ABC S.A.",
+  "folio": "871264",
+  "fecha": "2026-09-14",
+  "monto_neto": 137656.0,
+  "monto_iva": 26155.0,
+  "monto_total": 163811.0
  },
  {
   "tipo_doc": "33",
@@ -543,41 +783,21 @@
   "tipo_doc": "33",
   "rut_emisor": "96874030-K",
   "razon_social": "ABC S.A.",
-  "folio": "871262",
-  "fecha": "2026-09-14",
-  "monto_neto": 17062.0,
-  "monto_iva": 3242.0,
-  "monto_total": 20304.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "96874030-K",
-  "razon_social": "ABC S.A.",
-  "folio": "871264",
-  "fecha": "2026-09-14",
-  "monto_neto": 137656.0,
-  "monto_iva": 26155.0,
-  "monto_total": 163811.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "76593490-7",
-  "razon_social": "Craft Multimodal Chile SPA",
-  "folio": "270014",
-  "fecha": "2026-09-14",
-  "monto_neto": 220000.0,
-  "monto_iva": 41800.0,
-  "monto_total": 261800.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "96874030-K",
-  "razon_social": "ABC S.A.",
   "folio": "871263",
   "fecha": "2026-09-14",
   "monto_neto": 19050.0,
   "monto_iva": 3620.0,
   "monto_total": 22670.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "96874030-K",
+  "razon_social": "ABC S.A.",
+  "folio": "871262",
+  "fecha": "2026-09-14",
+  "monto_neto": 17062.0,
+  "monto_iva": 3242.0,
+  "monto_total": 20304.0
  },
  {
   "tipo_doc": "33",
@@ -588,16 +808,6 @@
   "monto_neto": 696681.0,
   "monto_iva": 132369.0,
   "monto_total": 829050.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77242733-6",
-  "razon_social": "INVERSIONES ICCM SPA",
-  "folio": "168",
-  "fecha": "2026-09-14",
-  "monto_neto": 480000.0,
-  "monto_iva": 91200.0,
-  "monto_total": 571200.0
  },
  {
   "tipo_doc": "33",
@@ -621,16 +831,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "97080000-K",
-  "razon_social": "Banco BICE",
-  "folio": "3931907",
-  "fecha": "2026-09-11",
-  "monto_neto": 1718.0,
-  "monto_iva": 326.0,
-  "monto_total": 2044.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
   "folio": "2458588",
@@ -648,6 +848,16 @@
   "monto_neto": 415000.0,
   "monto_iva": 78850.0,
   "monto_total": 493850.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "97080000-K",
+  "razon_social": "Banco BICE",
+  "folio": "3931907",
+  "fecha": "2026-09-11",
+  "monto_neto": 1718.0,
+  "monto_iva": 326.0,
+  "monto_total": 2044.0
  },
  {
   "tipo_doc": "33",
@@ -671,16 +881,6 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76172595-5",
-  "razon_social": "MEDLOG CHILE S.A",
-  "folio": "982052",
-  "fecha": "2026-09-11",
-  "monto_neto": 168000.0,
-  "monto_iva": 31920.0,
-  "monto_total": 199920.0
- },
- {
-  "tipo_doc": "33",
   "rut_emisor": "83382700-6",
   "razon_social": "Comercial Eccsa S.A.",
   "folio": "2458147",
@@ -691,23 +891,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "97004000-5",
-  "razon_social": "Banco de Chile",
-  "folio": "48605571",
-  "fecha": "2026-09-10",
-  "monto_neto": 9260.0,
-  "monto_iva": 1759.0,
-  "monto_total": 11019.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "97004000-5",
-  "razon_social": "Banco de Chile",
-  "folio": "48605572",
-  "fecha": "2026-09-10",
-  "monto_neto": 111116.0,
-  "monto_iva": 21112.0,
-  "monto_total": 132228.0
+  "rut_emisor": "76172595-5",
+  "razon_social": "MEDLOG CHILE S.A",
+  "folio": "982052",
+  "fecha": "2026-09-11",
+  "monto_neto": 168000.0,
+  "monto_iva": 31920.0,
+  "monto_total": 199920.0
  },
  {
   "tipo_doc": "33",
@@ -721,53 +911,13 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "76691442-K",
-  "razon_social": "BUK SPA",
-  "folio": "350739",
+  "rut_emisor": "97004000-5",
+  "razon_social": "Banco de Chile",
+  "folio": "48605572",
   "fecha": "2026-09-10",
-  "monto_neto": 167236.0,
-  "monto_iva": 31775.0,
-  "monto_total": 199011.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "97011000-3",
-  "razon_social": "BANCO INTERNACIONAL",
-  "folio": "1520955",
-  "fecha": "2026-09-10",
-  "monto_neto": 5559.0,
-  "monto_iva": 1056.0,
-  "monto_total": 6615.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "81201000-K",
-  "razon_social": "CENCOSUD RETAIL S.A.",
-  "folio": "27678754",
-  "fecha": "2026-09-10",
-  "monto_neto": 17983.0,
-  "monto_iva": 3417.0,
-  "monto_total": 21400.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77133058-4",
-  "razon_social": "APERSTORE CHILE SPA",
-  "folio": "2182",
-  "fecha": "2026-09-10",
-  "monto_neto": 155238.0,
-  "monto_iva": 29495.0,
-  "monto_total": 184733.0
- },
- {
-  "tipo_doc": "33",
-  "rut_emisor": "77133058-4",
-  "razon_social": "APERSTORE CHILE SPA",
-  "folio": "2204",
-  "fecha": "2026-09-10",
-  "monto_neto": 155238.0,
-  "monto_iva": 29495.0,
-  "monto_total": 184733.0
+  "monto_neto": 111116.0,
+  "monto_iva": 21112.0,
+  "monto_total": 132228.0
  },
  {
   "tipo_doc": "33",
@@ -801,23 +951,43 @@
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "77261280-K",
-  "razon_social": "FALABELLA RETAIL S.A.",
-  "folio": "5766766",
+  "rut_emisor": "76691442-K",
+  "razon_social": "BUK SPA",
+  "folio": "350739",
   "fecha": "2026-09-10",
-  "monto_neto": 78146.0,
-  "monto_iva": 14848.0,
-  "monto_total": 92994.0
+  "monto_neto": 167236.0,
+  "monto_iva": 31775.0,
+  "monto_total": 199011.0
  },
  {
   "tipo_doc": "33",
-  "rut_emisor": "79991430-1",
-  "razon_social": "SOC ALIMENTICIA Y COMERCIAL BAUERLE S.A.",
-  "folio": "28982",
+  "rut_emisor": "97011000-3",
+  "razon_social": "BANCO INTERNACIONAL",
+  "folio": "1520955",
   "fecha": "2026-09-10",
-  "monto_neto": 89496.0,
-  "monto_iva": 17004.0,
-  "monto_total": 106500.0
+  "monto_neto": 5559.0,
+  "monto_iva": 1056.0,
+  "monto_total": 6615.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "97004000-5",
+  "razon_social": "Banco de Chile",
+  "folio": "48605571",
+  "fecha": "2026-09-10",
+  "monto_neto": 9260.0,
+  "monto_iva": 1759.0,
+  "monto_total": 11019.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "81201000-K",
+  "razon_social": "CENCOSUD RETAIL S.A.",
+  "folio": "27678754",
+  "fecha": "2026-09-10",
+  "monto_neto": 17983.0,
+  "monto_iva": 3417.0,
+  "monto_total": 21400.0
  },
  {
   "tipo_doc": "33",
@@ -831,6 +1001,16 @@
  },
  {
   "tipo_doc": "33",
+  "rut_emisor": "79991430-1",
+  "razon_social": "SOC ALIMENTICIA Y COMERCIAL BAUERLE S.A.",
+  "folio": "28982",
+  "fecha": "2026-09-10",
+  "monto_neto": 89496.0,
+  "monto_iva": 17004.0,
+  "monto_total": 106500.0
+ },
+ {
+  "tipo_doc": "33",
   "rut_emisor": "96930480-5",
   "razon_social": "DUTY FREE T C S A",
   "folio": "173401",
@@ -838,6 +1018,36 @@
   "monto_neto": 912933.0,
   "monto_iva": 173457.0,
   "monto_total": 1086390.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77261280-K",
+  "razon_social": "FALABELLA RETAIL S.A.",
+  "folio": "5766766",
+  "fecha": "2026-09-10",
+  "monto_neto": 78146.0,
+  "monto_iva": 14848.0,
+  "monto_total": 92994.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77133058-4",
+  "razon_social": "APERSTORE CHILE SPA",
+  "folio": "2204",
+  "fecha": "2026-09-10",
+  "monto_neto": 155238.0,
+  "monto_iva": 29495.0,
+  "monto_total": 184733.0
+ },
+ {
+  "tipo_doc": "33",
+  "rut_emisor": "77133058-4",
+  "razon_social": "APERSTORE CHILE SPA",
+  "folio": "2182",
+  "fecha": "2026-09-10",
+  "monto_neto": 155238.0,
+  "monto_iva": 29495.0,
+  "monto_total": 184733.0
  },
  {
   "tipo_doc": "33",
@@ -1391,6 +1601,36 @@
  },
  {
   "tipo_doc": "34",
+  "rut_emisor": "97036000-K",
+  "razon_social": "Santander - Chile",
+  "folio": "15718055",
+  "fecha": "2026-09-28",
+  "monto_neto": 5371.0,
+  "monto_iva": 0.0,
+  "monto_total": 5371.0
+ },
+ {
+  "tipo_doc": "34",
+  "rut_emisor": "97004000-5",
+  "razon_social": "Banco de Chile",
+  "folio": "29902959",
+  "fecha": "2026-09-25",
+  "monto_neto": 4101.0,
+  "monto_iva": 0.0,
+  "monto_total": 4101.0
+ },
+ {
+  "tipo_doc": "34",
+  "rut_emisor": "77176962-4",
+  "razon_social": "EBURY PARTNERS CHILE SPA",
+  "folio": "42401",
+  "fecha": "2026-09-24",
+  "monto_neto": 0.0,
+  "monto_iva": 0.0,
+  "monto_total": 0.0
+ },
+ {
+  "tipo_doc": "34",
   "rut_emisor": "77066804-2",
   "razon_social": "SERVICIOS EDUCACIONALES LITTLE CHAMPIONS SPA",
   "folio": "1823",
@@ -1463,21 +1703,21 @@
   "tipo_doc": "34",
   "rut_emisor": "76376061-8",
   "razon_social": "SOCIEDAD CONCESIONARIA VESPUCIO ORIENTE S.A.",
-  "folio": "3527340",
-  "fecha": "2026-09-12",
-  "monto_neto": 31679.0,
-  "monto_iva": 0.0,
-  "monto_total": 31679.0
- },
- {
-  "tipo_doc": "34",
-  "rut_emisor": "76376061-8",
-  "razon_social": "SOCIEDAD CONCESIONARIA VESPUCIO ORIENTE S.A.",
   "folio": "3553331",
   "fecha": "2026-09-12",
   "monto_neto": 10171.0,
   "monto_iva": 0.0,
   "monto_total": 10171.0
+ },
+ {
+  "tipo_doc": "34",
+  "rut_emisor": "76376061-8",
+  "razon_social": "SOCIEDAD CONCESIONARIA VESPUCIO ORIENTE S.A.",
+  "folio": "3527340",
+  "fecha": "2026-09-12",
+  "monto_neto": 31679.0,
+  "monto_iva": 0.0,
+  "monto_total": 31679.0
  },
  {
   "tipo_doc": "34",
@@ -1553,21 +1793,21 @@
   "tipo_doc": "34",
   "rut_emisor": "77630439-5",
   "razon_social": "Operadora de Sistemas Electrónicos SPA",
-  "folio": "3411597",
-  "fecha": "2026-09-03",
-  "monto_neto": 13730.0,
-  "monto_iva": 0.0,
-  "monto_total": 13730.0
- },
- {
-  "tipo_doc": "34",
-  "rut_emisor": "77630439-5",
-  "razon_social": "Operadora de Sistemas Electrónicos SPA",
   "folio": "3375423",
   "fecha": "2026-09-03",
   "monto_neto": 5400.0,
   "monto_iva": 0.0,
   "monto_total": 5400.0
+ },
+ {
+  "tipo_doc": "34",
+  "rut_emisor": "77630439-5",
+  "razon_social": "Operadora de Sistemas Electrónicos SPA",
+  "folio": "3411597",
+  "fecha": "2026-09-03",
+  "monto_neto": 13730.0,
+  "monto_iva": 0.0,
+  "monto_total": 13730.0
  },
  {
   "tipo_doc": "34",
@@ -1638,6 +1878,16 @@
   "monto_neto": 21.0,
   "monto_iva": 4.0,
   "monto_total": 25.0
+ },
+ {
+  "tipo_doc": "43",
+  "rut_emisor": "77398220-1",
+  "razon_social": "MercadoLibre Chile LTDA",
+  "folio": "1130920",
+  "fecha": "2026-09-27",
+  "monto_neto": 0.0,
+  "monto_iva": 0.0,
+  "monto_total": 0.0
  },
  {
   "tipo_doc": "43",
@@ -1848,6 +2098,16 @@
   "monto_neto": 339676.0,
   "monto_iva": 64538.0,
   "monto_total": 404214.0
+ },
+ {
+  "tipo_doc": "914",
+  "rut_emisor": "55555555-5",
+  "razon_social": "Importación",
+  "folio": "2400378595",
+  "fecha": "2026-09-25",
+  "monto_neto": 89994394.0,
+  "monto_iva": 17098935.0,
+  "monto_total": 107093334.0
  },
  {
   "tipo_doc": "914",
