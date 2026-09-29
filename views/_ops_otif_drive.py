@@ -102,6 +102,21 @@ def _normalizar_otif_df(rows: list, fecha_col_alt: str = None) -> pd.DataFrame:
     else:
         df["courier_a_tiempo"] = False
 
+    # Un pedido cancelado o con quiebre nunca se despachó: no tiene estado y NO se
+    # puede medir su puntualidad. Si entra al denominador, castiga el OTIF de bodega
+    # como si fuera un incumplimiento. Se marca para excluirlo del cálculo (las filas
+    # se conservan: de ellas salen los montos de cancelación y quiebre).
+    _RESUELTOS = {"a tiempo", "tarde", "demorado", "fuera de plazo",
+                  "atrasado", "incumplimiento"}
+    if "Estado Empresa" in df.columns:
+        df["otif_medido"] = df["Estado Empresa"].str.lower().isin(_RESUELTOS)
+    else:
+        df["otif_medido"] = False
+    if "CUMPLIMIENTO COURIER" in df.columns:
+        df["courier_medido"] = df["CUMPLIMIENTO COURIER"].str.lower().isin(_RESUELTOS)
+    else:
+        df["courier_medido"] = False
+
     df["otif_total"] = df["empresa_a_tiempo"] & df["courier_a_tiempo"]
 
     # Días (varios encodings posibles)
@@ -205,15 +220,20 @@ def kpi_otif_resumen(mes: str = None) -> Dict:
         return {"error": f"Sin datos para {mes}"}
 
     n = len(df)
+    # denominadores: solo los pedidos efectivamente medidos
+    n_med_emp = int(df["otif_medido"].sum())
+    n_med_cou = int(df["courier_medido"].sum())
+    n_med_tot = int((df["otif_medido"] & df["courier_medido"]).sum())
     n_emp = int(df["empresa_a_tiempo"].sum())
     n_cou = int(df["courier_a_tiempo"].sum())
     n_total = int(df["otif_total"].sum())
 
     return {
         "n_pedidos": n,
-        "otif_empresa_pct": n_emp / n if n else 0,
-        "otif_courier_pct": n_cou / n if n else 0,
-        "otif_total_pct": n_total / n if n else 0,
+        "n_medidos": n_med_emp,
+        "otif_empresa_pct": n_emp / n_med_emp if n_med_emp else 0,
+        "otif_courier_pct": n_cou / n_med_cou if n_med_cou else 0,
+        "otif_total_pct": n_total / n_med_tot if n_med_tot else 0,
         "n_empresa_ok": n_emp,
         "n_courier_ok": n_cou,
         "n_otif_ok": n_total,
@@ -232,10 +252,16 @@ def kpi_otif_por_mes() -> List[Dict]:
 
     grouped = df.groupby("MES").agg(
         n_pedidos=("ORDEN", "count"),
-        otif_empresa=("empresa_a_tiempo", "mean"),
-        otif_courier=("courier_a_tiempo", "mean"),
-        otif_total=("otif_total", "mean"),
+        n_medidos=("otif_medido", "sum"),
+        emp_ok=("empresa_a_tiempo", "sum"),
+        cou_ok=("courier_a_tiempo", "sum"),
+        tot_ok=("otif_total", "sum"),
+        n_med_cou=("courier_medido", "sum"),
     ).reset_index().sort_values("MES")
+    grouped["otif_empresa"] = grouped["emp_ok"] / grouped["n_medidos"].replace(0, pd.NA)
+    grouped["otif_courier"] = grouped["cou_ok"] / grouped["n_med_cou"].replace(0, pd.NA)
+    grouped["otif_total"] = grouped["tot_ok"] / grouped["n_medidos"].replace(0, pd.NA)
+    grouped = grouped.fillna({"otif_empresa": 0, "otif_courier": 0, "otif_total": 0})
     grouped["otif_empresa_pct"] = (grouped["otif_empresa"] * 100).round(1)
     grouped["otif_courier_pct"] = (grouped["otif_courier"] * 100).round(1)
     grouped["otif_total_pct"] = (grouped["otif_total"] * 100).round(1)
@@ -252,10 +278,15 @@ def kpi_otif_por_cliente(mes: str = None, top_n: int = 20) -> List[Dict]:
 
     grouped = df.groupby("CLIENTE").agg(
         n_pedidos=("ORDEN", "count"),
-        otif_empresa=("empresa_a_tiempo", "mean"),
-        otif_courier=("courier_a_tiempo", "mean"),
-        otif_total=("otif_total", "mean"),
+        n_medidos=("otif_medido", "sum"),
+        emp_ok=("empresa_a_tiempo", "sum"),
+        cou_ok=("courier_a_tiempo", "sum"),
+        tot_ok=("otif_total", "sum"),
     ).reset_index()
+    _d = grouped["n_medidos"].replace(0, pd.NA)
+    grouped["otif_empresa"] = (grouped["emp_ok"] / _d).fillna(0)
+    grouped["otif_courier"] = (grouped["cou_ok"] / _d).fillna(0)
+    grouped["otif_total"] = (grouped["tot_ok"] / _d).fillna(0)
     grouped = grouped[grouped["n_pedidos"] >= 5]  # filtro ruido
     grouped["otif_empresa_pct"] = (grouped["otif_empresa"] * 100).round(1)
     grouped["otif_courier_pct"] = (grouped["otif_courier"] * 100).round(1)
@@ -403,6 +434,9 @@ def dashboard_otif_corte(corte_key: str, courier: str = None,
         }
 
     n = len(f)
+    n_med_emp = int(f["otif_medido"].sum())
+    n_med_cou = int(f["courier_medido"].sum())
+    n_med_tot = int((f["otif_medido"] & f["courier_medido"]).sum())
     n_emp = int(f["empresa_a_tiempo"].sum())
     n_cou = int(f["courier_a_tiempo"].sum())
     n_total = int(f["otif_total"].sum())
@@ -447,9 +481,10 @@ def dashboard_otif_corte(corte_key: str, courier: str = None,
         "quiebre_clp": quie_clp,
         "n_canceladas": n_canc,
         "n_quiebres": n_quie,
-        "ns_empresa_pct": n_emp / n if n else 0,
-        "ns_courier_pct": n_cou / n if n else 0,
-        "otif_total_pct": n_total / n if n else 0,
+        "n_medidos": n_med_emp,
+        "ns_empresa_pct": n_emp / n_med_emp if n_med_emp else 0,
+        "ns_courier_pct": n_cou / n_med_cou if n_med_cou else 0,
+        "otif_total_pct": n_total / n_med_tot if n_med_tot else 0,
         "n_empresa_ok": n_emp,
         "n_courier_ok": n_cou,
         "n_otif_ok": n_total,
@@ -580,6 +615,8 @@ def couriers_por_corte(corte_key: str) -> List[Dict]:
     f = f[f["CURIER"] != ""]
     g = f.groupby("CURIER").agg(
         n_pedidos=("ORDEN", "count"),
+        n_medidos=("otif_medido", "sum"),
+        n_med_cou=("courier_medido", "sum"),
         empresa_ok=("empresa_a_tiempo", "sum"),
         courier_ok=("courier_a_tiempo", "sum"),
         otif_ok=("otif_total", "sum"),
@@ -587,9 +624,11 @@ def couriers_por_corte(corte_key: str) -> List[Dict]:
     g = g[g["n_pedidos"] >= _COU_MIN_PEDIDOS]
     if g.empty:
         return []
-    g["ns_courier_pct"] = (g["courier_ok"] / g["n_pedidos"] * 100).round(1)
-    g["ns_empresa_pct"] = (g["empresa_ok"] / g["n_pedidos"] * 100).round(1)
-    g["otif_total_pct"] = (g["otif_ok"] / g["n_pedidos"] * 100).round(1)
+    _dc = g["n_med_cou"].replace(0, pd.NA)
+    _de = g["n_medidos"].replace(0, pd.NA)
+    g["ns_courier_pct"] = (g["courier_ok"] / _dc * 100).round(1).fillna(0)
+    g["ns_empresa_pct"] = (g["empresa_ok"] / _de * 100).round(1).fillna(0)
+    g["otif_total_pct"] = (g["otif_ok"] / _de * 100).round(1).fillna(0)
     g = g.sort_values("n_pedidos", ascending=False)
     return g[["CURIER", "n_pedidos", "ns_courier_pct", "ns_empresa_pct",
               "otif_total_pct"]].to_dict("records")
