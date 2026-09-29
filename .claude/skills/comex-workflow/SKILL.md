@@ -1,6 +1,6 @@
 ---
 name: comex-workflow
-description: "Flujo completo de costeo de importaciones desde China. TRIGGERS: 'Costear embarque', 'Nuevo embarque', 'Procesar PI', 'Costeo COMEX'. Usuario sube 3 archivos: PI (Proforma Invoice), PL (Packing List), y Tarifas (flete + gastos Chile). Claude genera Pre-costeo x CBM, actualiza Maestra Importaciones CON TODAS LAS PESTAÑAS, y crea borrador de email en Gmail."
+description: "Flujo completo de costeo de importaciones desde China. TRIGGERS: 'Costear embarque', 'Nuevo embarque', 'Procesar PI', 'Costeo COMEX'. Usuario sube 3 archivos: PI (Proforma Invoice), PL (Packing List), y Tarifas (flete + gastos Chile). Claude genera Pre-costeo x CBM y crea borrador de email en Gmail. La Maestra Importaciones NO se edita a mano: la actualiza agente-comex-auto/local/maestra_sync.py."
 ---
 
 # COMEX Workflow - Costeo de Importaciones
@@ -45,12 +45,12 @@ Skill para automatizar el flujo completo de costeo de importaciones desde China.
                                     │
                                     ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│  PASO 3: ACTUALIZAR MAESTRA IMPORTACIONES                            │
-│  • Agregar filas a pestaña "Maestra"                                 │
-│  • Actualizar "1. Apertura CC" con resumen del embarque              │
-│  • Actualizar "4. Matriz SKU" con costos por SKU                     │
-│  • Actualizar "5. Resumen Variaciones"                               │
-│  • Calcular variación vs ÚLTIMO costo internado por SKU              │
+│  PASO 3: MAESTRA IMPORTACIONES → NO EDITAR A MANO (desde 29-sep-2026)│
+│  • La actualiza agente-comex-auto/local/maestra_sync.py (diario, PC) │
+│  • Vista previa: python maestra_sync.py · aplicar: --aplicar (OK     │
+│    de Andrés). NUNCA openpyxl/pandas sobre la Maestra: borra las     │
+│    matrices dinámicas y el complemento (así se dañó la copia V2)     │
+│  • Sí: calcular variación vs ÚLTIMO costo internado por SKU (lectura)│
 └──────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -277,6 +277,12 @@ for producto in embarque_actual:
 ---
 
 ## ACTUALIZACIÓN DE PESTAÑAS DE LA MAESTRA
+
+> ⛔ **NO APLICAR (desde 29-sep-2026).** Lo que sigue es referencia histórica. La Maestra viva
+> (`G:/…/COMEX/Planificaciones/Maestra Importaciones.xlsx`) la actualiza `agente-comex-auto/local/maestra_sync.py`
+> por cirugía XML, con respaldo y validación, replicando las fórmulas de las filas existentes. Agregar filas
+> "con valores" o guardar con openpyxl rompe la planilla. Si hace falta cargar un embarque ya, correr
+> `python maestra_sync.py --solo <EMB>` (vista previa) y pedir OK a Andrés para `--aplicar`.
 
 ### Pestaña "Maestra" (principal)
 Agregar filas con el formato estándar, resaltadas en color.
@@ -605,7 +611,7 @@ INLAND CHILE
 | A.2 | Gift box = valor PI × 1.03 (agregar 3%) | ✅ |
 | A.3 | Comparar productos vs ÚLTIMO costo internado (no promedio) | ✅ |
 | A.4 | **Delivery cost PRORRATEADO por CBM del grupo** (no asignado individualmente, no por qty) | ✅ |
-| B | Actualizar pestañas: Maestra, 1. Apertura CC, 4. Matriz SKU, 5. Resumen Variaciones | ✅ |
+| B | Actualizar pestañas de la Maestra → REEMPLAZADO por agente-comex-auto/local/maestra_sync.py (29-sep-2026) | ✅ |
 | C | Alertar si hay conceptos no reconocidos en PI/PL | ✅ |
 
 ---
