@@ -28,6 +28,37 @@
         "sku": "LVMPADBML-BK",
         "fuente": "OC P00651: Mousepad Battlemat L 45x40, 500 u (PI: Pad L US$2,2)"
       }
+    },
+    "26TP0105": {
+      "TP013": {
+        "sku": "67337648026851",
+        "fuente": "OC P00633: Mueble Exhibidor Audífonos Lhotse RM12, 50 u (PI TP013: RM12/RM7 acrylic holder)"
+      },
+      "TP014": {
+        "sku": "69340337962010",
+        "fuente": "OC P00633: Mueble Exhibidor Parlantes Lhotse Tune Up, 50 u (PI TP014: tune up acrylic holder)"
+      },
+      "LVSPMONDOB": {
+        "sku": "LVSPBRX2MN",
+        "fuente": "OC P00633: Soporte Brazo Doble Monitor Notebook, 300 u (PI: monitor stand with laptop holder)"
+      },
+      "LVSPNOTFIJ": {
+        "sku": "LVSPALZNPLE",
+        "fuente": "OC P00633: Soporte Base Alzador Notebook Plegable, 300 u (PI: laptop stand foldable)"
+      }
+    }
+  },
+  "_excluir_uso": "excluir_modelos: líneas del PI que NO van a la Maestra (no son productos con SKU), por embarque, con fuente.",
+  "excluir_modelos": {
+    "26TP0105": {
+      "modelos": [
+        "RM12-DM",
+        "RM7-DM",
+        "RM Plus-DM",
+        "RM Plus -DM",
+        "TUNE UP-FAKE"
+      ],
+      "fuente": "Andrés 29-sep: fuera de la Maestra (dummies/maquetas para los exhibidores RM12 y Tune Up; no son productos)"
     }
   }
 }

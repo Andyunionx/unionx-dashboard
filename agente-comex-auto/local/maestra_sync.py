@@ -233,11 +233,20 @@ def correcciones_existentes(manual: dict, estado: dict) -> dict:
 
 
 # ---------------------------------------------------------------- 4. escritura segura
+def _ultimo_escrito() -> str | None:
+    """sha256 del último archivo que escribió este proceso (para no confundir su propia escritura con una edición)."""
+    try:
+        lineas = (LOGS / "maestra_sync.jsonl").read_text(encoding="utf-8").strip().splitlines()
+        return json.loads(lineas[-1]).get("sha_escrito") if lineas else None
+    except Exception:
+        return None
+
+
 def puede_escribir() -> str | None:
     lock = MAESTRA.with_name("~$" + MAESTRA.name)
     if lock.exists() and time.time() - lock.stat().st_mtime < 12 * 3600:
         return f"hay un ~$ de hace {(time.time() - lock.stat().st_mtime) / 60:.0f} min (Excel abierto)"
-    if time.time() - MAESTRA.stat().st_mtime < 30 * 60:
+    if time.time() - MAESTRA.stat().st_mtime < 30 * 60 and sha(MAESTRA) != _ultimo_escrito():
         return "la Maestra cambió hace menos de 30 min (alguien la está editando o Drive sincroniza)"
     return None
 
@@ -293,6 +302,12 @@ def main():
             e["embarque"] = emb
         for c in corregir_skus(e, reg, manual):
             log(f"  {emb} · {c}")
+        excl = set(manual.get("excluir_modelos", {}).get(emb, {}).get("modelos", []))
+        if excl:
+            fuera = [p for p in e["productos"] if str(p.get("Model") or "").strip() in excl]
+            e["productos"] = [p for p in e["productos"] if str(p.get("Model") or "").strip() not in excl]
+            log(f"  {emb} · fuera de la Maestra ({len(fuera)} líneas, {sum(float(p.get('Qty') or 0) for p in fuera):,.0f} u): "
+                f"{sorted({str(p.get('Model')) for p in fuera})}")
         e["fuente"] = f"{origen} {datetime.fromtimestamp(fecha):%d-%m-%Y}"
         embs.append(e)
     if esperan:
@@ -332,7 +347,8 @@ def main():
         sys.exit(1)
     log(f"  ✓ Maestra actualizada. Respaldo: {bk}")
     with open(LOGS / "maestra_sync.jsonl", "a", encoding="utf-8") as f:
-        f.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"), "embarques": [e["embarque"] for e in embs],
+        f.write(json.dumps({"ts": datetime.now().isoformat(timespec="seconds"), "sha_escrito": sha(MAESTRA),
+                            "embarques": [e["embarque"] for e in embs],
                             "fuentes": {e["embarque"]: e["fuente"] for e in embs}, "respaldo": str(bk),
                             **{k: v for k, v in st.items() if not k.startswith("listado")}}, ensure_ascii=False) + "\n")
 
