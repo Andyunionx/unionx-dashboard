@@ -70,7 +70,12 @@ class Ctx:
         ing = raw[raw['Centro de costo'] == 'Ingreso venta']
         self.ING = ing.groupby(['Canal', 'Mes'])['Monto'].sum()
         self.ING_MOD = ing.groupby(['Canal', 'Modalidad', 'Mes'])['Monto'].sum()
-        self.meses_gab = sorted(g['Mes'].unique())
+        # Mes de comparación = último mes con carga de los cinco marketplaces. Un mes a medio
+        # cargar (ej. septiembre sin Paris) daba semáforos falsos ("en meta" con $0).
+        MK = ['Mercado Libre', 'Falabella', 'Walmart', 'Paris', 'Ripley']
+        por_mes = g[g['Canal'].isin(MK)].groupby('Mes')['Canal'].apply(set)
+        completos = sorted(m for m, cs in por_mes.items() if set(MK) <= cs)
+        self.meses_gab = completos or sorted(g['Mes'].unique())
         self.meses_raw = sorted(ing['Mes'].unique())
 
     # --- helpers ---
