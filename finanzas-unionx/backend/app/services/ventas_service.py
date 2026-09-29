@@ -319,6 +319,9 @@ class VentasService(BaseOdooService):
             # (decisión Andrés 19-ago: no estimar no liquidadas). Reemplaza el tarifario.
             'x_fala_commission_est', 'x_fala_commission_is_real', 'x_fala_shipping_cost',
             'x_walmart_commission_is_real', 'x_meli_logistic_type',
+            # Logística por pedido (Martín 29-09, con IVA): Walmart = despacho seller +
+            # fulfillment + logística inversa; Ripley = glosas que el glosario manda a envío.
+            'x_walmart_logistics_cost', 'x_ripley_logistics_cost',
         ]
 
         all_orders = []
@@ -970,14 +973,15 @@ class VentasService(BaseOdooService):
                                                                    + abs(o.get('x_paris_reverse_logistics') or 0)) / _IVA
             if 'ripley' in ch:
                 # x_ripley_commission == _fee: en Mirakl el IVA de comisión viene en 0 y el
-                # monto ya trae IVA. Logística: sin campo aún (Martín la puede agregar).
-                return (o.get('x_ripley_commission') or 0) / _IVA, 0.0
+                # monto ya trae IVA. Logística: x_ripley_logistics_cost (Martín 29-09).
+                return (o.get('x_ripley_commission') or 0) / _IVA, abs(o.get('x_ripley_logistics_cost') or 0) / _IVA
             if 'walmart' in ch:
                 # Solo comisión REAL de la liquidación (automática desde el 25-09). La
                 # estimada (15% plano) queda en 0: "no estimar no liquidadas" (Andrés 17/19-ago).
+                _log_w = abs(o.get('x_walmart_logistics_cost') or 0) / _IVA
                 if o.get('x_walmart_commission_is_real'):
-                    return (o.get('x_walmart_commission_est') or 0) / _IVA, 0.0
-                return 0.0, 0.0
+                    return (o.get('x_walmart_commission_est') or 0) / _IVA, _log_w
+                return 0.0, _log_w
             if 'falabella' in ch:
                 # Comisión REAL de liquidación (bruto c/IVA → neto /1.19). Solo si ya
                 # está liquidada (is_real); si no, 0 (no estimar — Andrés 19-ago).
