@@ -230,11 +230,13 @@ def insertar_en_listado(xml, fin_bloque, fila_modelo, embs, codigo_modelo, puert
     return fijar_dimension(xml, dim.group(1), int(dim.group(2)) + n)
 
 
-def actualizar_matriz(xml: str, embs: list, ss: list):
+def actualizar_matriz(xml: str, embs: list, ss: list, extra_skus: list | None = None):
+    """Columna por embarque nuevo + fila por SKU nuevo (de los embarques o de correcciones: extra_skus [(sku, nombre)])."""
     cab, filas, cola = partes_sheetdata(xml)
     ult_col = max(col2n(c) for c, r, a, inner in CELL.findall(filas[5]))
     cols = [n2col(ult_col + 1 + i) for i in range(len(embs))]
     todas = [n2col(i) for i in range(3, ult_col + 1)] + cols
+    col_fin = cols[-1] if cols else n2col(ult_col)
 
     def formula(col, r):
         return (f"IFERROR(AVERAGEIFS(Maestra!$T$2:$T${RANGO_NUEVO},Maestra!$D$2:$D${RANGO_NUEVO},$A{r},"
@@ -250,18 +252,18 @@ def actualizar_matriz(xml: str, embs: list, ss: list):
             filas[r] = filas[r].replace("</row>", "".join(c_f(f"{c}{r}", formula(c, r), 210, texto=True) for c in cols) + "</row>")
     r_sig = max(filas) + 1
     nuevos = []
-    for e in embs:
-        for p in e["productos"]:
-            sku = str(p.get("SKU") or "").strip()
-            if sku and sku not in existentes and sku not in [s for s, _ in nuevos]:
-                nuevos.append((sku, str(p.get("Descripcion") or "").split("\n")[0].strip()[:80]))
+    candidatos = [(str(p.get("SKU") or "").strip(), str(p.get("Descripcion") or "").split("\n")[0].strip()[:80])
+                  for e in embs for p in e["productos"]] + list(extra_skus or [])
+    for sku, nombre in candidatos:
+        if sku and sku not in existentes and sku not in [s for s, _ in nuevos]:
+            nuevos.append((sku, nombre))
     for sku, nombre in nuevos:
         filas[r_sig] = (f'<row r="{r_sig}">' + c_str(f"A{r_sig}", sku) + c_str(f"B{r_sig}", nombre)
                         + "".join(c_f(f"{c}{r_sig}", formula(c, r_sig), 210, texto=True) for c in todas) + "</row>")
         r_sig += 1
     xml = cab + "".join(filas[r] for r in sorted(filas)) + cola
-    xml = re.sub(r'(<conditionalFormatting[^>]*sqref=")C6:[A-Z]+\d+(")', rf"\g<1>C6:{cols[-1]}{r_sig - 1}\g<2>", xml)
-    return fijar_dimension(xml, cols[-1], r_sig - 1), len(cols), len(nuevos)
+    xml = re.sub(r'(<conditionalFormatting[^>]*sqref=")C6:[A-Z]+\d+(")', rf"\g<1>C6:{col_fin}{r_sig - 1}\g<2>", xml)
+    return fijar_dimension(xml, col_fin, r_sig - 1), len(cols), len(nuevos)
 
 
 # ---------------------------------------------------------------- lectura robusta (corridas sucesivas)
@@ -331,13 +333,28 @@ def textos_compartidos(z) -> list:
 
 
 # ---------------------------------------------------------------- construcción completa
-def construir(maestra_path: Path, embs: list, destino: Path) -> dict:
-    """Escribe en `destino` la Maestra con los embarques `embs` (dicts de leer_precosteo) agregados."""
+def fijar_sku(xml: str, fila: int, sku: str) -> str:
+    """Reemplaza el SKU (columna D) de una fila existente de la hoja Maestra, conservando su formato."""
+    pat = re.compile(rf'<c r="D{fila}"([^>]*?)(?:/>|>.*?</c>)', re.S)
+    m = pat.search(xml)
+    if not m:
+        raise RuntimeError(f"No encontré la celda D{fila} en la Maestra")
+    st = re.search(r's="(\d+)"', m.group(1))
+    nueva = c_num(f"D{fila}", int(sku), st.group(1) if st else None) if re.fullmatch(r"\d{1,15}", sku) \
+        else c_str(f"D{fila}", sku, st.group(1) if st else None)
+    return xml[:m.start()] + nueva + xml[m.end():]
+
+
+def construir(maestra_path: Path, embs: list, destino: Path, correcciones: dict | None = None) -> dict:
+    """Escribe en `destino` la Maestra con los embarques `embs` (dicts de leer_precosteo) agregados y, si hay,
+    las correcciones de SKU en filas ya cargadas: {fila: (sku_nuevo, nombre)}."""
     import zipfile
     from xml.etree import ElementTree
     z = zipfile.ZipFile(maestra_path)
     xmls = {k: z.read(f"xl/worksheets/{v}.xml").decode("utf-8") for k, v in HOJA.items()}
     ss = textos_compartidos(z)
+    for fila, (sku, _) in (correcciones or {}).items():
+        xmls["maestra"] = fijar_sku(xmls["maestra"], fila, sku)
 
     # Maestra: filas por SKU desde la fila siguiente a la última con N° de embarque escrito
     col_a = literales_columna(xmls["maestra"], "A", ss)
@@ -387,9 +404,11 @@ def construir(maestra_path: Path, embs: list, destino: Path) -> dict:
     # listados por embarque (insertan filas y desplazan lo de abajo)
     la = detectar_listado(maestra_path, "1. Apertura CC")
     lv = detectar_listado(maestra_path, "3. Variables Exógenas")
-    xmls["apertura_cc"] = insertar_en_listado(xmls["apertura_cc"], la["fin"], la["modelo"], embs, la["codigo"], la["puerto"], la["anio"])
-    xmls["variables"] = insertar_en_listado(xmls["variables"], lv["fin"], lv["modelo"], embs, lv["codigo"], lv["puerto"], lv["anio"])
-    xmls["matriz"], n_cols, n_skus = actualizar_matriz(xmls["matriz"], embs, ss)
+    if embs:
+        xmls["apertura_cc"] = insertar_en_listado(xmls["apertura_cc"], la["fin"], la["modelo"], embs, la["codigo"], la["puerto"], la["anio"])
+        xmls["variables"] = insertar_en_listado(xmls["variables"], lv["fin"], lv["modelo"], embs, lv["codigo"], lv["puerto"], lv["anio"])
+    xmls["matriz"], n_cols, n_skus = actualizar_matriz(xmls["matriz"], embs, ss,
+                                                       extra_skus=list((correcciones or {}).values()))
 
     total_amp = 0
     for k in ("apertura_cc", "variables", "matriz", "resumen_var", "eficiencia"):
@@ -428,7 +447,14 @@ def construir(maestra_path: Path, embs: list, destino: Path) -> dict:
     faltan = [e["embarque"] for e in embs if e["embarque"] not in leidos]
     if faltan:
         raise RuntimeError(f"Validación: no se leen de vuelta en Maestra {faltan}")
+    xm = zp.read(f"xl/worksheets/{HOJA['maestra']}.xml").decode("utf-8")
+    for fila, (sku, _) in (correcciones or {}).items():
+        m = re.search(rf'<c r="D{fila}"([^>]*?)(?:/>|>(.*?)</c>)', xm, re.S)
+        v = valor_literal(m.group(1), m.group(2) or "", ss2) if m else None
+        if str(v) != str(sku):
+            raise RuntimeError(f"Validación: D{fila} quedó '{v}' y debía ser '{sku}'")
     return {"filas_maestra": len(nuevas), "fila_ini": fila_ini, "fila_fin": r - 1, "embarques": len(embs),
+            "correcciones": len(correcciones or {}),
             "matriz_columnas": n_cols, "matriz_skus": n_skus, "formulas_ampliadas": total_amp, "hojas": n_hojas,
             "listado_apertura": la, "listado_variables": lv}
 

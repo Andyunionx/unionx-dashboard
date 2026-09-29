@@ -42,6 +42,11 @@ LEGADO = [REPO_DRIVE / "agente-comex" / "data" / "output", REPO_DRIVE / "agente-
 TOKEN = REPO_DRIVE / "agente-comex" / "config" / "token.json"          # mismo token del agente (solo lectura)
 WORK = Path("C:/Users/andre/comex_maestra")
 CACHE, BACKUPS, LOGS, PREVIEW = WORK / "cache", WORK / "backups", WORK / "logs", WORK / "preview"
+# precosteos retroactivos (embarques ene-mar 2026 que nunca pasaron por el agente): PI+PL del correo + flete
+# Seimex + SKU de la OC de Odoo; solo los que cuadran por unidades con Odoo se copian a "aprobados"
+RETRO = WORK / "retro" / "aprobados"
+# las correcciones de SKU en filas ya cargadas se limitan a lo que agregó este proceso (desde el 29-sep-2026)
+FILA_INICIO_SYNC = 2625
 REPO_GIT = Path(__file__).resolve().parents[2]                          # worktree de este código
 ALIAS = Path(__file__).parent / "alias_sku.json"
 RX_ADJ = re.compile(r"^Pre-costeo_x_CBM_(\d{2}TP\d{4}[A-Z]*)\.xlsx$")
@@ -106,7 +111,7 @@ def bajar_de_correo() -> list:
 
 def del_legado() -> list:
     out = []
-    for d in LEGADO:
+    for d in LEGADO + [RETRO]:
         for f in glob.glob(str(d / "*" / "Pre-costeo_x_CBM_*.xlsx")):
             mm = RX_ADJ.match(Path(f).name)
             if mm:
@@ -206,6 +211,27 @@ def completar_con_odoo(embs: list):
             log(f"  {e['embarque']} · SKU que no existen en Odoo (se dejan igual): {', '.join(faltan)}")
 
 
+def correcciones_existentes(manual: dict, estado: dict) -> dict:
+    """{fila: (sku_nuevo, descripción)} para filas YA cargadas por este proceso cuyo SKU falta o es un alias conocido
+    (alias_sku.json por embarque o global, o sku_alias del estado del agente). Nunca toca filas históricas."""
+    import openpyxl
+    wb = openpyxl.load_workbook(MAESTRA, read_only=True, data_only=True)
+    out = {}
+    for i, row in enumerate(wb["Maestra"].iter_rows(min_row=FILA_INICIO_SYNC, max_col=4, values_only=True), FILA_INICIO_SYNC):
+        emb, _, modelo, sku = (row + (None,) * 4)[:4]
+        if not emb:
+            continue
+        emb, modelo, sku = str(emb).strip(), str(modelo or "").strip(), str(sku or "").strip()
+        alias = dict(manual.get("global", {}))
+        alias.update(manual.get("por_embarque", {}).get(emb, {}))
+        alias.update({k: {"sku": v} for k, v in (estado.get(emb) or {}).get("sku_alias", {}).items()})
+        nuevo = (alias.get(sku) if sku else None) or (alias.get(modelo) if not sku or not sku_valido(sku) else None)
+        if nuevo and nuevo["sku"] != sku:
+            out[i] = (nuevo["sku"], f"{emb} · {modelo} · {sku or '(sin SKU)'}")
+    wb.close()
+    return out
+
+
 # ---------------------------------------------------------------- 4. escritura segura
 def puede_escribir() -> str | None:
     lock = MAESTRA.with_name("~$" + MAESTRA.name)
@@ -254,10 +280,11 @@ def main():
         if emb in en_maestra or (solo and emb not in solo):
             continue
         origen = ("correo" if str(path).startswith(str(CACHE)) else
-                  "agente antiguo" if str(path).startswith(str(LEGADO[0])) else "agente nuevo (local)")
+                  "agente antiguo" if str(path).startswith(str(LEGADO[0])) else
+                  "retroactivo" if str(path).startswith(str(RETRO)) else "agente nuevo (local)")
         reg = estado.get(emb)
         # el agente antiguo solo costeó embarques que se cerraron con OC a mano; el nuevo, se mira su estado
-        if not (origen == "agente antiguo" or con_oc(reg)):
+        if not (origen in ("agente antiguo", "retroactivo") or con_oc(reg)):
             esperan.append(f"{emb} (fase {reg.get('fase') if reg else '?'})")
             continue
         e = MX.leer_precosteo(str(path))
@@ -270,7 +297,10 @@ def main():
         embs.append(e)
     if esperan:
         log(f"  Esperan OC (entran solos cuando la tengan): {', '.join(esperan)}")
-    if not embs:
+    correcciones = correcciones_existentes(manual, estado)
+    for fila, (sku, txt) in correcciones.items():
+        log(f"  corrección fila {fila}: {txt} → {sku}")
+    if not embs and not correcciones:
         log("  Nada que agregar: la Maestra ya tiene todos los embarques con OC.")
         return
     completar_con_odoo(embs)
@@ -279,8 +309,8 @@ def main():
 
     PREVIEW.mkdir(parents=True, exist_ok=True)
     destino = PREVIEW / f"Maestra Importaciones (vista previa {datetime.now():%Y%m%d-%H%M}).xlsx"
-    st = MX.construir(MAESTRA, embs, destino)
-    log(f"  ✓ Válida: Maestra +{st['filas_maestra']} filas ({st['fila_ini']}–{st['fila_fin']}) · +{st['embarques']} embarques en "
+    st = MX.construir(MAESTRA, embs, destino, correcciones)
+    log(f"  ✓ Válida: {st['correcciones']} SKU corregidos · Maestra +{st['filas_maestra']} filas ({st['fila_ini']}–{st['fila_fin']}) · +{st['embarques']} embarques en "
         f"Variacion Exog./Eficiencia/Centros/listados · Matriz +{st['matriz_columnas']} col y +{st['matriz_skus']} SKU · "
         f"{st['formulas_ampliadas']} fórmulas ampliadas · {st['hojas']} hojas → {destino}")
     if not a.aplicar:

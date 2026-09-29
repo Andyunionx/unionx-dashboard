@@ -1,11 +1,33 @@
 {
   "_uso": "Correcciones de SKU para la Maestra viva (maestra_sync.py). Clave = SKU o MODELO tal como viene en el precosteo. Agregar SOLO con fuente verificable y anotarla. El estado del agente (sku_alias) se suma solo.",
   "global": {
-    "SIMOREXBAS-35": {"sku": "SIMOREXOSL-WD", "fuente": "Andrés 24-sep-2026: organizador Oslo = SIMOREXOSL-WD (SIMOREXBAS-35 no existe)"}
+    "SIMOREXBAS-35": {
+      "sku": "SIMOREXOSL-WD",
+      "fuente": "Andrés 24-sep-2026: organizador Oslo = SIMOREXOSL-WD (SIMOREXBAS-35 no existe)"
+    }
   },
   "por_embarque": {
     "26TP0702": {
-      "YH702": {"sku": "SIMCUMAR-BK", "fuente": "Andrés 24-sep-2026 (set cuchillos Paris, 204 u) + OC P00731"}
+      "YH702": {
+        "sku": "SIMCUMAR-BK",
+        "fuente": "Andrés 24-sep-2026 (set cuchillos Paris, 204 u) + OC P00731"
+      }
+    },
+    "26TP0811": {
+      "HD4 Khaki": {
+        "sku": "TCMULTSTY5N1-BG",
+        "fuente": "Maestra de Productos (T-Care: HD4 = TCMULTSTY5N1 y TCMULTSTY5N1-BG Beige) + OC P00636 (0129: 1.002 u -BG)"
+      }
+    },
+    "26TP0207": {
+      "LVMPADS-BK": {
+        "sku": "LVMPADOFS-BK",
+        "fuente": "OC P00651: Mousepad Officepad S 23x20, 500 u (PI: OfficePad S US$1,2)"
+      },
+      "LVMPADL-BK": {
+        "sku": "LVMPADBML-BK",
+        "fuente": "OC P00651: Mousepad Battlemat L 45x40, 500 u (PI: Pad L US$2,2)"
+      }
     }
   }
 }
