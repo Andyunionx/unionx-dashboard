@@ -43,6 +43,8 @@ jobs:
           SEIMEX_EMAIL: ${{ secrets.SEIMEX_EMAIL }}
           SEIMEX_PASSWORD: ${{ secrets.SEIMEX_PASSWORD }}
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          # Vigía de la Maestra: la lee desde Drive (solo lectura) con el token OAuth del usuario
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
           # COMMIT_MODE=1 activa escrituras (correo al equipo + PO Odoo).
           # Se controla con una Variable de repo (Settings → Variables). Vacía = dry-run.
           COMMIT_MODE: ${{ vars.COMMIT_MODE }}
@@ -55,7 +57,7 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions COMEX"
-          git add agente-comex-auto/data/estado_embarques.json agente-comex-auto/data/digest_semanal.json || true
+          git add agente-comex-auto/data/estado_embarques.json agente-comex-auto/data/digest_semanal.json agente-comex-auto/data/vigia_maestra.json || true
           if ! git diff --staged --quiet; then
             git commit -m "Sync estado agente COMEX $(date -u +'%Y-%m-%d %H:%M UTC')"
             git pull --rebase origin main   # evita el race con otros commits en main

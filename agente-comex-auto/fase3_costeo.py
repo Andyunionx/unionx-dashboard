@@ -266,7 +266,8 @@ def resumen_lunes(estado: dict, dry_run: bool = True):
             "<th style='padding:6px'>Estado</th><th style='padding:6px'>PO</th>"
             f"<th style='padding:6px'>Pendiente (SKU · modelo · qty · producto)</th></tr>{html_filas}</table>"
             "<p>Los SKU por crear bloquean la PO: favor crearlos en Odoo con ese código exacto. "
-            "Los ítems <i>sin código</i> no bloquean (la PO se carga parcial sin ellos). Saludos.</p></div>")
+            "Los ítems <i>sin código</i> no bloquean (la PO se carga parcial sin ellos).</p>"
+            + _linea_maestra() + "<p>Saludos.</p></div>")
     subj = (f"Resumen semanal COMEX — {len(filas)} embarque(s) detenidos"
             + (f" · 🔴 {n_urg} urgente(s)" if n_urg else ""))
     if dry_run:
@@ -278,6 +279,16 @@ def resumen_lunes(estado: dict, dry_run: bool = True):
     DIGEST_FILE.write_text(json.dumps({"ultimo": hoy.isoformat(), "msg_id": mid,
                                        "embarques": [f[1] for f in filas]}, indent=2), encoding="utf-8")
     print(f"Resumen semanal enviado ({mid}) · {len(filas)} embarques · {n_urg} urgentes")
+
+
+def _linea_maestra() -> str:
+    """Estado de la Maestra de Importaciones (lo vigila vigia_maestra.py; el detalle le llega solo a Andrés)."""
+    try:
+        import vigia_maestra
+        return vigia_maestra.linea_resumen()
+    except Exception as e:
+        print(f"  (línea Maestra del resumen falló: {e})")
+        return ""
 
 
 def procesar(dry_run: bool = True) -> dict:

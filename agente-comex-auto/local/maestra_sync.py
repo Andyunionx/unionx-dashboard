@@ -22,6 +22,7 @@ import base64
 import glob
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -116,10 +117,15 @@ def del_legado() -> list:
 # ---------------------------------------------------------------- 2. estado del agente (origin/main)
 def estado_agente() -> dict:
     cache = CACHE / "estado_embarques.json"
+    # con pythonw (Programador de tareas) git necesita consola oculta y sin prompts, o muere con 0xC000013A
+    kw = dict(capture_output=True, stdin=subprocess.DEVNULL, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+              env={**os.environ, "GIT_TERMINAL_PROMPT": "0"})
     try:
-        subprocess.run([GIT, "-C", str(REPO_GIT), "fetch", "-q", "origin", "main"], check=True, capture_output=True, timeout=120)
+        f = subprocess.run([GIT, "-C", str(REPO_GIT), "fetch", "-q", "origin", "main"], timeout=120, **kw)
+        if f.returncode:
+            log(f"  (aviso: git fetch devolvió {f.returncode}; uso el último origin/main descargado)")
         txt = subprocess.run([GIT, "-C", str(REPO_GIT), "show", "origin/main:agente-comex-auto/data/estado_embarques.json"],
-                             check=True, capture_output=True, timeout=60).stdout.decode("utf-8")
+                             check=True, timeout=60, **kw).stdout.decode("utf-8")
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(txt, encoding="utf-8")
     except Exception as e:  # sin red: se usa la última copia buena

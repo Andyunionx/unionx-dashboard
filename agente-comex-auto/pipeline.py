@@ -22,6 +22,7 @@ import fase1_correos            # noqa: E402
 import fase2_seimex             # noqa: E402
 import fase3_costeo             # noqa: E402
 import fase4_odoo               # noqa: E402
+import vigia_maestra            # noqa: E402
 
 
 def main():
@@ -32,6 +33,12 @@ def main():
 
     print("\n── FASE 2 · flete Seimex ──")
     fase2_seimex.procesar(dry_run=DRY)
+
+    print("\n── VIGÍA · Maestra de Importaciones (la actualiza el PC; aquí se verifica el resultado) ──")
+    try:
+        vigia_maestra.revisar(st.cargar(), dry_run=DRY)
+    except Exception as e:
+        print(f"  (vigía falló: {type(e).__name__}: {e})")
 
     print("\n── FASE 3 · costeo + SKUs Odoo ──")
     fase3_costeo.procesar(dry_run=DRY)
