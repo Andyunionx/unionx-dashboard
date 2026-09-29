@@ -351,88 +351,230 @@ def _js(opts):
     return s
 
 
+def opt_modalidad(mods, v0, v1, l0, l1):
+    def serie(nm, vals, color, enf):
+        return {'name': nm, 'type': 'bar', 'barMaxWidth': 34, 'itemStyle': {'color': color},
+                'data': [{'value': (round(v, 2) if v is not None else None), 'tip': f'{nm}: {n(v)}%' if v is not None else 'sin venta',
+                          'label': _lab(n(v) + '%' if v is not None else '', 'top', INK if enf else MUTE, enf, 10.5)} for v in vals]}
+    return {'tooltip': TIP, 'animation': False,
+            'legend': {'top': 0, 'right': 0, 'itemWidth': 10, 'itemHeight': 10, 'icon': 'rect', 'textStyle': {'color': MUTE, 'fontSize': 11, 'fontFamily': MONO}},
+            'grid': {'left': 12, 'right': 8, 'top': 32, 'bottom': 4, 'containLabel': True}, 'xAxis': _ax_cat(mods),
+            'yAxis': {**_ax_val('% margen', '@@PCT@@'), 'boundaryGap': ['6%', '16%']},
+            'series': ([serie(l0, v0, GRAY, False)] if v0 else []) + [serie(l1, v1, BLUE, True)]}
+
+
+# ───────────────────────── detalle explicativo por canal ─────────────────────────
+CENTROS = [('Costo venta', 'Costo de venta'), ('Devolución', 'Devolución'), ('Comisión venta', 'Comisión de venta'),
+           ('Comisión envío', 'Comisión de envío'), ('Marketing', 'Marketing')]
+
+
+def detalle_canal(c, X, base, gab, M0, M1):
+    ING = X['ING']
+    i0, i1 = ING.get((c, M0), 0) if M0 else 0, ING.get((c, M1), 0)
+    CC = base[base['Canal'] == c].groupby(['Mes', 'Centro de costo'])['Monto'].sum()
+    centros = []
+    for cc, lab in CENTROS:
+        a0, a1 = (CC.get((M0, cc), 0) if M0 else 0), CC.get((M1, cc), 0)
+        p0, p1 = (a0 / i0 * 100 if i0 else None), (a1 / i1 * 100 if i1 else None)
+        # efecto en el margen de agosto = Δ p.p. × ingreso de agosto (el "cuánto vale" del cambio)
+        efecto = ((p1 - p0) / 100 * i1) if (p0 is not None and p1 is not None) else None
+        centros.append(dict(centro=lab, cc=cc, a0=a0, a1=a1, p0=p0, p1=p1, d=(p1 - p0) if p0 is not None else None, efecto=efecto))
+    g = gab[gab['Canal'] == c].copy()
+    g['k'] = g['Glosa'].str.lower()
+    A = g[g['Mes'] == M1].groupby('k').agg(v1=('Valor', 'sum'), glosa=('Glosa', 'first'), cc=('cc', 'first'))
+    Bq = g[g['Mes'] == M0].groupby('k').agg(v0=('Valor', 'sum'), glosa0=('Glosa', 'first'), cc0=('cc', 'first')) if M0 else pd.DataFrame(columns=['v0', 'glosa0', 'cc0'])
+    z = A.join(Bq, how='outer').fillna({'v1': 0, 'v0': 0})
+    z['glosa'] = z['glosa'].fillna(z['glosa0'])
+    z['cc'] = z['cc'].fillna(z['cc0'])
+    # Valor de Gabriela: costo positivo. En % del ingreso con signo del margen (costo = negativo)
+    z['p0'] = -z['v0'] / i0 * 100 if i0 else 0
+    z['p1'] = -z['v1'] / i1 * 100 if i1 else 0
+    z['d'] = z['p1'] - z['p0']
+    z['estado'] = ['nueva' if a == 0 and b != 0 else ('desaparece' if b == 0 and a != 0 else '') for a, b in zip(z['v0'], z['v1'])]
+    z = z.sort_values('d', key=lambda s: -s.abs())
+    glosas = [dict(glosa=r.glosa, cc=r.cc, v0=r.v0, v1=r.v1, p0=r.p0, p1=r.p1, d=r.d, estado=r.estado) for r in z.itertuples() if abs(r.d) >= 0.1][:10]
+    mods = []
+    for mod in ['Colecta', 'Envío directo', 'Fulfillment']:
+        s1 = X['ING_MOD'].get((c, mod, M1), 0)
+        if i1 and s1 / i1 >= 0.05:
+            mods.append(dict(mod=mod, share=s1 / i1 * 100, m0=X['mgmod'](c, mod, M0) if M0 else None, m1=X['mgmod'](c, mod, M1)))
+    mg0, mg1 = X['mg'](c, M0) if M0 else None, X['mg'](c, M1)
+    d = (mg1 - mg0) if mg0 is not None else 0
+    # narrativa: los centros que más mueven, cada uno con su glosa principal
+    partes = []
+    for ce in sorted([x for x in centros if x['d'] is not None], key=lambda x: -abs(x['d']))[:3]:
+        if abs(ce['d']) < 0.5:
+            continue
+        gl = [x for x in glosas if x['cc'] == ce['cc']]
+        txt = f"{ce['centro'].lower()} {pp(ce['d'])} p.p. ({'+' if ce['efecto'] > 0 else '−'}{mm(abs(ce['efecto']))} de margen)"
+        if gl:
+            x = gl[0]
+            txt += (f", sobre todo por \"{x['glosa']}\"" + (' (glosa nueva este mes' if x['estado'] == 'nueva' else ' (desaparece este mes' if x['estado'] == 'desaparece' else ' (')
+                    + f"{'' if x['estado'] == '' else ', '}{mm(x['v1'])} en {nom(M1).lower()} vs {mm(x['v0'])} en {nom(M0).lower()})")
+        elif ce['cc'] == 'Devolución':
+            txt += (': ojo, la devolución de ' + nom(M1).lower() + ' todavía no cierra su ventana de 3 meses, así que parte de esta mejora puede revertirse'
+                    if ce['d'] > 0 else ', que sale del RAW por fecha de venta y todavía puede crecer hasta cerrar su ventana de 3 meses')
+        partes.append(txt)
+    efecto_total = d / 100 * i1
+    if mg0 is None:
+        narrativa = f'{c} deja {n(mg1)}% en {nom(M1).lower()}.'
+    elif abs(d) < 0.5:
+        narrativa = f'{c} se mantiene: {n(mg0)}% → {n(mg1)}%.'
+    else:
+        narrativa = (f"El margen de {c} pasó de {n(mg0)}% a {n(mg1)}% ({pp(d)} p.p.). A la venta de {nom(M1).lower()} ({mm(i1)}) "
+                     f"eso equivale a {'+' if efecto_total > 0 else '−'}{mm(abs(efecto_total))} de margen. Lo explican: " + '; '.join(partes) + '.')
+    if len(mods) >= 2:
+        best = max(mods, key=lambda m: m['m1'] if m['m1'] is not None else -1e9)
+        worst = min(mods, key=lambda m: m['m1'] if m['m1'] is not None else 1e9)
+        narr_mod = (f"Por modalidad, {best['mod']} es la que más deja ({n(best['m1'])}%, {n(best['share'], 0)}% de la venta) y "
+                    f"{worst['mod']} la que menos ({n(worst['m1'])}%, {n(worst['share'], 0)}% de la venta).")
+    else:
+        narr_mod = ''
+    return dict(canal=c, i0=i0, i1=i1, mg0=mg0, mg1=mg1, d=d, efecto=efecto_total, centros=centros, glosas=glosas, mods=mods,
+                narrativa=narrativa, narr_mod=narr_mod)
+
+
+def _tabla(heads, rows, aligns, cls='t'):
+    th = ''.join(f'<th style="text-align:{a}">{h}</th>' for h, a in zip(heads, aligns))
+    tr = ''.join('<tr>' + ''.join(f'<td style="text-align:{a}">{v}</td>' for v, a in zip(r, aligns)) + '</tr>' for r in rows)
+    return f'<div class="scroll"><table class="{cls}"><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table></div>'
+
+
+def _chip(t, tono):
+    return f'<span class="chip {tono}">{H.escape(t)}</span>'
+
+
+def _signo(v, d=1, suf=''):
+    if v is None:
+        return '—'
+    c = 'pos' if v > 0.05 else 'neg' if v < -0.05 else 'neu'
+    return f'<span class="{c}" style="white-space:nowrap">{pp(v, d)}{suf}</span>'
+
+
 def dashboard_html(ctx):
-    """Dashboard completo (adjunto). También es la fuente de los PNG del correo: cada panel
-    con id se captura con Playwright."""
-    k, opts = ctx['kpis'], {}
+    """Dashboard explicativo (adjunto del correo)."""
+    opts = {}
     kp = ''.join(f"""<div class="kpi"><div class="eyebrow">{H.escape(t['label'])}</div><div class="kv">{t['valor']}<span class="ku">{t.get('unidad', '')}</span></div>
-<div class="kd" style="color:{t.get('color', MUTE)}">{t['meta']}</div></div>""" for t in k)
+<div class="kd" style="color:{t.get('color', MUTE)}">{t['meta']}</div><div class="kx">{t.get('expl', '')}</div></div>""" for t in ctx['kpis'])
     opts['c_mancuerna'] = opt_mancuerna(ctx['mancuerna'], ctx['l0'], ctx['l1'])
+    l0, l1 = ctx['l0'], ctx['l1']
+    res_rows = [[f'<b>{H.escape(r["canal"])}</b>', mm(r['i1']), (n(r['mg0']) + '%') if r['mg0'] is not None else '—', f'<b>{n(r["mg1"])}%</b>',
+                 _signo(r['d'], suf=' p.p.'), ('+' if r['efecto'] > 0 else '−') + mm(abs(r['efecto']))] for r in ctx['detalle']]
+    resumen_tab = _tabla(['Canal', f'Ingreso {l1[:3].lower()}', f'Margen {l0[:3].lower()}', f'Margen {l1[:3].lower()}', 'Δ', f'Efecto en margen {l1[:3].lower()}'],
+                         res_rows, ['left', 'right', 'right', 'right', 'right', 'right'])
     canales = ''
-    for i, c in enumerate(ctx['canales']):
-        opts[f'c_casc{i}'] = opt_cascada(c['cascada'])
-        if c['glosas']:
-            opts[f'c_glo{i}'] = opt_glosas(c['glosas'])
-        canales += f"""<section class="panel" id="p_canal{i}"><div class="eyebrow">{H.escape(c['canal'])} · {H.escape(c['sub'])}</div>
-<h3>{H.escape(c['titulo'])}</h3><p class="lead">{H.escape(c['lead'])}</p>
-<div class="two" id="g_canal{i}" style="background:#fff;padding:4px 2px"><div><div class="mini">De dónde sale la variación del margen (p.p. del ingreso)</div><div class="chart" id="c_casc{i}" style="height:250px"></div></div>
-<div><div class="mini">Glosas que más se movieron</div>{f'<div class="chart" id="c_glo{i}" style="height:250px"></div>' if c['glosas'] else '<p class="lead">Sin glosas con más de 0,3 p.p. de variación.</p>'}</div></div></section>"""
+    for i, dc in enumerate(ctx['detalle']):
+        steps = [(f'Margen {l0[:3].lower()}', dc['mg0'] or 0, 'start')] + [(ce['centro'].replace('Comisión de ', 'Comisión '), ce['d'] or 0, 'dec') for ce in dc['centros']]
+        otros = (dc['d'] or 0) - sum((ce['d'] or 0) for ce in dc['centros'])
+        if abs(otros) >= 0.05:
+            steps.append(('Otros', otros, 'dec'))
+        steps.append((f'Margen {l1[:3].lower()}', 0, 'total'))
+        opts[f'c_casc{i}'] = opt_cascada(steps)
+        gl = [(x['glosa'], x['d']) for x in dc['glosas'][:7]]
+        if gl:
+            opts[f'c_glo{i}'] = opt_glosas(gl)
+        if len(dc['mods']) >= 2:
+            opts[f'c_mod{i}'] = opt_modalidad([m['mod'] for m in dc['mods']], [m['m0'] for m in dc['mods']] if dc['mg0'] is not None else None,
+                                              [m['m1'] for m in dc['mods']], l0, l1)
+        cen_rows = [[ce['centro'], (n(ce['p0']) + '%') if ce['p0'] is not None else '—', (n(ce['p1']) + '%') if ce['p1'] is not None else '—',
+                     _signo(ce['d'], suf=' p.p.'), (('+' if ce['efecto'] > 0 else '−') + mm(abs(ce['efecto']))) if ce['efecto'] is not None else '—']
+                    for ce in dc['centros']]
+        gl_rows = [[H.escape(x['glosa']) + (' ' + _chip(x['estado'], 'bad' if x['estado'] == 'nueva' else 'neu') if x['estado'] else ''), H.escape(str(x['cc'])),
+                    mm(x['v0']), mm(x['v1']), f"{n(x['p0'])}%", f"{n(x['p1'])}%", _signo(x['d'], suf=' p.p.')] for x in dc['glosas']]
+        mod_rows = [[m['mod'], f"{n(m['share'], 0)}%", (n(m['m0']) + '%') if m['m0'] is not None else '—', f"<b>{n(m['m1'])}%</b>",
+                     _signo((m['m1'] - m['m0']) if m['m0'] is not None else None, suf=' p.p.')] for m in dc['mods']]
+        canales += f"""<section class="panel" id="canal{i}"><div class="eyebrow">{H.escape(dc['canal'])} · {l0} → {l1}</div>
+<h3>{H.escape(ctx['titulos'][i])}</h3>
+<div class="qp"><div class="qp-t">Qué pasó</div><p>{H.escape(dc['narrativa'])}</p>{f'<p>{H.escape(dc["narr_mod"])}</p>' if dc['narr_mod'] else ''}</div>
+<div class="two"><div><div class="mini">De dónde sale la variación del margen</div>
+<div class="how">Parte del margen de {l0.lower()} (azul oscuro). Cada barra es cuánto sumó (verde) o restó (rojo) cada centro de costo, en puntos del ingreso. Termina en el margen de {l1.lower()} (azul).</div>
+<div class="chart" id="c_casc{i}" style="height:270px"></div></div>
+<div><div class="mini">Las glosas que más se movieron</div>
+<div class="how">Cambio de cada glosa como % del ingreso entre los dos meses. Rojo = ese cargo pesa más (resta margen); verde = pesa menos o es un abono.</div>
+{f'<div class="chart" id="c_glo{i}" style="height:270px"></div>' if gl else '<p class="lead">Ninguna glosa se movió más de 0,1 p.p.</p>'}</div></div>
+<div class="two"><div><div class="mini">Por centro de costo · % del ingreso</div>{_tabla(['Centro', l0[:3], l1[:3], 'Δ', f'Efecto $ {l1[:3].lower()}'], cen_rows, ['left', 'right', 'right', 'right', 'right'])}</div>
+<div>{f'<div class="mini">Por modalidad · margen</div><div class="how">Cada modalidad con su propia venta; los cargos sin modalidad se reparten por venta.</div><div class="chart" id="c_mod{i}" style="height:200px"></div>' + _tabla(['Modalidad', 'Share venta', f'Mg {l0[:3].lower()}', f'Mg {l1[:3].lower()}', 'Δ'], mod_rows, ['left', 'right', 'right', 'right', 'right']) if len(dc['mods']) >= 2 else '<div class="mini">Por modalidad</div><p class="lead">Una sola modalidad con más de 5% de la venta.</p>'}</div></div>
+<details><summary>Detalle de glosas ({len(dc['glosas'])})</summary>{_tabla(['Glosa', 'Centro', f'$ {l0[:3].lower()}', f'$ {l1[:3].lower()}', f'% {l0[:3].lower()}', f'% {l1[:3].lower()}', 'Δ'], gl_rows, ['left', 'left', 'right', 'right', 'right', 'right', 'right'])}
+<p class="nota">$ = monto de la glosa (costo positivo, abono negativo). % = sobre el ingreso del canal, con el signo del margen.</p></details></section>"""
+    plan_rows = [[f'<b>{H.escape(r["ID"])}</b>', H.escape(r['Indicador']), H.escape(r['Base']), H.escape(r['Ultimo']), _chip(r['sem_t'], r['sem_c']),
+                  H.escape(r['Responsable']), _chip(r['Fecha'], 'neu') if r['Fecha'] else _chip('sin fecha', 'bad'),
+                  H.escape(r['Gestion']) if r['Gestion'] else _chip('sin gestión', 'bad')] for r in ctx['plan']]
+    auto_rows = [[m, f'<b>{c}</b>', d, _chip(f'{k} archivo' + ('s' if k != 1 else ''), 'good') if k else _chip('falta', 'warn'), u or '—'] for m, c, d, k, u in ctx['auto']]
+    cuad = ''
+    for mstr, filas in ctx['cuadre'].items():
+        cuad += f'<div class="mini" style="margin-top:14px">Cuadre {nom(mstr).lower()} · lectura automática vs carga manual (neto)</div>' + _tabla(
+            ['Canal', 'Automática', 'Carga manual', 'Estado'], filas, ['left', 'right', 'right', 'left'])
     return f"""<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Rentabilidad por canal</title><style>
-:root{{--navy:{NAVY};--blue:{BLUE};--ink:{INK};--mute:{MUTE};--rule:{RULE};--bg:{BG}}}
-*{{box-sizing:border-box}} body{{margin:0;background:var(--bg);color:var(--ink);font-family:{SANS}}}
-.wrap{{max-width:1120px;margin:0 auto;padding:32px 24px 56px;display:flex;flex-direction:column;gap:18px}}
+:root{{--navy:{NAVY};--blue:{BLUE};--ink:{INK};--mute:{MUTE};--rule:{RULE};--bg:{BG};--good:{GOOD};--bad:{BAD};--warn:{AMBER}}}
+*{{box-sizing:border-box}} body{{margin:0;background:var(--bg);color:var(--ink);font-family:{SANS};font-size:14px}}
+.wrap{{max-width:1160px;margin:0 auto;padding:32px 24px 56px;display:flex;flex-direction:column;gap:18px}}
 .eyebrow{{font-family:{MONO};font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}}
-h1{{font-family:{SERIF};font-weight:400;font-size:38px;line-height:1.15;margin:6px 0 4px;text-wrap:balance;max-width:880px}} h1 em{{color:var(--blue);font-style:normal}}
-.intro{{max-width:640px;color:#334155;font-size:15px;line-height:1.55;margin:0}}
+h1{{font-family:{SERIF};font-weight:400;font-size:38px;line-height:1.15;margin:6px 0 6px;text-wrap:balance;max-width:900px}} h1 em{{color:var(--blue);font-style:normal}}
+.intro{{max-width:720px;color:#334155;font-size:15px;line-height:1.55;margin:0}}
 .kpis{{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid var(--rule)}}
 .kpi{{padding:16px 18px;border-right:1px solid var(--rule)}} .kpi:last-child{{border-right:0}}
 .kv{{font-family:{MONO};font-size:30px;font-weight:600;margin:8px 0 4px;font-variant-numeric:tabular-nums}} .ku{{font-size:13px;color:var(--mute);margin-left:4px;font-weight:400}}
-.kd{{font-family:{MONO};font-size:12px}}
-.panel{{background:#fff;border:1px solid var(--rule);padding:18px 20px}}
-.panel h3{{font-family:{SERIF};font-weight:400;font-size:21px;margin:6px 0 4px;text-wrap:balance}} .lead{{color:var(--mute);font-size:13.5px;margin:0 0 8px;max-width:760px;line-height:1.5}}
-.mini{{font-family:{MONO};font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:6px 0 2px}}
-.two{{display:grid;grid-template-columns:1fr 1fr;gap:22px}} .chart{{width:100%}}
-@media (max-width:820px){{.kpis{{grid-template-columns:1fr 1fr}} .two{{grid-template-columns:1fr}} h1{{font-size:28px}}}}
+.kd{{font-family:{MONO};font-size:12px}} .kx{{font-size:12px;color:var(--mute);margin-top:6px;line-height:1.4}}
+.panel{{background:#fff;border:1px solid var(--rule);padding:20px 22px}}
+.panel h3{{font-family:{SERIF};font-weight:400;font-size:22px;margin:6px 0 10px;text-wrap:balance}} .lead{{color:var(--mute);font-size:13.5px;margin:0 0 8px;max-width:780px;line-height:1.5}}
+.qp{{background:#F5F8FC;border-left:3px solid var(--blue);padding:10px 14px;margin:0 0 14px}} .qp-t{{font-family:{MONO};font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:2px}}
+.qp p{{margin:4px 0;line-height:1.55;max-width:900px}}
+.mini{{font-family:{MONO};font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin:10px 0 2px;font-weight:600}}
+.how{{font-size:12px;color:var(--mute);line-height:1.45;margin:0 0 4px;max-width:520px}}
+.two{{display:grid;grid-template-columns:1fr 1fr;gap:26px}} .chart{{width:100%}}
+.scroll{{overflow-x:auto}} table.t{{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}}
+table.t th{{font-family:{MONO};font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);border-bottom:2px solid var(--navy);padding:6px 8px;font-weight:600;white-space:nowrap}}
+table.t td{{border-bottom:1px solid var(--rule);padding:6px 8px;vertical-align:top}}
+.pos{{color:var(--good);font-weight:600}} .neg{{color:var(--bad);font-weight:600}} .neu{{color:var(--mute)}}
+.chip{{display:inline-block;padding:1px 8px;border-radius:10px;border:1px solid currentColor;font-family:{MONO};font-size:10.5px;white-space:nowrap}}
+.chip.good{{color:var(--good)}} .chip.bad{{color:var(--bad)}} .chip.warn{{color:var(--warn)}} .chip.neu{{color:var(--mute)}}
+details{{margin-top:12px}} summary{{cursor:pointer;font-family:{MONO};font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}}
+.nota{{font-size:11.5px;color:var(--mute);margin:6px 0 0}}
+.metodo{{font-size:12.5px;color:#334155;line-height:1.55;columns:2;column-gap:28px}} .metodo p{{margin:0 0 8px;break-inside:avoid}}
+@media (max-width:860px){{.kpis{{grid-template-columns:1fr 1fr}} .two{{grid-template-columns:1fr}} h1{{font-size:28px}} .metodo{{columns:1}}}}
 </style></head><body><div class="wrap">
 <div><div class="eyebrow">Rentabilidad por canal · reporte semanal · {H.escape(ctx['fecha'])}</div>
 <h1>{ctx['titular']}</h1><p class="intro">{H.escape(ctx['intro'])}</p></div>
-<div class="kpis" id="p_kpis">{kp}</div>
-<section class="panel" id="p_mancuerna"><div class="eyebrow">Comparación · margen por canal</div><h3>{H.escape(ctx['titulo_mancuerna'])}</h3>
-<p class="lead">Punto hueco = {H.escape(ctx['l0'].lower())}, punto sólido = {H.escape(ctx['l1'].lower())} (verde si sube, rojo si baja). La distancia es la variación.</p>
-<div id="g_mancuerna" style="background:#fff;padding:4px 2px"><div class="chart" id="c_mancuerna" style="height:{60 + 46 * len(ctx['mancuerna'])}px"></div></div></section>
+<div class="kpis">{kp}</div>
+<section class="panel"><div class="eyebrow">Resultado · margen por canal</div><h3>{H.escape(ctx['titulo_mancuerna'])}</h3>
+<div class="how">Cada línea es un canal. Punto hueco = margen de {l0.lower()}; punto sólido = {l1.lower()} (verde si sube, rojo si baja). El largo de la línea es cuánto se movió. "Efecto en margen" traduce ese cambio a pesos sobre la venta de {l1.lower()}.</div>
+<div class="two"><div class="chart" id="c_mancuerna" style="height:{70 + 46 * len(ctx['mancuerna'])}px"></div><div>{resumen_tab}</div></div></section>
 {canales}
+<section class="panel"><div class="eyebrow">Seguimiento del plan de acción</div><h3>{H.escape(ctx['titulo_plan'])}</h3>
+<div class="how">Las columnas de indicador, base, último mes y semáforo se recalculan cada lunes. Responsable, fecha compromiso y última gestión se llenan en la pestaña 8 de la planilla.</div>
+{_tabla(['ID', 'Indicador', 'Base', 'Último mes', 'Semáforo', 'Responsable', 'Fecha', 'Última gestión'], plan_rows, ['left'] * 2 + ['right'] * 2 + ['left'] * 4)}</section>
+<section class="panel"><div class="eyebrow">Estado de la automatización</div><h3>{H.escape(ctx['titulo_auto'])}</h3>
+<div class="how">Qué liquidaciones hay en la carpeta de Drive por canal y mes, y si la lectura automática reproduce la carga manual de Gabriela (±2%).</div>
+{_tabla(['Mes', 'Carpeta', 'Qué debe estar', 'Estado', 'Última subida'], auto_rows, ['left'] * 5)}{cuad}</section>
+<section class="panel"><div class="eyebrow">Cómo se calcula</div><div class="metodo">
+<p><b>Margen</b> = ingreso − costo de venta − devolución − comisión de venta − comisión de envío − marketing, como % del ingreso del canal.</p>
+<p><b>Ingreso, costo y devolución</b> salen del RAW de ventas (por fecha de venta). La devolución del último mes sigue creciendo hasta cerrar su ventana de 3 meses.</p>
+<p><b>Comisiones y marketing</b> salen de las liquidaciones cargadas por Gabriela, clasificadas por glosa según su receta.</p>
+<p><b>p.p.</b> = puntos porcentuales del ingreso. <b>Efecto en margen</b> = Δ p.p. × ingreso del último mes: cuánto margen dio o quitó el cambio.</p>
+<p><b>Modalidad</b>: los cargos que la liquidación informa por modalidad van a esa modalidad; los que vienen a nivel cuenta se reparten por venta.</p>
+<p>Se compara el último mes con carga de los cinco marketplaces; un mes a medio cargar se informa como "en curso".</p></div></section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/6.1.0/echarts.min.js"></script><script>
 function fmtNum(v){{if(v==null||v==='')return '';var a=Math.abs(v);var d=(a<100&&a!==Math.round(a))?1:0;return v.toLocaleString('es-CL',{{minimumFractionDigits:d,maximumFractionDigits:d}});}}
 var O={_js(opts)};
-Object.keys(O).forEach(function(i){{var e=document.getElementById(i);if(!e)return;var c=echarts.init(e,null,{{renderer:'canvas'}});c.setOption(O[i]);new ResizeObserver(function(){{c.resize();}}).observe(e);}});
+Object.keys(O).forEach(function(i){{var e=document.getElementById(i);if(!e)return;var c=echarts.init(e);c.setOption(O[i]);new ResizeObserver(function(){{c.resize();}}).observe(e);}});
 window.__listo=true;
 </script></body></html>"""
 
 
-def capturar_png(html: str, ids):
-    """PNG 2x de cada panel (para incrustar en el correo). Requiere playwright + chromium."""
-    from playwright.sync_api import sync_playwright
-    out = {}
-    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
-        f = Path(td) / 'dash.html'
-        f.write_text(html, encoding='utf-8')
-        with sync_playwright() as pw:
-            b = pw.chromium.launch()
-            pg = b.new_page(viewport={'width': 1000, 'height': 1000}, device_scale_factor=2)
-            pg.goto(f.as_uri())
-            pg.wait_for_function('window.__listo === true', timeout=30000)
-            pg.wait_for_timeout(700)
-            for i in ids:
-                el = pg.query_selector(f'#{i}')
-                if el:
-                    out[i] = el.screenshot(type='png')
-            b.close()
-    return out
-
-
 # ───────────────────────── reporte ─────────────────────────
-def construir(hoy=None, cuadrar=True, con_png=True):
+def construir(hoy=None, cuadrar=True):
     hoy = hoy or dt.date.today()
     sh, base, gab, plan = cargar()
     X = metricas(base, gab)
     M0, M1, ING = X['M0'], X['M1'], X['ING']
     canales = X['canales']
-    MG = {c: (X['mg'](c, M0) if M0 else None, X['mg'](c, M1)) for c in canales}
     l0, l1 = (nom(M0) if M0 else ''), nom(M1)
+    det = [detalle_canal(c, X, base, gab, M0, M1) for c in canales]
+    det.sort(key=lambda d: -abs(d['d']))
+    MG = {d['canal']: (d['mg0'], d['mg1']) for d in det}
 
-    # consolidado de los cinco marketplaces
     def tot(m):
         if not m:
             return None, 0
@@ -441,21 +583,13 @@ def construir(hoy=None, cuadrar=True, con_png=True):
         return (mg_ / i * 100 if i else None), mg_
     t0, c0 = tot(M0)
     t1, c1 = tot(M1)
-
-    # canales ordenados por variación
-    orden = sorted(canales, key=lambda c: ((MG[c][1] - MG[c][0]) if MG[c][0] is not None else 0))
-    caen = [c for c in orden if MG[c][0] is not None and MG[c][1] - MG[c][0] <= -1]
-    suben = [c for c in orden if MG[c][0] is not None and MG[c][1] - MG[c][0] >= 1]
-    if caen:
-        c_peor = caen[0]
-        titular = (f'<em>{H.escape(" y ".join(caen))}</em> pierde{"n" if len(caen) > 1 else ""} margen en {l1.lower()}'
-                   + (f'; {H.escape(" y ".join(suben))} mejora{"n" if len(suben) > 1 else ""}.' if suben else '.'))
-    else:
-        titular = f'Ningún marketplace pierde más de 1 punto de margen en {l1.lower()}.'
-    intro = (f'{l1} contra {l0.lower()} en los cinco marketplaces con liquidación cargada. Margen = ingreso − costo de venta − devolución − comisión de venta − '
-             f'comisión de envío − marketing, como % del ingreso del canal.') if M0 else f'Resultado de {l1.lower()}.'
-
-    # plan + automatización
+    caen = [d['canal'] for d in sorted(det, key=lambda d: d['d']) if d['mg0'] is not None and d['d'] <= -1]
+    suben = [d['canal'] for d in sorted(det, key=lambda d: -d['d']) if d['mg0'] is not None and d['d'] >= 1]
+    titular = ((f'<em>{H.escape(" y ".join(caen))}</em> pierde{"n" if len(caen) > 1 else ""} margen en {l1.lower()}'
+                + (f'; {H.escape(" y ".join(suben))} mejora{"n" if len(suben) > 1 else ""}.' if suben else '.')) if caen
+               else f'Ningún marketplace pierde más de 1 punto de margen en {l1.lower()}.')
+    intro = (f'{l1} contra {l0.lower()} en los cinco marketplaces con liquidación cargada. Para cada canal: qué pasó con el margen, '
+             f'qué centro de costo y qué glosa lo explican, y cómo le fue a cada modalidad. Al final, el plan de acción y el estado de la automatización.')
     alert = alertas_plan(plan, hoy) if len(plan) else []
     con_gestion = sum(1 for _, r in plan.iterrows() if str(r.get('Última gestión (quién / qué / cuándo)', '')).strip())
     auto_rows, cuadre = [], {}
@@ -479,138 +613,107 @@ def construir(hoy=None, cuadrar=True, con_png=True):
                 b = gab[(gab['Mes'] == mstr) & gab['Canal'].isin(MK)].groupby('Canal')['Valor'].sum()
                 q = pd.DataFrame({'agente': a, 'carga': b}).fillna(0)
                 q['dif'] = q['agente'] - q['carga']
-                q['sin_regla'] = liq[liq['canal'].isin(MK) & (liq['estado_regla'] == 'sin regla')].groupby('canal')['monto_neto'].apply(lambda s: s.abs().sum())
-                cuadre[mstr] = q.fillna(0)
+                cuadre[mstr] = q.reindex(MK).fillna(0)
     except Exception as e:
         print(f'   [WARN] automatización: {type(e).__name__}: {e}')
     qm = cuadre.get(M1)
     cuadran = int(((qm['dif'].abs() <= qm['carga'].abs() * 0.02) & (qm['carga'] != 0)).sum()) if qm is not None else 0
+    faltan = sum(1 for r in auto_rows if not r[3])
+
+    def estado_cuadre(r):
+        if r.carga and r.agente and abs(r.dif) <= abs(r.carga) * 0.02:
+            return 'cuadra', 'good'
+        if not r.agente:
+            return 'sin archivo', 'warn'
+        if not r.carga:
+            return 'sin carga', 'warn'
+        return f'dif. {mm(r.dif)}', 'bad'
 
     kpis = [
         {'label': f'Margen marketplaces · {l1}', 'valor': n(t1) if t1 is not None else '—', 'unidad': '%',
-         'meta': (f'{"▲" if t1 >= t0 else "▼"} {pp(t1 - t0)} p.p. vs {l0.lower()}' if t0 is not None else ''), 'color': (GOOD if t0 is not None and t1 >= t0 else BAD)},
-        {'label': f'Contribución · {l1}', 'valor': n(c1 / 1e6, 1), 'unidad': 'M CLP',
-         'meta': (f'{"▲" if c1 >= c0 else "▼"} {pp((c1 - c0) / 1e6)} M vs {l0.lower()}' if M0 else ''), 'color': (GOOD if c1 >= c0 else BAD)},
+         'meta': f'{"▲" if t1 >= t0 else "▼"} {pp(t1 - t0)} p.p. vs {l0.lower()}' if t0 is not None else '', 'color': GOOD if t0 is not None and t1 >= t0 else BAD,
+         'expl': 'Margen de los cinco marketplaces sobre su ingreso total.'},
+        {'label': f'Margen en pesos · {l1}', 'valor': n(c1 / 1e6, 1), 'unidad': 'M CLP',
+         'meta': f'{"▲" if c1 >= c0 else "▼"} {pp((c1 - c0) / 1e6)} M vs {l0.lower()}' if M0 else '', 'color': GOOD if c1 >= c0 else BAD,
+         'expl': 'Parte de la baja es venta: el ingreso de los cinco canales también cambió.'},
         {'label': 'Plan de acción con gestión', 'valor': f'{con_gestion}/{len(plan)}', 'unidad': 'acciones',
-         'meta': f'{len(alert)} requieren gestión esta semana', 'color': (BAD if con_gestion == 0 else AMBER if alert else GOOD)},
+         'meta': f'{len(alert)} requieren gestión', 'color': BAD if con_gestion == 0 else AMBER if alert else GOOD,
+         'expl': 'Acciones con responsable trabajando y gestión registrada en la planilla.'},
         {'label': f'Lectura automática · {l1}', 'valor': f'{cuadran}/5', 'unidad': 'canales',
-         'meta': 'cuadran con la carga manual (±2%)', 'color': (GOOD if cuadran == 5 else AMBER)},
+         'meta': 'cuadran con la carga manual (±2%)', 'color': GOOD if cuadran == 5 else AMBER,
+         'expl': 'Las diferencias son documentos que aún no están en la carpeta (Envíame, marketing, factura Ripley).'},
     ]
-
-    ch_canales = []
-    for c in sorted(canales, key=lambda c: -abs((MG[c][1] - MG[c][0]) if MG[c][0] is not None else 0)):
-        mg0, mg1 = MG[c]
-        d = (mg1 - mg0) if mg0 is not None else 0
-        deltas = [(lab, X['ccp'](c, cc, M1) - X['ccp'](c, cc, M0)) for lab, cc in
-                  [('Costo venta', 'Costo venta'), ('Comisión venta', 'Comisión venta'), ('Comisión envío', 'Comisión envío'),
-                   ('Marketing', 'Marketing'), ('Devolución', 'Devolución')]] if M0 else []
-        otros = d - sum(v for _, v in deltas)
-        if abs(otros) >= 0.05:
-            deltas.append(('Otros', otros))
-        mayor = max(deltas, key=lambda t: abs(t[1])) if deltas else ('', 0)
-        mv = X['movers'](c)
-        verbo = 'sube' if d > 0.5 else 'baja' if d < -0.5 else 'se mantiene'
-        titulo = (f'{c} {verbo} {n(abs(d))} p.p.; lo que más pesa es {mayor[0].lower()} ({pp(mayor[1])} p.p.)' if abs(d) > 0.5
-                  else f'{c} se mantiene en {n(mg1)}%')
-        lead = (f'Ingreso {l1.lower()} {mm(ING.get((c, M1), 0))}, margen {n(mg0) + "% → " if mg0 is not None else ""}{n(mg1)}%.'
-                + (f' La glosa que más se movió es "{mv[0][0]}" ({pp(mv[0][1])} p.p. del ingreso).' if mv else ''))
-        ch_canales.append({'canal': c, 'sub': f'{l0} → {l1}', 'titulo': titulo, 'lead': lead,
-                           'cascada': [(f'Margen {l0[:3].lower()}', mg0 or 0, 'start')] + [(lab, v, 'dec') for lab, v in deltas] + [(f'Margen {l1[:3].lower()}', 0, 'total')],
-                           'glosas': mv, 'd': d, 'mg0': mg0, 'mg1': mg1})
-    mancuerna = [(c, MG[c][0], MG[c][1]) for c in sorted(canales, key=lambda c: -MG[c][1])]
-    peor = min(canales, key=lambda c: (MG[c][1] - MG[c][0]) if MG[c][0] is not None else 0)
-    mejor = max(canales, key=lambda c: (MG[c][1] - MG[c][0]) if MG[c][0] is not None else 0)
-    titulo_m = (f'{peor} cae {n(abs(MG[peor][1] - MG[peor][0]))} p.p. y {mejor} sube {n(MG[mejor][1] - MG[mejor][0])} p.p.' if M0 else f'Margen por canal en {l1.lower()}')
-    ctx = dict(fecha=hoy.strftime('%d %b %Y').lower(), titular=titular, intro=intro, kpis=kpis, mancuerna=mancuerna, l0=l0, l1=l1,
-               titulo_mancuerna=titulo_m, canales=ch_canales)
-    dash = dashboard_html(ctx)
-    ids = ['g_mancuerna'] + [f'g_canal{i}' for i in range(len(ch_canales))]
-    pngs = capturar_png(dash, ids) if con_png else {}
-
-    # ── correo email-safe ──
-    tdb = f'padding:9px 12px;border-bottom:1px solid {RULE};font-size:13px;vertical-align:top;font-family:{SANS};color:{INK}'
-    thb = f'padding:8px 12px;border-bottom:2px solid {NAVY};font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:{MUTE};font-family:{MONO};text-align:left;font-weight:600'
-
-    def chip(t, color):
-        return f'<span style="display:inline-block;padding:2px 8px;border-radius:10px;border:1px solid {color};color:{color};font-size:11px;font-family:{MONO};white-space:nowrap">{t}</span>'
-
-    kpi_cells = ''.join(f'<td width="25%" style="padding:14px 16px;border-right:1px solid {RULE};vertical-align:top;background:#fff">'
-                        f'<div style="font-family:{MONO};font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:{MUTE}">{H.escape(t["label"])}</div>'
-                        f'<div style="font-family:{MONO};font-size:26px;font-weight:600;color:{INK};margin:6px 0 2px">{t["valor"]}<span style="font-size:12px;color:{MUTE};font-weight:400;margin-left:4px">{t["unidad"]}</span></div>'
-                        f'<div style="font-family:{MONO};font-size:11.5px;color:{t["color"]}">{t["meta"]}</div></td>' for t in kpis)
-    img = lambda cid, w=920: f'<img src="cid:{cid}" width="{w}" style="display:block;width:100%;max-width:{w}px;height:auto;border:0" alt="">'  # noqa: E731
-
-    def panel(eyebrow, titulo, contenido, sub=''):
-        return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid {RULE};margin:0 0 16px"><tr><td style="padding:18px 20px">'
-                f'<div style="font-family:{MONO};font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:{MUTE}">{eyebrow}</div>'
-                f'<div style="font-family:{SERIF};font-size:20px;color:{INK};margin:6px 0 4px">{titulo}</div>'
-                + (f'<div style="font-family:{SANS};font-size:13px;color:{MUTE};margin:0 0 10px;line-height:1.5">{sub}</div>' if sub else '')
-                + contenido + '</td></tr></table>')
-
-    # 1. resultado (mancuerna)
-    sec1 = panel('1 · Resultado · margen por canal', H.escape(titulo_m), img('g_mancuerna') if 'g_mancuerna' in pngs else '',
-                 f'Punto hueco = {l0.lower()}, punto sólido = {l1.lower()} (verde sube, rojo baja).')
-    # 2. dónde dar ojo: canales con |Δ| >= 1
-    sec2 = ''
-    for i, cc in enumerate(ch_canales):
-        if abs(cc['d']) < 1:
-            continue
-        sec2 += panel(f'2 · Dónde dar ojo · {H.escape(cc["canal"])}', H.escape(cc['titulo']), img(f'g_canal{i}') if f'g_canal{i}' in pngs else '', H.escape(cc['lead']))
-    # 3. plan
-    por_resp = {}
-    for a in alert:
-        por_resp.setdefault(str(a[3]) or 'Sin responsable', []).append(a)
-    filas_plan = ''
+    titulos = []
+    for dc in det:
+        ce = max([x for x in dc['centros'] if x['d'] is not None] or [dict(centro='', d=0)], key=lambda x: abs(x['d']))
+        titulos.append(f"{dc['canal']} {'sube' if dc['d'] > 0.5 else 'baja' if dc['d'] < -0.5 else 'se mantiene'} {n(abs(dc['d']))} p.p.; "
+                       f"lo que más pesa es {ce['centro'].lower()} ({pp(ce['d'])} p.p.)" if abs(dc['d']) > 0.5 else f"{dc['canal']} se mantiene en {n(dc['mg1'])}%")
+    peor, mejor = min(det, key=lambda d: d['d']), max(det, key=lambda d: d['d'])
+    titulo_m = f"{peor['canal']} cae {n(abs(peor['d']))} p.p. y {mejor['canal']} sube {n(mejor['d'])} p.p." if M0 else f'Margen por canal en {l1.lower()}'
+    plan_ctx = []
     for _, r in plan.iterrows():
         sem = str(r.get('Semáforo', ''))
-        col = GOOD if sem.startswith('🟢') else BAD if sem.startswith('🔴') else AMBER if sem.startswith('🟡') else MUTE
-        ges = str(r.get('Última gestión (quién / qué / cuándo)', '')).strip()
-        fec = str(r.get('Fecha compromiso', '')).strip()
-        filas_plan += (f'<tr><td style="{tdb};font-family:{MONO};font-weight:600;white-space:nowrap">{H.escape(str(r["ID"]))}</td><td style="{tdb}">{H.escape(str(r.get("Indicador", "")))}</td>'
-                       f'<td style="{tdb};text-align:right;font-family:{MONO}">{H.escape(str(r.get(f"Base {PA.M_BASE}", "")))}</td>'
-                       f'<td style="{tdb};text-align:right;font-family:{MONO}">{H.escape(str(r.get("Valor último mes", "")))}</td>'
-                       f'<td style="{tdb}">{chip(sem[2:].strip() or "—", col)}</td><td style="{tdb}">{H.escape(str(r.get("Responsable", "")))}</td>'
-                       f'<td style="{tdb}">{chip(fec, INK) if fec else chip("sin fecha", BAD)}</td><td style="{tdb}">{H.escape(ges) if ges else chip("sin gestión", BAD)}</td></tr>')
-    resp_html = ''.join(f'<li style="margin:0 0 4px"><b>{H.escape(r)}</b>: {", ".join(x[0] for x in xs)}</li>' for r, xs in por_resp.items())
-    sec3 = panel('3 · Seguimiento del plan de acción',
-                 f'{con_gestion} de {len(plan)} acciones tienen gestión registrada',
-                 (f'<ul style="margin:0 0 12px 18px;padding:0;font-family:{SANS};font-size:13px;color:{INK}">{resp_html}</ul>' if resp_html else '')
-                 + f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><th style="{thb}">ID</th><th style="{thb}">Indicador</th><th style="{thb};text-align:right">Base</th>'
-                 f'<th style="{thb};text-align:right">Último</th><th style="{thb}">Semáforo</th><th style="{thb}">Responsable</th><th style="{thb}">Fecha</th><th style="{thb}">Última gestión</th></tr>{filas_plan}</table>',
-                 f'Responsable, fecha compromiso, estado y última gestión se llenan en la pestaña <a href="{URL_SHEET}" style="color:{BLUE}">8. Plan de acción</a>. '
-                 'Pendientes por responsable:' if resp_html else '')
-    # 4. automatización
-    filas_auto = ''.join(f'<tr><td style="{tdb}">{m}</td><td style="{tdb};font-family:{MONO};font-weight:600">{c}</td><td style="{tdb};color:{MUTE}">{d}</td>'
-                         f'<td style="{tdb}">{chip(f"{k} archivo" + ("s" if k != 1 else ""), GOOD) if k else chip("falta", AMBER)}</td><td style="{tdb};font-family:{MONO};color:{MUTE}">{u}</td></tr>'
-                         for m, c, d, k, u in auto_rows)
-    cuad_html = ''
+        plan_ctx.append({'ID': str(r['ID']), 'Indicador': str(r.get('Indicador', '')), 'Base': str(r.get(f'Base {PA.M_BASE}', '')),
+                         'Ultimo': str(r.get('Valor último mes', '')), 'sem_t': sem[2:].strip() or '—',
+                         'sem_c': 'good' if sem.startswith('🟢') else 'bad' if sem.startswith('🔴') else 'warn' if sem.startswith('🟡') else 'neu',
+                         'Responsable': str(r.get('Responsable', '')), 'Fecha': str(r.get('Fecha compromiso', '')).strip(),
+                         'Gestion': str(r.get('Última gestión (quién / qué / cuándo)', '')).strip()})
+    cuadre_ctx = {m: [[f'<b>{c}</b>', mm(r.agente) if r.agente else '—', mm(r.carga) if r.carga else '—', _chip(*estado_cuadre(r))] for c, r in q.iterrows()]
+                  for m, q in cuadre.items()}
+    ctx = dict(fecha=hoy.strftime('%d-%m-%Y'), titular=titular, intro=intro, kpis=kpis, l0=l0, l1=l1,
+               mancuerna=[(d['canal'], d['mg0'], d['mg1']) for d in sorted(det, key=lambda d: -d['mg1'])],
+               titulo_mancuerna=titulo_m, detalle=det, titulos=titulos, plan=plan_ctx,
+               titulo_plan=f'{con_gestion} de {len(plan)} acciones tienen gestión registrada', auto=auto_rows, cuadre=cuadre_ctx,
+               titulo_auto=(f'{faltan} carpeta{"s" if faltan != 1 else ""} pendiente{"s" if faltan != 1 else ""} · {cuadran} de 5 canales cuadran en {l1.lower()}'))
+    dash = dashboard_html(ctx)
+
+    # ── correo: formato del primer informe (secciones, tablas y listas; sin imágenes) ──
+    tdl = 'padding:5px 9px;border:1px solid #d5dbe5;font-size:12.5px;vertical-align:top'
+    th = lambda x, a='left': f'<th style="padding:6px 9px;border:1px solid #d5dbe5;background:#1E3A5F;color:#fff;text-align:{a};font-size:12.5px">{x}</th>'  # noqa: E731
+    cold = lambda d: ('#1E7A45' if d > 0.5 else '#C0392B' if d < -0.5 else '#64748b') if d is not None else '#64748b'  # noqa: E731
+    res = ''.join(f'<tr><td style="{tdl};font-weight:600">{d["canal"]}</td><td style="{tdl};text-align:right">{mm(d["i1"])}</td>'
+                  f'<td style="{tdl};text-align:right">{n(d["mg0"]) + "%" if d["mg0"] is not None else "—"}</td><td style="{tdl};text-align:right;font-weight:600">{n(d["mg1"])}%</td>'
+                  f'<td style="{tdl};text-align:right;font-weight:600;color:{cold(d["d"])}">{pp(d["d"]) if d["mg0"] is not None else "—"}</td>'
+                  f'<td style="{tdl};text-align:right">{("+" if d["efecto"] > 0 else "−") + mm(abs(d["efecto"]))}</td></tr>' for d in sorted(det, key=lambda d: d['d']))
+    ojo = ''.join(f'<li style="margin-bottom:8px"><b>{d["canal"]}</b> — {H.escape(d["narrativa"])}</li>' for d in det if abs(d['d']) >= 1) or '<li>Ningún canal se movió más de 1 p.p.</li>'
+    por_resp = {}
+    for a in alert:
+        por_resp.setdefault(str(a[3]) or 'Sin responsable', []).append(a[0])
+    alert_html = ''.join(f'<li><b>{H.escape(r)}</b>: {", ".join(xs)}</li>' for r, xs in por_resp.items())
+    plan_rows = ''.join(f'<tr><td style="{tdl};font-weight:600;white-space:nowrap">{H.escape(r["ID"])}</td><td style="{tdl}">{H.escape(r["Indicador"])}</td>'
+                        f'<td style="{tdl};text-align:right">{H.escape(r["Base"])}</td><td style="{tdl};text-align:right">{H.escape(r["Ultimo"])}</td>'
+                        f'<td style="{tdl};white-space:nowrap">{H.escape(r["sem_t"])}</td><td style="{tdl}">{H.escape(r["Responsable"])}</td>'
+                        f'<td style="{tdl}">{H.escape(r["Fecha"]) or "—"}</td><td style="{tdl}">{H.escape(r["Gestion"]) or "—"}</td></tr>' for r in plan_ctx)
+    auto_html = ''.join(f'<tr><td style="{tdl}">{m}</td><td style="{tdl};font-weight:600">{c}</td><td style="{tdl}">{d}</td>'
+                        f'<td style="{tdl};text-align:center">{"✅ " + str(k) if k else "⏳ falta"}</td><td style="{tdl}">{u}</td></tr>' for m, c, d, k, u in auto_rows)
+    cuad_mail = ''
     for mstr, q in cuadre.items():
-        filas = ''
-        for c, r in q.reindex(MK).fillna(0).iterrows():
-            ok = r.carga and r.agente and abs(r.dif) <= abs(r.carga) * 0.02
-            est = chip('cuadra', GOOD) if ok else (chip('sin archivo', AMBER) if not r.agente else chip('sin carga', AMBER) if not r.carga else chip(f'dif. {mm(r.dif)}', BAD))
-            filas += (f'<tr><td style="{tdb};font-weight:600">{c}</td><td style="{tdb};text-align:right;font-family:{MONO}">{mm(r.agente) if r.agente else "—"}</td>'
-                      f'<td style="{tdb};text-align:right;font-family:{MONO}">{mm(r.carga) if r.carga else "—"}</td><td style="{tdb}">{est}</td></tr>')
-        cuad_html += (f'<div style="font-family:{MONO};font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:{MUTE};margin:16px 0 4px">Cuadre {nom(mstr).lower()} · lectura automática vs carga manual (neto)</div>'
-                      f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><th style="{thb}">Canal</th><th style="{thb};text-align:right">Automática</th><th style="{thb};text-align:right">Carga manual</th><th style="{thb}">Estado</th></tr>{filas}</table>')
-    encurso = ''.join(f'<p style="font-family:{SANS};font-size:13px;color:{INK};margin:12px 0 0">Carga manual de <b>{nom(m).lower()}</b> en curso: faltan {", ".join(c for c in MK if c not in cs) or "ninguno"}.</p>' for m, cs in X['en_curso'].items())
-    faltan = sum(1 for r in auto_rows if not r[3])
-    sec4 = panel('4 · Estado de la automatización', f'{faltan} carpeta{"s" if faltan != 1 else ""} de liquidaciones pendiente{"s" if faltan != 1 else ""}' if faltan else 'Carpeta de liquidaciones al día',
-                 f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><th style="{thb}">Mes</th><th style="{thb}">Carpeta</th><th style="{thb}">Qué debe estar</th><th style="{thb}">Estado</th><th style="{thb}">Última subida</th></tr>{filas_auto}</table>'
-                 + cuad_html + encurso, f'Carpeta: <a href="{URL_CARPETA}" style="color:{BLUE}">liquidaciones en Drive</a>.')
-    body = f"""<div style="background:{BG};padding:24px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-<table role="presentation" width="960" cellpadding="0" cellspacing="0" style="max-width:960px;width:100%"><tr><td style="padding:0 16px">
-<div style="font-family:{MONO};font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:{MUTE}">Rentabilidad por canal · reporte semanal · {H.escape(ctx['fecha'])}</div>
-<div style="font-family:{SERIF};font-size:30px;line-height:1.2;color:{INK};margin:8px 0 6px">{titular.replace('<em>', f'<span style="color:{BLUE}">').replace('</em>', '</span>')}</div>
-<div style="font-family:{SANS};font-size:14px;color:#334155;line-height:1.55;margin:0 0 16px;max-width:680px">{H.escape(intro)} <a href="{URL_SHEET}" style="color:{BLUE}">Planilla macro</a> · adjunto: dashboard interactivo.</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid {RULE};margin:0 0 16px"><tr>{kpi_cells}</tr></table>
-{sec1}{sec2}{sec3}{sec4}
-<div style="font-family:{SANS};font-size:11.5px;color:{MUTE};margin:8px 0 0">Reporte automático de los lunes. La planilla se refresca los lunes 09:00 y 12:00 y la pestaña de plan de acción se recalcula en la misma corrida.</div>
-</td></tr></table></td></tr></table></div>"""
-    return body, dash, dict(M0=M0, M1=M1, alertas=len(alert), plan=len(plan), cuadre=cuadre, en_curso=X['en_curso'], pngs=pngs)
+        cuad_mail += (f'<p style="margin:12px 0 4px">Lectura automática de <b>{nom(mstr).lower()}</b> contra la carga manual (neto):</p><table style="border-collapse:collapse">'
+                      f'<tr>{th("Canal")}{th("Automática", "right")}{th("Carga manual", "right")}{th("Estado")}</tr>'
+                      + ''.join(f'<tr><td style="{tdl};font-weight:600">{c}</td><td style="{tdl};text-align:right">{mm(r.agente) if r.agente else "—"}</td>'
+                                f'<td style="{tdl};text-align:right">{mm(r.carga) if r.carga else "—"}</td><td style="{tdl}">{estado_cuadre(r)[0]}</td></tr>' for c, r in q.iterrows()) + '</table>')
+    encurso = ''.join(f'<p style="margin:10px 0 0">Carga manual de <b>{nom(m).lower()}</b> en curso: faltan {", ".join(c for c in MK if c not in cs) or "ninguno"}.</p>' for m, cs in X['en_curso'].items())
+    h3 = 'style="color:#1E3A5F;margin:18px 0 6px"'
+    body = f"""<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.5;max-width:960px">
+<h2 style="color:#1E3A5F;margin:0 0 2px;font-size:19px">Rentabilidad por canal — reporte semanal {hoy.strftime('%d-%m-%Y')}</h2>
+<div style="color:#64748b;font-size:12px;margin-bottom:10px">Último mes con carga de los cinco marketplaces: <b>{l1}</b>{' · comparado con ' + l0 if M0 else ''} · <a href="{URL_SHEET}">planilla macro</a> · <a href="{URL_CARPETA}">carpeta de liquidaciones</a> · adjunto: dashboard con gráficos y detalle por canal</div>
+<h3 {h3}>1. Resultado</h3>
+<table style="border-collapse:collapse"><tr>{th('Canal')}{th('Ingreso ' + l1[:3], 'right')}{th('% Mg ' + l0[:3], 'right')}{th('% Mg ' + l1[:3], 'right')}{th('Δ p.p.', 'right')}{th('Efecto $', 'right')}</tr>{res}</table>
+<p style="font-size:12px;color:#475569;margin:4px 0 0">Efecto $ = variación del margen (p.p.) × ingreso de {l1.lower()}: cuánto margen dio o quitó el cambio.</p>
+<h3 {h3}>2. Dónde dar ojo</h3><ul style="margin:0 0 10px 18px;padding:0">{ojo}</ul>
+<h3 {h3}>3. Seguimiento del plan de acción</h3>
+<p style="margin:0 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión registrada. Responsable, fecha compromiso y última gestión se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
+{'<ul style="margin:0 0 10px 18px;padding:0;font-size:13px">' + alert_html + '</ul>' if alert_html else ''}
+<table style="border-collapse:collapse"><tr>{th('ID')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
+<h3 {h3}>4. Estado de la automatización</h3>
+<table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>
+{cuad_mail}{encurso}
+<p style="font-size:12px;color:#475569;margin-top:14px">Reporte automático de los lunes. La planilla se refresca los lunes 09:00 y 12:00 y la pestaña de plan de acción se recalcula en la misma corrida.</p>
+</div>"""
+    return body, dash, dict(M0=M0, M1=M1, alertas=len(alert), plan=len(plan), cuadre=cuadre, en_curso=X['en_curso'])
 
 
-def enviar(asunto, body, html_adj, to, cc=None, pngs=None):
+def enviar(asunto, body, html_adj, to, cc=None):
     tok = os.environ.get('GMAIL_TOKEN_JSON', '').strip() or (ROOT / 'agente-comex/config/token.json').read_text()
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
@@ -625,11 +728,7 @@ def enviar(asunto, body, html_adj, to, cc=None, pngs=None):
     if cc:
         m['Cc'] = ', '.join(cc)
     m['Subject'] = asunto
-    m.set_content('Reporte semanal de rentabilidad por canal. Ábrelo en un cliente que muestre HTML.')
     m.add_alternative(body, subtype='html')
-    htmlpart = m.get_payload()[1]
-    for cid, png in (pngs or {}).items():
-        htmlpart.add_related(png, maintype='image', subtype='png', cid=f'<{cid}>')
     m.add_attachment(html_adj.encode('utf-8'), maintype='text', subtype='html', filename='Rentabilidad por canal - dashboard.html')
     r = build('gmail', 'v1', credentials=creds).users().messages().send(userId='me', body={'raw': base64.urlsafe_b64encode(m.as_bytes()).decode()}).execute()
     return r['id']
@@ -646,9 +745,7 @@ if __name__ == '__main__':
     body, dash, info = construir(hoy, cuadrar=not a.sin_cuadre)
     Path(a.out, 'rentabilidad_semanal.html').write_text(body, encoding='utf-8')
     Path(a.out, 'rentabilidad_semanal_dashboard.html').write_text(dash, encoding='utf-8')
-    for cid, png in info['pngs'].items():
-        Path(a.out, f'{cid}.png').write_bytes(png)
-    print(f"[reporte] {info['M1']} vs {info['M0']} · plan {info['plan']} acciones, {info['alertas']} con alerta · {len(info['pngs'])} gráficos")
+    print(f"[reporte] {info['M1']} vs {info['M0']} · plan {info['plan']} acciones, {info['alertas']} con alerta")
     if a.no_mail:
         sys.exit(0)
     asunto = f"Rentabilidad por canal — semana {hoy.strftime('%d-%m')} · {nom(info['M1'])}: resultado, plan de acción y automatización"
@@ -657,4 +754,4 @@ if __name__ == '__main__':
         cc = [x.strip() for x in os.environ.get('RENTABILIDAD_CC', 'andres@unionx.cl').split(',') if x.strip()]
     else:
         to, cc, asunto = ['andres@unionx.cl'], None, '[VISTA PREVIA] ' + asunto
-    print('ENVIADO', to, cc, enviar(asunto, body, dash, to, cc, info['pngs']))
+    print('ENVIADO', to, cc, enviar(asunto, body, dash, to, cc))
