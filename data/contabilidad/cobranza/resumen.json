@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-09-29T11:44:27.057019",
+  "generado_en": "2026-09-29T17:12:08.792500",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12935,
-  "total_monto_pendiente_clp": 711179749.0,
+  "total_documentos_pendientes": 13029,
+  "total_monto_pendiente_clp": 717992928.0,
   "monto_por_aging": {
-    "+90 días": 85332389.0,
-    "1-30 días": 340656795.0,
+    "+90 días": 85299399.0,
+    "1-30 días": 344766871.0,
     "31-60 días": 169653730.0,
     "61-90 días": 46064583.0,
-    "Vigente": 69472252.0
+    "Vigente": 72208345.0
   },
   "monto_por_tipo": {
-    "BOLETA": 612624965.0,
+    "BOLETA": 619438144.0,
     "FACTURA": 98554784.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 163380537.0
+      "monto": 163975547.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 72349243.0
+      "monto": 72654669.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 70635713.0
+      "monto": 71296473.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -50,27 +50,27 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 16654044.0
+      "monto": 16851165.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 14706641.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
       "monto": 14300166.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 13554803.0
-    },
-    {
       "partner": "Cliente Shopify",
-      "monto": 12752174.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 12067907.0
+      "monto": 12806165.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 12040402.0
+      "monto": 12249434.0
+    },
+    {
+      "partner": "Cliente Simplit Home",
+      "monto": 12223377.0
     },
     {
       "partner": "Status Spa",
@@ -93,10 +93,10 @@
       "monto": 7696993.0
     },
     {
-      "partner": "Falabella Retail",
-      "monto": 6199603.0
+      "partner": "Lhotse Store",
+      "monto": 6382388.0
     }
   ],
-  "notas_credito_count": 826,
+  "notas_credito_count": 827,
   "pedidos_venta_count": 10000
 }
