@@ -541,6 +541,12 @@ def main():
         from clasificar_marca import clasificar_tipo_marca, normalizar_estado_sku
         if 'marca' in df.columns:
             df['tipo_marca'] = df['marca'].apply(clasificar_tipo_marca)
+            # Los despachos no son "Otras marcas" (proveedores nacionales): no tienen
+            # proveedor ni costo, y con margen 100% inflaban ese grupo (Andrés 29-09).
+            # Mismo criterio que P5c aplica a tipo_compra.
+            if 'es_despacho' in df.columns:
+                _env = df['es_despacho'].fillna(False).astype(bool)
+                df.loc[_env, 'tipo_marca'] = 'Envío'
         if 'estado_sku' in df.columns:
             df['estado_sku'] = df['estado_sku'].apply(normalizar_estado_sku)
         print("   [clasif] tipo_marca derivado de marca (8 propias) + estado_sku normalizado")
