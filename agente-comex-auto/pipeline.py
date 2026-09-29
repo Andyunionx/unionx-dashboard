@@ -23,6 +23,7 @@ import fase2_seimex             # noqa: E402
 import fase3_costeo             # noqa: E402
 import fase4_odoo               # noqa: E402
 import vigia_maestra            # noqa: E402
+import vigia_radar              # noqa: E402
 
 
 def main():
@@ -39,6 +40,12 @@ def main():
         vigia_maestra.revisar(st.cargar(), dry_run=DRY)
     except Exception as e:
         print(f"  (vigía falló: {type(e).__name__}: {e})")
+
+    print("\n── VIGÍA · Radar de Importaciones (lo actualiza el PC; aquí se verifica que siga vivo) ──")
+    try:
+        vigia_radar.revisar(dry_run=DRY)
+    except Exception as e:
+        print(f"  (vigía radar falló: {type(e).__name__}: {e})")
 
     print("\n── FASE 3 · costeo + SKUs Odoo ──")
     fase3_costeo.procesar(dry_run=DRY)
