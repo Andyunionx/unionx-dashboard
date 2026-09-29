@@ -820,112 +820,12 @@ def generar_precosteo_xlsx(emb: Embarque, out_dir: Path) -> Path:
 # ---------------------------------------------------------------------------
 
 def actualizar_maestra(emb: Embarque, maestra_path: Path):
-    if not maestra_path.exists():
-        print(f"\n[MAESTRA] No existe: {maestra_path}. Salteo actualizacion.")
-        return
+    """DESACTIVADA (29-sep-2026). Abría y guardaba la Maestra con openpyxl: borraba sus fórmulas de matriz
+    dinámica y escribía en columnas corridas (Qty sobre SKU, Price sobre NOMBRE). Así se dañó la copia
+    'Maestra Importaciones V2' (filas 26TP0320-0706 corridas y duplicadas). La Maestra viva la actualiza
+    agente-comex-auto/local/maestra_sync.py (cirugía XML, con respaldo), que corre a diario en el PC de Andrés."""
+    print(f"\n[MAESTRA] No se escribe {Path(maestra_path).name}: la actualiza agente-comex-auto/local/maestra_sync.py")
 
-    print(f"\n[MAESTRA] Actualizando: {maestra_path.name}")
-    backup_path = maestra_path.with_suffix(maestra_path.suffix + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
-    import shutil
-    shutil.copy2(maestra_path, backup_path)
-    print(f"  Backup creado: {backup_path.name}")
-
-    wb = openpyxl.load_workbook(maestra_path)
-
-    # Maestra (filas por SKU)
-    if "Maestra" in wb.sheetnames:
-        ws = wb["Maestra"]
-        # Encontrar columnas (asumiendo encabezados en fila 1)
-        headers = {ws.cell(1, c).value: c for c in range(1, ws.max_column + 1) if ws.cell(1, c).value}
-        next_row = ws.max_row + 1
-        for p in emb.productos:
-            ws.cell(next_row, headers.get("N° Embarque", 1), emb.numero)
-            ws.cell(next_row, headers.get("SKU", 2), p.sku)
-            ws.cell(next_row, headers.get("Model", 3), p.model)
-            ws.cell(next_row, headers.get("Qty", 4), p.qty)
-            ws.cell(next_row, headers.get("Price", 5), p.price)
-            ws.cell(next_row, headers.get("Costo Neto Unitario", 6), p.costo_internado_unit)
-            ws.cell(next_row, headers.get("ETA", 7), emb.tarifas.fecha_eta)
-            ws.cell(next_row, headers.get("Puerto", 8), emb.puerto)
-            # Resaltar fila nueva
-            for c in range(1, ws.max_column + 1):
-                ws.cell(next_row, c).fill = PatternFill("solid", fgColor="FFF3CD")
-            next_row += 1
-        print(f"  Pestaña 'Maestra': +{len(emb.productos)} filas")
-
-    # 1. Apertura CC
-    if "1. Apertura CC" in wb.sheetnames:
-        ws = wb["1. Apertura CC"]
-        next_row = ws.max_row + 1
-        ws.cell(next_row, 1, emb.numero)
-        ws.cell(next_row, 2, emb.puerto)
-        ws.cell(next_row, 3, datetime.now().year)
-        ws.cell(next_row, 4, emb.tarifas.fecha_eta)
-        ws.cell(next_row, 5, len(emb.productos))
-        ws.cell(next_row, 6, emb.total_pxq)
-        ws.cell(next_row, 7, emb.cc_inland_china)
-        ws.cell(next_row, 8, emb.total_pxq + emb.cc_exw + emb.cc_inland_china)  # Costo FOB
-        ws.cell(next_row, 9, emb.cc_flete)
-        ws.cell(next_row, 10, emb.total_cif)
-        ws.cell(next_row, 11, emb.cc_inland_chile)
-        ws.cell(next_row, 12, emb.total_internado_clp)
-        ws.cell(next_row, 13, emb.sobrecosto_pct / 100)
-        for c in range(1, 14):
-            ws.cell(next_row, c).fill = PatternFill("solid", fgColor="FFF3CD")
-        print(f"  Pestaña '1. Apertura CC': +1 fila")
-
-    # 4. Matriz SKU
-    if "4. Matriz SKU" in wb.sheetnames:
-        ws = wb["4. Matriz SKU"]
-        new_col = ws.max_column + 1
-        ws.cell(1, new_col, emb.numero).font = Font(bold=True)
-        # Mapear SKU -> fila
-        sku_to_row = {}
-        for r in range(2, ws.max_row + 1):
-            sku_val = ws.cell(r, 1).value
-            if sku_val:
-                sku_to_row[str(sku_val).strip()] = r
-        for p in emb.productos:
-            if not p.sku:
-                continue
-            if p.sku in sku_to_row:
-                ws.cell(sku_to_row[p.sku], new_col, round(p.costo_internado_unit, 0))
-            else:
-                # Agregar nuevo SKU
-                next_row = ws.max_row + 1
-                ws.cell(next_row, 1, p.sku)
-                ws.cell(next_row, new_col, round(p.costo_internado_unit, 0))
-        print(f"  Pestaña '4. Matriz SKU': nueva columna {emb.numero}")
-
-    # 5. Resumen Variaciones
-    if "5. Resumen Variaciones" in wb.sheetnames:
-        ws = wb["5. Resumen Variaciones"]
-        # Limpiar y recalcular top 20
-        # (no implementamos limpieza completa; agregamos al final como nota informativa)
-        next_row = ws.max_row + 2
-        ws.cell(next_row, 1, f"Actualizado: {datetime.now().strftime('%Y-%m-%d')} - {emb.numero}").font = Font(italic=True, color="666666")
-        next_row += 1
-        ws.cell(next_row, 1, "SKU").font = Font(bold=True)
-        ws.cell(next_row, 2, "Variacion %").font = Font(bold=True)
-        ws.cell(next_row, 3, "Costo Actual").font = Font(bold=True)
-        ws.cell(next_row, 4, "Ultimo Costo").font = Font(bold=True)
-        next_row += 1
-        var_prods = sorted([p for p in emb.productos if p.variacion_pct is not None],
-                           key=lambda x: abs(x.variacion_pct or 0), reverse=True)[:20]
-        for p in var_prods:
-            ws.cell(next_row, 1, p.sku)
-            ws.cell(next_row, 2, p.variacion_pct)
-            ws.cell(next_row, 3, p.costo_internado_unit)
-            ws.cell(next_row, 4, p.ultimo_costo)
-            next_row += 1
-        print(f"  Pestaña '5. Resumen Variaciones': +{len(var_prods)} filas (top 20)")
-
-    wb.save(maestra_path)
-    print(f"  [OK] Maestra guardada.")
-
-# ---------------------------------------------------------------------------
-# GENERAR EMAIL HTML
-# ---------------------------------------------------------------------------
 
 def _html_items_sin_sku(emb: 'Embarque') -> str:
     """Bloque HTML listando ítems del PI sin SKU asignado (samples / nuevos productos).
