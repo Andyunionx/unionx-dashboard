@@ -195,6 +195,7 @@ from views.sistema_seguridad import render as render_sistema_seguridad
 from views.alertas_negocio import render as render_alertas_negocio
 from views.ops_comex import render as render_comex
 from views.ventas_cyber import render as render_ventas_cyber
+from views.ops_radar_importaciones import render as render_radar, _autorizado as radar_autorizado
 
 pages = {
     "📊 Ventas": [
@@ -230,6 +231,14 @@ pages = {
         st.Page(render_sistema_seguridad, title="Seguridad", icon="🔐", url_path="sistema-seguridad"),
     ],
 }
+
+# Radar de Importaciones: primer borrador, solo para el grupo de prueba (RADAR_USUARIOS en views/ops_radar_importaciones.py)
+if radar_autorizado():
+    _items = list(pages.items())
+    _i = next(i for i, (k, _) in enumerate(_items) if k == "📦 Stock") + 1
+    _items.insert(_i, ("🛰️ Supply chain", [st.Page(render_radar, title="Radar de Importaciones (borrador)", icon="🛰️",
+                                                   url_path="radar-importaciones")]))
+    pages = dict(_items)
 
 pg = st.navigation(pages)
 pg.run()
