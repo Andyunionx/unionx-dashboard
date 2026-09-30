@@ -1,28 +1,32 @@
 {
-  "generado_en": "2026-09-30T02:47:16.639940",
+  "generado_en": "2026-09-30T11:30:51.904576",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13120,
-  "total_monto_pendiente_clp": 721567034.0,
+  "total_documentos_pendientes": 13140,
+  "total_monto_pendiente_clp": 838566529.0,
   "monto_por_aging": {
     "+90 días": 85803799.0,
-    "1-30 días": 330439344.0,
+    "1-30 días": 330942616.0,
     "31-60 días": 186306023.0,
     "61-90 días": 50774929.0,
-    "Vigente": 68242939.0
+    "Vigente": 184739162.0
   },
   "monto_por_tipo": {
-    "BOLETA": 623012250.0,
+    "BOLETA": 740011745.0,
     "FACTURA": 98554784.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 165216370.0
+      "monto": 165507239.0
+    },
+    {
+      "partner": "WALMART CHILE COM. LTDA",
+      "monto": 116496223.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 72918969.0
+      "monto": 72985329.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -34,7 +38,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 25788323.0
+      "monto": 25825313.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -66,7 +70,7 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 12418667.0
+      "monto": 12494148.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -91,10 +95,6 @@
     {
       "partner": "Cliente Ripley",
       "monto": 7816853.0
-    },
-    {
-      "partner": "Falabella Retail",
-      "monto": 6717517.0
     }
   ],
   "notas_credito_count": 826,
