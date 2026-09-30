@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-09-30T17:09:22.322583",
+  "generado_en": "2026-09-30T21:37:28.633340",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13248,
-  "total_monto_pendiente_clp": 843692254.0,
+  "total_documentos_pendientes": 13206,
+  "total_monto_pendiente_clp": 845499870.0,
   "monto_por_aging": {
     "+90 días": 85538658.0,
-    "1-30 días": 335005815.0,
+    "1-30 días": 336945411.0,
     "31-60 días": 186306023.0,
-    "61-90 días": 50774929.0,
+    "61-90 días": 50642949.0,
     "Vigente": 186066829.0
   },
   "monto_por_tipo": {
-    "BOLETA": 745137470.0,
+    "BOLETA": 746945086.0,
     "FACTURA": 98554784.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 166801552.0
+      "monto": 167417567.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 73089219.0
+      "monto": 72972635.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -38,7 +38,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 25921243.0
+      "monto": 25938233.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -54,11 +54,11 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 17345815.0
+      "monto": 17584775.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 15485887.0
+      "monto": 15525879.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -66,7 +66,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 12878157.0
+      "monto": 12932148.0
     },
     {
       "partner": "Cliente Simplit Home",
@@ -89,14 +89,14 @@
       "monto": 8595153.0
     },
     {
-      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
-      "monto": 7840539.0
+      "partner": "Cliente Ripley",
+      "monto": 7859813.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 7833833.0
+      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+      "monto": 7840539.0
     }
   ],
-  "notas_credito_count": 831,
+  "notas_credito_count": 832,
   "pedidos_venta_count": 10000
 }
