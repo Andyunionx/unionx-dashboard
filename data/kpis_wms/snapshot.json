@@ -1,40 +1,54 @@
 {
-  "generado_en": "2026-09-30T09:25:18.805999",
+  "generado_en": "2026-09-30T19:53:13.434030",
   "mes_actual": "2026-09",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.06621976628317783,
-      "total_pickings": 11039,
-      "on_time": 731,
-      "on_time_pct": 0.06621976628317783,
-      "in_full": 11036,
-      "in_full_pct": 0.9997282362532838,
-      "both": 731,
+      "valor": 0.06785873938310237,
+      "total_pickings": 11185,
+      "on_time": 759,
+      "on_time_pct": 0.06785873938310237,
+      "in_full": 11182,
+      "in_full_pct": 0.999731783638802,
+      "both": 759,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.11023622047244094,
-      "total_pickings": 381,
-      "on_time": 42,
-      "on_time_pct": 0.11023622047244094,
-      "in_full": 374,
-      "in_full_pct": 0.9816272965879265,
-      "both": 42,
+      "valor": 0.11658031088082901,
+      "total_pickings": 386,
+      "on_time": 45,
+      "on_time_pct": 0.11658031088082901,
+      "in_full": 379,
+      "in_full_pct": 0.9818652849740933,
+      "both": 45,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998680042238648,
-      "ok": 15150,
-      "total": 15152,
+      "valor": 0.9998695964008607,
+      "ok": 15335,
+      "total": 15337,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.961241319444445,
-      "n_recepciones": 288,
+      "valor": 12.872181992337165,
+      "n_recepciones": 290,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01076",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-09-30 14:42",
+          "done": "2026-09-30 14:47"
+        },
+        {
+          "picking": "CA1/RET/01223",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-30 13:41",
+          "done": "2026-09-30 13:41"
+        },
         {
           "picking": "CA1/IN/01075",
           "proveedor": "",
@@ -160,39 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-09-24 14:12",
           "done": "2026-09-24 14:12"
-        },
-        {
-          "picking": "CA1/RET/01208",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-24 14:10",
-          "done": "2026-09-24 14:11"
-        },
-        {
-          "picking": "CA1/RET/01209",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-24 14:11",
-          "done": "2026-09-24 14:11"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9692965410027206,
-      "total_so": 10295,
-      "total_con_pickings": 10292,
-      "cumplidos": 9976,
+      "valor": 0.961596958174905,
+      "total_so": 10529,
+      "total_con_pickings": 10520,
+      "cumplidos": 10116,
       "parciales": 18,
-      "sin_iniciar": 298,
+      "sin_iniciar": 386,
       "error": null
     },
     "oct_30d": {
-      "valor": 80.60559634668682,
-      "n_orders": 11025,
+      "valor": 79.74514353840951,
+      "n_orders": 11172,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 32.458888888888886,
+      "mediana_h": 31.366666666666667,
       "detalle": [
         {
           "so": "S278911",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 14403,
+      "lineas": 14589,
       "mes": "2026-09",
       "error": null
     },
@@ -432,6 +432,12 @@
           "on_time_pct": 0.42857142857142855
         },
         {
+          "cliente": "Falabella Retail",
+          "total": 24,
+          "tarde": 2,
+          "on_time_pct": 0.9166666666666666
+        },
+        {
           "cliente": "Cencosud Retail S.A",
           "total": 7,
           "tarde": 0,
@@ -440,12 +446,6 @@
         {
           "cliente": "WALMART CHILE COM. LTDA",
           "total": 4,
-          "tarde": 0,
-          "on_time_pct": 1.0
-        },
-        {
-          "cliente": "Falabella Retail",
-          "total": 19,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8612,42 +8612,56 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.06621976628317783,
-      "total_pickings": 11039,
-      "on_time": 731,
-      "on_time_pct": 0.06621976628317783,
-      "in_full": 11036,
-      "in_full_pct": 0.9997282362532838,
-      "both": 731,
+      "valor": 0.06785873938310237,
+      "total_pickings": 11185,
+      "on_time": 759,
+      "on_time_pct": 0.06785873938310237,
+      "in_full": 11182,
+      "in_full_pct": 0.999731783638802,
+      "both": 759,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.11023622047244094,
-      "total_pickings": 381,
-      "on_time": 42,
-      "on_time_pct": 0.11023622047244094,
-      "in_full": 374,
-      "in_full_pct": 0.9816272965879265,
-      "both": 42,
+      "valor": 0.11658031088082901,
+      "total_pickings": 386,
+      "on_time": 45,
+      "on_time_pct": 0.11658031088082901,
+      "in_full": 379,
+      "in_full_pct": 0.9818652849740933,
+      "both": 45,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998680042238648,
-      "ok": 15150,
-      "total": 15152,
+      "valor": 0.9998695964008607,
+      "ok": 15335,
+      "total": 15337,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.961241319444445,
-      "n_recepciones": 288,
+      "valor": 12.872181992337165,
+      "n_recepciones": 290,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01076",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-09-30 14:42",
+          "done": "2026-09-30 14:47"
+        },
+        {
+          "picking": "CA1/RET/01223",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-09-30 13:41",
+          "done": "2026-09-30 13:41"
+        },
         {
           "picking": "CA1/IN/01075",
           "proveedor": "",
@@ -8773,20 +8787,6 @@
           "horas": 0.0,
           "scheduled": "2026-09-24 14:12",
           "done": "2026-09-24 14:12"
-        },
-        {
-          "picking": "CA1/RET/01208",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-24 14:10",
-          "done": "2026-09-24 14:11"
-        },
-        {
-          "picking": "CA1/RET/01209",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-24 14:11",
-          "done": "2026-09-24 14:11"
         }
       ],
       "error": null
