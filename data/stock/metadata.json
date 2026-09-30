@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-09-29T19:48:37.776775",
+  "generado_en": "2026-09-30T00:05:26.262108",
   "total_skus": 1762,
-  "total_quants": 4463,
+  "total_quants": 4458,
   "total_locations": 1428,
   "kpis": {
     "n_skus": 1762,
-    "valor_total": 991037800.32,
-    "unidades_total": 184503.0,
-    "costo_promedio_sku": 562450.51,
-    "n_quiebre_critico": 67,
+    "valor_total": 987186876.32,
+    "unidades_total": 184274.0,
+    "costo_promedio_sku": 560264.97,
+    "n_quiebre_critico": 64,
     "n_bajo": 139,
-    "n_optimo": 116,
-    "n_sobrestock": 308,
-    "n_sin_venta": 1132,
+    "n_optimo": 113,
+    "n_sobrestock": 313,
+    "n_sin_venta": 1133,
     "rot_30d_promedio": 2.57,
     "rot_90d_promedio": 4.57
   },
@@ -603,8 +603,8 @@
       {
         "Posicion": "101D17",
         "Ubicacion": "CA1/Stock/101D17",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "101D18",
@@ -8252,18 +8252,18 @@
       }
     ],
     "total": 1372,
-    "occupied": 765,
-    "empty": 607,
-    "pct": 55.8
+    "occupied": 764,
+    "empty": 608,
+    "pct": 55.7
   },
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1132
+      "SKUs": 1133
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 308
+      "SKUs": 313
     },
     {
       "Categoria": "BAJO",
@@ -8271,23 +8271,23 @@
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 116
+      "SKUs": 113
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 67
+      "SKUs": 64
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 780608905.52,
-      "Unidades": 161965.0,
-      "SKUs": 1208
+      "Valor": 776024853.52,
+      "Unidades": 161470.0,
+      "SKUs": 1207
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 48970169.74,
+      "Valor": 48970168.74,
       "Unidades": 5890.0,
       "SKUs": 409
     },
@@ -8299,8 +8299,8 @@
     },
     {
       "Bodega": "CA1/Output",
-      "Valor": 29696528.91,
-      "Unidades": 2763.0,
+      "Valor": 30429657.91,
+      "Unidades": 3029.0,
       "SKUs": 344
     },
     {
