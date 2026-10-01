@@ -268,17 +268,32 @@ def _filtros() -> dict:
     tcif = dict(zip(tipos.tipo, tipos.cif))
     nos = q("""SELECT sku, arg_max(producto, eta) producto, arg_max(tipo, eta) tipo, sum(qty) u FROM nosotros
                WHERE tipo IS NOT NULL AND coalesce(sku, '') <> '' GROUP BY 1 ORDER BY u DESC""")
-    lab_sku = {r.sku: f"{r.sku} · {str(r.producto)[:42]} ({r.tipo})" for r in nos.itertuples()}
+    nos["lab"] = [f"{r.sku} · {str(r.producto)[:42]} ({r.tipo})" for r in nos.itertuples()]
+    lab_sku = dict(zip(nos.sku, nos.lab))
     d0, d1, d2 = st.columns([2, 2, 2])
-    base["skus"] = d0.multiselect("Mi SKU (opcional)", nos["sku"].tolist(), placeholder="Ninguno",
-                                  format_func=lambda s_: lab_sku.get(s_, s_),
-                                  help="Para partir desde un producto nuestro: filtra su tipo y, en Precios y en el Excel, "
-                                       "lo compara contra quienes compran ese tipo en su mismo rango de precio.")
-    base["tipos"] = d1.multiselect("Tipo de producto", _con_elegidos(tipos["tipo"].tolist(), "radar_tipo"), placeholder="Todos",
+    base["tipos"] = d0.multiselect("Tipo de producto", _con_elegidos(tipos["tipo"].tolist(), "radar_tipo"), placeholder="Todos",
                                    format_func=lambda t: f"{t} · {mm(tcif.get(t))}", key="radar_tipo")
+    # Mi SKU con búsqueda EXACTA: la del multiselect de Streamlit calza letra a letra ("loza" traía 63 SKU de 12 tipos:
+    # "Pantalón Mujer Lukla-W Navy Talla 44" calza l…o…z…a) y el mercado terminaba mezclando polerones con loza.
+    # Si hay tipo elegido, solo se listan SKU de ese tipo.
+    buscar = d1.text_input("Mi SKU (opcional): buscar por código, nombre o tipo", key="radar_sku_buscar",
+                           placeholder="p. ej. loza · LVAUDGM · polerón",
+                           help="Para partir desde un producto nuestro: filtra su tipo y, en Precios y en el Excel, lo compara "
+                                "contra quienes compran ese tipo en su mismo rango de precio. Busca el texto tal cual.")
+    pool = nos[nos.tipo.isin(base["tipos"])] if base["tipos"] else nos
+    if buscar.strip():
+        s_ = _sin_tildes(buscar.strip())
+        pool = pool[pool.lab.map(_sin_tildes).str.contains(s_, regex=False)]
+    base["skus"] = d1.multiselect("SKU", _con_elegidos(pool.sku.tolist(), "radar_sku"), key="radar_sku",
+                                  placeholder=f"{len(pool)} SKU {'que calzan' if buscar.strip() else 'nuestros'} · elige uno o varios",
+                                  format_func=lambda s_: lab_sku.get(s_, s_), label_visibility="collapsed")
     if base["skus"] and not base["tipos"]:
         base["tipos"] = sorted(set(nos[nos.sku.isin(base["skus"])].tipo))
-        st.caption(f"Filtrando por el tipo de tus SKU: {', '.join(base['tipos'])}")
+        if len(base["tipos"]) > 1:
+            st.warning(f"Tus SKU elegidos son de {len(base['tipos'])} tipos distintos ({', '.join(base['tipos'])}) y el "
+                       "mercado de abajo los suma todos. Para mirar uno solo, elígelo en 'Tipo de producto'.")
+        else:
+            st.caption(f"Filtrando por el tipo de tus SKU: {base['tipos'][0]}")
     w, p = _where(base, con_importador=False)
     imps = q(f"""SELECT m.importador_key, coalesce(i.importador, 'No identificados') importador,
                         coalesce(i.nivel, 'NI') nivel, sum(m.cif) cif
