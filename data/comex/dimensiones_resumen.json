@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-01T09:51:58.152344",
+  "generado_en": "2026-10-01T17:41:32.590308",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 50,
-  "sku_match_odoo": 49,
-  "sku_con_peso": 45,
-  "sku_con_volumen": 45,
-  "sku_volumen_anomalo": 3,
+  "sku_input": 37,
+  "sku_match_odoo": 36,
+  "sku_con_peso": 32,
+  "sku_con_volumen": 32,
+  "sku_volumen_anomalo": 0,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 90.0,
-  "cobertura_volumen_pct": 90.0,
-  "cobertura_volumen_confiable_pct": 84.0,
-  "unidades_totales": 12440.0,
-  "peso_total_kg": 35352.3,
-  "volumen_total_m3": 151.49,
-  "volumen_total_m3_raw": 890011.56,
-  "pallets_totales_estim": 126.2,
+  "cobertura_peso_pct": 86.5,
+  "cobertura_volumen_pct": 86.5,
+  "cobertura_volumen_confiable_pct": 86.5,
+  "unidades_totales": 8552.0,
+  "peso_total_kg": 26702.2,
+  "volumen_total_m3": 98.31,
+  "volumen_total_m3_raw": 98.31,
+  "pallets_totales_estim": 81.9,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -83,26 +83,6 @@
       "cobertura_volumen_pct": 95.2
     },
     {
-      "pi": "26TP0811PI",
-      "transporte": "",
-      "fecha_embarque": "2026-09-24",
-      "fecha_eta_bodega": "2026-09-24",
-      "skus_distintos": 13,
-      "unidades_totales": 3888.0,
-      "peso_total_kg": 8650.1,
-      "volumen_total_m3": 53.18,
-      "volumen_total_m3_raw": 889913.25,
-      "pallets_estim": 44.3,
-      "containers_20_estim": 1.9,
-      "containers_40hc_estim": 0.79,
-      "skus_con_match_odoo": 13,
-      "skus_con_peso": 13,
-      "skus_con_volumen": 13,
-      "skus_volumen_anomalo": 3,
-      "cobertura_peso_pct": 100.0,
-      "cobertura_volumen_pct": 100.0
-    },
-    {
       "pi": "26TP0826PI",
       "transporte": "",
       "fecha_embarque": "2026-09-24",
@@ -126,21 +106,5 @@
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": [
-    {
-      "sku": "BDCASMUÑEC-WD",
-      "producto": "Casa de Muñecas Madera 3 Pisos con Muebles y Muñecos Bandú",
-      "volumen_unit_m3": 31438.125
-    },
-    {
-      "sku": "BDPZMG2E1",
-      "producto": "Pizarra Infantil Madera 2 en 1 Magnética Doble Cara Bandú",
-      "volumen_unit_m3": 11000.0
-    },
-    {
-      "sku": "BDGMNMVBB",
-      "producto": "Gimnasio Madera Bebé Montessori Juguetes Colgantes Bandú",
-      "volumen_unit_m3": 4414.41
-    }
-  ]
+  "skus_volumen_anomalo_top": []
 }
