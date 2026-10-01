@@ -40,7 +40,14 @@ import pandas as pd
 ROOT = Path(__file__).parent
 REGLAS = ROOT / 'data' / 'planillas' / 'reglas_margen_final.csv'
 COM_SKU = ROOT / 'data' / 'planillas' / 'comision_sku_canal.csv'
-CUTOFF = '2026-08-01'
+HIST = ROOT / 'data' / 'historico' / 'ventas_historico.parquet'
+# Devengo comercial desde jun-2026 (Andrés 30-09/01-10): jun–jul se recalcularon por pedido
+# (reemplazan la carga manual "Otros costos"); ago en adelante viene así del extract.
+CUTOFF = '2026-06-01'
+MARKETPLACES = ('Mercado Libre', 'Falabella', 'Paris', 'Ripley', 'Walmart')
+# Campo por pedido que puede venir vacío al vender (se llena con la liquidación) → promedio del canal
+HUECOS = [(c, 'comision') for c in MARKETPLACES] + [('Ripley', 'logistica'), ('Walmart', 'logistica')]
+COSTOS = ('comision', 'logistica', 'marketing')
 
 
 def cargar_reglas(path: Path = REGLAS) -> pd.DataFrame:
@@ -119,6 +126,9 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
         df.loc[m, 'fuente_comision'] = f.where(f.str.contains('regla'), (f + '+regla').str.lstrip('+'))
         tocadas += int(m.sum())
     movido = _sacar_envio_del_reparto(df, base)
+    n_prom = _promedio_canal(df, base, _ventas_referencia(df))
+    # la referencia se rearma después del promedio: la devolución revierte lo que la venta lleva
+    n_rev = _reversa_devoluciones(df, base, _ventas_referencia(df))
     # Identidad en TODAS las filas desde el corte (no solo las con regla): había filas
     # corregidas por pasos previos del RAW con margen_final = margen_front (24-09: 119
     # filas, $0,5M en septiembre).
@@ -126,8 +136,94 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
                                     - df.loc[base, 'logistica'] - df.loc[base, 'marketing'])
     if verbose:
         print(f"   [margen_final_reglas] {tocadas:,} filas con regla de canal ({len(reglas)} canales en la tabla)"
-              f" · ${movido:,.0f} de costos movidos de líneas de envío a productos")
+              f" · ${movido:,.0f} de costos movidos de líneas de envío a productos"
+              f" · {n_prom:,} filas con promedio del canal · {n_rev:,} costos revertidos en devoluciones")
     return df
+
+
+def _ventas_referencia(df: pd.DataFrame) -> pd.DataFrame:
+    """Ventas del histórico + las del df (sin duplicar meses): base para tasas de respaldo y
+    para revertir la devolución con el costo de su venta original."""
+    cols = ['fecha_venta', 'tipo_movimiento', 'canal', 'pedido_marketplace', 'sku', 'cantidad', 'venta_neta', *COSTOS]
+    partes = [df[[c for c in cols if c in df.columns]]]
+    if HIST.exists():
+        try:
+            h = pd.read_parquet(HIST, columns=cols)
+            meses_df = set(df['fecha_venta'].astype(str).str[:7])
+            partes.insert(0, h[~h['fecha_venta'].astype(str).str[:7].isin(meses_df)])
+        except Exception as e:  # el histórico es solo apoyo: sin él se usan las tasas del propio df
+            print(f"   [margen_final_reglas][WARN] histórico no disponible: {type(e).__name__}")
+    r = pd.concat(partes, ignore_index=True)
+    for c in ('cantidad', 'venta_neta', *COSTOS):
+        r[c] = pd.to_numeric(r[c], errors='coerce').fillna(0.0)
+    return r[(r['tipo_movimiento'].astype(str) == 'Venta') & ~r['sku'].astype(str).str.startswith('Delivery')
+             & (r['venta_neta'] > 0)]
+
+
+def _tasa(ref: pd.DataFrame, canal: str, col: str, mes: str, minimo: int = 30, solo_con_dato: bool = True):
+    """Tasa col/venta del canal en el mes; si el mes tiene menos de `minimo` ventas con dato,
+    la del último mes anterior que sí tenga. Devuelve (tasa, mes_usado) o (None, None)."""
+    x = ref[(ref['canal'] == canal) & ((ref[col] > 0) if solo_con_dato else True)]
+    x = x.assign(_m=x['fecha_venta'].astype(str).str[:7])
+    for m in sorted({m for m in x['_m'] if m <= mes}, reverse=True):
+        y = x[x['_m'] == m]
+        if len(y) >= minimo and y['venta_neta'].sum() > 0:
+            return y[col].sum() / y['venta_neta'].sum(), m
+    return None, None
+
+
+def _promedio_canal(df: pd.DataFrame, base: pd.Series, ref: pd.DataFrame) -> int:
+    """Pedido de marketplace sin el campo en Odoo (comisión; logística Ripley/Walmart) → promedio
+    del canal, con comentario. Lo ideal es el % según contrato (Andrés 30-09)."""
+    venta = base & (df['tipo_movimiento'] == 'Venta') & ~df['sku'].astype(str).str.startswith('Delivery') & (df['venta_neta'] > 0)
+    mes = df['fecha_venta'].astype(str).str[:7]
+    n = 0
+    for canal, col in HUECOS:
+        sin = venta & (df['canal'] == canal) & (df[col] == 0)
+        for m in sorted(set(mes[sin])):
+            sel = sin & (mes == m)
+            tasa, m_ref = _tasa(ref, canal, col, m)
+            if tasa is None:
+                continue
+            df.loc[sel, col] = df.loc[sel, 'venta_neta'] * tasa
+            f = df.loc[sel, 'fuente_comision']
+            df.loc[sel, 'fuente_comision'] = (f + f'·{col} promedio canal {m_ref} (lo ideal: contrato)').str.lstrip('·')
+            n += int(sel.sum())
+    return n
+
+
+def _reversa_devoluciones(df: pd.DataFrame, base: pd.Series, ref: pd.DataFrame) -> int:
+    """La venta conserva sus costos del momento de vender y la devolución los revierte (comisión,
+    logística y marketing; Andrés 01-10). Si la N/C calza con su venta (pedido marketplace + SKU) se
+    revierte lo de esa venta por unidad; si no, con la tasa del canal del mes. Solo costos en 0
+    (los canales con % de contrato ya los revierten por la regla)."""
+    dev = base & (df['tipo_movimiento'] == 'Devolución') & ~df['sku'].astype(str).str.startswith('Delivery') & (df['venta_neta'] < 0)
+    if not dev.any():
+        return 0
+    r = ref[ref['pedido_marketplace'].astype(str).str.len() > 3]
+    por_ud = r.groupby([r['pedido_marketplace'].astype(str), r['sku'].astype(str)])[['cantidad', *COSTOS]].sum()
+    por_ud = por_ud[por_ud['cantidad'] > 0]
+    llave = pd.Series(list(zip(df['pedido_marketplace'].astype(str), df['sku'].astype(str))), index=df.index)
+    calza = dev & llave.isin(set(por_ud.index))
+    mes = df['fecha_venta'].astype(str).str[:7]
+    n = 0
+    for col in COSTOS:
+        sin = dev & (df[col] == 0)
+        ex = sin & calza
+        if ex.any():
+            u = llave[ex].map(lambda k: por_ud.at[k, col] / por_ud.at[k, 'cantidad'])
+            df.loc[ex, col] = df.loc[ex, 'cantidad'] * u          # cantidad < 0 → costo negativo
+        for (canal, m), idx in df[sin & ~calza].groupby(['canal', mes[sin & ~calza]]).groups.items():
+            tasa, _ = _tasa(ref, canal, col, m, minimo=1, solo_con_dato=False)
+            if tasa is not None:
+                df.loc[idx, col] = df.loc[idx, 'venta_neta'] * tasa
+        hecho = sin & (df[col] != 0)
+        etiqueta = pd.Series(f'·reversa {col} devolución (tasa canal)', index=df.index).where(~calza, f'·reversa {col} exacta')
+        df.loc[hecho, 'fuente_comision'] = (df.loc[hecho, 'fuente_comision'] + etiqueta[hecho]).str.lstrip('·')
+        n += int(hecho.sum())
+    v = df.loc[dev, 'venta_neta']
+    df.loc[dev, 'comision_pct'] = (df.loc[dev, 'comision'] / v.where(v != 0) * 100).fillna(0)
+    return n
 
 
 def _sacar_envio_del_reparto(df: pd.DataFrame, base: pd.Series) -> float:

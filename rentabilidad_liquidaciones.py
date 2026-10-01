@@ -33,7 +33,7 @@ import pandas as pd
 ROOT = Path(__file__).parent
 RECETA = ROOT / 'data' / 'rentabilidad' / 'receta_glosas.csv'
 IVA = 1.19
-COLS = ['canal', 'cuenta', 'archivo', 'pedido', 'glosa', 'monto_archivo', 'base_iva', 'monto_neto', 'modalidad_liq']
+COLS = ['canal', 'cuenta', 'archivo', 'pedido', 'sku', 'glosa', 'monto_archivo', 'base_iva', 'monto_neto', 'modalidad_liq']
 
 
 def _norm(s):
@@ -57,6 +57,7 @@ def falabella(path: Path, cuenta='Falabella') -> pd.DataFrame:
     d = pd.DataFrame({
         'canal': 'Falabella', 'cuenta': cuenta, 'archivo': path.name,
         'pedido': f['N de orden'].astype('Int64').astype(str).replace('<NA>', ''),
+        'sku': f['SKU vendedor'].astype(str).str.strip().replace({'nan': ''}),
         'glosa': f['Descripcion Factura'].astype(str).str.strip(),
         'monto_archivo': pd.to_numeric(f['Monto (Sin IVA)'], errors='coerce').fillna(0),
         'base_iva': 'neto', 'modalidad_liq': mod,
@@ -81,6 +82,7 @@ def mercadolibre(path: Path, cuenta: str) -> pd.DataFrame:
         vcol = [c for c in d.columns if str(c).startswith('Valor de la')][0]
         out = pd.DataFrame({'canal': 'Mercado Libre', 'cuenta': cuenta, 'archivo': path.name,
                             'pedido': d['Número de venta'].astype(str).str.replace(r'\.0$', '', regex=True),
+                            'sku': '', 'envio': d['Número de envío'].astype(str).str.replace(r'\.0$', '', regex=True),
                             'glosa': d['Detalle'].astype(str).str.strip(),
                             'monto_archivo': pd.to_numeric(d[vcol], errors='coerce').fillna(0),
                             'base_iva': 'con_iva', 'modalidad_liq': 'Envío directo'})
@@ -89,11 +91,12 @@ def mercadolibre(path: Path, cuenta: str) -> pd.DataFrame:
         d = d[d['Detalle'].notna()]
         out = pd.DataFrame({'canal': 'Mercado Libre', 'cuenta': cuenta, 'archivo': path.name,
                             'pedido': d['Número de venta'].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', ''),
+                            'sku': '', 'envio': d['Número de envío'].astype(str).str.replace(r'\.0$', '', regex=True).replace('nan', ''),
                             'glosa': d['Detalle'].astype(str).str.strip(),
                             'monto_archivo': pd.to_numeric(d['Valor del cargo'], errors='coerce').fillna(0),
                             'base_iva': 'con_iva', 'modalidad_liq': ''})
     out['monto_neto'] = out['monto_archivo'] / IVA      # cargos positivos, anulaciones negativas
-    return out[COLS]
+    return out[COLS + ['envio']]
 
 
 # ─────────────────────────── Paris ───────────────────────────
@@ -119,8 +122,8 @@ def paris(path: Path, cuenta: str) -> pd.DataFrame:
     if ff:
         glosa = glosa.replace({'Venta': 'Cargo venta'}) + ' (FF)'
     d = pd.DataFrame({'canal': 'Paris', 'cuenta': cuenta, 'archivo': path.name,
-                      'pedido': p['número orden'].astype(str).str.replace(r'\.0$', '', regex=True),
-                      'glosa': glosa, 'monto_archivo': val, 'base_iva': 'con_iva',
+                      'pedido': p['nro suborden'].astype(str).str.replace(r'\.0$', '', regex=True),   # el RAW guarda la suborden
+                      'sku': '', 'glosa': glosa, 'monto_archivo': val, 'base_iva': 'con_iva',
                       'modalidad_liq': 'Fulfillment' if ff else ''})
     d['monto_neto'] = d['monto_archivo'] / IVA
     return d[COLS]
@@ -151,7 +154,7 @@ def ripley(path: Path, cuenta='Ripley') -> pd.DataFrame:
     m = m[pd.to_numeric(m['v'], errors='coerce').fillna(0) != 0]
     d = pd.DataFrame({'canal': 'Ripley', 'cuenta': cuenta, 'archivo': path.name,
                       'pedido': m['Orden de compra'].astype(str),
-                      'glosa': m['concepto'].map(RIPLEY_GLOSA).fillna(m['concepto']),
+                      'sku': '', 'glosa': m['concepto'].map(RIPLEY_GLOSA).fillna(m['concepto']),
                       'monto_archivo': -pd.to_numeric(m['v'], errors='coerce'),   # descuento negativo = costo
                       'base_iva': 'con_iva', 'modalidad_liq': ''})
     d['monto_neto'] = d['monto_archivo'] / IVA
@@ -176,6 +179,7 @@ def walmart(path: Path, cuenta='Walmart') -> pd.DataFrame:
     fb = w[col['Fulfilled By']].astype(str).str.upper() if 'Fulfilled By' in col else pd.Series('', index=w.index)
     d = pd.DataFrame({'canal': 'Walmart', 'cuenta': cuenta, 'archivo': path.name,
                       'pedido': w[col['Orden']].astype(str).str.replace(r'\.0$', '', regex=True),
+                      'sku': (w[col['SKU']].astype(str).str.strip().replace({'nan': ''}) if 'SKU' in col else ''),
                       'glosa': glosa, 'monto_archivo': val, 'base_iva': 'con_iva',
                       'modalidad_liq': fb.map(lambda s: 'Fulfillment' if 'WFS' in s or 'WALMART' in s else '')})
     d['monto_neto'] = d['monto_archivo'] / IVA
@@ -187,7 +191,9 @@ def recibelo(path: Path) -> pd.DataFrame:
     x = pd.read_excel(path, sheet_name='Detalle')
     canal = x['Cliente/Canal'].astype(str).str.strip()
     d = pd.DataFrame({'canal': canal, 'cuenta': 'Recíbelo', 'archivo': path.name,
-                      'pedido': x['ID interna'].astype(str), 'glosa': 'Recibelo',
+                      'pedido': [str(b).split('-PKG')[0] if str(b) not in ('0', 'nan', '') else str(a).split('-M')[0]
+                                 for a, b in zip(x['ID interna'], x['ID imported'])],
+                      'sku': '', 'glosa': 'Recibelo',
                       'monto_archivo': pd.to_numeric(x['Costo Total'], errors='coerce').fillna(0),
                       'base_iva': 'neto', 'modalidad_liq': 'Envío directo'})
     d['monto_neto'] = d['monto_archivo']
@@ -198,7 +204,9 @@ def bluex(path: Path) -> pd.DataFrame:
     x = pd.read_excel(path, sheet_name='Detalle')
     neto = [c for c in x.columns if str(c).startswith('NETO')][0]
     d = pd.DataFrame({'canal': x['CANAL'].astype(str).str.strip(), 'cuenta': 'BlueX', 'archivo': path.name,
-                      'pedido': x['REFERENCIA'].astype(str), 'glosa': 'Bluexpress',
+                      'pedido': x['REFERENCIA'].astype(str).str.split(',').str[0].str.strip()
+                                 .str.replace(r'^(MEL|GRS)', '', regex=True).str.replace(r'^[A-Za-z]+-(\d+)$', r'\1', regex=True),
+                      'sku': '', 'glosa': 'Bluexpress',
                       'monto_archivo': pd.to_numeric(x[neto], errors='coerce').fillna(0),
                       'base_iva': 'neto', 'modalidad_liq': ''})
     d['monto_neto'] = d['monto_archivo']
