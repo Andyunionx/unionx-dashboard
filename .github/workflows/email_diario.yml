@@ -159,9 +159,10 @@ jobs:
           python extract_finanzas_planificacion.py
         continue-on-error: true
 
-      - name: Enviar Dashboard Cierre del Mes (L-V a Andrés; copias solo los lunes)
+      - name: Enviar Dashboard Cierre del Mes (L-V a Andrés; copias los lunes y el primer día hábil del mes)
         # ACTIVO (OK Andrés 24-sep-2026): proyección de cierre del mes vs FCST vigente.
         # Andrés 25-sep: diario para él, semanal (lunes, hora Chile) para los de copia.
+        # Andrés 1-oct: el primer día hábil del mes sale el CIERRE del mes anterior a todos los copiados.
         # Venta del parquet recién refrescado arriba; FCST/PPTO/GAV desde data/finanzas
         # (sync de la planilla); margen de contribución base desde el Drive "Seguimiento
         # contribuciones 2026" (DRIVE_OAUTH_TOKEN_JSON). Ajustes caso a caso en
@@ -174,7 +175,10 @@ jobs:
           DASH_CIERRE_CC: ${{ vars.DASH_CIERRE_CC || 'martin@unionx.cl,erich@unionx.cl,nicolas@unionx.cl,sguzman@unionx.cl' }}
           PYTHONIOENCODING: utf-8
         run: |
-          if [ "$(TZ=America/Santiago date +%u)" != "1" ]; then export DASH_CIERRE_CC=""; fi
+          DOW=$(TZ=America/Santiago date +%u); DOM=$(TZ=America/Santiago date +%-d)
+          PRIMER_HABIL=0
+          if [ "$DOW" -le 5 ] && { [ "$DOM" = "1" ] || { [ "$DOW" = "1" ] && [ "$DOM" -le 3 ]; }; }; then PRIMER_HABIL=1; fi
+          if [ "$DOW" != "1" ] && [ "$PRIMER_HABIL" != "1" ]; then export DASH_CIERRE_CC=""; fi
           python dashboard_cierre.py --enviar
         continue-on-error: true
 

@@ -240,7 +240,27 @@ def _ajustes() -> dict:
 
 
 # ------------------------------------------------------------------ proyección
+UMBRAL_CONFIABLE = 0.25   # bajo este % del mes (curva LY) la proyección se mezcla con el FCST
+
+
+def _hoy_chile() -> date:
+    try:
+        from zoneinfo import ZoneInfo
+        from datetime import datetime
+        return datetime.now(ZoneInfo("America/Santiago")).date()
+    except Exception:
+        return date.today()
+
+
+def es_primer_dia_habil(d: date) -> bool:
+    """Primer día lunes a viernes del mes (el 1, o el lunes 2/3 si el 1 cae en fin de semana)."""
+    return d.weekday() < 5 and (d.day == 1 or (d.weekday() == 0 and d.day <= 3))
+
+
 def proyectar_cierre(hoy: date | None = None) -> dict:
+    """`hoy` = fecha de la corrida (por defecto, hoy en Chile). Se proyecta con el último día
+    COMPLETO (hoy − 1): el día en curso está a medio capturar (Andrés 1-oct-2026). El día 1 del mes
+    eso deja el mes anterior completo → el dashboard sale como CIERRE real de ese mes."""
     cols = ["fecha_venta", "canal", "tipo_negocio", "documento", "venta_neta", "costo_total",
             "comision", "logistica"]
     src, fuente = _parquet_produccion()
@@ -250,19 +270,29 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     for df in (cur, hist):
         df["fecha_venta"] = pd.to_datetime(df["fecha_venta"])
 
+    hoy = hoy or _hoy_chile()
+    corte = pd.Timestamp(hoy) - pd.Timedelta(days=1)
+    if es_primer_dia_habil(hoy):
+        # Andrés 1-oct: el primer día hábil del mes va el CIERRE del mes anterior (aunque el 1 caiga en fin de semana)
+        corte = pd.Timestamp(hoy.replace(day=1)) - pd.Timedelta(days=1)
+    ultimo = min(cur.fecha_venta.dt.normalize().max(), corte)
+    anio, mes, dia = ultimo.year, ultimo.month, ultimo.day
+    if not ((cur.fecha_venta.dt.year == anio) & (cur.fecha_venta.dt.month == mes)).any():
+        # el parquet del mes ya rotó: el mes a cerrar se toma del histórico
+        cur = pd.read_parquet(ROOT / "data/historico/ventas_historico.parquet", columns=cols)
+        cur["fecha_venta"] = pd.to_datetime(cur["fecha_venta"])
+        fuente += " · mes cerrado desde el histórico"
+
     excl = _excluidos()
     docs_excl = {e["documento"] for e in excl}
     mask_ex = cur["documento"].isin(docs_excl)
     excluido_mm = float(cur.loc[mask_ex, "venta_neta"].sum()) / 1e6
     cur = cur[~mask_ex]
 
-    ultimo = cur.fecha_venta.max()
-    if hoy is not None:
-        ultimo = min(ultimo, pd.Timestamp(hoy))
-    anio, mes, dia = ultimo.year, ultimo.month, ultimo.day
     dias_mes = calendar.monthrange(anio, mes)[1]
+    cerrado = dia == dias_mes
     cur = cur[(cur.fecha_venta.dt.year == anio) & (cur.fecha_venta.dt.month == mes)
-              & (cur.fecha_venta <= ultimo)].copy()
+              & (cur.fecha_venta.dt.normalize() <= ultimo)].copy()
     cur["tn"] = _tn(cur["tipo_negocio"])
     cur["linea"] = cur["tn"].map(LINEA).fillna("Otros")
     cur["ck"] = cur["canal"].fillna("").str.strip().str.lower()
@@ -273,7 +303,10 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     ly = ly[_tn(ly["tipo_negocio"]).isin(RECURRENTES)]
     ly_tot = ly.venta_neta.sum()
     share = (ly[ly.fecha_venta.dt.day <= dia].venta_neta.sum() / ly_tot) if ly_tot else dia / dias_mes
-    share = min(max(share, 0.05), 1.0)
+    share = 1.0 if cerrado else min(max(share, 0.05), 1.0)
+    # inicio de mes: pocos días de venta → la curva sola es ruido; se pondera con el FCST
+    peso_curva = 1.0 if cerrado else min(1.0, share / UMBRAL_CONFIABLE)
+    confiabilidad = "cerrado" if cerrado else ("baja" if peso_curva < 1 else "normal")
 
     ppto = _ventas_linea("ppto_ventas_2026", anio, mes)
     fcst = _ventas_linea("fcst_ventas_2026", anio, mes)
@@ -336,7 +369,9 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         no_rec = acum - rec_acum
         f_lin = fcst.get(lin, {"venta": 0.0, "contribucion": 0.0})
         p_lin = ppto.get(lin, {"venta": 0.0, "contribucion": 0.0})
-        if lin in ("Distribución", "Corporativo"):
+        if cerrado:
+            proy, regla = acum, "real (mes cerrado)"
+        elif lin in ("Distribución", "Corporativo"):
             base = no_rec + rec_acum / share
             proy = max(base, f_lin["venta"])
             regla = "FCST (se asume cumplido)" if f_lin["venta"] > base else "real (ya supera el FCST)"
@@ -344,6 +379,9 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
             proy, regla = acum, "real"
         else:
             proy, regla = rec_acum / share + no_rec, "curva año anterior"
+            if peso_curva < 1 and f_lin["venta"]:
+                proy = max(peso_curva * proy + (1 - peso_curva) * f_lin["venta"], acum)
+                regla = f"curva {peso_curva * 100:.0f}% + FCST {100 - peso_curva * 100:.0f}% (inicio de mes)"
         lineal = (rec_acum / dia * dias_mes + no_rec) if lin not in ("Distribución", "Corporativo") else proy
 
         ops = [o for o in operaciones if o["linea"] == lin]
@@ -394,14 +432,17 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
 
     # desviaciones por canal recurrente (meta V06 escalada al FCST de su línea)
     mcanal = _metas_canal(anio, mes, fcst)
+    sin_meta_canal = not mcanal
     rec = cur[cur["rec"]]
     nombres = {c.strip().lower(): c for c in rec["canal"].dropna().unique()}
     vc = (rec.groupby("ck").venta_neta.sum() / 1e6 / share).to_dict()
+    if sin_meta_canal or peso_curva < 1:
+        vc = {}          # sin meta por canal, o muy pocos días: no se publican desviaciones por canal
     canal_linea = dict(zip(rec["ck"], rec["linea"]))
     # Distribución y Corporativo no se comparan por canal: en el plan V06 toda la meta de
     # distribución está en "UnionX b2b" y la venta real entra por el canal del cliente.
     excl_canal = {"corporativo", "unionx b2b"} | {k for k, v in canal_linea.items() if v == "Distribución"}
-    claves = (set(mcanal) | set(vc)) - excl_canal
+    claves = (set(mcanal) | set(vc)) - excl_canal if vc else set()
     desv = [(nombres.get(c, c.title()), vc.get(c, 0.0), mcanal.get(c, 0.0), vc.get(c, 0.0) - mcanal.get(c, 0.0))
             for c in claves]
     desv = [d for d in desv if abs(d[3]) >= 1]
@@ -417,6 +458,8 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     return {
         "anio": anio, "mes": mes, "etiqueta": f"{MESES[mes - 1]}-{str(anio)[2:]}",
         "dato_hasta": ultimo.date(), "dia": dia, "dias_mes": dias_mes, "fuente": fuente,
+        "cerrado": cerrado, "confiabilidad": confiabilidad, "peso_curva": peso_curva,
+        "sin_meta_canal": sin_meta_canal,
         "excluidos": excl, "excluido_mm": excluido_mm,
         "venta_acum": venta_acum, "share_ly": share, "rec_acum": rec_acum_tot,
         "punt_acum": venta_acum - rec_acum_tot,

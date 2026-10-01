@@ -45,8 +45,17 @@ def pct(v, dec=1):
 
 
 # ------------------------------------------------------------------ datos
+def _hoy_arg():
+    """Fecha de corrida para probar (--hoy AAAA-MM-DD o env DASH_CIERRE_HOY); None = hoy en Chile."""
+    import os
+    v = os.environ.get("DASH_CIERRE_HOY", "")
+    if "--hoy" in sys.argv:
+        v = sys.argv[sys.argv.index("--hoy") + 1]
+    return datetime.strptime(v, "%Y-%m-%d").date() if v else None
+
+
 def datos():
-    p = proyectar_cierre()
+    p = proyectar_cierre(_hoy_arg())
     anio, mes, dia, dias_mes = p["anio"], p["mes"], p["dia"], p["dias_mes"]
     meta = p["meta"]
 
@@ -304,6 +313,16 @@ def render(D) -> str:
         "<tr><td colspan='6' class='mut'>Sin operaciones puntuales ≥ $5M este mes</td></tr>"
 
     alertas = []
+    if p["cerrado"]:
+        alertas.append(f"Mes cerrado: la venta es real del 1 al {p['dias_mes']}. El GAV y la depreciación son los del Fcst EERR "
+                       "vigente hasta que se cargue el EERR contable del mes.")
+    elif p["confiabilidad"] == "baja":
+        alertas.append(f"Inicio de mes: con {es(p['share_ly'] * 100, 0)}% del mes hecho, la proyección pondera la curva al "
+                       f"{es(p['peso_curva'] * 100, 0)}% y el FCST al {es(100 - p['peso_curva'] * 100, 0)}%. Desde el "
+                       f"{es(25, 0)}% del mes va 100% por curva. Las desviaciones por canal se publican desde ahí.")
+    if p["sin_meta_canal"]:
+        alertas.append(f"No hay meta por canal cargada para {p['etiqueta']} (metas_canal_mensuales_2026.json): "
+                       "no se comparan canales.")
     imp = sum(o["impacto"] for o in p["operaciones"])
     if p["operaciones"]:
         alertas.append(f"Las operaciones puntuales aportan {'+' if imp >= 0 else '−'}{mm(abs(imp))[1:]} de margen sobre la base de su línea. "
@@ -365,7 +384,7 @@ footer{{color:var(--mut);font-size:11px;line-height:1.5;margin-top:6px}}
   <div class="sub">¿Cómo vamos y cómo cerramos? · Comercial Innovatek SpA · MM CLP neto</div></div>
   <div class="chips">
     <div class="chip">Dato de venta al <b>{p['dato_hasta'].strftime('%d-%m-%Y')}</b></div>
-    <div class="chip">Día <b>{p['dia']}/{p['dias_mes']}</b> · llevamos el <b>{es(p['share_ly'] * 100, 0)}%</b> del mes</div>
+    <div class="chip">{('<b>Mes cerrado</b> · venta real' if p['cerrado'] else f"Día <b>{p['dia']}/{p['dias_mes']}</b> · llevamos el <b>{es(p['share_ly'] * 100, 0)}%</b> del mes" + (' · <b>confiabilidad baja</b>' if p['confiabilidad'] == 'baja' else ''))}</div>
     <div class="chip">Comparación: <b>FCST vigente</b> · ppto referencia</div>
   </div>
 </header>
@@ -398,7 +417,7 @@ footer{{color:var(--mut);font-size:11px;line-height:1.5;margin-top:6px}}
     <div class="ps">Últimos 12 meses cerrados + {p['etiqueta']} proyectado (naranjo)</div>
     <div id="c_eb" class="ch" style="height:240px"></div></div>
   <div class="panel"><div class="pt">Proyección de cierre de mes</div>
-    <div class="ps">Si seguimos al ritmo actual</div>
+    <div class="ps">{'Resultado real del mes' if p['cerrado'] else 'Si seguimos al ritmo actual'}</div>
     <table><tr><th>Línea</th><th>Proyección</th><th>FCST</th><th>Desv.</th><th>{MESES[p['mes'] - 1]}-{str(p['anio'] - 1)[2:]}</th></tr>{tabla_cierre}</table></div>
   <div class="panel"><div class="pt">Semáforo de la operación</div>
     <div class="ps">Estado al cierre proyectado</div>
@@ -491,7 +510,9 @@ def cuerpo_mail(p: dict) -> str:
             + fila("Margen contribución", p["mc_proy"], m["Contribución"])
             + fila("GAV", p["gav"], m["GAV"], gasto=True) + fila("EBITDA", p["ebitda_proy"], m["EBITDA"]))
     lin = "".join(
-        f"<tr><td style='{td}'>{l['linea']}</td><td style='{tdn}'>{mm(l['acum'])}</td><td style='{tdn}'><b>{mm(l['proy'])}</b></td>"
+        f"<tr><td style='{td}'>{l['linea']}</td>"
+        + ("" if p["cerrado"] else f"<td style='{tdn}'>{mm(l['acum'])}</td>")
+        + f"<td style='{tdn}'><b>{mm(l['proy'])}</b></td>"
         f"<td style='{tdn};color:#64748B'>{mm(l['fcst_venta'])}</td>"
         f"<td style='{tdn};color:{'#16A34A' if l['proy'] >= l['fcst_venta'] else '#DC2626'}'>"
         f"{(('+' if l['proy'] >= l['fcst_venta'] else '−') + es(abs(l['proy'] / l['fcst_venta'] - 1) * 100, 0) + '%') if l['fcst_venta'] else '—'}</td></tr>"
@@ -499,21 +520,35 @@ def cuerpo_mail(p: dict) -> str:
     desv = p["desviaciones"]
     bajo = " · ".join(f"{c} −{mm(abs(g), 0)[1:]}" for c, _, _, g in [d for d in desv if d[3] < 0][:4])
     sobre = " · ".join(f"{c} +{mm(g, 0)[1:]}" for c, _, _, g in [d for d in reversed(desv) if d[3] > 0][:3])
+    if p["sin_meta_canal"]:
+        txt_canal = f"<b>Canales:</b> sin meta por canal cargada para {p['etiqueta']}."
+    elif p["confiabilidad"] == "baja":
+        txt_canal = "<b>Canales:</b> se comparan desde que el mes lleva el 25% de la venta (con menos días es ruido)."
+    else:
+        txt_canal = f"<b>Canales bajo el FCST:</b> {bajo or '—'}<br><b>Sobre el FCST:</b> {sobre or '—'}"
+    cerr = p["cerrado"]
+    titulo = (f"EBITDA {p['etiqueta']} {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}" if cerr
+              else f"EBITDA proyectado {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}")
+    subt = (f"Mes cerrado · venta real del 1 al {p['dias_mes']}: {mm(p['venta_acum'])}" if cerr
+            else f"Venta real al {p['dato_hasta'].strftime('%d-%m')}: {mm(p['venta_acum'])} · día {p['dia']}/{p['dias_mes']} · si seguimos al ritmo actual"
+            + (f" · <b>inicio de mes: proyección ponderada con el FCST</b> (curva {es(p['peso_curva'] * 100, 0)}%)"
+               if p["confiabilidad"] == "baja" else ""))
+    col_proy = "Real" if cerr else "Proyección"
     ops = "".join(f"<li>{o['documento']} · {o['canal']}: {mm(o['venta'])} al {es(o['mc_pct'] * 100)}% de margen "
                   f"(impacto {'+' if o['impacto'] >= 0 else '−'}{mm(abs(o['impacto']))[1:]} sobre la base de su línea)</li>"
                   for o in p["operaciones"])
     return f"""<div style="font-family:Segoe UI,Arial,sans-serif;max-width:720px;color:#1E293B">
 <div style="font-size:11px;letter-spacing:.1em;color:#2563EB;font-weight:700">UNIONX · DASHBOARD FINANCIERO · CIERRE {p['etiqueta'].upper()}</div>
-<h2 style="margin:6px 0 2px;color:{col}">EBITDA proyectado {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}</h2>
-<div style="color:#64748B;font-size:12.5px">Venta real al {p['dato_hasta'].strftime('%d-%m')}: {mm(p['venta_acum'])} · día {p['dia']}/{p['dias_mes']} · si seguimos al ritmo actual</div>
+<h2 style="margin:6px 0 2px;color:{col}">{titulo}</h2>
+<div style="color:#64748B;font-size:12.5px">{subt}</div>
 <table style="border-collapse:collapse;font-size:13px;margin-top:10px">
-<tr style="color:#64748B;font-size:11px"><td></td><td style="text-align:right;padding:2px 8px">Proyección</td><td style="text-align:right;padding:2px 8px">FCST</td><td style="text-align:right;padding:2px 8px">Diferencia</td></tr>
+<tr style="color:#64748B;font-size:11px"><td></td><td style="text-align:right;padding:2px 8px">{col_proy}</td><td style="text-align:right;padding:2px 8px">FCST</td><td style="text-align:right;padding:2px 8px">Diferencia</td></tr>
 {kpis}</table>
 <h3 style="font-size:14px;margin:16px 0 4px;color:#1F3864">Venta por línea de negocio</h3>
 <table style="border-collapse:collapse;font-size:13px">
-<tr style="color:#64748B;font-size:11px"><td></td><td style="text-align:right;padding:2px 8px">Real</td><td style="text-align:right;padding:2px 8px">Proyección</td><td style="text-align:right;padding:2px 8px">FCST</td><td style="text-align:right;padding:2px 8px">vs FCST</td></tr>
+<tr style="color:#64748B;font-size:11px"><td></td>{'' if cerr else '<td style="text-align:right;padding:2px 8px">Real</td>'}<td style="text-align:right;padding:2px 8px">{col_proy}</td><td style="text-align:right;padding:2px 8px">FCST</td><td style="text-align:right;padding:2px 8px">vs FCST</td></tr>
 {lin}</table>
-<p style="font-size:13px;margin:12px 0 4px"><b>Canales bajo el FCST:</b> {bajo or '—'}<br><b>Sobre el FCST:</b> {sobre or '—'}</p>
+<p style="font-size:13px;margin:12px 0 4px">{txt_canal}</p>
 {('<p style="font-size:13px;margin:10px 0 2px"><b>Operaciones puntuales del mes</b> (van con su margen propio):</p><ul style="font-size:13px;margin:2px 0">' + ops + '</ul>') if ops else ''}
 <p style="font-size:12.5px;color:#64748B;margin-top:14px">El dashboard completo (gráficos, acumulado del año, composición del GAV, semáforo y detalle por línea) va adjunto: ábrelo en el navegador.</p>
 </div>"""
@@ -536,8 +571,13 @@ def enviar(html: str, p: dict):
     if cc:
         msg["Cc"] = cc
     msg["From"] = "andres@unionx.cl"
-    msg["Subject"] = (f"📊 Dashboard Cierre {p['etiqueta']} · EBITDA proy {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}"
-                      f" · venta {es(p['venta_proy'] / m['Venta'] * 100, 0)}% del FCST")
+    if p["cerrado"]:
+        msg["Subject"] = (f"📊 Cierre {p['etiqueta']} · EBITDA {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}"
+                          f" · venta {es(p['venta_proy'] / m['Venta'] * 100, 0)}% del FCST")
+    else:
+        msg["Subject"] = (f"📊 Dashboard Cierre {p['etiqueta']} · EBITDA proy {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}"
+                          f" · venta {es(p['venta_proy'] / m['Venta'] * 100, 0)}% del FCST"
+                          + (" · inicio de mes" if p["confiabilidad"] == "baja" else ""))
     msg.set_content("Dashboard financiero de cierre del mes (ver versión HTML y el adjunto).")
     msg.add_alternative(cuerpo_mail(p), subtype="html")
     msg.add_attachment(html.encode("utf-8"), maintype="text", subtype="html",
