@@ -93,6 +93,22 @@ def _cutoff_historico() -> str:
     return _rango_mes(_mes_actual_yyyymm())[0]
 
 
+def _pull_incompleto(prev: pd.DataFrame, nuevo: pd.DataFrame) -> tuple[bool, float, float, str]:
+    """¿El pull nuevo trae <70% de la venta bruta que ya había en el MISMO tramo (desde el 1° del mes de la data
+    nueva)? Antes se sumaba el parquet previo completo: al cambiar de mes el CUTOFF avanza y el mes_actual previo
+    todavía trae el mes anterior entero → octubre contra sep+oct → el guardrail bloqueaba TODOS los refrescos del
+    mes nuevo (App Ventas congelada en la mañana del 1-oct-2026). Devuelve (incompleto, venta_nueva, venta_previa, mes)."""
+    pfv = pd.to_datetime(prev['fecha_venta'], errors='coerce')
+    nfv = pd.to_datetime(nuevo['fecha_venta'], errors='coerce')
+    pmax, nmax = pfv.max(), nfv.max()
+    if pd.isna(pmax) or pd.isna(nmax) or pmax.to_period('M') != nmax.to_period('M'):
+        return False, 0.0, 0.0, ''
+    inicio = nmax.to_period('M').start_time
+    pv = float(pd.to_numeric(prev.loc[pfv >= inicio, 'venta_bruta'], errors='coerce').fillna(0).sum())
+    nv = float(pd.to_numeric(nuevo.loc[nfv >= inicio, 'venta_bruta'], errors='coerce').fillna(0).sum())
+    return (pv > 0 and nv < 0.70 * pv), nv, pv, str(nmax.to_period('M'))
+
+
 def _rango_mes(yyyymm: str) -> tuple[str, str]:
     año, mes = map(int, yyyymm.split('-'))
     desde = f"{año:04d}-{mes:02d}-01"
@@ -575,23 +591,16 @@ def main():
     df = df.drop(columns=['_line_id'], errors='ignore')
 
     # GUARDRAIL anti-clobber (20-jul): un pull incompleto de Odoo (timeout/503) NO debe
-    # pisar un mes_actual bueno. Si ya existe uno del MISMO mes con >30% más de venta
-    # bruta, se aborta el guardado (no se sobrescribe). Override con FORCE_WRITE=1.
+    # pisar un mes_actual bueno. Override con FORCE_WRITE=1.
     try:
         if OUT_PATH.exists() and os.environ.get('FORCE_WRITE') != '1':
             prev = pd.read_parquet(OUT_PATH, columns=['fecha_venta', 'venta_bruta', 'tipo_movimiento'])
-            pfv = pd.to_datetime(prev['fecha_venta'], errors='coerce')
-            nfv = pd.to_datetime(df['fecha_venta'], errors='coerce')
-            pmax, nmax = pfv.max(), nfv.max()
-            mismo_mes = (pd.notna(pmax) and pd.notna(nmax) and pmax.to_period('M') == nmax.to_period('M'))
-            if mismo_mes:
-                pv = pd.to_numeric(prev['venta_bruta'], errors='coerce').fillna(0).sum()
-                nv = pd.to_numeric(df['venta_bruta'], errors='coerce').fillna(0).sum()
-                if pv > 0 and nv < 0.70 * pv:
-                    print(f"\n[ABORTADO] Pull incompleto: venta bruta ${nv:,.0f} < 70% del actual ${pv:,.0f} "
-                          f"(mismo mes {nmax.to_period('M')}). NO se sobrescribe mes_actual. "
-                          f"Revisar Odoo (timeout/503). Forzar con FORCE_WRITE=1.")
-                    sys.exit(2)
+            incompleto, nv, pv, mes = _pull_incompleto(prev, df)
+            if incompleto:
+                print(f"\n[ABORTADO] Pull incompleto: venta bruta ${nv:,.0f} < 70% del actual ${pv:,.0f} "
+                      f"(mismo tramo desde el 1° de {mes}). NO se sobrescribe mes_actual. "
+                      f"Revisar Odoo (timeout/503). Forzar con FORCE_WRITE=1.")
+                sys.exit(2)
     except SystemExit:
         raise
     except Exception as e:
