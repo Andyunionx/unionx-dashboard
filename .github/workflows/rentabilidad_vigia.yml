@@ -1,0 +1,58 @@
+name: "Vigía liquidaciones Rentabilidad (diario)"
+
+# Una vez al día:
+#   1. Revisa la carpeta de liquidaciones de Gabriela en Drive. Si hay archivos nuevos o
+#      modificados, los lee, los compara con su carga y les avisa a Gabriela y a Andrés
+#      (rentabilidad_vigia.py). Sin cambios, no manda nada. El estado queda en
+#      data/rentabilidad/vigia_estado.json.
+#   2. Refresca la macro de Rentabilidad (sin correo), para que la venta del RAW en la
+#      planilla quede al día todos los días y no solo los lunes.
+# El cron de GitHub free se atrasa, pero para una corrida diaria da lo mismo la hora exacta.
+
+on:
+  schedule:
+    - cron: '0 13 * * *'      # ~10:00 CLT (horario de verano)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rentabilidad-vigia
+  cancel-in-progress: false
+
+jobs:
+  vigia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Revisar carpeta y avisar si hay cambios
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          RENTABILIDAD_TO: ${{ vars.RENTABILIDAD_TO || 'gabriela@unionx.cl' }}
+          RENTABILIDAD_CC: ${{ vars.RENTABILIDAD_CC || 'andres@unionx.cl' }}
+          PYTHONIOENCODING: utf-8
+        run: python -u rentabilidad_vigia.py
+      - name: Guardar estado
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions Vigía Rentabilidad"
+          git add data/rentabilidad/vigia_estado.json || true
+          if git diff --staged --quiet; then echo "Sin cambios de estado"; else
+            git commit -m "Vigía liquidaciones: estado $(date -u +'%Y-%m-%d %H:%M UTC')" && git pull --rebase origin main && git push || echo "push falló (se reintenta mañana)"; fi
+
+  macro:
+    needs: vigia
+    if: always()
+    uses: ./.github/workflows/macro_rentabilidad.yml
+    secrets: inherit

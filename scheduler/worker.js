@@ -1,63 +1,74 @@
 /**
- * UnionX — Scheduler confiable del pulso (Cloudflare Worker).
+ * UnionX — Scheduler confiable de los pulsos (Cloudflare Worker "patient-cloud-327e").
  *
- * Reemplaza al cron de GitHub Actions (que dropea runs) por un cron de Cloudflare
- * (confiable). Cada vez que dispara, hace workflow_dispatch del pulso en GitHub.
+ * Reemplaza al cron de GitHub Actions (se atrasa horas o se salta corridas). Cada cron
+ * de Cloudflare hace workflow_dispatch de un workflow en GitHub. El Worker es tonto a
+ * propósito: solo dispara; la lógica (ventana horaria del correo, validaciones) vive en
+ * cada workflow.
  *
- * El Worker es deliberadamente TONTO: solo dispara. Toda la lógica vive en el
- * workflow (cyber_pulso.yml): _check_rango (fechas), ventana de email 08:00-24:00
- * (horas pares), Gate 1/Gate 2 de validación. Así esto es fácil de mantener.
+ * Triggers (Settings → Triggers → Cron Triggers del Worker):
+ *   "30 11 * * 1-5"  → Pulso Diario (email_diario.yml), L-V 08:30 CLT en horario de verano (UTC−3) / 07:30 en invierno (UTC−4)
+ *   "0 * * * *"      → Cyber Pulso (cyber_pulso.yml), cada hora, SOLO dentro de la ventana CYBER
  *
- * Secrets requeridos (wrangler secret put):
- *   GH_TOKEN  — PAT fine-grained con permiso Actions: Read & Write sobre el repo.
- *
- * Vars (wrangler.toml [vars]):
- *   GH_OWNER, GH_REPO, GH_WORKFLOW, GH_REF
+ * Secrets: GH_TOKEN (PAT fine-grained, Actions: Read & Write sobre el repo), TRIGGER_KEY (opcional).
+ * Vars: GH_OWNER, GH_REPO, GH_WORKFLOW (el del pulso diario), GH_REF.
  */
+// Cyber octubre 2026: lun 5-oct 06:00 CLT → lun 12-oct 06:00 CLT (CLT = UTC−3 en octubre).
+// Fuera de esta ventana el cron horario no hace nada. Para el próximo Cyber, cambiar solo estas fechas.
+const CYBER = { desde: '2026-10-05T09:00:00Z', hasta: '2026-10-12T09:00:00Z', workflow: 'cyber_pulso.yml' };
+const CRON_HORARIO = '0 * * * *';
+
+async function dispatch(env, workflow) {
+  const owner = env.GH_OWNER || 'Andyunionx';
+  const repo = env.GH_REPO || 'unionx-dashboard';
+  const ref = env.GH_REF || 'main';
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.GH_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'unionx-pulso-scheduler',
+    },
+    body: JSON.stringify({ ref }),
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    console.log(`[scheduler] DISPATCH ${workflow} FALLÓ ${resp.status}: ${txt.slice(0, 300)}`);
+    throw new Error(`dispatch ${workflow} ${resp.status}`);
+  }
+  console.log(`[scheduler] ${workflow} disparado OK @ ${new Date().toISOString()}`);
+}
+
+function enCyber(ms) {
+  return ms >= Date.parse(CYBER.desde) && ms < Date.parse(CYBER.hasta);
+}
+
 export default {
   async scheduled(event, env, ctx) {
-    const owner = env.GH_OWNER || 'Andyunionx';
-    const repo = env.GH_REPO || 'unionx-dashboard';
-    const workflow = env.GH_WORKFLOW || 'cyber_pulso.yml';
-    const ref = env.GH_REF || 'main';
-
-    const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`;
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.GH_TOKEN}`,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'unionx-pulso-scheduler',
-      },
-      // Sin inputs → preborrador=false (los 4 destinatarios), force_email=false
-      // (la ventana horaria del workflow decide si manda email o solo refresca).
-      body: JSON.stringify({ ref }),
-    });
-
-    if (!resp.ok) {
-      const txt = await resp.text();
-      console.log(`[pulso-scheduler] DISPATCH FALLÓ ${resp.status}: ${txt.slice(0, 300)}`);
-      // 422 suele ser ref/branch inválido; 401/403 token; 404 repo/workflow.
-      throw new Error(`dispatch ${resp.status}`);
+    if (event.cron === CRON_HORARIO) {
+      if (!enCyber(Date.now())) {
+        console.log('[scheduler] cron horario fuera del Cyber: no dispara');
+        return;
+      }
+      await dispatch(env, CYBER.workflow);
+      return;
     }
-    console.log(`[pulso-scheduler] pulso disparado OK @ ${new Date().toISOString()} (cron ${event.cron})`);
+    // cualquier otro cron (el de las 11:30 UTC L-V) = Pulso Diario
+    await dispatch(env, env.GH_WORKFLOW || 'email_diario.yml');
   },
 
-  // Endpoint manual opcional: GET /trigger?k=<TRIGGER_KEY> dispara el pulso.
-  //
-  // El Worker tiene URL pública en workers.dev y los bots escanean ese dominio:
-  // sin llave, cualquiera que diera con la URL mandaba el pulso a las 13 personas
-  // del Pulso Diario. Se exige TRIGGER_KEY (wrangler secret put TRIGGER_KEY).
-  // Si no está configurada, el endpoint queda cerrado — el cron no se ve afectado.
+  // Manual: GET /trigger?k=<TRIGGER_KEY>[&wf=cyber]
   async fetch(request, env, ctx) {
     const u = new URL(request.url);
     if (u.pathname === '/trigger') {
       if (!env.TRIGGER_KEY || u.searchParams.get('k') !== env.TRIGGER_KEY) {
         return new Response('no autorizado', { status: 401 });
       }
-      await this.scheduled({ cron: 'manual' }, env, ctx);
-      return new Response('pulso disparado', { status: 200 });
+      const wf = u.searchParams.get('wf') === 'cyber' ? CYBER.workflow : (env.GH_WORKFLOW || 'email_diario.yml');
+      await dispatch(env, wf);
+      return new Response(`${wf} disparado`, { status: 200 });
     }
     return new Response('unionx pulso scheduler OK', { status: 200 });
   },

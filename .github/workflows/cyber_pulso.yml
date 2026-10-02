@@ -1,39 +1,45 @@
-name: "Cyber Pulso (horario, Lun-Sab Cyber)"
+name: "Cyber Pulso (horario, Cyber oct lun 5 → dom 11)"
 
-# Pulso horario durante Cyber UnionX 2026 (Lun 1-jun a Sab 6-jun).
-# El script enviar_pulso_cyber.py filtra internamente: solo envia si la hora
-# CLT esta en rango (08:00 a 23:00 Lun 1-jun a Sab 6-jun).
-# Antes de enviar: re-extract parquet fresh + dedup + sync Turso.
-# Cron en UTC. Para cubrir 08-23 CLT (UTC-4): 12,13,...,23,00,01,02,03 UTC.
+# Pulso horario del Cyber de octubre 2026. Lo dispara el Cloudflare Worker (scheduler/)
+# cada hora entre el lun 5-oct 06:00 y el lun 12-oct 06:00 CLT vía workflow_dispatch;
+# el cron de GitHub no se usa porque se atrasa horas o se salta corridas.
+# Cada corrida: re-extrae el mes en curso desde Odoo (la app queda fresca cada hora) y
+# enviar_pulso_cyber_oct.py decide si manda correo: cada 2 h (horas pares 08:00–24:00 CLT),
+# con dos validaciones antes (parquet sano + venta del día vs Odoo state=sale).
 
 on:
-  # schedule DESHABILITADO: el cron de GitHub Actions dropea runs (no confiable).
-  # El disparo ahora lo hace el Cloudflare Worker (scheduler/) vía workflow_dispatch,
-  # cada hora de forma confiable. Si alguna vez se retira el Worker, descomentar esto.
-  # schedule:
-  #   - cron: '0 * 1-7 6 *'
   workflow_dispatch:
     inputs:
       preborrador:
-        description: 'Prefijar asunto con [PRE-BORRADOR] y enviar solo a Andres'
+        description: 'Asunto [PRE-BORRADOR] y enviar solo a Andrés'
         required: false
         default: 'false'
         type: choice
-        options: ['false','true']
+        options: ['false', 'true']
       force_email:
-        description: 'Forzar envío del email ignorando la ventana horaria 08:00-24:00'
+        description: 'Forzar el correo ignorando la ventana horaria'
         required: false
         default: 'false'
         type: choice
-        options: ['false','true']
+        options: ['false', 'true']
+      forzar_rango:
+        description: 'Correr aunque esté fuera de las fechas del Cyber (pruebas; usar con preborrador=true)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
 permissions:
   contents: write
 
+concurrency:
+  group: cyber-pulso
+  cancel-in-progress: false
+
 jobs:
   pulso:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,55 +56,32 @@ jobs:
           pip install -r requirements.txt
           pip install google-auth google-auth-oauthlib google-api-python-client
 
-      - name: Restaurar credentials.json (para enriquecimiento CMR desde Sheet)
+      - name: Restaurar credentials.json (enriquecimiento CMR desde Sheet)
         env:
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         run: |
-          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
-            echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
-          else
-            echo "[WARN] GOOGLE_CREDENTIALS_JSON no configurado — CMR se omitirá"
-          fi
+          if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json; else echo "[WARN] sin GOOGLE_CREDENTIALS_JSON — CMR se omite"; fi
 
-      - name: Re-extract parquet desde Odoo (fresh) + enriquecer CMR
+      - name: Re-extract mes en curso desde Odoo + CMR
         env:
-          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
-          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           PYTHONIOENCODING: utf-8
         run: python extract_mes_actual_a_parquet.py --source odoo
 
-      - name: Dedup + filter >= 2026-06-02 (1-jun es foto fija en historico)
+      - name: Dedup del mes en curso
         run: |
           python <<'PYEOF'
           import pandas as pd
           path = 'data/historico/ventas_mes_actual.parquet'
           df = pd.read_parquet(path)
-          df['fv'] = pd.to_datetime(df['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d')
-          cols = ['pedido','sku','hora_venta','venta_bruta','cantidad','documento','tipo_movimiento','canal','fecha_venta']
+          cols = [c for c in ['pedido','sku','hora_venta','venta_bruta','cantidad','documento','tipo_movimiento','canal','fecha_venta'] if c in df.columns]
+          n0 = len(df)
           df = df.drop_duplicates(subset=cols, keep='first')
-          df = df[df['fv'] >= '2026-06-02'].copy().drop(columns=['fv'])
           df.to_parquet(path, index=False)
-          print(f'[Dedup] {len(df):,} filas finales, ${df["venta_bruta"].sum():,.0f}')
+          print(f'[Dedup] {n0:,} → {len(df):,} filas · ${df["venta_bruta"].sum():,.0f}')
           PYEOF
 
-      - name: Sync parquet a Turso (para dashboard)
-        env:
-          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
-          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
-          PYTHONIOENCODING: utf-8
-        continue-on-error: true
-        run: |
-          python <<'PYEOF'
-          import os, requests
-          url = os.environ['LIBSQL_URL'].rstrip('/')
-          tok = os.environ['LIBSQL_AUTH_TOKEN']
-          r = requests.post(url+'/v2/pipeline', json={'requests':[{'type':'execute','stmt':{'sql':"DELETE FROM ventas WHERE fecha_venta >= '2026-06-02'"}},{'type':'close'}]}, headers={'Authorization':'Bearer '+tok}, timeout=60)
-          print('DELETE 2-jun+:', r.json()['results'][0].get('type'))
-          PYEOF
-          python sync_turso_fast.py --mes 2026-06
-
-      - name: Commit parquet actualizado al repo
+      - name: Commit parquet actualizado (app fresca)
         if: always()
         run: |
           git config --local user.email "actions@github.com"
@@ -109,20 +92,20 @@ jobs:
           else
             git commit -m "Cyber Pulso refresh parquet: $(date -u +'%Y-%m-%d %H:%M UTC')" || true
             git pull --rebase origin main || true
-            git push || echo "Push fallo (no critico)"
+            git push || echo "Push falló (no crítico)"
           fi
 
       - name: Enviar pulso Cyber
         env:
-          LIBSQL_URL: ${{ secrets.LIBSQL_URL }}
-          LIBSQL_AUTH_TOKEN: ${{ secrets.LIBSQL_AUTH_TOKEN }}
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
-          # preborrador=true -> solo andres@unionx.cl. preborrador=false -> los 11.
-          EMAIL_TO: ${{ github.event.inputs.preborrador == 'true' && 'andres@unionx.cl' || (vars.CYBER_EMAIL_TO || 'andres@unionx.cl,nicolas@unionx.cl,nicole@grupoeter.cl,martin@grupoeter.cl,sguzman@grupoeter.cl,trinidad@unionx.cl,claudia@unionx.cl,ignacia@unionx.cl,michela@unionx.cl,felipe@unionx.cl,maximiliano@unionx.cl') }}
+          # preborrador=true → solo Andrés. Lista del Cyber: variable CYBER_EMAIL_TO del repo
+          # (mientras no se configure, sale solo a Andrés).
+          EMAIL_TO: ${{ github.event.inputs.preborrador == 'true' && 'andres@unionx.cl' || (vars.CYBER_EMAIL_TO || 'andres@unionx.cl') }}
           EMAIL_FROM: ${{ vars.EMAIL_FROM || 'onboarding@resend.dev' }}
           CYBER_PREBORRADOR: ${{ github.event.inputs.preborrador == 'true' && '1' || '0' }}
           CYBER_FORCE_EMAIL: ${{ github.event.inputs.force_email == 'true' && '1' || '0' }}
+          CYBER_FORZAR_RANGO: ${{ github.event.inputs.forzar_rango == 'true' && '1' || '0' }}
           PYTHONIOENCODING: utf-8
-        run: python enviar_pulso_cyber.py
+        run: python enviar_pulso_cyber_oct.py

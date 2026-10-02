@@ -210,11 +210,26 @@ def leer_sheet():
     return sh, base, gab
 
 
+def _r(f, *a, **k):
+    """Reintenta ante cuota de escrituras de Sheets (429)."""
+    import time
+    from gspread.exceptions import APIError
+    for i in range(6):
+        try:
+            return f(*a, **k)
+        except APIError as e:
+            if '429' in str(e) and i < 5:
+                print(f'   [sheets] 429, espero {30 * (i + 1)} s', flush=True)
+                time.sleep(30 * (i + 1))
+                continue
+            raise
+
+
 def escribir(sh, df):
     import gspread
     try:
         ws = sh.worksheet(H_PLAN)
-        prev = ws.get_all_values()
+        prev = _r(ws.get_all_values)
     except gspread.WorksheetNotFound:
         ws = sh.add_worksheet(title=H_PLAN, rows=80, cols=len(COLS) + 2)
         prev = []
@@ -230,20 +245,26 @@ def escribir(sh, df):
     out = df.copy()
     for c in [f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Δ vs base']:
         out[c] = [(_fmt(v, u) if v is not None and not pd.isna(v) else '') for v, u in zip(out[c], out['Unidad'])]
-    ws.clear()
-    ws.update([COLS] + out.astype(object).where(pd.notna(out), '').values.tolist(), value_input_option='RAW')
-    n = len(out) + 3
-    ws.update(f'A{n}', [[f'Base = {M_BASE} (mes del informe). Columnas A–L las recalcula el proceso cada lunes; M–P son de gestión y se conservan. '
-                         'Semáforo: verde = se mueve hacia la meta (o ya está), rojo = en contra, amarillo = plano. Revisión mensual con el informe de rentabilidad.']],
-              value_input_option='RAW')
-    ws.freeze(rows=1)
-    ws.format(f'A1:{chr(64 + len(COLS))}1', {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
-                                           'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}, 'wrapStrategy': 'WRAP'})
-    ws.format(f'M2:P{len(out) + 1}', {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}})   # amarillo = editable
-    for col, w in zip('ABCDEFGHIJKLMNOP', [7, 14, 34, 36, 6, 12, 12, 12, 12, 16, 11, 13, 22, 12, 10, 40]):
-        sh.batch_update({'requests': [{'updateDimensionProperties': {
-            'range': {'sheetId': ws.id, 'dimension': 'COLUMNS', 'startIndex': ord(col) - 65, 'endIndex': ord(col) - 64},
-            'properties': {'pixelSize': w * 8}, 'fields': 'pixelSize'}}]})
+    nota = [f'Base = {M_BASE} (mes del informe). Columnas A–L las recalcula el proceso cada lunes; M–P son de gestión y se conservan. '
+            'Semáforo: verde = se mueve hacia la meta (o ya está), rojo = en contra, amarillo = plano. Revisión mensual con el informe de rentabilidad.']
+    datos = [COLS] + out.astype(object).where(pd.notna(out), '').values.tolist()
+    n = len(datos)
+    # Primero se escribe y recién después se limpia lo que sobra: si Sheets corta a mitad
+    # (cuota de escrituras, 429), la pestaña nunca queda vacía (incidente 2-oct-2026).
+    _r(ws.update, values=datos + [[''] * len(COLS), nota + [''] * (len(COLS) - 1)], range_name='A1', value_input_option='RAW')
+    filas_ws = ws.row_count
+    if filas_ws > n + 2:
+        _r(ws.batch_clear, [f'A{n + 3}:{chr(64 + len(COLS))}{filas_ws}'])
+    _r(ws.freeze, rows=1)
+    _r(ws.batch_format, [
+        {'range': f'A1:{chr(64 + len(COLS))}1', 'format': {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
+                                                         'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}, 'wrapStrategy': 'WRAP'}},
+        {'range': f'M2:P{len(out) + 1}', 'format': {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}}},   # amarillo = editable
+    ])
+    anchos = [{'updateDimensionProperties': {'range': {'sheetId': ws.id, 'dimension': 'COLUMNS', 'startIndex': ord(col) - 65, 'endIndex': ord(col) - 64},
+                                             'properties': {'pixelSize': w * 8}, 'fields': 'pixelSize'}}
+              for col, w in zip('ABCDEFGHIJKLMNOP', [7, 14, 34, 36, 6, 12, 12, 12, 12, 16, 11, 13, 22, 12, 10, 40])]
+    _r(sh.batch_update, {'requests': anchos})     # una sola escritura (antes eran 16)
     return ws
 
 
