@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-02T11:33:09.706596",
+  "generado_en": "2026-10-02T17:00:20.687877",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1373,
   "capacidad_bodega_m3": 2471.3999999999996,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1373,
-    "posiciones_ocupadas_hoy": 768,
-    "posiciones_libres_hoy": 605,
-    "pct_ocupacion_hoy": 55.9,
-    "m3_stock_calculado": 893.0
+    "posiciones_ocupadas_hoy": 764,
+    "posiciones_libres_hoy": 609,
+    "pct_ocupacion_hoy": 55.6,
+    "m3_stock_calculado": 891.7
   },
   "pico_proyectado": {
     "fecha": "2026-10-02",
-    "posiciones_ocupadas": 759.4,
-    "pct_ocupacion": 55.3
+    "posiciones_ocupadas": 755.4,
+    "pct_ocupacion": 55.0
   },
   "minimo_proyectado": {
     "fecha": "2026-11-30",
-    "posiciones_ocupadas": 522.4,
-    "pct_ocupacion": 38.1
+    "posiciones_ocupadas": 518.4,
+    "pct_ocupacion": 37.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -66,16 +66,16 @@
   "pallets_total_entrantes_horizonte": 81.9,
   "pallets_total_salientes_horizonte": 245.6,
   "m3_total_entrante_horizonte": 98.3,
-  "m3_total_saliente_horizonte": 294.7,
+  "m3_total_saliente_horizonte": 294.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 800,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 32699.0,
-    "demanda_cumplida_unidades": 25125.0,
-    "demanda_no_cubierta_unidades_total": 7574.0,
-    "pct_demanda_cumplida": 76.8,
+    "demanda_cumplida_unidades": 25139.0,
+    "demanda_no_cubierta_unidades_total": 7560.0,
+    "pct_demanda_cumplida": 76.9,
     "sku_sin_match_stock_count": 32,
     "top_no_cubiertos": [
       {
@@ -95,7 +95,7 @@
       },
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 573.0,
+        "unid_no_cubiertas": 572.0,
         "sin_match_stock": true
       },
       {
@@ -105,37 +105,37 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 268.0,
+        "unid_no_cubiertas": 269.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 266.0,
+        "unid_no_cubiertas": 268.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 246.0,
+        "unid_no_cubiertas": 249.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 239.0,
+        "unid_no_cubiertas": 237.0,
         "sin_match_stock": true
       },
       {
         "sku": "1479750635184",
-        "unid_no_cubiertas": 236.0,
+        "unid_no_cubiertas": 231.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 194.0,
+        "unid_no_cubiertas": 188.0,
         "sin_match_stock": true
       },
       {
         "sku": "68540051413139",
-        "unid_no_cubiertas": 167.0,
+        "unid_no_cubiertas": 164.0,
         "sin_match_stock": true
       },
       {
@@ -160,12 +160,12 @@
       },
       {
         "sku": "1566849947902",
-        "unid_no_cubiertas": 119.0,
+        "unid_no_cubiertas": 120.0,
         "sin_match_stock": true
       },
       {
         "sku": "DYNTALCPER",
-        "unid_no_cubiertas": 117.0,
+        "unid_no_cubiertas": 113.0,
         "sin_match_stock": true
       },
       {
