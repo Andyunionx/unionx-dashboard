@@ -773,7 +773,7 @@ def enviar(html, adjuntos, bruta_total, bruta_hoy, avance):
     pre = '[PRE-BORRADOR] ' if PREBORRADOR else ''
     a = ahora()
     if corte()[1] < 0:
-        asunto = f"{pre}🛍️ Cyber UnionX Oct · pre-Cyber {a:%a %d %H:%M} · webs + Kitchen Center"
+        asunto = f"{pre}🛍️ Cyber UnionX Oct · {PRE_LBL[corte()[1] + 3] if corte()[1] >= -3 else 'pre-Cyber'} {a:%H:%M} · webs + Kitchen Center"
     else:
         asunto = f"{pre}🛍️ Cyber UnionX Oct · {a:%H:%M} · {fmt_m(bruta_hoy)} hoy · {fmt_m(bruta_total)} acum ({pct(avance * 100, 0)} meta)"
     print(f"[envío] {asunto} → {EMAIL_TO}", flush=True)
