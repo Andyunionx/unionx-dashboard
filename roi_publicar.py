@@ -108,84 +108,301 @@ def _hoja_xml(encabezados: list[str], filas: list[list]) -> bytes:
     return out.getvalue().encode("utf-8")
 
 
-def tabla_dataa(s: pd.DataFrame) -> tuple[list[str], list[list]]:
-    """Mismo orden y encabezados que 'ROI por SKU' (BUSCARV de Felipe: col 6 clasificación, 12 ROI, 13 EVA)."""
+MIX_HOJA = "MIX de Productos"
+GMROI_ENC = "GMROI"
+GMROI_DESC = "Margen directo ÷ inventario promedio a costo (veces al año)"
+_RE_LOOKUP = re.compile(r"VLOOKUP\(([A-Z]+)(\d+),DATAA!\$?A\$?(\d*):\$?([A-Z]+)\$?(\d*),(\d+),0\)")
+_RE_CELDA = re.compile(r'<c r="([A-Z]+)(\d+)"([^>]*?)(?:/>|>(.*?)</c>)', re.S)
+
+
+def _idx(col: str) -> int:
+    n = 0
+    for ch in col:
+        n = n * 26 + ord(ch) - 64
+    return n
+
+
+def _unesc(s: str) -> str:
+    return (s.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&apos;", "'")
+            .replace("&amp;", "&"))
+
+
+def tabla_dataa(s: pd.DataFrame, skus_num: frozenset = frozenset()) -> tuple[list[str], list[list]]:
+    """Mismo orden y encabezados que 'ROI por SKU' (BUSCARV de Felipe: col 6 clasificación, 12 ROI, 13 EVA, 14 GMROI).
+    El SKU va como NÚMERO si en MIX de Productos está guardado como número (BUSCARV no cruza número con texto).
+    En las columnas que en el libro son fórmula, un vacío va como "" (igual que la fórmula), no como celda en blanco."""
     import roi_producto as rp
     s = s.copy()
     s["costo_d"] = s["costo"].clip(lower=0) / 365
-    enc, keys = [h for _k, h, *_ in rp.COLUMNAS], [k for k, *_ in rp.COLUMNAS]
+    enc = [h for _k, h, *_ in rp.COLUMNAS]
+    keys = [k for k, *_ in rp.COLUMNAS]
+    formula = [tipo == "f" for _k, _h, tipo, *_ in rp.COLUMNAS]
     orden_seg = {c: i for i, c in enumerate(rp.SEGMENTOS)}
     s = s.assign(_o=s["segmento"].map(orden_seg).fillna(9)).sort_values(["_o", "venta"], ascending=[True, False])
     filas = []
     for sku, r in s.iterrows():
         fila = []
-        for k in keys:
+        for k, es_f in zip(keys, formula):
             src = rp.ENTRADA_DE.get(k, k)
-            fila.append(sku if src is None else r.get(src))
+            if src is None:
+                v = int(sku) if sku in skus_num else sku
+            else:
+                v = r.get(src)
+                if es_f and (v is None or (isinstance(v, float) and (np.isnan(v) or np.isinf(v)))):
+                    v = ""
+            fila.append(v)
         filas.append(fila)
     return enc, filas
 
 
-def _inyectar_bytes(original: bytes, hoja: str, nuevo_xml: bytes) -> bytes:
-    zin = zipfile.ZipFile(io.BytesIO(original))
+def _partes_hojas(zin: zipfile.ZipFile) -> dict:
     wbx = zin.read("xl/workbook.xml").decode("utf-8")
-    m = re.search(r'<sheet\b[^>]*\bname="' + re.escape(hoja) + r'"[^>]*/>', wbx)
-    if not m:
-        raise RuntimeError(f"la planilla no tiene la hoja {hoja}")
-    rid = re.search(r'r:id="([^"]+)"', m.group(0)).group(1)
     rels = zin.read("xl/_rels/workbook.xml.rels").decode("utf-8")
-    tgt = re.search(r'<Relationship\b[^>]*Id="' + re.escape(rid) + r'"[^>]*/>', rels).group(0)
-    target = re.search(r'Target="([^"]+)"', tgt).group(1).lstrip("/")
-    parte = target if target.startswith("xl/") else "xl/" + target
-    parte_rels = parte.replace("worksheets/", "worksheets/_rels/") + ".rels"
+    out = {}
+    for m in re.finditer(r"<sheet\b[^>]*/>", wbx):
+        nombre = _unesc(re.search(r'name="([^"]+)"', m.group(0)).group(1))
+        rid = re.search(r'r:id="([^"]+)"', m.group(0)).group(1)
+        tgt = re.search(r'<Relationship\b[^>]*Id="' + re.escape(rid) + r'"[^>]*/>', rels).group(0)
+        target = re.search(r'Target="([^"]+)"', tgt).group(1).lstrip("/")
+        out[nombre] = target if target.startswith("xl/") else "xl/" + target
+    return out
+
+
+def _compartidos(zin: zipfile.ZipFile) -> list[str]:
+    if "xl/sharedStrings.xml" not in zin.namelist():
+        return []
+    x = zin.read("xl/sharedStrings.xml").decode("utf-8")
+    return [_unesc("".join(re.findall(r"<t[^>]*>(.*?)</t>", si, re.S))) for si in re.findall(r"<si>(.*?)</si>", x, re.S)]
+
+
+def _valor(attrs: str, cuerpo, ss: list):
+    """Valor de una celda del XML: número, texto o None."""
+    if not cuerpo:
+        return None
+    t = re.search(r'\bt="(\w+)"', attrs)
+    t = t.group(1) if t else "n"
+    if t == "inlineStr":
+        return _unesc("".join(re.findall(r"<t[^>]*>(.*?)</t>", cuerpo, re.S)))
+    v = re.search(r"<v>(.*?)</v>", cuerpo, re.S)
+    if not v:
+        return None
+    v = v.group(1)
+    if t == "s":
+        return ss[int(v)]
+    if t in ("str", "e"):
+        return _unesc(v)
+    if t == "b":
+        return bool(int(v))
+    try:
+        return float(v)
+    except ValueError:
+        return _unesc(v)
+
+
+def _celda_cache(ref: str, attrs: str, f_xml: str, valor) -> str:
+    attrs = re.sub(r'\s*\bt="[^"]*"', "", attrs)
+    if isinstance(valor, (int, float, np.integer, np.floating)) and not isinstance(valor, bool):
+        return f'<c r="{ref}"{attrs}>{f_xml}<v>{float(valor)!r}</v></c>'
+    return f'<c r="{ref}"{attrs} t="str">{f_xml}<v>{escape(str(valor))}</v></c>'
+
+
+def _procesar_mix(xml: str, ss: list, dataa: list, gmroi_idx: int) -> tuple:
+    """Recalcula el valor guardado de toda fórmula BUSCARV(...;DATAA!...) de la hoja (como Excel: número con número,
+    texto sin distinguir mayúsculas, "-" si no está, 0 si la celda de DATAA está vacía) y agrega la columna GMROI
+    si no existe (encabezado en la fila 2, a la derecha de las búsquedas)."""
+    num, txt = {}, {}
+    for i, fila in enumerate(dataa):
+        k = fila[0]
+        if isinstance(k, (int, float, np.integer, np.floating)):
+            num.setdefault(float(k), (i + 2, fila))
+        else:
+            txt.setdefault(str(k).upper(), (i + 2, fila))
+
+    def buscar(clave, col_idx, fila_max):
+        if clave is None:
+            return "-"
+        hit = num.get(float(clave)) if isinstance(clave, float) else txt.get(str(clave).upper())
+        if not hit or (fila_max and hit[0] > fila_max):
+            return "-"
+        v = hit[1][col_idx - 1] if col_idx - 1 < len(hit[1]) else None
+        if v is None or (isinstance(v, float) and (np.isnan(v) or np.isinf(v))):
+            return 0.0
+        return v
+
+    filas_xml = list(re.finditer(r"(<row\b[^>]*>)(.*?)(</row>)", xml, re.S))
+    col_gm, estilo_enc, estilo_desc, estilo_dato, max_lookup, key_col = None, "", "", "", 0, None
+    for m in filas_xml:
+        r = int(re.search(r'\br="(\d+)"', m.group(1)).group(1))
+        if r > 3:
+            break
+        for c in _RE_CELDA.finditer(m.group(2)):
+            col, attrs, cuerpo = c.group(1), c.group(3), c.group(4)
+            if r == 2 and str(_valor(attrs, cuerpo, ss)).strip() == GMROI_ENC:
+                col_gm = col
+            if r == 3 and cuerpo and "DATAA!" in cuerpo:
+                lk = _RE_LOOKUP.search(cuerpo)
+                if lk:
+                    max_lookup = max(max_lookup, _idx(col))
+                    key_col = key_col or lk.group(1)
+                    if int(lk.group(6)) == 12:              # ROI: su estilo se copia a GMROI
+                        st_ = re.search(r'\bs="\d+"', attrs)
+                        estilo_dato = (" " + st_.group(0)) if st_ else ""
+    if not max_lookup:
+        raise RuntimeError("MIX de Productos ya no tiene fórmulas BUSCARV sobre DATAA: no se toca")
+    agregar = col_gm is None
+    if agregar:
+        ocupadas = set()
+        for m in filas_xml[:3]:
+            ocupadas |= {c.group(1) for c in _RE_CELDA.finditer(m.group(2)) if c.group(4)}
+        j = max_lookup + 1
+        while _col(j) in ocupadas:
+            j += 1
+        col_gm = _col(j)
+        for m in filas_xml[:3]:
+            r = int(re.search(r'\br="(\d+)"', m.group(1)).group(1))
+            for c in _RE_CELDA.finditer(m.group(2)):
+                st_ = re.search(r'\bs="\d+"', c.group(3))
+                if not st_:
+                    continue
+                if r == 2 and c.group(1) == _col(max_lookup - 2):       # encabezado de ROI (naranjo)
+                    estilo_enc = " " + st_.group(0)
+                if r == 1 and _idx(c.group(1)) < j:                     # texto descriptivo de la fila 1
+                    estilo_desc = " " + st_.group(0)
+    gi = _idx(col_gm)
+    stats = {"celdas_actualizadas": 0, "con_valor": 0, "columna_gmroi": col_gm, "gmroi_agregada": agregar}
+
+    def rehacer_fila(m):
+        r = int(re.search(r'\br="(\d+)"', m.group(1)).group(1))
+        celdas = [(c.group(1), c.group(0), c.group(3), c.group(4)) for c in _RE_CELDA.finditer(m.group(2))]
+        valores = {col: _valor(attrs, cu, ss) for col, _x, attrs, cu in celdas}
+        nuevas = []
+        for col, xml_c, attrs, cu in celdas:
+            if col == col_gm and agregar:
+                continue
+            lk = _RE_LOOKUP.search(cu or "")
+            fx = re.search(r"<f\b[^>]*>.*?</f>", cu or "", re.S)
+            if lk and fx and "DATAA!" in fx.group(0):
+                v = buscar(valores.get(lk.group(1)), int(lk.group(6)), int(lk.group(5)) if lk.group(5) else 0)
+                nuevas.append((col, _celda_cache(f"{col}{r}", attrs, fx.group(0), v)))
+                stats["celdas_actualizadas"] += 1
+                stats["con_valor"] += v != "-"
+            else:
+                nuevas.append((col, xml_c))
+        if agregar:
+            nueva = None
+            if r == 1:
+                nueva = f'<c r="{col_gm}1"{estilo_desc} t="inlineStr"><is><t>{escape(GMROI_DESC)}</t></is></c>'
+            elif r == 2:
+                nueva = f'<c r="{col_gm}2"{estilo_enc} t="inlineStr"><is><t>{GMROI_ENC}</t></is></c>'
+            elif r >= 3 and key_col and any(_RE_LOOKUP.search(cu or "") for _c, _x, _a, cu in celdas):
+                fx = f'<f>IFERROR(VLOOKUP({key_col}{r},DATAA!$A:${_col(gmroi_idx)},{gmroi_idx},0),"-")</f>'
+                v = buscar(valores.get(key_col), gmroi_idx, 0)
+                nueva = _celda_cache(f"{col_gm}{r}", estilo_dato, fx, v)
+                stats["celdas_actualizadas"] += 1
+                stats["con_valor"] += v != "-"
+            if nueva:
+                nuevas.append((col_gm, nueva))
+                nuevas.sort(key=lambda x: _idx(x[0]))
+        return m.group(1) + "".join(x for _c, x in nuevas) + m.group(3)
+
+    xml = re.sub(r"(<row\b[^>]*>)(.*?)(</row>)", rehacer_fila, xml, flags=re.S)
+    if agregar:
+        def ext(mt):
+            return f"{mt.group(1)}:{_col(max(_idx(mt.group(2)), gi))}{mt.group(3)}"
+        xml = re.sub(r'(?<=<autoFilter ref=")([A-Z]+\d+):([A-Z]+)(\d+)', ext, xml, count=1)
+        xml = re.sub(r'(?<=<dimension ref=")([A-Z]+\d+):([A-Z]+)(\d+)', ext, xml, count=1)
+        cubre = any(int(a) <= gi <= int(b) for a, b in re.findall(r'<col min="(\d+)" max="(\d+)"', xml))
+        if not cubre and "</cols>" in xml:
+            xml = xml.replace("</cols>", f'<col min="{gi}" max="{gi}" width="13.3" customWidth="1"/></cols>', 1)
+    return xml, stats
+
+
+def _inyectar_bytes(original: bytes, s: pd.DataFrame) -> tuple:
+    import roi_producto as rp
+    zin = zipfile.ZipFile(io.BytesIO(original))
+    partes = _partes_hojas(zin)
+    if PLANIF_HOJA not in partes or MIX_HOJA not in partes:
+        raise RuntimeError(f"la planilla no tiene las hojas {PLANIF_HOJA} y {MIX_HOJA}")
+    ss = _compartidos(zin)
+    mix = zin.read(partes[MIX_HOJA]).decode("utf-8")
+    lk = _RE_LOOKUP.search(mix)
+    key_col = lk.group(1) if lk else "E"
+    skus_num = set()                      # SKU que MIX guarda como número (celda sin atributo t)
+    for c in _RE_CELDA.finditer(mix):
+        if c.group(1) == key_col and int(c.group(2)) >= 3 and c.group(4) and not re.search(r'\bt="', c.group(3)):
+            v = _valor(c.group(3), c.group(4), ss)
+            if isinstance(v, float):
+                skus_num.add(str(int(v)))
+    enc, filas = tabla_dataa(s, frozenset(skus_num))
+    dataa_xml = _hoja_xml(enc, filas)
+    gmroi_idx = [k for k, *_ in rp.COLUMNAS].index("gmroi") + 1
+    mix_xml, stats = _procesar_mix(mix, ss, filas, gmroi_idx)
+    stats.update(filas_dataa=len(filas), skus_numericos=len(skus_num))
+    wbx = zin.read("xl/workbook.xml").decode("utf-8")
+    if stats["gmroi_agregada"]:
+        gi = _idx(stats["columna_gmroi"])
+        wbx = re.sub(r"('MIX de Productos'!\$A\$\d+:\$)([A-Z]+)(\$\d+)",
+                     lambda mt: mt.group(1) + _col(max(_idx(mt.group(2)), gi)) + mt.group(3), wbx)
+    if "fullCalcOnLoad" not in wbx:                     # Excel recalcula todo al abrir
+        wbx = re.sub(r"<calcPr\b", '<calcPr fullCalcOnLoad="1"', wbx, count=1)
+    parte_dataa = partes[PLANIF_HOJA]
+    parte_rels = parte_dataa.replace("worksheets/", "worksheets/_rels/") + ".rels"
+    rels = zin.read("xl/_rels/workbook.xml.rels").decode("utf-8")
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zout:
         for it in zin.infolist():
             n = it.filename
-            if n == parte:
-                zout.writestr(it, nuevo_xml)
+            if n == parte_dataa:
+                zout.writestr(it, dataa_xml)
+            elif n == partes[MIX_HOJA]:
+                zout.writestr(it, mix_xml.encode("utf-8"))
+            elif n == "xl/workbook.xml":
+                zout.writestr(it, wbx.encode("utf-8"))
             elif n in ("xl/calcChain.xml", parte_rels):
-                continue                       # la hoja nueva no tiene fórmulas ni dibujos: Excel recalcula la cadena
+                continue
             elif n == "[Content_Types].xml":
                 ct = zin.read(n).decode("utf-8")
-                ct = re.sub(r'<Override[^>]*PartName="/xl/calcChain.xml"[^>]*/>', "", ct)
-                zout.writestr(it, ct)
+                zout.writestr(it, re.sub(r'<Override[^>]*PartName="/xl/calcChain.xml"[^>]*/>', "", ct))
             elif n == "xl/_rels/workbook.xml.rels":
                 zout.writestr(it, re.sub(r'<Relationship[^>]*Target="[^"]*calcChain.xml"[^>]*/>', "", rels))
             else:
                 zout.writestr(it, zin.read(n))
-    return out.getvalue()
+    return out.getvalue(), stats
 
 
-def inyectar_planificacion(s: pd.DataFrame, intentos: int = 3, subir: bool = True, local_out: Path | None = None) -> dict:
+def inyectar_planificacion(s: pd.DataFrame, intentos: int = 3, subir: bool = True, local_out: Path | None = None,
+                           original: bytes | None = None) -> dict:
     import googleapiclient.http
     svc = _svc()
-    enc, filas = tabla_dataa(s)
-    xml = _hoja_xml(enc, filas)
     for i in range(intentos):
-        meta = svc.files().get(fileId=PLANIF_ID, fields="name,modifiedTime,md5Checksum", supportsAllDrives=True).execute()
-        buf = io.BytesIO()
-        dl = googleapiclient.http.MediaIoBaseDownload(buf, svc.files().get_media(fileId=PLANIF_ID, supportsAllDrives=True))
-        done = False
-        while not done:
-            _, done = dl.next_chunk()
-        nuevo = _inyectar_bytes(buf.getvalue(), PLANIF_HOJA, xml)
+        meta = svc.files().get(fileId=PLANIF_ID, fields="name,modifiedTime", supportsAllDrives=True).execute()
+        if original is None:
+            buf = io.BytesIO()
+            dl = googleapiclient.http.MediaIoBaseDownload(buf, svc.files().get_media(fileId=PLANIF_ID, supportsAllDrives=True))
+            done = False
+            while not done:
+                _, done = dl.next_chunk()
+            datos = buf.getvalue()
+        else:
+            datos = original
+        nuevo, stats = _inyectar_bytes(datos, s)
         import openpyxl                    # control: el archivo resultante abre y conserva sus hojas
         wb = openpyxl.load_workbook(io.BytesIO(nuevo), read_only=True)
-        if PLANIF_HOJA not in wb.sheetnames or "MIX de Productos" not in wb.sheetnames:
+        if PLANIF_HOJA not in wb.sheetnames or MIX_HOJA not in wb.sheetnames:
             raise RuntimeError("la planilla resultante no conserva sus hojas: no se sube")
         if local_out:
             local_out.write_bytes(nuevo)
         if not subir:
-            return {"filas": len(filas), "subido": False}
+            return {**stats, "subido": False}
         ahora = svc.files().get(fileId=PLANIF_ID, fields="modifiedTime", supportsAllDrives=True).execute()["modifiedTime"]
         if ahora != meta["modifiedTime"]:
             print(f"[planificación] Felipe la modificó durante la inyección: reintento {i + 1}")
+            original = None
             continue
         media = googleapiclient.http.MediaIoBaseUpload(io.BytesIO(nuevo), mimetype=(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), resumable=True)
         svc.files().update(fileId=PLANIF_ID, media_body=media, supportsAllDrives=True).execute()
-        return {"filas": len(filas), "subido": True, "archivo": meta["name"]}
+        return {**stats, "subido": True, "archivo": meta["name"]}
     raise RuntimeError("la planilla se modificó en todos los intentos: no se pisó")
 
 
