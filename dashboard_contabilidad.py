@@ -67,6 +67,7 @@ with st.sidebar:
 # ─── NAVEGACIÓN ──────────────────────────────────────────────────────
 from views.cont_cobranza import render as render_cont_cobranza  # noqa
 from views.cont_centro_costos import render as render_cont_cc  # noqa
+from views.cont_existencias import render as render_cont_existencias, puede_ver as puede_ver_existencias  # noqa
 
 pages = {
     "💰 Cobranza": [
@@ -78,6 +79,11 @@ pages = {
                 url_path="cont-centro-costos"),
     ],
 }
+if puede_ver_existencias((get_cont_user() or {}).get("email")):
+    pages["📦 Existencias"] = [
+        st.Page(render_cont_existencias, title="Memoria de auditoría", icon="📦",
+                url_path="cont-existencias"),
+    ]
 
 pg = st.navigation(pages)
 pg.run()
