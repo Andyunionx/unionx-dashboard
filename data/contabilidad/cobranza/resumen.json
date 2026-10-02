@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-10-01T22:21:26.920311",
+  "generado_en": "2026-10-02T02:55:09.448923",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 13020,
-  "total_monto_pendiente_clp": 813748148.0,
+  "total_documentos_pendientes": 11303,
+  "total_monto_pendiente_clp": 741283063.0,
   "monto_por_aging": {
-    "+90 días": 88130141.0,
-    "1-30 días": 284225027.0,
-    "31-60 días": 215970148.0,
-    "61-90 días": 50420130.0,
-    "Vigente": 175002702.0
+    "+90 días": 88124091.0,
+    "1-30 días": 263668556.0,
+    "31-60 días": 169862562.0,
+    "61-90 días": 45296919.0,
+    "Vigente": 174330935.0
   },
   "monto_por_tipo": {
-    "BOLETA": 715193364.0,
+    "BOLETA": 642728279.0,
     "FACTURA": 98554784.0
   },
   "top_20_deudores": [
-    {
-      "partner": "Cliente Mercado Libre",
-      "monto": 155998684.0
-    },
     {
       "partner": "WALMART CHILE COM. LTDA",
       "monto": 116496223.0
     },
     {
+      "partner": "Cliente Mercado Libre",
+      "monto": 100143967.0
+    },
+    {
       "partner": "Cliente Falabella Fcom",
-      "monto": 73293723.0
+      "monto": 72948743.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 18081755.0
+      "monto": 18194715.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -66,15 +66,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 12843645.0
+      "monto": 12891433.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
       "monto": 12633651.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 12331220.0
     },
     {
       "partner": "Status Spa",
@@ -85,16 +81,20 @@
       "monto": 8595153.0
     },
     {
+      "partner": "Cliente Simplit Home",
+      "monto": 8351585.0
+    },
+    {
       "partner": "Cliente Ripley",
-      "monto": 8052972.0
+      "monto": 8071952.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 7840539.0
     },
     {
-      "partner": "Lhotse Store",
-      "monto": 7152590.0
+      "partner": "Global Reward Solutions",
+      "monto": 5927157.0
     }
   ],
   "notas_credito_count": 834,
