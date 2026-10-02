@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-10-02T11:30:47.785754",
+  "generado_en": "2026-10-02T16:58:16.263493",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11329,
-  "total_monto_pendiente_clp": 741984698.0,
+  "total_documentos_pendientes": 11202,
+  "total_monto_pendiente_clp": 730651007.0,
   "monto_por_aging": {
     "+90 días": 88124091.0,
-    "1-30 días": 264370191.0,
-    "31-60 días": 169862562.0,
+    "1-30 días": 251287568.0,
+    "31-60 días": 169724582.0,
     "61-90 días": 45296919.0,
-    "Vigente": 174330935.0
+    "Vigente": 176217847.0
   },
   "monto_por_tipo": {
-    "BOLETA": 643429914.0,
+    "BOLETA": 632096223.0,
     "FACTURA": 98554784.0
   },
   "top_20_deudores": [
@@ -22,15 +22,15 @@
     },
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 100283897.0
-    },
-    {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 73178583.0
+      "monto": 100997497.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 72667992.0
+      "monto": 75475100.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 73411113.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -49,16 +49,12 @@
       "monto": 23378141.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 18194715.0
-    },
-    {
       "partner": "GOPOINTS CHILE SPA",
       "monto": 17802060.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 16890041.0
+      "partner": "Cliente Paris",
+      "monto": 14624807.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -66,37 +62,41 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 12944901.0
+      "monto": 13010260.0
+    },
+    {
+      "partner": "Duty Free T C S A",
+      "monto": 12681399.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 12633651.0
+      "monto": 10910864.0
     },
     {
       "partner": "Status Spa",
       "monto": 10837211.0
     },
     {
-      "partner": "abc S.A.",
-      "monto": 8595153.0
-    },
-    {
       "partner": "Cliente Simplit Home",
-      "monto": 8429153.0
+      "monto": 8898474.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 8071952.0
+      "partner": "abc S.A.",
+      "monto": 8479741.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 7840539.0
     },
     {
+      "partner": "Cliente Ripley",
+      "monto": 7018341.0
+    },
+    {
       "partner": "Global Reward Solutions",
-      "monto": 5927157.0
+      "monto": 6058772.0
     }
   ],
-  "notas_credito_count": 834,
+  "notas_credito_count": 835,
   "pedidos_venta_count": 10000
 }
