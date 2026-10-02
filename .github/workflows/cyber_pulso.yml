@@ -1,8 +1,8 @@
 name: "Cyber Pulso (horario, Cyber oct lun 5 → dom 11)"
 
-# Pulso horario del Cyber de octubre 2026. Lo dispara el Cloudflare Worker (scheduler/)
-# cada hora entre el lun 5-oct 06:00 y el lun 12-oct 06:00 CLT vía workflow_dispatch;
-# el cron de GitHub no se usa porque se atrasa horas o se salta corridas.
+# Pulso horario del Cyber de octubre 2026. Lo dispara cyber_reloj.yml cada hora en punto
+# entre el lun 5-oct 06:00 y el lun 12-oct 06:00 CLT vía workflow_dispatch (el cron de
+# GitHub no se usa directo porque se atrasa horas o se salta corridas).
 # Cada corrida: re-extrae el mes en curso desde Odoo (la app queda fresca cada hora) y
 # enviar_pulso_cyber_oct.py decide si manda correo: cada 2 h (horas pares 08:00–24:00 CLT),
 # con dos validaciones antes (parquet sano + venta del día vs Odoo state=sale).

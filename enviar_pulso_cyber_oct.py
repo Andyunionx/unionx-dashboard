@@ -17,7 +17,7 @@ de cada canal en el Cyber de octubre 2025. Meta por hora: curva horaria del mism
 del Cyber 2025.
 
 Pre-Cyber: viernes 2, sábado 3 y domingo 4 de octubre, solo páginas web y Kitchen
-Center, sin meta, como bloque aparte.
+Center, sin meta: van como filas "Pre" al inicio de la tabla por día (no suman al acumulado).
 
 Fuente: RAW de ventas en parquet (histórico + mes en curso), igual que el pulso diario.
 
@@ -373,6 +373,19 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
     vd = {s: agg(T[s][T[s]['d'] >= 0], 'd') for s in SERIES}          # mismo tramo (el día en curso, al corte)
     full = {s: S[s][S[s]['d'] >= 0].groupby('d')['venta_bruta'].sum() for s in ('ly', 'jun')}
     md = M.groupby('d')['meta'].sum()
+    # pre-Cyber (vie, sáb, dom previos): solo páginas web + Kitchen Center, sin meta
+    vp = {s: agg(pre[s], 'd') for s in SERIES}
+    for d, lbl in zip(range(-3, 0), PRE_LBL):
+        if d not in vp['ty'].index:
+            continue
+        r = vp['ty'].loc[d]
+        ref = {s: (vp[s].loc[d]['bruta'] if d in vp[s].index else 0) for s in ('ly', 'jun')}
+        dia_rows.append(f'<tr style="background:#FAFAF9"><td>{lbl} <span style="color:#94A3B8;font-size:0.75rem">webs + KC</span></td><td align="right">{ent(r["sos"])}</td>'
+                        + f'<td align="right">{ent(r["uds"])}</td>'
+                        + f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pct(pm(r))}</td>'
+                        + '<td align="right" style="color:#94A3B8">sin meta</td><td align="right">—</td>'
+                        + f'<td align="right">{fmt_m(ref["ly"])}</td>' + var_cell(r['bruta'], ref['ly'])
+                        + f'<td align="right">{fmt_m(ref["jun"])}</td>' + var_cell(r['bruta'], ref['jun']) + '</tr>')
     for d in range(7):
         r = vd['ty'].loc[d] if d in vd['ty'].index else None
         ref = {s: (vd[s].loc[d]['bruta'] if d in vd[s].index else 0) for s in ('ly', 'jun')}
@@ -392,8 +405,9 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
     sec_dia = (f'<h3 style="margin:24px 0 8px 0;font-size:1rem">📅 Por día del Cyber — oct 2026 vs oct 2025 vs jun 2026</h3>'
                + tabla(['Día', 'SOs', 'Uds', 'Bruta', 'Margen', '%M', 'Meta', '%Meta', 'Oct-25', 'vs', 'Jun-26', 'vs'], dia_rows)
                + '<p style="font-size:0.78rem;color:#64748B;margin:4px 0 0">Se compara por día del evento, no por fecha: Día 1 es el lunes de cada Cyber '
-               '(oct-26 lun 5 · oct-25 lun 6 · jun-26 lun 1). El día en curso se compara hasta la misma hora; los días por venir muestran, en gris, '
-               'la meta y el día completo de los otros Cyber.</p>') if en_cyber else ''
+               '(oct-26 lun 5 · oct-25 lun 6 · jun-26 lun 1). Las filas "Pre" son el viernes, sábado y domingo previos a cada Cyber, solo páginas web '
+               'y Kitchen Center, sin meta (no suman al acumulado del Cyber). El día en curso se compara hasta la misma hora; los días por venir '
+               'muestran, en gris, la meta y el día completo de los otros Cyber.</p>') if en_cyber else ''
 
     # ── por hora (día en curso)
     sec_hora = ''
@@ -455,42 +469,6 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
         sec_mar = '<h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Top 10 marcas</h3>' + bloque('marca', 'Marca', {}, top=10, con_meta=False)
         sec_cat = '<h3 style="margin:24px 0 8px 0;font-size:1rem">📂 Top 10 categorías</h3>' + bloque('categoria_hijo', 'Categoría', {}, top=10, con_meta=False)
 
-    # ── pre-Cyber (vie–dom, webs + Kitchen Center, sin meta)
-    pg = {s: agg(pre[s], 'd') for s in SERIES}
-    pc = {s: agg(pre[s], 'canal') for s in SERIES}
-    filas_d = []
-    for d, lbl in zip(range(-3, 0), PRE_LBL):
-        if d not in pg['ty'].index:
-            continue
-        r = pg['ty'].loc[d]
-        ly_ = pg['ly'].loc[d] if d in pg['ly'].index else None
-        jn_ = pg['jun'].loc[d] if d in pg['jun'].index else None
-        filas_d.append(f'<tr><td>{lbl}{" (al corte)" if d == idx and tod < "23:59" else ""}</td><td align="right">{ent(r["sos"])}</td>'
-                       + f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pct(pm(r))}</td>'
-                       + f'<td align="right">{fmt_m(ly_["bruta"]) if ly_ is not None else "—"}</td>' + var_cell(r['bruta'], ly_['bruta'] if ly_ is not None else 0)
-                       + f'<td align="right">{fmt_m(jn_["bruta"]) if jn_ is not None else "—"}</td>' + var_cell(r['bruta'], jn_['bruta'] if jn_ is not None else 0) + '</tr>')
-    filas_c = []
-    for k, r in pc['ty'].sort_values('bruta', ascending=False).iterrows():
-        ly_ = pc['ly'].loc[k] if k in pc['ly'].index else None
-        jn_ = pc['jun'].loc[k] if k in pc['jun'].index else None
-        filas_c.append(f'<tr><td>{k}</td><td align="right">{ent(r["sos"])}</td>'
-                       + f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pct(pm(r))}</td>'
-                       + f'<td align="right">{fmt_m(ly_["bruta"]) if ly_ is not None else "—"}</td>' + var_cell(r['bruta'], ly_['bruta'] if ly_ is not None else 0)
-                       + f'<td align="right">{fmt_m(jn_["bruta"]) if jn_ is not None else "—"}</td>' + var_cell(r['bruta'], jn_['bruta'] if jn_ is not None else 0) + '</tr>')
-    tp = {s: agg(pre[s]) for s in SERIES}
-    if len(filas_d):
-        r = tp['ty']
-        filas_d.append(f'<tr style="font-weight:700;background:#F8FAFC"><td>TOTAL pre-Cyber</td><td align="right">{ent(r["sos"])}</td>'
-                       + f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pct(pm(r))}</td>'
-                       + f'<td align="right">{fmt_m(tp["ly"]["bruta"])}</td>' + var_cell(r['bruta'], tp['ly']['bruta'])
-                       + f'<td align="right">{fmt_m(tp["jun"]["bruta"])}</td>' + var_cell(r['bruta'], tp['jun']['bruta']) + '</tr>')
-    cab_pre = ['', 'SOs', 'Bruta', 'Margen', '%M', 'oct-25', 'vs oct-25', 'jun-26', 'vs jun-26']
-    sec_pre = ''
-    if filas_d:
-        sec_pre = ('<h3 style="margin:24px 0 8px 0;font-size:1rem">🗓️ Pre-Cyber · viernes, sábado y domingo previos · páginas web + Kitchen Center (sin meta)</h3>'
-                   + tabla(['Día'] + cab_pre[1:], filas_d) + '<div style="height:10px"></div>' + tabla(['Canal'] + cab_pre[1:], filas_c)
-                   + '<p style="font-size:0.78rem;color:#64748B;margin:4px 0 0">Comparación por día del evento: el viernes, sábado y domingo previos a cada Cyber (oct-26: 2 al 4 · oct-25: 3 al 5 · jun-26: 29 al 31 de mayo), mismos canales.</p>')
-
     # ── alarma de stock
     sec_stock = ''
     if alarma_stock:
@@ -516,7 +494,6 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
 {sec_hora}
 {sec_lin}
 {sec_can}
-{sec_pre}
 {sec_mar}
 {sec_cat}
 {sec_stock}
@@ -772,10 +749,7 @@ def _gmail_con_adjuntos(asunto, html, adjuntos, to_list):
 def enviar(html, adjuntos, bruta_total, bruta_hoy, avance):
     pre = '[PRE-BORRADOR] ' if PREBORRADOR else ''
     a = ahora()
-    if corte()[1] < 0:
-        asunto = f"{pre}🛍️ Cyber UnionX Oct · {PRE_LBL[corte()[1] + 3] if corte()[1] >= -3 else 'pre-Cyber'} {a:%H:%M} · webs + Kitchen Center"
-    else:
-        asunto = f"{pre}🛍️ Cyber UnionX Oct · {a:%H:%M} · {fmt_m(bruta_hoy)} hoy · {fmt_m(bruta_total)} acum ({pct(avance * 100, 0)} meta)"
+    asunto = f"{pre}🛍️ Cyber UnionX Oct · {a:%H:%M} · {fmt_m(bruta_hoy)} hoy · {fmt_m(bruta_total)} acum ({pct(avance * 100, 0)} meta)"
     print(f"[envío] {asunto} → {EMAIL_TO}", flush=True)
     try:
         mid = _gmail_con_adjuntos(asunto, html, adjuntos, EMAIL_TO)

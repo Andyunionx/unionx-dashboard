@@ -1,0 +1,41 @@
+name: "Cyber Reloj (dispara el pulso Cyber cada hora)"
+
+# Reemplaza al cron horario: el cron de GitHub se atrasa horas, así que acá solo arranca
+# (o rearranca) el reloj; el reloj duerme dentro del job y dispara cyber_pulso.yml cada
+# hora en punto entre el lun 5-oct 06:00 y el lun 12-oct 06:00 CLT. Cada turno dura
+# ~5 h 30 y se releva solo. Repo público → minutos de Actions sin costo.
+# concurrency: un solo reloj corriendo; lo que llegue mientras tanto queda en espera y
+# toma el relevo si la cadena se corta.
+
+on:
+  schedule:
+    - cron: '*/30 * 4-12 10 *'
+  workflow_dispatch:
+    inputs:
+      prueba:
+        description: 'Disparar una vez el pulso en modo borrador (verifica permisos)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: cyber-reloj
+  cancel-in-progress: false
+
+jobs:
+  reloj:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reloj
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_NO_UPDATE_NOTIFIER: '1'
+          GH_PROMPT_DISABLED: '1'
+        run: python -u cyber_reloj.py ${{ github.event.inputs.prueba == 'true' && '--prueba' || '' }}
