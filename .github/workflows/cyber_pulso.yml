@@ -68,18 +68,9 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python extract_mes_actual_a_parquet.py --source odoo
 
-      - name: Dedup del mes en curso
-        run: |
-          python <<'PYEOF'
-          import pandas as pd
-          path = 'data/historico/ventas_mes_actual.parquet'
-          df = pd.read_parquet(path)
-          cols = [c for c in ['pedido','sku','hora_venta','venta_bruta','cantidad','documento','tipo_movimiento','canal','fecha_venta'] if c in df.columns]
-          n0 = len(df)
-          df = df.drop_duplicates(subset=cols, keep='first')
-          df.to_parquet(path, index=False)
-          print(f'[Dedup] {n0:,} → {len(df):,} filas · ${df["venta_bruta"].sum():,.0f}')
-          PYEOF
+      # Sin dedup extra: el extract ya deduplica por id de línea de Odoo y conserva las líneas
+      # idénticas legítimas (canjes repetidos, unidades de una misma N/C). Un dedup por contenido
+      # acá borraba ventas reales del parquet que usan la app y el Pulso Diario (2-oct: 13 filas).
 
       - name: Commit parquet actualizado (app fresca)
         if: always()
