@@ -2,7 +2,7 @@
  "evento": "Cyber Octubre 2026 (lun 5 → dom 11)",
  "fuente": "Planificacion_Cyber_Oct2026.xlsx · hoja META · columna 'Meta Cyber Bruta' (venta bruta, con IVA)",
  "plan_modificado": "2026-10-01T21:19:05.770Z",
- "actualizado": "2026-10-02 10:25",
+ "actualizado": "2026-10-02 (grupos: Nicole neta ×1,19 + Martín planilla)",
  "meta_total_bruta": 560225024,
  "total_general_planilla": 512540025,
  "metas_canal": {
@@ -26,5 +26,45 @@
   "Sawa": 1555930,
   "LATAM Pass": 1021935
  },
- "meta_dia": []
+ "meta_dia": [],
+ "grupos": {
+  "Nicole (Marketplace + Fidelización)": {
+   "canales": [
+    "Mercado Libre",
+    "Falabella",
+    "Paris",
+    "Kitchen Center",
+    "Walmart",
+    "Ripley",
+    "Travel Duty",
+    "El Volcan",
+    "Celmedia",
+    "Abc",
+    "Global Reward",
+    "Hites",
+    "Banco Bice",
+    "Sawa"
+   ],
+   "meta_dia_neta": [
+    121600000,
+    100600000,
+    113200000,
+    41900000,
+    16800000,
+    12600000,
+    12600000
+   ],
+   "fuente": "Nicole 02-10: meta de sus canales en venta NETA (60% de la meta de octubre), apertura por día; el pulso la lleva a bruto ×1,19"
+  },
+  "Martín (páginas web, CMR, LATAM)": {
+   "canales": [
+    "Simplit web",
+    "UnionX web",
+    "Lhotse web",
+    "CMR",
+    "LATAM Pass"
+   ],
+   "fuente": "planilla META, columna 'Meta Cyber Bruta' (Andrés 02-10: usar la planilla)"
+  }
+ }
 }

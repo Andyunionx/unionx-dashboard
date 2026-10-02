@@ -88,6 +88,8 @@ def main():
         'metas_canal': dict(sorted(metas.items(), key=lambda kv: -kv[1])),
         # apertura por día de Nicole (7 montos brutos lun→dom). Vacío = curva Cyber oct-2025.
         'meta_dia': previo.get('meta_dia', []),
+        # metas por área (ej. Nicole en neta con apertura diaria): se conservan al re-leer la planilla
+        'grupos': previo.get('grupos', {}),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')

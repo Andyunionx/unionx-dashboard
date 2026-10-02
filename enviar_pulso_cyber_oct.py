@@ -75,6 +75,7 @@ RANGO_INICIO = datetime(2026, 10, 5, 6, 0, tzinfo=TZ)
 RANGO_FIN = datetime(2026, 10, 12, 5, 59, tzinfo=TZ)     # incluye el pulso de las 00:00 del lun 12 (cierre del dom 11)
 META_JSON = PROJECT_ROOT / 'data' / 'planificacion' / 'plan_cyber_oct2026.json'
 SERIES = ('ty', 'ly', 'jun')
+IVA = 1.19
 NOM_SERIE = {'ty': 'Oct 2026', 'ly': 'Oct 2025', 'jun': 'Jun 2026'}
 LINEA_DEF = {'CMR': 'Fidelización', 'El Volcan': 'Distribución', 'LATAM Pass': 'Fidelización'}
 
@@ -207,14 +208,31 @@ def cargar_metas(S, lineas_canal):
     if len(md) == 7:
         f = pd.Series(md, index=range(7), dtype=float) / cd.groupby('d')['meta'].sum()
         cd['meta'] = cd['meta'] * cd['d'].map(f)
-        fuente_dia = 'apertura por día de Nicole'
+        fuente_dia = 'apertura por día cargada'
+    # Grupos con meta propia por día en venta NETA (ej. Nicole, Marketplace + Fidelización):
+    # cada día del grupo se reescala a esa meta × 1,19 (bruto, como el RAW); dentro del día se
+    # reparte entre los canales del grupo según su peso (planilla + curva del canal).
+    notas = []
+    for nombre, g in (plan.get('grupos') or {}).items():
+        mdn = g.get('meta_dia_neta') or []
+        sel = cd['canal'].isin(g.get('canales', []))
+        if len(mdn) == 7 and sel.any():
+            obj = pd.Series(mdn, index=range(7), dtype=float) * IVA
+            base = cd[sel].groupby('d')['meta'].sum()
+            cd.loc[sel, 'meta'] = cd.loc[sel, 'meta'] * cd.loc[sel, 'd'].map(obj / base)
+            notas.append(f"{nombre}: {fmt_m(sum(mdn))} neta → {fmt_m(sum(mdn) * IVA)} bruta, apertura por día del área")
+        elif sel.any():
+            notas.append(f"{nombre}: {fmt_m(cd.loc[sel, 'meta'].sum())} bruta de la planilla, por día con la curva de cada canal en oct-2025")
+    if notas:
+        fuente_dia = ' · '.join(notas)
+    mc = cd.groupby('canal')['meta'].sum().to_dict()
     # curva horaria del mismo día del Cyber 2025 (toda la empresa)
     hh = ly.groupby(['d', 'h'])['venta_bruta'].sum().clip(lower=0)
     hh = (hh / hh.groupby(level=0).transform('sum')).rename('sh').reset_index()
     m = cd.merge(hh, on='d', how='left')
     m['meta'] = m['meta'] * m['sh'].fillna(0)
     m['linea'] = m['canal'].map(lineas_canal).fillna(m['canal'].map(LINEA_DEF)).fillna('Otros')
-    info = {'total': sum(mc.values()), 'total_planilla': plan.get('total_general_planilla'),
+    info = {'total': sum(mc.values()), 'total_planilla': None if plan.get('grupos') else plan.get('total_general_planilla'),
             'fuente': plan.get('fuente', ''), 'fuente_dia': fuente_dia, 'canales': mc}
     return m[['d', 'h', 'canal', 'linea', 'meta']], info
 
@@ -479,7 +497,7 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
 
     banner = ('<div style="background:#FEE2E2;border-left:4px solid #DC2626;padding:10px 12px;border-radius:6px;margin:12px 0;font-size:0.88rem;color:#991B1B">'
               '<b>ENSAYO:</b> la serie "oct 2026" usa la venta del Cyber de junio para probar el formato. No son datos reales de octubre.</div>') if ENSAYO else ''
-    nota_meta = (f'Meta: {info["fuente"]}; por día con la {info["fuente_dia"]}. '
+    nota_meta = (f'Meta (venta bruta): {info["fuente_dia"]}. '
                  + (f'La suma por canal ({fmt_m(info["total"])}) no coincide con el "Total general" de la planilla ({fmt_m(info["total_planilla"])}).'
                     if info.get('total_planilla') and abs(info['total'] - info['total_planilla']) > 10 else ''))
     html = f"""<!DOCTYPE html>
