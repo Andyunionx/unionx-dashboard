@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-10-03T08:57:12.090032",
+  "generado_en": "2026-10-03T18:34:53.707153",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.070042194092827,
-      "total_pickings": 10665,
-      "on_time": 747,
-      "on_time_pct": 0.070042194092827,
-      "in_full": 10662,
-      "in_full_pct": 0.99971870604782,
-      "both": 747,
+      "valor": 0.07027478648347568,
+      "total_pickings": 10772,
+      "on_time": 757,
+      "on_time_pct": 0.07027478648347568,
+      "in_full": 10769,
+      "in_full_pct": 0.9997215001856665,
+      "both": 757,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,18 +23,109 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998644159717985,
-      "ok": 14749,
-      "total": 14751,
+      "valor": 0.9998655642938764,
+      "ok": 14875,
+      "total": 14877,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 13.321369598765433,
-      "n_recepciones": 288,
+      "valor": 12.746181247692874,
+      "n_recepciones": 301,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/RET/01240",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 12:02",
+          "done": "2026-10-03 12:02"
+        },
+        {
+          "picking": "CA1/RET/01239",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 12:00",
+          "done": "2026-10-03 12:00"
+        },
+        {
+          "picking": "CA1/RET/01238",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:59",
+          "done": "2026-10-03 11:59"
+        },
+        {
+          "picking": "CA1/RET/01234",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:57",
+          "done": "2026-10-03 11:57"
+        },
+        {
+          "picking": "CA1/RET/01233",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:44",
+          "done": "2026-10-03 11:44"
+        },
+        {
+          "picking": "CA1/RET/01231",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:41",
+          "done": "2026-10-03 11:42"
+        },
+        {
+          "picking": "CA1/RET/01232",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:42",
+          "done": "2026-10-03 11:42"
+        },
+        {
+          "picking": "CA1/RET/01230",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:40",
+          "done": "2026-10-03 11:41"
+        },
+        {
+          "picking": "CA1/RET/01229",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:40",
+          "done": "2026-10-03 11:40"
+        },
+        {
+          "picking": "CA1/RET/01228",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:39",
+          "done": "2026-10-03 11:39"
+        },
+        {
+          "picking": "CA1/RET/01225",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:38",
+          "done": "2026-10-03 11:38"
+        },
+        {
+          "picking": "CA1/RET/01227",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:38",
+          "done": "2026-10-03 11:38"
+        },
+        {
+          "picking": "CA1/RET/01224",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:37",
+          "done": "2026-10-03 11:37"
+        },
         {
           "picking": "CA1/IN/01084",
           "proveedor": "",
@@ -83,116 +174,25 @@
           "horas": 0.2,
           "scheduled": "2026-10-02 12:53",
           "done": "2026-10-02 13:05"
-        },
-        {
-          "picking": "CA1/IN/01068",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 168.5,
-          "scheduled": "2026-09-24 16:14",
-          "done": "2026-10-01 16:45"
-        },
-        {
-          "picking": "CA1/IN/01076",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-30 14:42",
-          "done": "2026-09-30 14:47"
-        },
-        {
-          "picking": "CA1/RET/01223",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-30 13:41",
-          "done": "2026-09-30 13:41"
-        },
-        {
-          "picking": "CA1/IN/01075",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 14:49",
-          "done": "2026-09-29 14:50"
-        },
-        {
-          "picking": "CA1/IN/01074",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-29 14:44",
-          "done": "2026-09-29 14:48"
-        },
-        {
-          "picking": "CA1/IN/01073",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 14:40",
-          "done": "2026-09-29 14:42"
-        },
-        {
-          "picking": "CA1/RET/01222",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 13:37",
-          "done": "2026-09-29 13:37"
-        },
-        {
-          "picking": "CA1/IN/01072",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 12:19",
-          "done": "2026-09-29 12:20"
-        },
-        {
-          "picking": "CA1/IN/01071",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 11:38",
-          "done": "2026-09-29 11:40"
-        },
-        {
-          "picking": "CA1/RET/01221",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-28 20:34",
-          "done": "2026-09-28 20:34"
-        },
-        {
-          "picking": "CA1/RET/01219",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-28 20:27",
-          "done": "2026-09-28 20:27"
-        },
-        {
-          "picking": "CA1/IN/01070",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-28 19:52",
-          "done": "2026-09-28 19:55"
-        },
-        {
-          "picking": "CA1/RET/01218",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-28 14:40",
-          "done": "2026-09-28 14:41"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9256628314157078,
-      "total_so": 10013,
-      "total_con_pickings": 9995,
-      "cumplidos": 9252,
+      "valor": 0.9164787765905303,
+      "total_so": 10220,
+      "total_con_pickings": 10201,
+      "cumplidos": 9349,
       "parciales": 15,
-      "sin_iniciar": 728,
+      "sin_iniciar": 837,
       "error": null
     },
     "oct_30d": {
-      "valor": 81.27957498283074,
-      "n_orders": 10678,
+      "valor": 80.62397627878227,
+      "n_orders": 10785,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 29.985833333333332,
+      "mediana_h": 29.28472222222222,
       "detalle": [
         {
           "so": "S278911",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 836,
+      "lineas": 962,
       "mes": "2026-10",
       "error": null
     },
@@ -8612,13 +8612,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.070042194092827,
-      "total_pickings": 10665,
-      "on_time": 747,
-      "on_time_pct": 0.070042194092827,
-      "in_full": 10662,
-      "in_full_pct": 0.99971870604782,
-      "both": 747,
+      "valor": 0.07027478648347568,
+      "total_pickings": 10772,
+      "on_time": 757,
+      "on_time_pct": 0.07027478648347568,
+      "in_full": 10769,
+      "in_full_pct": 0.9997215001856665,
+      "both": 757,
       "error": null
     },
     "b2b_30d": {
@@ -8634,20 +8634,111 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998644159717985,
-      "ok": 14749,
-      "total": 14751,
+      "valor": 0.9998655642938764,
+      "ok": 14875,
+      "total": 14877,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 13.321369598765433,
-      "n_recepciones": 288,
+      "valor": 12.746181247692874,
+      "n_recepciones": 301,
       "min": -210.61166666666668,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/RET/01240",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 12:02",
+          "done": "2026-10-03 12:02"
+        },
+        {
+          "picking": "CA1/RET/01239",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 12:00",
+          "done": "2026-10-03 12:00"
+        },
+        {
+          "picking": "CA1/RET/01238",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:59",
+          "done": "2026-10-03 11:59"
+        },
+        {
+          "picking": "CA1/RET/01234",
+          "proveedor": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA, JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:57",
+          "done": "2026-10-03 11:57"
+        },
+        {
+          "picking": "CA1/RET/01233",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:44",
+          "done": "2026-10-03 11:44"
+        },
+        {
+          "picking": "CA1/RET/01231",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:41",
+          "done": "2026-10-03 11:42"
+        },
+        {
+          "picking": "CA1/RET/01232",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:42",
+          "done": "2026-10-03 11:42"
+        },
+        {
+          "picking": "CA1/RET/01230",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:40",
+          "done": "2026-10-03 11:41"
+        },
+        {
+          "picking": "CA1/RET/01229",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:40",
+          "done": "2026-10-03 11:40"
+        },
+        {
+          "picking": "CA1/RET/01228",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:39",
+          "done": "2026-10-03 11:39"
+        },
+        {
+          "picking": "CA1/RET/01225",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:38",
+          "done": "2026-10-03 11:38"
+        },
+        {
+          "picking": "CA1/RET/01227",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:38",
+          "done": "2026-10-03 11:38"
+        },
+        {
+          "picking": "CA1/RET/01224",
+          "proveedor": "Cencosud Retail S.A",
+          "horas": 0.0,
+          "scheduled": "2026-10-03 11:37",
+          "done": "2026-10-03 11:37"
+        },
         {
           "picking": "CA1/IN/01084",
           "proveedor": "",
@@ -8696,97 +8787,6 @@
           "horas": 0.2,
           "scheduled": "2026-10-02 12:53",
           "done": "2026-10-02 13:05"
-        },
-        {
-          "picking": "CA1/IN/01068",
-          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
-          "horas": 168.5,
-          "scheduled": "2026-09-24 16:14",
-          "done": "2026-10-01 16:45"
-        },
-        {
-          "picking": "CA1/IN/01076",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-30 14:42",
-          "done": "2026-09-30 14:47"
-        },
-        {
-          "picking": "CA1/RET/01223",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-30 13:41",
-          "done": "2026-09-30 13:41"
-        },
-        {
-          "picking": "CA1/IN/01075",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 14:49",
-          "done": "2026-09-29 14:50"
-        },
-        {
-          "picking": "CA1/IN/01074",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-29 14:44",
-          "done": "2026-09-29 14:48"
-        },
-        {
-          "picking": "CA1/IN/01073",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 14:40",
-          "done": "2026-09-29 14:42"
-        },
-        {
-          "picking": "CA1/RET/01222",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 13:37",
-          "done": "2026-09-29 13:37"
-        },
-        {
-          "picking": "CA1/IN/01072",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 12:19",
-          "done": "2026-09-29 12:20"
-        },
-        {
-          "picking": "CA1/IN/01071",
-          "proveedor": "",
-          "horas": 0.0,
-          "scheduled": "2026-09-29 11:38",
-          "done": "2026-09-29 11:40"
-        },
-        {
-          "picking": "CA1/RET/01221",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-28 20:34",
-          "done": "2026-09-28 20:34"
-        },
-        {
-          "picking": "CA1/RET/01219",
-          "proveedor": "WALMART CHILE COM. LTDA",
-          "horas": 0.0,
-          "scheduled": "2026-09-28 20:27",
-          "done": "2026-09-28 20:27"
-        },
-        {
-          "picking": "CA1/IN/01070",
-          "proveedor": "",
-          "horas": 0.1,
-          "scheduled": "2026-09-28 19:52",
-          "done": "2026-09-28 19:55"
-        },
-        {
-          "picking": "CA1/RET/01218",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-09-28 14:40",
-          "done": "2026-09-28 14:41"
         }
       ],
       "error": null
