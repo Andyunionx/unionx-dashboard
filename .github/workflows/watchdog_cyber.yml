@@ -1,0 +1,49 @@
+name: "Vigía Cyber (Odoo · Yuju · Shopify cada 5 min)"
+
+# Vigía del Cyber oct-2026: revisa Odoo cada 5 minutos y avisa por correo (watchdog_cyber_odoo.py).
+# El cron de GitHub se atrasa horas, así que el vigía duerme dentro del job: cada turno dura
+# ~5 h 30 y se releva solo; el cron solo lo arranca o lo rearranca si la cadena se corta.
+# concurrency: un solo vigía corriendo; lo que llegue mientras tanto queda en espera.
+# Repo público → minutos de Actions sin costo, y por eso el log no muestra cifras del negocio.
+# Destinatarios: vars.WATCHDOG_EMAIL_TO (por defecto solo Andrés).
+
+on:
+  schedule:
+    - cron: '*/30 * 4-13 10 *'
+  workflow_dispatch:
+    inputs:
+      prueba:
+        description: 'Un ciclo + correo de prueba (verifica secretos)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: watchdog-cyber
+  cancel-in-progress: false
+
+jobs:
+  vigia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: pip install --quiet requests google-api-python-client google-auth google-auth-oauthlib
+      - name: Vigía
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          WATCHDOG_EMAIL_TO: ${{ vars.WATCHDOG_EMAIL_TO }}
+          GH_TOKEN: ${{ github.token }}
+          GH_NO_UPDATE_NOTIFIER: '1'
+          GH_PROMPT_DISABLED: '1'
+        run: python -u watchdog_cyber_odoo.py ${{ github.event.inputs.prueba == 'true' && '--prueba' || '' }}
