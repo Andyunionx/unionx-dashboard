@@ -398,12 +398,21 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
             continue
         r = vp['ty'].loc[d]
         ref = {s: (vp[s].loc[d]['bruta'] if d in vp[s].index else 0) for s in ('ly', 'jun')}
-        dia_rows.append(f'<tr style="background:#FAFAF9"><td>{lbl} <span style="color:#94A3B8;font-size:0.75rem">webs + KC</span></td><td align="right">{ent(r["sos"])}</td>'
+        dia_rows.append(f'<tr style="background:#FAFAF9"><td>{lbl}{" (al corte)" if d == idx and tod < "23:59" else ""} <span style="color:#94A3B8;font-size:0.75rem">webs + KC</span></td><td align="right">{ent(r["sos"])}</td>'
                         + f'<td align="right">{ent(r["uds"])}</td>'
                         + f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pct(pm(r))}</td>'
                         + '<td align="right" style="color:#94A3B8">sin meta</td><td align="right">—</td>'
                         + f'<td align="right">{fmt_m(ref["ly"])}</td>' + var_cell(r['bruta'], ref['ly'])
                         + f'<td align="right">{fmt_m(ref["jun"])}</td>' + var_cell(r['bruta'], ref['jun']) + '</tr>')
+    if len(vp['ty']):
+        tp = {s: agg(pre[s]) for s in SERIES}
+        r = tp['ty']
+        dia_rows.append(f'<tr style="background:#F1F5F9;font-weight:600"><td>Total pre-Cyber</td><td align="right">{ent(r["sos"])}</td>'
+                        + f'<td align="right">{ent(r["uds"])}</td>'
+                        + f'<td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pct(pm(r))}</td>'
+                        + '<td align="right" style="color:#94A3B8">sin meta</td><td align="right">—</td>'
+                        + f'<td align="right">{fmt_m(tp["ly"]["bruta"])}</td>' + var_cell(r['bruta'], tp['ly']['bruta'])
+                        + f'<td align="right">{fmt_m(tp["jun"]["bruta"])}</td>' + var_cell(r['bruta'], tp['jun']['bruta']) + '</tr>')
     for d in range(7):
         r = vd['ty'].loc[d] if d in vd['ty'].index else None
         ref = {s: (vd[s].loc[d]['bruta'] if d in vd[s].index else 0) for s in ('ly', 'jun')}
@@ -425,7 +434,7 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
                + '<p style="font-size:0.78rem;color:#64748B;margin:4px 0 0">Se compara por día del evento, no por fecha: Día 1 es el lunes de cada Cyber '
                '(oct-26 lun 5 · oct-25 lun 6 · jun-26 lun 1). Las filas "Pre" son el viernes, sábado y domingo previos a cada Cyber, solo páginas web '
                'y Kitchen Center, sin meta (no suman al acumulado del Cyber). El día en curso se compara hasta la misma hora; los días por venir '
-               'muestran, en gris, la meta y el día completo de los otros Cyber.</p>') if en_cyber else ''
+               'muestran, en gris, la meta y el día completo de los otros Cyber.</p>') if idx >= -3 else ''
 
     # ── por hora (día en curso)
     sec_hora = ''
@@ -454,8 +463,8 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
     M_lin = M.groupby('linea')['mt'].sum()
     M_can = M.groupby('canal')['mt'].sum()
 
-    def bloque(col_, titulo, metas, top=None, con_meta=True):
-        g = {s: agg(cy[s], col_) for s in SERIES}
+    def bloque(col_, titulo, metas, top=None, con_meta=True, datos=None):
+        g = {s: agg((datos or cy)[s], col_) for s in SERIES}
         ty = g['ty'].sort_values('bruta', ascending=False)
         if top:
             ty = ty.head(top)
@@ -486,6 +495,10 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
         sec_can = '<h3 style="margin:24px 0 8px 0;font-size:1rem">🏆 Top 15 canales (acumulado Cyber, mismo tramo)</h3>' + bloque('canal', 'Canal', M_can.to_dict(), top=15)
         sec_mar = '<h3 style="margin:24px 0 8px 0;font-size:1rem">🏷️ Top 10 marcas</h3>' + bloque('marca', 'Marca', {}, top=10, con_meta=False)
         sec_cat = '<h3 style="margin:24px 0 8px 0;font-size:1rem">📂 Top 10 categorías</h3>' + bloque('categoria_hijo', 'Categoría', {}, top=10, con_meta=False)
+
+    if not en_cyber and len(pre['ty']):
+        sec_can = ('<h3 style="margin:24px 0 8px 0;font-size:1rem">🏆 Por canal — pre-Cyber (páginas web + Kitchen Center, mismo tramo)</h3>'
+                   + bloque('canal', 'Canal', {}, con_meta=False, datos=pre))
 
     # ── alarma de stock
     sec_stock = ''
@@ -525,6 +538,10 @@ Venta bruta con IVA, como el RAW de ventas. Margen = margen directo (venta neta 
 </p>
 <style>td,th{{padding:6px 8px;border-bottom:1px solid #E2E8F0}}</style>
 </body></html>"""
+    if not en_cyber:
+        b = float(pre['ty']['venta_bruta'].sum())
+        hoy_b = float(pre['ty'].loc[pre['ty']['d'] == idx, 'venta_bruta'].sum())
+        return html, b, hoy_b, 0.0
     return html, b, hoy_b, (b / meta_tot if meta_tot else 0)
 
 
@@ -768,6 +785,8 @@ def enviar(html, adjuntos, bruta_total, bruta_hoy, avance):
     pre = '[PRE-BORRADOR] ' if PREBORRADOR else ''
     a = ahora()
     asunto = f"{pre}🛍️ Cyber UnionX Oct · {a:%H:%M} · {fmt_m(bruta_hoy)} hoy · {fmt_m(bruta_total)} acum ({pct(avance * 100, 0)} meta)"
+    if corte()[1] < 0:
+        asunto = f"{pre}🛍️ Cyber UnionX Oct · {a:%H:%M} · pre-Cyber webs + KC · {fmt_m(bruta_hoy)} hoy · {fmt_m(bruta_total)} acum"
     print(f"[envío] {asunto} → {EMAIL_TO}", flush=True)
     try:
         mid = _gmail_con_adjuntos(asunto, html, adjuntos, EMAIL_TO)
