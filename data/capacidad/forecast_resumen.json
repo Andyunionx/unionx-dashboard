@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-03T08:42:25.095781",
+  "generado_en": "2026-10-03T14:03:54.394434",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1373,
   "capacidad_bodega_m3": 2471.3999999999996,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 763,
     "posiciones_libres_hoy": 610,
     "pct_ocupacion_hoy": 55.6,
-    "m3_stock_calculado": 886.9
+    "m3_stock_calculado": 907.5
   },
   "pico_proyectado": {
     "fecha": "2026-10-03",
@@ -23,8 +23,8 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-12-01",
-    "posiciones_ocupadas": 517.9,
-    "pct_ocupacion": 37.7
+    "posiciones_ocupadas": 515.2,
+    "pct_ocupacion": 37.5
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -64,23 +64,23 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 81.9,
-  "pallets_total_salientes_horizonte": 245.1,
+  "pallets_total_salientes_horizonte": 247.8,
   "m3_total_entrante_horizonte": 98.3,
-  "m3_total_saliente_horizonte": 294.1,
+  "m3_total_saliente_horizonte": 297.4,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 799,
     "sku_fallback": 1,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 28760.0,
-    "demanda_cumplida_unidades": 22444.0,
-    "demanda_no_cubierta_unidades_total": 6316.0,
-    "pct_demanda_cumplida": 78.0,
+    "demanda_cumplida_unidades": 22563.0,
+    "demanda_no_cubierta_unidades_total": 6197.0,
+    "pct_demanda_cumplida": 78.5,
     "sku_sin_match_stock_count": 32,
     "top_no_cubiertos": [
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 1042.0,
+        "unid_no_cubiertas": 1040.0,
         "sin_match_stock": true
       },
       {
@@ -95,7 +95,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 439.0,
+        "unid_no_cubiertas": 437.0,
         "sin_match_stock": true
       },
       {
@@ -104,23 +104,23 @@
         "sin_match_stock": false
       },
       {
-        "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 275.0,
+        "sku": "1479750635184",
+        "unid_no_cubiertas": 249.0,
         "sin_match_stock": true
       },
       {
-        "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 258.0,
+        "sku": "SMBATSAV9-CR",
+        "unid_no_cubiertas": 241.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 256.0,
+        "unid_no_cubiertas": 232.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1479750635184",
-        "unid_no_cubiertas": 249.0,
+        "sku": "SMBATCOPBK",
+        "unid_no_cubiertas": 228.0,
         "sin_match_stock": true
       },
       {
@@ -169,13 +169,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "1635956574926",
-        "unid_no_cubiertas": 110.0,
+        "sku": "Pack261",
+        "unid_no_cubiertas": 99.0,
         "sin_match_stock": true
       },
       {
-        "sku": "Pack261",
-        "unid_no_cubiertas": 99.0,
+        "sku": "1635956574926",
+        "unid_no_cubiertas": 93.0,
         "sin_match_stock": true
       }
     ],
