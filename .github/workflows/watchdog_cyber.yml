@@ -5,7 +5,9 @@ name: "Vigía Cyber (Odoo · Yuju · Shopify cada 5 min)"
 # ~5 h 30 y se releva solo; el cron solo lo arranca o lo rearranca si la cadena se corta.
 # concurrency: un solo vigía corriendo; lo que llegue mientras tanto queda en espera.
 # Repo público → minutos de Actions sin costo, y por eso el log no muestra cifras del negocio.
-# Destinatarios: vars.WATCHDOG_EMAIL_TO (por defecto solo Andrés).
+# Destinatarios: vars.WATCHDOG_EMAIL_TO (todos los avisos) + vars.WATCHDOG_EMAIL_N1 (solo emergencias).
+# Estado entre turnos: .vigia_estado.json va y viene por la cache de Actions, para no repetir avisos.
+# Credencial: secrets.WATCHDOG_ODOO_KEY (API key de Odoo) si existe; si no, la clave de Andrés.
 
 on:
   schedule:
@@ -38,12 +40,26 @@ jobs:
           python-version: '3.12'
       - name: Instalar dependencias
         run: pip install --quiet requests google-api-python-client google-auth google-auth-oauthlib
+      - name: Recuperar estado del turno anterior
+        uses: actions/cache/restore@v4
+        with:
+          path: .vigia_estado.json
+          key: vigia-estado-${{ github.run_id }}
+          restore-keys: vigia-estado-
       - name: Vigía
         env:
+          WATCHDOG_ODOO_KEY: ${{ secrets.WATCHDOG_ODOO_KEY }}
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
           WATCHDOG_EMAIL_TO: ${{ vars.WATCHDOG_EMAIL_TO }}
+          WATCHDOG_EMAIL_N1: ${{ vars.WATCHDOG_EMAIL_N1 }}
           GH_TOKEN: ${{ github.token }}
           GH_NO_UPDATE_NOTIFIER: '1'
           GH_PROMPT_DISABLED: '1'
         run: python -u watchdog_cyber_odoo.py ${{ github.event.inputs.prueba == 'true' && '--prueba' || '' }}
+      - name: Guardar estado para el próximo turno
+        if: always() && hashFiles('.vigia_estado.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: .vigia_estado.json
+          key: vigia-estado-${{ github.run_id }}
