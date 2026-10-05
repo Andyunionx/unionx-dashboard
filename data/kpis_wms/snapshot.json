@@ -1,38 +1,38 @@
 {
-  "generado_en": "2026-10-04T18:34:00.049147",
+  "generado_en": "2026-10-05T10:07:39.839501",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.06633628934098418,
-      "total_pickings": 11502,
-      "on_time": 763,
-      "on_time_pct": 0.06633628934098418,
-      "in_full": 11500,
-      "in_full_pct": 0.9998261171970092,
-      "both": 763,
+      "valor": 0.06913035484464056,
+      "total_pickings": 10878,
+      "on_time": 752,
+      "on_time_pct": 0.06913035484464056,
+      "in_full": 10876,
+      "in_full_pct": 0.9998161426732856,
+      "both": 752,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.12771084337349398,
-      "total_pickings": 415,
-      "on_time": 53,
-      "on_time_pct": 0.12771084337349398,
-      "in_full": 408,
-      "in_full_pct": 0.983132530120482,
-      "both": 53,
+      "valor": 0.13192612137203166,
+      "total_pickings": 379,
+      "on_time": 50,
+      "on_time_pct": 0.13192612137203166,
+      "in_full": 372,
+      "in_full_pct": 0.9815303430079155,
+      "both": 50,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.99987254652052,
-      "ok": 15690,
-      "total": 15692,
+      "valor": 0.9998656816655473,
+      "ok": 14888,
+      "total": 14890,
       "errores": 2,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 12.746181247692874,
-      "n_recepciones": 301,
-      "min": -210.61166666666668,
+      "valor": 13.533994797473058,
+      "n_recepciones": 299,
+      "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
         {
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9610619469026549,
-      "total_so": 10172,
-      "total_con_pickings": 10170,
-      "cumplidos": 9774,
-      "parciales": 15,
-      "sin_iniciar": 381,
+      "valor": 0.8977229601518026,
+      "total_so": 10557,
+      "total_con_pickings": 10540,
+      "cumplidos": 9462,
+      "parciales": 14,
+      "sin_iniciar": 1064,
       "error": null
     },
     "oct_30d": {
-      "valor": 79.0597973194722,
-      "n_orders": 11511,
+      "valor": 81.66051686014373,
+      "n_orders": 10854,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 31.49972222222222,
+      "mediana_h": 30.706944444444446,
       "detalle": [
         {
           "so": "S278911",
@@ -351,9 +351,9 @@
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 225,
-      "outgoing": 29310,
-      "internal": 20465,
+      "incoming": 229,
+      "outgoing": 29447,
+      "internal": 20324,
       "total": 50000,
       "error": null
     },
@@ -367,8 +367,8 @@
         },
         {
           "cliente": "Lokal SpA",
-          "total": 7,
-          "tarde": 7,
+          "total": 6,
+          "tarde": 6,
           "on_time_pct": 0.0
         },
         {
@@ -378,33 +378,15 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "INVERSIONES MAVAPA SPA",
-          "total": 3,
-          "tarde": 3,
+          "cliente": "Global Reward Solutions",
+          "total": 122,
+          "tarde": 122,
           "on_time_pct": 0.0
         },
         {
           "cliente": "abc S.A.",
-          "total": 25,
-          "tarde": 25,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Global Reward Solutions",
-          "total": 136,
-          "tarde": 136,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Gluky Group SPA",
-          "total": 3,
-          "tarde": 3,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Sociedad Punta de Lobos S.A.",
-          "total": 3,
-          "tarde": 3,
+          "total": 24,
+          "tarde": 24,
           "on_time_pct": 0.0
         },
         {
@@ -421,15 +403,15 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 86,
-          "tarde": 85,
-          "on_time_pct": 0.011627906976744186
+          "total": 80,
+          "tarde": 79,
+          "on_time_pct": 0.0125
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 32,
-          "tarde": 31,
-          "on_time_pct": 0.03125
+          "total": 27,
+          "tarde": 26,
+          "on_time_pct": 0.037037037037037035
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -439,13 +421,25 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 24,
+          "total": 22,
           "tarde": 2,
-          "on_time_pct": 0.9166666666666666
+          "on_time_pct": 0.9090909090909091
         },
         {
           "cliente": "WALMART CHILE COM. LTDA",
-          "total": 6,
+          "total": 5,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Mercadolibre Chile Limitada",
+          "total": 5,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 9,
           "tarde": 0,
           "on_time_pct": 1.0
         }
@@ -8612,40 +8606,40 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.06633628934098418,
-      "total_pickings": 11502,
-      "on_time": 763,
-      "on_time_pct": 0.06633628934098418,
-      "in_full": 11500,
-      "in_full_pct": 0.9998261171970092,
-      "both": 763,
+      "valor": 0.06913035484464056,
+      "total_pickings": 10878,
+      "on_time": 752,
+      "on_time_pct": 0.06913035484464056,
+      "in_full": 10876,
+      "in_full_pct": 0.9998161426732856,
+      "both": 752,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.12771084337349398,
-      "total_pickings": 415,
-      "on_time": 53,
-      "on_time_pct": 0.12771084337349398,
-      "in_full": 408,
-      "in_full_pct": 0.983132530120482,
-      "both": 53,
+      "valor": 0.13192612137203166,
+      "total_pickings": 379,
+      "on_time": 50,
+      "on_time_pct": 0.13192612137203166,
+      "in_full": 372,
+      "in_full_pct": 0.9815303430079155,
+      "both": 50,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.99987254652052,
-      "ok": 15690,
-      "total": 15692,
+      "valor": 0.9998656816655473,
+      "ok": 14888,
+      "total": 14890,
       "errores": 2,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 12.746181247692874,
-      "n_recepciones": 301,
-      "min": -210.61166666666668,
+      "valor": 13.533994797473058,
+      "n_recepciones": 299,
+      "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
         {
