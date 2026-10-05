@@ -39,7 +39,7 @@ concurrency:
 jobs:
   pulso:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -100,3 +100,14 @@ jobs:
           CYBER_FORZAR_RANGO: ${{ github.event.inputs.forzar_rango == 'true' && '1' || '0' }}
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_cyber_oct.py
+
+      - name: Regenerar Reporte Ventas Empresa LIVE (pivot viva en Drive) tras el pulso
+        # Andrés 5-oct (pedido de Nicolás): la dinámica de Drive trae la venta del día hasta el corte.
+        # Solo cuando salió el correo (enviar_pulso_cyber_oct.py deja .cyber_pulso_enviado), cada 2 h.
+        # Toma ~6,5 min; va después del envío y si falla no afecta el pulso.
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -f .cyber_pulso_enviado ]; then python actualizar_raw_diario.py; else echo "Sin pulso enviado en esta corrida: no se regenera la pivot"; fi
+        continue-on-error: true

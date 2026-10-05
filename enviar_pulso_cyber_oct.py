@@ -610,8 +610,8 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
 <hr style="border:none;border-top:1px solid #E2E8F0;margin:24px 0">
 <p style="font-size:0.85rem;color:#64748B">
 📈 Adjunto: <b>dashboard</b> con venta y margen por hora y por día, filtrable por día, canal y línea de negocio.<br>
-📎 Adjunto: Excel RAW del día.<br>
-🔗 Dashboard live: <a href="https://unionx-ventas.streamlit.app">unionx-ventas.streamlit.app</a><br>
+📊 Reporte Ventas Empresa 2026 vs 2025 (pivot viva, se actualiza unos minutos después de cada pulso del Cyber): <a href="https://drive.google.com/file/d/1jcLmmLn4oHoen9FpL-UuWnYTxaYACQHL/view?usp=sharing">abrir en Drive</a><br>
+📎 Adjunto: Excel con la base RAW del día (sin dinámica).<br>
 {nota_meta}<br>
 Venta bruta con IVA, como el RAW de ventas. Margen = margen directo (venta neta − costo). Comparación siempre en el mismo tramo.<br>
 Margen final = margen directo − comisión − logística − marketing (devengo comercial del RAW). Su meta es {pct(info.get('pct_mf', 0) * 100)} de la venta neta (regla pareja, no por canal).
@@ -995,6 +995,8 @@ def main():
         print(f"[VALIDA] {msg}", flush=True)
     print('[3/4] Enviando...', flush=True)
     ok = enviar(html, adj, bruta_total, bruta_hoy, avance)
+    if ok:   # marca para el workflow: tras un pulso enviado se regenera la pivot viva de Drive
+        (PROJECT_ROOT / '.cyber_pulso_enviado').write_text(datetime.now(TZ).isoformat(), encoding='utf-8')
     print('[4/4] Listo.' if ok else '[4/4] FALLÓ', flush=True)
     return 0 if ok else 1
 
