@@ -375,7 +375,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-04 16:13:48Z",
+    "ts_actualizado": "2026-10-05 13:15:48Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -480,7 +480,10 @@
       "2026-10-03 15:29:58Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-10-04 16:13:48Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-10-04 16:13:48Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-04 16:13:48Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-10-04 16:13:48Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-10-05 13:15:48Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-10-05 13:15:48Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-05 13:15:48Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
@@ -579,7 +582,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-04 16:13:54Z",
+    "ts_actualizado": "2026-10-05 13:15:54Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -683,7 +686,10 @@
       "2026-10-03 15:30:04Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-10-04 16:13:54Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-10-04 16:13:54Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-04 16:13:54Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-10-04 16:13:54Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-10-05 13:15:54Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-10-05 13:15:54Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-05 13:15:54Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -727,7 +733,7 @@
   },
   "26TP0815": {
     "embarque": "26TP0815",
-    "fase": 3,
+    "fase": 9,
     "pi": {
       "msg_id": "1a00ed3d924fd309",
       "filename": "26TP0815PI NB 40HQ.xlsx",
@@ -768,21 +774,18 @@
     "costeo_path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/output/26TP0815/Pre-costeo_x_CBM_26TP0815.xlsx",
     "skus": [
       "SMBATSAV9-CR",
-      "SMBATOXBG",
+      "SMBATOXCR",
       "XRCARRTRACT-CL",
-      "XRTOLLAT270-CL",
+      "XRTOLLAT270-BG",
       "1650302269777",
       "XRCOOLPORTF40-GR",
       "XRCOOLPORT-GR"
     ],
-    "skus_faltantes": [
-      "SMBATOXBG",
-      "XRTOLLAT270-CL"
-    ],
-    "po_id": null,
-    "po_name": null,
+    "skus_faltantes": [],
+    "po_id": 1912,
+    "po_name": "P00739",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-04 16:14:00Z",
+    "ts_actualizado": "2026-10-05 13:16:33Z",
     "log": [
       "2026-09-02 15:29:23Z · PL detectado: 26TP0815PI PL.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0815PI NB 40HQ.xlsx (dry-run)",
@@ -887,25 +890,17 @@
       "2026-10-04 16:14:00Z · costeado · 7 prod · sobrecosto 24.0% · internado 49,997,925 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-10-04 16:14:00Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-10-04 16:14:00Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
-      "2026-10-05 alias SKU por correo de Felipe 28-sep (Re: Resumen semanal COMEX): SMBATOXBG→SMBATOXCR, XRTOLLAT270-CL→XRTOLLAT270-BG; ambos existen en Odoo (OK Andrés 5-oct)"
+      "2026-10-05 alias SKU por correo de Felipe 28-sep (Re: Resumen semanal COMEX): SMBATOXBG→SMBATOXCR, XRTOLLAT270-CL→XRTOLLAT270-BG; ambos existen en Odoo (OK Andrés 5-oct)",
+      "2026-10-05 13:16:00Z · costeado · 7 prod · sobrecosto 24.0% · internado 49,997,925 CLP · SKU por crear: 0 · sin SKU: 0",
+      "2026-10-05 13:16:01Z · correo ENVIADO con planilla (1a10c34fb2032632, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-10-05 13:16:01Z · fase 3 (COSTEO_Y_SKUS) → 4 (CARGA_PO) todos los productos con SKU en Odoo → cargar PO",
+      "2026-10-05 13:16:33Z · PO P00739 creada y CONFIRMADA (purchase, 7 líneas, 49,997,922 CLP)",
+      "2026-10-05 13:16:33Z · fase 4 (CARGA_PO) → 9 (COMPLETADO) PO P00739 confirmada → COMPLETADO"
     ],
     "productos_sin_sku": [],
-    "correo_firma": "['SMBATOXBG', 'XRTOLLAT270-CL']|[]",
+    "correo_firma": "[]|[]",
     "escalado_ts": "2026-09-24 12:22:34",
-    "pendientes_detalle": [
-      {
-        "model": "C15SETS",
-        "sku": "SMBATOXBG",
-        "qty": 600,
-        "desc": "Batería de Cocina Antiadherente Oxford Granito 15 pcs Beige"
-      },
-      {
-        "model": "TPT004",
-        "sku": "XRTOLLAT270-CL",
-        "qty": 10,
-        "desc": "Xroad 270° Side Roof Car Camping Awning"
-      }
-    ],
+    "pendientes_detalle": [],
     "sku_alias": {
       "SMBATOXBG": "SMBATOXCR",
       "XRTOLLAT270-CL": "XRTOLLAT270-BG"
@@ -1732,7 +1727,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-12 14:43:03Z",
-    "ts_actualizado": "2026-10-04 16:14:10Z",
+    "ts_actualizado": "2026-10-05 13:16:13Z",
     "log": [
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-A SZ 40HQ.xlsx · descargado",
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-B Dinasty  SZ 40HQ.xlsx · descargado",
@@ -1783,7 +1778,10 @@
       "2026-10-03 15:30:21Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-10-04 16:14:10Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 9 · sin SKU: 6",
       "2026-10-04 16:14:10Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-04 16:14:10Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-10-04 16:14:10Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-10-05 13:16:13Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 9 · sin SKU: 6",
+      "2026-10-05 13:16:13Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-05 13:16:13Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "LTS27-MFZH01",
@@ -1973,7 +1971,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-28 19:01:24Z",
-    "ts_actualizado": "2026-10-04 16:13:34Z",
+    "ts_actualizado": "2026-10-05 13:15:33Z",
     "log": [
       "2026-09-28 19:01:24Z · PI detectado: 26TP0927PI NB 40HQ.xlsx · descargado",
       "2026-09-28 19:01:24Z · PL detectado: 26TP0927PI PL.xlsx · descargado",
@@ -1985,7 +1983,8 @@
       "2026-10-01 17:47:25Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
       "2026-10-02 17:08:08Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
       "2026-10-03 15:29:44Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
-      "2026-10-04 16:13:34Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
+      "2026-10-04 16:13:34Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
+      "2026-10-05 13:15:33Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
     ]
   },
   "26TP0928": {
@@ -2038,7 +2037,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-29 17:22:17Z",
-    "ts_actualizado": "2026-10-04 16:13:34Z",
+    "ts_actualizado": "2026-10-05 13:15:33Z",
     "log": [
       "2026-09-29 17:22:18Z · PI detectado: 26TP0928PI .xlsx · descargado",
       "2026-09-29 17:22:18Z · PL detectado: 26TP0928PI PL.xlsx · descargado",
@@ -2049,7 +2048,8 @@
       "2026-10-01 17:47:25Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
       "2026-10-02 17:08:08Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
       "2026-10-03 15:29:44Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
-      "2026-10-04 16:13:34Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana"
+      "2026-10-04 16:13:34Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
+      "2026-10-05 13:15:33Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana"
     ]
   },
   "26TP0930": {
@@ -2143,7 +2143,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-30 17:20:11Z",
-    "ts_actualizado": "2026-10-04 16:14:23Z",
+    "ts_actualizado": "2026-10-05 13:16:26Z",
     "log": [
       "2026-09-30 17:20:11Z · PI detectado: 26TP0930PI SZ 40HQ .xlsx · descargado",
       "2026-09-30 17:20:12Z · PL detectado: 26TP0930PI PL.xlsx · descargado",
@@ -2164,7 +2164,10 @@
       "2026-10-03 15:30:33Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-10-04 16:14:23Z · costeado · 37 prod · sobrecosto 19.1% · internado 95,232,283 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-10-04 16:14:23Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-04 16:14:23Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-10-04 16:14:23Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-10-05 13:16:26Z · costeado · 37 prod · sobrecosto 19.1% · internado 95,232,283 CLP · SKU por crear: 2 · sin SKU: 0",
+      "2026-10-05 13:16:26Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-05 13:16:26Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "pendientes_detalle": [
