@@ -527,13 +527,14 @@ def cuerpo_mail(p: dict) -> str:
     else:
         txt_canal = f"<b>Canales bajo el FCST:</b> {bajo or '—'}<br><b>Sobre el FCST:</b> {sobre or '—'}"
     cerr = p["cerrado"]
-    titulo = (f"EBITDA {p['etiqueta']} {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}" if cerr
+    titulo = (f"EBITDA cierre proyectado {p['etiqueta']} {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}" if cerr
               else f"EBITDA proyectado {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}")
-    subt = (f"Mes cerrado · venta real del 1 al {p['dias_mes']}: {mm(p['venta_acum'])}" if cerr
+    subt = (f"Mes cerrado · venta y margen directo reales del 1 al {p['dias_mes']}: {mm(p['venta_acum'])} · margen de contribución "
+            f"con el resultado {p['seguimiento']['mes']} del Drive de seguimiento · GAV del Fcst EERR (la contabilidad del mes aún no cierra)" if cerr
             else f"Venta real al {p['dato_hasta'].strftime('%d-%m')}: {mm(p['venta_acum'])} · día {p['dia']}/{p['dias_mes']} · si seguimos al ritmo actual"
             + (f" · <b>inicio de mes: proyección ponderada con el FCST</b> (curva {es(p['peso_curva'] * 100, 0)}%)"
                if p["confiabilidad"] == "baja" else ""))
-    col_proy = "Real" if cerr else "Proyección"
+    col_proy = "Cierre" if cerr else "Proyección"
     ops = "".join(f"<li>{o['documento']} · {o['canal']}: {mm(o['venta'])} al {es(o['mc_pct'] * 100)}% de margen "
                   f"(impacto {'+' if o['impacto'] >= 0 else '−'}{mm(abs(o['impacto']))[1:]} sobre la base de su línea)</li>"
                   for o in p["operaciones"])
@@ -572,12 +573,14 @@ def enviar(html: str, p: dict):
         msg["Cc"] = cc
     msg["From"] = "andres@unionx.cl"
     if p["cerrado"]:
-        msg["Subject"] = (f"📊 Cierre {p['etiqueta']} · EBITDA {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}"
+        msg["Subject"] = (f"📊 Cierre proyectado {p['etiqueta']} · EBITDA {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}"
                           f" · venta {es(p['venta_proy'] / m['Venta'] * 100, 0)}% del FCST")
     else:
         msg["Subject"] = (f"📊 Dashboard Cierre {p['etiqueta']} · EBITDA proy {mm(p['ebitda_proy'])} vs FCST {mm(m['EBITDA'])}"
                           f" · venta {es(p['venta_proy'] / m['Venta'] * 100, 0)}% del FCST"
                           + (" · inicio de mes" if p["confiabilidad"] == "baja" else ""))
+    if os.environ.get("DASH_CIERRE_PREFIJO"):
+        msg.replace_header("Subject", os.environ["DASH_CIERRE_PREFIJO"] + " " + msg["Subject"])
     msg.set_content("Dashboard financiero de cierre del mes (ver versión HTML y el adjunto).")
     msg.add_alternative(cuerpo_mail(p), subtype="html")
     msg.add_attachment(html.encode("utf-8"), maintype="text", subtype="html",

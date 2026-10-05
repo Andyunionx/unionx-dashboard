@@ -11,15 +11,17 @@ Fuentes
   - Proyección del GAV y depreciación: resultado vigente del Fcst EERR.
 
 Venta
-  - Marketplace, Fidelización, Páginas Web y canal UnionX B2B: curva del mismo mes del año
-    anterior (backtest ene-ago 2026 al día 21: error medio −1,4%, ±5%).
+  - Marketplace, Fidelización, Páginas Web y canal UnionX B2B: curva del año anterior alineada
+    por día de semana (−364 días: Cyber y Black Friday calzan; backtest ene-sep 2026: error medio
+    12% al día 4 → 3% al día 10). Las operaciones puntuales ≥ $5M no se extrapolan: van tal cual.
   - Distribución y Corporativo: se asume que cumplen el FCST (o lo real, si ya lo supera).
 
 Margen
   - Margen directo (venta − costo): real a la fecha + resto del mes al % del flujo normal.
   - Margen de contribución base por línea: resultado del mes anterior del Drive "Seguimiento
-    contribuciones 2026" (Marketplace, Fidelización, Web); % del FCST VENTAS para Distribución y
-    Corporativo. El RAW no trae la contribución completa a tiempo: solo se muestra como señal.
+    contribuciones 2026" (Marketplace, Fidelización, Web; en el cierre, el del propio mes), corregido
+    por estacionalidad con los pp de margen directo del año anterior (mes vs mes base: el Cyber
+    baja el margen); % del FCST VENTAS para Distribución y Corporativo. El RAW no trae la contribución completa a tiempo: solo se muestra como señal.
   - Operaciones puntuales ≥ $5M por documento: se aíslan con su margen propio (RAW), corregible.
 
 EBITDA = margen de contribución − GAV + depreciación (igual que la planilla).
@@ -181,9 +183,10 @@ def _num_cl(s: str):
         return None
 
 
-def _contrib_seguimiento(anio: int, mes: int) -> dict:
+def _contrib_seguimiento(anio: int, mes: int, incluir_mes: bool = False) -> dict:
     """Margen de contribución % por línea del último mes CERRADO, desde el bloque 'Resultado <Mes>'
-    de la pestaña 'Resumen 2026' del Drive de seguimiento de contribución. Cachea en
+    de la pestaña 'Resumen 2026' del Drive de seguimiento de contribución. Con `incluir_mes` (cierre
+    del mes) usa el resultado del propio mes si ya está. Cachea en
     data/finanzas/contribucion_seguimiento.json (fallback si no hay acceso al Drive)."""
     cache = ROOT / "data/finanzas/contribucion_seguimiento.json"
     datos = {}
@@ -215,13 +218,38 @@ def _contrib_seguimiento(anio: int, mes: int) -> dict:
     except Exception:
         if cache.exists():
             datos = json.loads(cache.read_text(encoding="utf-8")).get("meses", {})
-    # último mes cerrado anterior al mes en curso
-    for m_ in range(mes - 1, 0, -1):
+    # último mes cerrado anterior al mes en curso (o el propio mes, en el cierre)
+    for m_ in range(mes if incluir_mes else mes - 1, 0, -1):
         d = datos.get(str(m_))
         if d:
-            return {"mes": f"{MESES[m_ - 1]}-{str(anio)[2:]}",
+            return {"mes": f"{MESES[m_ - 1]}-{str(anio)[2:]}", "num": m_,
                     "pct": {k: x["contri"] / x["venta"] for k, x in d.items() if x["venta"]}}
-    return {"mes": "—", "pct": {}}
+    return {"mes": "—", "num": None, "pct": {}}
+
+
+def _estacionalidad_margen(hist: pd.DataFrame, anio: int, mes: int, mes_base: int | None) -> dict:
+    """pp de margen directo por línea entre el mes y el mes base, ambos del año anterior (RAW).
+    En los meses de Cyber el margen cae (oct-25 vs sep-25: Marketplace −7,7 pp, Web −8,1 pp) y al mes
+    siguiente se recupera; el resultado del mes base se corrige con ese delta (Andrés 5-oct)."""
+    if not mes_base or mes_base == mes:
+        return {}
+    h = hist[hist.fecha_venta.dt.year == anio - 1].copy()
+    h["lin"] = _tn(h["tipo_negocio"]).map(LINEA)
+
+    def delta(x):
+        a, b = x[x.fecha_venta.dt.month == mes], x[x.fecha_venta.dt.month == mes_base]
+        if a.venta_neta.sum() >= 20e6 and b.venta_neta.sum() >= 20e6:
+            return (b.costo_total.sum() / b.venta_neta.sum()) - (a.costo_total.sum() / a.venta_neta.sum())
+        return None
+    lineas = ("Marketplace", "Fidelización", "Páginas Web")
+    total = delta(h[h["lin"].isin(lineas)])
+    out = {}
+    for lin in lineas:
+        d = delta(h[h["lin"] == lin])
+        d = total if d is None else d          # línea chica el año anterior: delta del total recurrente
+        if d is not None:
+            out[lin] = d
+    return out
 
 
 def _fcst_gasto_mes(anio: int, mes: int) -> dict:
@@ -265,8 +293,7 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
             "comision", "logistica"]
     src, fuente = _parquet_produccion()
     cur = pd.read_parquet(src, columns=cols)
-    hist = pd.read_parquet(ROOT / "data/historico/ventas_historico.parquet",
-                           columns=[c for c in cols if c != "documento"])
+    hist = pd.read_parquet(ROOT / "data/historico/ventas_historico.parquet", columns=cols)
     for df in (cur, hist):
         df["fecha_venta"] = pd.to_datetime(df["fecha_venta"])
 
@@ -298,11 +325,21 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     cur["ck"] = cur["canal"].fillna("").str.strip().str.lower()
     cur["rec"] = cur["tn"].isin(RECURRENTES) | cur["ck"].isin(CANALES_RECURRENTES_EXTRA)
 
-    # curva: % de la venta recurrente del mismo mes LY hecho al día `dia`
-    ly = hist[(hist.fecha_venta.dt.year == anio - 1) & (hist.fecha_venta.dt.month == mes)]
+    # curva: % de la venta recurrente del año anterior hecho al corte, ALINEADA POR DÍA DE SEMANA
+    # (−364 días): el Cyber (lunes de la 1ª semana de jun/oct) y el Black Friday caen en el mismo
+    # día del evento que el año anterior, y los fines de semana calzan (Andrés 5-oct: el cierre de
+    # oct no leía la estacionalidad). Las operaciones puntuales del año anterior no forman la curva.
+    d364 = pd.Timedelta(days=364)
+    ini_ly = pd.Timestamp(anio, mes, 1) - d364
+    fin_ly = pd.Timestamp(anio, mes, dias_mes) - d364
+    fly = hist.fecha_venta.dt.normalize()
+    ly = hist[(fly >= ini_ly) & (fly <= fin_ly)].copy()
     ly = ly[_tn(ly["tipo_negocio"]).isin(RECURRENTES)]
+    ly["ym"] = ly.fecha_venta.dt.to_period("M")
+    dly = ly.groupby(["ym", "documento"]).venta_neta.transform("sum")
+    ly = ly[~((dly.abs() >= UMBRAL_PUNTUAL_MM * 1e6) & ly["documento"].fillna("").str.strip().ne(""))]
     ly_tot = ly.venta_neta.sum()
-    share = (ly[ly.fecha_venta.dt.day <= dia].venta_neta.sum() / ly_tot) if ly_tot else dia / dias_mes
+    share = (ly[ly.fecha_venta.dt.normalize() <= ultimo - d364].venta_neta.sum() / ly_tot) if ly_tot else dia / dias_mes
     share = 1.0 if cerrado else min(max(share, 0.05), 1.0)
     # inicio de mes: pocos días de venta → la curva sola es ruido; se pondera con el FCST
     peso_curva = 1.0 if cerrado else min(1.0, share / UMBRAL_CONFIABLE)
@@ -314,7 +351,8 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     fe = _fcst_eerr_mes(anio, mes)          # resultado/proyección vigente (hoja Fcst EERR)
     fg = _fcst_gasto_mes(anio, mes)         # forecast del gasto (hoja FCST GASTO 2026)
     ppto_mes = _metas_2026(anio, mes)       # referencia secundaria: presupuesto
-    seg = _contrib_seguimiento(anio, mes)   # margen de contribución % del mes anterior por línea
+    seg = _contrib_seguimiento(anio, mes, incluir_mes=cerrado)   # margen de contribución % por línea (mes anterior, o el propio en el cierre)
+    est = _estacionalidad_margen(hist, anio, mes, seg.get("num"))   # pp por estacionalidad (Cyber, Black Friday)
     fe_prev = _fcst_eerr_mes(*((anio, mes - 1) if mes > 1 else (anio - 1, 12)))
     # comparación: venta y margen del forecast (Fcst EERR); GAV del FCST GASTO
     gav_fcst = fg.get("GAV") or fe["GAV"]
@@ -338,7 +376,7 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         """Margen de contribución base: resultado del mes anterior (Drive de seguimiento) para
         Marketplace/Fidelización/Páginas Web; % del FCST VENTAS para Distribución y Corporativo."""
         if lin in seg["pct"]:
-            return seg["pct"][lin]
+            return seg["pct"][lin] + est.get(lin, 0.0)
         f_lin, p_lin = fcst.get(lin, {}), ppto.get(lin, {})
         if f_lin.get("venta"):
             return f_lin["contribucion"] / f_lin["venta"]
@@ -347,7 +385,10 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         return None
 
     def fuente_base(lin):
-        return f"resultado {seg['mes']}" if lin in seg["pct"] else "FCST"
+        if lin not in seg["pct"]:
+            return "FCST"
+        e = est.get(lin)
+        return f"resultado {seg['mes']}" + (f" {e * 100:+.1f} pp estacionalidad ({MESES[mes - 1].lower()} vs {MESES[seg['num'] - 1].lower()} año anterior)" if e else "")
 
     operaciones = []
     for _, r in grandes.iterrows():
@@ -367,22 +408,26 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         acum = s.venta_neta.sum() / 1e6
         rec_acum = s.loc[s["rec"], "venta_neta"].sum() / 1e6
         no_rec = acum - rec_acum
+        # las operaciones puntuales (≥ $5M por documento) no se repiten: van tal cual, sin curva
+        # (Andrés 5-oct: la FAC 102855 de $25M extrapolada llevó Distribución a $412M vs FCST $46M)
+        punt_rec = s.loc[s["rec"] & s["documento"].isin(docs_grandes), "venta_neta"].sum() / 1e6
+        rec_norm = rec_acum - punt_rec
         f_lin = fcst.get(lin, {"venta": 0.0, "contribucion": 0.0})
         p_lin = ppto.get(lin, {"venta": 0.0, "contribucion": 0.0})
         if cerrado:
             proy, regla = acum, "real (mes cerrado)"
         elif lin in ("Distribución", "Corporativo"):
-            base = no_rec + rec_acum / share
+            base = no_rec + punt_rec + rec_norm / share
             proy = max(base, f_lin["venta"])
             regla = "FCST (se asume cumplido)" if f_lin["venta"] > base else "real (ya supera el FCST)"
         elif lin == "Otros":
             proy, regla = acum, "real"
         else:
-            proy, regla = rec_acum / share + no_rec, "curva año anterior"
+            proy, regla = rec_norm / share + punt_rec + no_rec, "curva año anterior"
             if peso_curva < 1 and f_lin["venta"]:
                 proy = max(peso_curva * proy + (1 - peso_curva) * f_lin["venta"], acum)
                 regla = f"curva {peso_curva * 100:.0f}% + FCST {100 - peso_curva * 100:.0f}% (inicio de mes)"
-        lineal = (rec_acum / dia * dias_mes + no_rec) if lin not in ("Distribución", "Corporativo") else proy
+        lineal = (rec_norm / dia * dias_mes + punt_rec + no_rec) if lin not in ("Distribución", "Corporativo") else proy
 
         ops = [o for o in operaciones if o["linea"] == lin]
         punt_v = sum(o["venta"] for o in ops)
@@ -435,7 +480,9 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     sin_meta_canal = not mcanal
     rec = cur[cur["rec"]]
     nombres = {c.strip().lower(): c for c in rec["canal"].dropna().unique()}
-    vc = (rec.groupby("ck").venta_neta.sum() / 1e6 / share).to_dict()
+    es_punt = rec["documento"].isin(docs_grandes)
+    vc = (rec[~es_punt].groupby("ck").venta_neta.sum() / 1e6 / share).add(
+        rec[es_punt].groupby("ck").venta_neta.sum() / 1e6, fill_value=0).to_dict()
     if sin_meta_canal or peso_curva < 1:
         vc = {}          # sin meta por canal, o muy pocos días: no se publican desviaciones por canal
     canal_linea = dict(zip(rec["ck"], rec["linea"]))
@@ -470,7 +517,7 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         "md_proy": md_proy, "md_acum": md_acum,
         "md_prev_pct": (fe_prev["MD"] / fe_prev["Venta"]) if fe_prev["Venta"] else None,
         "mc_prev_pct": (fe_prev["Contribución"] / fe_prev["Venta"]) if fe_prev["Venta"] else None,
-        "seguimiento": seg,
+        "seguimiento": seg, "estacionalidad": est,
         "meta": meta, "fcst": {"Venta": fcst_venta, "Contribución": fcst_mc}, "ppto": ppto_mes,
         "da": da_proy, "operaciones": operaciones, "factor_cont": factor_cont,
         "pct_venta": venta_proy / meta["Venta"] if meta["Venta"] else None,
