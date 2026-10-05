@@ -201,16 +201,37 @@ def recibelo(path: Path) -> pd.DataFrame:
 
 
 def bluex(path: Path) -> pd.DataFrame:
-    x = pd.read_excel(path, sheet_name='Detalle')
-    neto = [c for c in x.columns if str(c).startswith('NETO')][0]
-    d = pd.DataFrame({'canal': x['CANAL'].astype(str).str.strip(), 'cuenta': 'BlueX', 'archivo': path.name,
-                      'pedido': x['REFERENCIA'].astype(str).str.split(',').str[0].str.strip()
-                                 .str.replace(r'^(MEL|GRS)', '', regex=True).str.replace(r'^[A-Za-z]+-(\d+)$', r'\1', regex=True),
-                      'sku': '', 'glosa': 'Bluexpress',
-                      'monto_archivo': pd.to_numeric(x[neto], errors='coerce').fillna(0),
-                      'base_iva': 'neto', 'modalidad_liq': ''})
-    d['monto_neto'] = d['monto_archivo']
-    return d[COLS]
+    """Resumen Blue Express de Gabriela. Desde sep-26 (correo 5-oct): la columna NETO es el monto por OS y
+    SUMA_EN_RESUMEN marca las filas que suman (las piezas de envíos multi-OS repiten el monto de su cabecera);
+    la pestaña "NC <n°>" trae la rebaja por OS aceptada, con el canal del mes original, y se aplica en el mes
+    en que llega."""
+    xl = pd.ExcelFile(path)
+    x = pd.read_excel(xl, sheet_name='Detalle')
+    if 'SUMA_EN_RESUMEN' in x.columns:
+        x = x[x['SUMA_EN_RESUMEN'].astype(str).str.strip().str.lower().str.startswith('s')]
+    neto = 'NETO' if 'NETO' in x.columns else [c for c in x.columns if str(c).startswith('NETO')][0]
+
+    def filas(canal, ref, monto):
+        d = pd.DataFrame({'canal': canal.astype(str).str.strip(), 'cuenta': 'BlueX', 'archivo': path.name,
+                          'pedido': ref.astype(str).str.split(r'[,;]').str[0].str.strip()
+                                     .str.replace(r'^(MEL|GRS)', '', regex=True).str.replace(r'^[A-Za-z]+-(\d+)$', r'\1', regex=True),
+                          'sku': '', 'glosa': 'Bluexpress',
+                          'monto_archivo': pd.to_numeric(monto, errors='coerce').fillna(0),
+                          'base_iva': 'neto', 'modalidad_liq': ''})
+        d['monto_neto'] = d['monto_archivo']
+        return d[COLS]
+
+    partes = [filas(x['CANAL'], x['REFERENCIA'], x[neto])]
+    for hoja in [h for h in xl.sheet_names if h.strip().upper().startswith('NC')]:
+        n = pd.read_excel(xl, sheet_name=hoja)
+        c_canal = next((c for c in n.columns if str(c).strip().upper().startswith('CANAL')), None)
+        c_nc = next((c for c in n.columns if str(c).strip().upper().startswith('NC')), None)
+        if c_canal is None or c_nc is None:
+            continue
+        n = n[n[c_canal].notna() & n[c_canal].astype(str).str.strip().ne('')]   # sin la fila de total
+        ref = n['REFERENCIA'] if 'REFERENCIA' in n.columns else n[c_canal]
+        partes.append(filas(n[c_canal], ref, n[c_nc]))
+    return pd.concat(partes, ignore_index=True)
 
 
 CANAL_COURIER = {'mercado libre': 'Mercado Libre', 'meli': 'Mercado Libre', 'falabella': 'Falabella', 'ripley': 'Ripley',
