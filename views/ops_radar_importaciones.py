@@ -47,7 +47,7 @@ RADAR_HUB_FILE_ID = "1j0b6vqAQpd2w2BmsjKoNdg8QwHPOClDq"
 # Primer borrador (30-sep-2026): solo Andrés + Nicolás, Felipe, Nicole, Martín y Seba (usuarios del login de App Ventas)
 RADAR_USUARIOS = {"andres", "nicolas", "felipe", "nicole", "martin", "sguzman"}
 TABLAS = ["importadores", "mercado", "imp_mes", "proveedores", "din", "din_tipo", "precios_dist", "nosotros", "lineas", "ventas",
-          "imp_total", "imp_fuera", "imp_hs4"]
+          "imp_total", "imp_fuera", "imp_hs4", "cruce_embarques"]
 UX = "RUT:76600685"
 NIVEL_TXT = {"rut": "RUT declarado", "verificada": "Verificada", "probable": "Probable",
              "trazado": "Trazado sin nombre", "NI": "No identificado"}
@@ -150,6 +150,43 @@ def _asegurar_hub() -> bool:
         for f_ in (q, calidad, TABLAS_OK, _capitulos, _con):
             f_.clear()
     return True
+
+
+def _rss_mb():
+    """RAM del proceso en MB (Linux /proc: Streamlit Cloud). En Windows/local devuelve None."""
+    try:
+        for linea in open("/proc/self/status", encoding="utf-8"):
+            if linea.startswith("VmRSS:"):
+                return int(linea.split()[1]) / 1024
+    except Exception:
+        return None
+    return None
+
+
+@st.cache_resource(show_spinner=False)
+def _candado_excel() -> threading.Lock:
+    return threading.Lock()
+
+
+def _armar_excel_seguro(nombre: str, fn):
+    """Un Excel a la vez en toda la app (App Ventas comparte la RAM entre usuarios y ya cayó por memoria). Medido
+    4-oct-2026 en modo nube: Vista General de Ventas 557 MB · + radar 45 MB · Excel de decisión +190 MB de pico.
+    Deja la RAM antes/después en el log de Streamlit Cloud (Manage app → logs)."""
+    import gc
+    lock = _candado_excel()
+    if not lock.acquire(timeout=90):
+        st.warning("Otra persona está armando un Excel del radar en este momento. Intenta de nuevo en un minuto.")
+        return None
+    try:
+        antes = _rss_mb()
+        t0 = datetime.now()
+        out = fn()
+        gc.collect()
+        print(f"[radar] Excel {nombre}: {len(out) / 1e6:.1f} MB en {(datetime.now() - t0).seconds}s · RAM "
+              f"{antes or 0:.0f} → {_rss_mb() or 0:.0f} MB · usuario {st.session_state.get('username', 'local')}", flush=True)
+        return out
+    finally:
+        lock.release()
 
 
 def _autorizado() -> bool:
@@ -974,7 +1011,9 @@ def _tab_tamano(f):
         firma = (d, h, tuple(rubros), solo_rut)
         if st.button("Preparar Excel del ranking", key="tam_xlsx_btn"):
             with st.spinner("Armando el Excel…"):
-                st.session_state["tam_xlsx"] = (firma, _excel_tamano(rk, d, h, rubros, solo_rut, cob_txt))
+                xl_ = _armar_excel_seguro("tamaño", lambda: _excel_tamano(rk, d, h, rubros, solo_rut, cob_txt))
+                if xl_:
+                    st.session_state["tam_xlsx"] = (firma, xl_)
         prep = st.session_state.get("tam_xlsx")
         if prep and prep[0] == firma:
             st.download_button("Descargar Excel", data=prep[1], file_name=f"radar_tamano_empresas_{d}_{h}.xlsx",
@@ -1086,7 +1125,48 @@ def _precios_por_importador(f: dict, min_unidades: int) -> pd.DataFrame:
                 GROUP BY 1, 2 HAVING sum(m.unidades) >= {min_unidades}""", pm + pm)
 
 
+def _cruce_din(f: dict):
+    """Embarque por embarque: lo que costeamos vs lo que declaramos en la DIN (radar-aduana/pipeline/p10_cruce.py)."""
+    c = q("SELECT * FROM cruce_embarques WHERE eta BETWEEN ? AND ? ORDER BY eta DESC",
+          (f"{f['desde']}-01", f"{f['hasta']}-28"))
+    if c.empty:
+        return
+    st.markdown("#### Nuestros embarques vs lo que declaramos en la DIN")
+    con = c[c.fob_din_usd.notna()]
+    cuadra = con.estado.str.startswith("cuadra")
+    fl = con[con.flete_costeo_usd > 0]
+    k = st.columns(4)
+    k[0].metric("Embarques con su DIN", f"{len(con)} de {len(c)}",
+                help="DIN de UnionX amarrada al embarque por los códigos de modelo que declara y la fecha.")
+    k[1].metric("FOB declarado = costeo (±2%)", pct(cuadra.mean() if len(con) else None, 0),
+                help="Cuadra contra el valor de los productos del PI o contra el FOB total (con caja de regalo e inland "
+                     "China): la factura de Steven a veces trae solo productos y a veces todo.")
+    k[2].metric("Flete declarado vs costeado", pct(fl.flete_din_usd.sum() / fl.flete_costeo_usd.sum() - 1 if len(fl) else None, 0),
+                help="Suma del flete declarado en las DIN ÷ flete de nuestros costeos (Seimex), en los embarques con DIN.")
+    k[3].metric("Días BL → aceptación DIN", ECH.es(con.dias_bl_acep.median()) if len(con) else "—",
+                help="Mediana: desde el conocimiento de embarque hasta la aceptación de la DIN (tránsito + internación).")
+    t = pd.DataFrame({
+        "Embarque": c.embarque, "ETA": pd.to_datetime(c.eta).dt.strftime("%d-%m-%Y"), "OC": c.po,
+        "FOB productos PI (US$)": c.pxq_usd.round(0), "FOB total costeado (US$)": c.fob_total_usd.round(0),
+        "FOB declarado DIN (US$)": c.fob_din_usd.round(0),
+        "Dif. vs costeo": (100 * c.dif_fob_total_pct.where(c.dif_fob_total_pct.abs() <= c.dif_fob_pct.abs(), c.dif_fob_pct)).round(1),
+        "Estado": c.estado,
+        "Flete costeado (US$)": c.flete_costeo_usd.round(0), "Flete declarado (US$)": c.flete_din_usd.round(0),
+        "Dif. flete": (100 * c.dif_flete_pct).round(0), "Días BL→DIN": c.dias_bl_acep, "DIN vs ETA (días)": c.dias_eta_acep,
+        "Forwarder": c.forwarder, "Naviera": c.naviera, "DIN (id anonimizado)": c.dins,
+    })
+    st.dataframe(t, hide_index=True, width="stretch", height=380, column_config={
+        "Dif. vs costeo": st.column_config.NumberColumn(format="%.1f%%", help="FOB declarado vs la base más cercana del costeo."),
+        "Dif. flete": st.column_config.NumberColumn(format="%.0f%%", help="Positivo = declaramos más flete del que costeamos."),
+        "DIN vs ETA (días)": st.column_config.NumberColumn(help="Negativo = la DIN se aceptó antes de la ETA del costeo.")})
+    st.caption("MEDIDO en la DIN y en nuestros costeos. 'Sin DIN amarrada' = muestras o envíos chicos, o meses en que el radar "
+               "no identificó a UnionX; 'DIN aún no publicada' = Aduana publica ~30 días después del cierre del mes.")
+
+
 def _tab_nosotros(f):
+    if "cruce_embarques" in TABLAS_OK():
+        _cruce_din(f)
+        st.markdown("#### Nuestro precio por tipo de producto vs el mercado")
     tipos_f = f["tipos"]
     w = "WHERE tipo IN (" + ",".join("?" * len(tipos_f)) + ")" if tipos_f else "WHERE tipo IS NOT NULL"
     nos = q(f"""SELECT tipo, sum(qty) qty, sum(fob_usd * qty) / sum(qty) fob, sum(internado_usd * qty) / sum(qty) internado,
@@ -1218,9 +1298,10 @@ def _descarga(f: dict):
             with st.spinner("Armando el Excel…"):
                 # en la nube la Sábana va más corta: 60 mil líneas eran +210 MB de RAM en una app de ~1 GB compartida
                 # con App Ventas (20 mil = +28 MB). El resto de las hojas va completo.
-                st.session_state["radar_xlsx"] = _excel(f, int(min_u), float(banda), max_filas=20_000 if EN_NUBE else 200_000)
-                import gc
-                gc.collect()
+                xl_ = _armar_excel_seguro("decisión", lambda: _excel(f, int(min_u), float(banda),
+                                                                     max_filas=20_000 if EN_NUBE else 200_000))
+                if xl_:
+                    st.session_state["radar_xlsx"] = xl_
         if st.session_state.get("radar_xlsx"):
             st.download_button("Descargar Excel", data=st.session_state["radar_xlsx"],
                                file_name=f"radar_decision_{f['desde']}_{f['hasta']}.xlsx",
