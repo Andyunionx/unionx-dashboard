@@ -9,7 +9,9 @@ Cuando llegue, se carga en "meta_dia" (7 montos brutos, lun 5 → dom 11) y el p
 reescala cada día a ese total.
 
 Uso: python cyber_meta_oct.py            (baja de Drive con drive_oauth_token.json)
-     python cyber_meta_oct.py <xlsx>     (desde un archivo local)
+     python cyber_meta_oct.py <xlsx>     (desde un archivo local; si es la planificación v8 de Nicole,
+                                          Cumplimiento_Plan_Cyber_W41.xlsx, lee la hoja "Por canal")
+Vigente desde 04-10 (Andrés): la planificación v8 de Nicole. La planilla del Drive ya no se usa.
 """
 import io
 import json
@@ -23,7 +25,7 @@ ROOT = Path(__file__).parent
 PLAN_ID = '1DL78bm8UepEPX_kcrvwkvQDSnjGOw_pO'
 OUT = ROOT / 'data' / 'planificacion' / 'plan_cyber_oct2026.json'
 # nombre en la planificación → canal del RAW
-CANAL_RAW = {'Unionx web': 'UnionX web', 'El volcan': 'El Volcan', 'Latam': 'LATAM Pass'}
+CANAL_RAW = {'Unionx web': 'UnionX web', 'El volcan': 'El Volcan', 'Latam': 'LATAM Pass', 'Global reward': 'Global Reward'}
 
 
 def bajar_plan():
@@ -65,12 +67,22 @@ def leer_meta(fuente):
     return metas, total
 
 
+def leer_v8(fuente):
+    """Planificación v8 de Nicole (Cumplimiento_Plan_Cyber_W41.xlsx, hoja 'Por canal', columna 'Plan $', bruto)."""
+    import pandas as pd
+    pc = pd.read_excel(fuente, 'Por canal')
+    pc = pc[pc['Canal'].notna() & (pc['Canal'] != 'Total general')]
+    metas = {CANAL_RAW.get(str(c).strip(), str(c).strip()): round(float(v)) for c, v in zip(pc['Canal'], pc['Plan $']) if float(v or 0) > 0}
+    return metas, float(pc['Plan $'].sum())
+
+
 def main():
     if len(sys.argv) > 1:
         fuente, info = sys.argv[1], {'name': Path(sys.argv[1]).name, 'modifiedTime': ''}
     else:
         fuente, info = bajar_plan()
-    metas, total = leer_meta(fuente)
+    es_v8 = 'Por canal' in openpyxl.load_workbook(fuente, read_only=True).sheetnames
+    metas, total = leer_v8(fuente) if es_v8 else leer_meta(fuente)
     suma = sum(metas.values())
     # La planilla calcula cada canal como venta neta × 1,19 × máx(peso W41, 60%), y la fila
     # "Total general" con la misma fórmula sobre el total (peso 60%): no son iguales. El pulso
@@ -80,7 +92,8 @@ def main():
     previo = json.loads(OUT.read_text(encoding='utf-8')) if OUT.exists() else {}
     data = {
         'evento': 'Cyber Octubre 2026 (lun 5 → dom 11)',
-        'fuente': f"{info['name']} · hoja META · columna 'Meta Cyber Bruta' (venta bruta, con IVA)",
+        'fuente': (f"{info['name']} · hoja 'Por canal' · columna 'Plan $' (planificación v8 de Nicole, bruta)" if es_v8
+                   else f"{info['name']} · hoja META · columna 'Meta Cyber Bruta' (venta bruta, con IVA)"),
         'plan_modificado': info.get('modifiedTime', ''),
         'actualizado': datetime.now().strftime('%Y-%m-%d %H:%M'),
         'meta_total_bruta': round(suma),

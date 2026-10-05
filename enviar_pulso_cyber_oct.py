@@ -220,9 +220,9 @@ def cargar_metas(S, lineas_canal):
             obj = pd.Series(mdn, index=range(7), dtype=float) * IVA
             base = cd[sel].groupby('d')['meta'].sum()
             cd.loc[sel, 'meta'] = cd.loc[sel, 'meta'] * cd.loc[sel, 'd'].map(obj / base)
-            notas.append(f"{nombre}: {fmt_m(sum(mdn))} neta → {fmt_m(sum(mdn) * IVA)} bruta, apertura por día del área")
+            notas.append(f"{nombre}: {fmt_m(sum(mdn))} neta → {fmt_m(sum(mdn) * IVA)} bruta, apertura por día de Nicole")
         elif sel.any():
-            notas.append(f"{nombre}: {fmt_m(cd.loc[sel, 'meta'].sum())} bruta de la planilla, por día con la curva de cada canal en oct-2025")
+            notas.append(f"{nombre}: {fmt_m(cd.loc[sel, 'meta'].sum())} bruta según la planificación v8 de Nicole, por día con la curva de cada canal en oct-2025")
     if notas:
         fuente_dia = ' · '.join(notas)
     mc = cd.groupby('canal')['meta'].sum().to_dict()
