@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-05T09:47:25.964710",
+  "generado_en": "2026-10-05T19:54:47.571819",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 37,
-  "sku_match_odoo": 36,
-  "sku_con_peso": 33,
-  "sku_con_volumen": 32,
-  "sku_volumen_anomalo": 0,
+  "sku_input": 43,
+  "sku_match_odoo": 42,
+  "sku_con_peso": 39,
+  "sku_con_volumen": 38,
+  "sku_volumen_anomalo": 3,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 89.2,
-  "cobertura_volumen_pct": 86.5,
-  "cobertura_volumen_confiable_pct": 86.5,
-  "unidades_totales": 8552.0,
-  "peso_total_kg": 38890.2,
-  "volumen_total_m3": 98.31,
-  "volumen_total_m3_raw": 98.31,
-  "pallets_totales_estim": 81.9,
+  "cobertura_peso_pct": 90.7,
+  "cobertura_volumen_pct": 88.4,
+  "cobertura_volumen_confiable_pct": 81.4,
+  "unidades_totales": 9805.0,
+  "peso_total_kg": 52106.8,
+  "volumen_total_m3": 124.79,
+  "volumen_total_m3_raw": 31939367.49,
+  "pallets_totales_estim": 104.0,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -101,10 +101,46 @@
       "skus_volumen_anomalo": 0,
       "cobertura_peso_pct": 100.0,
       "cobertura_volumen_pct": 100.0
+    },
+    {
+      "pi": "26TP0815PI",
+      "transporte": "",
+      "fecha_embarque": "2026-10-05",
+      "fecha_eta_bodega": "2026-10-05",
+      "skus_distintos": 7,
+      "unidades_totales": 1253.0,
+      "peso_total_kg": 13216.6,
+      "volumen_total_m3": 26.49,
+      "volumen_total_m3_raw": 31939269.19,
+      "pallets_estim": 22.1,
+      "containers_20_estim": 0.95,
+      "containers_40hc_estim": 0.4,
+      "skus_con_match_odoo": 7,
+      "skus_con_peso": 7,
+      "skus_con_volumen": 7,
+      "skus_volumen_anomalo": 3,
+      "cobertura_peso_pct": 100.0,
+      "cobertura_volumen_pct": 100.0
     }
   ],
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": []
+  "skus_volumen_anomalo_top": [
+    {
+      "sku": "XRCOOLPORTF40-GR",
+      "producto": "Cooler Freezer Eléctrico Portátil 40L -20°C 12V-220V Gris Xroad",
+      "volumen_unit_m3": 133585.2
+    },
+    {
+      "sku": "XRCARRTRACT-CL",
+      "producto": "Carro de Transporte con Techo 150 KG Negro Xroad",
+      "volumen_unit_m3": 87637.5
+    },
+    {
+      "sku": "XRTOLLAT270-BG",
+      "producto": "Toldo Camping Lateral Para Auto Techo 270° Xroad",
+      "volumen_unit_m3": 83200.0
+    }
+  ]
 }
