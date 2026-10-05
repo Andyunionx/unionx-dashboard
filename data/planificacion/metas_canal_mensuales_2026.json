@@ -1,5 +1,5 @@
 {
- "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago).",
+ "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: FCST VENTAS 2026 por línea de negocio, sin apertura por canal (canal vacío, nivel \"linea\") — Andrés 05-oct-2026, mientras Nicole no mande las metas Q4 por canal.",
  "extraido": "2026-06-16",
  "base": "neta",
  "factor_bruta_iva": 1.19,
@@ -1475,6 +1475,123 @@
    "canal": "Corporativo",
    "meta_venta": 0.0,
    "meta_contribucion": 0.0
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Distribución",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 46000000.0,
+   "meta_contribucion": 13800000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Fidelización",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 31131051.5,
+   "meta_contribucion": 9656852.18
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 539688051.0,
+   "meta_contribucion": 121429811.47
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Páginas Propias",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 89753292.0,
+   "meta_contribucion": 20194490.7
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Distribución",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 146182376.0,
+   "meta_contribucion": 51207686.31
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 21242551.0,
+   "meta_contribucion": 6580942.3
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 386815594.0,
+   "meta_contribucion": 101732501.22
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Páginas Propias",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 42715279.0,
+   "meta_contribucion": 10892396.15
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Corporativo",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 40000000.0,
+   "meta_contribucion": 12200000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Distribución",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 30000000.0,
+   "meta_contribucion": 10500000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 40491413.0,
+   "meta_contribucion": 12564485.45
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 726528183.0,
+   "meta_contribucion": 196162609.41
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Páginas Propias",
+   "canal": "",
+   "nivel": "linea",
+   "meta_venta": 99156640.0,
+   "meta_contribucion": 25780726.4
   }
  ]
 }

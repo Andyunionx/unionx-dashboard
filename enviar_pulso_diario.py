@@ -48,7 +48,8 @@ def cargar_metas_v06():
     data = json.loads(path.read_text(encoding='utf-8'))
     metas = {}
     for r in data.get('metas', []):
-        k = (int(r['ano']), int(r['mes']), str(r['canal']).strip())
+        # oct-dic 2026: metas por línea sin canal (FCST VENTAS) → suman al total, no a un canal
+        k = (int(r['ano']), int(r['mes']), str(r.get('canal') or '').strip() or '__linea__')
         metas[k] = metas.get(k, 0) + float(r.get('meta_venta', 0)) * FACTOR_IVA_BRUTA
     return metas
 
@@ -236,7 +237,7 @@ def render_html(df):
         pm = r['margen']/r['neta']*100 if r['neta'] else 0
         pmeta = r['bruta']/meta_c*100 if meta_c else 0
         color = '#16A34A' if pmeta >= 80 else ('#EA580C' if pmeta >= 40 else '#DC2626')
-        can_rows += f'<tr><td>{r["canal"][:24]}</td><td align="right">{int(r["sos"]):,}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_c) if meta_c else "—"}</td><td align="right" style="color:{color}">{pmeta:.1f}%</td>{_yoy_cell(r["bruta"], ly_can.get(r["canal"], 0))}{_yoy_cell(r["margen"], ly_can_m.get(r["canal"], 0))}</tr>'
+        can_rows += f'<tr><td>{r["canal"][:24]}</td><td align="right">{int(r["sos"]):,}</td><td align="right">{fmt_m(r["bruta"])}</td><td align="right">{fmt_m(r["margen"])}</td><td align="right">{pm:.1f}%</td><td align="right">{fmt_m(meta_c) if meta_c else "—"}</td>{f'<td align="right" style="color:{color}">{pmeta:.1f}%</td>' if meta_c else '<td align="right" style="color:#94A3B8">—</td>'}{_yoy_cell(r["bruta"], ly_can.get(r["canal"], 0))}{_yoy_cell(r["margen"], ly_can_m.get(r["canal"], 0))}</tr>'
 
     # Por línea de negocio (vs Meta V06)
     df_mes = df_mes.copy()

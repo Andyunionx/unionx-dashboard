@@ -121,6 +121,8 @@ def _metas_canal(anio: int, mes: int, ppto_linea: dict) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     raw = {}
     for r in data.get("metas", []):
+        if not str(r.get("canal") or "").strip():
+            continue          # metas por línea sin canal (oct-dic 2026, FCST VENTAS): no son de canal
         if int(r.get("ano", 0)) == anio and int(r.get("mes", 0)) == mes:
             lin = LINEA.get(str(r["negocio"]).strip().lower(), str(r["negocio"]).strip())
             c = str(r["canal"]).strip().lower()
