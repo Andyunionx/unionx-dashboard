@@ -20,6 +20,11 @@ on:
         type: boolean
         default: false
 
+# Una corrida a la vez: dos corridas simultáneas podrían emitir dos veces la misma NC.
+concurrency:
+  group: agente-tickets-nc
+  cancel-in-progress: false
+
 jobs:
   agente:
     runs-on: ubuntu-latest
