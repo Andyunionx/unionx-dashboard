@@ -1,11 +1,14 @@
 name: Agente Tickets NC (postventa)
 
 # Decisión Andrés 26-08-2026 (opción B): emisión y posteo automático de NC por
-# devoluciones de postventa, activo desde el LUNES 31-08-2026 (gate en el script:
-# antes de esa fecha corre en dry-run). Reglas de Max 26-08: Motivo=Devolución +
-# Estado in {Nuevo, Outlet, Merma}; excluye Kitchen Center; NC por línea agrupada
-# por OC; si hay NC previa NO emite y reporta a Max los lunes.
+# devoluciones de postventa. Reglas vigentes en nc_reglas.py (Max 17-sep y 05-oct):
+# Motivo=Devolución + resolución no vacía + producto recepcionado; en automático
+# solo Falabella, Mercado Libre, Paris, Ripley y Walmart; «PV» en el título y el
+# resto de los canales van a gestión manual. NC por línea agrupada por OC; si hay
+# NC previa NO emite y reporta a Max los lunes.
 # Deshabilitar con vars.AGENTE_TICKETS_NC_ENABLED='false'.
+# vars.AGENTE_NC_BOLETAS_AUTORIZADAS (lista separada por comas): si tiene boletas,
+# emite solo esas (reactivación controlada 05-oct); vacía = sin restricción.
 
 on:
   schedule:
@@ -33,6 +36,7 @@ jobs:
         env:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          AGENTE_NC_BOLETAS_AUTORIZADAS: ${{ vars.AGENTE_NC_BOLETAS_AUTORIZADAS }}
           PYTHONIOENCODING: utf-8
         run: |
           if [ "${{ github.event.inputs.full }}" = "true" ]; then
