@@ -464,16 +464,22 @@ def leer_pl(path: Path, productos: list[Producto]) -> float:
     # POR CANTIDAD. Antes se asignaba el CBM completo de una fila PL a CADA
     # variante de color → se triplicaba el CBM (ej. R450 Black/Blue/Grey con
     # 0.924 c/u en 26TP0702; CBM total superaba la capacidad del contenedor).
+    # FIX 4-oct-2026: el modelo se compara sin guiones, espacios ni puntos. El PL de 26TP0126 trae "TP-649" y el PI
+    # "TP649": las mochilas quedaban sin CBM y sin flete (26TP0309: 500 u con 29 m3 sin flete). Probado en 47
+    # embarques: solo cambian las líneas que estaban en CBM 0.
+    def _clave_modelo(m) -> str:
+        return re.sub(r"[^a-z0-9]", "", str(m).lower()) or str(m).lower()
+
     pl_by_model: dict[str, dict] = {}
     for it in items_pl:
-        agg = pl_by_model.setdefault(it["model"].lower(), {"cbm": 0.0, "qty": 0.0, "items": []})
+        agg = pl_by_model.setdefault(_clave_modelo(it["model"]), {"cbm": 0.0, "qty": 0.0, "items": []})
         agg["cbm"] += it["cbm"]
         agg["qty"] += it["qty"]
         agg["items"].append(it)
 
     total_cbm = 0.0
     for prod in productos:
-        agg = pl_by_model.get(prod.model.lower())
+        agg = pl_by_model.get(_clave_modelo(prod.model))
         if agg and agg["qty"] > 0:
             # CBM por unidad del modelo × qty de esta variante
             prod.cbm_total = (agg["cbm"] / agg["qty"]) * prod.qty
