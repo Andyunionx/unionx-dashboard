@@ -16,6 +16,10 @@ comercial). Apertura por día: la de Nicole si está cargada en "meta_dia"; si n
 de cada canal en el Cyber de octubre 2025. Meta por hora: curva horaria del mismo día
 del Cyber 2025.
 
+Margen: no hay meta de margen directo. Meta de margen final = "margen_final_meta_pct" del JSON (regla pareja,
+23,3% de la venta neta, no por canal) sobre la meta de venta neta. El margen directo se compara con oct-25 y jun-26;
+el margen final, con la meta y, como referencia general, con jun-26.
+
 Pre-Cyber: viernes 2, sábado 3 y domingo 4 de octubre, solo páginas web y Kitchen
 Center, sin meta: van como filas "Pre" al inicio de la tabla por día (no suman al acumulado).
 
@@ -232,19 +236,28 @@ def cargar_metas(S, lineas_canal):
     m = cd.merge(hh, on='d', how='left')
     m['meta'] = m['meta'] * m['sh'].fillna(0)
     m['linea'] = m['canal'].map(lineas_canal).fillna(m['canal'].map(LINEA_DEF)).fillna('Otros')
+    # Meta de margen final: regla pareja sobre la meta de venta neta (no se distribuye por canal). No hay meta de margen directo.
+    pct_mf = float(plan.get('margen_final_meta_pct') or 0)
+    m['meta_mf'] = m['meta'] / IVA * pct_mf
     info = {'total': sum(mc.values()), 'total_planilla': None if plan.get('grupos') else plan.get('total_general_planilla'),
-            'fuente': plan.get('fuente', ''), 'fuente_dia': fuente_dia, 'canales': mc}
-    return m[['d', 'h', 'canal', 'linea', 'meta']], info
+            'fuente': plan.get('fuente', ''), 'fuente_dia': fuente_dia, 'canales': mc,
+            'pct_mf': pct_mf, 'total_mf': float(m['meta_mf'].sum())}
+    return m[['d', 'h', 'canal', 'linea', 'meta', 'meta_mf']], info
 
 
-def meta_tramo(M, idx, h, frac):
-    """Meta hasta el corte (días anteriores completos + horas del día en curso, la última prorrateada)."""
+def peso_tramo(M, idx, h, frac):
+    """Peso de cada fila de meta hasta el corte (días anteriores completos + horas del día en curso, la última prorrateada)."""
     w = pd.Series(0.0, index=M.index)
     w[M['d'] < idx] = 1.0
     hoy = M['d'] == idx
     w[hoy & (M['h'] < h)] = 1.0
     w[hoy & (M['h'] == h)] = frac
-    return M['meta'] * w
+    return w
+
+
+def meta_tramo(M, idx, h, frac):
+    """Meta hasta el corte."""
+    return M['meta'] * peso_tramo(M, idx, h, frac)
 
 
 def curva_acumulada(S, idx, tod):
@@ -274,6 +287,18 @@ def ent(v):
 
 def pct(v, d=1):
     return f"{v:,.{d}f}%".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def pp(v):
+    return f"{'+' if v >= 0 else ''}{v:,.1f} pp".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def pp_cell(ty_pct, ref_pct, hay_ref=True):
+    if not hay_ref:
+        return '<td align="right" style="color:#94A3B8">—</td>'
+    v = ty_pct - ref_pct
+    c = '#16A34A' if v >= 0 else '#DC2626'
+    return f'<td align="right" style="color:{c};font-weight:600">{pp(v)}</td>'
 
 
 def var_cell(ty, ref):
@@ -319,7 +344,8 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
     T = {s: S[s][en_tramo(S[s], idx, tod)] for s in SERIES}
     cy = {s: T[s][T[s]['d'] >= 0] for s in SERIES}
     pre = {s: T[s][T[s]['d'] < 0] for s in SERIES}
-    M = M.assign(mt=meta_tramo(M, idx, h, frac))
+    w_tramo = peso_tramo(M, idx, h, frac)
+    M = M.assign(mt=M['meta'] * w_tramo, mt_mf=M['meta_mf'] * w_tramo)
     en_cyber = idx >= 0
     n_dias = min(max(idx + 1, 0), 7)
 
@@ -362,29 +388,81 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
     vs_jun = (tot['ty']['bruta'] / tot['jun']['bruta'] - 1) * 100 if tot['jun']['bruta'] else 0
     vs_ly_m = (tot['ty']['margen'] / tot['ly']['margen'] - 1) * 100 if tot['ly']['margen'] else 0
     vs_jun_m = (tot['ty']['margen'] / tot['jun']['margen'] - 1) * 100 if tot['jun']['margen'] else 0
-    cl = lambda v: '#16A34A' if v >= 0 else '#DC2626'  # noqa: E731
-    sg = lambda v: '+' if v >= 0 else ''  # noqa: E731
+    # Margen directo: oct-26 vs oct-25 vs jun-26 (mismo tramo). El margen final no se compara con esos Cyber.
+    hay = {s: tot[s]['neta'] > 0 for s in ('ly', 'jun')}
+    tdl = 'style="padding:5px 8px;border-bottom:1px solid #E2E8F0"'
+    tdn = 'align="right" style="padding:5px 8px;border-bottom:1px solid #E2E8F0"'
     box_cmp = f"""
 <div style="background:#FEF3C7;border-left:4px solid #EA580C;padding:14px;border-radius:6px;margin:16px 0">
-  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📊 Comparación mismo tramo ({rng})</div>
-  <table style="width:100%;margin-top:6px;font-size:0.88rem">
-    <tr><td>Cyber oct 2026:</td><td align="right"><b>{fmt_m(tot['ty']['bruta'])}</b> bruta · {fmt_m(tot['ty']['margen'])} margen ({pct(pm(tot['ty']))})</td></tr>
-    <tr><td>Cyber oct 2025 (mismos días del evento):</td><td align="right">{fmt_m(tot['ly']['bruta'])} bruta · {fmt_m(tot['ly']['margen'])} margen ({pct(pm(tot['ly']))})</td></tr>
-    <tr><td>Cyber jun 2026 (mismos días del evento):</td><td align="right">{fmt_m(tot['jun']['bruta'])} bruta · {fmt_m(tot['jun']['margen'])} margen ({pct(pm(tot['jun']))})</td></tr>
-    <tr style="border-top:1px solid #E2E8F0"><td>vs oct 2025:</td><td align="right">Venta <span style="color:{cl(vs_ly)};font-weight:600">{sg(vs_ly)}{pct(vs_ly)}</span> · Margen <span style="color:{cl(vs_ly_m)};font-weight:600">{sg(vs_ly_m)}{pct(vs_ly_m)}</span></td></tr>
-    <tr><td>vs jun 2026:</td><td align="right">Venta <span style="color:{cl(vs_jun)};font-weight:600">{sg(vs_jun)}{pct(vs_jun)}</span> · Margen <span style="color:{cl(vs_jun_m)};font-weight:600">{sg(vs_jun_m)}{pct(vs_jun_m)}</span></td></tr>
+  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📊 Margen directo — oct 2026 vs oct 2025 vs jun 2026 (mismo tramo: {rng})</div>
+  <table style="width:100%;margin-top:6px;font-size:0.86rem;border-collapse:collapse">
+    <tr style="color:#64748B;font-size:0.78rem"><td {tdl}></td><td {tdn}><b>Oct 2026</b></td><td {tdn}>Oct 2025</td><td {tdn}>vs</td><td {tdn}>Jun 2026</td><td {tdn}>vs</td></tr>
+    <tr><td {tdl}>Venta bruta</td><td {tdn}><b>{fmt_m(tot['ty']['bruta'])}</b></td><td {tdn}>{fmt_m(tot['ly']['bruta'])}</td>{var_cell(tot['ty']['bruta'], tot['ly']['bruta'])}<td {tdn}>{fmt_m(tot['jun']['bruta'])}</td>{var_cell(tot['ty']['bruta'], tot['jun']['bruta'])}</tr>
+    <tr><td {tdl}>Margen directo</td><td {tdn}><b>{fmt_m(tot['ty']['margen'])}</b></td><td {tdn}>{fmt_m(tot['ly']['margen'])}</td>{var_cell(tot['ty']['margen'], tot['ly']['margen'])}<td {tdn}>{fmt_m(tot['jun']['margen'])}</td>{var_cell(tot['ty']['margen'], tot['jun']['margen'])}</tr>
+    <tr><td {tdl}>% margen directo (s/ venta neta)</td><td {tdn}><b>{pct(pm(tot['ty']))}</b></td><td {tdn}>{pct(pm(tot['ly']))}</td>{pp_cell(pm(tot['ty']), pm(tot['ly']), hay['ly'])}<td {tdn}>{pct(pm(tot['jun']))}</td>{pp_cell(pm(tot['ty']), pm(tot['jun']), hay['jun'])}</tr>
   </table>
+  <div style="font-size:0.76rem;color:#64748B;margin-top:6px">Margen directo = venta neta − costo. La variación del % se mide en puntos porcentuales (pp).</div>
 </div>"""
 
-    # ── margen final (devengo)
+    # ── margen final vs meta (regla pareja sobre la venta neta) + proyección al cierre
     x = cy['ty']
     com, log, mkt, mfin = x['comision'].sum(), x['logistica'].sum(), x['marketing'].sum(), x['margen_final'].sum()
+    meta_mf_tot, meta_mf_corte = info.get('total_mf', 0), M['mt_mf'].sum()
+    obj = info.get('pct_mf', 0) * 100
+    tasa_mf = mfin / n * 100 if n else 0
+    p_mf = mfin / meta_mf_corte * 100 if meta_mf_corte else 0
+    avance_esp = meta_corte / meta_tot if meta_tot else 0
+    if meta_mf_tot and avance_esp >= 0.05:
+        neta_proy = n / avance_esp
+        mf_proy = mfin / avance_esp
+        txt_proy = (f'Proyección al cierre del Cyber: <b>{fmt_m(mf_proy)}</b> '
+                    f'(<b style="color:{col(mf_proy / meta_mf_tot * 100)}">{pct(mf_proy / meta_mf_tot * 100)}</b> de la meta) = '
+                    f'venta neta proyectada {fmt_m(neta_proy)} × margen final {pct(tasa_mf)}. Supone que el resto del Cyber mantiene '
+                    f'el ritmo actual contra la meta de venta y el % de margen final que llevamos.')
+    elif meta_mf_tot:
+        txt_proy = (f'La proyección al cierre aparece cuando el avance esperado de la meta de venta pase el 5% '
+                    f'(al corte va en {pct(avance_esp * 100)}).')
+    else:
+        txt_proy = ''
+    xj = cy['jun']
+    nj, mfj = xj['venta_neta'].sum(), xj['margen_final'].sum()
+    txt_jun = (f'Referencia Cyber jun 2026 (mismo tramo): margen final {fmt_m(mfj)} ({pct(mfj / nj * 100)} s/neta), '
+               f'{pp(tasa_mf - mfj / nj * 100)} este Cyber.' if nj > 0 else '')
     box_mfin = (f"""
 <div style="background:#F0FDF4;border-left:4px solid #16A34A;padding:14px;border-radius:6px;margin:16px 0">
-  <div style="font-size:0.75rem;color:#166534;text-transform:uppercase;letter-spacing:0.05em">💰 Margen Final (contribución directa)</div>
-  <div style="font-size:1.5rem;font-weight:700;color:#15803D;margin:2px 0">{fmt_m(mfin)} <span style="font-size:0.9rem;font-weight:600;color:#64748B">({pct(mfin / n * 100 if n else 0)} s/neta)</span></div>
-  <div style="font-size:0.85rem;color:#64748B">Margen directo {fmt_m(mg)} − Comisión {fmt_m(com)} − Logística {fmt_m(log)} − Marketing {fmt_m(mkt)} = <b>Margen Final {fmt_m(mfin)}</b></div>
+  <div style="font-size:0.75rem;color:#166534;text-transform:uppercase;letter-spacing:0.05em">💰 Margen final vs meta</div>
+  <div style="font-size:1.5rem;font-weight:700;color:#15803D;margin:2px 0">{fmt_m(mfin)} <span style="font-size:0.9rem;font-weight:600;color:#64748B">({pct(tasa_mf)} s/neta · objetivo {pct(obj)})</span></div>
+  <div style="font-size:0.88rem;color:#475569">
+    Meta al corte {fmt_m(meta_mf_corte)} (<b style="color:{col(p_mf)}">{pct(p_mf)}</b>) · gap {fmt_m(mfin - meta_mf_corte)} · meta Cyber {fmt_m(meta_mf_tot)} · avance {pct(mfin / meta_mf_tot * 100 if meta_mf_tot else 0)}<br>
+    {txt_proy}
+  </div>
+  <div style="font-size:0.82rem;color:#64748B;margin-top:6px">Margen directo {fmt_m(mg)} − Comisión {fmt_m(com)} − Logística {fmt_m(log)} − Marketing {fmt_m(mkt)} = <b>Margen final {fmt_m(mfin)}</b>.<br>
+    {txt_jun}</div>
 </div>""" if n else '')
+
+    # ── canales que proyectan margen final negativo o bajo el objetivo (solo se informa, sin diagnóstico)
+    sec_mf_alerta = ''
+    if en_cyber and len(x) and obj:
+        g = x.groupby('canal').agg(sos=('pedido', 'nunique'), neta=('venta_neta', 'sum'), mf=('margen_final', 'sum'))
+        g = g[g['neta'] > 0]
+        g['pmf'] = g['mf'] / g['neta'] * 100
+        m_can, m_can_t = M.groupby('canal')['mt'].sum(), M.groupby('canal')['meta'].sum()
+        filas = []
+        for c_, r in g[g['pmf'] < obj].sort_values('pmf').iterrows():
+            av = m_can.get(c_, 0) / m_can_t.get(c_, 0) if m_can_t.get(c_, 0) else 0
+            av = av if av >= 0.05 else (avance_esp if avance_esp >= 0.05 else 0)
+            neg = r['mf'] < 0
+            estado_c = '<b style="color:#DC2626">Negativo</b>' if neg else '<b style="color:#EA580C">Bajo objetivo</b>'
+            filas.append(f'<tr><td>{c_}</td><td>{estado_c}</td><td align="right">{ent(r["sos"])}</td><td align="right">{fmt_m(r["neta"])}</td>'
+                         f'<td align="right">{fmt_m(r["mf"])}</td><td align="right" style="color:{"#DC2626" if neg else "#EA580C"};font-weight:600">{pct(r["pmf"])}</td>'
+                         f'<td align="right">{fmt_m(r["mf"] / av) if av else "—"}</td></tr>')
+        titulo = f'<h3 style="margin:24px 0 8px 0;font-size:1rem">📉 Canales con margen final proyectado negativo o bajo el objetivo ({pct(obj)})</h3>'
+        if filas:
+            sec_mf_alerta = (titulo + tabla(['Canal', 'Estado', 'SOs', 'Venta neta', 'Margen final', '%MF', 'Proy. cierre'], filas)
+                             + '<p style="font-size:0.78rem;color:#64748B;margin:4px 0 0">Acumulado Cyber al corte. Proy. cierre = margen final del canal '
+                             'al ritmo actual contra su meta de venta, con el % de margen final que lleva.</p>')
+        else:
+            sec_mf_alerta = titulo + f'<p style="font-size:0.88rem;color:#16A34A;margin:0">Ningún canal proyecta margen final bajo el {pct(obj)}.</p>'
 
     # ── por día (alineado por día del evento: Día 1 = lunes de cada Cyber)
     dia_rows = []
@@ -519,8 +597,9 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
 <p style="color:#64748B;margin:0 0 16px 0;font-size:0.9rem">{estado}</p>
 {banner}
 {box_acum if en_cyber else ''}
-{box_cmp if en_cyber else ''}
 {box_mfin if en_cyber else ''}
+{sec_mf_alerta if en_cyber else ''}
+{box_cmp if en_cyber else ''}
 {sec_dia}
 {sec_hora}
 {sec_lin}
@@ -534,7 +613,8 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
 📎 Adjunto: Excel RAW del día.<br>
 🔗 Dashboard live: <a href="https://unionx-ventas.streamlit.app">unionx-ventas.streamlit.app</a><br>
 {nota_meta}<br>
-Venta bruta con IVA, como el RAW de ventas. Margen = margen directo (venta neta − costo). Comparación siempre en el mismo tramo.
+Venta bruta con IVA, como el RAW de ventas. Margen = margen directo (venta neta − costo). Comparación siempre en el mismo tramo.<br>
+Margen final = margen directo − comisión − logística − marketing (devengo comercial del RAW). Su meta es {pct(info.get('pct_mf', 0) * 100)} de la venta neta (regla pareja, no por canal).
 </p>
 <style>td,th{{padding:6px 8px;border-bottom:1px solid #E2E8F0}}</style>
 </body></html>"""

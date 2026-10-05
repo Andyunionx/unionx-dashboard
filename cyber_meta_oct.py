@@ -103,6 +103,9 @@ def main():
         'meta_dia': previo.get('meta_dia', []),
         # metas por área (ej. Nicole en neta con apertura diaria): se conservan al re-leer la planilla
         'grupos': previo.get('grupos', {}),
+        # meta de margen final: regla pareja sobre la venta neta (Andrés 05-10); se conserva al re-leer la planilla
+        'margen_final_meta_pct': previo.get('margen_final_meta_pct'),
+        'fuente_margen_final': previo.get('fuente_margen_final', ''),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding='utf-8')
