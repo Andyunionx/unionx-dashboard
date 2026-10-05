@@ -24,6 +24,10 @@ Margen
     baja el margen); % del FCST VENTAS para Distribución y Corporativo. El RAW no trae la contribución completa a tiempo: solo se muestra como señal.
   - Operaciones puntuales ≥ $5M por documento: se aíslan con su margen propio (RAW), corregible.
 
+  - Insumos (etiquetas y envases): 0,3% de la venta, se descuentan del margen de contribución de
+    cada línea (Andrés 5-oct; el Drive de seguimiento no los trae). Medios de pago van dentro de la
+    comisión de venta y los fletes dentro de la logística.
+
 EBITDA = margen de contribución − GAV + depreciación (igual que la planilla).
 Uso: python cierre_mes.py   ·   from cierre_mes import proyectar_cierre
 """
@@ -49,6 +53,7 @@ LINEA = {"marketplace": "Marketplace", "fidelización": "Fidelización", "fideli
          "distribución": "Distribución", "distribucion": "Distribución", "corporativo": "Corporativo"}
 LINEAS_META = ("Marketplace", "Distribución", "Fidelización", "Páginas Web", "Corporativo")
 BANDA_MC = 0.03
+INSUMOS_PCT = 0.003   # insumos (etiquetas y envases) sobre la venta, regla de Andrés 5-oct-2026
 PARQUET_MES = "data/historico/ventas_mes_actual.parquet"
 
 
@@ -442,8 +447,8 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         if bp is None:
             bp = mc_senal if mc_senal is not None else 0.0
         normal_proy = max(proy - punt_v, 0.0)
-        mc_proy_l = normal_proy * bp + punt_mc
-        mc_acum_l = max(acum - punt_v, 0.0) * bp + punt_mc
+        mc_proy_l = normal_proy * bp + punt_mc - INSUMOS_PCT * proy
+        mc_acum_l = max(acum - punt_v, 0.0) * bp + punt_mc - INSUMOS_PCT * acum
         # margen directo (venta − costo): el costo del RAW sí es oportuno → real a la fecha;
         # el resto del mes al % directo del flujo normal (o al del FCST si no hay venta aún)
         md_acum = acum - s.costo_total.sum() / 1e6
