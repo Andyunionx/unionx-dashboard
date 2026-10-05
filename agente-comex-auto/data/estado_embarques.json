@@ -886,7 +886,8 @@
       "2026-10-03 15:30:09Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-10-04 16:14:00Z · costeado · 7 prod · sobrecosto 24.0% · internado 49,997,925 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-10-04 16:14:00Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-04 16:14:00Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-10-04 16:14:00Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-10-05 alias SKU por correo de Felipe 28-sep (Re: Resumen semanal COMEX): SMBATOXBG→SMBATOXCR, XRTOLLAT270-CL→XRTOLLAT270-BG; ambos existen en Odoo (OK Andrés 5-oct)"
     ],
     "productos_sin_sku": [],
     "correo_firma": "['SMBATOXBG', 'XRTOLLAT270-CL']|[]",
@@ -904,7 +905,11 @@
         "qty": 10,
         "desc": "Xroad 270° Side Roof Car Camping Awning"
       }
-    ]
+    ],
+    "sku_alias": {
+      "SMBATOXBG": "SMBATOXCR",
+      "XRTOLLAT270-CL": "XRTOLLAT270-BG"
+    }
   },
   "26TP0816": {
     "embarque": "26TP0816",
