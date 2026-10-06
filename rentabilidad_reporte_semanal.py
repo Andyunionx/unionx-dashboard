@@ -95,6 +95,49 @@ def cargar():
     return sh, base, gab, plan
 
 
+def comerciales(sh, base, gab) -> pd.DataFrame:
+    """Costos comerciales con la misma regla de la planilla (D.combinar): carga de Gabriela o lectura de sus
+    liquidaciones (pestaña 2b), la más completa por canal × mes × centro. Columnas como gab (cc, Valor costo +)."""
+    canales = base.loc[base['Fuente'] == 'RAW ventas', 'Canal'].unique()
+    g = gab.copy()
+    g['Canal'] = D.canonizar(g['Canal'], canales)
+    g['Centro de costo'] = g['cc']
+    g['Fuente'] = 'Gabriela'
+    try:
+        vl = sh.worksheet(D.H_LIQ).get_all_values(value_render_option='UNFORMATTED_VALUE')
+        liq = pd.DataFrame(vl[1:], columns=vl[0])
+        liq['Valor'] = pd.to_numeric(liq['Valor'], errors='coerce').fillna(0)
+        liq['Mes'] = liq['Mes'].map(PA.mes_str)
+        liq['Canal'] = D.canonizar(liq['Canal'], canales)
+        liq['Glosa'] = liq['Glosa'].astype(str).str.strip()
+    except Exception:
+        liq = None
+    c = D.combinar(g, liq)
+    c['cc'] = c['Centro de costo']
+    return c
+
+
+ESTADO_HOJA = '_estado reporte'
+
+
+def estado_leer(sh) -> str:
+    """Último mes cuyo reporte de CIERRE ya se envió (pestaña oculta de la planilla)."""
+    try:
+        v = sh.worksheet(ESTADO_HOJA).acell('B1').value
+        return PA.mes_str(v) if v else ''
+    except Exception:
+        return ''
+
+
+def estado_guardar(sh, mes: str):
+    try:
+        ws = sh.worksheet(ESTADO_HOJA)
+    except Exception:
+        ws = sh.add_worksheet(title=ESTADO_HOJA, rows=5, cols=3)
+        sh.batch_update({'requests': [{'updateSheetProperties': {'properties': {'sheetId': ws.id, 'hidden': True}, 'fields': 'hidden'}}]})
+    ws.update([['Último cierre reportado', mes, dt.date.today().isoformat()]], range_name='A1', value_input_option='RAW')
+
+
 def drive_carpeta():
     """Árbol de la carpeta de liquidaciones: {canal: {mes_num: [archivos]}}."""
     from googleapiclient.discovery import build
@@ -161,15 +204,19 @@ def bajar_mes(drv, arbol, mes_num, destino: Path):
 
 # ───────────────────────── métricas ─────────────────────────
 def metricas(base, gab):
-    # Mes de cierre = último mes con carga de los cinco marketplaces (uno a medio cargar no
-    # se compara: se informa como "carga en curso" en la sección de automatización).
-    por_mes = gab[gab['Canal'].isin(MK)].groupby('Mes')['Canal'].apply(set)
-    completos = sorted(m for m, cs in por_mes.items() if set(MK) <= cs)
-    M1 = completos[-1] if completos else sorted(por_mes.index)[-1]
-    M0 = completos[-2] if len(completos) > 1 else None
-    en_curso = {m: sorted(cs) for m, cs in por_mes.items() if m > M1}
+    # Mes de cierre = último mes con los cinco marketplaces CARGADOS (costo comercial ≥ 10% del ingreso,
+    # sea de la carga de Gabriela o de la lectura de sus liquidaciones). Uno a medio cargar no se compara:
+    # se informa como "carga en curso".
     raw = base[base['Fuente'] == 'RAW ventas']
     ING = raw[raw['Centro de costo'] == 'Ingreso venta'].groupby(['Canal', 'Mes'])['Monto'].sum()
+    costo = gab.groupby(['Canal', 'Mes'])['Valor'].sum()
+    cargado = lambda c, m: ING.get((c, m), 0) > 0 and costo.get((c, m), 0) / ING.get((c, m), 0) >= 0.10  # noqa: E731
+    meses = sorted(gab['Mes'].unique())
+    por_mes = {m: {c for c in MK if cargado(c, m)} for m in meses}
+    completos = [m for m in meses if set(MK) <= por_mes[m]]
+    M1 = completos[-1] if completos else meses[-1]
+    M0 = completos[-2] if len(completos) > 1 else None
+    en_curso = {m: sorted(cs) for m, cs in por_mes.items() if m > M1}
     ING_MOD = raw[raw['Centro de costo'] == 'Ingreso venta'].groupby(['Canal', 'Modalidad', 'Mes'])['Monto'].sum()
     CC = base.groupby(['Canal', 'Mes', 'Centro de costo'])['Monto'].sum()
     canales = [c for c in MK if ING.get((c, M1), 0) > 0]
@@ -412,8 +459,8 @@ def detalle_canal(c, X, base, gab, M0, M1):
             txt += (f", sobre todo por \"{x['glosa']}\"" + (' (glosa nueva este mes' if x['estado'] == 'nueva' else ' (desaparece este mes' if x['estado'] == 'desaparece' else ' (')
                     + f"{'' if x['estado'] == '' else ', '}{mm(x['v1'])} en {nom(M1).lower()} vs {mm(x['v0'])} en {nom(M0).lower()})")
         elif ce['cc'] == 'Devolución':
-            txt += (': ojo, la devolución de ' + nom(M1).lower() + ' todavía no cierra su ventana de 3 meses, así que parte de esta mejora puede revertirse'
-                    if ce['d'] > 0 else ', que sale del RAW por fecha de venta y todavía puede crecer hasta cerrar su ventana de 3 meses')
+            txt += (': la devolución se registra en el mes de la nota de crédito, así que parte de la mejora puede ser solo que aún no se emiten las notas del mes'
+                    if ce['d'] > 0 else ': la devolución se registra en el mes de la nota de crédito y puede incluir ventas de meses anteriores')
         partes.append(txt)
     efecto_total = d / 100 * i1
     if mg0 is None:
@@ -564,14 +611,21 @@ window.__listo=true;
 
 
 # ───────────────────────── reporte ─────────────────────────
-def construir(hoy=None, cuadrar=True):
+def _mes_tag(m):
+    return f' <span style="color:#64748b;font-size:11px">({m})</span>' if m else ''
+
+
+def construir(hoy=None, cuadrar=True, modo='auto'):
     hoy = hoy or dt.date.today()
     sh, base, gab, plan = cargar()
-    X = metricas(base, gab)
+    com = comerciales(sh, base, gab)       # carga de Gabriela + lectura de liquidaciones (lo que usa la planilla)
+    X = metricas(base, com)
     M0, M1, ING = X['M0'], X['M1'], X['ING']
+    if modo == 'auto':
+        modo = 'cierre' if M1 > estado_leer(sh) else 'seguimiento'
     canales = X['canales']
     l0, l1 = (nom(M0) if M0 else ''), nom(M1)
-    det = [detalle_canal(c, X, base, gab, M0, M1) for c in canales]
+    det = [detalle_canal(c, X, base, com, M0, M1) for c in canales]
     det.sort(key=lambda d: -abs(d['d']))
     MG = {d['canal']: (d['mg0'], d['mg1']) for d in det}
 
@@ -653,8 +707,10 @@ def construir(hoy=None, cuadrar=True):
     plan_ctx = []
     for _, r in plan.iterrows():
         sem = str(r.get('Semáforo', ''))
+        mes_i = str(r.get('Último mes con carga', '')).strip()
         plan_ctx.append({'ID': str(r['ID']), 'Indicador': str(r.get('Indicador', '')), 'Base': str(r.get(f'Base {PA.M_BASE}', '')),
-                         'Ultimo': str(r.get('Valor último mes', '')), 'sem_t': sem[2:].strip() or '—',
+                         'Ultimo': str(r.get('Valor último mes', '')), 'Mes': nom(PA.mes_str(mes_i))[:3].lower() if mes_i else '',
+                         'sem_t': sem[2:].strip() or '—',
                          'sem_c': 'good' if sem.startswith('🟢') else 'bad' if sem.startswith('🔴') else 'warn' if sem.startswith('🟡') else 'neu',
                          'Responsable': str(r.get('Responsable', '')), 'Fecha': str(r.get('Fecha compromiso', '')).strip(),
                          'Gestion': str(r.get('Última gestión (quién / qué / cuándo)', '')).strip()})
@@ -681,7 +737,8 @@ def construir(hoy=None, cuadrar=True):
         por_resp.setdefault(str(a[3]) or 'Sin responsable', []).append(a[0])
     alert_html = ''.join(f'<li><b>{H.escape(r)}</b>: {", ".join(xs)}</li>' for r, xs in por_resp.items())
     plan_rows = ''.join(f'<tr><td style="{tdl};font-weight:600;white-space:nowrap">{H.escape(r["ID"])}</td><td style="{tdl}">{H.escape(r["Indicador"])}</td>'
-                        f'<td style="{tdl};text-align:right">{H.escape(r["Base"])}</td><td style="{tdl};text-align:right">{H.escape(r["Ultimo"])}</td>'
+                        f'<td style="{tdl};text-align:right">{H.escape(r["Base"])}</td><td style="{tdl};text-align:right">{H.escape(r["Ultimo"])}'
+                        f'{_mes_tag(r["Mes"])}</td>'
                         f'<td style="{tdl};white-space:nowrap">{H.escape(r["sem_t"])}</td><td style="{tdl}">{H.escape(r["Responsable"])}</td>'
                         f'<td style="{tdl}">{H.escape(r["Fecha"]) or "—"}</td><td style="{tdl}">{H.escape(r["Gestion"]) or "—"}</td></tr>' for r in plan_ctx)
     auto_html = ''.join(f'<tr><td style="{tdl}">{m}</td><td style="{tdl};font-weight:600">{c}</td><td style="{tdl}">{d}</td>'
@@ -695,8 +752,9 @@ def construir(hoy=None, cuadrar=True):
     encurso = ''.join(f'<p style="margin:10px 0 0">Carga manual de <b>{nom(m).lower()}</b> en curso: faltan {", ".join(c for c in MK if c not in cs) or "ninguno"}.</p>' for m, cs in X['en_curso'].items())
     h3 = 'style="color:#1E3A5F;margin:18px 0 6px"'
     body = f"""<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.5;max-width:960px">
-<h2 style="color:#1E3A5F;margin:0 0 2px;font-size:19px">Rentabilidad por canal — reporte semanal {hoy.strftime('%d-%m-%Y')}</h2>
+<h2 style="color:#1E3A5F;margin:0 0 2px;font-size:19px">Rentabilidad por canal — cierre de {l1.lower()} · {hoy.strftime('%d-%m-%Y')}</h2>
 <div style="color:#64748b;font-size:12px;margin-bottom:10px">Último mes con carga de los cinco marketplaces: <b>{l1}</b>{' · comparado con ' + l0 if M0 else ''} · <a href="{URL_SHEET}">planilla macro</a> · <a href="{URL_CARPETA}">carpeta de liquidaciones</a> · adjunto: dashboard con gráficos y detalle por canal</div>
+<p style="margin:0 0 10px;padding:8px 10px;background:#EEF3FA;border-left:3px solid #1E3A5F;font-size:13px"><b>Reporte de cierre de {l1.lower()}.</b> Es el análisis del mes: {l1.lower()} contra {l0.lower() if M0 else 'el mes anterior'}, qué lo explica y el plan de acción. Las semanas siguientes llega el seguimiento del plan de acción.</p>
 <h3 {h3}>1. Resultado</h3>
 <table style="border-collapse:collapse"><tr>{th('Canal')}{th('Ingreso ' + l1[:3], 'right')}{th('% Mg ' + l0[:3], 'right')}{th('% Mg ' + l1[:3], 'right')}{th('Δ p.p.', 'right')}{th('Efecto $', 'right')}</tr>{res}</table>
 <p style="font-size:12px;color:#475569;margin:4px 0 0">Efecto $ = variación del margen (p.p.) × ingreso de {l1.lower()}: cuánto margen dio o quitó el cambio.</p>
@@ -708,9 +766,31 @@ def construir(hoy=None, cuadrar=True):
 <h3 {h3}>4. Estado de la automatización</h3>
 <table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>
 {cuad_mail}{encurso}
-<p style="font-size:12px;color:#475569;margin-top:14px">Reporte automático de los lunes. La planilla se refresca los lunes 09:00 y 12:00 y la pestaña de plan de acción se recalcula en la misma corrida.</p>
+<p style="font-size:12px;color:#475569;margin-top:14px">Reporte automático de los lunes. La planilla y el plan de acción se refrescan todos los días con lo que llega a la carpeta de liquidaciones.</p>
 </div>"""
-    return body, dash, dict(M0=M0, M1=M1, alertas=len(alert), plan=len(plan), cuadre=cuadre, en_curso=X['en_curso'])
+    if modo == 'seguimiento':
+        sig = ''
+        for m, cs in sorted(X['en_curso'].items()):
+            falt = [c for c in MK if c not in cs]
+            sig += (f'<li><b>{nom(m)}</b>: {len(cs)} de 5 marketplaces cargados' + (f' · falta {", ".join(falt)}' if falt else '')
+                    + f'. Con los cinco llega el reporte de cierre de {nom(m).lower()}.</li>')
+        sig = sig or f'<li>Todavía no hay carga del mes siguiente a {l1.lower()}.</li>'
+        pend = ('<ul style="margin:0 0 10px 18px;padding:0;font-size:13px">' + alert_html + '</ul>') if alert_html else ''
+        body = f"""<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.5;max-width:960px">
+<h2 style="color:#1E3A5F;margin:0 0 2px;font-size:19px">Rentabilidad por canal — seguimiento del plan de acción · {hoy.strftime('%d-%m-%Y')}</h2>
+<div style="color:#64748b;font-size:12px;margin-bottom:10px"><a href="{URL_SHEET}">planilla macro</a> · <a href="{URL_CARPETA}">carpeta de liquidaciones</a> · adjunto: dashboard del cierre de {l1.lower()}</div>
+<p style="margin:0 0 10px;padding:8px 10px;background:#EEF3FA;border-left:3px solid #1E3A5F;font-size:13px"><b>Semana de seguimiento.</b> El análisis del mes es el reporte de cierre de {l1.lower()}, que llegó al cerrar su carga. Esta semana: cómo avanza el plan de acción y la carga del mes siguiente.</p>
+<h3 {h3}>1. Plan de acción</h3>
+<p style="margin:0 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión registrada. Cada indicador se mide en el último mes cargado de su canal (entre paréntesis). Responsable, fecha compromiso y última gestión se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
+{pend}
+<table style="border-collapse:collapse"><tr>{th('ID')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
+<h3 {h3}>2. Avance de la carga</h3><ul style="margin:0 0 10px 18px;padding:0">{sig}</ul>
+<h3 {h3}>3. Estado de la automatización</h3>
+<table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>
+{cuad_mail}
+<p style="font-size:12px;color:#475569;margin-top:14px">Reporte automático de los lunes. Al cerrar la carga de cada mes llega el análisis del mes contra el anterior con su plan de acción; las semanas siguientes, este seguimiento.</p>
+</div>"""
+    return body, dash, dict(M0=M0, M1=M1, alertas=len(alert), plan=len(plan), cuadre=cuadre, en_curso=X['en_curso'], modo=modo)
 
 
 def enviar(asunto, body, html_adj, to, cc=None):
@@ -740,19 +820,26 @@ if __name__ == '__main__':
     ap.add_argument('--no-mail', action='store_true')
     ap.add_argument('--sin-cuadre', action='store_true', help='no descarga liquidaciones para cuadrar')
     ap.add_argument('--out', default=str(Path(tempfile.gettempdir())))
+    ap.add_argument('--modo', choices=['auto', 'cierre', 'seguimiento'], default='auto',
+                    help='cierre = análisis del mes (una vez por mes cerrado); seguimiento = plan de acción')
     a = ap.parse_args()
     from zoneinfo import ZoneInfo
     hoy = dt.datetime.now(ZoneInfo('America/Santiago')).date()   # fecha de Chile (el runner está en UTC)
-    body, dash, info = construir(hoy, cuadrar=not a.sin_cuadre)
+    body, dash, info = construir(hoy, cuadrar=not a.sin_cuadre, modo=a.modo)
     Path(a.out, 'rentabilidad_semanal.html').write_text(body, encoding='utf-8')
     Path(a.out, 'rentabilidad_semanal_dashboard.html').write_text(dash, encoding='utf-8')
-    print(f"[reporte] {info['M1']} vs {info['M0']} · plan {info['plan']} acciones, {info['alertas']} con alerta")
+    print(f"[reporte] modo {info['modo']} · {info['M1']} vs {info['M0']} · plan {info['plan']} acciones, {info['alertas']} con alerta")
     if a.no_mail:
         sys.exit(0)
-    asunto = f"Rentabilidad por canal — semana {hoy.strftime('%d-%m')} · {nom(info['M1'])}: resultado, plan de acción y automatización"
+    if info['modo'] == 'cierre':
+        asunto = f"Rentabilidad por canal — cierre de {nom(info['M1']).lower()}: análisis del mes y plan de acción"
+    else:
+        asunto = f"Rentabilidad por canal — seguimiento del plan de acción · semana {hoy.strftime('%d-%m')}"
     if a.enviar:
         to = [x.strip() for x in os.environ.get('RENTABILIDAD_TO', 'gabriela@unionx.cl').split(',') if x.strip()]
         cc = [x.strip() for x in os.environ.get('RENTABILIDAD_CC', 'andres@unionx.cl').split(',') if x.strip()]
     else:
         to, cc, asunto = ['andres@unionx.cl'], None, '[VISTA PREVIA] ' + asunto
     print('ENVIADO', to, cc, enviar(asunto, body, dash, to, cc))
+    if a.enviar and info['modo'] == 'cierre':       # el cierre del mes ya salió: las próximas semanas son seguimiento
+        estado_guardar(D._abrir(D._cli(), crear_si_falta=False)[0], info['M1'])
