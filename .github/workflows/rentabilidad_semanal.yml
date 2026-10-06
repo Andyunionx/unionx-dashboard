@@ -32,8 +32,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ github.event.inputs.forzar }}" = "true" ]; then echo "seguir=true" >> $GITHUB_OUTPUT; exit 0; fi
-          HOY=$(date -u +%Y-%m-%d)
-          N=$(gh api "repos/${{ github.repository }}/actions/workflows/rentabilidad_semanal.yml/runs?created=${HOY}&status=success" --jq '[.workflow_runs[] | select(.id != ${{ github.run_id }})] | length')
+          # "Hoy" en hora de Chile: el cron atrasado puede caer después de la medianoche UTC y, con la
+          # fecha UTC, la segunda corrida del lunes se veía como de otro día (5-oct salió dos veces).
+          DESDE=$(date -u -d "$(TZ=America/Santiago date +%Y-%m-%d) 00:00 $(TZ=America/Santiago date +%z)" +%Y-%m-%dT%H:%M:%SZ)
+          echo "Corridas exitosas desde ${DESDE} (00:00 hora Chile)"
+          N=$(gh api "repos/${{ github.repository }}/actions/workflows/rentabilidad_semanal.yml/runs?created=>=${DESDE}&status=success" --jq '[.workflow_runs[] | select(.id != ${{ github.run_id }})] | length')
           if [ "$N" -gt 0 ]; then echo "Ya salió hoy ($N corridas exitosas)"; echo "seguir=false" >> $GITHUB_OUTPUT; else echo "seguir=true" >> $GITHUB_OUTPUT; fi
 
   reporte:

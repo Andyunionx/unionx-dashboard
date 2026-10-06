@@ -741,7 +741,8 @@ if __name__ == '__main__':
     ap.add_argument('--sin-cuadre', action='store_true', help='no descarga liquidaciones para cuadrar')
     ap.add_argument('--out', default=str(Path(tempfile.gettempdir())))
     a = ap.parse_args()
-    hoy = dt.date.today()
+    from zoneinfo import ZoneInfo
+    hoy = dt.datetime.now(ZoneInfo('America/Santiago')).date()   # fecha de Chile (el runner está en UTC)
     body, dash, info = construir(hoy, cuadrar=not a.sin_cuadre)
     Path(a.out, 'rentabilidad_semanal.html').write_text(body, encoding='utf-8')
     Path(a.out, 'rentabilidad_semanal_dashboard.html').write_text(dash, encoding='utf-8')
