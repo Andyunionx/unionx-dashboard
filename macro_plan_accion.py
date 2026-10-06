@@ -77,6 +77,10 @@ class Ctx:
         # canal × mes × centro (la misma regla de la base, D.combinar): el plan recoge lo que ya está en la carpeta
         g = limpio(gab, 'Gabriela')
         self.con_carga = set(zip(g['Canal'], g['Mes']))       # canal × mes que Gabriela ya cargó
+        solo = g.copy()                                        # indicadores de higiene de SU carga (TOD-*)
+        solo['glosa_k'] = solo['Glosa'].astype(str).str.strip().str.lower()
+        solo['mod'] = solo['Modalidad'].astype(str).str.strip().str.lower().map(MOD_MAP).fillna('')
+        self.solo_gab = solo
         l = limpio(liq, 'Liquidación') if liq is not None and len(liq) else None
         g = D.combinar(g, l)
         g['glosa_k'] = g['Glosa'].astype(str).str.strip().str.lower()
@@ -135,12 +139,12 @@ class Ctx:
         return None if x is None or y is None else x - y
 
     def pct_sin_mod(self, c, m):
-        x = self.gab[(self.gab['Canal'] == c) & (self.gab['Mes'] == m)]
+        x = self.solo_gab[(self.solo_gab['Canal'] == c) & (self.solo_gab['Mes'] == m)]
         tot = x['Valor'].abs().sum()
         return float(x[x['mod'] == '']['Valor'].abs().sum()) / tot * 100 if tot else None
 
     def glosas_partidas(self, m):
-        x = self.gab[self.gab['Mes'] == m]
+        x = self.solo_gab[self.solo_gab['Mes'] == m]
         n = x.groupby(['Canal', 'glosa_k'])['Glosa'].agg(lambda s: s.str.strip().nunique())
         return int((n > 1).sum())
 
@@ -311,7 +315,7 @@ def main():
     for c in [f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Δ vs base']:
         show[c] = [_fmt(v, u) for v, u in zip(show[c], show['Unidad'])]
     print(show.to_string(index=False))
-    print(f'\nÚltimo mes con carga de Gabriela: {x.meses_gab[-1] if x.meses_gab else "—"} · RAW hasta {x.meses_raw[-1] if x.meses_raw else "—"}')
+    print(f'\nÚltimo mes con los cinco marketplaces cargados: {x.meses_gab[-1] if x.meses_gab else "—"} · RAW hasta {x.meses_raw[-1] if x.meses_raw else "—"}')
     if a.dry_run:
         return
     escribir(sh, df)
