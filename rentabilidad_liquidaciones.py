@@ -186,7 +186,93 @@ def walmart(path: Path, cuenta='Walmart') -> pd.DataFrame:
     return d[COLS]
 
 
+# ─────────────────────────── Kitchen Center / Banco Bice ───────────────────────────
+def kitchen_center(path: Path) -> pd.DataFrame:
+    """Reporte Melollevo de Kitchen Center: una fila por pedido (Venta / Devolución / Reenvío / Cancelación).
+    "Monto Facturado" es lo que KC nos cobra (comisión 20% del bruto, con IVA)."""
+    x = pd.read_excel(path)
+    x = x[pd.to_numeric(x['Monto Facturado'], errors='coerce').fillna(0) != 0]
+    d = pd.DataFrame({'canal': 'Kitchen Center', 'cuenta': 'Kitchen Center', 'archivo': path.name,
+                      'pedido': x['ID Pedido Shopify'].astype(str).str.replace('#', '', regex=False).str.strip(),
+                      'sku': '', 'glosa': 'Comisión KC',
+                      'monto_archivo': pd.to_numeric(x['Monto Facturado'], errors='coerce').fillna(0),
+                      'base_iva': 'con IVA', 'modalidad_liq': ''})
+    d['monto_neto'] = d['monto_archivo'] / IVA
+    return d[COLS]
+
+
+def bice(path: Path) -> pd.DataFrame:
+    """Liquidación de Banco Bice: pestaña "Analisis Facturación Pedidos", comisión por pedido con IVA
+    (la suma cuadra con "Comisión con iva" del Resumen)."""
+    x = pd.read_excel(path, sheet_name='Analisis Facturación Pedidos')
+    x = x[x['ID Pedido'].notna()]
+    d = pd.DataFrame({'canal': 'Banco Bice', 'cuenta': 'Banco Bice', 'archivo': path.name,
+                      'pedido': x['ID Pedido'].astype(str).str.strip(), 'sku': '', 'glosa': 'Comisión Bice',
+                      'monto_archivo': pd.to_numeric(x['Comision Del Pedido'], errors='coerce').fillna(0),
+                      'base_iva': 'con IVA', 'modalidad_liq': ''})
+    d['monto_neto'] = d['monto_archivo'] / IVA
+    return d[COLS]
+
+
 # ─────────────────────────── couriers (Recíbelo / BlueX) ───────────────────────────
+_MAPA_RAW = {}
+
+
+def _mapa_raw():
+    """Pedido de Odoo → canal y Marketplace Reference de CMR, desde el RAW (para las referencias S y #)."""
+    if not _MAPA_RAW:
+        cols = ['pedido', 'pedido_marketplace', 'canal']
+        partes = [pd.read_parquet(p, columns=cols) for p in (ROOT / 'data/historico/ventas_historico.parquet',
+                                                               ROOT / 'data/historico/ventas_mes_actual.parquet') if p.exists()]
+        r = pd.concat(partes, ignore_index=True) if partes else pd.DataFrame(columns=cols)
+        _MAPA_RAW['canal'] = dict(zip(r['pedido'].astype(str).str.strip().str.upper(), r['canal']))
+        _MAPA_RAW['cmr'] = set(r.loc[r['canal'] == 'CMR', 'pedido_marketplace'].astype(str).str.strip())
+    return _MAPA_RAW
+
+
+CANAL_WEB_RECIBELO = {'Simplit web': 'Simplit Home', 'Lhotse web': 'Lhotse', 'UnionX web': 'UnionX Web',
+                      'LATAM Pass': 'LATAM PASS', 'CMR': 'CMR'}
+
+
+def canal_recibelo(id_interna, tags, id_imported) -> str:
+    """Receta de Gabriela (29-09, con el cruce al RAW de las referencias S del 5-10). Validada contra su
+    costeo de agosto: 98,7% de los envíos (las diferencias son S de pedidos web que ella dejaba en B2B)."""
+    m = _mapa_raw()
+    i = re.sub(r'^MEL', '', str(id_interna or '').strip().upper()).replace(' ', '')
+    i = re.sub(r'-M?\d+$', '', i)                     # reenvío "-1" y bulto de multi-bulto "-M1"
+    t = str(tags or '').replace('\xa0', ' ').lower()
+    imp = str(id_imported or '').strip().upper()
+    if 'falabella' in t:
+        return 'Falabella'
+    if 'ripley' in t or imp.endswith('-A'):
+        return 'Ripley'
+    for pre, canal in (('SH', 'Simplit Home'), ('LH', 'Lhotse'), ('MKT', 'Marketing'), ('PV', 'Postventa'), ('ITAU', 'Celmedia')):
+        if i.startswith(pre):
+            return canal
+    if i.startswith('#'):
+        return 'CMR' if i in m['cmr'] else 'UnionX Web'
+    if re.fullmatch(r'S\d+', i):
+        return CANAL_WEB_RECIBELO.get(m['canal'].get(i, ''), 'UnionX B2B')
+    if 'PKG' in imp or 'PKG' in i or re.fullmatch(r'\d{9}', i):
+        return 'Falabella'
+    if re.fullmatch(r'\d{11}', i) or re.fullmatch(r'2000\d{12,15}', i):
+        return 'Mercado Libre'
+    return 'Desconocido'
+
+
+def recibelo_crudo(path: Path) -> pd.DataFrame:
+    """Archivo crudo de Recíbelo ("UnionX {MES}.xlsx", pestaña Detalle): costo = TARIFA + TARIFA BIG TICKET
+    (neto; cuadra con el NETO de la pestaña Resumen) y canal con canal_recibelo()."""
+    x = pd.read_excel(path, sheet_name='Detalle')
+    costo = pd.to_numeric(x['TARIFA'], errors='coerce').fillna(0) + pd.to_numeric(x.get('TARIFA BIG TICKET', 0), errors='coerce').fillna(0)
+    d = pd.DataFrame({'canal': [canal_recibelo(a, b, c) for a, b, c in zip(x['ID interna'], x['Tags'], x['ID imported'])],
+                      'cuenta': 'Recíbelo', 'archivo': path.name,
+                      'pedido': x['ID interna'].astype(str).str.strip(), 'sku': '', 'glosa': 'Recibelo',
+                      'monto_archivo': costo, 'base_iva': 'neto', 'modalidad_liq': 'Envío directo'})
+    d['monto_neto'] = d['monto_archivo']
+    return d[COLS]
+
+
 def recibelo(path: Path) -> pd.DataFrame:
     x = pd.read_excel(path, sheet_name='Detalle')
     canal = x['Cliente/Canal'].astype(str).str.strip()
@@ -240,9 +326,21 @@ CANAL_COURIER = {'mercado libre': 'Mercado Libre', 'meli': 'Mercado Libre', 'fal
 
 def leer_carpeta(base: Path) -> pd.DataFrame:
     partes = []
+    # Recíbelo: si en la carpeta del mes está el costeo de Gabriela se usa ese; el crudo solo cuando no hay costeo.
+    con_costeo = {f.parent for f in base.rglob('*.xlsx') if 'RECIBELO' in str(f).upper() and 'COSTEO' in f.name.upper()}
     for f in sorted(base.rglob('*.xlsx')):
         p = str(f.relative_to(base)).upper().replace('\\', '/')
         try:
+            if p.startswith('KITCHEN CENTER'):
+                partes.append(kitchen_center(f))
+                continue
+            if p.startswith('BICE'):
+                partes.append(bice(f))
+                continue
+            if ('RECIBELO' in p and f.name.upper().startswith('UNIONX') and 'COSTEO' not in f.name.upper()
+                    and f.parent not in con_costeo and 'Detalle' in pd.ExcelFile(f).sheet_names):
+                partes.append(recibelo_crudo(f))
+                continue
             if p.startswith('FALABELLA'):
                 partes.append(falabella(f))
             elif p.startswith('MELI'):

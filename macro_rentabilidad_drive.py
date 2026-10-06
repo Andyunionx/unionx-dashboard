@@ -44,7 +44,69 @@ from macro_rentabilidad_canal import (construir, COLS, CC_GABRIELA,  # noqa: E40
                                       SIGNO, MOD_GABRIELA)
 
 H_BASE, H_DIN, H_PCT = '5. Base dinámica', '6. Rentabilidad', '7. Rentabilidad %'
+H_LIQ = '2b. Liquidaciones (automático)'
 COLS_BASE = COLS[:-1] + ['Monto', 'Fuente']   # Valor -> + columna Monto con signo
+
+# Nombres de canal de la carga de Gabriela y de las liquidaciones → el del RAW (Andrés 6-oct: "Lhotse Web"
+# vs "Lhotse web" partía el canal en dos filas y sus costos no caían en su línea de negocio).
+ALIAS_CANAL = {'simplit home': 'Simplit web', 'lhotse': 'Lhotse web', 'unionx web': 'UnionX web',
+               'latam pass': 'LATAM Pass', 'bice': 'Banco Bice', 'unionxb2b': 'UnionX B2B',
+               'mercado libre 2': 'Mercado Libre'}
+
+
+def canonizar(canales: pd.Series, ref) -> pd.Series:
+    ref_l = {str(c).strip().lower(): c for c in ref}
+
+    def f(c):
+        k = str(c).strip()
+        k = ALIAS_CANAL.get(k.lower(), k)
+        return ref_l.get(k.lower(), k)
+    return canales.map(f)
+
+
+def combinar(gab: pd.DataFrame, liq) -> pd.DataFrame:
+    """Costos comerciales que entran a la base. Por canal × mes × centro de costo se usa la fuente más
+    completa (la de mayor costo): la carga de Gabriela o la lectura automática de las liquidaciones que ella
+    sube a la carpeta. Así lo que ya está en la carpeta se ve en la planilla aunque todavía no lo cargue
+    (Paris y la 2ª quincena de Walmart en sep, couriers de canales sin carga, Kitchen Center, Bice), y lo
+    que solo está en su carga (marketing de Paris, cupón de Ripley, Envíame) no se pierde."""
+    if liq is None or not len(liq):
+        return gab
+    k = ['Mes', 'Canal', 'Centro de costo']
+    tg = gab.groupby(k)['Valor'].sum() if len(gab) else pd.Series(dtype=float)
+    tl = liq.groupby(k)['Valor'].sum()
+    usa_liq = {key for key, v in tl.items() if v > tg.get(key, 0) + 1}
+    idx_g = pd.MultiIndex.from_frame(gab[k]) if len(gab) else pd.MultiIndex.from_tuples([], names=k)
+    idx_l = pd.MultiIndex.from_frame(liq[k])
+    return pd.concat([gab[~idx_g.isin(list(usa_liq))], liq[idx_l.isin(list(usa_liq))]], ignore_index=True)
+
+
+def leer_liquidaciones(meses) -> pd.DataFrame:
+    """Lee la carpeta de liquidaciones de Gabriela (los meses pedidos) con su receta: una fila por canal ×
+    mes × modalidad × centro de costo × glosa, costo positivo (la convención de su carga). Las glosas sin
+    regla no entran (las avisa el vigía)."""
+    import tempfile
+    import rentabilidad_liquidaciones as RL
+    import rentabilidad_reporte_semanal as R
+    drv, arbol = R.drive_carpeta()
+    partes = []
+    for m in meses:
+        with tempfile.TemporaryDirectory() as td:
+            R.bajar_mes(drv, arbol, int(m[5:7]), Path(td))
+            d = RL.leer_carpeta(Path(td))
+        if len(d):
+            d['Mes'] = m
+            partes.append(d)
+    if not partes:
+        return pd.DataFrame(columns=COLS)
+    d = pd.concat(partes, ignore_index=True)
+    d = d[d['centro_costo'].isin(CC_GABRIELA)]
+    g = d.groupby(['Mes', 'canal', 'modalidad_liq', 'centro_costo', 'glosa'], as_index=False)['monto_neto'].sum()
+    out = pd.DataFrame({'Año': g['Mes'].str[:4].astype(int), 'Mes': g['Mes'], 'Línea de negocio': '',
+                        'Canal': g['canal'], 'Modalidad': g['modalidad_liq'].fillna(''),
+                        'Centro de costo': g['centro_costo'], 'Glosa': g['glosa'],
+                        'Valor': g['monto_neto'].round(0), 'Fuente': 'Liquidación'})
+    return out[out['Valor'] != 0][COLS]
 
 
 def _num(s):
@@ -63,21 +125,44 @@ def _num(s):
     return -x if neg else x
 
 
-def armar_base(t, vals_gab):
-    """RAW + carga de Gabriela, con el monto ya con signo y la modalidad resuelta.
+def gab_df(vals_gab) -> pd.DataFrame:
+    """Filas con valor de la pestaña de Gabriela, normalizadas (centro de costo y modalidad)."""
+    g = pd.DataFrame(vals_gab[1:], columns=vals_gab[0])
+    g = g[g['Valor'].astype(str).str.strip().ne('')].copy()
+    g['Valor'] = g['Valor'].map(_num)
+    g = g[g['Valor'] != 0]
+    g['Mes'] = g['Mes'].astype(str).str[:7]
+    g['Centro de costo'] = g['Centro de costo'].str.strip().str.capitalize().replace(
+        {'Comisión envio': 'Comisión envío', 'Comision envío': 'Comisión envío'})
+    g['Modalidad'] = g['Modalidad'].str.strip().str.lower().map(MOD_GABRIELA).fillna('')
+    g['Fuente'] = 'Gabriela'
+    return g
+
+
+def comerciales(t, vals_gab, liq=None) -> pd.DataFrame:
+    """Costos comerciales que entran a la base: carga de Gabriela + lectura de liquidaciones (combinar()),
+    con los nombres de canal del RAW."""
+    canales = t['Canal'].unique()
+    g = gab_df(vals_gab)
+    g['Canal'] = canonizar(g['Canal'], canales)
+    if liq is not None and len(liq):
+        liq = liq.copy()
+        liq['Canal'] = canonizar(liq['Canal'], canales)
+        liq['Modalidad'] = liq['Modalidad'].where(liq['Modalidad'].isin(set(MOD_GABRIELA.values())), '')
+    return combinar(g, liq)
+
+
+def armar_base(t, vals_gab, liq=None):
+    """RAW + costos comerciales (carga de Gabriela o lectura de sus liquidaciones, ver combinar()), con el
+    monto ya con signo y la modalidad resuelta.
 
     Gabriela carga a nivel canal cuando el marketplace no le informa modalidad.
     Esas filas se prorratean entre las modalidades del canal según su venta neta
     del mes: es el único repartidor que tenemos, y queda declarado acá para que
     nadie lo lea como un dato informado.
     """
-    g = pd.DataFrame(vals_gab[1:], columns=vals_gab[0])
-    g = g[g['Valor'].astype(str).str.strip().ne('')].copy()
-    g['Valor'] = g['Valor'].map(_num)
-    g = g[g['Valor'] != 0]
-    g['Centro de costo'] = g['Centro de costo'].str.strip().str.capitalize().replace(
-        {'Comisión envio': 'Comisión envío', 'Comision envío': 'Comisión envío'})
-    g['Modalidad'] = g['Modalidad'].str.strip().str.lower().map(MOD_GABRIELA).fillna('')
+    g = comerciales(t, vals_gab, liq)
+    g['Línea de negocio'] = g['Línea de negocio'].replace('', pd.NA)
 
     vent = t[t['Centro de costo'] == 'Ingreso venta']
     peso = vent.groupby(['Año', 'Mes', 'Canal', 'Línea de negocio', 'Modalidad'],
@@ -93,7 +178,7 @@ def armar_base(t, vals_gab):
             on=['Mes', 'Canal'], how='left')
         huerf = sin['w'].isna()
         if huerf.any():
-            print(f'[base] {huerf.sum()} filas de Gabriela sin venta que las reciba '
+            print(f'[base] {huerf.sum()} filas de costos sin venta que las reciba '
                   f'(${sin[huerf]["Valor"].sum():,.0f}) — quedan a nivel canal')
             sin.loc[huerf, ['Modalidad', 'w']] = ['Sin modalidad', 1.0]
             sin.loc[huerf, 'Línea de negocio'] = sin.loc[huerf, 'Línea de negocio'].fillna('Sin clasificar')
@@ -101,11 +186,11 @@ def armar_base(t, vals_gab):
         sin = sin.drop(columns=['w'])
     if len(con):
         ln = vent.groupby('Canal')['Línea de negocio'].agg(lambda s: s.mode().iat[0]).to_dict()
-        con['Línea de negocio'] = con['Canal'].map(ln).fillna(con['Línea de negocio'])
+        con['Línea de negocio'] = con['Canal'].map(ln).fillna(con['Línea de negocio']).fillna('Sin clasificar')
     gab = pd.concat([x for x in (con, sin) if len(x)], ignore_index=True) if (len(con) or len(sin)) else pd.DataFrame(columns=COLS)
     if len(gab):
         gab['Año'] = gab['Mes'].str[:4].astype(int)
-        gab['Fuente'] = 'Gabriela'
+        gab['Fuente'] = gab['Fuente'].fillna('Gabriela')      # 'Gabriela' o 'Liquidación'
         gab = gab[COLS]
 
     base = pd.concat([t, gab], ignore_index=True) if len(gab) else t.copy()
@@ -339,7 +424,29 @@ def main():
     # bajados a modalidad. Con el signo aplicado, el total de la dinámica es
     # directamente el margen: no hace falta campo calculado y al filtrar sigue
     # cuadrando con lo filtrado.
-    base = armar_base(t, wg.get_all_values())
+    # ---- 2b. Liquidaciones (automático): lectura de la carpeta de Gabriela con su receta ----
+    vals_gab = wg.get_all_values()
+    liq = None
+    try:
+        liq = leer_liquidaciones(sorted(t['Mes'].astype(str).str[:7].unique()))
+        liq['Canal'] = canonizar(liq['Canal'], t['Canal'].unique())
+        usadas = comerciales(t, vals_gab, liq)
+        claves = set(map(tuple, usadas.loc[usadas['Fuente'] == 'Liquidación', ['Mes', 'Canal', 'Centro de costo']].values))
+        vista = liq.copy()
+        vista['Usada en la base'] = ['Sí' if (m, c, cc) in claves else 'No (manda la carga de Gabriela)'
+                                     for m, c, cc in zip(vista['Mes'], vista['Canal'], vista['Centro de costo'])]
+        wl = _hoja(sh, H_LIQ, filas=max(len(vista) + 50, 300), cols=11)
+        wl.clear()
+        wl.update([list(vista.columns)] + vista.astype(object).values.tolist(), value_input_option='RAW')
+        wl.freeze(rows=1)
+        wl.format('A1:J1', {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
+                            'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}})
+        print(f'[{H_LIQ}] {len(vista)} filas · ${liq["Valor"].sum():,.0f} · usadas {len(claves)} canal×mes×centro')
+    except Exception as e:      # sin acceso a la carpeta: la base sale solo con la carga de Gabriela
+        print(f'[{H_LIQ}] [WARN] no se pudieron leer las liquidaciones: {type(e).__name__}: {e}')
+        liq = None
+
+    base = armar_base(t, vals_gab, liq)
     wb_ = _hoja(sh, H_BASE, filas=max(len(base) + 50, 500), cols=11)
     wb_.clear()
     wb_.update([COLS_BASE] + base.astype(object).where(pd.notna(base), '').values.tolist(),
@@ -370,6 +477,11 @@ def main():
         [f'{H_GAB}', 'Es tuya, Gabriela. El proceso automático nunca escribe acá. Carga Comisión '
                      'venta, Comisión envío y Marketing.'],
         [f'{H_CON}', 'Se arma sola con una fórmula que apila las dos anteriores. No editar.'],
+        [f'{H_LIQ}', 'La escribe el proceso automático: lectura de las liquidaciones de la carpeta de Drive con la '
+                     'receta de glosas (marketplaces, couriers, Kitchen Center, Bice). No editar.'],
+        ['5. Base dinámica', 'RAW + costos comerciales. Por canal, mes y centro de costo entra la fuente más '
+                             'completa (la de mayor costo): la carga de Gabriela o la lectura de sus liquidaciones. '
+                             'La columna Fuente dice cuál se usó.'],
         ['', ''],
         ['QUÉ LLENAR EN TU PESTAÑA', ''],
         ['Glosa', 'La glosa contable que corresponda. Son siempre las mismas y se repiten mes a mes.'],

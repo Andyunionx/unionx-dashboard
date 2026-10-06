@@ -53,29 +53,51 @@ def mes_str(x):
 class Ctx:
     """Indicadores sobre la base (Monto con signo) y la carga de Gabriela (Valor)."""
 
-    def __init__(self, base, gab):
+    def __init__(self, base, gab, liq=None):
+        import macro_rentabilidad_drive as D
         self.base = base.copy()
         self.base['Mes'] = self.base['Mes'].map(mes_str)
-        g = gab.copy()
-        g = g[g['Valor'].astype(str).str.strip().ne('')].copy()
-        g['Valor'] = pd.to_numeric(g['Valor'], errors='coerce').fillna(0)
-        g = g[g['Valor'] != 0]
-        g['Mes'] = g['Mes'].map(mes_str)
-        g['Canal'] = g['Canal'].astype(str).str.strip().replace({'Mercado Libre 2': 'Mercado Libre'})
-        g['glosa_k'] = g['Glosa'].astype(str).str.strip().str.lower()
-        g['mod'] = g['Modalidad'].astype(str).str.strip().str.lower().map(MOD_MAP).fillna('')
-        g['Valor'] = -g['Valor']          # costo negativo, abono positivo
-        self.gab = g
         raw = self.base[self.base['Fuente'] == 'RAW ventas']
         ing = raw[raw['Centro de costo'] == 'Ingreso venta']
         self.ING = ing.groupby(['Canal', 'Mes'])['Monto'].sum()
         self.ING_MOD = ing.groupby(['Canal', 'Modalidad', 'Mes'])['Monto'].sum()
-        # Mes de comparación = último mes con carga de los cinco marketplaces. Un mes a medio
-        # cargar (ej. septiembre sin Paris) daba semáforos falsos ("en meta" con $0).
+
+        def limpio(x, fuente):
+            x = x.copy()
+            x = x[x['Valor'].astype(str).str.strip().ne('')].copy()
+            x['Valor'] = pd.to_numeric(x['Valor'], errors='coerce').fillna(0)
+            x = x[x['Valor'] != 0]
+            x['Mes'] = x['Mes'].map(mes_str)
+            x['Canal'] = D.canonizar(x['Canal'].astype(str), raw['Canal'].unique())
+            x['Centro de costo'] = x['Centro de costo'].astype(str).str.strip().str.capitalize().replace(
+                {'Comisión envio': 'Comisión envío', 'Comision envío': 'Comisión envío'})
+            x['Fuente'] = fuente
+            return x
+        # costos comerciales = carga de Gabriela o lectura de sus liquidaciones, la más completa por
+        # canal × mes × centro (la misma regla de la base, D.combinar): el plan recoge lo que ya está en la carpeta
+        g = limpio(gab, 'Gabriela')
+        self.con_carga = set(zip(g['Canal'], g['Mes']))       # canal × mes que Gabriela ya cargó
+        l = limpio(liq, 'Liquidación') if liq is not None and len(liq) else None
+        g = D.combinar(g, l)
+        g['glosa_k'] = g['Glosa'].astype(str).str.strip().str.lower()
+        g['mod'] = g['Modalidad'].astype(str).str.strip().str.lower().map(MOD_MAP).fillna('')
+        # Mes de comparación = último mes con los cinco marketplaces CARGADOS: costo comercial de al menos
+        # 10% de su ingreso (un canal a medio cargar, ej. Mercado Libre sep con $3,7M sobre $130M, daba
+        # semáforos falsos).
         MK = ['Mercado Libre', 'Falabella', 'Walmart', 'Paris', 'Ripley']
-        por_mes = g[g['Canal'].isin(MK)].groupby('Mes')['Canal'].apply(set)
-        completos = sorted(m for m, cs in por_mes.items() if set(MK) <= cs)
-        self.meses_gab = completos or sorted(g['Mes'].unique())
+        costo = g.groupby(['Canal', 'Mes'])['Valor'].sum()
+
+        def cargado(c, m):
+            i = float(self.ING.get((c, m), 0))
+            return i > 0 and float(costo.get((c, m), 0)) / i >= 0.10
+        meses = sorted(g['Mes'].unique())
+        completos = [m for m in meses if all(cargado(c, m) for c in MK)]
+        # Último mes cargado de CADA canal: cada indicador se mide en el último mes de su canal (Andrés 6-oct:
+        # el plan no recogía lo nuevo porque esperaba a que los cinco marketplaces estuvieran completos).
+        self.meses_canal = {c: [m for m in meses if cargado(c, m)] for c in MK}
+        g['Valor'] = -g['Valor']          # costo negativo, abono positivo
+        self.gab = g
+        self.meses_gab = completos or meses
         self.meses_raw = sorted(ing['Mes'].unique())
 
     # --- helpers ---
@@ -87,10 +109,14 @@ class Ctx:
         if not i:
             return None
         x = self.gab[(self.gab['Canal'] == c) & (self.gab['Mes'] == m) & self.gab['glosa_k'].str.contains(sub.lower(), regex=False)]
+        if not len(x) and (c, m) not in self.con_carga:
+            return None          # solo está la lectura automática y la glosa no viene en la liquidación
         return float(x['Valor'].sum()) / i * 100
 
     def clp_glosa(self, c, sub, m):
         x = self.gab[(self.gab['Canal'] == c) & (self.gab['Mes'] == m) & self.gab['glosa_k'].str.contains(sub.lower(), regex=False)]
+        if not len(x) and (c, m) not in self.con_carga:
+            return None          # ej. marketing de Paris: documento aparte que Gabriela aún no carga
         return float(x['Valor'].sum()) if len(x) else 0.0
 
     def share_mod(self, c, mod, m):
@@ -168,19 +194,20 @@ def _sem(base, ult, meta, mejor, unidad):
     return '🟢 mejora' if bien else '🔴 empeora'
 
 
-def calcular(base, gab):
-    x = Ctx(base, gab)
+def calcular(base, gab, liq=None):
+    x = Ctx(base, gab, liq)
     m_gab = x.meses_gab[-1] if x.meses_gab else None
     m_raw = x.meses_raw[-1] if x.meses_raw else None
     filas = []
     for pid, canal, accion, ind, uni, fuente, mejor, fn, meta_fn, resp in PLAN:
         b = fn(x, M_BASE)
         meta = meta_fn(x) if meta_fn else None
-        ult = fn(x, m_gab) if m_gab else None
-        cur = fn(x, m_raw) if (fuente == 'raw' and m_raw and m_raw != m_gab) else None
+        m_ult = (x.meses_canal.get(canal) or [m_gab])[-1] if canal in x.meses_canal else m_gab
+        ult = fn(x, m_ult) if m_ult else None
+        cur = fn(x, m_raw) if (fuente == 'raw' and m_raw and m_raw != m_ult) else None
         ref = cur if cur is not None else ult
         filas.append({'ID': pid, 'Canal': canal, 'Acción': accion, 'Indicador': ind, 'Unidad': uni,
-                      f'Base {M_BASE}': b, 'Meta propuesta': meta, 'Último mes con carga': m_gab, 'Valor último mes': ult,
+                      f'Base {M_BASE}': b, 'Meta propuesta': meta, 'Último mes con carga': m_ult, 'Valor último mes': ult,
                       'Mes en curso (solo RAW)': (f'{m_raw}: ' + _fmt(cur, uni)) if cur is not None else '',
                       'Δ vs base': (ref - b) if (ref is not None and b is not None) else None,
                       'Semáforo': _sem(b, ref, meta, mejor, uni), 'Responsable': resp,
@@ -207,7 +234,12 @@ def leer_sheet():
     base['Monto'] = pd.to_numeric(base['Monto'], errors='coerce').fillna(0)
     vg = sh.worksheet(D.H_GAB).get_all_values(value_render_option='UNFORMATTED_VALUE')
     gab = pd.DataFrame(vg[1:], columns=vg[0])
-    return sh, base, gab
+    try:
+        vl = sh.worksheet(D.H_LIQ).get_all_values(value_render_option='UNFORMATTED_VALUE')
+        liq = pd.DataFrame(vl[1:], columns=vl[0])
+    except Exception:
+        liq = None
+    return sh, base, gab, liq
 
 
 def _r(f, *a, **k):
@@ -272,8 +304,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args()
-    sh, base, gab = leer_sheet()
-    df, x = calcular(base, gab)
+    sh, base, gab, liq = leer_sheet()
+    df, x = calcular(base, gab, liq)
     pd.set_option('display.width', 250)
     show = df[['ID', 'Canal', 'Indicador', 'Unidad', f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Mes en curso (solo RAW)', 'Δ vs base', 'Semáforo']].copy()
     for c in [f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Δ vs base']:
