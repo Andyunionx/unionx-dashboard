@@ -24,6 +24,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from anonimizar_remuneraciones import anonimizar_remuneraciones, verificar
+
 PROJECT_ROOT = Path(__file__).parent
 SHEET_ID = "1NfIL-k00pUbF5ogsVnadP2wMAVc7oUKkOA7UMLOT-j0"
 CREDENTIALS = PROJECT_ROOT / "credentials.json"
@@ -333,6 +335,9 @@ def main():
         print(f"\n[CA1 persona] Cobertura GAV/GASTO: "
               f"{con_persona:,}/{total_gasto:,} filas ({pct:.1f}%)", flush=True)
 
+    # ─── Sin detalle personal: el repo es público (anonimizar_remuneraciones.py) ───
+    df = anonimizar_remuneraciones(df)
+
     # ─── Guardar parquet ────────────────────────────────────────────────
     cols_out = ["fecha", "year", "month", "mes_text",
                 "linea_negocio", "canal", "tipo_costo",
@@ -340,6 +345,7 @@ def main():
                 "cuenta_analitica", "cuenta_analitica_persona",
                 "escenario", "kpi", "valor", "tipo_raw"]
     df_out = df[[c for c in cols_out if c in df.columns]].copy()
+    verificar(df_out, OUT_PARQUET.name)
     df_out.to_parquet(OUT_PARQUET, index=False)
     print(f"\n[3] Parquet guardado: {OUT_PARQUET.relative_to(PROJECT_ROOT)}", flush=True)
 

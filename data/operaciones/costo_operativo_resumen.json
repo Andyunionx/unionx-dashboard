@@ -1,8 +1,8 @@
 {
-  "generado_en": "2026-10-06T10:01:50.949997",
+  "generado_en": "2026-10-06T10:58:47.896023",
   "fuente": "Drive Sheet 1WXoQYwDwYVXGBIacAUgTpzb-aYXm2BXgXA0_EucKo7M",
   "sheet_titulo": "OPERACIONES 2025-2026",
-  "filas_procesadas": 1003,
+  "filas_procesadas": 848,
   "anios": [
     2025,
     2026
@@ -22,6 +22,7 @@
     "LOGISTICA",
     "MARKETPLACE",
     "OPERACIONES",
+    "OTROS",
     "P. WEB",
     "PAGINAS WEB",
     "POSTVENTA",
@@ -34,12 +35,12 @@
     "FINANZAS Y ADMINISTRACIÓN",
     "GRUPO ETER",
     "LOGISTICA",
-    "OPERACIONES"
+    "OPERACIONES",
+    "OTRAS ÁREAS"
   ],
   "centros_costo_count": 12,
   "centros_costo_top20": {
     "": 360,
-    "REMUNERACIONES": 178,
     "GASTOS OFICINA Y SERVICIOS": 112,
     "MOVILIZACIÓN TRANSPORTE Y COLACIÓN": 75,
     "SUSCRIPCIÓN Y PUBLICACIONES": 60,
@@ -47,6 +48,7 @@
     "MANTENCIÓN ACTIVOS": 50,
     "SEGUROS": 41,
     "INSUMOS": 30,
+    "REMUNERACIONES": 23,
     "HONORARIOS": 23,
     "GASTO DE SERVICIOS Y OFICINA": 12,
     "BENEFICIOS PERSONAL": 8
@@ -60,10 +62,11 @@
   "totales_por_area": {
     "": 23406916.0,
     "COMERCIAL": -11845.0,
-    "FINANZAS Y ADMINISTRACIÓN": -52998.0,
+    "FINANZAS Y ADMINISTRACIÓN": -18437.0,
     "GRUPO ETER": -34558.0,
     "LOGISTICA": -2590.0,
-    "OPERACIONES": -606703.0
+    "OPERACIONES": -388900.0,
+    "OTRAS ÁREAS": -252364.0
   },
   "totales_por_canal": {
     "": -8636.0,
@@ -71,20 +74,21 @@
     "DISTRIBUCIÓN": 5680340.0,
     "E-COMMERCE": 13312349.0,
     "FIDELIZACIÓN": 487332.0,
-    "FINANZAS Y ADMINISTRACIÓN": -55908.0,
+    "FINANZAS Y ADMINISTRACIÓN": -21347.0,
     "GRUPO ETER": -39990.0,
-    "LOGISTICA": -535265.0,
+    "LOGISTICA": -307694.0,
     "MARKETPLACE": 1655016.0,
-    "OPERACIONES": -33997.0,
+    "OPERACIONES": -29189.0,
+    "OTROS": -281648.0,
     "P. WEB": 230110.0,
     "PAGINAS WEB": 1564870.0,
-    "POSTVENTA": -31046.0,
+    "POSTVENTA": -16338.0,
     "TIENDAS": 152876.0,
     "UNIONX": -644.0
   },
   "totales_por_tipo_costo": {
     "": 23415552.0,
-    "FIJO": -572936.0,
-    "VARIABLE": -144395.0
+    "FIJO": -611486.0,
+    "VARIABLE": -105845.0
   }
 }

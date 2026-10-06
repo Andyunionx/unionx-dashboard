@@ -10,6 +10,8 @@ valor en MILES (Excel MM × 1000), signo negativo = gasto.
 import pandas as pd
 from pathlib import Path
 
+from anonimizar_remuneraciones import anonimizar_remuneraciones, verificar
+
 ROOT = Path(__file__).resolve().parent
 EXCEL = ROOT / "data" / "outputs" / "Detalle_Gasto_CC_Analitica_2026.xlsx"
 CG = ROOT / "data" / "finanzas" / "control_gestion.parquet"
@@ -58,6 +60,8 @@ def main():
             })
     out = pd.DataFrame(rows)
     out["fecha"] = pd.to_datetime(out["year"].astype(str) + "-" + out["month"].astype(str) + "-01")
+    out = anonimizar_remuneraciones(out)   # repo público: sin sueldos por cargo
+    verificar(out, OUT.name)
     out.to_parquet(OUT, index=False)
     tot = out["valor"].sum() / 1000.0
     print(f"OK {OUT.name}: {len(out)} filas | jun-dic núcleo = ${tot:,.1f}M | meses {sorted(out.month.unique())}")

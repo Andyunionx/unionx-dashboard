@@ -26,6 +26,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from anonimizar_remuneraciones import anonimizar_remuneraciones, verificar
+
 PROJECT_ROOT = Path(__file__).parent
 SHEET_ID = "1WXoQYwDwYVXGBIacAUgTpzb-aYXm2BXgXA0_EucKo7M"
 CREDENTIALS = PROJECT_ROOT / "credentials.json"
@@ -171,11 +173,15 @@ def main():
         errors="coerce",
     )
 
+    # Sin detalle personal: el repo es público (anonimizar_remuneraciones.py)
+    df = anonimizar_remuneraciones(df)
+
     cols_out = ["fecha", "year", "month", "mes_text",
                 "linea_negocio", "canal", "tipo_costo",
                 "area", "sub_area", "centro_costo", "cuenta_analitica",
                 "escenario", "kpi", "valor", "tipo_raw"]
     df_out = df[[c for c in cols_out if c in df.columns]].copy()
+    verificar(df_out, OUT_PARQUET.name)
     df_out.to_parquet(OUT_PARQUET, index=False)
     print(f"\n[3] Parquet guardado: {OUT_PARQUET.relative_to(PROJECT_ROOT)}", flush=True)
 

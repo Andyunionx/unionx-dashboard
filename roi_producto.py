@@ -116,6 +116,11 @@ POOL_MANIPULACION_CUENTAS = {"OPERARIO", "JEFATURA-BODEGA", "COORDINACIÓN-INVEN
 POOL_MANIPULACION_PREFIJOS = ("OPERARIO-LOGISTICO", "OPERARIO-INVENTARIO")
 P_ESP, P_MAN, P_PV, P_INS = "Almacenaje", "Manipulación", "Postventa / log. inversa", "Insumos"
 P_NA = "No asignado a producto"
+# Desde 6-oct-2026 control_gestion publica remuneraciones solo como total por equipo (el repo es público: sin
+# nombres ni cargos; ver anonimizar_remuneraciones.py). Del sueldo de Operaciones sin Postventa, esta fracción
+# es personal de bodega (pool Manipulación): medida con el detalle por cargo de la ventana oct-25 → sep-26,
+# $138,5MM de $218,0MM. Recalcular con la nómina local si cambia la dotación de bodega.
+SHARE_MANIPULACION_REM_OPERACIONES = 0.6352
 FORMATO_SKU = ROOT / "data/comex/formato_importacion_sku.parquet"
 
 CLASES = ["Estrella", "Nicho", "Volumen", "Paga justo", "No paga su capital", "Destruye valor", "Sin venta"]
@@ -438,6 +443,17 @@ def pools_operacion():
     x.loc[oper & x["pool"].isna(), "pool"] = P_NA
     x.loc[cc.eq("INSUMOS") & x["kpi"].eq("GASTO"), "pool"] = P_INS
     x = x[x["pool"].notna()].copy()
+    # Remuneraciones publicadas sin cargo: Operaciones (salvo Postventa) se reparte Manipulación / No asignado
+    agreg = (x["area"].astype(str).str.upper().eq("OPERACIONES") & x["kpi"].eq("GASTO")
+             & x["centro_costo"].astype(str).str.upper().eq("REMUNERACIONES")
+             & x["cuenta_analitica"].astype(str).str.strip().str.upper().eq("REMUNERACIONES")
+             & ~x["sub_area"].astype(str).str.upper().eq("POSTVENTA"))
+    if agreg.any():
+        parte = x[agreg].copy()
+        parte["monto"] *= SHARE_MANIPULACION_REM_OPERACIONES
+        parte["pool"] = P_MAN
+        x.loc[agreg, "monto"] *= 1 - SHARE_MANIPULACION_REM_OPERACIONES
+        x = pd.concat([x, parte], ignore_index=True)
     # "JEFATURA" (nombre antiguo en LOGISTICA) = jefatura bodega + facturación → proporción de los meses nuevos
     cta = x["cuenta_analitica"].astype(str).str.strip().str.upper()
     jb = x.loc[cta.eq("JEFATURA-BODEGA"), "monto"].sum()
