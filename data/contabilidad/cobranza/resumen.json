@@ -1,102 +1,102 @@
 {
-  "generado_en": "2026-10-05T12:54:16.606392",
+  "generado_en": "2026-10-06T03:39:02.985708",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11693,
-  "total_monto_pendiente_clp": 785253597.0,
+  "total_documentos_pendientes": 12673,
+  "total_monto_pendiente_clp": 891808034.0,
   "monto_por_aging": {
-    "+90 días": 92370742.0,
-    "1-30 días": 282674185.0,
-    "31-60 días": 177803594.0,
-    "61-90 días": 53525631.0,
-    "Vigente": 178879445.0
+    "+90 días": 96597333.0,
+    "1-30 días": 377375934.0,
+    "31-60 días": 174317143.0,
+    "61-90 días": 55189986.0,
+    "Vigente": 188327638.0
   },
   "monto_por_tipo": {
-    "BOLETA": 686698813.0,
-    "FACTURA": 98554784.0
+    "BOLETA": 699010424.0,
+    "FACTURA": 192797610.0
   },
   "top_20_deudores": [
+    {
+      "partner": "Cliente Mercado Libre",
+      "monto": 119699862.0
+    },
     {
       "partner": "WALMART CHILE COM. LTDA",
       "monto": 116496223.0
     },
     {
-      "partner": "Cliente Mercado Libre",
-      "monto": 109531133.0
+      "partner": "Mercadolibre Chile Limitada",
+      "monto": 111592632.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 82524916.0
-    },
-    {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 58896571.0
-    },
-    {
-      "partner": "Mercadolibre Chile Limitada",
-      "monto": 55893449.0
-    },
-    {
-      "partner": "All In Marketing Spa",
-      "monto": 29852016.0
-    },
-    {
-      "partner": "Cliente Walmart",
-      "monto": 26272628.0
+      "monto": 90895930.0
     },
     {
       "partner": "FALABELLA.COM",
-      "monto": 23816280.0
+      "monto": 57525003.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 56546684.0
+    },
+    {
+      "partner": "Cliente Walmart",
+      "monto": 26951692.0
     },
     {
       "partner": "Shopping LATAM Pass",
       "monto": 23378141.0
     },
     {
+      "partner": "Duty Free T C S A",
+      "monto": 21656583.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 19944501.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 19623499.0
+    },
+    {
+      "partner": "Cliente Simplit Home",
+      "monto": 17910263.0
+    },
+    {
       "partner": "GOPOINTS CHILE SPA",
       "monto": 17802060.0
     },
     {
-      "partner": "Cliente Shopify",
-      "monto": 16487329.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 16279227.0
-    },
-    {
-      "partner": "Duty Free T C S A",
-      "monto": 14764293.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 14536297.0
-    },
-    {
       "partner": "Walmart Serv. Generales Ltda.",
-      "monto": 14300166.0
+      "monto": 16717488.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 10910864.0
+      "monto": 11704013.0
+    },
+    {
+      "partner": "Lhotse Store",
+      "monto": 11513054.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 11309459.0
     },
     {
       "partner": "Status Spa",
       "monto": 10837211.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 9078331.0
-    },
-    {
-      "partner": "Lhotse Store",
-      "monto": 9033339.0
-    },
-    {
       "partner": "abc S.A.",
       "monto": 8479741.0
+    },
+    {
+      "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
+      "monto": 7840539.0
     }
   ],
-  "notas_credito_count": 839,
+  "notas_credito_count": 899,
   "pedidos_venta_count": 10000
 }
