@@ -647,6 +647,21 @@ def _build_contrib_cv(real_cb_piv, real_vn_piv, dim_col, meses_lin, dims_filter=
 _Q_MAP = {'Q1': [1,2,3], 'Q2': [4,5,6], 'Q3': [7,8,9], 'Q4': [10,11,12]}
 
 
+def _lin_oct26_ponderado() -> float:
+    """Oct-2026: semana 5-11 pesa 60% del mes; los 24 días restantes pesan 40% en partes iguales."""
+    dia_corte = max(0, _TODAY.day - 1)
+    if dia_corte == 0:
+        return 0.0
+    SEMANA = set(range(5, 12))   # días 5-11
+    peso_dia_semana = 0.60 / 7
+    peso_dia_resto  = 0.40 / 24  # 31 - 7 = 24 días restantes
+    acum = sum(
+        peso_dia_semana if d in SEMANA else peso_dia_resto
+        for d in range(1, dia_corte + 1)
+    )
+    return min(acum, 1.0)
+
+
 def _lin_for_mes(mes_str: str) -> float:
     """Linealidad 0→1 for a given month string 'YYYY-MM'.
     Uses yesterday (day-1) because sales data closes at end of the prior day."""
@@ -655,6 +670,8 @@ def _lin_for_mes(mes_str: str) -> float:
         return 0.0
     if mes_str < cur:
         return 1.0
+    if mes_str == '2026-10':
+        return _lin_oct26_ponderado()
     ts   = pd.Timestamp(mes_str + '-01')
     dias = (ts + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
     return max(0, _TODAY.day - 1) / dias
