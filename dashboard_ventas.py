@@ -232,11 +232,11 @@ pages = {
     ],
 }
 
-# Radar de Importaciones: primer borrador, solo para el grupo de prueba (RADAR_USUARIOS en views/ops_radar_importaciones.py)
+# Radar de Importaciones (producción desde 6-oct-2026): visible para todos; RADAR_USUARIOS en Secrets lo restringe
 if radar_autorizado():
     _items = list(pages.items())
     _i = next(i for i, (k, _) in enumerate(_items) if k == "📦 Stock") + 1
-    _items.insert(_i, ("🛰️ Supply chain", [st.Page(render_radar, title="Radar de Importaciones (borrador)", icon="🛰️",
+    _items.insert(_i, ("🛰️ Supply chain", [st.Page(render_radar, title="Radar de Importaciones", icon="🛰️",
                                                    url_path="radar-importaciones")]))
     pages = dict(_items)
 

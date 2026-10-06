@@ -44,8 +44,9 @@ EN_NUBE = HUB is None or os.environ.get("RADAR_FORZAR_NUBE") == "1"
 if EN_NUBE:
     HUB = Path(tempfile.gettempdir()) / "radar_hub"
 RADAR_HUB_FILE_ID = "1j0b6vqAQpd2w2BmsjKoNdg8QwHPOClDq"
-# Primer borrador (30-sep-2026): solo Andrés + Nicolás, Felipe, Nicole, Martín y Seba (usuarios del login de App Ventas)
-RADAR_USUARIOS = {"andres", "nicolas", "felipe", "nicole", "martin", "sguzman"}
+# En producción desde 6-oct-2026 (Andrés): lo ven todos los usuarios de App Ventas. Para restringirlo de nuevo sin tocar
+# código: Secrets → RADAR_USUARIOS = "andres,felipe,…" (usuarios del login de App Ventas).
+RADAR_USUARIOS: set = set()
 TABLAS = ["importadores", "mercado", "imp_mes", "proveedores", "din", "din_tipo", "precios_dist", "nosotros", "lineas", "ventas",
           "imp_total", "imp_fuera", "imp_hs4", "cruce_embarques"]
 UX = "RUT:76600685"
@@ -190,12 +191,12 @@ def _armar_excel_seguro(nombre: str, fn):
 
 
 def _autorizado() -> bool:
-    """Borrador: solo los usuarios de RADAR_USUARIOS (login de App Ventas). En local (sin login) no aplica."""
+    """Todos los usuarios de App Ventas, salvo que Secrets defina RADAR_USUARIOS. En local (sin login) no aplica."""
     usuario = st.session_state.get("username")
     if not usuario:
         return True
     permitidos = {u.strip() for u in str(_secreto("RADAR_USUARIOS", "")).split(",") if u.strip()} or RADAR_USUARIOS
-    return usuario in permitidos
+    return not permitidos or usuario in permitidos
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -1312,7 +1313,7 @@ def _descarga(f: dict):
 def render():
     st.title("🛰️ Radar de Importaciones")
     if not _autorizado():
-        st.info("El Radar de Importaciones está en borrador y por ahora solo lo ve un grupo reducido. Pídele acceso a Andrés.")
+        st.info("El Radar de Importaciones tiene acceso restringido. Pídele acceso a Andrés.")
         return
     if not _asegurar_hub():
         return
@@ -1320,7 +1321,8 @@ def render():
         st.warning("Aún no hay datos del radar (falta correr radar-aduana/pipeline/p9_cubos.py).")
         return
     if EN_NUBE:
-        st.caption("🧪 Primer borrador: compártelo solo dentro del equipo (trae nuestros costos y márgenes).")
+        st.caption("Uso interno: trae nuestros costos y márgenes. Se actualiza solo (Aduana publica cada mes ~30 días después "
+                   "del cierre; nuestros costos, a diario). Excel semanal: Drive → COMEX → Radar de Importaciones.")
     cal = calidad()
     meses = [c["mes"] for c in cal.get("cuadratura", [])]
     st.caption(f"DIN públicas de Aduana · {mes_txt(meses[0]) if meses else ''} → {mes_txt(meses[-1]) if meses else ''} · "
