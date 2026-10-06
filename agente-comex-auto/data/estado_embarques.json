@@ -170,6 +170,14 @@
         "attachment_id": "ANGjdJ_J9oGWaYR9KorFvS70OtPE_yeuN5G3TnjHfzmo6VtIEbPA_RFtFfDZnJRiRl5KMySL0RDkTjytw7Vwiz7IqbqGtYMDZP-bVGsomMqxwDQIAJCcVTBqcn7duHcih_EILi5p6rjs2HymFRgNs69lM5qCLwujnUQ4rnczlZ9dyzUiD4C3McXGAf2LFwmBHqEp3ul_TFM7f7Go8u5oMwKo_677mwnAfekfYTj3GNLpiHamqVFmBUfBLHVzy0fo5OIt2C8lKcJO8A0lSTy-txSyDb89LpDTofeOQ_k5zqdIV9BVCC0-uzZshl1d0G5gxKQjPXdwj3roRA7LFUTFRSl5LcqJsO79Xga1n7jY-MJHlFV2qPi87ztShistbap660lIc_jZg_qJ5Wabcxnh6BbS9hA0-CCSawOI4vYCnQ",
         "subject": "26TP080PI-A+26TP0811PI+ Balance list",
         "date": "Tue, 11 Aug 2026 17:05:55 +0800 (GMT+08:00)"
+      },
+      {
+        "msg_id": "1a110b57dc46b3ba",
+        "filename": "26TP0806PI-A(modified) SZ 40HQ.xlsx",
+        "attachment_id": "ANGjdJ-AI9cHrSwehAnmT25CeHG6DeWZuqv9ZbMtnadL4kKztnDIqU3UKYn6mYcwb0sad1kLZolwXQHbm_-IQAgQrCaXdr7hEtLS2tY-NQJY0VM19FNCaDbLTEVuTd99Hxf75BDF3kltFWK7-nJvTye1TCjdCCjDnxxUlt78bxqO26TO9dRaL9hAAS8iAFpUtm48aXN5tFt-TZKuX8PLRk4F4Xoi1TprXUE3K1aiaMO8L29MM9tVA-UJckluEsZwCjmNE7E7ZGNXnQkOQRB-mlEiDYqQ11pn8rCVgblWyZP40L6Tayb1hFPm_YvNHRiok5MURaTKc2G3qOnjsHpjncGQJvhLnxMS5b_tp8GaCFcFS0_j_kYs_vHgaH2jnoIvWF_KbL3JglesXssUWYM_",
+        "subject": "balance list + PIs",
+        "date": "Tue, 6 Oct 2026 18:13:48 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0806/26TP0806PI-A(modified) SZ 40HQ.xlsx"
       }
     ],
     "pl_candidatos": [
@@ -214,7 +222,7 @@
     "po_id": null,
     "po_name": "P00737",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-09-28 19:01:28Z",
+    "ts_actualizado": "2026-10-06 17:40:10Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0806PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0806PI PL.xlsx (dry-run)",
@@ -296,7 +304,8 @@
       "2026-09-24 12:22:14Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:15Z · ESCALADO (el contenedor ya debía estar en bodega (2026-09-19)) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35dcc85fab22)",
       "2026-09-24 12:22:15Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
-      "2026-09-28 19:01:28Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00737) → COMPLETADO"
+      "2026-09-28 19:01:28Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00737) → COMPLETADO",
+      "2026-10-06 17:40:10Z · PI detectado: 26TP0806PI-A(modified) SZ 40HQ.xlsx · descargado"
     ],
     "productos_sin_sku": [
       "T2",
@@ -375,7 +384,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-05 20:10:23Z",
+    "ts_actualizado": "2026-10-06 17:40:25Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -486,7 +495,10 @@
       "2026-10-05 13:15:48Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-10-05 20:10:23Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-10-05 20:10:23Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-05 20:10:23Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-10-05 20:10:23Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-10-06 17:40:25Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
+      "2026-10-06 17:40:25Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-06 17:40:25Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "TP101",
@@ -585,7 +597,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-05 20:10:29Z",
+    "ts_actualizado": "2026-10-06 17:40:32Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -695,7 +707,10 @@
       "2026-10-05 13:15:54Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-10-05 20:10:29Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-10-05 20:10:29Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-05 20:10:29Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-10-05 20:10:29Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-10-06 17:40:32Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-10-06 17:40:32Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-06 17:40:32Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -1733,7 +1748,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-12 14:43:03Z",
-    "ts_actualizado": "2026-10-05 20:10:41Z",
+    "ts_actualizado": "2026-10-06 17:40:44Z",
     "log": [
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-A SZ 40HQ.xlsx · descargado",
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-B Dinasty  SZ 40HQ.xlsx · descargado",
@@ -1790,7 +1805,10 @@
       "2026-10-05 13:16:13Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-10-05 20:10:41Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 9 · sin SKU: 6",
       "2026-10-05 20:10:41Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-05 20:10:41Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-10-05 20:10:41Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-10-06 17:40:44Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 9 · sin SKU: 6",
+      "2026-10-06 17:40:44Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-06 17:40:44Z · pendientes (9 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "LTS27-MFZH01",
@@ -1980,7 +1998,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-28 19:01:24Z",
-    "ts_actualizado": "2026-10-05 20:10:10Z",
+    "ts_actualizado": "2026-10-06 17:40:12Z",
     "log": [
       "2026-09-28 19:01:24Z · PI detectado: 26TP0927PI NB 40HQ.xlsx · descargado",
       "2026-09-28 19:01:24Z · PL detectado: 26TP0927PI PL.xlsx · descargado",
@@ -1994,7 +2012,8 @@
       "2026-10-03 15:29:44Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
       "2026-10-04 16:13:34Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
       "2026-10-05 13:15:33Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
-      "2026-10-05 20:10:10Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
+      "2026-10-05 20:10:10Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
+      "2026-10-06 17:40:12Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
     ]
   },
   "26TP0928": {
@@ -2047,7 +2066,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-29 17:22:17Z",
-    "ts_actualizado": "2026-10-05 20:10:10Z",
+    "ts_actualizado": "2026-10-06 17:40:12Z",
     "log": [
       "2026-09-29 17:22:18Z · PI detectado: 26TP0928PI .xlsx · descargado",
       "2026-09-29 17:22:18Z · PL detectado: 26TP0928PI PL.xlsx · descargado",
@@ -2060,7 +2079,8 @@
       "2026-10-03 15:29:44Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
       "2026-10-04 16:13:34Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
       "2026-10-05 13:15:33Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
-      "2026-10-05 20:10:10Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana"
+      "2026-10-05 20:10:10Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
+      "2026-10-06 17:40:12Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana"
     ]
   },
   "26TP0930": {
@@ -2154,7 +2174,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-30 17:20:11Z",
-    "ts_actualizado": "2026-10-05 20:10:53Z",
+    "ts_actualizado": "2026-10-06 17:40:57Z",
     "log": [
       "2026-09-30 17:20:11Z · PI detectado: 26TP0930PI SZ 40HQ .xlsx · descargado",
       "2026-09-30 17:20:12Z · PL detectado: 26TP0930PI PL.xlsx · descargado",
@@ -2181,7 +2201,10 @@
       "2026-10-05 13:16:26Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-10-05 20:10:53Z · costeado · 37 prod · sobrecosto 19.1% · internado 95,232,283 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-10-05 20:10:53Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-05 20:10:53Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-10-05 20:10:53Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-10-06 17:40:57Z · costeado · 37 prod · sobrecosto 19.1% · internado 95,232,283 CLP · SKU por crear: 2 · sin SKU: 0",
+      "2026-10-06 17:40:57Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-06 17:40:57Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "pendientes_detalle": [
@@ -2199,5 +2222,44 @@
       }
     ],
     "correo_firma": "['XRBOLBL-430', 'XRCOOLPOR45-GR']|[]"
+  },
+  "26TP0917": {
+    "embarque": "26TP0917",
+    "fase": 1,
+    "pi": {
+      "msg_id": "1a110b57dc46b3ba",
+      "filename": "26TP0917PI NB 40HQ .xlsx",
+      "attachment_id": "ANGjdJ_OBirBn3kb__K_BQCeF6NVmDiDk-qw6gcMqbLJjFQgxOX6XIKqo_lAewolgcTX2FtGKmfwmfhqYDa_1wHqmenG11SffzeBFftgDBb00clEDUIe2TPrTG5xgyP-mDEnbjwFt8kHLJ_b_onEN9oUuCkBoEODnL3HMeFqJXQvIwQjfhhqbWfwGlKyLWvy1M1qeHs-7FiYGJHFm5-etJU6avKKu2pwp6kGDXb_sNWilxo6qHdnr69viNMlXwFF0SzgqynSS_-uKK_KT7j5NWwGSihqHsHKp4JAiCF9cHU9RCFoJWYPSFpWqS10wXAxPaKyft9bS3KaTWxb_16U9PUWoXnAB1zChFkN_GCKc2E_eMUi4P3BKsWPRQPBFkihooPrapSDxwrf9nfYZR6NV96NXRJXI2deK7E1zIPK4w",
+      "subject": "balance list + PIs",
+      "date": "Tue, 6 Oct 2026 18:13:48 +0800 (GMT+08:00)",
+      "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0917/26TP0917PI NB 40HQ .xlsx"
+    },
+    "pl": null,
+    "pi_candidatos": [
+      {
+        "msg_id": "1a110b57dc46b3ba",
+        "filename": "26TP0917PI NB 40HQ .xlsx",
+        "attachment_id": "ANGjdJ_OBirBn3kb__K_BQCeF6NVmDiDk-qw6gcMqbLJjFQgxOX6XIKqo_lAewolgcTX2FtGKmfwmfhqYDa_1wHqmenG11SffzeBFftgDBb00clEDUIe2TPrTG5xgyP-mDEnbjwFt8kHLJ_b_onEN9oUuCkBoEODnL3HMeFqJXQvIwQjfhhqbWfwGlKyLWvy1M1qeHs-7FiYGJHFm5-etJU6avKKu2pwp6kGDXb_sNWilxo6qHdnr69viNMlXwFF0SzgqynSS_-uKK_KT7j5NWwGSihqHsHKp4JAiCF9cHU9RCFoJWYPSFpWqS10wXAxPaKyft9bS3KaTWxb_16U9PUWoXnAB1zChFkN_GCKc2E_eMUi4P3BKsWPRQPBFkihooPrapSDxwrf9nfYZR6NV96NXRJXI2deK7E1zIPK4w",
+        "subject": "balance list + PIs",
+        "date": "Tue, 6 Oct 2026 18:13:48 +0800 (GMT+08:00)",
+        "path": "/home/runner/work/unionx-dashboard/unionx-dashboard/agente-comex-auto/data/inbox/26TP0917/26TP0917PI NB 40HQ .xlsx"
+      }
+    ],
+    "pl_candidatos": [],
+    "flete_usd": null,
+    "flete_moneda": null,
+    "seimex_ref": null,
+    "eta_puerto": null,
+    "eta_bodega": null,
+    "costeo_path": null,
+    "skus": [],
+    "skus_faltantes": null,
+    "po_id": null,
+    "po_name": null,
+    "ts_creado": "2026-10-06 17:40:10Z",
+    "ts_actualizado": "2026-10-06 17:40:11Z",
+    "log": [
+      "2026-10-06 17:40:11Z · PI detectado: 26TP0917PI NB 40HQ .xlsx · descargado"
+    ]
   }
 }
