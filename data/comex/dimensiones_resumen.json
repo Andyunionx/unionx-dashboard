@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-06T09:34:49.963754",
+  "generado_en": "2026-10-06T17:34:19.310306",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 43,
-  "sku_match_odoo": 42,
-  "sku_con_peso": 39,
-  "sku_con_volumen": 38,
-  "sku_volumen_anomalo": 3,
+  "sku_input": 45,
+  "sku_match_odoo": 44,
+  "sku_con_peso": 35,
+  "sku_con_volumen": 34,
+  "sku_volumen_anomalo": 2,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 90.7,
-  "cobertura_volumen_pct": 88.4,
-  "cobertura_volumen_confiable_pct": 81.4,
-  "unidades_totales": 9805.0,
-  "peso_total_kg": 52106.8,
-  "volumen_total_m3": 124.79,
-  "volumen_total_m3_raw": 31939367.49,
-  "pallets_totales_estim": 104.0,
+  "cobertura_peso_pct": 77.8,
+  "cobertura_volumen_pct": 75.6,
+  "cobertura_volumen_confiable_pct": 71.1,
+  "unidades_totales": 8618.0,
+  "peso_total_kg": 38969.0,
+  "volumen_total_m3": 98.31,
+  "volumen_total_m3_raw": 491500.47,
+  "pallets_totales_estim": 81.9,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -103,24 +103,24 @@
       "cobertura_volumen_pct": 100.0
     },
     {
-      "pi": "26TP0815PI",
+      "pi": "26TP0928PI",
       "transporte": "",
-      "fecha_embarque": "2026-10-05",
-      "fecha_eta_bodega": "2026-10-05",
-      "skus_distintos": 7,
-      "unidades_totales": 1253.0,
-      "peso_total_kg": 13216.6,
-      "volumen_total_m3": 26.49,
-      "volumen_total_m3_raw": 31939269.19,
-      "pallets_estim": 22.1,
-      "containers_20_estim": 0.95,
-      "containers_40hc_estim": 0.4,
-      "skus_con_match_odoo": 7,
-      "skus_con_peso": 7,
-      "skus_con_volumen": 7,
-      "skus_volumen_anomalo": 3,
-      "cobertura_peso_pct": 100.0,
-      "cobertura_volumen_pct": 100.0
+      "fecha_embarque": "2026-10-06",
+      "fecha_eta_bodega": "2026-10-06",
+      "skus_distintos": 8,
+      "unidades_totales": 66.0,
+      "peso_total_kg": 78.8,
+      "volumen_total_m3": 0.0,
+      "volumen_total_m3_raw": 491402.16,
+      "pallets_estim": 0,
+      "containers_20_estim": 0,
+      "containers_40hc_estim": 0,
+      "skus_con_match_odoo": 8,
+      "skus_con_peso": 2,
+      "skus_con_volumen": 2,
+      "skus_volumen_anomalo": 2,
+      "cobertura_peso_pct": 25.0,
+      "cobertura_volumen_pct": 25.0
     }
   ],
   "skus_sin_match": [
@@ -128,19 +128,14 @@
   ],
   "skus_volumen_anomalo_top": [
     {
-      "sku": "XRCOOLPORTF40-GR",
-      "producto": "Cooler Freezer Eléctrico Portátil 40L -20°C 12V-220V Gris Xroad",
-      "volumen_unit_m3": 133585.2
+      "sku": "LVPRONOV-WH",
+      "producto": "Proyector Portátil Smart Novus 17000lm WiFi BT Android LEVO",
+      "volumen_unit_m3": 9191.25
     },
     {
-      "sku": "XRCARRTRACT-CL",
-      "producto": "Carro de Transporte con Techo 150 KG Negro Xroad",
-      "volumen_unit_m3": 87637.5
-    },
-    {
-      "sku": "XRTOLLAT270-BG",
-      "producto": "Toldo Camping Lateral Para Auto Techo 270° Xroad",
-      "volumen_unit_m3": 83200.0
+      "sku": "LVPROFLX-BK",
+      "producto": "Proyector Portátil Smart Flux 10000lm WiFi BT Android LEVO",
+      "volumen_unit_m3": 8220.09
     }
   ]
 }
