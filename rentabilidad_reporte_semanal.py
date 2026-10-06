@@ -732,7 +732,7 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     res = ''.join(f'<tr><td style="{tdl};font-weight:600">{d["canal"]}</td><td style="{tdl};text-align:right">{mm(d["i1"])}</td>'
                   f'<td style="{tdl};text-align:right">{n(d["mg0"]) + "%" if d["mg0"] is not None else "—"}</td><td style="{tdl};text-align:right;font-weight:600">{n(d["mg1"])}%</td>'
                   f'<td style="{tdl};text-align:right;font-weight:600;color:{cold(d["d"])}">{pp(d["d"]) if d["mg0"] is not None else "—"}</td>'
-                  f'<td style="{tdl};text-align:right">{("+" if d["efecto"] > 0 else "−") + mm(abs(d["efecto"]))}</td></tr>' for d in sorted(det, key=lambda d: d['d']))
+                  f'<td style="{tdl};text-align:right">{(("+" if d["efecto"] > 0 else "−") + mm(abs(d["efecto"]))) if d["mg0"] is not None else "—"}</td></tr>' for d in sorted(det, key=lambda d: d['d']))
     ojo = ''.join(f'<li style="margin-bottom:8px"><b>{d["canal"]}</b> — {H.escape(d["narrativa"])}</li>' for d in det if abs(d['d']) >= 1) or '<li>Ningún canal se movió más de 1 p.p.</li>'
     por_resp = {}
     for a in alert:
