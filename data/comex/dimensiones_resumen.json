@@ -1,19 +1,19 @@
 {
-  "generado_en": "2026-10-06T17:34:19.310306",
+  "generado_en": "2026-10-06T22:00:16.452131",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 45,
-  "sku_match_odoo": 44,
-  "sku_con_peso": 35,
-  "sku_con_volumen": 34,
-  "sku_volumen_anomalo": 2,
+  "sku_input": 37,
+  "sku_match_odoo": 36,
+  "sku_con_peso": 33,
+  "sku_con_volumen": 32,
+  "sku_volumen_anomalo": 0,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 77.8,
-  "cobertura_volumen_pct": 75.6,
-  "cobertura_volumen_confiable_pct": 71.1,
-  "unidades_totales": 8618.0,
-  "peso_total_kg": 38969.0,
+  "cobertura_peso_pct": 89.2,
+  "cobertura_volumen_pct": 86.5,
+  "cobertura_volumen_confiable_pct": 86.5,
+  "unidades_totales": 8552.0,
+  "peso_total_kg": 38890.2,
   "volumen_total_m3": 98.31,
-  "volumen_total_m3_raw": 491500.47,
+  "volumen_total_m3_raw": 98.31,
   "pallets_totales_estim": 81.9,
   "asunciones": {
     "m3_por_pallet": 1.2,
@@ -101,41 +101,10 @@
       "skus_volumen_anomalo": 0,
       "cobertura_peso_pct": 100.0,
       "cobertura_volumen_pct": 100.0
-    },
-    {
-      "pi": "26TP0928PI",
-      "transporte": "",
-      "fecha_embarque": "2026-10-06",
-      "fecha_eta_bodega": "2026-10-06",
-      "skus_distintos": 8,
-      "unidades_totales": 66.0,
-      "peso_total_kg": 78.8,
-      "volumen_total_m3": 0.0,
-      "volumen_total_m3_raw": 491402.16,
-      "pallets_estim": 0,
-      "containers_20_estim": 0,
-      "containers_40hc_estim": 0,
-      "skus_con_match_odoo": 8,
-      "skus_con_peso": 2,
-      "skus_con_volumen": 2,
-      "skus_volumen_anomalo": 2,
-      "cobertura_peso_pct": 25.0,
-      "cobertura_volumen_pct": 25.0
     }
   ],
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": [
-    {
-      "sku": "LVPRONOV-WH",
-      "producto": "Proyector Portátil Smart Novus 17000lm WiFi BT Android LEVO",
-      "volumen_unit_m3": 9191.25
-    },
-    {
-      "sku": "LVPROFLX-BK",
-      "producto": "Proyector Portátil Smart Flux 10000lm WiFi BT Android LEVO",
-      "volumen_unit_m3": 8220.09
-    }
-  ]
+  "skus_volumen_anomalo_top": []
 }
