@@ -81,6 +81,59 @@ def combinar(gab: pd.DataFrame, liq) -> pd.DataFrame:
     return pd.concat([gab[~idx_g.isin(list(usa_liq))], liq[idx_l.isin(list(usa_liq))]], ignore_index=True)
 
 
+# "Control Aportes Uniox y Marketing" (raíz de la carpeta de liquidaciones; Andrés 6-oct): pestaña Aportes,
+# Retail = canal de venta (en Falabella, Ripley, Paris y Walmart es la TIENDA, no el digital) y la Provisión
+# Neta = comisión de venta del mes. Ej.: Duty Travel agosto = $4.459.720.
+CANAL_APORTES = {'duty travel': 'Travel Duty', 'abc': 'Abc', 'falabella': 'Falabella tienda', 'paris': 'Paris tienda',
+                 'ripley': 'Ripley tienda', 'walmart': 'Walmart tienda'}
+# Reglas de comisión de venta de Gabriela (correo 6-oct "Macro Rentabilidad - Reglas"): % sobre la venta de productos.
+REGLAS_COMISION = {'LATAM Pass': 0.15, 'CMR': 0.15, 'El Volcan': 0.30}
+
+
+def _fila_com(mes, canal, glosa, valor, cc='Comisión venta'):
+    return {'Año': int(mes[:4]), 'Mes': mes, 'Línea de negocio': '', 'Canal': canal, 'Modalidad': '',
+            'Centro de costo': cc, 'Glosa': glosa, 'Valor': round(float(valor)), 'Fuente': 'Liquidación'}
+
+
+def leer_aportes(drv, meses) -> pd.DataFrame:
+    import io
+    from googleapiclient.http import MediaIoBaseDownload
+    import rentabilidad_reporte_semanal as R
+    fs = drv.files().list(q=f"'{R.CARPETA_LIQ}' in parents and name contains 'Control Aportes' and trashed=false",
+                          fields='files(id,name,modifiedTime)', supportsAllDrives=True, includeItemsFromAllDrives=True).execute().get('files', [])
+    fs = sorted([f for f in fs if not f['name'].startswith('~$')], key=lambda f: f['modifiedTime'])
+    if not fs:
+        return pd.DataFrame(columns=COLS)
+    b = io.BytesIO()
+    dl = MediaIoBaseDownload(b, drv.files().get_media(fileId=fs[-1]['id'], supportsAllDrives=True))
+    done = False
+    while not done:
+        _, done = dl.next_chunk()
+    b.seek(0)
+    a = pd.read_excel(b, sheet_name='Aportes')
+    a = a[a['Año'].notna() & a['Mes'].notna()].copy()
+    a['mes'] = a['Año'].astype(int).astype(str) + '-' + a['Mes'].astype(int).map('{:02d}'.format)
+    a = a[a['mes'].isin(meses)]
+    a['canal'] = a['Retail'].astype(str).str.strip().map(lambda r: CANAL_APORTES.get(r.lower(), r))
+    a['v'] = pd.to_numeric(a['Provisión Neta'], errors='coerce').fillna(0)
+    g = a.groupby(['mes', 'canal'], as_index=False)['v'].sum()
+    return pd.DataFrame([_fila_com(r.mes, r.canal, 'Aporte comercial (provisión)', r.v) for r in g.itertuples() if r.v],
+                        columns=COLS)
+
+
+def reglas_comision(meses) -> pd.DataFrame:
+    """Comisión de venta por regla de Gabriela sobre la venta neta de PRODUCTOS (sin las líneas de envío)."""
+    import macro_rentabilidad_canal as MC
+    v = MC.cargar_raw(min(meses), max(meses))
+    v = v[(v['tipo_movimiento'] == 'Venta') & v['canal'].isin(REGLAS_COMISION)]
+    if 'es_despacho' in v.columns:
+        v = v[~v['es_despacho'].fillna(False).astype(bool)]
+    v = v[~v['sku'].astype(str).str.startswith('Delivery')]
+    g = v.groupby(['mes', 'canal'], as_index=False)['venta_neta'].sum()
+    return pd.DataFrame([_fila_com(r.mes, r.canal, f'Comisión {REGLAS_COMISION[r.canal] * 100:.0f}% (regla)', r.venta_neta * REGLAS_COMISION[r.canal])
+                         for r in g.itertuples() if r.venta_neta], columns=COLS)
+
+
 def leer_liquidaciones(meses) -> pd.DataFrame:
     """Lee la carpeta de liquidaciones de Gabriela (los meses pedidos) con su receta: una fila por canal ×
     mes × modalidad × centro de costo × glosa, costo positivo (la convención de su carga). Las glosas sin
@@ -97,15 +150,22 @@ def leer_liquidaciones(meses) -> pd.DataFrame:
         if len(d):
             d['Mes'] = m
             partes.append(d)
-    if not partes:
-        return pd.DataFrame(columns=COLS)
-    d = pd.concat(partes, ignore_index=True)
-    d = d[d['centro_costo'].isin(CC_GABRIELA)]
-    g = d.groupby(['Mes', 'canal', 'modalidad_liq', 'centro_costo', 'glosa'], as_index=False)['monto_neto'].sum()
-    out = pd.DataFrame({'Año': g['Mes'].str[:4].astype(int), 'Mes': g['Mes'], 'Línea de negocio': '',
-                        'Canal': g['canal'], 'Modalidad': g['modalidad_liq'].fillna(''),
-                        'Centro de costo': g['centro_costo'], 'Glosa': g['glosa'],
-                        'Valor': g['monto_neto'].round(0), 'Fuente': 'Liquidación'})
+    extras = []
+    for nombre, fn in (('aportes', lambda: leer_aportes(drv, meses)), ('reglas de comisión', lambda: reglas_comision(meses))):
+        try:
+            extras.append(fn())
+        except Exception as e:
+            print(f'   [WARN] {nombre}: {type(e).__name__}: {e}')
+    out = pd.DataFrame(columns=COLS)
+    if partes:
+        d = pd.concat(partes, ignore_index=True)
+        d = d[d['centro_costo'].isin(CC_GABRIELA)]
+        g = d.groupby(['Mes', 'canal', 'modalidad_liq', 'centro_costo', 'glosa'], as_index=False)['monto_neto'].sum()
+        out = pd.DataFrame({'Año': g['Mes'].str[:4].astype(int), 'Mes': g['Mes'], 'Línea de negocio': '',
+                            'Canal': g['canal'], 'Modalidad': g['modalidad_liq'].fillna(''),
+                            'Centro de costo': g['centro_costo'], 'Glosa': g['glosa'],
+                            'Valor': g['monto_neto'].round(0), 'Fuente': 'Liquidación'})
+    out = pd.concat([out] + [e for e in extras if len(e)], ignore_index=True)
     return out[out['Valor'] != 0][COLS]
 
 

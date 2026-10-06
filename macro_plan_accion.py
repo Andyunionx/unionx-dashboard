@@ -34,7 +34,8 @@ H_PLAN = '8. Plan de acción'
 M_BASE = '2026-08'                    # mes del informe que originó el plan
 MOD_MAP = {'colecta': 'Colecta', 'fulfillment': 'Fulfillment', 'flex': 'Envío directo',
            'flex (flota propia)': 'Envío directo', 'envío directo': 'Envío directo', 'envio directo': 'Envío directo'}
-COLS_AUTO = ['ID', 'Canal', 'Acción', 'Indicador', 'Unidad', f'Base {M_BASE}', 'Meta propuesta',
+WEBS = ['Simplit web', 'Lhotse web', 'UnionX web']
+COLS_AUTO = ['ID', 'Canal', 'Prioridad (share de venta)', 'Acción', 'Indicador', 'Unidad', f'Base {M_BASE}', 'Meta propuesta',
              'Último mes con carga', 'Valor último mes', 'Mes en curso (solo RAW)', 'Δ vs base', 'Semáforo']
 COLS_GESTION = ['Responsable', 'Fecha compromiso', 'Estado', 'Última gestión (quién / qué / cuándo)']
 COLS = COLS_AUTO + COLS_GESTION
@@ -99,14 +100,50 @@ class Ctx:
         # Último mes cargado de CADA canal: cada indicador se mide en el último mes de su canal (Andrés 6-oct:
         # el plan no recogía lo nuevo porque esperaba a que los cinco marketplaces estuvieran completos).
         self.meses_canal = {c: [m for m in meses if cargado(c, m)] for c in MK}
+        # canales fuera de los cinco marketplaces: último mes con costo comercial cargado (carga o lectura)
+        self.meses_costo = g.groupby('Canal')['Mes'].apply(lambda s_: sorted(s_.unique())).to_dict()
         g['Valor'] = -g['Valor']          # costo negativo, abono positivo
         self.gab = g
         self.meses_gab = completos or meses
         self.meses_raw = sorted(ing['Mes'].unique())
+        dev = self.base[self.base['Centro de costo'] == 'Devolución']
+        self.DEV = dev.groupby(['Canal', 'Mes'])['Monto'].sum()
+        # participación en la venta del último mes completo del RAW (el último del RAW es el mes en curso)
+        self.m_share = self.meses_raw[-2] if len(self.meses_raw) > 1 else (self.meses_raw[-1] if self.meses_raw else None)
+        tot = float(ing[ing['Mes'] == self.m_share]['Monto'].sum()) if self.m_share else 0
+        self.SHARE = {c: float(v) / tot * 100 for c, v in ing[ing['Mes'] == self.m_share].groupby('Canal')['Monto'].sum().items()} if tot else {}
 
     # --- helpers ---
     def ing(self, c, m):
+        if isinstance(c, (list, tuple)):
+            return sum(float(self.ING.get((x, m), 0)) for x in c)
         return float(self.ING.get((c, m), 0))
+
+    def pct_cc(self, c, cc, m):
+        """Centro de costo (carga o lectura) como % del ingreso; c puede ser una lista de canales."""
+        cs = c if isinstance(c, (list, tuple)) else [c]
+        i = self.ing(cs, m)
+        if not i:
+            return None
+        x = self.gab[self.gab['Canal'].isin(cs) & (self.gab['Mes'] == m) & (self.gab['Centro de costo'] == cc)]
+        if not len(x):
+            return None
+        return float(x['Valor'].sum()) / i * 100
+
+    def dev_pct(self, c, m):
+        i = self.ing(c, m)
+        return float(self.DEV.get((c, m), 0)) / i * 100 if i else None
+
+    def share(self, c):
+        cs = c if isinstance(c, (list, tuple)) else [c]
+        return sum(self.SHARE.get(x, 0) for x in cs)
+
+    def ultimo_mes(self, canal, m_gab):
+        if canal in self.meses_canal:
+            return (self.meses_canal.get(canal) or [m_gab])[-1]
+        cs = WEBS if canal == 'Páginas web' else [canal]
+        ms = sorted({m for c in cs for m in self.meses_costo.get(c, [])})
+        return ms[-1] if ms else m_gab
 
     def pct_glosa(self, c, sub, m):
         i = self.ing(c, m)
@@ -172,6 +209,18 @@ PLAN = [
      lambda x, m: x.share_mod('Paris', 'Fulfillment', m), None, 'Comercial (KAM Paris)'),
     ('WAL-1', 'Walmart', 'Empujar WFS', 'Share de Fulfillment (WFS) en el ingreso del canal', '%', 'raw', 'sube',
      lambda x, m: x.share_mod('Walmart', 'Fulfillment', m), None, 'Comercial + Operaciones'),
+    ('KC-1', 'Kitchen Center', 'Verificar la comisión de KC contra el contrato (20%)', 'Comisión de venta como % del ingreso', '%', 'gab', 'sube',
+     lambda x, m: x.pct_cc('Kitchen Center', 'Comisión venta', m), lambda x: -20.0, 'Comercial (KAM Kitchen Center)'),
+    ('PAR-3', 'Paris', 'Bajar las devoluciones (entregas fallidas del courier de Paris)', 'Devoluciones como % del ingreso', '%', 'gab', 'sube',
+     lambda x, m: x.dev_pct('Paris', m), lambda x: x.dev_pct('Paris', '2026-07'), 'Comercial (KAM Paris) + Operaciones'),
+    ('FAL-3', 'Falabella', 'Bajar las devoluciones', 'Devoluciones como % del ingreso', '%', 'gab', 'sube',
+     lambda x, m: x.dev_pct('Falabella', m), lambda x: x.dev_pct('Falabella', '2026-07'), 'Comercial (KAM Falabella) + Operaciones'),
+    ('WEB-1', 'Páginas web', 'Llevar el marketing de las webs al 10% de la venta', 'Marketing como % del ingreso (Simplit, Lhotse y UnionX web)', '%', 'gab', 'sube',
+     lambda x, m: x.pct_cc(WEBS, 'Marketing', m), lambda x: -10.0, 'Martín + Marketing'),
+    ('WEB-2', 'Páginas web', 'Revisar el costo de envío de las webs', 'Comisión de envío como % del ingreso (webs)', '%', 'gab', 'sube',
+     lambda x, m: x.pct_cc(WEBS, 'Comisión envío', m), None, 'Martín + Operaciones'),
+    ('LAT-1', 'LATAM Pass', 'Revisar el costo de couriers de LATAM', 'Comisión de envío como % del ingreso', '%', 'gab', 'sube',
+     lambda x, m: x.pct_cc('LATAM Pass', 'Comisión envío', m), None, 'Martín'),
     ('TOD-1', 'Todos', 'Cargar la modalidad siempre que la liquidación la informe', '% de la carga de Mercado Libre sin modalidad', '%', 'gab', 'baja',
      lambda x, m: x.pct_sin_mod('Mercado Libre', m), lambda x: 10.0, 'Gabriela'),
     ('TOD-2', 'Todos', 'Cargar la modalidad siempre que la liquidación la informe', '% de la carga de Falabella sin modalidad', '%', 'gab', 'baja',
@@ -206,17 +255,22 @@ def calcular(base, gab, liq=None):
     for pid, canal, accion, ind, uni, fuente, mejor, fn, meta_fn, resp in PLAN:
         b = fn(x, M_BASE)
         meta = meta_fn(x) if meta_fn else None
-        m_ult = (x.meses_canal.get(canal) or [m_gab])[-1] if canal in x.meses_canal else m_gab
+        m_ult = x.ultimo_mes(canal, m_gab) if canal != 'Todos' else m_gab
         ult = fn(x, m_ult) if m_ult else None
         cur = fn(x, m_raw) if (fuente == 'raw' and m_raw and m_raw != m_ult) else None
         ref = cur if cur is not None else ult
-        filas.append({'ID': pid, 'Canal': canal, 'Acción': accion, 'Indicador': ind, 'Unidad': uni,
+        sh_ = x.share(WEBS if canal == 'Páginas web' else canal) if canal != 'Todos' else None
+        prio = ('⚪ Transversal' if sh_ is None else ('🔴 Alta' if sh_ >= 15 else '🟡 Media' if sh_ >= 5 else '🟢 Baja')
+                + ('' if sh_ is None else f' · {sh_:.0f}%'.replace('.', ',')))
+        filas.append({'ID': pid, 'Canal': canal, 'Prioridad (share de venta)': prio, '_share': -1 if sh_ is None else sh_,
+                      'Acción': accion, 'Indicador': ind, 'Unidad': uni,
                       f'Base {M_BASE}': b, 'Meta propuesta': meta, 'Último mes con carga': m_ult, 'Valor último mes': ult,
                       'Mes en curso (solo RAW)': (f'{m_raw}: ' + _fmt(cur, uni)) if cur is not None else '',
                       'Δ vs base': (ref - b) if (ref is not None and b is not None) else None,
                       'Semáforo': _sem(b, ref, meta, mejor, uni), 'Responsable': resp,
                       'Fecha compromiso': '', 'Estado': 'Abierta', 'Última gestión (quién / qué / cuándo)': ''})
-    return pd.DataFrame(filas, columns=COLS), x
+    df = pd.DataFrame(filas).sort_values('_share', ascending=False, kind='stable')
+    return df[COLS].reset_index(drop=True), x
 
 
 def _fmt(v, uni):
@@ -281,7 +335,7 @@ def escribir(sh, df):
     out = df.copy()
     for c in [f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Δ vs base']:
         out[c] = [(_fmt(v, u) if v is not None and not pd.isna(v) else '') for v, u in zip(out[c], out['Unidad'])]
-    nota = [f'Base = {M_BASE} (mes del informe). Columnas A–L las recalcula el proceso cada lunes; M–P son de gestión y se conservan. '
+    nota = [f'Base = {M_BASE} (mes del informe). Columnas A–M las recalcula el proceso todos los días; N–Q son de gestión y se conservan. Orden = prioridad por share de venta. '
             'Semáforo: verde = se mueve hacia la meta (o ya está), rojo = en contra, amarillo = plano. Revisión mensual con el informe de rentabilidad.']
     datos = [COLS] + out.astype(object).where(pd.notna(out), '').values.tolist()
     n = len(datos)
@@ -295,11 +349,11 @@ def escribir(sh, df):
     _r(ws.batch_format, [
         {'range': f'A1:{chr(64 + len(COLS))}1', 'format': {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
                                                          'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}, 'wrapStrategy': 'WRAP'}},
-        {'range': f'M2:P{len(out) + 1}', 'format': {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}}},   # amarillo = editable
+        {'range': f'N2:Q{len(out) + 1}', 'format': {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}}},   # amarillo = editable
     ])
     anchos = [{'updateDimensionProperties': {'range': {'sheetId': ws.id, 'dimension': 'COLUMNS', 'startIndex': ord(col) - 65, 'endIndex': ord(col) - 64},
                                              'properties': {'pixelSize': w * 8}, 'fields': 'pixelSize'}}
-              for col, w in zip('ABCDEFGHIJKLMNOP', [7, 14, 34, 36, 6, 12, 12, 12, 12, 16, 11, 13, 22, 12, 10, 40])]
+              for col, w in zip('ABCDEFGHIJKLMNOPQ', [7, 14, 14, 34, 36, 6, 12, 12, 12, 12, 16, 11, 13, 22, 12, 10, 40])]
     _r(sh.batch_update, {'requests': anchos})     # una sola escritura (antes eran 16)
     return ws
 

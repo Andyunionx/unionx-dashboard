@@ -219,7 +219,8 @@ def metricas(base, gab):
     en_curso = {m: sorted(cs) for m, cs in por_mes.items() if m > M1}
     ING_MOD = raw[raw['Centro de costo'] == 'Ingreso venta'].groupby(['Canal', 'Modalidad', 'Mes'])['Monto'].sum()
     CC = base.groupby(['Canal', 'Mes', 'Centro de costo'])['Monto'].sum()
-    canales = [c for c in MK if ING.get((c, M1), 0) > 0]
+    # el cierre es de TODOS los canales (Andrés 6-oct), los con venta ≥ $1M en el mes, de mayor a menor venta
+    canales = sorted([c for (c, m), v in ING.items() if m == M1 and v >= 1e6], key=lambda c: -ING.get((c, M1), 0))
 
     def mg(c, m):
         i = ING.get((c, m), 0)
@@ -641,8 +642,8 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     suben = [d['canal'] for d in sorted(det, key=lambda d: -d['d']) if d['mg0'] is not None and d['d'] >= 1]
     titular = ((f'<em>{H.escape(" y ".join(caen))}</em> pierde{"n" if len(caen) > 1 else ""} margen en {l1.lower()}'
                 + (f'; {H.escape(" y ".join(suben))} mejora{"n" if len(suben) > 1 else ""}.' if suben else '.')) if caen
-               else f'Ningún marketplace pierde más de 1 punto de margen en {l1.lower()}.')
-    intro = (f'{l1} contra {l0.lower()} en los cinco marketplaces con liquidación cargada. Para cada canal: qué pasó con el margen, '
+               else f'Ningún canal pierde más de 1 punto de margen en {l1.lower()}.')
+    intro = (f'{l1} contra {l0.lower()} en todos los canales con venta de $1M o más. Para cada canal: qué pasó con el margen, '
              f'qué centro de costo y qué glosa lo explican, y cómo le fue a cada modalidad. Al final, el plan de acción y el estado de la automatización.')
     alert = alertas_plan(plan, hoy) if len(plan) else []
     con_gestion = sum(1 for _, r in plan.iterrows() if str(r.get('Última gestión (quién / qué / cuándo)', '')).strip())
@@ -684,12 +685,12 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
         return f'dif. {mm(r.dif)}', 'bad'
 
     kpis = [
-        {'label': f'Margen marketplaces · {l1}', 'valor': n(t1) if t1 is not None else '—', 'unidad': '%',
+        {'label': f'Margen total · {l1}', 'valor': n(t1) if t1 is not None else '—', 'unidad': '%',
          'meta': f'{"▲" if t1 >= t0 else "▼"} {pp(t1 - t0)} p.p. vs {l0.lower()}' if t0 is not None else '', 'color': GOOD if t0 is not None and t1 >= t0 else BAD,
-         'expl': 'Margen de los cinco marketplaces sobre su ingreso total.'},
+         'expl': 'Margen de todos los canales con venta de $1M o más en el mes, sobre su ingreso total.'},
         {'label': f'Margen en pesos · {l1}', 'valor': n(c1 / 1e6, 1), 'unidad': 'M CLP',
          'meta': f'{"▲" if c1 >= c0 else "▼"} {pp((c1 - c0) / 1e6)} M vs {l0.lower()}' if M0 else '', 'color': GOOD if c1 >= c0 else BAD,
-         'expl': 'Parte de la baja es venta: el ingreso de los cinco canales también cambió.'},
+         'expl': 'Parte del cambio es venta: el ingreso de los canales también cambió.'},
         {'label': 'Plan de acción con gestión', 'valor': f'{con_gestion}/{len(plan)}', 'unidad': 'acciones',
          'meta': f'{len(alert)} requieren gestión', 'color': BAD if con_gestion == 0 else AMBER if alert else GOOD,
          'expl': 'Acciones con responsable trabajando y gestión registrada en la planilla.'},
@@ -710,6 +711,7 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
         mes_i = str(r.get('Último mes con carga', '')).strip()
         plan_ctx.append({'ID': str(r['ID']), 'Indicador': str(r.get('Indicador', '')), 'Base': str(r.get(f'Base {PA.M_BASE}', '')),
                          'Ultimo': str(r.get('Valor último mes', '')), 'Mes': nom(PA.mes_str(mes_i))[:3].lower() if mes_i else '',
+                         'Prio': str(r.get('Prioridad (share de venta)', '')).strip(),
                          'sem_t': sem[2:].strip() or '—',
                          'sem_c': 'good' if sem.startswith('🟢') else 'bad' if sem.startswith('🔴') else 'warn' if sem.startswith('🟡') else 'neu',
                          'Responsable': str(r.get('Responsable', '')), 'Fecha': str(r.get('Fecha compromiso', '')).strip(),
@@ -736,7 +738,7 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     for a in alert:
         por_resp.setdefault(str(a[3]) or 'Sin responsable', []).append(a[0])
     alert_html = ''.join(f'<li><b>{H.escape(r)}</b>: {", ".join(xs)}</li>' for r, xs in por_resp.items())
-    plan_rows = ''.join(f'<tr><td style="{tdl};font-weight:600;white-space:nowrap">{H.escape(r["ID"])}</td><td style="{tdl}">{H.escape(r["Indicador"])}</td>'
+    plan_rows = ''.join(f'<tr><td style="{tdl};font-weight:600;white-space:nowrap">{H.escape(r["ID"])}</td><td style="{tdl};white-space:nowrap">{H.escape(r["Prio"])}</td><td style="{tdl}">{H.escape(r["Indicador"])}</td>'
                         f'<td style="{tdl};text-align:right">{H.escape(r["Base"])}</td><td style="{tdl};text-align:right">{H.escape(r["Ultimo"])}'
                         f'{_mes_tag(r["Mes"])}</td>'
                         f'<td style="{tdl};white-space:nowrap">{H.escape(r["sem_t"])}</td><td style="{tdl}">{H.escape(r["Responsable"])}</td>'
@@ -762,7 +764,7 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
 <h3 {h3}>3. Seguimiento del plan de acción</h3>
 <p style="margin:0 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión registrada. Responsable, fecha compromiso y última gestión se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
 {'<ul style="margin:0 0 10px 18px;padding:0;font-size:13px">' + alert_html + '</ul>' if alert_html else ''}
-<table style="border-collapse:collapse"><tr>{th('ID')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
+<table style="border-collapse:collapse"><tr>{th('ID')}{th('Prioridad')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
 <h3 {h3}>4. Estado de la automatización</h3>
 <table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>
 {cuad_mail}{encurso}
@@ -783,7 +785,7 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
 <h3 {h3}>1. Plan de acción</h3>
 <p style="margin:0 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión registrada. Cada indicador se mide en el último mes cargado de su canal (entre paréntesis). Responsable, fecha compromiso y última gestión se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
 {pend}
-<table style="border-collapse:collapse"><tr>{th('ID')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
+<table style="border-collapse:collapse"><tr>{th('ID')}{th('Prioridad')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
 <h3 {h3}>2. Avance de la carga</h3><ul style="margin:0 0 10px 18px;padding:0">{sig}</ul>
 <h3 {h3}>3. Estado de la automatización</h3>
 <table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>
