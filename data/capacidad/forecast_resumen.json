@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-07T03:13:10.151335",
+  "generado_en": "2026-10-07T12:16:33.637678",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1373,
   "capacidad_bodega_m3": 2471.3999999999996,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1373,
-    "posiciones_ocupadas_hoy": 751,
-    "posiciones_libres_hoy": 622,
-    "pct_ocupacion_hoy": 54.7,
-    "m3_stock_calculado": 884.3
+    "posiciones_ocupadas_hoy": 747,
+    "posiciones_libres_hoy": 626,
+    "pct_ocupacion_hoy": 54.4,
+    "m3_stock_calculado": 883.5
   },
   "pico_proyectado": {
     "fecha": "2026-10-07",
-    "posiciones_ocupadas": 723.2,
-    "pct_ocupacion": 52.7
+    "posiciones_ocupadas": 719.2,
+    "pct_ocupacion": 52.4
   },
   "minimo_proyectado": {
     "fecha": "2026-12-05",
-    "posiciones_ocupadas": 500.0,
-    "pct_ocupacion": 36.4
+    "posiciones_ocupadas": 496.1,
+    "pct_ocupacion": 36.1
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -72,18 +72,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 81.9,
-  "pallets_total_salientes_horizonte": 251.0,
+  "pallets_total_salientes_horizonte": 250.9,
   "m3_total_entrante_horizonte": 98.3,
-  "m3_total_saliente_horizonte": 301.3,
+  "m3_total_saliente_horizonte": 301.1,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 794,
     "sku_fallback": 3,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 24468.0,
-    "demanda_cumplida_unidades": 17192.0,
-    "demanda_no_cubierta_unidades_total": 7276.0,
-    "pct_demanda_cumplida": 70.3,
+    "demanda_cumplida_unidades": 17180.0,
+    "demanda_no_cubierta_unidades_total": 7288.0,
+    "pct_demanda_cumplida": 70.2,
     "sku_sin_match_stock_count": 36,
     "top_no_cubiertos": [
       {
@@ -123,7 +123,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 284.0,
+        "unid_no_cubiertas": 288.0,
         "sin_match_stock": true
       },
       {
@@ -148,17 +148,17 @@
       },
       {
         "sku": "1635956574926",
-        "unid_no_cubiertas": 199.0,
+        "unid_no_cubiertas": 201.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SIMCUPGL-30",
+        "unid_no_cubiertas": 196.0,
         "sin_match_stock": true
       },
       {
         "sku": "68540051413139",
         "unid_no_cubiertas": 193.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 192.0,
         "sin_match_stock": true
       },
       {
