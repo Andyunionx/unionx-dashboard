@@ -170,7 +170,11 @@ def cargar_cmr_sheet():
 
     df = df[df['fecha'].notna() & df['sku'].notna() & (df['cantidad'] > 0)]
     df = df[df['fecha'] >= datetime.strptime(CUTOFF_FECHA, '%Y-%m-%d').date()]
-    df['sku'] = df['sku'].str.strip()
+    df['sku'] = df['sku'].astype(str).str.strip()
+    # SKU numérico con formato de número en el Sheet ("1.661.873.799.978,00") → "1661873799978". Sin esto no
+    # cruzaba con el pedido web y la línea CMR quedaba con costo $0 (agosto 2026: 37 líneas).
+    num = df['sku'].str.fullmatch(r'[\d\.]+(,0+)?')
+    df.loc[num, 'sku'] = df.loc[num, 'sku'].str.replace(r',0+$', '', regex=True).str.replace('.', '', regex=False)
     df['cmr_name'] = df['cmr_name'].str.strip()
     print(f"   {len(df)} filas validas ≥ {CUTOFF_FECHA}", flush=True)
     return df
