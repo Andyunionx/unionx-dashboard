@@ -1,34 +1,40 @@
 {
-  "generado_en": "2026-10-07T12:16:33.637678",
+  "generado_en": "2026-10-07T20:18:39.028257",
   "horizonte_dias": 90,
-  "capacidad_posiciones": 1373,
-  "capacidad_bodega_m3": 2471.3999999999996,
-  "capacidad_fuente": "1373 pos CA1/Stock × 1.7999999999999998 m³",
+  "capacidad_posiciones": 1374,
+  "capacidad_bodega_m3": 2473.2,
+  "capacidad_fuente": "1374 pos CA1/Stock × 1.7999999999999998 m³",
   "asunciones": {
     "m3_por_posicion": 1.7999999999999998,
     "m3_por_pallet_apilable": 1.2,
     "umbral_anomalo_m3_unidad": 1.0
   },
   "estado_actual": {
-    "posiciones_total": 1373,
-    "posiciones_ocupadas_hoy": 747,
-    "posiciones_libres_hoy": 626,
-    "pct_ocupacion_hoy": 54.4,
-    "m3_stock_calculado": 883.5
+    "posiciones_total": 1374,
+    "posiciones_ocupadas_hoy": 759,
+    "posiciones_libres_hoy": 615,
+    "pct_ocupacion_hoy": 55.2,
+    "m3_stock_calculado": 871.8
   },
   "pico_proyectado": {
     "fecha": "2026-10-07",
-    "posiciones_ocupadas": 719.2,
-    "pct_ocupacion": 52.4
+    "posiciones_ocupadas": 775.9,
+    "pct_ocupacion": 56.5
   },
   "minimo_proyectado": {
     "fecha": "2026-12-05",
-    "posiciones_ocupadas": 496.1,
-    "pct_ocupacion": 36.1
+    "posiciones_ocupadas": 554.6,
+    "pct_ocupacion": 40.4
   },
   "primer_critico": null,
   "primer_atencion": null,
-  "dias_con_entrada_transito": [],
+  "dias_con_entrada_transito": [
+    {
+      "fecha": "2026-10-07",
+      "pallets": 44.8,
+      "m3": 53.7
+    }
+  ],
   "pis_entrantes": [
     {
       "pi": "26TP0704PI",
@@ -69,26 +75,34 @@
       "m3": 0.0,
       "unidades": 32.0,
       "transporte": ""
+    },
+    {
+      "pi": "26TP0909PI",
+      "fecha_eta": "2026-10-07",
+      "pallets": 44.8,
+      "m3": 53.7,
+      "unidades": 4227.0,
+      "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 81.9,
-  "pallets_total_salientes_horizonte": 250.9,
-  "m3_total_entrante_horizonte": 98.3,
-  "m3_total_saliente_horizonte": 301.1,
+  "pallets_total_entrantes_horizonte": 126.7,
+  "pallets_total_salientes_horizonte": 249.1,
+  "m3_total_entrante_horizonte": 152.0,
+  "m3_total_saliente_horizonte": 298.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 794,
     "sku_fallback": 3,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 24468.0,
-    "demanda_cumplida_unidades": 17180.0,
-    "demanda_no_cubierta_unidades_total": 7288.0,
-    "pct_demanda_cumplida": 70.2,
-    "sku_sin_match_stock_count": 36,
+    "demanda_cumplida_unidades": 17164.0,
+    "demanda_no_cubierta_unidades_total": 7304.0,
+    "pct_demanda_cumplida": 70.1,
+    "sku_sin_match_stock_count": 35,
     "top_no_cubiertos": [
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 1216.0,
+        "unid_no_cubiertas": 1219.0,
         "sin_match_stock": true
       },
       {
@@ -98,32 +112,32 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 426.0,
+        "unid_no_cubiertas": 427.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 353.0,
+        "unid_no_cubiertas": 372.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVPRONOV",
-        "unid_no_cubiertas": 344.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "1650301031879",
-        "unid_no_cubiertas": 336.0,
+        "unid_no_cubiertas": 345.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 333.0,
+        "unid_no_cubiertas": 342.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1650301031879",
+        "unid_no_cubiertas": 337.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 288.0,
+        "unid_no_cubiertas": 308.0,
         "sin_match_stock": true
       },
       {
@@ -137,28 +151,28 @@
         "sin_match_stock": true
       },
       {
+        "sku": "1635956574926",
+        "unid_no_cubiertas": 210.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SIMCUPGL-30",
+        "unid_no_cubiertas": 209.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "LVTECOFSL-GR",
         "unid_no_cubiertas": 208.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1479750635184",
-        "unid_no_cubiertas": 204.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "1635956574926",
-        "unid_no_cubiertas": 201.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 196.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "68540051413139",
-        "unid_no_cubiertas": 193.0,
+        "unid_no_cubiertas": 208.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1479750635184",
+        "unid_no_cubiertas": 207.0,
         "sin_match_stock": true
       },
       {
@@ -177,13 +191,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVPROORI",
-        "unid_no_cubiertas": 117.0,
+        "sku": "LVPROLUM",
+        "unid_no_cubiertas": 114.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LVPROLUM",
-        "unid_no_cubiertas": 113.0,
+        "sku": "1566849947902",
+        "unid_no_cubiertas": 99.0,
         "sin_match_stock": true
       }
     ],

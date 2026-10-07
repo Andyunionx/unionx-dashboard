@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-07T12:16:28.853104",
+  "generado_en": "2026-10-07T20:18:32.727644",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 59,
-  "sku_match_odoo": 58,
-  "sku_con_peso": 33,
-  "sku_con_volumen": 32,
-  "sku_volumen_anomalo": 0,
+  "sku_input": 76,
+  "sku_match_odoo": 75,
+  "sku_con_peso": 48,
+  "sku_con_volumen": 47,
+  "sku_volumen_anomalo": 4,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 55.9,
-  "cobertura_volumen_pct": 54.2,
-  "cobertura_volumen_confiable_pct": 54.2,
-  "unidades_totales": 8584.0,
-  "peso_total_kg": 38890.2,
-  "volumen_total_m3": 98.31,
-  "volumen_total_m3_raw": 98.31,
-  "pallets_totales_estim": 81.9,
+  "cobertura_peso_pct": 63.2,
+  "cobertura_volumen_pct": 61.8,
+  "cobertura_volumen_confiable_pct": 56.6,
+  "unidades_totales": 12811.0,
+  "peso_total_kg": 60676.0,
+  "volumen_total_m3": 152.01,
+  "volumen_total_m3_raw": 5523902.01,
+  "pallets_totales_estim": 126.7,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -121,10 +121,51 @@
       "skus_volumen_anomalo": 0,
       "cobertura_peso_pct": 0.0,
       "cobertura_volumen_pct": 0.0
+    },
+    {
+      "pi": "26TP0909PI",
+      "transporte": "",
+      "fecha_embarque": "2026-10-07",
+      "fecha_eta_bodega": "2026-10-07",
+      "skus_distintos": 29,
+      "unidades_totales": 4227.0,
+      "peso_total_kg": 21785.8,
+      "volumen_total_m3": 53.7,
+      "volumen_total_m3_raw": 5523803.7,
+      "pallets_estim": 44.8,
+      "containers_20_estim": 1.92,
+      "containers_40hc_estim": 0.8,
+      "skus_con_match_odoo": 29,
+      "skus_con_peso": 18,
+      "skus_con_volumen": 18,
+      "skus_volumen_anomalo": 4,
+      "cobertura_peso_pct": 62.1,
+      "cobertura_volumen_pct": 62.1
     }
   ],
   "skus_sin_match": [
     ""
   ],
-  "skus_volumen_anomalo_top": []
+  "skus_volumen_anomalo_top": [
+    {
+      "sku": "BDSILLEVREG",
+      "producto": "Silla de Comer Evolutiva de Madera Regulable Bebé Bandú",
+      "volumen_unit_m3": 70125.0
+    },
+    {
+      "sku": "BDTORRAPR",
+      "producto": "Torre Aprendizaje Montessori Madera Plegable 3 Niveles Bandú",
+      "volumen_unit_m3": 56700.0
+    },
+    {
+      "sku": "LVMOPRL-BK",
+      "producto": "Mochila Notebook Ejecutiva Prime Lite Impermeable 18L LEVO",
+      "volumen_unit_m3": 6300.0
+    },
+    {
+      "sku": "SMCONTCAFMI",
+      "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
+      "volumen_unit_m3": 2535.0
+    }
+  ]
 }
