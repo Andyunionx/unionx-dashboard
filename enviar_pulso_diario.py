@@ -3,7 +3,7 @@
 
 Contenido:
 - KPIs mes en curso hasta ayer (venta, margen, %M, %meta, gap)
-- YoY mismo período mes 2025
+- YoY contra los mismos días de la semana del año pasado (−364 días)
 - Por día del mes (cada día con venta/margen)
 - Top canales acumulado mes con %Meta (V06 Análisis Metas vs Resultados)
 - Top marcas/categorías
@@ -156,9 +156,10 @@ def render_html(df):
     # Acumulado mes en curso (1 al día anterior)
     df_mes = df[(df['fv_dt'] >= primer_dia) & (df['fv_dt'] <= ayer)].copy()
 
-    # YoY: mismo período año pasado
-    primer_dia_ly = date(ano_actual-1, mes_actual, 1)
-    ayer_ly = primer_dia_ly + timedelta(days=dias_acum-1)
+    # YoY: mismos días de la semana del año pasado (−364 días), para que lunes compare con lunes y los
+    # eventos (Cyber) caigan en el mismo día. Con la fecha calendario cada día caía contra otro día de la semana (Andrés 7-oct).
+    primer_dia_ly = primer_dia - timedelta(days=364)
+    ayer_ly = ayer - timedelta(days=364)
     df_ly = df[(df['fv_dt'] >= primer_dia_ly) & (df['fv_dt'] <= ayer_ly)].copy()
     # YoY por breakdown: venta bruta LY (2025 mismo período) por llave. Misma base
     # que el pivot vivo (2026 vs 2025, mismo parquet).
@@ -375,10 +376,10 @@ def render_html(df):
 </div>
 
 <div style="background:#FEF3C7;border-left:4px solid #EA580C;padding:14px;border-radius:6px;margin:16px 0">
-  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📊 YoY mismo período mes 2025 ({primer_dia_ly} a {ayer_ly})</div>
+  <div style="font-size:0.75rem;color:#64748B;text-transform:uppercase;letter-spacing:0.05em">📊 YoY {ano_actual-1}, mismos días de la semana ({primer_dia_ly} a {ayer_ly})</div>
   <table style="width:100%;margin-top:6px;font-size:0.88rem">
-    <tr><td>{mes_nom} 2026 al día {dias_acum}:</td><td align="right"><b>{fmt_m(b_ty)}</b> bruta · {fmt_m(m_ty)} margen ({pm_ty:.1f}%)</td></tr>
-    <tr><td>{mes_nom} 2025 mismo período:</td><td align="right">{fmt_m(b_ly)} bruta · {fmt_m(m_ly)} margen ({pm_ly:.1f}%)</td></tr>
+    <tr><td>{mes_nom} {ano_actual} al día {dias_acum}:</td><td align="right"><b>{fmt_m(b_ty)}</b> bruta · {fmt_m(m_ty)} margen ({pm_ty:.1f}%)</td></tr>
+    <tr><td>{ano_actual-1}, mismos días de la semana:</td><td align="right">{fmt_m(b_ly)} bruta · {fmt_m(m_ly)} margen ({pm_ly:.1f}%)</td></tr>
     <tr style="border-top:1px solid #E2E8F0"><td>YoY:</td><td align="right">Venta <span style="color:{cl(yoy_v)};font-weight:600">{yoy_v:+.1f}%</span> · Margen <span style="color:{cl(yoy_m)};font-weight:600">{yoy_m:+.1f}%</span></td></tr>
   </table>
 </div>
