@@ -137,14 +137,18 @@ RIPLEY_GLOSA = {
     'Descuento por logistica inversa': 'MKP Cobro despacho logistica inversa',
     'Descuento por cancelación': 'MKP Penalidad - Cancelacion',
     'Descuento por PDM': 'MKP Acuerdo comercial - Espacios Always OnProduct',
-    'Abono postventa': 'MKP Otros abonos',
-    'Otros descuentos': 'MKP Otros descuentos',
-    'Descuento por cupones de despacho': 'MKP Cupones de despacho',
+    # Gabriela 8-oct: columna Z = costo fijo, AJ = última milla, H + L = despacho que cobra Ripley por pedido
+    'Otros descuentos': 'MKP COMISIÓN COSTO FIJO MKP',
+    'Descuento por cupones de despacho': 'MKP Logística última milla',
+    'Gastos de envío pagados por el operador': 'Despacho de productos MKP Ventas',
+    'Gastos de envío reembolsados pagados por el operador': 'Despacho de productos MKP Ventas',
     'Cobro despacho primera milla': 'MKP Cobro logístico parcial del despacho primera milla',
 }
+# Envío (G) y Envío reembolsado (K) son lo que paga el cliente: Ripley lo abona y lo descuenta en H, por eso no
+# entran. El Abono postventa no entra porque no tiene facturación asociada (Gabriela 8-oct).
 RIPLEY_NO_COSTO = {'Fecha OC', 'Número documento liquidación', 'Orden de compra', 'Shop ID', 'Tienda',
-                   'Importe del pedido', 'Envío', 'Gastos de envío pagados por el operador', 'Pedidos reembolsados',
-                   'Envío reembolsado', 'Gastos de envío reembolsados pagados por el operador', 'A pagar'}
+                   'Importe del pedido', 'Envío', 'Pedidos reembolsados', 'Envío reembolsado', 'A pagar',
+                   'Abono postventa'}
 
 
 def ripley(path: Path, cuenta='Ripley') -> pd.DataFrame:
@@ -334,6 +338,22 @@ def enviame(path: Path) -> pd.DataFrame:
     return d[COLS]
 
 
+def hites(path: Path) -> pd.DataFrame:
+    """Liquidación de Hites (carpeta HITES/<MES>, tres archivos por mes con corte el 20; Gabriela 8-oct): columna
+    COMISIÓN → comisión de venta y SHIPPING → comisión de envío, con IVA. TOTAL, PAGO y ESTADO no entran."""
+    x = pd.read_excel(path)
+    x = x[x['ORDEN DE COMPRA'].notna()]
+    partes = [pd.DataFrame({'canal': 'Hites', 'cuenta': 'Hites', 'archivo': path.name,
+                            'pedido': x['ORDEN DE COMPRA'].astype(str).str.replace(r'\.0$', '', regex=True), 'sku': '',
+                            'glosa': glosa, 'monto_archivo': pd.to_numeric(x[col], errors='coerce').fillna(0),
+                            'base_iva': 'con_iva', 'modalidad_liq': 'Colecta'})
+              for col, glosa in (('COMISIÓN', 'Comisión Marketplace seller Comercial Innovatek Spa'),
+                                 ('SHIPPING', 'Despacho Marketplace seller Comercial Innovatek Spa'))]
+    d = pd.concat(partes, ignore_index=True)
+    d['monto_neto'] = d['monto_archivo'] / IVA
+    return d[COLS]
+
+
 CANAL_COURIER = {'mercado libre': 'Mercado Libre', 'meli': 'Mercado Libre', 'falabella': 'Falabella', 'ripley': 'Ripley',
                  'paris': 'Paris', 'walmart': 'Walmart'}
 
@@ -347,6 +367,9 @@ def leer_carpeta(base: Path) -> pd.DataFrame:
         try:
             if p.startswith('MELI') and '/ENVIAME/' in p:
                 partes.append(enviame(f))
+                continue
+            if p.startswith('HITES'):
+                partes.append(hites(f))
                 continue
             if p.startswith('KITCHEN CENTER'):
                 partes.append(kitchen_center(f))
