@@ -135,7 +135,7 @@ def _check_rango():
 
 # ───────────────────────── datos ─────────────────────────
 COLS = ['fecha_venta', 'hora_venta', 'tipo_movimiento', 'canal', 'tipo_negocio', 'marca', 'categoria_hijo', 'pedido',
-        'sku', 'producto', 'bodega', 'cantidad', 'venta_bruta', 'venta_neta', 'margen_front',
+        'documento', 'sku', 'producto', 'bodega', 'cantidad', 'venta_bruta', 'venta_neta', 'margen_front',
         'comision', 'logistica', 'marketing', 'margen_final']
 NUM = ['cantidad', 'venta_bruta', 'venta_neta', 'margen_front', 'comision', 'logistica', 'marketing', 'margen_final']
 
@@ -169,6 +169,52 @@ def cargar_ventas():
     for c in ('canal', 'tipo_negocio', 'marca', 'categoria_hijo'):
         df[c] = df[c].fillna('').astype(str).str.strip()
     return df
+
+
+REFACT = {}      # documento → detalle de las refacturaciones excluidas (se informa al pie del encabezado)
+
+
+def refacturaciones():
+    """Refacturaciones de ventas anteriores al evento (8-oct: N/C 042532 revierte entera la FAC 102752 de Walmart del
+    30-sep, OC 5550650057, para volver a facturarla). La NC que revierte completa una FACTURA emitida antes del evento
+    y la factura nueva con la misma referencia y cliente son administrativas: no son venta ni devolución del Cyber.
+    Devuelve {documento: detalle}. Si Odoo no responde, no excluye nada."""
+    import xmlrpc.client
+    pw = os.environ.get('ANDRES_ODOO_PASSWORD', '')
+    if not pw:
+        return {}
+    try:
+        url, db, user = 'https://unionxb2b.odoo.com', 'bmya-innovatek-sh-prd-6981800', 'andres@grupoeter.cl'
+        uid = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common', allow_none=True).authenticate(db, user, pw, {})
+        ob = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/object', allow_none=True)
+        x = lambda *a, **k: ob.execute_kw(db, uid, pw, *a, **k)  # noqa: E731
+        ini = PRE[0]
+        ncs = x('account.move', 'search_read', [[('move_type', '=', 'out_refund'), ('state', '=', 'posted'),
+                                                 ('invoice_date', '>=', ini), ('reversed_entry_id', '!=', False)]],
+                {'fields': ['name', 'amount_total', 'reversed_entry_id']})
+        orig = {o['id']: o for o in x('account.move', 'read', [list({n['reversed_entry_id'][0] for n in ncs})],
+                                      {'fields': ['name', 'invoice_date', 'amount_total', 'ref', 'partner_id']})} if ncs else {}
+        out, origs = {}, []
+        for n in ncs:
+            o = orig.get(n['reversed_entry_id'][0])
+            # solo FACTURAS revertidas completas (refacturación B2B); las boletas revertidas son devoluciones reales
+            if (o and str(o['name']).startswith('FAC') and str(o['invoice_date']) < ini
+                    and abs(n['amount_total'] - o['amount_total']) < 1):
+                out[n['name']] = f"{n['name']} revierte {o['name']} del {o['invoice_date']} (${o['amount_total']:,.0f})"
+                origs.append(o)
+        # factura nueva: mismo cliente, desde el inicio del evento, con la misma referencia o el mismo monto (±$100: la
+        # FAC 103364 que refactura la 102752 viene sin referencia y $17 distinta por redondeo de líneas)
+        for o in origs:
+            for f in x('account.move', 'search_read', [[('move_type', '=', 'out_invoice'), ('state', '=', 'posted'),
+                                                        ('invoice_date', '>=', ini), ('partner_id', '=', o['partner_id'][0]),
+                                                        ('id', '!=', o['id'])]],
+                       {'fields': ['name', 'amount_total', 'ref']}):
+                if (o.get('ref') and f.get('ref') == o['ref']) or abs(f['amount_total'] - o['amount_total']) <= 100:
+                    out[f['name']] = f"{f['name']} refactura {o['name']} (${f['amount_total']:,.0f})"
+        return out
+    except Exception as e:
+        print(f"[REFACT][WARN] no se pudo revisar Odoo ({type(e).__name__}): no excluyo nada", flush=True)
+        return {}
 
 
 def series(df):
@@ -365,6 +411,9 @@ def render_html(S, M, info, lineas_canal, alarma_stock):
         estado = (f'Día {n_dias} de 7 · corte {a:%d-%b %H:%M} · datos hasta las {tod[:5]}' if idx <= 6 else 'Cyber terminado')
     else:
         estado = f'Pre-Cyber · corte {a:%d-%b %H:%M} · datos hasta las {tod[:5]} · el Cyber parte el lun 5-oct'
+    if REFACT:
+        estado += ('<br>No incluye refacturaciones de ventas anteriores al Cyber: '
+                   + '; '.join(v.split(' (')[0] for v in REFACT.values()) + '.')
     hoy_txt = ''
     if 0 <= idx <= 6:
         p_hoy = hoy_b / meta_hoy_corte * 100 if meta_hoy_corte else 0
@@ -932,6 +981,13 @@ def construir():
     print('[1/4] Cargando RAW (parquet)...', flush=True)
     t0 = time.time()
     df = cargar_ventas()
+    if not ENSAYO:
+        REFACT.update(refacturaciones())
+        fuera = df['fv'].isin(DIAS + PRE) & df['documento'].astype(str).str.strip().isin(REFACT)
+        if fuera.any():
+            print(f"      [REFACT] excluidas {int(fuera.sum())} filas (${df.loc[fuera, 'venta_bruta'].sum():,.0f}): "
+                  + ' · '.join(REFACT.values()), flush=True)
+            df = df[~fuera].copy()
     S = series(df)
     dia_s = corte()[0]
     hoy = df[df['fv'] == dia_s] if not ENSAYO else pd.DataFrame()   # todos los canales: frescura del dato
@@ -987,7 +1043,9 @@ def main():
         print(f"[OK] archivos en {out}", flush=True)
         return 0
     if not ENSAYO and os.environ.get('CYBER_SIN_VALIDAR') != '1':   # CYBER_SIN_VALIDAR solo para borradores locales
-        okv, msg = validar_contra_odoo(dia_s, float(dia_df['venta_bruta'].sum()) if len(dia_df) else 0.0)
+        # solo filas Venta: Odoo sale.order no trae las notas de crédito (8-oct, N/C 042532 bloqueó el pulso)
+        v = dia_df[dia_df['tipo_movimiento'] == 'Venta'] if len(dia_df) else dia_df
+        okv, msg = validar_contra_odoo(dia_s, float(v['venta_bruta'].sum()) if len(v) else 0.0)
         if not okv:
             print(f"[VALIDA] ABORTA: {msg}", flush=True)
             alertar_andres('validación contra Odoo falló — pulso NO enviado', msg)
