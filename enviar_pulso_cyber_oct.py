@@ -209,7 +209,7 @@ def refacturaciones():
                                                         ('invoice_date', '>=', ini), ('partner_id', '=', o['partner_id'][0]),
                                                         ('id', '!=', o['id'])]],
                        {'fields': ['name', 'amount_total', 'ref']}):
-                if (o.get('ref') and f.get('ref') == o['ref']) or abs(f['amount_total'] - o['amount_total']) <= 100:
+                if (o.get('ref') and f.get('ref') == o['ref']) or (not f.get('ref') and abs(f['amount_total'] - o['amount_total']) <= 100):
                     out[f['name']] = f"{f['name']} refactura {o['name']} (${f['amount_total']:,.0f})"
         return out
     except Exception as e:

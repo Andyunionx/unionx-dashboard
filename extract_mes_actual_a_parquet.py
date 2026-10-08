@@ -396,6 +396,14 @@ def main():
               f"(${_vb:,.0f}) — pertenecen a meses ya congelados")
         df = df[~_fuera].copy()
 
+    # Refacturación de una factura de un mes cerrado (8-oct, Walmart N/C 042532 + FAC 103364): la factura nueva no
+    # queda ligada al pedido y el RAW solo traía la NC (−$116,5M). La NC sale; la venta sigue en su mes. Ver refacturaciones_raw.py.
+    try:
+        from refacturaciones_raw import excluir as _excluir_refacturaciones
+        df = _excluir_refacturaciones(df, desde)
+    except Exception as e:
+        print(f"   [WARN] refacturaciones no revisadas: {type(e).__name__}: {str(e)[:80]}")
+
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     # GATE 1 (mecanismo de seguridad): validar contra el último parquet bueno.
