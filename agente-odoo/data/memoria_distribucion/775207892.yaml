@@ -1,0 +1,10 @@
+rut: 77520789-2
+nombre: Eboxy SpA
+reglas:
+- patron: comisión eattouch
+  tipo_match: contains_lower
+  cuenta_destino: COMISION_GRANDES_CUENTAS
+  aprobaciones: 1
+  ultima_aprobacion: '2026-10-08'
+  aprobado_por: Camila Bustos <camila@unionx.cl>
+  auto: false
