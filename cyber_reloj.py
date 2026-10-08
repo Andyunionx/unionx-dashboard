@@ -8,6 +8,9 @@ se vuelve a disparar a sí mismo para seguir. El cron del workflow solo lo arran
 rearranca si la cadena se corta); el `concurrency` evita que haya dos relojes a la vez.
 
 Ventana: lun 5-oct 06:00 CLT → lun 12-oct 06:00 CLT (UTC−3). Fuera de ella no hace nada.
+A las 08, 14 y 18 h CLT también dispara cyber_planilla.yml (planilla de operaciones en Drive), que
+espera 10 min para no cruzar su extracción de Odoo con la del pulso. No se encadena con workflow_run
+porque GitHub no dispara workflows a partir de corridas lanzadas con el GITHUB_TOKEN.
 Uso: python cyber_reloj.py [--simular | --prueba]   (--simular: muestra qué haría; --prueba: dispara una vez el pulso en borrador)
 """
 import os
@@ -19,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 DESDE = datetime(2026, 10, 5, 9, 0, tzinfo=timezone.utc)
 HASTA = datetime(2026, 10, 12, 9, 0, tzinfo=timezone.utc)
 TURNO = timedelta(hours=5, minutes=30)
+HORAS_PLANILLA = {8, 14, 18}     # hora CLT en que se actualiza la planilla de operaciones
 SIMULAR = '--simular' in sys.argv
 PRUEBA = '--prueba' in sys.argv     # dispara una vez el pulso en modo borrador (verifica permisos)
 
@@ -50,6 +54,8 @@ def main():
         if espera > 0 and not SIMULAR:
             time.sleep(espera)
         gh('workflow', 'run', 'cyber_pulso.yml')
+        if (proxima - timedelta(hours=3)).hour in HORAS_PLANILLA:
+            gh('workflow', 'run', 'cyber_planilla.yml', '-f', 'esperar_min=10')
         proxima += timedelta(hours=1)
     if proxima < HASTA:
         print('[reloj] fin del turno: relevo')
