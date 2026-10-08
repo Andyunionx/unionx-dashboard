@@ -22,6 +22,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent
 MATRIZ = ROOT / "data" / "planillas" / "Matriz productos.xlsx"
 NC_DET = ROOT / "data" / "contabilidad" / "nc_detalle_h1.parquet"
+PRICING_CAT = ROOT / "data" / "planillas" / "categorias_pricing.csv"   # sync_categorias_pricing.py
 
 MATRIZ_MAP = {
     "Producto": "producto", "Categoría macro": "categoria_macro",
@@ -160,6 +161,28 @@ def unificar_descripcion_por_sku(df, verbose=True):
     return df
 
 
+def categorias_pricing(df, verbose=True):
+    """P1e: categoria_padre/hijo desde data/planillas/categorias_pricing.csv (Maestra Pricing) + Open Box."""
+    log = print if verbose else (lambda *a, **k: None)
+    if "categoria_padre" not in df.columns or "categoria_hijo" not in df.columns:
+        return df
+    n = 0
+    if PRICING_CAT.exists():
+        pc = pd.read_csv(PRICING_CAT, dtype=str).fillna("")
+        mp = {_norm(s): (pa, hi) for s, pa, hi in zip(pc["sku"], pc["categoria_padre"], pc["categoria_hijo"]) if s and pa and hi}
+        k = df["sku"].astype(str).map(_norm)
+        hit = k.isin(mp)
+        df.loc[hit, "categoria_padre"] = k[hit].map(lambda x: mp[x][0])
+        df.loc[hit, "categoria_hijo"] = k[hit].map(lambda x: mp[x][1])
+        n = int(hit.sum())
+    vac = lambda s: s.fillna("").astype(str).str.strip().isin(["", "0", "nan", "None"])  # noqa: E731
+    ob = df["sku"].astype(str).str.strip().str.upper().str.startswith("OB-") & (vac(df["categoria_padre"]) | vac(df["categoria_hijo"]))
+    df.loc[ob, "categoria_padre"] = "Open Box"
+    df.loc[ob, "categoria_hijo"] = "Open Box"
+    log(f"  [P1e] categoría desde la Maestra Pricing en {n:,} filas · Open Box por prefijo en {int(ob.sum())}")
+    return df
+
+
 def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     """Aplica P1 (atributos por SKU), P5 (es_despacho) y opcional P3 (backfill NC).
     Vectorizado y sin copia para soportar el histórico (~414k filas)."""
@@ -183,6 +206,14 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
     except Exception as e:
         log(f"  [P1] omitido: {type(e).__name__}: {e}")
         df = df.drop(columns=[c for c in df.columns if c.startswith("_m_") or c == "_sk"], errors="ignore")
+
+    # P1e — categoría padre/hijo desde la Maestra Pricing, la fuente única que mantiene Felipe (Andrés 8-oct):
+    # pisa la de la Matriz cuando el SKU está en la Pricing; si no, queda la de la Matriz. Open Box (SKU "OB-")
+    # sin categoría → Open Box / Open Box, como los asigna Felipe.
+    try:
+        df = categorias_pricing(df, verbose=verbose)
+    except Exception as e:
+        log(f"  [P1e] omitido: {type(e).__name__}: {e}")
 
     # P1b — self-heal de marca vacía (mismo SKU + prefijo)
     df = heal_marca(df, verbose=verbose)
