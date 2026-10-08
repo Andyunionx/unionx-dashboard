@@ -185,8 +185,10 @@ def _num(s):
     return -x if neg else x
 
 
-def gab_df(vals_gab) -> pd.DataFrame:
-    """Filas con valor de la pestaña de Gabriela, normalizadas (centro de costo y modalidad)."""
+def gab_df(vals_gab, fuera=False) -> pd.DataFrame:
+    """Filas con valor de la pestaña de Gabriela, normalizadas (centro de costo y modalidad). Solo entran los
+    centros comerciales (CC_GABRIELA): otro centro (ej. "Venta comercial" de Paris y ML en sep, 7-oct) se restaba
+    como costo y hundía el margen. fuera=True devuelve esas filas, para listarlas en la 2b como no usadas."""
     g = pd.DataFrame(vals_gab[1:], columns=vals_gab[0])
     g = g[g['Valor'].astype(str).str.strip().ne('')].copy()
     g['Valor'] = g['Valor'].map(_num)
@@ -196,7 +198,8 @@ def gab_df(vals_gab) -> pd.DataFrame:
         {'Comisión envio': 'Comisión envío', 'Comision envío': 'Comisión envío'})
     g['Modalidad'] = g['Modalidad'].str.strip().str.lower().map(MOD_GABRIELA).fillna('')
     g['Fuente'] = 'Gabriela'
-    return g
+    ok = g['Centro de costo'].isin(CC_GABRIELA)
+    return g[~ok] if fuera else g[ok]
 
 
 def comerciales(t, vals_gab, liq=None) -> pd.DataFrame:
@@ -495,6 +498,11 @@ def main():
         vista = liq.copy()
         vista['Usada en la base'] = ['Sí' if (m, c, cc) in claves else 'No (manda la carga de Gabriela)'
                                      for m, c, cc in zip(vista['Mes'], vista['Canal'], vista['Centro de costo'])]
+        fuera = gab_df(vals_gab, fuera=True)
+        if len(fuera):
+            fuera = fuera.reindex(columns=COLS).assign(**{'Usada en la base': 'No (centro de costo no comercial, de la carga de Gabriela)'})
+            vista = pd.concat([vista, fuera], ignore_index=True)
+            print(f'[{H_LIQ}] {len(fuera)} filas de la carga de Gabriela fuera de {CC_GABRIELA}: no entran al margen')
         wl = _hoja(sh, H_LIQ, filas=max(len(vista) + 50, 300), cols=11)
         wl.clear()
         wl.update([list(vista.columns)] + vista.astype(object).values.tolist(), value_input_option='RAW')
@@ -535,7 +543,8 @@ def main():
         [f'{H_RAW}', 'La escribe el proceso automático desde el RAW de ventas. Trae Ingreso venta '
                      'y Costo venta. NO editar: se borra y reescribe entera en cada corrida.'],
         [f'{H_GAB}', 'Es tuya, Gabriela. El proceso automático nunca escribe acá. Carga Comisión '
-                     'venta, Comisión envío y Marketing.'],
+                     'venta, Comisión envío y Marketing. Otro centro de costo no entra al margen: se lista en la 2b '
+                     'como no usado.'],
         [f'{H_CON}', 'Se arma sola con una fórmula que apila las dos anteriores. No editar.'],
         [f'{H_LIQ}', 'La escribe el proceso automático: lectura de las liquidaciones de la carpeta de Drive con la '
                      'receta de glosas (marketplaces, couriers, Kitchen Center, Bice). No editar.'],

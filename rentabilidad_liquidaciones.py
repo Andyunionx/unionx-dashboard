@@ -320,6 +320,20 @@ def bluex(path: Path) -> pd.DataFrame:
     return pd.concat(partes, ignore_index=True)
 
 
+def enviame(path: Path) -> pd.DataFrame:
+    """Factura de Envíame, courier de Mercado Libre (carpeta MELI/ENVIAME/<MES>, Gabriela 7-oct). Pestaña Detalle,
+    una fila por envío; 'total' = precio + seguro, neto (suma el Subtotal de la pestaña Resumen). La última fila es
+    el total y no trae id."""
+    x = pd.read_excel(path, sheet_name='Detalle')
+    x = x[x['id'].notna()]
+    monto = pd.to_numeric(x['total'] if 'total' in x.columns else x['precio'], errors='coerce').fillna(0)
+    d = pd.DataFrame({'canal': 'Mercado Libre', 'cuenta': 'Envíame', 'archivo': path.name,
+                      'pedido': x['imported_id'].map(lambda v: str(int(v)) if pd.notna(v) else ''),
+                      'sku': '', 'glosa': 'Enviame', 'monto_archivo': monto, 'base_iva': 'neto', 'modalidad_liq': ''})
+    d['monto_neto'] = d['monto_archivo']
+    return d[COLS]
+
+
 CANAL_COURIER = {'mercado libre': 'Mercado Libre', 'meli': 'Mercado Libre', 'falabella': 'Falabella', 'ripley': 'Ripley',
                  'paris': 'Paris', 'walmart': 'Walmart'}
 
@@ -331,6 +345,9 @@ def leer_carpeta(base: Path) -> pd.DataFrame:
     for f in sorted(base.rglob('*.xlsx')):
         p = str(f.relative_to(base)).upper().replace('\\', '/')
         try:
+            if p.startswith('MELI') and '/ENVIAME/' in p:
+                partes.append(enviame(f))
+                continue
             if p.startswith('KITCHEN CENTER'):
                 partes.append(kitchen_center(f))
                 continue

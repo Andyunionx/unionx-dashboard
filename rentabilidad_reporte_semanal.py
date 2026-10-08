@@ -27,6 +27,7 @@ import html as H
 import io
 import json
 import os
+import re
 import sys
 import tempfile
 from email.message import EmailMessage
@@ -51,6 +52,19 @@ ESPERADO = {'FALABELLA': 'Liquidación (InvoiceReport)', 'MELI': 'ML 1 y ML 2: f
             'PARIS': 'FF y Seller (transactions_report)', 'RIPLEY': 'Liquidaciones semanales Mirakl',
             'WALMART': 'Liquidaciones quincenales', 'Recibelo-Blue': 'Costeo Recíbelo + detalle BlueX'}
 MES_CARPETA = {v.upper(): k for k, v in MESES_ES.items()}
+MES_ABREV = {'ENE': 1, 'FEB': 2, 'MAR': 3, 'ABR': 4, 'MAY': 5, 'JUN': 6, 'JUL': 7, 'AGO': 8, 'SEP': 9, 'SEPT': 9,
+             'SET': 9, 'OCT': 10, 'NOV': 11, 'DIC': 12}
+
+
+def mes_carpeta(nombre):
+    """Mes de una carpeta de la liquidación: con el nombre completo ("AGOSTO MELI 1") o abreviado como palabra
+    ("SEPT MELI 1", 7-oct: la liquidación de ML de septiembre no se leía). La abreviatura se compara por palabra
+    entera para no confundir MAR con MARKETING."""
+    u = str(nombre).upper()
+    mes = next((v for k, v in MES_CARPETA.items() if k in u), None)
+    if mes:
+        return mes
+    return next((MES_ABREV[w] for w in re.findall(r'[A-ZÁÉÍÓÚÑ]+', u) if w in MES_ABREV), None)
 
 
 def n(x, d=1):
@@ -85,6 +99,7 @@ def cargar():
     gab['Mes'] = gab['Mes'].map(PA.mes_str)
     gab['Canal'] = gab['Canal'].astype(str).str.strip().replace({'Mercado Libre 2': 'Mercado Libre'})
     gab['cc'] = gab['Centro de costo'].astype(str).str.strip().str.capitalize().replace({'Comisión envio': 'Comisión envío'})
+    gab = gab[gab['cc'].isin(D.CC_GABRIELA)]             # mismo filtro que la base (D.gab_df)
     gab['Glosa'] = gab['Glosa'].astype(str).str.strip()
     try:
         vp = sh.worksheet(PA.H_PLAN).get_all_values()
@@ -168,16 +183,21 @@ def drive_carpeta():
         for m in hijos(c['id']):
             if not m['mimeType'].endswith('folder'):
                 continue
-            mes = next((v for k, v in MES_CARPETA.items() if k in m['name'].upper()), None)
-            if not mes:
-                continue
-            files = []
-            pila = [m]
-            while pila:
-                x = pila.pop()
-                for f in hijos(x['id']):
-                    (pila.append(f) if f['mimeType'].endswith('folder') else files.append((f, x['name'])))
-            arbol.setdefault(c['name'], {}).setdefault(mes, []).extend(files)
+            mes = mes_carpeta(m['name'])
+            if mes:
+                grupos = [(m, mes, '')]
+            else:
+                # carpeta por proveedor con los meses adentro (MELI/ENVIAME/AGOSTO, PAGINAS/SHOPIFY/JULIO; 7-oct)
+                grupos = [(x, mes_carpeta(x['name']), m['name'] + '/') for x in hijos(m['id'])
+                          if x['mimeType'].endswith('folder') and mes_carpeta(x['name'])]
+            for carpeta, mes, pref in grupos:
+                files = []
+                pila = [carpeta]
+                while pila:
+                    x = pila.pop()
+                    for f in hijos(x['id']):
+                        (pila.append(f) if f['mimeType'].endswith('folder') else files.append((f, pref + x['name'])))
+                arbol.setdefault(c['name'], {}).setdefault(mes, []).extend(files)
     return d, arbol
 
 

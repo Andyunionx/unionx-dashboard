@@ -72,6 +72,7 @@ class Ctx:
             x['Canal'] = D.canonizar(x['Canal'].astype(str), raw['Canal'].unique())
             x['Centro de costo'] = x['Centro de costo'].astype(str).str.strip().str.capitalize().replace(
                 {'Comisión envio': 'Comisión envío', 'Comision envío': 'Comisión envío'})
+            x = x[x['Centro de costo'].isin(D.CC_GABRIELA)]     # mismo filtro que la base (D.gab_df)
             x['Fuente'] = fuente
             return x
         # costos comerciales = carga de Gabriela o lectura de sus liquidaciones, la más completa por
