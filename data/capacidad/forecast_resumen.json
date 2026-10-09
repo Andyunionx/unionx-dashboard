@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-09T09:47:42.945985",
+  "generado_en": "2026-10-09T17:42:01.798513",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1374,
-    "posiciones_ocupadas_hoy": 752,
-    "posiciones_libres_hoy": 622,
-    "pct_ocupacion_hoy": 54.7,
-    "m3_stock_calculado": 839.2
+    "posiciones_ocupadas_hoy": 743,
+    "posiciones_libres_hoy": 631,
+    "pct_ocupacion_hoy": 54.1,
+    "m3_stock_calculado": 828.9
   },
   "pico_proyectado": {
     "fecha": "2026-10-09",
-    "posiciones_ocupadas": 738.3,
-    "pct_ocupacion": 53.7
+    "posiciones_ocupadas": 729.8,
+    "pct_ocupacion": 53.1
   },
   "minimo_proyectado": {
     "fecha": "2026-12-05",
-    "posiciones_ocupadas": 557.8,
-    "pct_ocupacion": 40.6
+    "posiciones_ocupadas": 550.7,
+    "pct_ocupacion": 40.1
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -80,19 +80,19 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 240.9,
+  "pallets_total_salientes_horizonte": 238.9,
   "m3_total_entrante_horizonte": 152.0,
-  "m3_total_saliente_horizonte": 289.0,
+  "m3_total_saliente_horizonte": 286.7,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 792,
     "sku_fallback": 3,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 24468.0,
-    "demanda_cumplida_unidades": 16709.0,
-    "demanda_no_cubierta_unidades_total": 7759.0,
-    "pct_demanda_cumplida": 68.3,
-    "sku_sin_match_stock_count": 35,
+    "demanda_cumplida_unidades": 16624.0,
+    "demanda_no_cubierta_unidades_total": 7844.0,
+    "pct_demanda_cumplida": 67.9,
+    "sku_sin_match_stock_count": 36,
     "top_no_cubiertos": [
       {
         "sku": "DYNTALSPER",
@@ -101,7 +101,7 @@
       },
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 1072.0,
+        "unid_no_cubiertas": 1077.0,
         "sin_match_stock": true
       },
       {
@@ -111,7 +111,7 @@
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 373.0,
+        "unid_no_cubiertas": 390.0,
         "sin_match_stock": true
       },
       {
@@ -125,18 +125,18 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVPRONOV",
-        "unid_no_cubiertas": 349.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 345.0,
+        "unid_no_cubiertas": 362.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 343.0,
+        "unid_no_cubiertas": 357.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "LVPRONOV",
+        "unid_no_cubiertas": 349.0,
         "sin_match_stock": true
       },
       {
@@ -155,18 +155,18 @@
         "sin_match_stock": true
       },
       {
+        "sku": "68540051413139",
+        "unid_no_cubiertas": 214.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "LVTECOFSL-GR",
         "unid_no_cubiertas": 213.0,
         "sin_match_stock": true
       },
       {
         "sku": "1479750635184",
-        "unid_no_cubiertas": 209.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "68540051413139",
-        "unid_no_cubiertas": 208.0,
+        "unid_no_cubiertas": 213.0,
         "sin_match_stock": true
       },
       {
