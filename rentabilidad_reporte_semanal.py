@@ -277,6 +277,8 @@ def metricas(base, gab):
 def alertas_plan(plan: pd.DataFrame, hoy: dt.date):
     """Presión semanal: qué acciones no tienen dueño, fecha, gestión, o están vencidas/rojas."""
     out = []
+    gcol = PA.columnas(plan.columns)['gestion_cur'] or ''
+    gmes = PA.mes_de_col(gcol) if gcol else None
     for _, r in plan.iterrows():
         est = str(r.get('Estado', '')).strip().lower()
         if est in ('cerrada', 'cerrado', 'descartada', 'hecha'):
@@ -291,8 +293,8 @@ def alertas_plan(plan: pd.DataFrame, hoy: dt.date):
                     falta.append(f'vencida ({f.strftime("%d-%m")})')
             except Exception:
                 pass
-        if not str(r.get('Última gestión (quién / qué / cuándo)', '')).strip():
-            falta.append('sin gestión registrada')
+        if not str(r.get(gcol, '')).strip():
+            falta.append(f'sin gestión de {nom(gmes).lower()}' if gmes else 'sin gestión registrada')
         if str(r.get('Semáforo', '')).startswith('🔴'):
             falta.append('semáforo rojo')
         if falta:
@@ -567,6 +569,10 @@ def dashboard_html(ctx):
     plan_rows = [[f'<b>{H.escape(r["ID"])}</b>', H.escape(r['Indicador']), H.escape(r['Base']), H.escape(r['Ultimo']), _chip(r['sem_t'], r['sem_c']),
                   H.escape(r['Responsable']), _chip(r['Fecha'], 'neu') if r['Fecha'] else _chip('sin fecha', 'bad'),
                   H.escape(r['Gestion']) if r['Gestion'] else _chip('sin gestión', 'bad')] for r in ctx['plan']]
+    comp_rows = [[f'<b>{H.escape(r["ID"])}</b>', H.escape(r['Accion']), H.escape(r['Comprometido']), H.escape(r['Base']), H.escape(r['Ultimo']),
+                  _chip(r['sem_t'], r['sem_c'])] for r in ctx['plan'] if r['Comprometido']]
+    comp_html = (f"""<div class="mini">Compromisos de {ctx['g_prev']} → resultado en {ctx['lp1'].lower()}</div>
+{_tabla(['ID', 'Acción', 'Lo comprometido', ctx['lp0'], ctx['lp1'], 'Resultado'], comp_rows, ['left'] * 3 + ['right'] * 2 + ['left'])}""" if comp_rows else '')
     auto_rows = [[m, f'<b>{c}</b>', d, _chip(f'{k} archivo' + ('s' if k != 1 else ''), 'good') if k else _chip('falta', 'warn'), u or '—'] for m, c, d, k, u in ctx['auto']]
     cuad = ''
     for mstr, filas in ctx['cuadre'].items():
@@ -610,8 +616,9 @@ details{{margin-top:12px}} summary{{cursor:pointer;font-family:{MONO};font-size:
 <div class="two"><div class="chart" id="c_mancuerna" style="height:{70 + 46 * len(ctx['mancuerna'])}px"></div><div>{resumen_tab}</div></div></section>
 {canales}
 <section class="panel"><div class="eyebrow">Seguimiento del plan de acción</div><h3>{H.escape(ctx['titulo_plan'])}</h3>
-<div class="how">Las columnas de indicador, base, último mes y semáforo se recalculan cada lunes. Responsable, fecha compromiso y última gestión se llenan en la pestaña 8 de la planilla.</div>
-{_tabla(['ID', 'Indicador', 'Base', 'Último mes', 'Semáforo', 'Responsable', 'Fecha', 'Última gestión'], plan_rows, ['left'] * 2 + ['right'] * 2 + ['left'] * 4)}</section>
+<div class="how">El indicador de cada mes y el semáforo ({ctx['lp1'].lower()} contra {ctx['lp0'].lower()}) se recalculan todos los días. Responsable, fecha compromiso y la gestión de {ctx['g_cur']} se llenan en la pestaña 8 de la planilla; la de meses anteriores queda en la pestaña 8b.</div>
+{comp_html}
+{_tabla(['ID', 'Indicador', ctx['lp0'], ctx['lp1'], 'Semáforo', 'Responsable', 'Fecha', 'Gestión de ' + ctx['g_cur']], plan_rows, ['left'] * 2 + ['right'] * 2 + ['left'] * 4)}</section>
 <section class="panel"><div class="eyebrow">Estado de la automatización</div><h3>{H.escape(ctx['titulo_auto'])}</h3>
 <div class="how">Qué liquidaciones hay en la carpeta de Drive por canal y mes, y si la lectura automática reproduce la carga manual de Gabriela (±2%).</div>
 {_tabla(['Mes', 'Carpeta', 'Qué debe estar', 'Estado', 'Última subida'], auto_rows, ['left'] * 5)}{cuad}</section>
@@ -666,7 +673,15 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     intro = (f'{l1} contra {l0.lower()} en todos los canales con venta de $1M o más. Para cada canal: qué pasó con el margen, '
              f'qué centro de costo y qué glosa lo explican, y cómo le fue a cada modalidad. Al final, el plan de acción y el estado de la automatización.')
     alert = alertas_plan(plan, hoy) if len(plan) else []
-    con_gestion = sum(1 for _, r in plan.iterrows() if str(r.get('Última gestión (quién / qué / cuándo)', '')).strip())
+    rol = PA.columnas(plan.columns) if len(plan) else dict(meses=[], gestion_prev=None, gestion_cur=None)
+    (hm1, pm1) = rol['meses'][-1] if rol['meses'] else ('', None)
+    (hm0, pm0) = rol['meses'][-2] if len(rol['meses']) > 1 else ('', None)
+    lp1 = nom(pm1)[:3] if pm1 else 'Último'
+    lp0 = nom(pm0)[:3] if pm0 else 'Anterior'
+    con_gestion = sum(1 for _, r in plan.iterrows() if str(r.get(rol['gestion_cur'] or '', '')).strip())
+    g_cur = nom(PA.mes_de_col(rol['gestion_cur'])).lower() if rol['gestion_cur'] and PA.mes_de_col(rol['gestion_cur']) else 'del mes'
+    g_prev = nom(PA.mes_de_col(rol['gestion_prev'])).lower() if rol['gestion_prev'] else ''
+    comprom = [r for _, r in plan.iterrows() if rol['gestion_prev'] and str(r.get(rol['gestion_prev'], '')).strip()]
     auto_rows, cuadre = [], {}
     try:
         drv, arbol = drive_carpeta()
@@ -728,20 +743,22 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     plan_ctx = []
     for _, r in plan.iterrows():
         sem = str(r.get('Semáforo', ''))
-        mes_i = str(r.get('Último mes con carga', '')).strip()
-        plan_ctx.append({'ID': str(r['ID']), 'Indicador': str(r.get('Indicador', '')), 'Base': str(r.get(f'Base {PA.M_BASE}', '')),
-                         'Ultimo': str(r.get('Valor último mes', '')), 'Mes': nom(PA.mes_str(mes_i))[:3].lower() if mes_i else '',
+        plan_ctx.append({'ID': str(r['ID']), 'Indicador': str(r.get('Indicador', '')), 'Accion': str(r.get('Acción', '')),
+                         'Base': str(r.get(hm0, '')), 'Ultimo': str(r.get(hm1, '')), 'Mes': '',
+                         'Resultado': str(r.get('Resultado del mes', '')),
+                         'Comprometido': str(r.get(rol['gestion_prev'] or '', '')).strip(),
                          'Prio': str(r.get('Prioridad (share de venta)', '')).strip(),
                          'sem_t': sem[2:].strip() or '—',
                          'sem_c': 'good' if sem.startswith('🟢') else 'bad' if sem.startswith('🔴') else 'warn' if sem.startswith('🟡') else 'neu',
                          'Responsable': str(r.get('Responsable', '')), 'Fecha': str(r.get('Fecha compromiso', '')).strip(),
-                         'Gestion': str(r.get('Última gestión (quién / qué / cuándo)', '')).strip()})
+                         'Gestion': str(r.get(rol['gestion_cur'] or '', '')).strip()})
     cuadre_ctx = {m: [[f'<b>{c}</b>', mm(r.agente) if r.agente else '—', mm(r.carga) if r.carga else '—', _chip(*estado_cuadre(r))] for c, r in q.iterrows()]
                   for m, q in cuadre.items()}
     ctx = dict(fecha=hoy.strftime('%d-%m-%Y'), titular=titular, intro=intro, kpis=kpis, l0=l0, l1=l1,
                mancuerna=[(d['canal'], d['mg0'], d['mg1']) for d in sorted(det, key=lambda d: -d['mg1'])],
                titulo_mancuerna=titulo_m, detalle=det, titulos=titulos, plan=plan_ctx,
-               titulo_plan=f'{con_gestion} de {len(plan)} acciones tienen gestión registrada', auto=auto_rows, cuadre=cuadre_ctx,
+               titulo_plan=f'{con_gestion} de {len(plan)} acciones tienen gestión de {g_cur}', auto=auto_rows, cuadre=cuadre_ctx,
+               lp0=lp0, lp1=lp1, g_cur=g_cur, g_prev=g_prev,
                titulo_auto=(f'{faltan} carpeta{"s" if faltan != 1 else ""} pendiente{"s" if faltan != 1 else ""} · {cuadran} de 5 canales cuadran en {l1.lower()}'))
     dash = dashboard_html(ctx)
 
@@ -758,6 +775,13 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     for a in alert:
         por_resp.setdefault(str(a[3]) or 'Sin responsable', []).append(a[0])
     alert_html = ''.join(f'<li><b>{H.escape(r)}</b>: {", ".join(xs)}</li>' for r, xs in por_resp.items())
+    comp_mail = ''.join(f'<tr><td style="{tdl};font-weight:600;white-space:nowrap">{H.escape(r["ID"])}</td><td style="{tdl}">{H.escape(r["Accion"])}</td>'
+                        f'<td style="{tdl}">{H.escape(r["Comprometido"])}</td><td style="{tdl};text-align:right">{H.escape(r["Base"])}</td>'
+                        f'<td style="{tdl};text-align:right">{H.escape(r["Ultimo"])}</td><td style="{tdl};white-space:nowrap">{H.escape(r["sem_t"])}</td></tr>'
+                        for r in plan_ctx if r['Comprometido'])
+    comp_mail = (f'<p style="margin:10px 0 6px"><b>Compromisos de {g_prev} → resultado en {nom(pm1).lower() if pm1 else ""}</b>: lo que se anotó al cerrar '
+                 f'{g_prev} y cómo se movió el indicador.</p><table style="border-collapse:collapse"><tr>{th("ID")}{th("Acción")}{th("Lo comprometido")}'
+                 f'{th(lp0, "right")}{th(lp1, "right")}{th("Resultado")}</tr>{comp_mail}</table>') if comp_mail else ''
     plan_rows = ''.join(f'<tr><td style="{tdl};font-weight:600;white-space:nowrap">{H.escape(r["ID"])}</td><td style="{tdl};white-space:nowrap">{H.escape(r["Prio"])}</td><td style="{tdl}">{H.escape(r["Indicador"])}</td>'
                         f'<td style="{tdl};text-align:right">{H.escape(r["Base"])}</td><td style="{tdl};text-align:right">{H.escape(r["Ultimo"])}'
                         f'{_mes_tag(r["Mes"])}</td>'
@@ -782,9 +806,10 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
 <p style="font-size:12px;color:#475569;margin:4px 0 0">Efecto $ = variación del margen (p.p.) × ingreso de {l1.lower()}: cuánto margen dio o quitó el cambio.</p>
 <h3 {h3}>2. Dónde dar ojo</h3><ul style="margin:0 0 10px 18px;padding:0">{ojo}</ul>
 <h3 {h3}>3. Seguimiento del plan de acción</h3>
-<p style="margin:0 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión registrada. Responsable, fecha compromiso y última gestión se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
+{comp_mail}
+<p style="margin:12px 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión de {g_cur}. Responsable, fecha compromiso y la gestión de {g_cur} se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
 {'<ul style="margin:0 0 10px 18px;padding:0;font-size:13px">' + alert_html + '</ul>' if alert_html else ''}
-<table style="border-collapse:collapse"><tr>{th('ID')}{th('Prioridad')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
+<table style="border-collapse:collapse"><tr>{th('ID')}{th('Prioridad')}{th('Indicador')}{th(lp0, 'right')}{th(lp1, 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Gestión de ' + g_cur)}</tr>{plan_rows}</table>
 <h3 {h3}>4. Estado de la automatización</h3>
 <table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>
 {cuad_mail}{encurso}
@@ -803,9 +828,10 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
 <div style="color:#64748b;font-size:12px;margin-bottom:10px"><a href="{URL_SHEET}">planilla macro</a> · <a href="{URL_CARPETA}">carpeta de liquidaciones</a> · adjunto: dashboard del cierre de {l1.lower()}</div>
 <p style="margin:0 0 10px;padding:8px 10px;background:#EEF3FA;border-left:3px solid #1E3A5F;font-size:13px"><b>Semana de seguimiento.</b> El análisis del mes es el reporte de cierre de {l1.lower()}, que llegó al cerrar su carga. Esta semana: cómo avanza el plan de acción y la carga del mes siguiente.</p>
 <h3 {h3}>1. Plan de acción</h3>
-<p style="margin:0 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión registrada. Cada indicador se mide en el último mes cargado de su canal (entre paréntesis). Responsable, fecha compromiso y última gestión se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
+{comp_mail}
+<p style="margin:12px 0 6px">{con_gestion} de {len(plan)} acciones tienen gestión de {g_cur}. Responsable, fecha compromiso y la gestión de {g_cur} se llenan en la pestaña <a href="{URL_SHEET}">8. Plan de acción</a>. Pendientes por responsable:</p>
 {pend}
-<table style="border-collapse:collapse"><tr>{th('ID')}{th('Prioridad')}{th('Indicador')}{th('Base', 'right')}{th('Último mes', 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Última gestión')}</tr>{plan_rows}</table>
+<table style="border-collapse:collapse"><tr>{th('ID')}{th('Prioridad')}{th('Indicador')}{th(lp0, 'right')}{th(lp1, 'right')}{th('Semáforo')}{th('Responsable')}{th('Fecha')}{th('Gestión de ' + g_cur)}</tr>{plan_rows}</table>
 <h3 {h3}>2. Avance de la carga</h3><ul style="margin:0 0 10px 18px;padding:0">{sig}</ul>
 <h3 {h3}>3. Estado de la automatización</h3>
 <table style="border-collapse:collapse"><tr>{th('Mes')}{th('Carpeta')}{th('Qué debe estar')}{th('Archivos')}{th('Última subida')}</tr>{auto_html}</table>

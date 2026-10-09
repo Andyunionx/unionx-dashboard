@@ -5,15 +5,16 @@ Cada acción del informe mensual tiene UN indicador medible que sale de la propi
 macro (RAW de ventas + carga de Gabriela). Este script lo recalcula y lo deja en
 la pestaña "8. Plan de acción" del Sheet compartido:
 
-  · Columnas automáticas (A–L): id, canal, acción, indicador, base ago-26, meta
-    propuesta, último mes con carga, valor, mes en curso (solo RAW), Δ, semáforo.
-    Se reescriben en cada corrida.
-  · Columnas de gestión (M–P): responsable, fecha compromiso, estado, última
-    gestión. Son de las personas: se preservan por id entre corridas.
+  · Columnas automáticas: id, canal, prioridad, acción, indicador, meta propuesta, UNA COLUMNA POR MES
+    (los últimos cuatro meses cerrados; ago-26 es la base), mes en curso (solo RAW), resultado del mes
+    (último mes cerrado contra el anterior) y semáforo. Se reescriben en cada corrida.
+  · Columnas de gestión: responsable, fecha compromiso, estado, la gestión del mes anterior (lo que se
+    comprometió, fija) y la gestión del mes en curso (editable). Al cerrar un mes, lo escrito se guarda en
+    la pestaña "8b. Historial plan" y la columna editable parte vacía para el mes nuevo (Andrés 9-oct).
 
-Semáforo: verde si el indicador se movió en la dirección buscada (≥ 0,5 p.p. o
-≥ 5% del valor base), rojo si se movió en contra, amarillo si está plano. Cuando
-hay meta y ya se alcanzó, verde aunque el movimiento sea chico.
+Semáforo del resultado del mes: verde si el indicador se movió en la dirección buscada (≥ 0,5 p.p. o ≥ 5%
+del valor anterior), rojo si se movió en contra, amarillo si está plano. Cuando hay meta y ya se alcanzó,
+verde aunque el movimiento sea chico.
 
 Uso:
     python macro_plan_accion.py            # lee el Sheet y escribe la pestaña
@@ -22,6 +23,7 @@ Lo llama el workflow del lunes después de refrescar la macro.
 """
 import argparse
 import datetime as dt
+import re
 import sys
 from pathlib import Path
 
@@ -31,14 +33,58 @@ ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
 H_PLAN = '8. Plan de acción'
+H_HIST = '8b. Historial plan'
 M_BASE = '2026-08'                    # mes del informe que originó el plan
+MES_INICIO = '2026-07'                # primer mes de la serie (el de la meta "tasa de julio")
+N_MESES = 4                           # meses cerrados que se muestran
+MES_CORTO = {1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr', 5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Sep', 10: 'Oct',
+             11: 'Nov', 12: 'Dic'}
+MES_NUM = {v: k for k, v in MES_CORTO.items()}
 MOD_MAP = {'colecta': 'Colecta', 'fulfillment': 'Fulfillment', 'flex': 'Envío directo',
            'flex (flota propia)': 'Envío directo', 'envío directo': 'Envío directo', 'envio directo': 'Envío directo'}
 WEBS = ['Simplit web', 'Lhotse web', 'UnionX web']
-COLS_AUTO = ['ID', 'Canal', 'Prioridad (share de venta)', 'Acción', 'Indicador', 'Unidad', f'Base {M_BASE}', 'Meta propuesta',
-             'Último mes con carga', 'Valor último mes', 'Mes en curso (solo RAW)', 'Δ vs base', 'Semáforo']
-COLS_GESTION = ['Responsable', 'Fecha compromiso', 'Estado', 'Última gestión (quién / qué / cuándo)']
-COLS = COLS_AUTO + COLS_GESTION
+COLS_IZQ = ['ID', 'Canal', 'Prioridad (share de venta)', 'Acción', 'Indicador', 'Unidad', 'Meta propuesta']
+COLS_DER = ['Mes en curso (solo RAW)', 'Resultado del mes', 'Semáforo']
+COLS_GESTION = ['Responsable', 'Fecha compromiso', 'Estado']
+GESTION_LEGACY = 'Última gestión (quién / qué / cuándo)'      # columna única de gestión hasta el 9-oct (= agosto)
+COLS_HIST = ['Mes de cierre', 'ID', 'Canal', 'Acción', 'Indicador', 'Valor del mes', 'Gestión', 'Responsable', 'Estado',
+             'Guardado el']
+
+
+def lab(m):
+    """'2026-09' → 'Sep-26'."""
+    return f'{MES_CORTO[int(m[5:7])]}-{m[2:4]}'
+
+
+def col_mes(m):
+    return lab(m) + (' (base)' if m == M_BASE else '')
+
+
+def mes_de_col(h):
+    """'Sep-26', 'Ago-26 (base)' o 'Gestión Sep-26 (…)' → '2026-09'."""
+    mm = re.match(r'^(?:Gestión )?([A-Z][a-z]{2})-(\d\d)', str(h).strip())
+    return f'20{mm.group(2)}-{MES_NUM[mm.group(1)]:02d}' if mm and mm.group(1) in MES_NUM else None
+
+
+def col_gestion_prev(m):
+    return f'Gestión {lab(m)} (comprometido)'
+
+
+def col_gestion_cur(m):
+    return f'Gestión {lab(m)} (escribir aquí)'
+
+
+def mes_anterior(m):
+    y, mo = int(m[:4]), int(m[5:7])
+    return f'{y - 1}-12' if mo == 1 else f'{y}-{mo - 1:02d}'
+
+
+def columnas(hdr):
+    """Columnas de la pestaña por rol (para el reporte): meses [(encabezado, 'YYYY-MM')], gestión fija y editable."""
+    hdr = [str(h) for h in hdr]
+    return dict(meses=[(h, mes_de_col(h)) for h in hdr if mes_de_col(h) and not h.startswith('Gestión')],
+                gestion_prev=next((h for h in hdr if h.endswith('(comprometido)')), None),
+                gestion_cur=next((h for h in hdr if h.endswith('(escribir aquí)')), None) or (GESTION_LEGACY if GESTION_LEGACY in hdr else None))
 
 
 def mes_str(x):
@@ -249,29 +295,33 @@ def _sem(base, ult, meta, mejor, unidad):
 
 
 def calcular(base, gab, liq=None):
+    """Una fila por acción con el indicador de cada mes cerrado (los últimos N_MESES desde MES_INICIO), el mes en
+    curso (solo indicadores del RAW) y el resultado del último mes cerrado contra el anterior."""
     x = Ctx(base, gab, liq)
-    m_gab = x.meses_gab[-1] if x.meses_gab else None
+    m_cierre = x.m_share                                 # último mes completo del RAW (el último es el mes en curso)
+    m_prev = mes_anterior(m_cierre) if m_cierre else None
     m_raw = x.meses_raw[-1] if x.meses_raw else None
+    meses = [m for m in x.meses_raw if MES_INICIO <= m <= (m_cierre or '')][-N_MESES:]
     filas = []
     for pid, canal, accion, ind, uni, fuente, mejor, fn, meta_fn, resp in PLAN:
-        b = fn(x, M_BASE)
+        vals = {m: fn(x, m) for m in sorted(set(meses) | ({m_prev} if m_prev else set()))}
         meta = meta_fn(x) if meta_fn else None
-        m_ult = x.ultimo_mes(canal, m_gab) if canal != 'Todos' else m_gab
-        ult = fn(x, m_ult) if m_ult else None
-        cur = fn(x, m_raw) if (fuente == 'raw' and m_raw and m_raw != m_ult) else None
-        ref = cur if cur is not None else ult
+        ult, ant = vals.get(m_cierre), vals.get(m_prev)
+        cur = fn(x, m_raw) if (fuente == 'raw' and m_raw and m_raw != m_cierre) else None
         sh_ = x.share(WEBS if canal == 'Páginas web' else canal) if canal != 'Todos' else None
         prio = ('⚪ Transversal' if sh_ is None else ('🔴 Alta' if sh_ >= 15 else '🟡 Media' if sh_ >= 5 else '🟢 Baja')
                 + ('' if sh_ is None else f' · {sh_:.0f}%'.replace('.', ',')))
-        filas.append({'ID': pid, 'Canal': canal, 'Prioridad (share de venta)': prio, '_share': -1 if sh_ is None else sh_,
-                      'Acción': accion, 'Indicador': ind, 'Unidad': uni,
-                      f'Base {M_BASE}': b, 'Meta propuesta': meta, 'Último mes con carga': m_ult, 'Valor último mes': ult,
-                      'Mes en curso (solo RAW)': (f'{m_raw}: ' + _fmt(cur, uni)) if cur is not None else '',
-                      'Δ vs base': (ref - b) if (ref is not None and b is not None) else None,
-                      'Semáforo': _sem(b, ref, meta, mejor, uni), 'Responsable': resp,
-                      'Fecha compromiso': '', 'Estado': 'Abierta', 'Última gestión (quién / qué / cuándo)': ''})
-    df = pd.DataFrame(filas).sort_values('_share', ascending=False, kind='stable')
-    return df[COLS].reset_index(drop=True), x
+        fila = {'ID': pid, 'Canal': canal, 'Prioridad (share de venta)': prio, '_share': -1 if sh_ is None else sh_,
+                'Acción': accion, 'Indicador': ind, 'Unidad': uni, 'Meta propuesta': meta, '_mejor': mejor}
+        fila.update({col_mes(m): vals.get(m) for m in meses})
+        fila.update({'Mes en curso (solo RAW)': (f'{lab(m_raw)}: ' + _fmt(cur, uni)) if cur is not None else '',
+                     'Resultado del mes': (ult - ant) if (ult is not None and ant is not None) else None,
+                     'Semáforo': _sem(ant, ult, meta, mejor, uni), 'Responsable': resp, 'Fecha compromiso': '',
+                     'Estado': 'Abierta', '_vals': vals})
+        filas.append(fila)
+    df = pd.DataFrame(filas).sort_values('_share', ascending=False, kind='stable').reset_index(drop=True)
+    info = dict(meses=meses, m_cierre=m_cierre, m_prev=m_prev, m_raw=m_raw)
+    return df, x, info
 
 
 def _fmt(v, uni):
@@ -316,46 +366,127 @@ def _r(f, *a, **k):
             raise
 
 
-def escribir(sh, df):
+def _col(i):
+    """Índice 1-based → letra de columna (A..Z, AA..)."""
+    out = ''
+    while i:
+        i, r = divmod(i - 1, 26)
+        out = chr(65 + r) + out
+    return out
+
+
+def leer_historial(sh):
+    import gspread
+    try:
+        v = _r(sh.worksheet(H_HIST).get_all_values)
+        return pd.DataFrame(v[1:], columns=v[0]) if len(v) > 1 else pd.DataFrame(columns=COLS_HIST)
+    except gspread.WorksheetNotFound:
+        return pd.DataFrame(columns=COLS_HIST)
+
+
+def guardar_historial(sh, filas):
+    """Agrega al historial la gestión de un mes que se cerró (no reescribe lo anterior)."""
+    import gspread
+    try:
+        ws = sh.worksheet(H_HIST)
+        if not _r(ws.get_all_values):
+            _r(ws.update, values=[COLS_HIST], range_name='A1')
+    except gspread.WorksheetNotFound:
+        ws = sh.add_worksheet(title=H_HIST, rows=400, cols=len(COLS_HIST))
+        _r(ws.update, values=[COLS_HIST], range_name='A1')
+        _r(ws.format, f'A1:{_col(len(COLS_HIST))}1', {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
+                                                     'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}})
+        _r(ws.freeze, rows=1)
+    _r(ws.append_rows, filas, value_input_option='RAW')
+
+
+def armar(df, info, prev, hist):
+    """Arma la pestaña (sin escribir): columnas, gestión conservada por ID y, si cerró un mes nuevo, las filas que
+    pasan al historial. prev = valores actuales de la pestaña; hist = historial (DataFrame)."""
+    m_cierre, m_prev = info['m_cierre'], info['m_prev']
+    cols_mes = [col_mes(m) for m in info['meses']]
+    cp, cc = col_gestion_prev(m_prev), col_gestion_cur(m_cierre)
+    cols = COLS_IZQ + cols_mes + COLS_DER + COLS_GESTION + [cp, cc]
+    df = df.copy()
+    p = pd.DataFrame(prev[1:], columns=prev[0]) if prev and len(prev) > 1 and 'ID' in prev[0] else pd.DataFrame(columns=['ID'])
+    p = p[p['ID'].astype(str).str.strip().str.fullmatch(r'[A-Z]{2,4}-\d+')].set_index('ID')
+    # responsable, fecha y estado: de las personas, se conservan por ID
+    for c in COLS_GESTION:
+        if c in p.columns:
+            keep = p[c].reindex(df['ID']).fillna('').astype(str).str.strip().values
+            df[c] = [k if k else d for k, d in zip(keep, df[c])]
+    # gestión: la columna editable es del mes de su encabezado; cuando cierra un mes nuevo se guarda en el historial
+    rol = columnas(p.columns)
+    col_ed = rol['gestion_cur']
+    per_ed = (M_BASE if col_ed == GESTION_LEGACY else mes_de_col(col_ed)) if col_ed else None
+    textos = p[col_ed].reindex(df['ID']).fillna('').astype(str).str.strip() if col_ed else pd.Series('', index=df['ID'])
+    nuevas = []
+    if per_ed and m_cierre and per_ed < m_cierre:
+        if not (hist['Mes de cierre'].astype(str) == per_ed).any():
+            hoy = dt.date.today().isoformat()
+            nuevas = [[per_ed, r['ID'], r['Canal'], r['Acción'], r['Indicador'], _fmt(r['_vals'].get(per_ed), r['Unidad']),
+                       textos.get(r['ID'], ''), r['Responsable'], r['Estado'], hoy] for _, r in df.iterrows()]
+            hist = pd.concat([hist, pd.DataFrame(nuevas, columns=COLS_HIST)], ignore_index=True)
+        actual = {}                                       # mes nuevo: la columna editable parte vacía
+    else:
+        actual = textos.to_dict()
+    h = hist[hist['Mes de cierre'].astype(str) == m_prev]
+    comp = dict(zip(h['ID'], h['Gestión'])) if len(h) else {}
+    df[cp] = [comp.get(i, '') for i in df['ID']]
+    df[cc] = [actual.get(i, '') for i in df['ID']]
+    out = df.copy()
+    for c in ['Meta propuesta', 'Resultado del mes'] + cols_mes:
+        out[c] = [(_fmt(v, u) if v is not None and not pd.isna(v) else '') for v, u in zip(out[c], out['Unidad'])]
+    out['Resultado del mes'] = [(f'{t} ({lab(m_cierre)[:3].lower()} vs {lab(m_prev)[:3].lower()})' if t else '') for t in out['Resultado del mes']]
+    out = out[cols]
+    return cols, out, nuevas, cp, cc
+
+
+def escribir(sh, df, info):
     import gspread
     try:
         ws = sh.worksheet(H_PLAN)
         prev = _r(ws.get_all_values)
     except gspread.WorksheetNotFound:
-        ws = sh.add_worksheet(title=H_PLAN, rows=80, cols=len(COLS) + 2)
+        ws = sh.add_worksheet(title=H_PLAN, rows=80, cols=len(COLS_IZQ) + N_MESES + 10)
         prev = []
-    # preservar la gestión por ID
-    if prev and len(prev) > 1 and 'ID' in prev[0]:
-        p = pd.DataFrame(prev[1:], columns=prev[0])
-        if 'ID' in p.columns:
-            p = p.set_index('ID')
-            for c in COLS_GESTION:
-                if c in p.columns:
-                    keep = p[c].reindex(df['ID']).fillna('').astype(str).str.strip().values
-                    df[c] = [k if k else d for k, d in zip(keep, df[c])]
-    out = df.copy()
-    for c in [f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Δ vs base']:
-        out[c] = [(_fmt(v, u) if v is not None and not pd.isna(v) else '') for v, u in zip(out[c], out['Unidad'])]
-    nota = [f'Base = {M_BASE} (mes del informe). Columnas A–M las recalcula el proceso todos los días; N–Q son de gestión y se conservan. Orden = prioridad por share de venta. '
-            'Semáforo: verde = se mueve hacia la meta (o ya está), rojo = en contra, amarillo = plano. Revisión mensual con el informe de rentabilidad.']
-    datos = [COLS] + out.astype(object).where(pd.notna(out), '').values.tolist()
+    cols, out, nuevas, cp, cc = armar(df, info, prev, leer_historial(sh))
+    if nuevas:
+        guardar_historial(sh, nuevas)
+        print(f'[{H_HIST}] gestión de {lab(nuevas[0][0])} guardada ({sum(1 for f in nuevas if f[6])} con texto)')
+    m_cierre, m_prev = info['m_cierre'], info['m_prev']
+    cols_mes = [col_mes(m) for m in info['meses']]
+    nota = [f'Una columna por mes cerrado ({lab(M_BASE)} es la base del plan). "Resultado del mes" y "Semáforo" comparan {lab(m_cierre)} '
+            f'contra {lab(m_prev)}: es el resultado de lo comprometido en "{cp}". Responsable, fecha, estado y "{cc}" son de '
+            f'gestión (amarillo) y se conservan; al cerrar el próximo mes, lo escrito pasa al historial ({H_HIST}). Orden = prioridad '
+            'por share de venta. Semáforo: verde = se mueve hacia la meta (o ya está), rojo = en contra, amarillo = plano.']
+    datos = [cols] + out.astype(object).where(pd.notna(out), '').values.tolist()
     n = len(datos)
+    ult = _col(len(cols))
     # Primero se escribe y recién después se limpia lo que sobra: si Sheets corta a mitad
     # (cuota de escrituras, 429), la pestaña nunca queda vacía (incidente 2-oct-2026).
-    _r(ws.update, values=datos + [[''] * len(COLS), nota + [''] * (len(COLS) - 1)], range_name='A1', value_input_option='RAW')
-    filas_ws = ws.row_count
-    if filas_ws > n + 2:
-        _r(ws.batch_clear, [f'A{n + 3}:{chr(64 + len(COLS))}{filas_ws}'])
+    _r(ws.update, values=datos + [[''] * len(cols), nota + [''] * (len(cols) - 1)], range_name='A1', value_input_option='RAW')
+    if ws.row_count > n + 2:
+        _r(ws.batch_clear, [f'A{n + 3}:{_col(max(ws.col_count, len(cols)))}{ws.row_count}'])
+    if ws.col_count > len(cols):
+        _r(ws.batch_clear, [f'{_col(len(cols) + 1)}1:{_col(ws.col_count)}{n + 2}'])
     _r(ws.freeze, rows=1)
+    i_ges = len(COLS_IZQ) + len(cols_mes) + len(COLS_DER) + 1          # primera columna de gestión (1-based)
     _r(ws.batch_format, [
-        {'range': f'A1:{chr(64 + len(COLS))}1', 'format': {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
-                                                         'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}, 'wrapStrategy': 'WRAP'}},
-        {'range': f'N2:Q{len(out) + 1}', 'format': {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}}},   # amarillo = editable
+        {'range': f'A1:{ult}1', 'format': {'textFormat': {'bold': True, 'foregroundColor': {'red': 1, 'green': 1, 'blue': 1}},
+                                           'backgroundColor': {'red': .118, 'green': .227, 'blue': .373}, 'wrapStrategy': 'WRAP'}},
+        {'range': f'A2:{ult}{n}', 'format': {'backgroundColor': {'red': 1, 'green': 1, 'blue': 1}, 'wrapStrategy': 'WRAP'}},
+        {'range': f'{_col(i_ges)}2:{_col(i_ges + 2)}{n}', 'format': {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}}},   # editable
+        {'range': f'{_col(i_ges + 3)}2:{_col(i_ges + 3)}{n}', 'format': {'backgroundColor': {'red': .933, 'green': .949, 'blue': .969}}},  # fija
+        {'range': f'{_col(i_ges + 4)}2:{_col(i_ges + 4)}{n}', 'format': {'backgroundColor': {'red': 1, 'green': .973, 'blue': .863}}},   # editable
     ])
-    anchos = [{'updateDimensionProperties': {'range': {'sheetId': ws.id, 'dimension': 'COLUMNS', 'startIndex': ord(col) - 65, 'endIndex': ord(col) - 64},
-                                             'properties': {'pixelSize': w * 8}, 'fields': 'pixelSize'}}
-              for col, w in zip('ABCDEFGHIJKLMNOPQ', [7, 14, 14, 34, 36, 6, 12, 12, 12, 12, 16, 11, 13, 22, 12, 10, 40])]
-    _r(sh.batch_update, {'requests': anchos})     # una sola escritura (antes eran 16)
+    ancho = {'ID': 7, 'Canal': 14, 'Prioridad (share de venta)': 14, 'Acción': 32, 'Indicador': 34, 'Unidad': 6,
+             'Meta propuesta': 11, 'Mes en curso (solo RAW)': 14, 'Resultado del mes': 16, 'Semáforo': 13, 'Responsable': 20,
+             'Fecha compromiso': 11, 'Estado': 10, cp: 36, cc: 36}
+    anchos = [{'updateDimensionProperties': {'range': {'sheetId': ws.id, 'dimension': 'COLUMNS', 'startIndex': i, 'endIndex': i + 1},
+                                             'properties': {'pixelSize': ancho.get(c, 11) * 8}, 'fields': 'pixelSize'}}
+              for i, c in enumerate(cols)]
+    _r(sh.batch_update, {'requests': anchos})     # una sola escritura
     return ws
 
 
@@ -364,16 +495,18 @@ def main():
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args()
     sh, base, gab, liq = leer_sheet()
-    df, x = calcular(base, gab, liq)
+    df, x, info = calcular(base, gab, liq)
     pd.set_option('display.width', 250)
-    show = df[['ID', 'Canal', 'Indicador', 'Unidad', f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Mes en curso (solo RAW)', 'Δ vs base', 'Semáforo']].copy()
-    for c in [f'Base {M_BASE}', 'Meta propuesta', 'Valor último mes', 'Δ vs base']:
+    cols_mes = [col_mes(m) for m in info['meses']]
+    show = df[['ID', 'Canal', 'Indicador', 'Unidad'] + cols_mes + ['Resultado del mes', 'Semáforo']].copy()
+    for c in cols_mes + ['Resultado del mes']:
         show[c] = [_fmt(v, u) for v, u in zip(show[c], show['Unidad'])]
-    print(show.to_string(index=False))
-    print(f'\nÚltimo mes con los cinco marketplaces cargados: {x.meses_gab[-1] if x.meses_gab else "—"} · RAW hasta {x.meses_raw[-1] if x.meses_raw else "—"}')
+    print(show.drop(columns=['Unidad']).to_string(index=False))
+    print(f"\nMeses: {', '.join(lab(m) for m in info['meses'])} · resultado {lab(info['m_cierre'])} vs {lab(info['m_prev'])} · "
+          f"en curso {lab(info['m_raw']) if info['m_raw'] else '—'}")
     if a.dry_run:
         return
-    escribir(sh, df)
+    escribir(sh, df, info)
     print(f'[{H_PLAN}] {len(df)} indicadores escritos · {sh.url}')
 
 
