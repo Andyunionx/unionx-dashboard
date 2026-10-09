@@ -23,6 +23,7 @@ RIPLEY/, WALMART/, Recibelo-Blue/.  Para la prueba de agosto se usan copias loca
 from __future__ import annotations
 
 import argparse
+import io
 import re
 import sys
 import unicodedata
@@ -121,11 +122,20 @@ def paris(path: Path, cuenta: str) -> pd.DataFrame:
     glosa = tipo.map(PARIS_GLOSA).fillna(tipo)
     if ff:
         glosa = glosa.replace({'Venta': 'Cargo venta'}) + ' (FF)'
-    d = pd.DataFrame({'canal': 'Paris', 'cuenta': cuenta, 'archivo': path.name,
-                      'pedido': p['nro suborden'].astype(str).str.replace(r'\.0$', '', regex=True),   # el RAW guarda la suborden
+    pedido = p['nro suborden'].astype(str).str.replace(r'\.0$', '', regex=True)   # el RAW guarda la suborden
+    d = pd.DataFrame({'canal': 'Paris', 'cuenta': cuenta, 'archivo': path.name, 'pedido': pedido,
                       'sku': '', 'glosa': glosa, 'monto_archivo': val, 'base_iva': 'con_iva',
                       'modalidad_liq': 'Fulfillment' if ff else ''})
-    d['monto_neto'] = d['monto_archivo'] / IVA
+    # Descuento Comercial (Gabriela 8-oct): columna de la liquidación de Colecta, al lado de cada Venta y Devolución;
+    # rebaja la comisión, por eso entra con signo negativo. En FF no entra.
+    if not ff and 'Descuento Comercial' in p.columns:
+        dc = pd.to_numeric(p['Descuento Comercial'], errors='coerce').fillna(0)
+        m = dc != 0
+        d = pd.concat([d, pd.DataFrame({'canal': 'Paris', 'cuenta': cuenta, 'archivo': path.name, 'pedido': pedido[m],
+                                        'sku': '', 'glosa': 'Descuento Comercial', 'monto_archivo': -dc[m],
+                                        'base_iva': 'con_iva', 'modalidad_liq': ''})], ignore_index=True)
+    # Gabriela divide por 1,19 y redondea FILA A FILA (así cuadra al peso con su carga de agosto y septiembre)
+    d['monto_neto'] = (d['monto_archivo'] / IVA).round()
     return d[COLS]
 
 
@@ -148,7 +158,7 @@ RIPLEY_GLOSA = {
 # entran. El Abono postventa no entra porque no tiene facturación asociada (Gabriela 8-oct).
 RIPLEY_NO_COSTO = {'Fecha OC', 'Número documento liquidación', 'Orden de compra', 'Shop ID', 'Tienda',
                    'Importe del pedido', 'Envío', 'Pedidos reembolsados', 'Envío reembolsado', 'A pagar',
-                   'Abono postventa'}
+                   'Abono postventa', 'Abonos por cupón promocional'}   # sin facturación asociada (Gabriela 8-oct)
 
 
 def ripley(path: Path, cuenta='Ripley') -> pd.DataFrame:
@@ -338,6 +348,48 @@ def enviame(path: Path) -> pd.DataFrame:
     return d[COLS]
 
 
+RIPLEY_FF = {'almacenamiento diario': 'FBR COBRO ALMACENAMIENTO DIARIO',
+             'cofinanciamiento logistico': 'FBR COFINANCIAMIENTO LOGISTICO',
+             'commission_fee': 'Comisión Ventas FF'}
+
+
+def ripley_ff(path: Path) -> pd.DataFrame:
+    """CSV de Fulfillment de Ripley (abonos_descuentos_<folio>_ff_2143.csv, Gabriela 8-oct): columna S "Descuento por
+    almacenamiento diario (FF)" y V "Descuento por cofinanciamiento logístico (FF)" → Comisión envío; K commission_fee
+    → Comisión venta. Vienen en positivo (= lo que se descuenta) y con IVA; se suman TODAS las filas, también las sin
+    pedido (los cobros de bodega vienen sueltos)."""
+    raw = path.read_bytes()
+    x = None
+    for enc in ('utf-8-sig', 'latin-1'):
+        for sep in (';', ','):
+            try:
+                c = pd.read_csv(io.BytesIO(raw), sep=sep, encoding=enc)
+            except Exception:
+                continue
+            if c.shape[1] > 5:
+                x = c
+                break
+        if x is not None:
+            break
+    if x is None:
+        raise ValueError('CSV de Fulfillment de Ripley sin columnas reconocibles')
+    col_ped = next((c for c in x.columns if _norm(c) in ('order_id', 'orden de compra', 'pedido')), None)
+    pedido = x[col_ped].astype(str) if col_ped else pd.Series('', index=x.index)
+    partes = []
+    for clave, glosa in RIPLEY_FF.items():
+        col = next((c for c in x.columns if clave in _norm(c)), None)
+        if col is None:
+            continue
+        v = pd.to_numeric(x[col].astype(str).str.replace(',', '.', regex=False), errors='coerce').fillna(0)
+        m = v != 0
+        partes.append(pd.DataFrame({'canal': 'Ripley', 'cuenta': 'Ripley FF', 'archivo': path.name, 'pedido': pedido[m],
+                                    'sku': '', 'glosa': glosa, 'monto_archivo': v[m], 'base_iva': 'con_iva',
+                                    'modalidad_liq': 'Fulfillment'}))
+    d = pd.concat(partes, ignore_index=True) if partes else pd.DataFrame(columns=COLS)
+    d['monto_neto'] = d['monto_archivo'] / IVA
+    return d[COLS]
+
+
 def hites(path: Path) -> pd.DataFrame:
     """Liquidación de Hites (carpeta HITES/<MES>, tres archivos por mes con corte el 20; Gabriela 8-oct): columna
     COMISIÓN → comisión de venta y SHIPPING → comisión de envío, con IVA. TOTAL, PAGO y ESTADO no entran."""
@@ -362,6 +414,13 @@ def leer_carpeta(base: Path) -> pd.DataFrame:
     partes = []
     # Recíbelo: si en la carpeta del mes está el costeo de Gabriela se usa ese; el crudo solo cuando no hay costeo.
     con_costeo = {f.parent for f in base.rglob('*.xlsx') if 'RECIBELO' in str(f).upper() and 'COSTEO' in f.name.upper()}
+    for f in sorted(base.rglob('*.csv')):            # CSV de Fulfillment de Ripley (abonos y descuentos)
+        p = str(f.relative_to(base)).upper().replace('\\', '/')
+        if p.startswith('RIPLEY') and 'ABONOS' in f.name.upper():
+            try:
+                partes.append(ripley_ff(f))
+            except Exception as e:
+                print(f'   [WARN] {p}: {type(e).__name__}: {e}')
     for f in sorted(base.rglob('*.xlsx')):
         p = str(f.relative_to(base)).upper().replace('\\', '/')
         try:

@@ -134,6 +134,11 @@ def reglas_comision(meses) -> pd.DataFrame:
                          for r in g.itertuples() if r.venta_neta], columns=COLS)
 
 
+# Glosas donde manda la carga de Gabriela aunque la lectura dé más (Andrés 9-oct): FBR de agosto, Ripley no facturó
+# todo el almacenamiento (ticket abierto); el archivo dice $82.865 y ella carga lo facturado ($48.677).
+SOLO_CARGA = {('2026-08', 'Ripley', 'FBR COBRO ALMACENAMIENTO DIARIO')}
+
+
 def leer_liquidaciones(meses) -> pd.DataFrame:
     """Lee la carpeta de liquidaciones de Gabriela (los meses pedidos) con su receta: una fila por canal ×
     mes × modalidad × centro de costo × glosa, costo positivo (la convención de su carga). Las glosas sin
@@ -160,6 +165,7 @@ def leer_liquidaciones(meses) -> pd.DataFrame:
     if partes:
         d = pd.concat(partes, ignore_index=True)
         d = d[d['centro_costo'].isin(CC_GABRIELA)]
+        d = d[[(m, c, gl) not in SOLO_CARGA for m, c, gl in zip(d['Mes'], d['canal'], d['glosa'])]]
         g = d.groupby(['Mes', 'canal', 'modalidad_liq', 'centro_costo', 'glosa'], as_index=False)['monto_neto'].sum()
         out = pd.DataFrame({'Año': g['Mes'].str[:4].astype(int), 'Mes': g['Mes'], 'Línea de negocio': '',
                             'Canal': g['canal'], 'Modalidad': g['modalidad_liq'].fillna(''),
