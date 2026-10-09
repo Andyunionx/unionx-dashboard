@@ -207,6 +207,7 @@ def kitchen_center(path: Path) -> pd.DataFrame:
     "Comisión KC" de las filas Reenvío es Comisión envío (glosa Reenvios); el resto del Monto Facturado es Comisión
     venta. Cuadra con su carga de sep: $4.140.042 y $92.746."""
     x = pd.read_excel(path)
+    x = x[x['Tipo'].notna() & x['ID Pedido Shopify'].notna()]      # sin la fila "Totales:" (sep, 9-oct)
     fact = pd.to_numeric(x['Monto Facturado'], errors='coerce').fillna(0)
     reenvio = pd.to_numeric(x['Comisión KC'], errors='coerce').fillna(0).where(x['Tipo'].astype(str).str.strip().eq('Reenvío'), 0)
     pedido = x['ID Pedido Shopify'].astype(str).str.replace('#', '', regex=False).str.strip()
