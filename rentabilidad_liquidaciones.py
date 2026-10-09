@@ -377,7 +377,8 @@ def ripley_ff(path: Path) -> pd.DataFrame:
     pedido = x[col_ped].astype(str) if col_ped else pd.Series('', index=x.index)
     partes = []
     for clave, glosa in RIPLEY_FF.items():
-        col = next((c for c in x.columns if clave in _norm(c)), None)
+        col = (next((c for c in x.columns if _norm(c) == clave), None)          # exacto primero: no refund_commission_fee
+               or next((c for c in x.columns if clave in _norm(c)), None))
         if col is None:
             continue
         v = pd.to_numeric(x[col].astype(str).str.replace(',', '.', regex=False), errors='coerce').fillna(0)
