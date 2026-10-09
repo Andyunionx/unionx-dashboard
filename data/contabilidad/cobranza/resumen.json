@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-09T12:13:41.336065",
+  "generado_en": "2026-10-09T21:58:20.077889",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 16750,
-  "total_monto_pendiente_clp": 1044723473.0,
+  "total_documentos_pendientes": 16825,
+  "total_monto_pendiente_clp": 1054001921.0,
   "monto_por_aging": {
-    "+90 días": 102091609.0,
-    "1-30 días": 476762496.0,
+    "+90 días": 101880851.0,
+    "1-30 días": 480500504.0,
     "31-60 días": 187780668.0,
-    "61-90 días": 64991219.0,
-    "Vigente": 213097481.0
+    "61-90 días": 64679539.0,
+    "Vigente": 219160359.0
   },
   "monto_por_tipo": {
-    "BOLETA": 854343461.0,
+    "BOLETA": 863621909.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 147327363.0
+      "monto": 150086220.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 81744619.0
+      "monto": 82363595.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -42,35 +42,35 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 37842745.0
+      "monto": 40595302.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 30114344.0
+      "monto": 30387204.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 29545334.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 27255234.0
+      "monto": 29743674.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 26890227.0
+      "monto": 27248795.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 26206226.0
     },
     {
       "partner": "Shopping LATAM Pass",
       "monto": 23378141.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 22819967.0
+      "partner": "Lhotse Store",
+      "monto": 21275011.0
     },
     {
-      "partner": "Lhotse Store",
-      "monto": 21624236.0
+      "partner": "Cliente Ripley",
+      "monto": 21274383.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 13857529.0
+      "monto": 13952920.0
     },
     {
       "partner": "Status Spa",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 8116589.0
+      "monto": 8188675.0
     }
   ],
-  "notas_credito_count": 897,
+  "notas_credito_count": 900,
   "pedidos_venta_count": 10000
 }
