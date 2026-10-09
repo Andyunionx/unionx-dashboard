@@ -317,12 +317,16 @@ def poner_vista_pct(sh, base):
     meses = sorted(base['Mes'].unique())
     ING = 'Ingreso venta'
     COM = ['Comisión venta', 'Comisión envío', 'Marketing']
+    # Columnas por mes: Ingreso, % Devol, % Costo, % Com. venta, % Com. envío, % Marketing, % Margen (Andrés 9-oct:
+    # desglosar el antiguo "% Com+Mkt" en sus tres centros de costo).
+    N = 7
 
     def bloque(dims, titulo):
-        filas = [[titulo] + [''] * (len(dims) - 1 + 5 * len(meses) + 1)]
+        filas = [[titulo] + [''] * (len(dims) - 1 + N * len(meses) + 1)]
         enc = list(dims)
         for m in meses:
-            enc += [f'{m} Ingreso', f'{m} % Devol', f'{m} % Costo', f'{m} % Com+Mkt', f'{m} % Margen']
+            enc += [f'{m} Ingreso', f'{m} % Devol', f'{m} % Costo', f'{m} % Com. venta', f'{m} % Com. envío',
+                    f'{m} % Marketing', f'{m} % Margen']
         enc += ['Δ margen p.p.']
         filas.append(enc)
         g = base.groupby(dims + ['Mes', 'Centro de costo'], as_index=False)['Monto'].sum()
@@ -344,16 +348,16 @@ def poner_vista_pct(sh, base):
             fila = list(clave)
             refs = []
             for k, m in enumerate(meses):
-                c0 = len(dims) + 5 * k + 1                      # columna del Ingreso del mes (1-based)
+                c0 = len(dims) + N * k + 1                      # columna del Ingreso del mes (1-based)
                 ci = col(c0)
                 sm = lambda cc: f'SUMIFS({B}$I:$I;{crit};{B}$B:$B;"{m}";{B}$F:$F;"{cc}")'  # noqa: E731
                 ing = f'={sm(ING)}'
                 pdev = f'=IFERROR({sm("Devolución")}/{ci}{r};"")'
                 pcos = f'=IFERROR(({sm("Costo venta")}+{sm("Otros costos")})/{ci}{r};"")'
-                pcom = f'=IFERROR(({"+".join(sm(c) for c in COM)})/{ci}{r};"")'
+                pcom = [f'=IFERROR({sm(c)}/{ci}{r};"")' for c in COM]
                 pmg = f'=IFERROR(SUMIFS({B}$I:$I;{crit};{B}$B:$B;"{m}")/{ci}{r};"")'
-                fila += [ing, pdev, pcos, pcom, pmg]
-                refs.append(f'{col(c0 + 4)}{r}')
+                fila += [ing, pdev, pcos] + pcom + [pmg]
+                refs.append(f'{col(c0 + N - 1)}{r}')
             fila.append(f'=IFERROR({refs[-1]}-{refs[-2]};"")' if len(refs) > 1 else '')
             out.append(fila)
         return filas + out + [[''] * len(enc)]
@@ -391,10 +395,10 @@ def poner_vista_pct(sh, base):
         if datos_fin < datos_ini:
             continue
         for k in range(len(meses)):
-            c_ing = nd + 5 * k + 1                    # Ingreso del mes k
+            c_ing = nd + N * k + 1                    # Ingreso del mes k
             ws.format(f'{col(c_ing)}{datos_ini}:{col(c_ing)}{datos_fin}', pesos)
-            ws.format(f'{col(c_ing + 1)}{datos_ini}:{col(c_ing + 4)}{datos_fin}', pct)
-        c_delta = nd + 5 * len(meses) + 1             # Δ margen, en puntos porcentuales
+            ws.format(f'{col(c_ing + 1)}{datos_ini}:{col(c_ing + N - 1)}{datos_fin}', pct)
+        c_delta = nd + N * len(meses) + 1             # Δ margen, en puntos porcentuales
         ws.format(f'{col(c_delta)}{datos_ini}:{col(c_delta)}{datos_fin}', pct)
     print(f'[{H_PCT}] {len(todo)} filas · 3 bloques')
     return ws
