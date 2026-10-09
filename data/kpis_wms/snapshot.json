@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-10-09T10:11:55.630969",
+  "generado_en": "2026-10-09T20:01:12.520009",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.053614381567287,
-      "total_pickings": 15798,
-      "on_time": 847,
-      "on_time_pct": 0.053614381567287,
-      "in_full": 15796,
-      "in_full_pct": 0.9998734016964173,
-      "both": 847,
+      "valor": 0.05190230155002348,
+      "total_pickings": 17032,
+      "on_time": 884,
+      "on_time_pct": 0.05190230155002348,
+      "in_full": 17030,
+      "in_full_pct": 0.9998825739783936,
+      "both": 884,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.10082304526748971,
-      "total_pickings": 486,
+      "valor": 0.10020449897750511,
+      "total_pickings": 489,
       "on_time": 49,
-      "on_time_pct": 0.10082304526748971,
-      "in_full": 479,
-      "in_full_pct": 0.98559670781893,
+      "on_time_pct": 0.10020449897750511,
+      "in_full": 482,
+      "in_full_pct": 0.9856850715746421,
       "both": 49,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998609243892262,
-      "ok": 21568,
-      "total": 21571,
+      "valor": 0.9998702814891685,
+      "ok": 23124,
+      "total": 23127,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 13.565688064389477,
-      "n_recepciones": 283,
+      "valor": 13.423479992229993,
+      "n_recepciones": 286,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01093",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-10-09 17:16",
+          "done": "2026-10-09 17:17"
+        },
+        {
+          "picking": "CA1/RET/01245",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-10-09 13:50",
+          "done": "2026-10-09 13:50"
+        },
+        {
+          "picking": "CA1/IN/01092",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-10-09 13:44",
+          "done": "2026-10-09 13:45"
+        },
         {
           "picking": "CA1/RET/01243",
           "proveedor": "Falabella Retail",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-10-03 11:40",
           "done": "2026-10-03 11:40"
-        },
-        {
-          "picking": "CA1/RET/01228",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:39",
-          "done": "2026-10-03 11:39"
-        },
-        {
-          "picking": "CA1/RET/01225",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:38",
-          "done": "2026-10-03 11:38"
-        },
-        {
-          "picking": "CA1/RET/01227",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:38",
-          "done": "2026-10-03 11:38"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.7534036012296882,
-      "total_so": 18285,
-      "total_con_pickings": 18216,
-      "cumplidos": 13724,
+      "valor": 0.8024260640867371,
+      "total_so": 18705,
+      "total_con_pickings": 18631,
+      "cumplidos": 14950,
       "parciales": 18,
-      "sin_iniciar": 4474,
+      "sin_iniciar": 3663,
       "error": null
     },
     "oct_30d": {
-      "valor": 62.92769174521205,
-      "n_orders": 15879,
+      "valor": 61.59647983721791,
+      "n_orders": 17119,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 25.764722222222222,
+      "mediana_h": 26.511666666666667,
       "detalle": [
         {
           "so": "S278911",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9615,
+      "lineas": 11582,
       "mes": "2026-10",
       "error": null
     },
@@ -8798,42 +8798,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.053614381567287,
-      "total_pickings": 15798,
-      "on_time": 847,
-      "on_time_pct": 0.053614381567287,
-      "in_full": 15796,
-      "in_full_pct": 0.9998734016964173,
-      "both": 847,
+      "valor": 0.05190230155002348,
+      "total_pickings": 17032,
+      "on_time": 884,
+      "on_time_pct": 0.05190230155002348,
+      "in_full": 17030,
+      "in_full_pct": 0.9998825739783936,
+      "both": 884,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.10082304526748971,
-      "total_pickings": 486,
+      "valor": 0.10020449897750511,
+      "total_pickings": 489,
       "on_time": 49,
-      "on_time_pct": 0.10082304526748971,
-      "in_full": 479,
-      "in_full_pct": 0.98559670781893,
+      "on_time_pct": 0.10020449897750511,
+      "in_full": 482,
+      "in_full_pct": 0.9856850715746421,
       "both": 49,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998609243892262,
-      "ok": 21568,
-      "total": 21571,
+      "valor": 0.9998702814891685,
+      "ok": 23124,
+      "total": 23127,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 13.565688064389477,
-      "n_recepciones": 283,
+      "valor": 13.423479992229993,
+      "n_recepciones": 286,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01093",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-10-09 17:16",
+          "done": "2026-10-09 17:17"
+        },
+        {
+          "picking": "CA1/RET/01245",
+          "proveedor": "Falabella Retail",
+          "horas": 0.0,
+          "scheduled": "2026-10-09 13:50",
+          "done": "2026-10-09 13:50"
+        },
+        {
+          "picking": "CA1/IN/01092",
+          "proveedor": "",
+          "horas": 0.0,
+          "scheduled": "2026-10-09 13:44",
+          "done": "2026-10-09 13:45"
+        },
         {
           "picking": "CA1/RET/01243",
           "proveedor": "Falabella Retail",
@@ -8952,27 +8973,6 @@
           "horas": 0.0,
           "scheduled": "2026-10-03 11:40",
           "done": "2026-10-03 11:40"
-        },
-        {
-          "picking": "CA1/RET/01228",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:39",
-          "done": "2026-10-03 11:39"
-        },
-        {
-          "picking": "CA1/RET/01225",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:38",
-          "done": "2026-10-03 11:38"
-        },
-        {
-          "picking": "CA1/RET/01227",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:38",
-          "done": "2026-10-03 11:38"
         }
       ],
       "error": null
