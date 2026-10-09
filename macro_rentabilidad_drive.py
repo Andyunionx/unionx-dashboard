@@ -65,20 +65,25 @@ def canonizar(canales: pd.Series, ref) -> pd.Series:
 
 
 def combinar(gab: pd.DataFrame, liq) -> pd.DataFrame:
-    """Costos comerciales que entran a la base. Por canal × mes × centro de costo se usa la fuente más
-    completa (la de mayor costo): la carga de Gabriela o la lectura automática de las liquidaciones que ella
-    sube a la carpeta. Así lo que ya está en la carpeta se ve en la planilla aunque todavía no lo cargue
-    (Paris y la 2ª quincena de Walmart en sep, couriers de canales sin carga, Kitchen Center, Bice), y lo
-    que solo está en su carga (marketing de Paris, cupón de Ripley, Envíame) no se pierde."""
+    """Costos comerciales que entran a la base. Por canal × mes se usa UNA sola fuente: la carga de Gabriela si cargó
+    ese canal ese mes (al menos la mitad de lo que da la lectura de su carpeta), o la lectura automática si no (canal
+    o mes que todavía no carga). Las reglas que ella pidió y que no carga (comisión % de LATAM, CMR y El Volcán y la
+    provisión del Control Aportes) se suman aparte.
+
+    Antes se elegía el mayor costo por centro de costo, y cuando ella y la lectura clasificaban distinto un mismo
+    costo se contaba dos veces (Walmart sep: "Servicio Fulfillment" en venta en su carga y en envío en la lectura,
+    $296.202; Kitchen Center sep $4,2M). Andrés 9-oct."""
     if liq is None or not len(liq):
         return gab
-    k = ['Mes', 'Canal', 'Centro de costo']
+    es_regla = liq['Glosa'].astype(str).str.contains(r'\(regla\)|Aporte comercial \(provisión\)', regex=True)
+    regla, carpeta = liq[es_regla], liq[~es_regla]
+    k = ['Mes', 'Canal']
     tg = gab.groupby(k)['Valor'].sum() if len(gab) else pd.Series(dtype=float)
-    tl = liq.groupby(k)['Valor'].sum()
-    usa_liq = {key for key, v in tl.items() if v > tg.get(key, 0) + 1}
-    idx_g = pd.MultiIndex.from_frame(gab[k]) if len(gab) else pd.MultiIndex.from_tuples([], names=k)
-    idx_l = pd.MultiIndex.from_frame(liq[k])
-    return pd.concat([gab[~idx_g.isin(list(usa_liq))], liq[idx_l.isin(list(usa_liq))]], ignore_index=True)
+    tl = carpeta.groupby(k)['Valor'].sum()
+    usa_gab = {key for key, v in tg.items() if v > 0 and v >= 0.5 * tl.get(key, 0)}
+    ig = pd.Series([tuple(x) for x in gab[k].values], index=gab.index).isin(usa_gab) if len(gab) else pd.Series(dtype=bool)
+    il = pd.Series([tuple(x) for x in carpeta[k].values], index=carpeta.index).isin(usa_gab)
+    return pd.concat([gab[ig], carpeta[~il], regla], ignore_index=True)
 
 
 # "Control Aportes Uniox y Marketing" (raíz de la carpeta de liquidaciones; Andrés 6-oct): pestaña Aportes,
@@ -554,9 +559,9 @@ def main():
         [f'{H_CON}', 'Se arma sola con una fórmula que apila las dos anteriores. No editar.'],
         [f'{H_LIQ}', 'La escribe el proceso automático: lectura de las liquidaciones de la carpeta de Drive con la '
                      'receta de glosas (marketplaces, couriers, Kitchen Center, Bice). No editar.'],
-        ['5. Base dinámica', 'RAW + costos comerciales. Por canal, mes y centro de costo entra la fuente más '
-                             'completa (la de mayor costo): la carga de Gabriela o la lectura de sus liquidaciones. '
-                             'La columna Fuente dice cuál se usó.'],
+        ['5. Base dinámica', 'RAW + costos comerciales. Por canal y mes entra una sola fuente: tu carga si '
+                             'cargaste ese canal ese mes, o la lectura de tus liquidaciones si no. Las reglas de comisión '
+                             '(LATAM, CMR, El Volcán) y el Control Aportes se suman aparte. La columna Fuente dice cuál se usó.'],
         ['', ''],
         ['QUÉ LLENAR EN TU PESTAÑA', ''],
         ['Glosa', 'La glosa contable que corresponda. Son siempre las mismas y se repiten mes a mes.'],
