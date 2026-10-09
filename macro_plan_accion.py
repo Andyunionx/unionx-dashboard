@@ -298,7 +298,11 @@ def calcular(base, gab, liq=None):
     """Una fila por acción con el indicador de cada mes cerrado (los últimos N_MESES desde MES_INICIO), el mes en
     curso (solo indicadores del RAW) y el resultado del último mes cerrado contra el anterior."""
     x = Ctx(base, gab, liq)
-    m_cierre = x.m_share                                 # último mes completo del RAW (el último es el mes en curso)
+    # Mes cerrado = último mes con los cinco marketplaces cargados (costo ≥ 10% del ingreso), como el reporte de cierre, y
+    # nunca el mes en curso del RAW. Sin esto, el 1° de cada mes el plan pasaría al mes recién terminado antes de que
+    # Gabriela lo cargue: costos a medias y semáforos falsos (auditoría 9-oct).
+    cerrados = [m for m in x.meses_gab if x.m_share and m <= x.m_share]
+    m_cierre = cerrados[-1] if cerrados else x.m_share
     m_prev = mes_anterior(m_cierre) if m_cierre else None
     m_raw = x.meses_raw[-1] if x.meses_raw else None
     meses = [m for m in x.meses_raw if MES_INICIO <= m <= (m_cierre or '')][-N_MESES:]
