@@ -80,7 +80,8 @@ def combinar(gab: pd.DataFrame, liq) -> pd.DataFrame:
     k = ['Mes', 'Canal']
     tg = gab.groupby(k)['Valor'].sum() if len(gab) else pd.Series(dtype=float)
     tl = carpeta.groupby(k)['Valor'].sum()
-    usa_gab = {key for key, v in tg.items() if v > 0 and v >= 0.5 * tl.get(key, 0)}
+    usa_gab = {key for key, v in tg.items() if v > 0 and v >= 0.5 * tl.get(key, 0)
+               and not (key[1] in LECTURA_MANDA and tl.get(key, 0) > 0)}
     ig = pd.Series([tuple(x) for x in gab[k].values], index=gab.index).isin(usa_gab) if len(gab) else pd.Series(dtype=bool)
     il = pd.Series([tuple(x) for x in carpeta[k].values], index=carpeta.index).isin(usa_gab)
     return pd.concat([gab[ig], carpeta[~il], regla], ignore_index=True)
@@ -142,6 +143,9 @@ def reglas_comision(meses) -> pd.DataFrame:
 # Glosas donde manda la carga de Gabriela aunque la lectura dé más (Andrés 9-oct): FBR de agosto, Ripley no facturó
 # todo el almacenamiento (ticket abierto); el archivo dice $82.865 y ella carga lo facturado ($48.677).
 SOLO_CARGA = {('2026-08', 'Ripley', 'FBR COBRO ALMACENAMIENTO DIARIO')}
+# Canales donde manda la liquidación aunque Gabriela tenga carga (ella lo pidió): Kitchen Center, 9-oct ("el valor
+# correcto es el que toma la liquidación"; en su pestaña jul y ago quedaron divididos por 1,19 de más).
+LECTURA_MANDA = {'Kitchen Center'}
 
 
 def leer_liquidaciones(meses) -> pd.DataFrame:

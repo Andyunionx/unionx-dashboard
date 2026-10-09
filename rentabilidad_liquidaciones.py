@@ -203,14 +203,18 @@ def walmart(path: Path, cuenta='Walmart') -> pd.DataFrame:
 # ─────────────────────────── Kitchen Center / Banco Bice ───────────────────────────
 def kitchen_center(path: Path) -> pd.DataFrame:
     """Reporte Melollevo de Kitchen Center: una fila por pedido (Venta / Devolución / Reenvío / Cancelación).
-    "Monto Facturado" es lo que KC nos cobra (comisión 20% del bruto, con IVA)."""
+    "Monto Facturado" es lo que KC nos cobra (comisión + otros descuentos, con IVA). Regla de Gabriela (9-oct): la
+    "Comisión KC" de las filas Reenvío es Comisión envío (glosa Reenvios); el resto del Monto Facturado es Comisión
+    venta. Cuadra con su carga de sep: $4.140.042 y $92.746."""
     x = pd.read_excel(path)
-    x = x[pd.to_numeric(x['Monto Facturado'], errors='coerce').fillna(0) != 0]
-    d = pd.DataFrame({'canal': 'Kitchen Center', 'cuenta': 'Kitchen Center', 'archivo': path.name,
-                      'pedido': x['ID Pedido Shopify'].astype(str).str.replace('#', '', regex=False).str.strip(),
-                      'sku': '', 'glosa': 'Comisión KC',
-                      'monto_archivo': pd.to_numeric(x['Monto Facturado'], errors='coerce').fillna(0),
-                      'base_iva': 'con IVA', 'modalidad_liq': ''})
+    fact = pd.to_numeric(x['Monto Facturado'], errors='coerce').fillna(0)
+    reenvio = pd.to_numeric(x['Comisión KC'], errors='coerce').fillna(0).where(x['Tipo'].astype(str).str.strip().eq('Reenvío'), 0)
+    pedido = x['ID Pedido Shopify'].astype(str).str.replace('#', '', regex=False).str.strip()
+    partes = [pd.DataFrame({'canal': 'Kitchen Center', 'cuenta': 'Kitchen Center', 'archivo': path.name, 'pedido': pedido,
+                            'sku': '', 'glosa': glosa, 'monto_archivo': monto, 'base_iva': 'con IVA', 'modalidad_liq': ''})
+              for glosa, monto in (('Comisión Venta', fact - reenvio), ('Reenvios', reenvio))]
+    d = pd.concat(partes, ignore_index=True)
+    d = d[d['monto_archivo'] != 0]
     d['monto_neto'] = d['monto_archivo'] / IVA
     return d[COLS]
 
