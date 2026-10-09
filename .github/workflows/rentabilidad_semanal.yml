@@ -1,7 +1,8 @@
 name: "Reporte semanal Rentabilidad por canal (lunes)"
 
 # Cada lunes, después de la macro (13:00 y 16:00 UTC), manda a Gabriela con copia a
-# Andrés el reporte de rentabilidad: resultado del último mes cerrado, dónde dar ojo,
+# Andrés el reporte de rentabilidad. Al cerrar un mes salen DOS informes: venta, margen y razones (comercial) y
+# control de gestión (dónde ser más rentables, glosa por glosa). Contenido del primero: resultado del último mes cerrado, dónde dar ojo,
 # seguimiento del plan de acción (con alertas de gestión) y estado de la automatización
 # (liquidaciones en la carpeta de Drive + cuadre de la lectura automática vs la carga).
 # Guard: si ya salió hoy, no vuelve a enviar (el cron de GHA free puede duplicar/atrasar).
@@ -60,5 +61,10 @@ jobs:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
           RENTABILIDAD_TO: ${{ vars.RENTABILIDAD_TO || 'gabriela@unionx.cl' }}
           RENTABILIDAD_CC: ${{ vars.RENTABILIDAD_CC || 'andres@unionx.cl' }}
+          # Informe 2 del cierre (control de gestión, Andrés 9-oct): a Gabriela con copia a Andrés. Necesita Odoo para
+          # contar pedidos por modalidad (si Odoo no responde, sale sin $/pedido).
+          RENTABILIDAD_CONTROL_TO: ${{ vars.RENTABILIDAD_CONTROL_TO || 'gabriela@unionx.cl' }}
+          RENTABILIDAD_CONTROL_CC: ${{ vars.RENTABILIDAD_CONTROL_CC || 'andres@unionx.cl' }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           PYTHONIOENCODING: utf-8
         run: python -u rentabilidad_reporte_semanal.py --enviar

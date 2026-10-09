@@ -841,7 +841,7 @@ def construir(hoy=None, cuadrar=True, modo='auto'):
     return body, dash, dict(M0=M0, M1=M1, alertas=len(alert), plan=len(plan), cuadre=cuadre, en_curso=X['en_curso'], modo=modo)
 
 
-def enviar(asunto, body, html_adj, to, cc=None):
+def enviar(asunto, body, html_adj, to, cc=None, nombre_adj='Rentabilidad por canal - dashboard.html'):
     tok = os.environ.get('GMAIL_TOKEN_JSON', '').strip() or (ROOT / 'agente-comex/config/token.json').read_text()
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
@@ -857,7 +857,7 @@ def enviar(asunto, body, html_adj, to, cc=None):
         m['Cc'] = ', '.join(cc)
     m['Subject'] = asunto
     m.add_alternative(body, subtype='html')
-    m.add_attachment(html_adj.encode('utf-8'), maintype='text', subtype='html', filename='Rentabilidad por canal - dashboard.html')
+    m.add_attachment(html_adj.encode('utf-8'), maintype='text', subtype='html', filename=nombre_adj)
     r = build('gmail', 'v1', credentials=creds).users().messages().send(userId='me', body={'raw': base64.urlsafe_b64encode(m.as_bytes()).decode()}).execute()
     return r['id']
 
@@ -880,7 +880,7 @@ if __name__ == '__main__':
     if a.no_mail:
         sys.exit(0)
     if info['modo'] == 'cierre':
-        asunto = f"Rentabilidad por canal — cierre de {nom(info['M1']).lower()}: análisis del mes y plan de acción"
+        asunto = f"Rentabilidad por canal — cierre de {nom(info['M1']).lower()}: venta, margen y razones"
     else:
         asunto = f"Rentabilidad por canal — seguimiento del plan de acción · semana {hoy.strftime('%d-%m')}"
     if a.enviar:
@@ -889,5 +889,30 @@ if __name__ == '__main__':
     else:
         to, cc, asunto = ['andres@unionx.cl'], None, '[VISTA PREVIA] ' + asunto
     print('ENVIADO', to, cc, enviar(asunto, body, dash, to, cc))
+    # Cierre: además del informe de venta, margen y razones (comercial) sale el de control de gestión (Gabriela):
+    # dónde ser más rentables, glosa por glosa (Andrés 9-oct). Si falla, no frena el cierre.
+    if info['modo'] == 'cierre':
+        try:
+            import rentabilidad_control_gestion as CG
+            pend = []
+            try:
+                _, arbol = drive_carpeta()
+                mes_n = int(info['M1'][5:7])
+                if not any(str(sub).upper().startswith('ENVIAME') for f, sub in arbol.get('MELI', {}).get(mes_n, [])):
+                    pend.append(f"falta la factura de Envíame de {nom(info['M1']).lower()} (comisión de envío de Mercado Libre)")
+            except Exception as e:
+                print(f'   [WARN] revisión de Envíame: {type(e).__name__}: {e}')
+            cg = CG.construir(info['M1'], pendientes=pend)
+            Path(a.out, 'rentabilidad_control_gestion.html').write_text(cg['doc'], encoding='utf-8')
+            if a.enviar:
+                to2 = [x.strip() for x in os.environ.get('RENTABILIDAD_CONTROL_TO', 'gabriela@unionx.cl').split(',') if x.strip()]
+                cc2 = [x.strip() for x in os.environ.get('RENTABILIDAD_CONTROL_CC', 'andres@unionx.cl').split(',') if x.strip()]
+                asunto2 = cg['asunto']
+            else:
+                to2, cc2, asunto2 = ['andres@unionx.cl'], None, '[VISTA PREVIA] ' + cg['asunto']
+            print('ENVIADO control', to2, cc2, cg['resumen'],
+                  enviar(asunto2, cg['body'], cg['doc'], to2, cc2, nombre_adj='Rentabilidad por canal - control de gestion.html'))
+        except Exception as e:
+            print(f'   [WARN] informe de control de gestión no enviado: {type(e).__name__}: {e}')
     if a.enviar and info['modo'] == 'cierre':       # el cierre del mes ya salió: las próximas semanas son seguimiento
         estado_guardar(D._abrir(D._cli(), crear_si_falta=False)[0], info['M1'])
