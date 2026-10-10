@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-10T17:41:17.270309",
+  "generado_en": "2026-10-10T20:51:05.060562",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 733,
     "posiciones_libres_hoy": 641,
     "pct_ocupacion_hoy": 53.3,
-    "m3_stock_calculado": 801.0
+    "m3_stock_calculado": 800.7
   },
   "pico_proyectado": {
     "fecha": "2026-10-10",
@@ -89,8 +89,8 @@
     "sku_fallback": 3,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 21249.0,
-    "demanda_cumplida_unidades": 14558.0,
-    "demanda_no_cubierta_unidades_total": 6691.0,
+    "demanda_cumplida_unidades": 14556.0,
+    "demanda_no_cubierta_unidades_total": 6693.0,
     "pct_demanda_cumplida": 68.5,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -161,7 +161,7 @@
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 190.0,
+        "unid_no_cubiertas": 191.0,
         "sin_match_stock": true
       },
       {
