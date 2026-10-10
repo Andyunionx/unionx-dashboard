@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-10T11:33:32.255939",
+  "generado_en": "2026-10-10T16:33:57.676645",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -11,19 +11,19 @@
   },
   "estado_actual": {
     "posiciones_total": 1374,
-    "posiciones_ocupadas_hoy": 736,
-    "posiciones_libres_hoy": 638,
-    "pct_ocupacion_hoy": 53.6,
-    "m3_stock_calculado": 815.3
+    "posiciones_ocupadas_hoy": 733,
+    "posiciones_libres_hoy": 641,
+    "pct_ocupacion_hoy": 53.3,
+    "m3_stock_calculado": 801.2
   },
   "pico_proyectado": {
     "fecha": "2026-10-10",
-    "posiciones_ocupadas": 729.5,
-    "pct_ocupacion": 53.1
+    "posiciones_ocupadas": 726.7,
+    "pct_ocupacion": 52.9
   },
   "minimo_proyectado": {
     "fecha": "2026-12-05",
-    "posiciones_ocupadas": 559.9,
+    "posiciones_ocupadas": 559.7,
     "pct_ocupacion": 40.7
   },
   "primer_critico": null,
@@ -80,23 +80,23 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 235.5,
+  "pallets_total_salientes_horizonte": 232.0,
   "m3_total_entrante_horizonte": 152.0,
-  "m3_total_saliente_horizonte": 282.6,
+  "m3_total_saliente_horizonte": 278.4,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 790,
     "sku_fallback": 3,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 24468.0,
-    "demanda_cumplida_unidades": 16417.0,
-    "demanda_no_cubierta_unidades_total": 8051.0,
-    "pct_demanda_cumplida": 67.1,
-    "sku_sin_match_stock_count": 37,
+    "demanda_cumplida_unidades": 16168.0,
+    "demanda_no_cubierta_unidades_total": 8300.0,
+    "pct_demanda_cumplida": 66.1,
+    "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 1237.0,
+        "unid_no_cubiertas": 1267.0,
         "sin_match_stock": true
       },
       {
@@ -106,32 +106,32 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 449.0,
+        "unid_no_cubiertas": 456.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 408.0,
+        "unid_no_cubiertas": 427.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 405.0,
+        "unid_no_cubiertas": 412.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 378.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "1650301031879",
-        "unid_no_cubiertas": 369.0,
+        "unid_no_cubiertas": 399.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 368.0,
+        "unid_no_cubiertas": 388.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1650301031879",
+        "unid_no_cubiertas": 381.0,
         "sin_match_stock": true
       },
       {
@@ -145,23 +145,23 @@
         "sin_match_stock": true
       },
       {
+        "sku": "1635956574926",
+        "unid_no_cubiertas": 248.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "1659990828178",
         "unid_no_cubiertas": 244.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1635956574926",
+        "sku": "1479750635184",
         "unid_no_cubiertas": 234.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1479750635184",
-        "unid_no_cubiertas": 225.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "68540051413139",
-        "unid_no_cubiertas": 214.0,
+        "unid_no_cubiertas": 233.0,
         "sin_match_stock": true
       },
       {
@@ -180,18 +180,18 @@
         "sin_match_stock": true
       },
       {
+        "sku": "SMBATOXBK",
+        "unid_no_cubiertas": 135.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "68540048936286",
+        "unid_no_cubiertas": 123.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "DYNTALCPER",
         "unid_no_cubiertas": 118.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "LVPROLUM",
-        "unid_no_cubiertas": 114.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "SMBATOXBK",
-        "unid_no_cubiertas": 109.0,
         "sin_match_stock": true
       }
     ],
