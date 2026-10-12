@@ -223,3 +223,9 @@ data/stock/walmart_session.json
 
 # App Finanzas: modulos compartidos van al repo (excepcion a _*.py)
 !views/_fin_*.py
+
+# Agente Producto: parámetros (márgenes por categoría), casos y salidas con costos internos — nunca al repo público
+agente-producto/parametros.json
+agente-producto/casos/
+agente-producto/salidas/
+

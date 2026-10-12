@@ -196,6 +196,7 @@ from views.alertas_negocio import render as render_alertas_negocio
 from views.ops_comex import render as render_comex
 from views.ventas_cyber import render as render_ventas_cyber
 from views.ops_radar_importaciones import render as render_radar, _autorizado as radar_autorizado
+from views.ops_evaluador_producto import render as render_evaluador
 
 pages = {
     "📊 Ventas": [
@@ -237,7 +238,10 @@ if radar_autorizado():
     _items = list(pages.items())
     _i = next(i for i, (k, _) in enumerate(_items) if k == "📦 Stock") + 1
     _items.insert(_i, ("🛰️ Supply chain", [st.Page(render_radar, title="Radar de Importaciones", icon="🛰️",
-                                                   url_path="radar-importaciones")]))
+                                                   url_path="radar-importaciones"),
+                                           # Evaluador de productos (Agente Producto, pedido de Seba 9-oct-2026)
+                                           st.Page(render_evaluador, title="Evaluador de productos", icon="🧮",
+                                                   url_path="evaluador-productos")]))
     pages = dict(_items)
 
 pg = st.navigation(pages)

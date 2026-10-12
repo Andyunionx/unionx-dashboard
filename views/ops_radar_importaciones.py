@@ -134,7 +134,7 @@ def _asegurar_hub() -> bool:
     with _candado():
         if marca.exists() and marca.read_text(encoding="utf-8") == remota:
             return True
-        with st.spinner("Bajando los datos del radar (una vez por actualización, ~200 MB)…"):
+        with st.spinner("Bajando los datos del radar (una vez por actualización, ~380 MB)…"):
             HUB.mkdir(parents=True, exist_ok=True)
             tmp = HUB.parent / "radar_hub_descarga.zip"
             fid = _secreto("RADAR_HUB_FILE_ID", RADAR_HUB_FILE_ID)
