@@ -1,16 +1,16 @@
 {
-  "generado_en": "2026-10-12T10:18:28.421228",
+  "generado_en": "2026-10-12T20:58:06.409843",
   "total_skus": 1766,
-  "total_quants": 4447,
+  "total_quants": 4446,
   "total_locations": 1431,
   "kpis": {
     "n_skus": 1766,
-    "valor_total": 982716271.23,
-    "unidades_total": 174621.0,
-    "costo_promedio_sku": 556464.48,
-    "n_quiebre_critico": 113,
-    "n_bajo": 174,
-    "n_optimo": 147,
+    "valor_total": 981810556.23,
+    "unidades_total": 174514.0,
+    "costo_promedio_sku": 555951.62,
+    "n_quiebre_critico": 112,
+    "n_bajo": 176,
+    "n_optimo": 146,
     "n_sobrestock": 256,
     "n_sin_venta": 1076,
     "rot_30d_promedio": 1.08,
@@ -8279,28 +8279,28 @@
     },
     {
       "Categoria": "BAJO",
-      "SKUs": 174
+      "SKUs": 176
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 147
+      "SKUs": 146
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 113
+      "SKUs": 112
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 770493673.4,
+      "Valor": 770493670.4,
       "Unidades": 152961.0,
       "SKUs": 1181
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 44339775.74,
-      "Unidades": 5363.0,
+      "Valor": 43788509.74,
+      "Unidades": 5280.0,
       "SKUs": 406
     },
     {
@@ -8311,8 +8311,8 @@
     },
     {
       "Bodega": "BFFa/Stock",
-      "Valor": 30614804.05,
-      "Unidades": 2140.0,
+      "Valor": 30379048.05,
+      "Unidades": 2124.0,
       "SKUs": 283
     },
     {
@@ -8329,9 +8329,9 @@
     },
     {
       "Bodega": "BFW/Stock",
-      "Valor": 11733953.0,
-      "Unidades": 750.0,
-      "SKUs": 96
+      "Valor": 11615263.0,
+      "Unidades": 742.0,
+      "SKUs": 95
     },
     {
       "Bodega": "CA1/Input",
@@ -8347,7 +8347,7 @@
     },
     {
       "Bodega": "BFP/Stock",
-      "Valor": 9007600.0,
+      "Valor": 9007599.0,
       "Unidades": 494.0,
       "SKUs": 119
     },
@@ -8365,7 +8365,7 @@
     },
     {
       "Bodega": "MK/Stock",
-      "Valor": 5095256.0,
+      "Valor": 5095257.0,
       "Unidades": 375.0,
       "SKUs": 209
     },
