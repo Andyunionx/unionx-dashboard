@@ -535,6 +535,14 @@ def render():
             os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
     except Exception:  # noqa: BLE001
         pass
+    cfg = Path(HUB) / "ia_config.json"         # o del zip privado del radar (la publica radar-aduana/pipeline/publicar_nube.py)
+    if not os.environ.get("ANTHROPIC_API_KEY") and cfg.exists():
+        try:
+            k = json.loads(cfg.read_text(encoding="utf-8")).get("ANTHROPIC_API_KEY")
+            if k:
+                os.environ["ANTHROPIC_API_KEY"] = k
+        except Exception:  # noqa: BLE001
+            pass
     R.HUB = Path(HUB)
     par = _par()
     p1 = _paso1()
