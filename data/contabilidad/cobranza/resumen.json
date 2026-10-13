@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-13T04:18:41.260681",
+  "generado_en": "2026-10-13T13:05:54.997118",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17583,
-  "total_monto_pendiente_clp": 1082187273.0,
+  "total_documentos_pendientes": 17594,
+  "total_monto_pendiente_clp": 1082182473.0,
   "monto_por_aging": {
     "+90 días": 105599377.0,
-    "1-30 días": 490262338.0,
+    "1-30 días": 490257538.0,
     "31-60 días": 198868136.0,
     "61-90 días": 67776643.0,
     "Vigente": 219680779.0
   },
   "monto_por_tipo": {
-    "BOLETA": 891807261.0,
+    "BOLETA": 891802461.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 157241875.0
+      "monto": 157701068.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 30855227.0
+      "monto": 30874717.0
     },
     {
       "partner": "Cliente Walmart",
@@ -58,11 +58,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28321790.0
+      "monto": 28371800.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 24847331.0
+      "monto": 24910844.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 22289912.0
+      "monto": 22402852.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -97,6 +97,6 @@
       "monto": 8188675.0
     }
   ],
-  "notas_credito_count": 900,
+  "notas_credito_count": 896,
   "pedidos_venta_count": 10000
 }
