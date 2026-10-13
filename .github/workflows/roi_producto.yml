@@ -24,6 +24,10 @@ on:
         description: "No enviar correos (prueba)"
         type: boolean
         default: false
+      resumen_a:
+        description: "Prueba: mandar el resumen SOLO a este correo (no lo marca como enviado)"
+        type: string
+        default: ""
 
 concurrency:
   group: roi-producto
@@ -65,9 +69,11 @@ jobs:
           ROI_CRON: ${{ github.event.schedule }}
           ROI_RESUMEN_TO: ${{ vars.ROI_RESUMEN_TO || 'nicolas@unionx.cl,nicole@unionx.cl,felipe@unionx.cl,sguzman@unionx.cl,martin@unionx.cl' }}
           PYTHONIOENCODING: utf-8
+          RESUMEN_A: ${{ github.event.inputs.resumen_a }}
         run: |
           ARGS=""
           if [ "${{ github.event.inputs.forzar }}" = "true" ]; then ARGS="$ARGS --forzar"; fi
           if [ "${{ github.event.inputs.lunes }}" = "true" ]; then ARGS="$ARGS --lunes"; fi
           if [ "${{ github.event.inputs.sin_enviar }}" = "true" ]; then ARGS="$ARGS --sin-enviar"; fi
+          if [ -n "$RESUMEN_A" ]; then ARGS="$ARGS --resumen-a $RESUMEN_A"; fi
           python roi_automatico.py $ARGS

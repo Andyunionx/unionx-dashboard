@@ -46,6 +46,54 @@ def _svc():
     return _service()
 
 
+# ── reintentos ante errores temporales de Google (el 8-oct un 502 de Drive tumbó la publicación) ──
+TEMPORALES = {429: "demasiadas solicitudes", 500: "error interno", 502: "Bad Gateway", 503: "servicio no disponible",
+              504: "tiempo de espera agotado"}
+
+
+def transitorio(e: Exception) -> bool:
+    from googleapiclient.errors import HttpError
+    if isinstance(e, HttpError):
+        return getattr(e.resp, "status", None) in TEMPORALES
+    import ssl
+    from google.auth.exceptions import TransportError
+    try:
+        from httplib2 import HttpLib2Error
+    except ImportError:                                # pragma: no cover
+        HttpLib2Error = ConnectionError
+    return isinstance(e, (ConnectionError, TimeoutError, ssl.SSLError, TransportError, HttpLib2Error))
+
+
+def motivo_corto(e: Exception, largo: int = 300) -> str:
+    """Motivo legible para el correo de alerta (sin el HTML de las páginas de error de Google)."""
+    from googleapiclient.errors import HttpError
+    if isinstance(e, HttpError):
+        st = getattr(e.resp, "status", "?")
+        txt = TEMPORALES.get(st) or re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", str(getattr(e, "reason", "")))).strip()[:150]
+        return escape(f"Google respondió {st} ({txt})")
+    t = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", str(e))).strip()
+    return escape(f"{type(e).__name__}: {t[:largo]}" + ("…" if len(t) > largo else ""))
+
+
+def reintentar(fn, que: str, intentos: int = 5, espera: float = 10):
+    """Ejecuta fn(); ante un error temporal de Google espera 10, 20, 40, 80 s y reintenta."""
+    import time
+    for i in range(1, intentos + 1):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            if i == intentos or not transitorio(e):
+                raise
+            print(f"[reintento] {que}: {motivo_corto(e)} · intento {i}/{intentos}, espero {espera * 2 ** (i - 1):.0f} s")
+            time.sleep(espera * 2 ** (i - 1))
+
+
+def marcar(fid: str, props: dict):
+    """Actualiza solo esas appProperties del Excel publicado (el resto queda igual)."""
+    _svc().files().update(fileId=fid, body={"appProperties": {k: str(v)[:100] for k, v in props.items()}},
+                          supportsAllDrives=True).execute()
+
+
 # ── estado de las fuentes (vigía) ───────────────────────────────────────────
 def fechas_fuentes() -> dict:
     s = _svc()
