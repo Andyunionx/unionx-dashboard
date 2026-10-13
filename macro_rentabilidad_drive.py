@@ -51,7 +51,10 @@ COLS_BASE = COLS[:-1] + ['Monto', 'Fuente']   # Valor -> + columna Monto con sig
 # vs "Lhotse web" partía el canal en dos filas y sus costos no caían en su línea de negocio).
 ALIAS_CANAL = {'simplit home': 'Simplit web', 'lhotse': 'Lhotse web', 'unionx web': 'UnionX web',
                'latam pass': 'LATAM Pass', 'bice': 'Banco Bice', 'unionxb2b': 'UnionX B2B',
-               'mercado libre 2': 'Mercado Libre'}
+               'mercado libre 2': 'Mercado Libre',
+               # GRS = Global Reward: la orden GRS27111579-1 es el pedido 27111579-1 del RAW. Sin el alias el envío
+               # de GRS quedaba en un canal sin venta y el margen de Global Reward salía inflado (sep 48,6% → 29,1%).
+               'grs': 'Global Reward'}
 
 
 def canonizar(canales: pd.Series, ref) -> pd.Series:

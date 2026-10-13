@@ -339,15 +339,32 @@ def bluex(path: Path) -> pd.DataFrame:
     return pd.concat(partes, ignore_index=True)
 
 
+def canal_enviame(orden) -> str:
+    """Canal de un envío de Envíame por su orden (columna C, imported_id). Hasta agosto la factura era solo de Mercado
+    Libre; desde septiembre trae también envíos Blue Express de otros canales (Gabriela 13-oct): GRS = Global Reward,
+    BICE = Banco Bice y el resto con la regla de Recíbelo (S… y # con el RAW). Global Reward también viene sin el
+    prefijo (27117228-1): se busca el pedido en el RAW."""
+    u = str(orden or '').strip().upper()
+    if u.startswith('GRS'):
+        return 'Global Reward'
+    if u.startswith('BICE'):
+        return 'Banco Bice'
+    c = canal_recibelo(u, '', u)
+    if c == 'Desconocido':
+        c = _mapa_raw()['canal'].get(u, c)
+    return c
+
+
 def enviame(path: Path) -> pd.DataFrame:
-    """Factura de Envíame, courier de Mercado Libre (carpeta MELI/ENVIAME/<MES>, Gabriela 7-oct). Pestaña Detalle,
-    una fila por envío; 'total' = precio + seguro, neto (suma el Subtotal de la pestaña Resumen). La última fila es
-    el total y no trae id."""
+    """Factura de Envíame (carpeta ENVIAME/<MES> en la raíz desde sep; antes MELI/ENVIAME/<MES>, Gabriela 7-oct).
+    Pestaña Detalle, una fila por envío; 'total' (columna V) = precio + seguro, neto (suma el Subtotal de la pestaña
+    Resumen). Cada envío va al canal de su orden (canal_enviame). La última fila es el total y no trae id."""
     x = pd.read_excel(path, sheet_name='Detalle')
     x = x[x['id'].notna()]
     monto = pd.to_numeric(x['total'] if 'total' in x.columns else x['precio'], errors='coerce').fillna(0)
-    d = pd.DataFrame({'canal': 'Mercado Libre', 'cuenta': 'Envíame', 'archivo': path.name,
-                      'pedido': x['imported_id'].map(lambda v: str(int(v)) if pd.notna(v) else ''),
+    orden = x['imported_id'].map(lambda v: '' if pd.isna(v) else str(int(v)) if isinstance(v, float) else str(v).strip())
+    d = pd.DataFrame({'canal': orden.map(canal_enviame), 'cuenta': 'Envíame', 'archivo': path.name,
+                      'pedido': orden,
                       'sku': '', 'glosa': 'Enviame', 'monto_archivo': monto, 'base_iva': 'neto', 'modalidad_liq': ''})
     d['monto_neto'] = d['monto_archivo']
     return d[COLS]
@@ -430,7 +447,7 @@ def leer_carpeta(base: Path) -> pd.DataFrame:
     for f in sorted(base.rglob('*.xlsx')):
         p = str(f.relative_to(base)).upper().replace('\\', '/')
         try:
-            if p.startswith('MELI') and '/ENVIAME/' in p:
+            if p.startswith('ENVIAME/') or (p.startswith('MELI') and '/ENVIAME/' in p):
                 partes.append(enviame(f))
                 continue
             if p.startswith('HITES'):

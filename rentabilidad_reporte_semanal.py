@@ -898,7 +898,8 @@ if __name__ == '__main__':
             try:
                 _, arbol = drive_carpeta()
                 mes_n = int(info['M1'][5:7])
-                if not any(str(sub).upper().startswith('ENVIAME') for f, sub in arbol.get('MELI', {}).get(mes_n, [])):
+                if not (arbol.get('ENVIAME', {}).get(mes_n)     # carpeta ENVIAME/<MES> en la raíz (desde sep)
+                        or any(str(sub).upper().startswith('ENVIAME') for f, sub in arbol.get('MELI', {}).get(mes_n, []))):
                     pend.append(f"falta la factura de Envíame de {nom(info['M1']).lower()} (comisión de envío de Mercado Libre)")
             except Exception as e:
                 print(f'   [WARN] revisión de Envíame: {type(e).__name__}: {e}')
