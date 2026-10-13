@@ -295,6 +295,41 @@ def radar_desde_busqueda(res: dict, fob_u: float, partida: str, unidad: str, fue
             "n_alta": len(coinc), "palabras_genericas": False, "share_palabras": 0.0, "fuente": "DIN completa (índice de búsqueda)"}
 
 
+def proveedor_origen(d: pd.DataFrame) -> pd.DataFrame:
+    """A quién le compra la competencia: para cada fila del ranking (DIN), el proveedor declarado, país de origen, puerto de
+    embarque y forwarder de las líneas del radar (lineas.parquet, solo categorías del universo del radar). Cruce: mismo
+    importador y partida con FOB unitario ±2%. Sin cruce → vacío; cruce sin proveedor → 'no declarado'."""
+    f = HUB / "lineas.parquet"
+    vacio = pd.DataFrame({"proveedor_radar": None, "origen_radar": None}, index=d.index)
+    if not f.exists() or d.empty:
+        return vacio
+    k = pd.DataFrame({"i": d.index, "importador": d.importador.astype(str), "arancel": d.arancel.astype(str),
+                      "fob_u": pd.to_numeric(d.fob_u, errors="coerce")})
+    con = duckdb.connect()
+    con.register("k", k)
+    m = con.execute(f"""
+        SELECT k.i, coalesce(nullif(trim(l.proveedor_declarado), ''), nullif(trim(l.proveedor), '')) proveedor,
+               l.pais_origen, l.puerto_embarque, l.forwarder, l.fecha_acep
+        FROM k JOIN read_parquet('{f.as_posix()}') l
+          ON l.importador = k.importador AND l.arancel = k.arancel
+         AND k.fob_u > 0 AND abs(l.fob_por_unidad / k.fob_u - 1) < 0.02""").df()
+    con.close()
+    if m.empty:
+        return vacio
+
+    def moda(s):
+        s = s.dropna().astype(str)
+        s = s[~s.str.upper().isin(["", "NONE", "(NO DECLARADO)"])]
+        return s.value_counts().index[0] if len(s) else None
+    g = m.sort_values("fecha_acep").groupby("i")
+    out = pd.DataFrame({"proveedor_radar": g.proveedor.agg(moda).fillna("no declarado"),
+                        "pais": g.pais_origen.agg(moda), "puerto": g.puerto_embarque.agg(moda), "fwd": g.forwarder.agg(moda)})
+    out["origen_radar"] = [" · ".join(x for x in (p, (pu or "").title()[:30] if pu and "NO ESPECIFICADO" not in pu.upper() else None,
+                                                  f"forwarder {fw.title()}" if fw else None) if x)
+                           for p, pu, fw in zip(out.pais, out.puerto, out.fwd)]
+    return vacio.drop(columns=["proveedor_radar", "origen_radar"]).join(out[["proveedor_radar", "origen_radar"]])
+
+
 def rankear_similitud(d: pd.DataFrame, ficha: dict, terminos_tipo: list[str] | None = None) -> pd.DataFrame:
     """Similitud 0–100 de cada línea de la DIN con la ficha técnica (reglas; la IA puede refinarla después):
     tipo de producto 40 · marca/modelo 15 · capacidad 15 · potencia 10 · peso por unidad 20 (la DIN trae kilos y unidades)."""

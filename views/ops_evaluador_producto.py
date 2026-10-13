@@ -240,6 +240,8 @@ def _paso1():
     fuertes = tuple(t.strip() for t in fuertes_txt.split(",") if t.strip())
     base = {"link": link, "ficha": ficha, "res": None, "ref": None, "fuertes": fuertes}
     if not terms:
+        st.warning("Sin palabras de búsqueda no puedo buscar en el radar quién lo importa: escribe arriba cómo se llama el "
+                   "producto (o vuelve a leer el link en un minuto si la página bloqueó la lectura).")
         return base
     with st.spinner("Buscando en la DIN y comparando con la ficha…"):
         res = _buscar(terms, fuertes)
@@ -270,12 +272,20 @@ def _paso1():
         st.caption("FOB en las partidas más probables (" + ", ".join(res["partidas"]) + "): " + " · ".join(
             f"por {u.lower()}: p25 {usd(v['p25'])} · mediana {usd(v['p50'])} · p75 {usd(v['p75'])} ({miles(v['cantidad'])} {u.lower()})"
             for u, v in pr.items()))
+    try:                                               # a quién le compra: proveedor declarado y origen (líneas del radar)
+        d = d.join(R.proveedor_origen(d))
+    except Exception:  # noqa: BLE001
+        d = d.assign(proveedor_radar=None, origen_radar=None)
     vista = d.assign(FOB=d.fob_u.map(usd), kgu=d.kg_u.map(lambda x: "—" if x is None or x != x else f"{x:.2f}"),
-                     cant=d.cantidad.map(miles), ult=d.ultima.astype(str).str[:10])
-    st.dataframe(vista[["similitud", "importador", "nivel", "glosa", "fabricante", "unidad", "cant", "kgu", "FOB", "ult", "razon"]]
-                 .rename(columns={"nivel": "evidencia", "fabricante": "productor", "cant": "cantidad", "kgu": "kg/u", "ult": "última",
-                                  "razon": "por qué"}),
+                     cant=d.cantidad.map(miles), ult=d.ultima.astype(str).str[:10],
+                     prov=[f if isinstance(f, str) and f else (p or "—") for f, p in zip(d.fabricante, d.proveedor_radar)],
+                     origen=d.origen_radar.fillna("—"))
+    st.dataframe(vista[["similitud", "importador", "nivel", "glosa", "prov", "origen", "unidad", "cant", "kgu", "FOB", "ult", "razon"]]
+                 .rename(columns={"nivel": "evidencia", "prov": "proveedor / fábrica", "origen": "origen y forwarder",
+                                  "cant": "cantidad", "kgu": "kg/u", "ult": "última", "razon": "por qué"}),
                  hide_index=True, width="stretch", height=300)
+    st.caption("Proveedor / fábrica: la fábrica escrita en la glosa o, si no viene, el proveedor declarado en la DIN según el radar "
+               "('no declarado' = la DIN no lo informa; '—' = fuera de las categorías que sigue el radar).")
     st.caption("Similitud 0–100 con la ficha (tipo, marca/modelo, capacidad, potencia y kg por unidad"
                + (", afinada con IA" if IA.disponible() else "") + "). Importador inferido: cada fila trae su nivel de evidencia.")
     et = [f"[{r.similitud}] {r.importador[:24]} · {r.glosa[:44]} · {usd(r.fob_u)}/{r.unidad.lower()} · {miles(r.cantidad)} {r.unidad.lower()}"

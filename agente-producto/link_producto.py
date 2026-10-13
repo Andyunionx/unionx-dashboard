@@ -52,16 +52,25 @@ def _num(x) -> float | None:
         return None
 
 
-def _get(url: str, timeout: int = 20) -> requests.Response:
-    """GET con reintento ante límite de consultas (429/503): las tiendas Shopify limitan lecturas seguidas."""
+_CACHE: dict = {}          # url → (hora, respuesta): no volver a pedir la misma página (las tiendas bloquean lecturas seguidas)
+
+
+def _get(url: str, timeout: int = 20, headers: dict | None = None) -> requests.Response:
+    """GET con caché de 10 min y reintentos. Algunas tiendas detrás de Cloudflare (Kitchen Center, 13-oct) responden 429/403
+    a un User-Agent de navegador sin cookies, pero no al de Python: primero se reintenta con el UA estándar; si sigue el
+    límite de consultas (429/503), se espera lo que pide Retry-After (hasta 20 s) y se reintenta una vez."""
     import time
-    r = requests.get(url, headers=UA, timeout=timeout)
-    for intento in range(2):
-        if r.status_code not in (429, 503):
-            break
-        espera = min(float(r.headers.get("Retry-After") or 0) or 2.0 * (intento + 1), 6.0)
-        time.sleep(espera)
-        r = requests.get(url, headers=UA, timeout=timeout)
+    hit = _CACHE.get(url)
+    if hit and time.time() - hit[0] < 600 and hit[1].ok:
+        return hit[1]
+    h = UA if headers is None else headers
+    r = requests.get(url, headers=h, timeout=timeout)
+    if r.status_code in (403, 429) and h:
+        r = requests.get(url, timeout=timeout)
+    if r.status_code in (429, 503):
+        time.sleep(min(float(r.headers.get("Retry-After") or 0) or 3.0, 20.0))
+        r = requests.get(url, headers=h, timeout=timeout)
+    _CACHE[url] = (time.time(), r)
     return r
 
 
@@ -69,7 +78,7 @@ def _shopify(url: str) -> dict | None:
     m = re.match(r"(https?://[^/]+/(?:[^/]+/)?products/[^/?#]+)", url)
     if not m:
         return None
-    r = _get(m.group(1) + ".json")
+    r = _get(m.group(1) + ".json", headers={})               # .json de Shopify: UA estándar (ver _get)
     if not r.ok or "product" not in r.text[:200]:
         return None
     p = r.json()["product"]
@@ -77,7 +86,7 @@ def _shopify(url: str) -> dict | None:
     return {"nombre": p.get("title"), "marca": p.get("vendor"), "categoria_tienda": p.get("product_type"),
             "precio": _num(v.get("price")), "moneda": None, "sku": v.get("sku"), "gtin": v.get("barcode"),
             "imagen": ((p.get("image") or {}).get("src")), "descripcion": re.sub(r"<[^>]+>", " ", p.get("body_html") or "")[:600],
-            "fuente_dato": "Shopify (.json)"}
+            "fuente_dato": "Shopify (.json)", "_html_desc": p.get("body_html") or ""}
 
 
 def _jsonld(txt: str) -> dict | None:
@@ -125,8 +134,9 @@ def leer(url: str) -> dict:
         s = _shopify(url)
         if s:
             out.update({k: v for k, v in s.items() if v not in (None, "")})
-        r = _get(url, timeout=25)
-        if r.ok:
+        # Shopify: el .json ya trae todo; no se pide la página (cada lectura extra acerca el bloqueo de la tienda)
+        r = None if s else _get(url, timeout=25)
+        if r is not None and r.ok:
             for parte in (_jsonld(r.text), _og(r.text)):
                 if parte:
                     for k, v in parte.items():
@@ -243,10 +253,13 @@ def leer_completo(url: str) -> dict:
     d = leer(url)
     texto, pdf_txt, pdfs = "", "", []
     try:
-        r = _get(url, timeout=25)
-        if r.ok:
-            texto = texto_visible(r.text)
-            pdfs = pdfs_enlazados(r.text, url)
+        html = d.pop("_html_desc", None)                 # Shopify: descripción completa del .json, sin pedir la página
+        if html is None:
+            r = _get(url, timeout=25)
+            html = r.text if r.ok else ""
+        if html:
+            texto = texto_visible(html)
+            pdfs = pdfs_enlazados(html, url)
             pdf_txt = "\n\n".join(t for t in (leer_pdf(u) for u in pdfs[:2]) if t)
     except Exception:  # noqa: BLE001
         pass
