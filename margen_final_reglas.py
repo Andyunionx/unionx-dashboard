@@ -25,7 +25,13 @@ data/planillas/reglas_margen_final.csv:
     el comprador lo descuenta después el marketplace ("Cargo por envíos" en ML, "Envío a
     cargo del Cliente" en Falabella). El cobro queda en venta y ese descuento va como
     logística en la misma línea de envío (margen 0 en la línea; no se reparte a productos).
-    Antes el RAW tenía el ingreso sin el descuento: jun–sep −$33M de logística.
+    Antes el RAW tenía el ingreso sin el descuento: jun–sep −$33M de logística. Walmart igual
+    (13-oct). Paris y Ripley NO: el campo de Odoo por pedido ya trae ese descuento.
+  · Logística que no viene por pedido (Andrés 13-oct): en ML, Envíame (envíos a regiones) y los
+    cargos de Full, como tasa del mes sobre la venta de productos (Envíame sobre la venta no Full,
+    Full sobre la venta Full). Tasas en data/planillas/logistica_extra_tasas.csv, que arma
+    logistica_extra_tasas.py desde la carga de Gabriela; mes sin carga = última tasa conocida
+    (no hacia atrás: jun-26 queda sin este extra).
 
   · com_pct / log_pct / mkt_pct vacíos = no tocar lo que trae el extract.
   · modo_com = 'forzar' reemplaza la comisión; 'si_vacio' solo la pone si la fila
@@ -56,9 +62,12 @@ COSTOS = ('comision', 'logistica', 'marketing')
 # Canales que descuentan el despacho que pagó el comprador (opción B, Andrés 13-oct). Verificado con
 # liquidaciones: Falabella "Envío a cargo del Cliente" ≈ venta de la línea de envío (jul 3,50 vs 3,62 ·
 # ago 3,82 vs 3,68 · sep 2,68 vs 2,49 MM); ML sep, pedidos con despacho pagado: cliente $1,45M, ML cobra
-# $1,90M, el RAW tenía $0,57M. Paris, Ripley y Walmart sin verificar.
-ENVIO_COBRADO = ('Mercado Libre', 'Falabella')
+# $1,90M, el RAW tenía $0,57M. Walmart (pedidos con despacho pagado): RAW + cobrado al cliente = liquidación
+# (ago 0,85 vs 0,70 · sep 0,31 vs 0,30 MM). Paris y Ripley quedan fuera: su campo de Odoo ya trae el descuento
+# ("Despacho" 0,452 vs RAW 0,451; "Despacho de productos MKP Ventas" 0,605 vs 0,603 en ago).
+ENVIO_COBRADO = ('Mercado Libre', 'Falabella', 'Walmart')
 ETIQ_ENVIO = 'envío cobrado al cliente'
+LOG_EXTRA = ROOT / 'data' / 'planillas' / 'logistica_extra_tasas.csv'
 
 
 def cargar_reglas(path: Path = REGLAS) -> pd.DataFrame:
@@ -141,6 +150,7 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
     n_prom = _promedio_canal(df, base, _ventas_referencia(df))
     # la referencia se rearma después del promedio: la devolución revierte lo que la venta lleva
     n_rev = _reversa_devoluciones(df, base, _ventas_referencia(df))
+    n_extra = _logistica_extra(df, base)
     # Identidad en TODAS las filas desde el corte (no solo las con regla): había filas
     # corregidas por pasos previos del RAW con margen_final = margen_front (24-09: 119
     # filas, $0,5M en septiembre).
@@ -150,7 +160,8 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
         print(f"   [margen_final_reglas] {tocadas:,} filas con regla de canal ({len(reglas)} canales en la tabla)"
               f" · ${movido:,.0f} de costos movidos de líneas de envío a productos"
               f" · {n_prom:,} filas con promedio del canal · {n_rev:,} costos revertidos en devoluciones"
-              f" · ${n_env:,.0f} de despacho cobrado al cliente como logística (ML y Falabella)")
+              f" · ${n_env:,.0f} de despacho cobrado al cliente como logística ({', '.join(ENVIO_COBRADO)})"
+              f" · ${n_extra:,.0f} de logística por tasa (Envíame y Full)")
     return df
 
 
@@ -287,6 +298,41 @@ def _envio_cobrado(df: pd.DataFrame, base: pd.Series) -> float:
     f = df.loc[m, 'fuente_comision'].astype(str)
     df.loc[m, 'fuente_comision'] = f.where(f.str.contains(ETIQ_ENVIO, regex=False), (f + '·' + ETIQ_ENVIO).str.lstrip('·'))
     return float(df.loc[m, 'logistica'].sum())
+
+
+def _logistica_extra(df: pd.DataFrame, base: pd.Series) -> float:
+    """Logística del canal que no viene por pedido (Andrés 13-oct): tasa del mes × venta neta de cada fila Venta de
+    producto (no se revierte en devoluciones: el envío y el Full igual se pagaron). Mes sin tasa = la última conocida
+    (sirve al mes en curso); antes de la primera tasa no se carga (jun-26 no tiene liquidación y el RAW ya quedaba
+    sobre el KAM). Queda anotado en fuente_comision; una fila anotada no se vuelve a cargar."""
+    if not LOG_EXTRA.exists():
+        return 0.0
+    t = pd.read_csv(LOG_EXTRA, dtype={'mes': str})
+    if t.empty:
+        return 0.0
+    venta = (base & (df['tipo_movimiento'].astype(str) == 'Venta') & ~df['sku'].astype(str).str.startswith('Delivery')
+             & (df['venta_neta'] > 0))
+    full = (df['bodega'].astype(str).str.lower().str.contains('fulfillment') if 'bodega' in df.columns
+            else pd.Series(False, index=df.index))
+    mes = df['fecha_venta'].astype(str).str[:7]
+    canal = df['canal'].astype(str).str.strip()
+    total = 0.0
+    for (c, concepto, b), g in t.groupby(['canal', 'concepto', 'base']):
+        etiq = f'logística {concepto} (tasa)'
+        tasas = g.set_index('mes')['tasa'].sort_index()
+        m = venta & (canal == c) & ~df['fuente_comision'].astype(str).str.contains(etiq, regex=False)
+        m &= full if b == 'full' else ~full
+        for mm in sorted(set(mes[m])):
+            prev = [x for x in tasas.index if x <= mm]
+            if not prev:
+                continue
+            tasa = float(tasas[prev[-1]])
+            s = m & (mes == mm)
+            extra = df.loc[s, 'venta_neta'] * tasa
+            df.loc[s, 'logistica'] = df.loc[s, 'logistica'] + extra
+            df.loc[s, 'fuente_comision'] = (df.loc[s, 'fuente_comision'].astype(str) + '·' + etiq).str.lstrip('·')
+            total += float(extra.sum())
+    return total
 
 
 if __name__ == '__main__':
