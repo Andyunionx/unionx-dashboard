@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-13T13:08:24.181635",
+  "generado_en": "2026-10-13T20:26:08.505004",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 76,
-  "sku_match_odoo": 75,
-  "sku_con_peso": 48,
-  "sku_con_volumen": 47,
-  "sku_volumen_anomalo": 4,
+  "sku_input": 71,
+  "sku_match_odoo": 70,
+  "sku_con_peso": 56,
+  "sku_con_volumen": 55,
+  "sku_volumen_anomalo": 5,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 63.2,
-  "cobertura_volumen_pct": 61.8,
-  "cobertura_volumen_confiable_pct": 56.6,
-  "unidades_totales": 12811.0,
-  "peso_total_kg": 60676.0,
-  "volumen_total_m3": 152.01,
-  "volumen_total_m3_raw": 5523902.01,
-  "pallets_totales_estim": 126.7,
+  "cobertura_peso_pct": 78.9,
+  "cobertura_volumen_pct": 77.5,
+  "cobertura_volumen_confiable_pct": 70.4,
+  "unidades_totales": 17169.0,
+  "peso_total_kg": 83897.6,
+  "volumen_total_m3": 193.2,
+  "volumen_total_m3_raw": 5524355.5,
+  "pallets_totales_estim": 161.0,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -103,26 +103,6 @@
       "cobertura_volumen_pct": 100.0
     },
     {
-      "pi": "26TP0928PI",
-      "transporte": "",
-      "fecha_embarque": "2026-10-06",
-      "fecha_eta_bodega": "2026-10-06",
-      "skus_distintos": 22,
-      "unidades_totales": 32.0,
-      "peso_total_kg": 0.0,
-      "volumen_total_m3": 0.0,
-      "volumen_total_m3_raw": 0.0,
-      "pallets_estim": 0,
-      "containers_20_estim": 0,
-      "containers_40hc_estim": 0,
-      "skus_con_match_odoo": 22,
-      "skus_con_peso": 0,
-      "skus_con_volumen": 0,
-      "skus_volumen_anomalo": 0,
-      "cobertura_peso_pct": 0.0,
-      "cobertura_volumen_pct": 0.0
-    },
-    {
       "pi": "26TP0909PI",
       "transporte": "",
       "fecha_embarque": "2026-10-07",
@@ -141,6 +121,26 @@
       "skus_volumen_anomalo": 4,
       "cobertura_peso_pct": 62.1,
       "cobertura_volumen_pct": 62.1
+    },
+    {
+      "pi": "26TP0818PI",
+      "transporte": "",
+      "fecha_embarque": "2026-10-13",
+      "fecha_eta_bodega": "2026-10-13",
+      "skus_distintos": 9,
+      "unidades_totales": 4390.0,
+      "peso_total_kg": 23221.7,
+      "volumen_total_m3": 41.19,
+      "volumen_total_m3_raw": 453.49,
+      "pallets_estim": 34.3,
+      "containers_20_estim": 1.47,
+      "containers_40hc_estim": 0.61,
+      "skus_con_match_odoo": 10,
+      "skus_con_peso": 10,
+      "skus_con_volumen": 10,
+      "skus_volumen_anomalo": 1,
+      "cobertura_peso_pct": 111.1,
+      "cobertura_volumen_pct": 111.1
     }
   ],
   "skus_sin_match": [
@@ -166,6 +166,11 @@
       "sku": "SMCONTCAFMI",
       "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
       "volumen_unit_m3": 2535.0
+    },
+    {
+      "sku": "XRCARINF34-CL",
+      "producto": "Carpa Inflable 4 Personas 3 Estaciones Impermeable Xroad",
+      "volumen_unit_m3": 20.615
     }
   ]
 }

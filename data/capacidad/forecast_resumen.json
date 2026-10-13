@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-13T13:08:29.014027",
+  "generado_en": "2026-10-13T20:26:15.187907",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -11,24 +11,30 @@
   },
   "estado_actual": {
     "posiciones_total": 1374,
-    "posiciones_ocupadas_hoy": 732,
-    "posiciones_libres_hoy": 642,
-    "pct_ocupacion_hoy": 53.3,
-    "m3_stock_calculado": 790.6
+    "posiciones_ocupadas_hoy": 726,
+    "posiciones_libres_hoy": 648,
+    "pct_ocupacion_hoy": 52.8,
+    "m3_stock_calculado": 772.2
   },
   "pico_proyectado": {
     "fecha": "2026-10-13",
-    "posiciones_ocupadas": 720.6,
-    "pct_ocupacion": 52.4
+    "posiciones_ocupadas": 748.9,
+    "pct_ocupacion": 54.5
   },
   "minimo_proyectado": {
     "fecha": "2026-12-11",
-    "posiciones_ocupadas": 535.6,
-    "pct_ocupacion": 39.0
+    "posiciones_ocupadas": 566.6,
+    "pct_ocupacion": 41.2
   },
   "primer_critico": null,
   "primer_atencion": null,
-  "dias_con_entrada_transito": [],
+  "dias_con_entrada_transito": [
+    {
+      "fecha": "2026-10-13",
+      "pallets": 34.3,
+      "m3": 41.2
+    }
+  ],
   "pis_entrantes": [
     {
       "pi": "26TP0704PI",
@@ -63,60 +69,60 @@
       "transporte": ""
     },
     {
-      "pi": "26TP0928PI",
-      "fecha_eta": "2026-10-06",
-      "pallets": 0,
-      "m3": 0.0,
-      "unidades": 32.0,
-      "transporte": ""
-    },
-    {
       "pi": "26TP0909PI",
       "fecha_eta": "2026-10-07",
       "pallets": 44.8,
       "m3": 53.7,
       "unidades": 4227.0,
       "transporte": ""
+    },
+    {
+      "pi": "26TP0818PI",
+      "fecha_eta": "2026-10-13",
+      "pallets": 34.3,
+      "m3": 41.19,
+      "unidades": 4390.0,
+      "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 196.4,
-  "m3_total_entrante_horizonte": 152.0,
-  "m3_total_saliente_horizonte": 235.7,
+  "pallets_total_entrantes_horizonte": 161.0,
+  "pallets_total_salientes_horizonte": 193.7,
+  "m3_total_entrante_horizonte": 193.2,
+  "m3_total_saliente_horizonte": 232.4,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 790,
+    "sku_con_vol_odoo": 789,
     "sku_fallback": 3,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 20135.0,
-    "demanda_cumplida_unidades": 13548.0,
-    "demanda_no_cubierta_unidades_total": 6587.0,
-    "pct_demanda_cumplida": 67.3,
-    "sku_sin_match_stock_count": 37,
+    "demanda_cumplida_unidades": 13654.0,
+    "demanda_no_cubierta_unidades_total": 6481.0,
+    "pct_demanda_cumplida": 67.8,
+    "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 949.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 573.0,
+        "unid_no_cubiertas": 951.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUPGL-30",
-        "unid_no_cubiertas": 377.0,
+        "unid_no_cubiertas": 418.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 371.0,
+        "unid_no_cubiertas": 381.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 345.0,
+        "unid_no_cubiertas": 350.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "SMBATSAV9-CR",
+        "unid_no_cubiertas": 322.0,
         "sin_match_stock": true
       },
       {
@@ -125,18 +131,23 @@
         "sin_match_stock": true
       },
       {
-        "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 288.0,
+        "sku": "DYNTALSPER",
+        "unid_no_cubiertas": 275.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 264.0,
+        "unid_no_cubiertas": 272.0,
         "sin_match_stock": true
       },
       {
         "sku": "1659990828178",
         "unid_no_cubiertas": 227.0,
+        "sin_match_stock": true
+      },
+      {
+        "sku": "1659991971809",
+        "unid_no_cubiertas": 215.0,
         "sin_match_stock": true
       },
       {
@@ -150,13 +161,8 @@
         "sin_match_stock": true
       },
       {
-        "sku": "1659991971809",
-        "unid_no_cubiertas": 204.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "SMBATCOPBK",
-        "unid_no_cubiertas": 194.0,
+        "unid_no_cubiertas": 211.0,
         "sin_match_stock": true
       },
       {
@@ -186,12 +192,12 @@
       },
       {
         "sku": "1660857800718",
-        "unid_no_cubiertas": 131.0,
+        "unid_no_cubiertas": 137.0,
         "sin_match_stock": true
       },
       {
-        "sku": "Pack449",
-        "unid_no_cubiertas": 113.0,
+        "sku": "68540048936286",
+        "unid_no_cubiertas": 124.0,
         "sin_match_stock": true
       }
     ],
