@@ -25,8 +25,9 @@ data/planillas/reglas_margen_final.csv:
     el comprador lo descuenta después el marketplace ("Cargo por envíos" en ML, "Envío a
     cargo del Cliente" en Falabella). El cobro queda en venta y ese descuento va como
     logística en la misma línea de envío (margen 0 en la línea; no se reparte a productos).
-    Antes el RAW tenía el ingreso sin el descuento: jun–sep −$33M de logística. Walmart igual
-    (13-oct). Paris y Ripley NO: el campo de Odoo por pedido ya trae ese descuento.
+    Antes el RAW tenía el ingreso sin el descuento: jun–sep −$33M de logística. Walmart y Paris
+    igual (13-oct). Ripley solo en los pedidos donde el campo de Odoo trae la primera milla en vez
+    del despacho cobrado (ver COBRADO_SI_FALTA).
   · Logística que no viene por pedido (Andrés 13-oct): en ML, Envíame (envíos a regiones) y los
     cargos de Full, como tasa del mes sobre la venta de productos (Envíame sobre la venta no Full,
     Full sobre la venta Full). Tasas en data/planillas/logistica_extra_tasas.csv, que arma
@@ -63,9 +64,16 @@ COSTOS = ('comision', 'logistica', 'marketing')
 # liquidaciones: Falabella "Envío a cargo del Cliente" ≈ venta de la línea de envío (jul 3,50 vs 3,62 ·
 # ago 3,82 vs 3,68 · sep 2,68 vs 2,49 MM); ML sep, pedidos con despacho pagado: cliente $1,45M, ML cobra
 # $1,90M, el RAW tenía $0,57M. Walmart (pedidos con despacho pagado): RAW + cobrado al cliente = liquidación
-# (ago 0,85 vs 0,70 · sep 0,31 vs 0,30 MM). Paris y Ripley quedan fuera: su campo de Odoo ya trae el descuento
-# ("Despacho" 0,452 vs RAW 0,451; "Despacho de productos MKP Ventas" 0,605 vs 0,603 en ago).
-ENVIO_COBRADO = ('Mercado Libre', 'Falabella', 'Walmart')
+# (ago 0,85 vs 0,70 · sep 0,31 vs 0,30 MM). Paris: la glosa "Despacho" es exactamente lo que pagó el cliente
+# (jul–ago, 141 pedidos: 0,591 vs 0,591, razón 1,00 por pedido) y el campo x_paris_shipping_charge trae solo
+# "Cobro por despacho" + logística inversa (0,45 vs 0,445).
+ENVIO_COBRADO = ('Mercado Libre', 'Falabella', 'Walmart', 'Paris')
+# Ripley: "Despacho de productos MKP Ventas" también es lo que pagó el cliente (0,600 vs 0,607), pero el campo
+# x_ripley_logistics_cost trae UNA cosa por pedido: la primera milla + logística inversa cuando el pedido la tiene
+# (222 de 223 pedidos, razón 1,00), o el despacho cobrado cuando no. Se agrega el despacho cobrado solo si la
+# logística del pedido no coincide (±2%) con lo que pagó el cliente; los pedidos sin campo (promedio del canal)
+# no se tocan. Jul–ago, pedidos cruzados con la liquidación: agrega $422K de $583K que faltan.
+COBRADO_SI_FALTA = ('Ripley',)
 ETIQ_ENVIO = 'envío cobrado al cliente'
 LOG_EXTRA = ROOT / 'data' / 'planillas' / 'logistica_extra_tasas.csv'
 
@@ -288,8 +296,20 @@ def _envio_cobrado(df: pd.DataFrame, base: pd.Series) -> float:
     """Opción B (Andrés 13-oct): en ML y Falabella la línea de envío lleva como logística lo mismo que
     pagó el comprador, porque el marketplace se lo descuenta. Queda en la misma línea (margen 0); en la
     devolución de la línea, venta_neta negativa lo revierte. Idempotente."""
-    m = (base & df['canal'].astype(str).str.strip().isin(ENVIO_COBRADO)
-         & df['sku'].astype(str).str.startswith('Delivery') & (df['venta_neta'] != 0))
+    canal = df['canal'].astype(str).str.strip()
+    es_env = df['sku'].astype(str).str.startswith('Delivery')
+    linea = base & es_env & (df['venta_neta'] != 0)
+    m = linea & canal.isin(ENVIO_COBRADO)
+    r = linea & canal.isin(COBRADO_SI_FALTA) & (df['tipo_movimiento'].astype(str) == 'Venta')
+    if r.any():
+        prod = base & canal.isin(COBRADO_SI_FALTA) & ~es_env & (df['tipo_movimiento'].astype(str) == 'Venta')
+        ped = df['pedido'].astype(str)
+        log_ped = df.loc[prod].groupby(ped[prod])['logistica'].sum()
+        prom = set(ped[prod & df['fuente_comision'].astype(str).str.contains('logistica promedio', regex=False)])
+        lp = ped[r].map(log_ped).fillna(0.0)
+        v = df.loc[r, 'venta_neta']
+        falta = (lp > 0) & ~ped[r].isin(prom) & ((lp - v).abs() > 0.02 * v.abs())
+        m = m | (r & falta.reindex(df.index, fill_value=False))
     if not m.any():
         return 0.0
     df.loc[m, 'logistica'] = df.loc[m, 'venta_neta']
