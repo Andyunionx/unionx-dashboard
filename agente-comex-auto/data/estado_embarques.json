@@ -378,13 +378,11 @@
       "1629726159155",
       "XRCARINF34-CL"
     ],
-    "skus_faltantes": [
-      "XRCARINF34-CL"
-    ],
-    "po_id": null,
-    "po_name": null,
+    "skus_faltantes": [],
+    "po_id": 1916,
+    "po_name": "P00743",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-12 20:39:42Z",
+    "ts_actualizado": "2026-10-13 18:42:53Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI (A+B) SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PI detectado: 26TP0818PI A Innocatek SZ 40HQ.xlsx (dry-run)",
@@ -516,21 +514,18 @@
       "2026-10-11 17:07:16Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
       "2026-10-12 20:39:42Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 1 · sin SKU: 2",
       "2026-10-12 20:39:42Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-12 20:39:42Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana"
+      "2026-10-12 20:39:42Z · pendientes (1 por crear + 2 sin código) → re-chequea Odoo mañana",
+      "2026-10-13 18:42:45Z · costeado · 14 prod · sobrecosto 33.7% · internado 45,566,841 CLP · SKU por crear: 0 · sin SKU: 2",
+      "2026-10-13 18:42:47Z · correo ENVIADO con planilla (1a1369303385de04, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
+      "2026-10-13 18:42:53Z · PO P00743 creada y CONFIRMADA (purchase, 10 líneas, 43,374,949 CLP) · PARCIAL, faltan: ['TP140/SIN-SKU', 'TP140/SIN-SKU', 'TP101/SIN-SKU', 'TP101/SIN-SKU']"
     ],
     "productos_sin_sku": [
       "TP101",
       "TP140"
     ],
-    "correo_firma": "['XRCARINF34-CL']|['TP101', 'TP140']",
+    "correo_firma": "[]|['TP101', 'TP140']",
     "escalado_ts": "2026-09-24 12:22:21",
     "pendientes_detalle": [
-      {
-        "model": "TP-T002",
-        "sku": "XRCARINF34-CL",
-        "qty": 20,
-        "desc": "Xroad Inflatable Tent 3-4 People"
-      },
       {
         "model": "TP140",
         "sku": "(sin código)",
@@ -555,7 +550,8 @@
         "qty": 5,
         "desc": "print version cost"
       }
-    ]
+    ],
+    "po_parcial": true
   },
   "26TP0819": {
     "embarque": "26TP0819",
@@ -615,7 +611,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-12 20:39:49Z",
+    "ts_actualizado": "2026-10-13 18:42:59Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -746,7 +742,10 @@
       "2026-10-11 17:07:23Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-10-12 20:39:49Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-10-12 20:39:49Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-12 20:39:49Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-10-12 20:39:49Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-10-13 18:42:59Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
+      "2026-10-13 18:42:59Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-13 18:42:59Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -1774,7 +1773,7 @@
     "po_id": 1915,
     "po_name": "P00742",
     "ts_creado": "2026-09-12 14:43:03Z",
-    "ts_actualizado": "2026-10-12 20:40:00Z",
+    "ts_actualizado": "2026-10-13 18:43:11Z",
     "log": [
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-A SZ 40HQ.xlsx · descargado",
       "2026-09-12 14:43:04Z · PI detectado: 26TP0909PI-B Dinasty  SZ 40HQ.xlsx · descargado",
@@ -1852,7 +1851,10 @@
       "2026-10-11 17:07:34Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
       "2026-10-12 20:40:00Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 0 · sin SKU: 6",
       "2026-10-12 20:40:00Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-12 20:40:00Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
+      "2026-10-12 20:40:00Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana",
+      "2026-10-13 18:43:11Z · costeado · 41 prod · sobrecosto 18.3% · internado 96,857,909 CLP · SKU por crear: 0 · sin SKU: 6",
+      "2026-10-13 18:43:11Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-13 18:43:11Z · pendientes (0 por crear + 6 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [
       "LTS27-MFZH01",
@@ -1989,7 +1991,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-28 19:01:24Z",
-    "ts_actualizado": "2026-10-12 20:39:28Z",
+    "ts_actualizado": "2026-10-13 18:42:31Z",
     "log": [
       "2026-09-28 19:01:24Z · PI detectado: 26TP0927PI NB 40HQ.xlsx · descargado",
       "2026-09-28 19:01:24Z · PL detectado: 26TP0927PI PL.xlsx · descargado",
@@ -2010,7 +2012,8 @@
       "2026-10-09 17:47:15Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
       "2026-10-10 16:41:13Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
       "2026-10-11 17:07:02Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
-      "2026-10-12 20:39:28Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
+      "2026-10-12 20:39:28Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana",
+      "2026-10-13 18:42:31Z · aún no aparece en Seimex (busqué PI0927) → reintenta mañana"
     ]
   },
   "26TP0928": {
@@ -2063,7 +2066,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-29 17:22:17Z",
-    "ts_actualizado": "2026-10-12 20:39:28Z",
+    "ts_actualizado": "2026-10-13 18:42:31Z",
     "log": [
       "2026-09-29 17:22:18Z · PI detectado: 26TP0928PI .xlsx · descargado",
       "2026-09-29 17:22:18Z · PL detectado: 26TP0928PI PL.xlsx · descargado",
@@ -2083,7 +2086,8 @@
       "2026-10-09 17:47:15Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
       "2026-10-10 16:41:13Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
       "2026-10-11 17:07:02Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
-      "2026-10-12 20:39:28Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana"
+      "2026-10-12 20:39:28Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana",
+      "2026-10-13 18:42:31Z · aún no aparece en Seimex (busqué PI0928) → reintenta mañana"
     ]
   },
   "26TP0930": {
@@ -2177,7 +2181,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-30 17:20:11Z",
-    "ts_actualizado": "2026-10-12 20:40:13Z",
+    "ts_actualizado": "2026-10-13 18:43:23Z",
     "log": [
       "2026-09-30 17:20:11Z · PI detectado: 26TP0930PI SZ 40HQ .xlsx · descargado",
       "2026-09-30 17:20:12Z · PL detectado: 26TP0930PI PL.xlsx · descargado",
@@ -2225,7 +2229,10 @@
       "2026-10-11 17:07:47Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-10-12 20:40:13Z · costeado · 37 prod · sobrecosto 19.1% · internado 95,232,283 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-10-12 20:40:13Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-12 20:40:13Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-10-12 20:40:13Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-10-13 18:43:23Z · costeado · 37 prod · sobrecosto 19.1% · internado 95,232,283 CLP · SKU por crear: 2 · sin SKU: 0",
+      "2026-10-13 18:43:23Z · correo ya enviado con estos pendientes → no re-envío",
+      "2026-10-13 18:43:23Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
     ],
     "productos_sin_sku": [],
     "pendientes_detalle": [
@@ -2333,7 +2340,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-10-09 17:47:12Z",
-    "ts_actualizado": "2026-10-12 20:39:28Z",
+    "ts_actualizado": "2026-10-13 18:42:31Z",
     "log": [
       "2026-10-09 17:47:12Z · PL detectado: 26TP1009PI PL.xlsx · descargado",
       "2026-10-09 17:47:12Z · PI detectado: 26TP1009PI NB 40HQ .xlsx · descargado",
@@ -2341,7 +2348,8 @@
       "2026-10-09 17:47:15Z · aún no aparece en Seimex (busqué PI1009) → reintenta mañana",
       "2026-10-10 16:41:13Z · aún no aparece en Seimex (busqué PI1009) → reintenta mañana",
       "2026-10-11 17:07:02Z · aún no aparece en Seimex (busqué PI1009) → reintenta mañana",
-      "2026-10-12 20:39:28Z · aún no aparece en Seimex (busqué PI1009) → reintenta mañana"
+      "2026-10-12 20:39:28Z · aún no aparece en Seimex (busqué PI1009) → reintenta mañana",
+      "2026-10-13 18:42:31Z · aún no aparece en Seimex (busqué PI1009) → reintenta mañana"
     ]
   }
 }
