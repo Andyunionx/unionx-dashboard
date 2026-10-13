@@ -43,6 +43,11 @@ CANALES = ["Mercado Libre", "Falabella", "Paris", "Walmart"]
 BOD2CANAL = {"BFML": "Mercado Libre", "BFFa": "Falabella", "BFP": "Paris",
              "BFR": "Ripley", "BFW": "Walmart", "BFE": "Falabella"}
 DIGITAL = {"Marketplace", "Páginas propias", "Páginas Propias", "Fidelización"}
+# Canales cuyo stock full NO se toma del feed de Martín (cae a Odoo BF*). Paris (13-oct, Claudia): el feed
+# (/v2/stock isFulfillment=true) no refleja las reposiciones al FF — desde el 1-sep solo baja (274 → 205 uds,
+# 112 → 87 SKU) y el 13-oct marcaba 205 uds contra 449 del Seller Center (multistyler 0 vs 47). Odoo BFP:
+# 494 uds, 113 de 156 SKU exactos vs 71 del feed. Volver al feed cuando Martín lo corrija.
+SIN_FEED_LIVE = {"Paris"}
 SEM_EVENTO = {23, 41}
 AZUL = "4884FC"
 
@@ -362,7 +367,10 @@ def stock_full_live(no_live: bool):
             except Exception as e:
                 live = pd.read_parquet(fl.LIVE_PARQUET)
                 fuente = f"Seller center (parquet local; feed no disponible: {type(e).__name__})"
-            cruce = fl.generar_cruce(live)
+            cruce = fl.generar_cruce(live)   # la cuadratura sigue mostrando feed vs Odoo de todos los canales
+            live = live[~live["canal"].isin(SIN_FEED_LIVE)]
+            if SIN_FEED_LIVE:
+                fuente += " · " + ", ".join(sorted(SIN_FEED_LIVE)) + "=Odoo (feed sin reposiciones)"
             canales_live = set(live["canal"].unique())
             base = pd.concat([live[["canal", "sku", "qty"]],
                               odoo_g[~odoo_g["canal"].isin(canales_live)]], ignore_index=True)
