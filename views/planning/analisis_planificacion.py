@@ -998,7 +998,7 @@ def render():
 
             ts0   = pd.Timestamp(mes_actual_cv + '-01')
             dias0 = (ts0 + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
-            dia0  = round(lin_actual_cv * dias0)
+            dia0  = max(0, _TODAY.day - 1)
             st.info(f"📅 **{per_lbl}** · Linealidad día **{dia0}/{dias0}** = **{lin_actual_cv:.1%}**")
 
             # ── Resumen KPIs ──────────────────────────────────────────
