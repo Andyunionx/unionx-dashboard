@@ -21,6 +21,11 @@ data/planillas/reglas_margen_final.csv:
     productos, y lo que viene por pedido (Odoo, tarifario) y quedó en la línea de
     envío se reasigna a los productos del mismo pedido (Andrés 24-09). El total del
     pedido no cambia.
+  · Excepción (Andrés 13-oct, opción B): en Mercado Libre y Falabella el despacho que paga
+    el comprador lo descuenta después el marketplace ("Cargo por envíos" en ML, "Envío a
+    cargo del Cliente" en Falabella). El cobro queda en venta y ese descuento va como
+    logística en la misma línea de envío (margen 0 en la línea; no se reparte a productos).
+    Antes el RAW tenía el ingreso sin el descuento: jun–sep −$33M de logística.
 
   · com_pct / log_pct / mkt_pct vacíos = no tocar lo que trae el extract.
   · modo_com = 'forzar' reemplaza la comisión; 'si_vacio' solo la pone si la fila
@@ -48,6 +53,12 @@ MARKETPLACES = ('Mercado Libre', 'Falabella', 'Paris', 'Ripley', 'Walmart')
 # Campo por pedido que puede venir vacío al vender (se llena con la liquidación) → promedio del canal
 HUECOS = [(c, 'comision') for c in MARKETPLACES] + [('Ripley', 'logistica'), ('Walmart', 'logistica')]
 COSTOS = ('comision', 'logistica', 'marketing')
+# Canales que descuentan el despacho que pagó el comprador (opción B, Andrés 13-oct). Verificado con
+# liquidaciones: Falabella "Envío a cargo del Cliente" ≈ venta de la línea de envío (jul 3,50 vs 3,62 ·
+# ago 3,82 vs 3,68 · sep 2,68 vs 2,49 MM); ML sep, pedidos con despacho pagado: cliente $1,45M, ML cobra
+# $1,90M, el RAW tenía $0,57M. Paris, Ripley y Walmart sin verificar.
+ENVIO_COBRADO = ('Mercado Libre', 'Falabella')
+ETIQ_ENVIO = 'envío cobrado al cliente'
 
 
 def cargar_reglas(path: Path = REGLAS) -> pd.DataFrame:
@@ -126,6 +137,7 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
         df.loc[m, 'fuente_comision'] = f.where(f.str.contains('regla'), (f + '+regla').str.lstrip('+'))
         tocadas += int(m.sum())
     movido = _sacar_envio_del_reparto(df, base)
+    n_env = _envio_cobrado(df, base)
     n_prom = _promedio_canal(df, base, _ventas_referencia(df))
     # la referencia se rearma después del promedio: la devolución revierte lo que la venta lleva
     n_rev = _reversa_devoluciones(df, base, _ventas_referencia(df))
@@ -137,7 +149,8 @@ def aplicar(df: pd.DataFrame, reglas: pd.DataFrame | None = None, verbose: bool 
     if verbose:
         print(f"   [margen_final_reglas] {tocadas:,} filas con regla de canal ({len(reglas)} canales en la tabla)"
               f" · ${movido:,.0f} de costos movidos de líneas de envío a productos"
-              f" · {n_prom:,} filas con promedio del canal · {n_rev:,} costos revertidos en devoluciones")
+              f" · {n_prom:,} filas con promedio del canal · {n_rev:,} costos revertidos en devoluciones"
+              f" · ${n_env:,.0f} de despacho cobrado al cliente como logística (ML y Falabella)")
     return df
 
 
@@ -244,17 +257,36 @@ def _sacar_envio_del_reparto(df: pd.DataFrame, base: pd.Series) -> float:
     movido = 0.0
     tiene_prod = key[env_c].isin(set(key[pm]))
     ec = env_c.copy(); ec[env_c] = tiene_prod.values
+    # el descuento del despacho cobrado al cliente (_envio_cobrado) se queda en su línea
+    fija = ec & df['fuente_comision'].astype(str).str.contains(ETIQ_ENVIO, regex=False)
     for c in ('comision', 'logistica', 'marketing'):
-        tot = df.loc[ec].groupby(key[ec])[c].sum()
+        ecc = ec & ~fija if c == 'logistica' else ec
+        tot = df.loc[ecc].groupby(key[ecc])[c].sum()
         df.loc[pm, c] = df.loc[pm, c] + key[pm].map(tot).fillna(0) * w
-        movido += float(df.loc[ec, c].abs().sum())
-        df.loc[ec, c] = 0.0
+        movido += float(df.loc[ecc, c].abs().sum())
+        df.loc[ecc, c] = 0.0
     for idx in (pm, ec):
         df.loc[idx, 'margen_final'] = (df.loc[idx, 'margen_front'] - df.loc[idx, 'comision']
                                        - df.loc[idx, 'logistica'] - df.loc[idx, 'marketing'])
         v = df.loc[idx, 'venta_neta']
         df.loc[idx, 'comision_pct'] = (df.loc[idx, 'comision'] / v.where(v != 0) * 100).fillna(0)
     return movido
+
+
+def _envio_cobrado(df: pd.DataFrame, base: pd.Series) -> float:
+    """Opción B (Andrés 13-oct): en ML y Falabella la línea de envío lleva como logística lo mismo que
+    pagó el comprador, porque el marketplace se lo descuenta. Queda en la misma línea (margen 0); en la
+    devolución de la línea, venta_neta negativa lo revierte. Idempotente."""
+    m = (base & df['canal'].astype(str).str.strip().isin(ENVIO_COBRADO)
+         & df['sku'].astype(str).str.startswith('Delivery') & (df['venta_neta'] != 0))
+    if not m.any():
+        return 0.0
+    df.loc[m, 'logistica'] = df.loc[m, 'venta_neta']
+    df.loc[m, 'margen_final'] = (df.loc[m, 'margen_front'] - df.loc[m, 'comision']
+                                 - df.loc[m, 'logistica'] - df.loc[m, 'marketing'])
+    f = df.loc[m, 'fuente_comision'].astype(str)
+    df.loc[m, 'fuente_comision'] = f.where(f.str.contains(ETIQ_ENVIO, regex=False), (f + '·' + ETIQ_ENVIO).str.lstrip('·'))
+    return float(df.loc[m, 'logistica'].sum())
 
 
 if __name__ == '__main__':
