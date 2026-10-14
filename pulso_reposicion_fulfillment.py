@@ -48,6 +48,19 @@ DIGITAL = {"Marketplace", "Páginas propias", "Páginas Propias", "Fidelización
 # 112 → 87 SKU) y el 13-oct marcaba 205 uds contra 449 del Seller Center (multistyler 0 vs 47). Odoo BFP:
 # 494 uds, 113 de 156 SKU exactos vs 71 del feed. Volver al feed cuando Martín lo corrija.
 SIN_FEED_LIVE = {"Paris"}
+# Mismo producto con dos códigos (duplicado en Odoo): el feed y la venta se juntan en el código vigente.
+# 1660858118518 (vendió hasta el 16-sep) = SIMMANCC-BK (Mantequillero cerámica tapa bamboo + cuchillo 600 ml):
+# el Full de ML llegaba en el código viejo y la venta en el nuevo (Trini, 14-oct).
+ALIAS_SKU = {"1660858118518": "SIMMANCC-BK"}
+
+
+def _alias_sku(df, col="sku"):
+    """Pasa los códigos duplicados al vigente y vuelve a sumar (stock) — no toca otras columnas."""
+    if df is None or not len(df) or not ALIAS_SKU:
+        return df
+    df = df.copy()
+    df[col] = df[col].astype(str).str.strip().replace(ALIAS_SKU)
+    return df
 SEM_EVENTO = {23, 41}
 AZUL = "4884FC"
 
@@ -197,7 +210,7 @@ def cargar_venta_digital(sem: list[int]) -> pd.DataFrame:
     v = v[v["fecha_venta"].dt.year == anio]
     v["week"] = v["fecha_venta"].dt.isocalendar().week.astype(int)
     v = v[v["week"].isin(sem)]
-    v["sku"] = v["sku"].astype(str).str.strip()
+    v["sku"] = v["sku"].astype(str).str.strip().replace(ALIAS_SKU)
     v["cantidad"] = pd.to_numeric(v["cantidad"], errors="coerce").fillna(0)
     return v
 
@@ -379,14 +392,18 @@ def stock_full_live(no_live: bool):
                 fuente += " · Falabella=FBF (API Seller Center)"
             if WFS_LIVE.exists():
                 fuente += " · Walmart=WFS (export Seller Center)"
-            return _override_walmart(_override_fala(full)), fuente, cruce
+            full = _override_walmart(_override_fala(full))
+            full = _alias_sku(full).groupby(["canal", "sku"], as_index=False)["qty"].sum()
+            return full, fuente, cruce
         except Exception as e:
             print(f"[live][WARN] {type(e).__name__}: {e} -> Odoo BF*")
     if FALA_FBF.exists():
         fuente += " · Falabella=FBF (API Seller Center)"
     if WFS_LIVE.exists():
         fuente += " · Walmart=WFS (export Seller Center)"
-    return _override_walmart(_override_fala(odoo_g)), fuente, cruce
+    full = _override_walmart(_override_fala(odoo_g))
+    full = _alias_sku(full).groupby(["canal", "sku"], as_index=False)["qty"].sum()
+    return full, fuente, cruce
 
 
 def transito_a_fulls():

@@ -133,7 +133,8 @@ def main():
     out = (w.groupby("sku", as_index=False)
              .agg(qty=("avail", "sum"), inbound=("inb", "sum")))
     out["canal"] = "Walmart"
-    out = out[["canal", "sku", "qty", "inbound"]]
+    out["ts"] = pd.Timestamp(fecha)   # fecha del export: el pulso avisa si está viejo
+    out = out[["canal", "sku", "qty", "inbound", "ts"]]
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     out.to_parquet(OUT, index=False)

@@ -40,15 +40,17 @@ def _fuentes_transito(hoy):
     internas. El 21-09 eso hizo que el pulso sugiriera 616 uds ignorando 2.747 ya
     en camino. Esto lo detecta y lo saca al mail, en rojo."""
     avisos = []
-    for canal, ruta, fuente in [("Falabella", FALA_TRANSITO, "Seller Center FBF (scraper)"),
-                                ("Walmart", WFS_LIVE, "export WFS del Seller Center")]:
+    # días de antigüedad tolerados: Falabella se scrapea el mismo día; el export de Walmart lo manda
+    # Trini el viernes y el pulso corre el lunes (antes el parquet no traía "ts" y salía "ilegible").
+    for canal, ruta, fuente, tolera in [("Falabella", FALA_TRANSITO, "Seller Center FBF (scraper)", 0),
+                                        ("Walmart", WFS_LIVE, "export WFS del Seller Center", 7)]:
         if not ruta.exists():
             avisos.append((canal, f"sin archivo de {fuente}"))
             continue
         try:
             ts = pd.to_datetime(pd.read_parquet(ruta)["ts"].max())
             edad = (pd.Timestamp(hoy) - ts.normalize()).days
-            if edad > 0:
+            if edad > tolera:
                 avisos.append((canal, f"{fuente} sin refrescar: último dato del {ts.date()} ({edad}d)"))
         except Exception as e:
             avisos.append((canal, f"{fuente} ilegible ({type(e).__name__})"))
