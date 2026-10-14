@@ -1,5 +1,5 @@
 {
- "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: Marketplace y Fidelización por canal = \"Distribución Meta S2 2026.Q4.xlsx\" hoja Metas de Nicole (13-oct-2026; filas repetidas por canal/mes sumadas; sin meta Q4 para CMR ni LATAM); Páginas Propias = total de Nicole repartido 60/20/20 Simplit/UnionX/Lhotse web (hoja Shares, Share Fcst; Andrés 13-oct-2026); Corporativo y Distribución = FCST VENTAS 2026 por línea (canal vacío, nivel \"linea\").",
+ "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: Marketplace y Fidelización por canal = \"Distribución Meta S2 2026.Q4.xlsx\" hoja Metas de Nicole (13-oct-2026; filas repetidas por canal/mes sumadas; sin meta Q4 para CMR ni LATAM); Páginas Propias = total de Nicole abierto por web con 57/33/20 de Nicolás reescalado a 100% (Simplit 51,8% · Lhotse 30,0% · UnionX 18,2%; 14-oct-2026, a revisar con Martín). LATAM Pass $20M/mes oct–dic y CMR $8M/mes nov–dic (Nicolás 14-oct, canales de Martín; sin meta de contribución). Corporativo y Distribución = FCST VENTAS 2026 por línea (canal vacío, nivel \"linea\").",
  "extraido": "2026-06-16",
  "base": "neta",
  "factor_bruta_iva": 1.19,
@@ -1513,6 +1513,14 @@
    "ano": 2026,
    "mes": 10,
    "negocio": "Fidelización",
+   "canal": "LATAM Pass",
+   "meta_venta": 20000000.0,
+   "meta_contribucion": 0.0
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Fidelización",
    "canal": "Sawa",
    "meta_venta": 1867863.1,
    "meta_contribucion": 607055.51
@@ -1601,25 +1609,25 @@
    "ano": 2026,
    "mes": 10,
    "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 26925987.6,
+   "meta_contribucion": 6058347.21
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Páginas Propias",
    "canal": "Simplit web",
-   "meta_venta": 53851975.2,
-   "meta_contribucion": 12116694.42
+   "meta_venta": 46508524.04,
+   "meta_contribucion": 10464417.91
   },
   {
    "ano": 2026,
    "mes": 10,
    "negocio": "Páginas Propias",
    "canal": "UnionX web",
-   "meta_venta": 17950658.4,
-   "meta_contribucion": 4038898.14
-  },
-  {
-   "ano": 2026,
-   "mes": 10,
-   "negocio": "Páginas Propias",
-   "canal": "Lhotse web",
-   "meta_venta": 17950658.4,
-   "meta_contribucion": 4038898.14
+   "meta_venta": 16318780.36,
+   "meta_contribucion": 3671725.58
   },
   {
    "ano": 2026,
@@ -1642,6 +1650,14 @@
    "ano": 2026,
    "mes": 11,
    "negocio": "Fidelización",
+   "canal": "CMR",
+   "meta_venta": 8000000.0,
+   "meta_contribucion": 0.0
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
    "canal": "Celmedia",
    "meta_venta": 5310637.72,
    "meta_contribucion": 1725957.26
@@ -1653,6 +1669,14 @@
    "canal": "Global Reward",
    "meta_venta": 2549106.11,
    "meta_contribucion": 828459.48
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
+   "canal": "LATAM Pass",
+   "meta_venta": 20000000.0,
+   "meta_contribucion": 0.0
   },
   {
    "ano": 2026,
@@ -1746,25 +1770,25 @@
    "ano": 2026,
    "mes": 11,
    "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 12814583.7,
+   "meta_contribucion": 3267718.84
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Páginas Propias",
    "canal": "Simplit web",
-   "meta_venta": 25629167.4,
-   "meta_contribucion": 6535437.69
+   "meta_venta": 22134280.94,
+   "meta_contribucion": 5644241.64
   },
   {
    "ano": 2026,
    "mes": 11,
    "negocio": "Páginas Propias",
    "canal": "UnionX web",
-   "meta_venta": 8543055.8,
-   "meta_contribucion": 2178479.23
-  },
-  {
-   "ano": 2026,
-   "mes": 11,
-   "negocio": "Páginas Propias",
-   "canal": "Lhotse web",
-   "meta_venta": 8543055.8,
-   "meta_contribucion": 2178479.23
+   "meta_venta": 7766414.36,
+   "meta_contribucion": 1980435.66
   },
   {
    "ano": 2026,
@@ -1796,6 +1820,14 @@
    "ano": 2026,
    "mes": 12,
    "negocio": "Fidelización",
+   "canal": "CMR",
+   "meta_venta": 8000000.0,
+   "meta_contribucion": 0.0
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
    "canal": "Celmedia",
    "meta_venta": 10122853.28,
    "meta_contribucion": 3289927.32
@@ -1807,6 +1839,14 @@
    "canal": "Global Reward",
    "meta_venta": 4858969.57,
    "meta_contribucion": 1579165.11
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
+   "canal": "LATAM Pass",
+   "meta_venta": 20000000.0,
+   "meta_contribucion": 0.0
   },
   {
    "ano": 2026,
@@ -1900,25 +1940,25 @@
    "ano": 2026,
    "mes": 12,
    "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 29746992.0,
+   "meta_contribucion": 7734217.92
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Páginas Propias",
    "canal": "Simplit web",
-   "meta_venta": 59493984.0,
-   "meta_contribucion": 15468435.84
+   "meta_venta": 51381168.0,
+   "meta_contribucion": 13359103.68
   },
   {
    "ano": 2026,
    "mes": 12,
    "negocio": "Páginas Propias",
    "canal": "UnionX web",
-   "meta_venta": 19831328.0,
-   "meta_contribucion": 5156145.28
-  },
-  {
-   "ano": 2026,
-   "mes": 12,
-   "negocio": "Páginas Propias",
-   "canal": "Lhotse web",
-   "meta_venta": 19831328.0,
-   "meta_contribucion": 5156145.28
+   "meta_venta": 18028480.0,
+   "meta_contribucion": 4687404.8
   }
  ]
 }
