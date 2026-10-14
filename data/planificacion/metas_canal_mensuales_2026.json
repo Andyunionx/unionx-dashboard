@@ -1,5 +1,5 @@
 {
- "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: FCST VENTAS 2026 por línea de negocio, sin apertura por canal (canal vacío, nivel \"linea\") — Andrés 05-oct-2026, mientras Nicole no mande las metas Q4 por canal.",
+ "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: Marketplace y Fidelización por canal = \"Distribución Meta S2 2026.Q4.xlsx\" hoja Metas de Nicole (13-oct-2026; filas repetidas por canal/mes sumadas; sin meta Q4 para CMR ni LATAM); Páginas Propias, Corporativo y Distribución = FCST VENTAS 2026 por línea (canal vacío, nivel \"linea\"; Páginas Propias igual al total de Nicole, sin apertura por web).",
  "extraido": "2026-06-16",
  "base": "neta",
  "factor_bruta_iva": 1.19,
@@ -975,6 +975,22 @@
   {
    "ano": 2026,
    "mes": 7,
+   "negocio": "Corporativo",
+   "canal": "Corporativo",
+   "meta_venta": 10000000.0,
+   "meta_contribucion": 3240000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 7,
+   "negocio": "Distribución",
+   "canal": "UnionX b2b",
+   "meta_venta": 46000000.0,
+   "meta_contribucion": 13800000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 7,
    "negocio": "Fidelización",
    "canal": "Banco Bice",
    "meta_venta": 1568952.86,
@@ -982,39 +998,7 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "Banco Bice",
-   "meta_venta": 1555671.73,
-   "meta_contribucion": 482258.24
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Fidelización",
-   "canal": "Banco Bice",
-   "meta_venta": 1130875.77,
-   "meta_contribucion": 350571.49
-  },
-  {
-   "ano": 2026,
    "mes": 7,
-   "negocio": "Fidelización",
-   "canal": "CMR",
-   "meta_venta": 2000000.0,
-   "meta_contribucion": 560000.0
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "CMR",
-   "meta_venta": 2000000.0,
-   "meta_contribucion": 560000.0
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
    "negocio": "Fidelización",
    "canal": "CMR",
    "meta_venta": 2000000.0,
@@ -1030,22 +1014,6 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "Celmedia",
-   "meta_venta": 7333881.02,
-   "meta_contribucion": 2383511.33
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Fidelización",
-   "canal": "Celmedia",
-   "meta_venta": 5331271.47,
-   "meta_contribucion": 1732663.23
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Fidelización",
    "canal": "Global Reward",
@@ -1054,42 +1022,10 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "Global Reward",
-   "meta_venta": 2666865.82,
-   "meta_contribucion": 866731.39
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Fidelización",
-   "canal": "Global Reward",
-   "meta_venta": 1938644.17,
-   "meta_contribucion": 630059.36
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Fidelización",
    "canal": "Latam",
    "meta_venta": 1008612.55,
-   "meta_contribucion": 0.0
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "Latam",
-   "meta_venta": 1000074.68,
-   "meta_contribucion": 0.0
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Fidelización",
-   "canal": "Latam",
-   "meta_venta": 726991.56,
    "meta_contribucion": 0.0
   },
   {
@@ -1102,43 +1038,11 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "Sawa",
-   "meta_venta": 1555671.73,
-   "meta_contribucion": 505593.31
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Fidelización",
-   "canal": "Sawa",
-   "meta_venta": 1130875.77,
-   "meta_contribucion": 367534.62
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Fidelización",
    "canal": "Travel Duty",
    "meta_venta": 9189581.04,
    "meta_contribucion": 2710926.41
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Fidelización",
-   "canal": "Travel Duty",
-   "meta_venta": 9111791.57,
-   "meta_contribucion": 2687978.51
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Fidelización",
-   "canal": "Travel Duty",
-   "meta_venta": 6623700.91,
-   "meta_contribucion": 1953991.77
   },
   {
    "ano": 2026,
@@ -1150,43 +1054,11 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Abc",
-   "meta_venta": 4327582.4,
-   "meta_contribucion": 1156996.16
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Abc",
-   "meta_venta": 3485111.15,
-   "meta_contribucion": 910130.25
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Marketplace",
    "canal": "El Volcan",
    "meta_venta": 7511847.45,
    "meta_contribucion": 2001279.41
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "El Volcan",
-   "meta_venta": 7212637.33,
-   "meta_contribucion": 1928326.93
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "El Volcan",
-   "meta_venta": 5808518.59,
-   "meta_contribucion": 1516883.76
   },
   {
    "ano": 2026,
@@ -1198,43 +1070,11 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Falabella",
-   "meta_venta": 96949417.5,
-   "meta_contribucion": 25888073.8
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Falabella",
-   "meta_venta": 65040764.88,
-   "meta_contribucion": 16924095.92
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Marketplace",
    "canal": "Hites",
    "meta_venta": 1877961.86,
    "meta_contribucion": 509709.66
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Hites",
-   "meta_venta": 1803159.33,
-   "meta_contribucion": 491097.53
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Hites",
-   "meta_venta": 1452129.65,
-   "meta_contribucion": 386481.59
   },
   {
    "ano": 2026,
@@ -1246,43 +1086,11 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Kitchen Center",
-   "meta_venta": 24162335.07,
-   "meta_contribucion": 6677356.24
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Kitchen Center",
-   "meta_venta": 19458537.26,
-   "meta_contribucion": 5256687.42
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Marketplace",
    "canal": "Mercado Libre",
    "meta_venta": 190855912.16,
    "meta_contribucion": 50766507.65
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Mercado Libre",
-   "meta_venta": 186234916.28,
-   "meta_contribucion": 49886566.69
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Mercado Libre",
-   "meta_venta": 161075274.53,
-   "meta_contribucion": 41929367.82
   },
   {
    "ano": 2026,
@@ -1294,43 +1102,11 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Paris",
-   "meta_venta": 25157894.35,
-   "meta_contribucion": 6847134.23
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Paris",
-   "meta_venta": 16399040.88,
-   "meta_contribucion": 4331106.78
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Marketplace",
    "canal": "Ripley",
    "meta_venta": 18025275.93,
    "meta_contribucion": 4927698.66
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Ripley",
-   "meta_venta": 17757205.36,
-   "meta_contribucion": 4892907.07
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Ripley",
-   "meta_venta": 13785849.99,
-   "meta_contribucion": 3691347.62
   },
   {
    "ano": 2026,
@@ -1342,43 +1118,11 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Marketplace",
-   "canal": "Walmart",
-   "meta_venta": 16119631.28,
-   "meta_contribucion": 4453624.44
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Marketplace",
-   "canal": "Walmart",
-   "meta_venta": 12867659.9,
-   "meta_contribucion": 3469162.06
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Páginas Propias",
    "canal": "Lhotse web",
    "meta_venta": 7406977.5,
    "meta_contribucion": 1777674.6
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Páginas Propias",
-   "canal": "Lhotse web",
-   "meta_venta": 8270738.28,
-   "meta_contribucion": 1943623.5
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Páginas Propias",
-   "canal": "Lhotse web",
-   "meta_venta": 5703390.0,
-   "meta_contribucion": 1368813.6
   },
   {
    "ano": 2026,
@@ -1390,27 +1134,171 @@
   },
   {
    "ano": 2026,
-   "mes": 8,
-   "negocio": "Páginas Propias",
-   "canal": "Simplit web",
-   "meta_venta": 24812214.84,
-   "meta_contribucion": 6451175.86
-  },
-  {
-   "ano": 2026,
-   "mes": 9,
-   "negocio": "Páginas Propias",
-   "canal": "Simplit web",
-   "meta_venta": 17110170.0,
-   "meta_contribucion": 4534195.05
-  },
-  {
-   "ano": 2026,
    "mes": 7,
    "negocio": "Páginas Propias",
    "canal": "UnionX web",
    "meta_venta": 7406977.5,
    "meta_contribucion": 1777674.6
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Corporativo",
+   "canal": "Corporativo",
+   "meta_venta": 110000000.0,
+   "meta_contribucion": 34870000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Distribución",
+   "canal": "UnionX b2b",
+   "meta_venta": 39000000.0,
+   "meta_contribucion": 13650000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "Banco Bice",
+   "meta_venta": 1555671.73,
+   "meta_contribucion": 482258.24
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "CMR",
+   "meta_venta": 2000000.0,
+   "meta_contribucion": 560000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "Celmedia",
+   "meta_venta": 7333881.02,
+   "meta_contribucion": 2383511.33
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "Global Reward",
+   "meta_venta": 2666865.82,
+   "meta_contribucion": 866731.39
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "Latam",
+   "meta_venta": 1000074.68,
+   "meta_contribucion": 0.0
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "Sawa",
+   "meta_venta": 1555671.73,
+   "meta_contribucion": 505593.31
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Fidelización",
+   "canal": "Travel Duty",
+   "meta_venta": 9111791.57,
+   "meta_contribucion": 2687978.51
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Abc",
+   "meta_venta": 4327582.4,
+   "meta_contribucion": 1156996.16
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "El Volcan",
+   "meta_venta": 7212637.33,
+   "meta_contribucion": 1928326.93
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Falabella",
+   "meta_venta": 96949417.5,
+   "meta_contribucion": 25888073.8
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Hites",
+   "meta_venta": 1803159.33,
+   "meta_contribucion": 491097.53
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Kitchen Center",
+   "meta_venta": 24162335.07,
+   "meta_contribucion": 6677356.24
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Mercado Libre",
+   "meta_venta": 186234916.28,
+   "meta_contribucion": 49886566.69
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Paris",
+   "meta_venta": 25157894.35,
+   "meta_contribucion": 6847134.23
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Ripley",
+   "meta_venta": 17757205.36,
+   "meta_contribucion": 4892907.07
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Marketplace",
+   "canal": "Walmart",
+   "meta_venta": 16119631.28,
+   "meta_contribucion": 4453624.44
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 8270738.28,
+   "meta_contribucion": 1943623.5
+  },
+  {
+   "ano": 2026,
+   "mes": 8,
+   "negocio": "Páginas Propias",
+   "canal": "Simplit web",
+   "meta_venta": 24812214.84,
+   "meta_contribucion": 6451175.86
   },
   {
    "ano": 2026,
@@ -1423,26 +1311,10 @@
   {
    "ano": 2026,
    "mes": 9,
-   "negocio": "Páginas Propias",
-   "canal": "UnionX web",
-   "meta_venta": 5703390.0,
-   "meta_contribucion": 1368813.6
-  },
-  {
-   "ano": 2026,
-   "mes": 7,
-   "negocio": "Distribución",
-   "canal": "UnionX b2b",
-   "meta_venta": 46000000.0,
-   "meta_contribucion": 13800000.0
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Distribución",
-   "canal": "UnionX b2b",
-   "meta_venta": 39000000.0,
-   "meta_contribucion": 13650000.0
+   "negocio": "Corporativo",
+   "canal": "Corporativo",
+   "meta_venta": 0.0,
+   "meta_contribucion": 0.0
   },
   {
    "ano": 2026,
@@ -1454,27 +1326,155 @@
   },
   {
    "ano": 2026,
-   "mes": 7,
-   "negocio": "Corporativo",
-   "canal": "Corporativo",
-   "meta_venta": 10000000.0,
-   "meta_contribucion": 3240000.0
-  },
-  {
-   "ano": 2026,
-   "mes": 8,
-   "negocio": "Corporativo",
-   "canal": "Corporativo",
-   "meta_venta": 110000000.0,
-   "meta_contribucion": 34870000.0
+   "mes": 9,
+   "negocio": "Fidelización",
+   "canal": "Banco Bice",
+   "meta_venta": 1130875.77,
+   "meta_contribucion": 350571.49
   },
   {
    "ano": 2026,
    "mes": 9,
-   "negocio": "Corporativo",
-   "canal": "Corporativo",
-   "meta_venta": 0.0,
+   "negocio": "Fidelización",
+   "canal": "CMR",
+   "meta_venta": 2000000.0,
+   "meta_contribucion": 560000.0
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Fidelización",
+   "canal": "Celmedia",
+   "meta_venta": 5331271.47,
+   "meta_contribucion": 1732663.23
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Fidelización",
+   "canal": "Global Reward",
+   "meta_venta": 1938644.17,
+   "meta_contribucion": 630059.36
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Fidelización",
+   "canal": "Latam",
+   "meta_venta": 726991.56,
    "meta_contribucion": 0.0
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Fidelización",
+   "canal": "Sawa",
+   "meta_venta": 1130875.77,
+   "meta_contribucion": 367534.62
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Fidelización",
+   "canal": "Travel Duty",
+   "meta_venta": 6623700.91,
+   "meta_contribucion": 1953991.77
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Abc",
+   "meta_venta": 3485111.15,
+   "meta_contribucion": 910130.25
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "El Volcan",
+   "meta_venta": 5808518.59,
+   "meta_contribucion": 1516883.76
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Falabella",
+   "meta_venta": 65040764.88,
+   "meta_contribucion": 16924095.92
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Hites",
+   "meta_venta": 1452129.65,
+   "meta_contribucion": 386481.59
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Kitchen Center",
+   "meta_venta": 19458537.26,
+   "meta_contribucion": 5256687.42
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Mercado Libre",
+   "meta_venta": 161075274.53,
+   "meta_contribucion": 41929367.82
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Paris",
+   "meta_venta": 16399040.88,
+   "meta_contribucion": 4331106.78
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Ripley",
+   "meta_venta": 13785849.99,
+   "meta_contribucion": 3691347.62
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Marketplace",
+   "canal": "Walmart",
+   "meta_venta": 12867659.9,
+   "meta_contribucion": 3469162.06
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 5703390.0,
+   "meta_contribucion": 1368813.6
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Páginas Propias",
+   "canal": "Simplit web",
+   "meta_venta": 17110170.0,
+   "meta_contribucion": 4534195.05
+  },
+  {
+   "ano": 2026,
+   "mes": 9,
+   "negocio": "Páginas Propias",
+   "canal": "UnionX web",
+   "meta_venta": 5703390.0,
+   "meta_contribucion": 1368813.6
   },
   {
    "ano": 2026,
@@ -1489,19 +1489,113 @@
    "ano": 2026,
    "mes": 10,
    "negocio": "Fidelización",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 31131051.5,
-   "meta_contribucion": 9656852.18
+   "canal": "Banco Bice",
+   "meta_venta": 1245242.06,
+   "meta_contribucion": 386025.04
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Fidelización",
+   "canal": "Celmedia",
+   "meta_venta": 7782762.9,
+   "meta_contribucion": 2529397.94
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Fidelización",
+   "canal": "Global Reward",
+   "meta_venta": 3735726.19,
+   "meta_contribucion": 1214111.01
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Fidelización",
+   "canal": "Sawa",
+   "meta_venta": 1867863.1,
+   "meta_contribucion": 607055.51
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Fidelización",
+   "canal": "Travel Duty",
+   "meta_venta": 16499457.35,
+   "meta_contribucion": 4949837.21
   },
   {
    "ano": 2026,
    "mes": 10,
    "negocio": "Marketplace",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 539688051.0,
-   "meta_contribucion": 121429811.47
+   "canal": "Abc",
+   "meta_venta": 5264545.45,
+   "meta_contribucion": 1210845.45
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "El Volcan",
+   "meta_venta": 10529090.89,
+   "meta_contribucion": 2421690.91
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Falabella",
+   "meta_venta": 165772698.11,
+   "meta_contribucion": 37591872.52
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Hites",
+   "meta_venta": 2632272.72,
+   "meta_contribucion": 618584.09
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Kitchen Center",
+   "meta_venta": 39484090.85,
+   "meta_contribucion": 9436697.71
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Mercado Libre",
+   "meta_venta": 243701210.82,
+   "meta_contribucion": 55422692.44
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Paris",
+   "meta_venta": 36604216.4,
+   "meta_contribucion": 8392046.42
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Ripley",
+   "meta_venta": 20189865.47,
+   "meta_contribucion": 4711978.82
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Marketplace",
+   "canal": "Walmart",
+   "meta_venta": 31826009.08,
+   "meta_contribucion": 7571486.58
   },
   {
    "ano": 2026,
@@ -1525,19 +1619,113 @@
    "ano": 2026,
    "mes": 11,
    "negocio": "Fidelización",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 21242551.0,
-   "meta_contribucion": 6580942.3
+   "canal": "Banco Bice",
+   "meta_venta": 849702.04,
+   "meta_contribucion": 263407.63
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
+   "canal": "Celmedia",
+   "meta_venta": 5310637.72,
+   "meta_contribucion": 1725957.26
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
+   "canal": "Global Reward",
+   "meta_venta": 2549106.11,
+   "meta_contribucion": 828459.48
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
+   "canal": "Sawa",
+   "meta_venta": 1274553.05,
+   "meta_contribucion": 414229.74
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Fidelización",
+   "canal": "Travel Duty",
+   "meta_venta": 11258551.97,
+   "meta_contribucion": 3377565.59
   },
   {
    "ano": 2026,
    "mes": 11,
    "negocio": "Marketplace",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 386815594.0,
-   "meta_contribucion": 101732501.22
+   "canal": "Abc",
+   "meta_venta": 3790781.81,
+   "meta_contribucion": 985603.27
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "El Volcan",
+   "meta_venta": 7581563.62,
+   "meta_contribucion": 1971206.54
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Falabella",
+   "meta_venta": 105487214.86,
+   "meta_contribucion": 27229555.21
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Hites",
+   "meta_venta": 1895390.9,
+   "meta_contribucion": 502278.59
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Kitchen Center",
+   "meta_venta": 28430863.57,
+   "meta_contribucion": 7647902.3
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Mercado Libre",
+   "meta_venta": 194635811.12,
+   "meta_contribucion": 50233814.27
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Paris",
+   "meta_venta": 26705530.55,
+   "meta_contribucion": 6943437.94
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Ripley",
+   "meta_venta": 14586604.63,
+   "meta_contribucion": 3858855.89
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Marketplace",
+   "canal": "Walmart",
+   "meta_venta": 15450273.58,
+   "meta_contribucion": 4138376.15
   },
   {
    "ano": 2026,
@@ -1570,19 +1758,113 @@
    "ano": 2026,
    "mes": 12,
    "negocio": "Fidelización",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 40491413.0,
-   "meta_contribucion": 12564485.45
+   "canal": "Banco Bice",
+   "meta_venta": 1619656.52,
+   "meta_contribucion": 502093.52
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
+   "canal": "Celmedia",
+   "meta_venta": 10122853.28,
+   "meta_contribucion": 3289927.32
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
+   "canal": "Global Reward",
+   "meta_venta": 4858969.57,
+   "meta_contribucion": 1579165.11
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
+   "canal": "Sawa",
+   "meta_venta": 2429484.79,
+   "meta_contribucion": 789582.56
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Fidelización",
+   "canal": "Travel Duty",
+   "meta_venta": 21460448.95,
+   "meta_contribucion": 6438134.68
   },
   {
    "ano": 2026,
    "mes": 12,
    "negocio": "Marketplace",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 726528183.0,
-   "meta_contribucion": 196162609.41
+   "canal": "Abc",
+   "meta_venta": 6911832.67,
+   "meta_contribucion": 1831635.66
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "El Volcan",
+   "meta_venta": 6911832.66,
+   "meta_contribucion": 1831635.66
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Falabella",
+   "meta_venta": 202096204.54,
+   "meta_contribucion": 53113578.9
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Hites",
+   "meta_venta": 3455916.33,
+   "meta_contribucion": 933097.41
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Kitchen Center",
+   "meta_venta": 31103246.98,
+   "meta_contribucion": 8522289.68
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Mercado Libre",
+   "meta_venta": 397925028.83,
+   "meta_contribucion": 104651154.7
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Paris",
+   "meta_venta": 36484340.14,
+   "meta_contribucion": 9660850.14
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Ripley",
+   "meta_venta": 27832707.12,
+   "meta_contribucion": 7489124.46
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Marketplace",
+   "canal": "Walmart",
+   "meta_venta": 35228317.35,
+   "meta_contribucion": 9611977.4
   },
   {
    "ano": 2026,
