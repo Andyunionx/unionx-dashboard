@@ -611,7 +611,7 @@
     "po_id": null,
     "po_name": null,
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-13 18:42:59Z",
+    "ts_actualizado": "2026-10-14 13:49:54Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -745,7 +745,8 @@
       "2026-10-12 20:39:49Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
       "2026-10-13 18:42:59Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 1 · sin SKU: 3",
       "2026-10-13 18:42:59Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-10-13 18:42:59Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana"
+      "2026-10-13 18:42:59Z · pendientes (1 por crear + 3 sin código) → re-chequea Odoo mañana",
+      "2026-10-14 13:49:54Z · alias XRCOOLPOR45-GR → XRCOOLPOR50-BK (Andrés 14-oct: 'creemos con el SKU de Felipe'; Felipe 13-oct: el SKU es XRCOOLPOR50-BK)"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -785,7 +786,10 @@
         "qty": 200,
         "desc": "Portable Cooler 45L Gray Xroad"
       }
-    ]
+    ],
+    "sku_alias": {
+      "XRCOOLPOR45-GR": "XRCOOLPOR50-BK"
+    }
   },
   "26TP0815": {
     "embarque": "26TP0815",
