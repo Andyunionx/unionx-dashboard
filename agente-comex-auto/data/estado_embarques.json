@@ -558,7 +558,7 @@
   },
   "26TP0819": {
     "embarque": "26TP0819",
-    "fase": 3,
+    "fase": 9,
     "pi": {
       "msg_id": "1a023a3a71c8654a",
       "filename": "26TP0819PI SZ 40HQ.xlsx",
@@ -612,7 +612,7 @@
     "po_id": 1917,
     "po_name": "P00744",
     "ts_creado": "2026-09-02 15:29:23Z",
-    "ts_actualizado": "2026-10-14 13:51:31Z",
+    "ts_actualizado": "2026-10-14 15:05:55Z",
     "log": [
       "2026-09-02 15:29:23Z · PI detectado: 26TP0819PI SZ 40HQ.xlsx (dry-run)",
       "2026-09-02 15:29:23Z · PL detectado: 26TP0819PI PL.xlsx (dry-run)",
@@ -750,7 +750,8 @@
       "2026-10-14 13:49:54Z · alias XRCOOLPOR45-GR → XRCOOLPOR50-BK (Andrés 14-oct: 'creemos con el SKU de Felipe'; Felipe 13-oct: el SKU es XRCOOLPOR50-BK)",
       "2026-10-14 13:51:24Z · costeado · 13 prod · sobrecosto 22.7% · internado 55,110,108 CLP · SKU por crear: 0 · sin SKU: 3",
       "2026-10-14 13:51:25Z · correo ENVIADO con planilla (1a13aaea01e4127d, 1 adj) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl",
-      "2026-10-14 13:51:31Z · PO P00744 creada y CONFIRMADA (purchase, 9 líneas, 34,790,292 CLP) · PARCIAL, faltan: ['TP146/SIN-SKU', '702-2/SIN-SKU', 'TP371/SIN-SKU', 'TP371/SIN-SKU']"
+      "2026-10-14 13:51:31Z · PO P00744 creada y CONFIRMADA (purchase, 9 líneas, 34,790,292 CLP) · PARCIAL, faltan: ['TP146/SIN-SKU', '702-2/SIN-SKU', 'TP371/SIN-SKU', 'TP371/SIN-SKU']",
+      "2026-10-14 15:05:55Z · PO P00744 COMPLETADA a mano (OK Andrés 14-oct): +LHMOCLATK-BK 251 y LHMOCLATK-BU 251 (TP371, a 15.239,61) + LHMALFRONT-S/M/L 150 c/u (TP146 = set de 3; set/3 + molde 702-2 prorrateado, a 28.154,52) → 55,1M neto"
     ],
     "productos_sin_sku": [
       "702-2",
@@ -788,7 +789,7 @@
     "sku_alias": {
       "XRCOOLPOR45-GR": "XRCOOLPOR50-BK"
     },
-    "po_parcial": true
+    "po_parcial": false
   },
   "26TP0815": {
     "embarque": "26TP0815",
