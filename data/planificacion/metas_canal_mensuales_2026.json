@@ -1,5 +1,5 @@
 {
- "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: Marketplace y Fidelización por canal = \"Distribución Meta S2 2026.Q4.xlsx\" hoja Metas de Nicole (13-oct-2026; filas repetidas por canal/mes sumadas; sin meta Q4 para CMR ni LATAM); Páginas Propias, Corporativo y Distribución = FCST VENTAS 2026 por línea (canal vacío, nivel \"linea\"; Páginas Propias igual al total de Nicole, sin apertura por web).",
+ "fuente": "ene-jun: Analisis_Contribucion_2026_V06.xlsx \"Resultado vs Presupuesto\". jul-sep (Q3): Digital (Marketplace/Fidelización/Páginas Propias) = Metas Q3 Digital de Nicole; Corporativo/Distribución = FCST VENTAS 2026. Meta NETA; pulso ×1.19 IVA. | Corporativo 2026: meta sep (110M venta / 34,87M contrib) movida a AGOSTO (decisión Andrés 01-sep-2026, cierre ago). | oct-dic: Marketplace y Fidelización por canal = \"Distribución Meta S2 2026.Q4.xlsx\" hoja Metas de Nicole (13-oct-2026; filas repetidas por canal/mes sumadas; sin meta Q4 para CMR ni LATAM); Páginas Propias = total de Nicole repartido 60/20/20 Simplit/UnionX/Lhotse web (hoja Shares, Share Fcst; Andrés 13-oct-2026); Corporativo y Distribución = FCST VENTAS 2026 por línea (canal vacío, nivel \"linea\").",
  "extraido": "2026-06-16",
  "base": "neta",
  "factor_bruta_iva": 1.19,
@@ -1601,10 +1601,25 @@
    "ano": 2026,
    "mes": 10,
    "negocio": "Páginas Propias",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 89753292.0,
-   "meta_contribucion": 20194490.7
+   "canal": "Simplit web",
+   "meta_venta": 53851975.2,
+   "meta_contribucion": 12116694.42
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Páginas Propias",
+   "canal": "UnionX web",
+   "meta_venta": 17950658.4,
+   "meta_contribucion": 4038898.14
+  },
+  {
+   "ano": 2026,
+   "mes": 10,
+   "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 17950658.4,
+   "meta_contribucion": 4038898.14
   },
   {
    "ano": 2026,
@@ -1731,10 +1746,25 @@
    "ano": 2026,
    "mes": 11,
    "negocio": "Páginas Propias",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 42715279.0,
-   "meta_contribucion": 10892396.15
+   "canal": "Simplit web",
+   "meta_venta": 25629167.4,
+   "meta_contribucion": 6535437.69
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Páginas Propias",
+   "canal": "UnionX web",
+   "meta_venta": 8543055.8,
+   "meta_contribucion": 2178479.23
+  },
+  {
+   "ano": 2026,
+   "mes": 11,
+   "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 8543055.8,
+   "meta_contribucion": 2178479.23
   },
   {
    "ano": 2026,
@@ -1870,10 +1900,25 @@
    "ano": 2026,
    "mes": 12,
    "negocio": "Páginas Propias",
-   "canal": "",
-   "nivel": "linea",
-   "meta_venta": 99156640.0,
-   "meta_contribucion": 25780726.4
+   "canal": "Simplit web",
+   "meta_venta": 59493984.0,
+   "meta_contribucion": 15468435.84
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Páginas Propias",
+   "canal": "UnionX web",
+   "meta_venta": 19831328.0,
+   "meta_contribucion": 5156145.28
+  },
+  {
+   "ano": 2026,
+   "mes": 12,
+   "negocio": "Páginas Propias",
+   "canal": "Lhotse web",
+   "meta_venta": 19831328.0,
+   "meta_contribucion": 5156145.28
   }
  ]
 }
