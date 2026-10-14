@@ -159,9 +159,10 @@ def prorratear_delivery_por_cbm(productos_grupo, delivery_amount):
 ### 2. Gift Box (con 3% adicional)
 
 ```python
-# La gift box lleva un 3% adicional sobre el valor especificado en PI
-gift_box_pi = valor_en_PI  # Lo que dice el PI
-gift_box_real = gift_box_pi * 1.03  # Agregar 3%
+# La columna "Gift box" de la PI es US$ POR UNIDAD. La caja se compra aparte (PI de empaques, ej. 26TP0630
+# "Gift box") y el BL la reconoce, así que va al costo de cada unidad, con el 3% de Steven.
+gift_box_pi = valor_en_PI            # US$ por unidad (solo si la celda es un número y no supera el precio)
+gift_box_real = gift_box_pi * qty * 1.03   # total de la línea
 ```
 
 ### 2. Comisión Steven (3%)
@@ -187,7 +188,7 @@ comision_steven = base_comision * 0.03
 ```python
 # CC1: EXW (Gift Box + Delivery)
 cc_exw = sum(gift_box_real) + sum(delivery_cost)
-# Donde gift_box_real = gift_box_PI × 1.03
+# Donde gift_box_real = gift_box_PI (US$/u) × qty × 1.03
 
 # CC2: Inland China
 # Extraer del PI (ya vienen calculados, excepto comisión Steven que se recalcula)

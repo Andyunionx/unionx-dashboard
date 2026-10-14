@@ -110,8 +110,8 @@ class Producto:
     descripcion: str
     qty: float
     price: float
-    gift_box_pi: float = 0.0
-    gift_box_real: float = 0.0  # gift_box_pi * 1.03
+    gift_box_pi: float = 0.0    # US$ por UNIDAD, tal como viene en la PI (la caja se compra aparte, ej. PI 26TP0630)
+    gift_box_real: float = 0.0  # total de la línea = gift_box_pi × qty × 1.03
     delivery_total: float = 0.0
     delivery_unitario: float = 0.0
     cbm_total: float = 0.0
@@ -195,6 +195,24 @@ def _to_float(value) -> float:
     except Exception:
         return 0.0
 
+def _gift_box(value, price: float, model: str, mixto: bool = False) -> float:
+    """Gift box en US$ por unidad. Solo si la celda es un número: la columna a veces trae notas ("32pcs by air",
+    "1 sample") o tallas (38/40/42 en vestuario) → 0 con aviso. Un valor mayor que el precio unitario se descarta."""
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return 0.0
+    if isinstance(value, str):
+        s = value.strip().replace(",", ".")
+        if not re.fullmatch(r"\d+(\.\d+)?", s):
+            print(f"  [gift box] {model}: '{value}' no es un monto → 0")
+            return 0.0
+        value = float(s)
+    gb = float(value)
+    if (price and gb > price) or (mixto and gb >= 5):
+        print(f"  [gift box] {model}: {gb} (precio {price}) parece talla o nota → 0")
+        return 0.0
+    return gb
+
+
 def _norm(s) -> str:
     if s is None:
         return ""
@@ -256,7 +274,10 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
         elif n_base.startswith("qty"):                        headers["qty"] = j
         elif n_base in ("price",) or n_base.startswith("price"):  headers["price"] = j
         elif n_base in ("amount",) or n_base.startswith("amount"): headers["amount"] = j
-        elif n_base in ("gift box", "giftbox"):               headers["gift_box"] = j
+        elif n_base.startswith(("gift box", "giftbox")):
+            headers["gift_box"] = j
+            if "size" in n_base:                              # "Gift box/Size": a veces trae tallas
+                headers["gift_box_mixto"] = j
         elif n_base in ("sku",):                              headers["sku"] = j
         elif n_base in ("no", "no.", "n°"):                   headers["no"] = j
 
@@ -336,7 +357,9 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
                 "qty": qty,
                 "price": _to_float(row[headers.get("price", -1)]) if "price" in headers else 0.0,
                 "amount": amount,
-                "gift_box_pi": _to_float(row[headers.get("gift_box", -1)]) if "gift_box" in headers else 0.0,
+                "gift_box_pi": _gift_box(row[headers["gift_box"]], _to_float(row[headers.get("price", -1)])
+                                         if "price" in headers else 0.0, model, "gift_box_mixto" in headers)
+                if "gift_box" in headers else 0.0,
                 "sku": str(row[headers.get("sku", -1)] or "").strip() if "sku" in headers else "",
                 "row": row_idx,
             }
@@ -392,7 +415,7 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
                 qty=item["qty"],
                 price=item["price"],
                 gift_box_pi=item["gift_box_pi"],
-                gift_box_real=item["gift_box_pi"] * 1.03,
+                gift_box_real=item["gift_box_pi"] * item["qty"] * 1.03,     # por unidad × cantidad + 3% Steven
                 delivery_total=item.get("delivery_total", 0.0),
                 delivery_unitario=item.get("delivery_unitario", 0.0),
                 delivery_grupo_id=item.get("delivery_grupo_id", 0),
@@ -758,7 +781,7 @@ def generar_precosteo_xlsx(emb: Embarque, out_dir: Path) -> Path:
     ws2 = wb.create_sheet("Productos")
     cols = [
         "Model", "SKU", "Descripcion", "Qty", "Price", "P×Q",
-        "Gift Box PI", "Gift Box Real (×1.03)", "Delivery Total",
+        "Gift Box PI (US$/u)", "Gift Box línea (×qty ×1.03)", "Delivery Total",
         "CBM Total", "% CBM",
         "EXW Producto", "Inland China Prod", "Flete Prod", "CIF Prod",
         "Inland Chile Prod", "Costo Internado Total (CLP)", "Costo Internado Unit (CLP)",
