@@ -1,19 +1,19 @@
 {
-  "generado_en": "2026-10-14T14:10:00.478507",
+  "generado_en": "2026-10-14T19:02:38.737280",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 79,
-  "sku_match_odoo": 78,
-  "sku_con_peso": 62,
-  "sku_con_volumen": 61,
-  "sku_volumen_anomalo": 6,
+  "sku_input": 84,
+  "sku_match_odoo": 83,
+  "sku_con_peso": 65,
+  "sku_con_volumen": 64,
+  "sku_volumen_anomalo": 9,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 78.5,
-  "cobertura_volumen_pct": 77.2,
-  "cobertura_volumen_confiable_pct": 69.6,
-  "unidades_totales": 18501.0,
-  "peso_total_kg": 90921.8,
+  "cobertura_peso_pct": 77.4,
+  "cobertura_volumen_pct": 76.2,
+  "cobertura_volumen_confiable_pct": 65.5,
+  "unidades_totales": 19453.0,
+  "peso_total_kg": 93171.8,
   "volumen_total_m3": 210.19,
-  "volumen_total_m3_raw": 5534707.49,
+  "volumen_total_m3_raw": 48133057.49,
   "pallets_totales_estim": 175.2,
   "asunciones": {
     "m3_por_pallet": 1.2,
@@ -147,20 +147,20 @@
       "transporte": "",
       "fecha_embarque": "2026-10-14",
       "fecha_eta_bodega": "2026-10-14",
-      "skus_distintos": 9,
-      "unidades_totales": 1332.0,
-      "peso_total_kg": 7024.1,
+      "skus_distintos": 14,
+      "unidades_totales": 2284.0,
+      "peso_total_kg": 9274.1,
       "volumen_total_m3": 16.99,
-      "volumen_total_m3_raw": 10351.99,
+      "volumen_total_m3_raw": 42608701.99,
       "pallets_estim": 14.2,
       "containers_20_estim": 0.61,
       "containers_40hc_estim": 0.25,
-      "skus_con_match_odoo": 9,
-      "skus_con_peso": 7,
-      "skus_con_volumen": 7,
-      "skus_volumen_anomalo": 1,
-      "cobertura_peso_pct": 77.8,
-      "cobertura_volumen_pct": 77.8
+      "skus_con_match_odoo": 14,
+      "skus_con_peso": 10,
+      "skus_con_volumen": 10,
+      "skus_volumen_anomalo": 4,
+      "cobertura_peso_pct": 71.4,
+      "cobertura_volumen_pct": 71.4
     }
   ],
   "skus_sin_match": [
@@ -168,9 +168,24 @@
   ],
   "skus_volumen_anomalo_top": [
     {
+      "sku": "LHMALFRONT-L",
+      "producto": "Maleta Grande Viaje 23kg Expandible (L) 110L Frontier Lhotse",
+      "volumen_unit_m3": 133518.0
+    },
+    {
+      "sku": "LHMALFRONT-M",
+      "producto": "Maleta Mediana Viaje 18kg Expandible (M) 75L Frontier Lhotse",
+      "volumen_unit_m3": 90450.0
+    },
+    {
       "sku": "BDSILLEVREG",
       "producto": "Silla de Comer Evolutiva de Madera Regulable Bebé Bandú",
       "volumen_unit_m3": 70125.0
+    },
+    {
+      "sku": "LHMALFRONT-S",
+      "producto": "Maleta Cabina Viaje 10kg Expandible (S) 41L Frontier Lhotse",
+      "volumen_unit_m3": 60021.0
     },
     {
       "sku": "BDTORRAPR",
