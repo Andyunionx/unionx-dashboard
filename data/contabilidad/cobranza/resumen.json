@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-14T12:45:48.540369",
+  "generado_en": "2026-10-14T16:06:54.529901",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17932,
-  "total_monto_pendiente_clp": 1114074921.0,
+  "total_documentos_pendientes": 17941,
+  "total_monto_pendiente_clp": 1097546901.0,
   "monto_por_aging": {
-    "+90 días": 107944431.0,
-    "1-30 días": 492733603.0,
-    "31-60 días": 210851871.0,
+    "+90 días": 107875451.0,
+    "1-30 días": 475992174.0,
+    "31-60 días": 209334447.0,
     "61-90 días": 70037351.0,
-    "Vigente": 232507665.0
+    "Vigente": 234307478.0
   },
   "monto_por_tipo": {
-    "BOLETA": 923694909.0,
+    "BOLETA": 907166889.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 160071171.0
+      "monto": 160459835.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 84652228.0
+      "monto": 83933688.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,23 +46,23 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 31580050.0
+      "monto": 31669010.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 31282837.0
+      "monto": 31322307.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 30766734.0
+      "monto": 30783714.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28826820.0
+      "monto": 28961209.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 25100495.0
+      "monto": 25248815.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -70,11 +70,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 22752622.0
-    },
-    {
-      "partner": "GOPOINTS CHILE SPA",
-      "monto": 17802060.0
+      "monto": 22845562.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -82,19 +78,23 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 14600042.0
+      "monto": 14695103.0
+    },
+    {
+      "partner": "abc S.A.",
+      "monto": 11651777.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 11336311.0
     },
     {
-      "partner": "abc S.A.",
-      "monto": 10990924.0
-    },
-    {
       "partner": "Status Spa",
       "monto": 10837211.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 8424403.0
     }
   ],
   "notas_credito_count": 899,
