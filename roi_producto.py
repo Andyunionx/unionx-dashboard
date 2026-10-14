@@ -8,8 +8,8 @@ Marco (literatura retail):
   Días de caja = capital empleado / costo diario                                  (cash-to-cash)
 
 Contribución = venta neta − costo
-               − comisión venta  (marketplace: % Maestra Pricing · páginas propias: medios de pago)
-               − envío / logística canal (marketplace: % Maestra Pricing · web: flete propio por m³)
+               − comisión venta  (marketplace: % real del RAW del SKU · páginas propias: medios de pago)
+               − envío / logística canal (marketplace: % real del RAW del SKU · web: RAW)
                − marketing (marketplace: % Maestra Pricing · web / fidelización / B2B: supuesto)
                − costo de operación asignado: almacenaje (m³ en CA1), manipulación (unidades ponderadas
                  B2C / B2B / fulfillment), insumos (pedidos B2C desde bodega), postventa (unidades devueltas)
@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import io
+import os
 import re
 import sys
 import unicodedata
@@ -83,6 +84,13 @@ FACTOR_PRECIO = {"MKP": 1.0, "WEB": 1.0, "FID": 1.0}   # × precio de lista de l
 ESCENARIOS = ["Mix real", "Solo marketplace", "Solo páginas web", "Solo fidelización", "Mix personalizado"]
 MIX_DEFAULT = {"MKP": 0.60, "WEB": 0.25, "FID": 0.15}
 TASAS_DESDE = "2026-08-01"
+# Comisión y logística de MARKETPLACE por SKU = RAW (Andrés 13-oct-2026, a propuesta de Nicole: misma fuente que el precio;
+# antes = % TY de la Maestra Pricing, que el 6-oct bajó a la mitad). El RAW trae comisión y logística completas por pedido
+# (devengo comercial) recién desde jun-26: antes solo ML, Falabella y Walmart. Un SKU con poca venta marketplace en ese
+# período toma la tasa de su categoría. ROI_TASAS_MKP=Pricing vuelve a la Maestra Pricing (respaldo).
+TASAS_MKP_FUENTE = os.environ.get("ROI_TASAS_MKP", "RAW").strip() or "RAW"
+DEVENGO_DESDE = "2026-06-01"
+MIN_VENTA_MKP_SKU = 500_000          # venta marketplace neta del SKU desde DEVENGO_DESDE para usar su propia tasa
 # Sensibilidad estándar: cuánto se mueve cada palanca para comparar cuál pesa más en cada SKU (editable en Supuestos)
 SHOCK = {"precio": 0.05, "costo": 0.05, "mix": 0.10, "anticipo": 0.10, "prod": 10, "tran": 10, "inv": 0.20, "m3": 0.20,
          "uds": 0.10}
@@ -503,6 +511,30 @@ def tasas_canal(v: pd.DataFrame) -> dict:
                 fid_prog=fid, upp=upp)
 
 
+def tasas_mkp_raw(ventas: pd.DataFrame, cat: pd.Series) -> pd.DataFrame:
+    """% comisión y logística de marketplace por SKU desde el RAW (desde DEVENGO_DESDE; venta neta con devoluciones,
+    packs ya repartidos en sus componentes). SKU con venta marketplace < MIN_VENTA_MKP_SKU o con tasas fuera de rango →
+    tasa de su categoría padre (RAW); categoría sin venta suficiente → tasa de todo marketplace."""
+    cols = ["venta_neta", "comision", "logistica"]
+    x = ventas[ventas.neg.eq("mkp") & (ventas.fecha_venta >= DEVENGO_DESDE)]
+    g = x.groupby("sku")[cols].sum()
+    tasa = lambda d: d.assign(com=d.comision / d.venta_neta, log=d.logistica / d.venta_neta)
+    g = tasa(g)
+    rango = lambda d: d.com.between(0.01, 0.5) & d.log.between(0, 0.35)
+    propio = (g.venta_neta >= MIN_VENTA_MKP_SKU) & rango(g)
+    gc = tasa(g[cols].groupby(g.index.to_series().map(cat).fillna("Sin categoría")).sum())
+    gc = gc[(gc.venta_neta >= 10 * MIN_VENTA_MKP_SKU) & rango(gc)]
+    tot = tasa(g[cols].sum().to_frame().T).iloc[0]
+    out = pd.DataFrame(index=cat.index)
+    c_ = cat.fillna("Sin categoría")
+    for k in ("com", "log"):
+        out[k] = cat.index.to_series().map(g.loc[propio, k])
+        out[k] = out[k].fillna(c_.map(gc[k])).fillna(tot[k])
+    out["fuente"] = np.where(cat.index.isin(g.index[propio]), "RAW del SKU",
+                             np.where(c_.isin(gc.index), "RAW de la categoría", "RAW todo marketplace"))
+    return out
+
+
 def conciliacion_eerr(s: pd.DataFrame) -> pd.DataFrame:
     """Cascada del ROI vs EERR contable (pyl_mensual) en la misma ventana: solo informativo."""
     p = pd.read_parquet(ROOT / "data/finanzas/pyl_mensual.parquet")
@@ -577,7 +609,8 @@ def calcular(refresh=False):
     base = ventas[~es_pack]
     ex = ventas[es_pack].merge(pk[["pack", "comp", "n", "share"]].rename(columns={"pack": "_pack"}),
                                left_on="sku", right_on="_pack")
-    ex[["venta_neta", "costo", "pedido_eq"]] = ex[["venta_neta", "costo", "pedido_eq"]].mul(ex["share"], axis=0)
+    rep = ["venta_neta", "costo", "pedido_eq", "comision", "logistica"]     # comisión/logística: tasas RAW por SKU
+    ex[rep] = ex[rep].mul(ex["share"], axis=0)
     ex["cantidad"] = ex["cantidad"] * ex["n"]
     ex["sku"] = ex["comp"]
     ventas = pd.concat([base, ex[base.columns]], ignore_index=True)
@@ -669,6 +702,9 @@ def calcular(refresh=False):
         s[k] = s.index.to_series().map(pp[c])
         s[k] = s[k].fillna(s["categoria_padre"].map(med[c])).fillna(pr[c].median())
     s["pct_fuente"] = s.index.to_series().map(pp["pct_fuente"]).fillna("Mediana categoría (sin SKU en Pricing)")
+    if TASAS_MKP_FUENTE.upper() == "RAW":          # comisión y logística del RAW; marketing sigue en la Pricing
+        tr = tasas_mkp_raw(ventas, s["categoria_padre"])
+        s["com_pct"], s["log_pct"], s["pct_fuente"] = tr["com"], tr["log"], tr["fuente"]
     s["cat_comercial"] = s.index.to_series().map(pp["Categoria Comercial"]).fillna("Sin categoría")
 
     # medidas: oficiales → Loginsa → volumen Odoo → mediana de la categoría
@@ -728,7 +764,7 @@ def calcular(refresh=False):
     marcas_ = {
         "medidas": ~s["m3_fuente"].isin(["Medidas oficiales", "Maestro Loginsa"]),
         "uds por caja": s["uds_caja_fuente"].str.startswith("FALTA") & ((s["uds_b2b"] + s["uds_ff"]) > 0),
-        "% Pricing": ~s["pct_fuente"].eq("Maestra Pricing (SKU)"),
+        "% marketplace": ~s["pct_fuente"].isin(["Maestra Pricing (SKU)", "RAW del SKU"]),
         "tipo de pago": imp & s["pago_fuente"].ne("Maestra"),
         "lead time": imp & s["lt_fuente"].ne("Maestra"),
         "puerto": imp & s["puerto"].eq(""),
@@ -1064,10 +1100,10 @@ COLUMNAS = [
     ("precio_real", "Precio real promedio (neto)", "in", P, None),
     ("pvp_mkp", "PVP marketplace (Pricing, c/IVA)", "in", P, None),
     ("pvp_web", "PVP web (Pricing, c/IVA)", "in", P, None),
-    ("com_pct", "Comisión % (Pricing)", "in", M, None),
-    ("log_pct", "Logística % (Pricing)", "in", M, None),
+    ("com_pct", "Comisión % marketplace", "in", M, None),
+    ("log_pct", "Logística % marketplace", "in", M, None),
     ("mkt_pct", "Marketing % (Pricing)", "in", M, None),
-    ("pct_fuente", "Fuente % Pricing", "in", None, None),
+    ("pct_fuente", "Fuente % comisión y logística", "in", None, None),
     ("uds_b2c", "Uds B2C desde bodega", "in", P, None),
     ("uds_b2b", "Uds B2B", "in", P, None),
     ("uds_ff", "Uds fulfillment", "in", P, None),
@@ -1143,7 +1179,7 @@ def exportar(s, aud, pools_det, pools, excluidos, conc, meta, sufijo: str = "") 
             ("FACT_WEB", "Páginas web: factor sobre PVP web", FACTOR_PRECIO["WEB"], D2, "referencia: el precio real promedio fue 0,95 × PVP"),
             ("FACT_FID", "Fidelización: factor sobre PVP marketplace", FACTOR_PRECIO["FID"], D2, "referencia: el precio real promedio fue 0,99 × PVP"),
         ]),
-        ("COSTO DE CANAL FUERA DE MARKETPLACE (marketplace = % Pricing del SKU)", [
+        ("COSTO DE CANAL FUERA DE MARKETPLACE (marketplace = % RAW del SKU desde jun-26; marketing = % Pricing)", [
             ("WEB_COM", "Páginas web: comisión venta (medios de pago)", tsa["web_com"], '0.0%', "RAW desde ago-26"),
             ("WEB_ENV", "Páginas web: envío", tsa["web_env"], '0.0%', "RAW desde ago-26 (8,7%–12,2% según tienda)"),
             ("WEB_MKT", "Páginas web: marketing", MKT_WEB, '0.0%', "regla Andrés"),
@@ -1452,8 +1488,9 @@ def exportar(s, aud, pools_det, pools, excluidos, conc, meta, sufijo: str = "") 
     fila += 2
     textos = [
         ("LA PREGUNTA", "", "Por cada peso que tenemos amarrado en un producto, ¿cuánto nos devuelve al año?"),
-        ("Contribución", "", "Venta neta − costo de venta (Odoo) − comisión, envío y marketing (% de la Maestra "
-                             "Pricing del SKU) − costo de operación asignado (almacenaje, manipulación, insumos, postventa)."),
+        ("Contribución", "", "Venta neta − costo de venta (Odoo) − comisión y envío (% real del RAW del SKU desde jun-26; "
+                             "con poca venta, el de su categoría) − marketing (% de la Maestra Pricing) − costo de operación "
+                             "asignado (almacenaje, manipulación, insumos, postventa)."),
         ("Capital empleado", "", "Plata amarrada en promedio: anticipo al proveedor + mercadería en tránsito y aduana + "
                                  "inventario promedio + cuentas por cobrar − créditos (flete/internación a 30 días, "
                                  "proveedor nacional). En producción solo está pagado el anticipo; el saldo se paga al "
@@ -1468,7 +1505,7 @@ def exportar(s, aud, pools_det, pools, excluidos, conc, meta, sufijo: str = "") 
         ("Días de caja", "", "Capital / costo diario: cuántos días está afuera cada peso invertido."),
         ("", "", ""),
         ("ESCENARIOS DE CANAL", "", "Cada SKU se calcula como si TODO su volumen de los 12 meses se vendiera por un solo canal: "
-                                    "marketplace (% de la Maestra Pricing del SKU), páginas web o fidelización (tasas de Supuestos). "
+                                    "marketplace (% del RAW del SKU), páginas web o fidelización (tasas de Supuestos). "
                                     "Cambia el precio y el costo de canal; el volumen, el costo, el inventario y la bodega se mantienen."),
         ("Mix real", "", "Lo que efectivamente se vendió, cada venta con el costo de su canal."),
         ("Mejor canal", "", "El escenario con mayor valor económico (EVA): pista para un pricing diferenciado."),
@@ -1944,7 +1981,7 @@ def exportar(s, aud, pools_det, pools, excluidos, conc, meta, sufijo: str = "") 
 
     # ── Conciliación con el EERR ──
     cc = wb.create_sheet("Conciliación EERR")
-    cc["A1"] = "Cascada del ROI vs EERR contable, misma ventana (informativo: el ROI usa los % de la Maestra Pricing)"
+    cc["A1"] = "Cascada del ROI vs EERR contable, misma ventana (informativo: comisión y envío de marketplace = % del RAW por SKU)"
     cc["A1"].font = Font(bold=True, color=NAVY)
     for j, h in enumerate(conc.columns, 1):
         c = cc.cell(row=3, column=j, value=h)
