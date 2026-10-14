@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-14T00:01:52.993331",
+  "generado_en": "2026-10-14T14:10:00.478507",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 71,
-  "sku_match_odoo": 70,
-  "sku_con_peso": 56,
-  "sku_con_volumen": 55,
-  "sku_volumen_anomalo": 5,
+  "sku_input": 79,
+  "sku_match_odoo": 78,
+  "sku_con_peso": 62,
+  "sku_con_volumen": 61,
+  "sku_volumen_anomalo": 6,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 78.9,
-  "cobertura_volumen_pct": 77.5,
-  "cobertura_volumen_confiable_pct": 70.4,
-  "unidades_totales": 17169.0,
-  "peso_total_kg": 83897.6,
-  "volumen_total_m3": 193.2,
-  "volumen_total_m3_raw": 5524355.5,
-  "pallets_totales_estim": 161.0,
+  "cobertura_peso_pct": 78.5,
+  "cobertura_volumen_pct": 77.2,
+  "cobertura_volumen_confiable_pct": 69.6,
+  "unidades_totales": 18501.0,
+  "peso_total_kg": 90921.8,
+  "volumen_total_m3": 210.19,
+  "volumen_total_m3_raw": 5534707.49,
+  "pallets_totales_estim": 175.2,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -141,6 +141,26 @@
       "skus_volumen_anomalo": 1,
       "cobertura_peso_pct": 111.1,
       "cobertura_volumen_pct": 111.1
+    },
+    {
+      "pi": "26TP0819PI",
+      "transporte": "",
+      "fecha_embarque": "2026-10-14",
+      "fecha_eta_bodega": "2026-10-14",
+      "skus_distintos": 9,
+      "unidades_totales": 1332.0,
+      "peso_total_kg": 7024.1,
+      "volumen_total_m3": 16.99,
+      "volumen_total_m3_raw": 10351.99,
+      "pallets_estim": 14.2,
+      "containers_20_estim": 0.61,
+      "containers_40hc_estim": 0.25,
+      "skus_con_match_odoo": 9,
+      "skus_con_peso": 7,
+      "skus_con_volumen": 7,
+      "skus_volumen_anomalo": 1,
+      "cobertura_peso_pct": 77.8,
+      "cobertura_volumen_pct": 77.8
     }
   ],
   "skus_sin_match": [
@@ -166,6 +186,11 @@
       "sku": "SMCONTCAFMI",
       "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
       "volumen_unit_m3": 2535.0
+    },
+    {
+      "sku": "XRCOOLPOR50-BK",
+      "producto": "Cooler Portátil 50L con Ruedas Negro Xroad",
+      "volumen_unit_m3": 51.675
     },
     {
       "sku": "XRCARINF34-CL",
