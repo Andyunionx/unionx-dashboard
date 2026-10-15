@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-10-15T08:03:47.960893",
+  "generado_en": "2026-10-15T18:55:37.991331",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.04205,
+      "valor": 0.04175,
       "total_pickings": 20000,
-      "on_time": 841,
-      "on_time_pct": 0.04205,
+      "on_time": 835,
+      "on_time_pct": 0.04175,
       "in_full": 19998,
       "in_full_pct": 0.9999,
-      "both": 841,
+      "both": 835,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.08905380333951762,
-      "total_pickings": 539,
+      "valor": 0.08347826086956522,
+      "total_pickings": 575,
       "on_time": 48,
-      "on_time_pct": 0.08905380333951762,
-      "in_full": 531,
-      "in_full_pct": 0.9851576994434137,
+      "on_time_pct": 0.08347826086956522,
+      "in_full": 567,
+      "in_full_pct": 0.9860869565217392,
       "both": 48,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.999814367922777,
-      "ok": 26930,
-      "total": 26935,
+      "valor": 0.9998195401884,
+      "ok": 27702,
+      "total": 27707,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 14.805575102880658,
-      "n_recepciones": 270,
+      "valor": 14.893761701261703,
+      "n_recepciones": 273,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01096",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 27.3,
+          "scheduled": "2026-10-14 13:51",
+          "done": "2026-10-15 17:12"
+        },
+        {
+          "picking": "CA1/IN/01097",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-10-15 14:00",
+          "done": "2026-10-15 14:06"
+        },
+        {
+          "picking": "CA1/IN/01095",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 41.0,
+          "scheduled": "2026-10-13 18:42",
+          "done": "2026-10-15 11:45"
+        },
         {
           "picking": "CA1/IN/01094",
           "proveedor": "",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-10-03 11:57",
           "done": "2026-10-03 11:57"
-        },
-        {
-          "picking": "CA1/RET/01233",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:44",
-          "done": "2026-10-03 11:44"
-        },
-        {
-          "picking": "CA1/RET/01231",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:41",
-          "done": "2026-10-03 11:42"
-        },
-        {
-          "picking": "CA1/RET/01232",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:42",
-          "done": "2026-10-03 11:42"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.946615270883937,
-      "total_so": 18943,
-      "total_con_pickings": 18938,
-      "cumplidos": 17927,
-      "parciales": 19,
-      "sin_iniciar": 992,
+      "valor": 0.9672354234271956,
+      "total_so": 19111,
+      "total_con_pickings": 19106,
+      "cumplidos": 18480,
+      "parciales": 18,
+      "sin_iniciar": 608,
       "error": null
     },
     "oct_30d": {
-      "valor": 68.58256661364649,
-      "n_orders": 19699,
+      "valor": 69.54507054091712,
+      "n_orders": 19697,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 32.35638888888889,
+      "mediana_h": 32.711666666666666,
       "detalle": [
         {
           "so": "S278911",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 17141,
+      "lineas": 17915,
       "mes": "2026-10",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 230,
-      "outgoing": 29455,
-      "internal": 20315,
+      "outgoing": 29454,
+      "internal": 20316,
       "total": 50000,
       "error": null
     },
@@ -379,14 +379,14 @@
         },
         {
           "cliente": "abc S.A.",
-          "total": 82,
-          "tarde": 82,
+          "total": 96,
+          "tarde": 96,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 137,
-          "tarde": 137,
+          "total": 148,
+          "tarde": 148,
           "on_time_pct": 0.0
         },
         {
@@ -403,9 +403,9 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 157,
-          "tarde": 156,
-          "on_time_pct": 0.006369426751592357
+          "total": 161,
+          "tarde": 160,
+          "on_time_pct": 0.006211180124223602
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
@@ -421,19 +421,19 @@
         },
         {
           "cliente": "Falabella Retail",
-          "total": 20,
-          "tarde": 2,
-          "on_time_pct": 0.9
+          "total": 21,
+          "tarde": 3,
+          "on_time_pct": 0.8571428571428571
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 11,
+          "tarde": 1,
+          "on_time_pct": 0.9090909090909091
         },
         {
           "cliente": "Mercadolibre Chile Limitada",
           "total": 5,
-          "tarde": 0,
-          "on_time_pct": 1.0
-        },
-        {
-          "cliente": "Cencosud Retail S.A",
-          "total": 10,
           "tarde": 0,
           "on_time_pct": 1.0
         },
@@ -8798,42 +8798,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.04205,
+      "valor": 0.04175,
       "total_pickings": 20000,
-      "on_time": 841,
-      "on_time_pct": 0.04205,
+      "on_time": 835,
+      "on_time_pct": 0.04175,
       "in_full": 19998,
       "in_full_pct": 0.9999,
-      "both": 841,
+      "both": 835,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.08905380333951762,
-      "total_pickings": 539,
+      "valor": 0.08347826086956522,
+      "total_pickings": 575,
       "on_time": 48,
-      "on_time_pct": 0.08905380333951762,
-      "in_full": 531,
-      "in_full_pct": 0.9851576994434137,
+      "on_time_pct": 0.08347826086956522,
+      "in_full": 567,
+      "in_full_pct": 0.9860869565217392,
       "both": 48,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.999814367922777,
-      "ok": 26930,
-      "total": 26935,
+      "valor": 0.9998195401884,
+      "ok": 27702,
+      "total": 27707,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 14.805575102880658,
-      "n_recepciones": 270,
+      "valor": 14.893761701261703,
+      "n_recepciones": 273,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01096",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 27.3,
+          "scheduled": "2026-10-14 13:51",
+          "done": "2026-10-15 17:12"
+        },
+        {
+          "picking": "CA1/IN/01097",
+          "proveedor": "",
+          "horas": 0.1,
+          "scheduled": "2026-10-15 14:00",
+          "done": "2026-10-15 14:06"
+        },
+        {
+          "picking": "CA1/IN/01095",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 41.0,
+          "scheduled": "2026-10-13 18:42",
+          "done": "2026-10-15 11:45"
+        },
         {
           "picking": "CA1/IN/01094",
           "proveedor": "",
@@ -8952,27 +8973,6 @@
           "horas": 0.0,
           "scheduled": "2026-10-03 11:57",
           "done": "2026-10-03 11:57"
-        },
-        {
-          "picking": "CA1/RET/01233",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:44",
-          "done": "2026-10-03 11:44"
-        },
-        {
-          "picking": "CA1/RET/01231",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:41",
-          "done": "2026-10-03 11:42"
-        },
-        {
-          "picking": "CA1/RET/01232",
-          "proveedor": "Cencosud Retail S.A",
-          "horas": 0.0,
-          "scheduled": "2026-10-03 11:42",
-          "done": "2026-10-03 11:42"
         }
       ],
       "error": null
