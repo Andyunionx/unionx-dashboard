@@ -1,28 +1,28 @@
 {
-  "generado_en": "2026-10-15T10:30:08.289444",
+  "generado_en": "2026-10-15T15:54:12.821030",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17867,
-  "total_monto_pendiente_clp": 1096779472.0,
+  "total_documentos_pendientes": 17949,
+  "total_monto_pendiente_clp": 1100421798.0,
   "monto_por_aging": {
     "+90 días": 108233500.0,
-    "1-30 días": 475802271.0,
+    "1-30 días": 477374256.0,
     "31-60 días": 215627228.0,
     "61-90 días": 71061712.0,
-    "Vigente": 226054761.0
+    "Vigente": 228125102.0
   },
   "monto_por_tipo": {
-    "BOLETA": 906399460.0,
+    "BOLETA": 910041786.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 162804992.0
+      "monto": 164011085.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 119795656.0
+      "monto": 120162504.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 84332458.0
+      "monto": 84442958.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,23 +46,23 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 32264880.0
+      "monto": 32993770.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 30803684.0
+      "monto": 30985664.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 30135566.0
+      "monto": 30236196.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 27536317.0
+      "monto": 27621067.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 23456182.0
+      "monto": 23588292.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -70,7 +70,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 23149442.0
+      "monto": 23185302.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 8424403.0
+      "monto": 8885715.0
     }
   ],
-  "notas_credito_count": 895,
+  "notas_credito_count": 896,
   "pedidos_venta_count": 10000
 }
