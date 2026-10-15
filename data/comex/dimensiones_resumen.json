@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-15T07:49:42.197763",
+  "generado_en": "2026-10-15T13:47:14.821518",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 84,
-  "sku_match_odoo": 83,
-  "sku_con_peso": 65,
-  "sku_con_volumen": 64,
-  "sku_volumen_anomalo": 9,
+  "sku_input": 76,
+  "sku_match_odoo": 75,
+  "sku_con_peso": 57,
+  "sku_con_volumen": 56,
+  "sku_volumen_anomalo": 8,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 77.4,
-  "cobertura_volumen_pct": 76.2,
-  "cobertura_volumen_confiable_pct": 65.5,
-  "unidades_totales": 19453.0,
-  "peso_total_kg": 93171.8,
-  "volumen_total_m3": 210.19,
-  "volumen_total_m3_raw": 48133057.49,
-  "pallets_totales_estim": 175.2,
+  "cobertura_peso_pct": 75.0,
+  "cobertura_volumen_pct": 73.7,
+  "cobertura_volumen_confiable_pct": 63.2,
+  "unidades_totales": 15063.0,
+  "peso_total_kg": 69950.1,
+  "volumen_total_m3": 169.0,
+  "volumen_total_m3_raw": 48132604.0,
+  "pallets_totales_estim": 140.8,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -123,26 +123,6 @@
       "cobertura_volumen_pct": 62.1
     },
     {
-      "pi": "26TP0818PI",
-      "transporte": "",
-      "fecha_embarque": "2026-10-13",
-      "fecha_eta_bodega": "2026-10-13",
-      "skus_distintos": 9,
-      "unidades_totales": 4390.0,
-      "peso_total_kg": 23221.7,
-      "volumen_total_m3": 41.19,
-      "volumen_total_m3_raw": 453.49,
-      "pallets_estim": 34.3,
-      "containers_20_estim": 1.47,
-      "containers_40hc_estim": 0.61,
-      "skus_con_match_odoo": 10,
-      "skus_con_peso": 10,
-      "skus_con_volumen": 10,
-      "skus_volumen_anomalo": 1,
-      "cobertura_peso_pct": 111.1,
-      "cobertura_volumen_pct": 111.1
-    },
-    {
       "pi": "26TP0819PI",
       "transporte": "",
       "fecha_embarque": "2026-10-14",
@@ -206,11 +186,6 @@
       "sku": "XRCOOLPOR50-BK",
       "producto": "Cooler Portátil 50L con Ruedas Negro Xroad",
       "volumen_unit_m3": 51.675
-    },
-    {
-      "sku": "XRCARINF34-CL",
-      "producto": "Carpa Inflable 4 Personas 3 Estaciones Impermeable Xroad",
-      "volumen_unit_m3": 20.615
     }
   ]
 }
