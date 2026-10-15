@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-15T18:46:17.260847",
+  "generado_en": "2026-10-15T23:24:53.673247",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1374,
-    "posiciones_ocupadas_hoy": 753,
-    "posiciones_libres_hoy": 621,
-    "pct_ocupacion_hoy": 54.8,
-    "m3_stock_calculado": 802.0
+    "posiciones_ocupadas_hoy": 784,
+    "posiciones_libres_hoy": 590,
+    "pct_ocupacion_hoy": 57.1,
+    "m3_stock_calculado": 801.6
   },
   "pico_proyectado": {
     "fecha": "2026-10-15",
-    "posiciones_ocupadas": 753.0,
-    "pct_ocupacion": 54.8
+    "posiciones_ocupadas": 784.0,
+    "pct_ocupacion": 57.1
   },
   "minimo_proyectado": {
     "fecha": "2026-12-14",
-    "posiciones_ocupadas": 562.2,
-    "pct_ocupacion": 40.9
+    "posiciones_ocupadas": 593.3,
+    "pct_ocupacion": 43.2
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -72,18 +72,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 190.8,
+  "pallets_total_salientes_horizonte": 190.7,
   "m3_total_entrante_horizonte": 152.0,
-  "m3_total_saliente_horizonte": 228.9,
+  "m3_total_saliente_horizonte": 228.8,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 786,
+    "sku_con_vol_odoo": 785,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 19122.0,
-    "demanda_cumplida_unidades": 13310.0,
-    "demanda_no_cubierta_unidades_total": 5812.0,
-    "pct_demanda_cumplida": 69.6,
+    "demanda_cumplida_unidades": 13282.0,
+    "demanda_no_cubierta_unidades_total": 5840.0,
+    "pct_demanda_cumplida": 69.5,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
       {
@@ -182,8 +182,8 @@
         "sin_match_stock": true
       },
       {
-        "sku": "Pack449",
-        "unid_no_cubiertas": 107.0,
+        "sku": "LHCAMACXPL",
+        "unid_no_cubiertas": 109.0,
         "sin_match_stock": true
       }
     ],
