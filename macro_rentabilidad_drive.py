@@ -150,6 +150,57 @@ SOLO_CARGA = {('2026-08', 'Ripley', 'FBR COBRO ALMACENAMIENTO DIARIO')}
 # correcto es el que toma la liquidación"; en su pestaña jul y ago quedaron divididos por 1,19 de más).
 LECTURA_MANDA = {'Kitchen Center'}
 
+# Kitchen Center factura APARTE de la liquidación (reporte Melollevo) el marketing "Always On", el "Despacho Gratis" de
+# SKU seleccionados y ajustes de comisión por N/C. No vienen en la carpeta, y como en KC manda la lectura, tampoco
+# entraban por la carga de Gabriela: se leen de sus facturas de proveedor en Odoo, en el mes de la factura (Andrés
+# 15-oct). Jul–sep: marketing 850.000 / 400.000 / 450.000 · despacho 930.000 / 64.557 / 57.500 · ajuste −67.952 (sep).
+KC_RUT = '96999930'
+KC_REGLAS = [('always on', 'Marketing', 'Always On KC'),                 # por descripción (el de junio quedó en
+             ('despacho gratis', 'Comisión envío', 'Despacho Gratis KC'),  # la cuenta de comisión, pero es marketing)
+             ('ajuste comisi', 'Comisión venta', 'Ajuste comisión KC')]
+KC_CUENTA = [('42410401', 'Marketing', 'Marketing KC'), ('42410201', 'Comisión envío', 'Envío KC'),
+             ('42410104', 'Comisión venta', 'Comisión KC')]
+
+
+def leer_kc_odoo(meses) -> pd.DataFrame:
+    """Líneas de las facturas (y N/C) de proveedor de Kitchen Center en Odoo que NO son la liquidación, por mes de la
+    factura: costo positivo, N/C negativo."""
+    import macro_rentabilidad_canal as MC
+    rpc = MC._odoo()
+    socios = [r['id'] for r in rpc('res.partner', 'search_read', [('vat', 'ilike', KC_RUT)], fields=['id'])]
+    if not socios:
+        return pd.DataFrame(columns=COLS)
+    hasta = (pd.Period(max(meses), 'M').end_time).strftime('%Y-%m-%d')
+    mv = rpc('account.move', 'search_read', [('partner_id', 'in', socios), ('move_type', 'in', ['in_invoice', 'in_refund']),
+                                             ('state', '=', 'posted'), ('invoice_date', '>=', min(meses) + '-01'),
+                                             ('invoice_date', '<=', hasta)],
+             fields=['id', 'name', 'invoice_date', 'move_type'])
+    if not mv:
+        return pd.DataFrame(columns=COLS)
+    info = {m['id']: m for m in mv}
+    lineas = rpc('account.move.line', 'search_read', [('move_id', 'in', list(info)), ('display_type', '=', 'product')],
+                 fields=['move_id', 'name', 'price_subtotal', 'account_id'])
+    filas = []
+    for ln in lineas:
+        m = info[ln['move_id'][0]]
+        desc = str(ln.get('name') or '').lower()
+        if 'liquidaci' in desc:
+            continue                      # la liquidación viene del reporte Melollevo de la carpeta
+        cuenta = str(ln['account_id'][1]) if ln.get('account_id') else ''
+        cc = next(((c, g) for clave, c, g in KC_REGLAS if clave in desc), None) or \
+            next(((c, g) for cod, c, g in KC_CUENTA if cuenta.startswith(cod)), None)
+        mes = str(m['invoice_date'])[:7]
+        if cc is None or mes not in meses:
+            if cc is None:
+                print(f"   [WARN] KC Odoo sin regla: {m['name']} · {ln.get('name')} · {cuenta}")
+            continue
+        signo = -1 if m['move_type'] == 'in_refund' else 1
+        filas.append(_fila_com(mes, 'Kitchen Center', cc[1], signo * float(ln['price_subtotal']), cc[0]))
+    d = pd.DataFrame(filas, columns=COLS)
+    if not len(d):
+        return d
+    return d.groupby([c for c in COLS if c != 'Valor'], as_index=False)['Valor'].sum()[COLS]
+
 
 def leer_liquidaciones(meses) -> pd.DataFrame:
     """Lee la carpeta de liquidaciones de Gabriela (los meses pedidos) con su receta: una fila por canal ×
@@ -168,7 +219,8 @@ def leer_liquidaciones(meses) -> pd.DataFrame:
             d['Mes'] = m
             partes.append(d)
     extras = []
-    for nombre, fn in (('aportes', lambda: leer_aportes(drv, meses)), ('reglas de comisión', lambda: reglas_comision(meses))):
+    for nombre, fn in (('aportes', lambda: leer_aportes(drv, meses)), ('reglas de comisión', lambda: reglas_comision(meses)),
+                       ('facturas aparte de Kitchen Center (Odoo)', lambda: leer_kc_odoo(meses))):
         try:
             extras.append(fn())
         except Exception as e:
