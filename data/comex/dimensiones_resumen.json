@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-15T13:47:14.821518",
+  "generado_en": "2026-10-15T18:46:10.656493",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 76,
-  "sku_match_odoo": 75,
-  "sku_con_peso": 57,
-  "sku_con_volumen": 56,
-  "sku_volumen_anomalo": 8,
+  "sku_input": 63,
+  "sku_match_odoo": 62,
+  "sku_con_peso": 48,
+  "sku_con_volumen": 47,
+  "sku_volumen_anomalo": 4,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 75.0,
-  "cobertura_volumen_pct": 73.7,
-  "cobertura_volumen_confiable_pct": 63.2,
-  "unidades_totales": 15063.0,
-  "peso_total_kg": 69950.1,
-  "volumen_total_m3": 169.0,
-  "volumen_total_m3_raw": 48132604.0,
-  "pallets_totales_estim": 140.8,
+  "cobertura_peso_pct": 76.2,
+  "cobertura_volumen_pct": 74.6,
+  "cobertura_volumen_confiable_pct": 68.3,
+  "unidades_totales": 12779.0,
+  "peso_total_kg": 60676.0,
+  "volumen_total_m3": 152.01,
+  "volumen_total_m3_raw": 5523902.01,
+  "pallets_totales_estim": 126.7,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -121,26 +121,6 @@
       "skus_volumen_anomalo": 4,
       "cobertura_peso_pct": 62.1,
       "cobertura_volumen_pct": 62.1
-    },
-    {
-      "pi": "26TP0819PI",
-      "transporte": "",
-      "fecha_embarque": "2026-10-14",
-      "fecha_eta_bodega": "2026-10-14",
-      "skus_distintos": 14,
-      "unidades_totales": 2284.0,
-      "peso_total_kg": 9274.1,
-      "volumen_total_m3": 16.99,
-      "volumen_total_m3_raw": 42608701.99,
-      "pallets_estim": 14.2,
-      "containers_20_estim": 0.61,
-      "containers_40hc_estim": 0.25,
-      "skus_con_match_odoo": 14,
-      "skus_con_peso": 10,
-      "skus_con_volumen": 10,
-      "skus_volumen_anomalo": 4,
-      "cobertura_peso_pct": 71.4,
-      "cobertura_volumen_pct": 71.4
     }
   ],
   "skus_sin_match": [
@@ -148,24 +128,9 @@
   ],
   "skus_volumen_anomalo_top": [
     {
-      "sku": "LHMALFRONT-L",
-      "producto": "Maleta Grande Viaje 23kg Expandible (L) 110L Frontier Lhotse",
-      "volumen_unit_m3": 133518.0
-    },
-    {
-      "sku": "LHMALFRONT-M",
-      "producto": "Maleta Mediana Viaje 18kg Expandible (M) 75L Frontier Lhotse",
-      "volumen_unit_m3": 90450.0
-    },
-    {
       "sku": "BDSILLEVREG",
       "producto": "Silla de Comer Evolutiva de Madera Regulable Bebé Bandú",
       "volumen_unit_m3": 70125.0
-    },
-    {
-      "sku": "LHMALFRONT-S",
-      "producto": "Maleta Cabina Viaje 10kg Expandible (S) 41L Frontier Lhotse",
-      "volumen_unit_m3": 60021.0
     },
     {
       "sku": "BDTORRAPR",
@@ -181,11 +146,6 @@
       "sku": "SMCONTCAFMI",
       "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
       "volumen_unit_m3": 2535.0
-    },
-    {
-      "sku": "XRCOOLPOR50-BK",
-      "producto": "Cooler Portátil 50L con Ruedas Negro Xroad",
-      "volumen_unit_m3": 51.675
     }
   ]
 }

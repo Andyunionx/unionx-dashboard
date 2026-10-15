@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-15T17:38:29.400958",
+  "generado_en": "2026-10-15T18:46:17.260847",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 753,
     "posiciones_libres_hoy": 621,
     "pct_ocupacion_hoy": 54.8,
-    "m3_stock_calculado": 802.1
+    "m3_stock_calculado": 802.0
   },
   "pico_proyectado": {
     "fecha": "2026-10-15",
@@ -23,8 +23,8 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-12-14",
-    "posiciones_ocupadas": 559.4,
-    "pct_ocupacion": 40.7
+    "posiciones_ocupadas": 562.2,
+    "pct_ocupacion": 40.9
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -69,29 +69,21 @@
       "m3": 53.7,
       "unidades": 4227.0,
       "transporte": ""
-    },
-    {
-      "pi": "26TP0819PI",
-      "fecha_eta": "2026-10-14",
-      "pallets": 14.2,
-      "m3": 16.99,
-      "unidades": 2284.0,
-      "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 140.8,
-  "pallets_total_salientes_horizonte": 193.6,
-  "m3_total_entrante_horizonte": 169.0,
-  "m3_total_saliente_horizonte": 232.3,
+  "pallets_total_entrantes_horizonte": 126.7,
+  "pallets_total_salientes_horizonte": 190.8,
+  "m3_total_entrante_horizonte": 152.0,
+  "m3_total_saliente_horizonte": 228.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 786,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 19122.0,
-    "demanda_cumplida_unidades": 13418.0,
-    "demanda_no_cubierta_unidades_total": 5704.0,
-    "pct_demanda_cumplida": 70.2,
+    "demanda_cumplida_unidades": 13310.0,
+    "demanda_no_cubierta_unidades_total": 5812.0,
+    "pct_demanda_cumplida": 69.6,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
       {
@@ -106,7 +98,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 345.0,
+        "unid_no_cubiertas": 353.0,
         "sin_match_stock": true
       },
       {
@@ -185,13 +177,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "Pack449",
-        "unid_no_cubiertas": 107.0,
+        "sku": "1650301031879",
+        "unid_no_cubiertas": 145.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1659991999728",
-        "unid_no_cubiertas": 101.0,
+        "sku": "Pack449",
+        "unid_no_cubiertas": 107.0,
         "sin_match_stock": true
       }
     ],
