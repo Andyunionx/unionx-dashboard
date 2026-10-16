@@ -1,32 +1,32 @@
 {
-  "generado_en": "2026-10-16T07:57:57.223560",
+  "generado_en": "2026-10-16T18:40:24.053363",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.04135,
+      "valor": 0.03985,
       "total_pickings": 20000,
-      "on_time": 827,
-      "on_time_pct": 0.04135,
-      "in_full": 19998,
-      "in_full_pct": 0.9999,
-      "both": 827,
+      "on_time": 797,
+      "on_time_pct": 0.03985,
+      "in_full": 19997,
+      "in_full_pct": 0.99985,
+      "both": 797,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.07747747747747748,
-      "total_pickings": 555,
+      "valor": 0.07517482517482517,
+      "total_pickings": 572,
       "on_time": 43,
-      "on_time_pct": 0.07747747747747748,
-      "in_full": 547,
-      "in_full_pct": 0.9855855855855856,
+      "on_time_pct": 0.07517482517482517,
+      "in_full": 564,
+      "in_full_pct": 0.986013986013986,
       "both": 43,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998148491020181,
-      "ok": 27000,
-      "total": 27005,
-      "errores": 5,
+      "valor": 0.9997806376133372,
+      "ok": 27346,
+      "total": 27352,
+      "errores": 6,
       "error": null
     },
     "tiempo_recepcion_90d": {
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9624774440080671,
-      "total_so": 18847,
-      "total_con_pickings": 18842,
-      "cumplidos": 18135,
-      "parciales": 17,
-      "sin_iniciar": 690,
+      "valor": 0.9696345585128855,
+      "total_so": 18942,
+      "total_con_pickings": 18936,
+      "cumplidos": 18361,
+      "parciales": 19,
+      "sin_iniciar": 556,
       "error": null
     },
     "oct_30d": {
-      "valor": 69.17814909771934,
+      "valor": 69.51493015010746,
       "n_orders": 19697,
       "min_h": 0.005277777777777778,
       "max_h": 700.1955555555555,
-      "mediana_h": 32.60777777777778,
+      "mediana_h": 32.83444444444444,
       "detalle": [
         {
           "so": "S278911",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 17985,
+      "lineas": 18332,
       "mes": "2026-10",
       "error": null
     },
@@ -379,8 +379,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 148,
-          "tarde": 148,
+          "total": 153,
+          "tarde": 153,
           "on_time_pct": 0.0
         },
         {
@@ -403,15 +403,15 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 156,
-          "tarde": 155,
-          "on_time_pct": 0.00641025641025641
+          "total": 161,
+          "tarde": 160,
+          "on_time_pct": 0.006211180124223602
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 25,
-          "tarde": 24,
-          "on_time_pct": 0.04
+          "total": 28,
+          "tarde": 27,
+          "on_time_pct": 0.03571428571428571
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -8798,32 +8798,32 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.04135,
+      "valor": 0.03985,
       "total_pickings": 20000,
-      "on_time": 827,
-      "on_time_pct": 0.04135,
-      "in_full": 19998,
-      "in_full_pct": 0.9999,
-      "both": 827,
+      "on_time": 797,
+      "on_time_pct": 0.03985,
+      "in_full": 19997,
+      "in_full_pct": 0.99985,
+      "both": 797,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.07747747747747748,
-      "total_pickings": 555,
+      "valor": 0.07517482517482517,
+      "total_pickings": 572,
       "on_time": 43,
-      "on_time_pct": 0.07747747747747748,
-      "in_full": 547,
-      "in_full_pct": 0.9855855855855856,
+      "on_time_pct": 0.07517482517482517,
+      "in_full": 564,
+      "in_full_pct": 0.986013986013986,
       "both": 43,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998148491020181,
-      "ok": 27000,
-      "total": 27005,
-      "errores": 5,
+      "valor": 0.9997806376133372,
+      "ok": 27346,
+      "total": 27352,
+      "errores": 6,
       "error": null
     }
   },
