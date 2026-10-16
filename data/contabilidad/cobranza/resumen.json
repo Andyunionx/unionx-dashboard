@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-16T15:42:54.191842",
+  "generado_en": "2026-10-16T20:11:59.214815",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17185,
-  "total_monto_pendiente_clp": 1072347723.0,
+  "total_documentos_pendientes": 17114,
+  "total_monto_pendiente_clp": 1063630405.0,
   "monto_por_aging": {
     "+90 días": 109775226.0,
-    "1-30 días": 446076879.0,
+    "1-30 días": 438171521.0,
     "31-60 días": 207159382.0,
     "61-90 días": 84223806.0,
-    "Vigente": 225112430.0
+    "Vigente": 224300470.0
   },
   "monto_por_tipo": {
-    "BOLETA": 881967711.0,
+    "BOLETA": 873250393.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 166011469.0
+      "monto": 165621101.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 72314887.0
+      "monto": 71932065.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -42,35 +42,35 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 47022380.0
+      "monto": 47718293.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 31064594.0
+      "monto": 31078574.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 30345825.0
+      "monto": 28739078.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28016659.0
+      "monto": 26963609.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 23765955.0
+      "monto": 23825305.0
+    },
+    {
+      "partner": "Cliente Ripley",
+      "monto": 23545082.0
     },
     {
       "partner": "Shopping LATAM Pass",
       "monto": 23378141.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 23264192.0
-    },
-    {
       "partner": "Cliente Paris",
-      "monto": 22453678.0
+      "monto": 22495648.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "abc S.A.",
-      "monto": 11651777.0
+      "monto": 11315625.0
     },
     {
       "partner": "Status Spa",
@@ -97,6 +97,6 @@
       "monto": 7041951.0
     }
   ],
-  "notas_credito_count": 901,
+  "notas_credito_count": 902,
   "pedidos_venta_count": 10000
 }
