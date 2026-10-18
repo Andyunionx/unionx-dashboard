@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-17T22:46:17.889165",
+  "generado_en": "2026-10-18T02:01:56.301414",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -14,12 +14,12 @@
     "posiciones_ocupadas_hoy": 788,
     "posiciones_libres_hoy": 586,
     "pct_ocupacion_hoy": 57.4,
-    "m3_stock_calculado": 793.6
+    "m3_stock_calculado": 793.4
   },
   "pico_proyectado": {
-    "fecha": "2026-10-17",
-    "posiciones_ocupadas": 788.0,
-    "pct_ocupacion": 57.4
+    "fecha": "2026-10-18",
+    "posiciones_ocupadas": 781.4,
+    "pct_ocupacion": 56.9
   },
   "minimo_proyectado": {
     "fecha": "2026-12-15",
@@ -81,8 +81,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 19119.0,
-    "demanda_cumplida_unidades": 13142.0,
-    "demanda_no_cubierta_unidades_total": 5977.0,
+    "demanda_cumplida_unidades": 13138.0,
+    "demanda_no_cubierta_unidades_total": 5981.0,
     "pct_demanda_cumplida": 68.7,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
@@ -182,8 +182,8 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 114.0,
+        "sku": "67933857637909",
+        "unid_no_cubiertas": 115.0,
         "sin_match_stock": true
       }
     ],
