@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-19T19:03:01.664695",
+  "generado_en": "2026-10-19T21:50:58.301836",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1374,
-    "posiciones_ocupadas_hoy": 783,
-    "posiciones_libres_hoy": 591,
-    "pct_ocupacion_hoy": 57.0,
-    "m3_stock_calculado": 784.1
+    "posiciones_ocupadas_hoy": 790,
+    "posiciones_libres_hoy": 584,
+    "pct_ocupacion_hoy": 57.5,
+    "m3_stock_calculado": 782.9
   },
   "pico_proyectado": {
     "fecha": "2026-10-19",
-    "posiciones_ocupadas": 783.0,
-    "pct_ocupacion": 57.0
+    "posiciones_ocupadas": 790.0,
+    "pct_ocupacion": 57.5
   },
   "minimo_proyectado": {
     "fecha": "2026-12-18",
-    "posiciones_ocupadas": 604.7,
-    "pct_ocupacion": 44.0
+    "posiciones_ocupadas": 611.8,
+    "pct_ocupacion": 44.5
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -72,17 +72,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 178.3,
+  "pallets_total_salientes_horizonte": 178.2,
   "m3_total_entrante_horizonte": 152.0,
-  "m3_total_saliente_horizonte": 214.0,
+  "m3_total_saliente_horizonte": 213.8,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 785,
+    "sku_con_vol_odoo": 783,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18912.0,
-    "demanda_cumplida_unidades": 12936.0,
-    "demanda_no_cubierta_unidades_total": 5976.0,
+    "demanda_cumplida_unidades": 12929.0,
+    "demanda_no_cubierta_unidades_total": 5983.0,
     "pct_demanda_cumplida": 68.4,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -98,7 +98,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 330.0,
+        "unid_no_cubiertas": 331.0,
         "sin_match_stock": true
       },
       {
@@ -123,7 +123,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 222.0,
+        "unid_no_cubiertas": 223.0,
         "sin_match_stock": true
       },
       {
@@ -191,7 +191,7 @@
       "Delivery_007"
     ]
   },
-  "stock_anomalies_count": 77,
+  "stock_anomalies_count": 76,
   "top_stock_anomalies": [
     {
       "sku": "6902221386601",
