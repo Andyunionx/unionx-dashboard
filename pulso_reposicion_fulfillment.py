@@ -446,6 +446,102 @@ def transito_a_fulls():
     return df.groupby(["canal", "sku"])["qty"].sum().to_dict() if len(df) else {}
 
 
+# Envíos a Full que el pulso no veía (Trini, 19-oct). Desde fines de septiembre:
+#  · Mercado Libre: Trini hace el PICK CA1/Stock → CA1/Output (origen "FFMeliDDMM-N") y Gerardo
+#    registra el traspaso CA1/Output → BFML recién cuando ML lo recibe. Mientras tanto no es un
+#    pendiente a BF* ni stock del feed. En los feeds diarios, ML muestra disponible lo despachado
+#    1,5–3 días después del PICK → tránsito = PICK hecho sin traspaso, de hasta TRANSITO_FF_DIAS
+#    días; los más viejos se asumen recibidos (el feed ya los trae) y se avisan.
+#  · Paris (stock desde Odoo BFP): OUT CA1/Output → Clientes al despachar y RET Clientes → BFP
+#    cuando llega → tránsito = OUT hecho sin RET (hasta 30 días) + PICK hecho sin OUT.
+# Walmart y Falabella no: su tránsito sale del Seller Center (WFS / shipment-intents).
+TRANSITO_FF_DIAS = 3
+TRANSITO_FF_OUT_DIAS = 30
+FF_ORIGEN = {"FFMeli": "Mercado Libre", "FFParis": "Paris"}
+
+
+def transito_ff_odoo(ahora=None) -> dict:
+    import xmlrpc.client, time
+    cfg = json.load(open(ROOT / "odoo/odoo_config.json"))["produccion"]
+    pw = os.environ.get("ANDRES_ODOO_PASSWORD", "") or (ROOT / "odoo/.odoo_pass").read_text().strip()
+    uid = xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/common").authenticate(cfg["db_name"], cfg["username"], pw, {})
+
+    def rpc(model, method, args, kw=None):
+        for i in range(3):
+            try:
+                return xmlrpc.client.ServerProxy(f"{cfg['url']}/xmlrpc/2/object").execute_kw(
+                    cfg["db_name"], uid, pw, model, method, args, kw or {})
+            except Exception:
+                if i == 2:
+                    raise
+                time.sleep(5)
+    ahora = ahora or datetime.datetime.utcnow()
+    desde = (ahora - datetime.timedelta(days=TRANSITO_FF_OUT_DIAS + 15)).strftime("%Y-%m-%d")
+    dom = ["|"] * (len(FF_ORIGEN) - 1) + [("origin", "=like", f"{p}%") for p in FF_ORIGEN]
+    pk = rpc("stock.picking", "search_read", [dom + [("state", "=", "done"), ("date_done", ">=", desde)]],
+             {"fields": ["id", "name", "origin", "date_done", "location_id", "location_dest_id"]})
+    if not pk:
+        return {}
+    info = {p["id"]: p for p in pk}
+    # devoluciones (RET) de los OUT a clientes: lo que ya llegó a la bodega del canal
+    outs = [p["id"] for p in pk if str(p["location_dest_id"][1]).startswith("Partners")]
+    rets = rpc("stock.picking", "search_read", [[("return_id", "in", outs), ("state", "=", "done")]],
+               {"fields": ["id", "return_id", "date_done"]}) if outs else []
+    ret_de = {r["id"]: r["return_id"][0] for r in rets}
+    ret_fecha = {r["id"]: r["date_done"] for r in rets}
+    mv = rpc("stock.move", "search_read", [[("picking_id", "in", list(info) + list(ret_de)), ("state", "=", "done")]],
+             {"fields": ["picking_id", "product_id", "quantity"]})
+    pids = list({m["product_id"][0] for m in mv if m["product_id"]})
+    codes = {}
+    for i in range(0, len(pids), 300):
+        for p in rpc("product.product", "read", [pids[i:i + 300]], {"fields": ["default_code"]}):
+            codes[p["id"]] = str(p["default_code"] or "").strip()
+    filas = []
+    for m in mv:
+        if not m["product_id"]:
+            continue
+        pid_ = m["picking_id"][0]
+        sku = ALIAS_SKU.get(codes.get(m["product_id"][0], ""), codes.get(m["product_id"][0], ""))
+        if pid_ in ret_de:                                   # RET: descuenta del OUT de origen
+            o = info[ret_de[pid_]]
+            filas.append({"origen": o["origin"], "sku": sku, "paso": "out", "q": -m["quantity"], "fecha": ret_fecha[pid_]})
+            continue
+        p = info[pid_]
+        de, a = str(p["location_id"][1]), str(p["location_dest_id"][1])
+        paso = "pick" if a.startswith("CA1/Output") else ("out" if de.startswith("CA1/Output") else None)
+        if paso:
+            filas.append({"origen": p["origin"], "sku": sku, "paso": paso, "q": m["quantity"], "fecha": p["date_done"]})
+    if not filas:
+        return {}
+    df = pd.DataFrame(filas)
+    df["canal"] = df["origen"].map(lambda o: next((c for pre, c in FF_ORIGEN.items() if str(o).startswith(pre)), None))
+    df["edad"] = (ahora - pd.to_datetime(df["fecha"])).dt.total_seconds() / 86400
+    df = df[df["edad"] >= 0]                                   # solo lo registrado hasta `ahora`
+    es_pick, es_out, es_ret = df.paso.eq("pick"), df.paso.eq("out") & (df.q > 0), df.paso.eq("out") & (df.q < 0)
+    df = df.assign(q_pick=df.q.where(es_pick, 0), q_out=df.q.where(es_out, 0), q_ret=(-df.q).where(es_ret, 0),
+                   edad_pick=df.edad.where(es_pick), edad_out=df.edad.where(es_out))
+    g = df.groupby(["canal", "origen", "sku"], as_index=False).agg(
+        pick=("q_pick", "sum"), out=("q_out", "sum"), ret=("q_ret", "sum"),
+        edad_pick=("edad_pick", "min"), edad_out=("edad_out", "min"))
+    sin_paso = (g["pick"] - g["out"]).clip(lower=0)            # pickeado que sigue en CA1/Output
+    reciente = g["edad_pick"] <= TRANSITO_FF_DIAS
+    g["tr"] = np.where(reciente, sin_paso, 0)
+    es_paris = g["canal"] == "Paris"                          # Paris: despachado y aún sin RET a BFP
+    g.loc[es_paris, "tr"] += np.where(g.loc[es_paris, "edad_out"] <= TRANSITO_FF_OUT_DIAS,
+                                      (g.loc[es_paris, "out"] - g.loc[es_paris, "ret"]).clip(lower=0), 0)
+    viejos = g[(~reciente) & (sin_paso > 0) & (g["canal"] == "Mercado Libre")]
+    if len(viejos):
+        print(f"[transito-ff][AVISO] PICK a Full sin traspaso registrado de más de {TRANSITO_FF_DIAS} días "
+              f"(se asumen recibidos): " + ", ".join(sorted(viejos["origen"].unique())))
+    tr = g[g["tr"] > 0].groupby(["canal", "sku"])["tr"].sum()
+    if len(tr):
+        res = tr.groupby(level=0).agg(["sum", "size"])
+        print("[transito-ff] " + " · ".join(f"{c}: {r['sum']:,.0f} uds en {r['size']} SKU" for c, r in res.iterrows()))
+    else:
+        print("[transito-ff] sin envíos a Full en camino")
+    return tr.to_dict()
+
+
 def construir(no_download=False, no_live=False) -> Path:
     hoy = datetime.date.today()
     sem = semanas_l6w(hoy)
@@ -465,13 +561,16 @@ def construir(no_download=False, no_live=False) -> Path:
     full_map = {(r.canal, r.sku): r.qty for r in full.itertuples(index=False)}
 
     det = pd.read_parquet(DETALLE)
-    ca1 = det[det["Bodega"].astype(str).str.startswith("CA1")]
+    # CA1 disponible = solo CA1/Stock: lo que está en CA1/Output ya está pickeado (envíos a Full
+    # o pedidos por despachar) y no se puede volver a mandar (Trini, 19-oct).
+    ca1 = det[det["Bodega"].astype(str).str.startswith("CA1/Stock")]
     stock_ca1 = ca1.groupby(ca1["SKU"].astype(str).str.strip())["Disponible"].sum()
 
-    # Complementar la base con productos nuevos no presentes en la Maestra: con venta
-    # digital, stock en marketplace, o stock en bodega CA1 (productos recién recibidos
-    # que pricing aún no carga) → no depende de que se carguen a mano en el doc.
-    prod, sku_nuevos = complementar_base_nuevos(prod, venta, full_map, ca1)
+    # Complementar la base con productos que no están en Pricing/Maestra pero tienen venta
+    # digital o stock en algún Full. Ya NO se agregan los que solo tienen stock en CA1: la
+    # base es la hoja Pricing (al día desde el 1-sep) y ese criterio metía dummies, muebles
+    # exhibidores y bolsas con sugerido 2 por UME MIN (Trini, 19-oct).
+    prod, sku_nuevos = complementar_base_nuevos(prod, venta, full_map)
     if sku_nuevos:
         print(f"[complemento] +{len(sku_nuevos)} SKU con venta/stock no presentes en la Maestra")
     try:
@@ -479,6 +578,12 @@ def construir(no_download=False, no_live=False) -> Path:
     except Exception as e:
         print(f"[transito-fulls][WARN] {type(e).__name__}: {e}")
         tr_fulls = {}
+    try:
+        ff_tr = transito_ff_odoo()
+        for k, v in ff_tr.items():
+            tr_fulls[k] = tr_fulls.get(k, 0) + v
+    except Exception as e:
+        print(f"[transito-ff][WARN] {type(e).__name__}: {e}")
     # Walmart: el tránsito real es el `Inbound units` del WFS (Seller Center), no
     # los picks de Odoo → se reemplazan las entradas de Walmart por el WFS.
     wfs_tr = _transito_walmart_wfs()
@@ -525,15 +630,12 @@ def construir(no_download=False, no_live=False) -> Path:
             ume = mult2(float(v_canal.get((sku, canal), 0)))
             manual = manual_map.get((sku, canal))
             large = 1 if (canal, sku) in lgset else 0
-            # Blacklist: manda el 1 de CUALQUIERA de las dos hojas del panel.
-            # Antes la hoja UME tenía precedencia y su 0 anulaba a la hoja
-            # BLACKLIST: 251 pares canal-SKU marcados por Trinidad (175 ML, 76
-            # Walmart) seguían entrando al sugerido. (Reporte Trinidad 07-09.)
-            # Blacklist: manda el 1 de CUALQUIERA de las dos hojas del panel.
-            # Antes la hoja UME tenía precedencia y su 0 anulaba a la hoja
-            # BLACKLIST: 251 pares canal-SKU marcados por Trinidad (175 ML, 76
-            # Walmart) seguían entrando al sugerido. (Reporte Trinidad 07-09.)
-            black = 1 if ((canal, sku) in blset or bl_panel.get((sku, canal)) == 1) else 0
+            # Blacklist: SOLO la hoja BLACKLIST del panel (canal + SKU), que es la que mantienen
+            # Trinidad y Claudia. La columna Blacklist de la hoja UME es una fórmula sobre esa misma
+            # hoja, pero con las referencias corridas (la fila de LHSHNUCO-BK en ML lee la fila 212):
+            # sumarla bloqueaba 1.017 pares canal-SKU que no están en la BLACKLIST (Trini, 19-oct).
+            # Los discontinuados ya salen por In/Out = out de Pricing.
+            black = 1 if (canal, sku) in blset else 0
             # Objetivo por cobertura por CANAL (hoja Reglas). OJO: la col 'Cob' de la
             # Maestra resultó ser cobertura ACTUAL (llega a 158 meses), NO un objetivo,
             # así que NO se usa como target (inflaba el sugerido 17x). Se muestra como

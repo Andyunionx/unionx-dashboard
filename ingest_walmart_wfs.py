@@ -25,6 +25,7 @@ import io
 import re
 import sys
 import json
+import os
 import base64
 import datetime
 from pathlib import Path
@@ -44,8 +45,11 @@ def _svc():
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
-    info = json.load(open(TOKEN))
-    creds = Credentials.from_authorized_user_info(info)
+    # GitHub Actions: GMAIL_TOKEN_JSON (mismo secret de los pulsos); local: token.json del agente-comex.
+    # Antes solo leía el archivo → en Actions el export de Trini nunca se tomaba (Walmart caía a Odoo).
+    cj = os.environ.get("GMAIL_TOKEN_JSON", "")
+    info = json.loads(cj) if cj else json.load(open(TOKEN))
+    creds = Credentials.from_authorized_user_info(info, info.get("scopes"))
     if not creds.valid and creds.refresh_token:
         creds.refresh(Request())
     return build("gmail", "v1", credentials=creds)
