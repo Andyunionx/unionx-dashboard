@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-20T17:46:07.531331",
+  "generado_en": "2026-10-20T18:49:49.635357",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 785,
     "posiciones_libres_hoy": 589,
     "pct_ocupacion_hoy": 57.1,
-    "m3_stock_calculado": 777.6
+    "m3_stock_calculado": 775.6
   },
   "pico_proyectado": {
     "fecha": "2026-10-20",
@@ -23,7 +23,7 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-12-19",
-    "posiciones_ocupadas": 609.4,
+    "posiciones_ocupadas": 610.1,
     "pct_ocupacion": 44.4
   },
   "primer_critico": null,
@@ -72,18 +72,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 175.6,
+  "pallets_total_salientes_horizonte": 174.9,
   "m3_total_entrante_horizonte": 152.0,
-  "m3_total_saliente_horizonte": 210.7,
+  "m3_total_saliente_horizonte": 209.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 782,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18918.0,
-    "demanda_cumplida_unidades": 12961.0,
-    "demanda_no_cubierta_unidades_total": 5957.0,
-    "pct_demanda_cumplida": 68.5,
+    "demanda_cumplida_unidades": 12929.0,
+    "demanda_no_cubierta_unidades_total": 5989.0,
+    "pct_demanda_cumplida": 68.3,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
       {
@@ -102,18 +102,18 @@
         "sin_match_stock": true
       },
       {
+        "sku": "1659991971809",
+        "unid_no_cubiertas": 286.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "SIMCUVER-CR",
         "unid_no_cubiertas": 284.0,
         "sin_match_stock": true
       },
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 283.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "1659991971809",
-        "unid_no_cubiertas": 279.0,
+        "unid_no_cubiertas": 284.0,
         "sin_match_stock": true
       },
       {
@@ -143,12 +143,12 @@
       },
       {
         "sku": "68540048936286",
-        "unid_no_cubiertas": 183.0,
+        "unid_no_cubiertas": 184.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 175.0,
+        "unid_no_cubiertas": 179.0,
         "sin_match_stock": true
       },
       {
