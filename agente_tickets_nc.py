@@ -5,9 +5,14 @@ posteo automático, activo desde el LUNES 31-08-2026).
 Reglas: ver nc_reglas.py (Max, correo 17-sep-2026; complemento Andrés 05-oct). Resumen:
   - Gatillo: Motivo == "Devolución" + Resolución no vacía + producto recepcionado
     (Estado Nuevo / Outlet / Merma). Motivo "Cambio" = canal manual sin confirmar.
-  - Se emiten a mano (el agente no los toca): Fidelización, Distribución, páginas
-    propias y Kitchen Center. Fuera también los tickets con "PV" + OC en el título.
+  - Se emiten a mano (el agente no los toca): Fidelización, Distribución, UnionX B2B
+    y Kitchen Center (las 3 webs entran al automático desde el 19-oct). Fuera también
+    los tickets con "PV" + OC en el título.
   - OC del canal en propiedad "Nº Orden de compra" (normalizar prefijo PV/espacios).
+    Se busca como referencia del canal, nombre del pedido o pack de Yuju (las OC de
+    Mercado Libre «2000013…» son el pack, no la orden: 19-oct).
+  - Fulfillment (despacho desde bodega BF*) NO lleva NC: se descuenta en la
+    liquidación del marketplace (Víctor 04-08).
   - NC POR LÍNEA: "Producto Comprado" × "Cantidad". Varios tickets de una OC → una
     NC agrupada. Fecha NC = "F. recepción PV" (si su mes está cerrado → hoy).
   - Si la boleta YA tiene NC (no creada por este agente) → NO emitir; marcar
@@ -102,7 +107,7 @@ def ficha(t, bucket, detalle):
     oc = norm_oc(prop(t, "Nº Orden de compra"))
     if not oc and "-" in t["name"]:
         oc = norm_oc(t["name"].split("-", 1)[1])
-    return {"t": t, "canal": R.texto(t, "Canal"), "estado": R.texto(t, "Estado"), "oc": oc,
+    return {"t": t, "canal": R.canal_canonico(R.texto(t, "Canal")), "estado": R.texto(t, "Estado"), "oc": oc,
             "prod": prop(t, "Producto Comprado"), "qty": prop(t, "Cantidad") or 0,
             "frecep": prop(t, "F. recepción PV"), "bucket": bucket, "detalle": detalle}
 
@@ -153,13 +158,28 @@ for i in range(0, len(ocs), B):
     ch = ocs[i:i+B]
     variantes = ch + ["#" + o for o in ch]
     for o in ex("sale.order", "search_read",
-                ["|", ("channel_order_reference", "in", variantes), ("name", "in", ch)],
-                fields=["id", "name", "channel_order_reference", "invoice_ids"], limit=2000):
+                ["|", "|", ("channel_order_reference", "in", variantes), ("name", "in", ch),
+                 ("yuju_pack_id", "in", ch)],
+                fields=["id", "name", "channel_order_reference", "yuju_pack_id", "invoice_ids"], limit=5000):
         key = norm_oc(o.get("channel_order_reference") or "") or o["name"]
+        pack = norm_oc(o.get("yuju_pack_id") or "")
         if key in por_oc or key in man_por_oc:
             ord_por_oc[key].append(o)
         elif o["name"] in por_oc or o["name"] in man_por_oc:
             ord_por_oc[o["name"]].append(o)
+        elif pack in por_oc or pack in man_por_oc:
+            ord_por_oc[pack].append(o)
+# Pedidos despachados desde una bodega Full (BF*): no llevan NC. Casi nunca tienen
+# boleta (13.384 de 13.386 entre ago y oct-2026), pero los que sí la tienen no deben
+# salir por el agente.
+oid_all = sorted({o["id"] for os_ in ord_por_oc.values() for o in os_})
+ped_full = set()
+for i in range(0, len(oid_all), 400):
+    for p in ex("stock.picking", "search_read", [("sale_id", "in", oid_all[i:i+400])],
+                fields=["sale_id", "location_id"], limit=10000):
+        if str(p["location_id"][1] if p["location_id"] else "").split("/")[0].startswith("BF"):
+            ped_full.add(p["sale_id"][0])
+print(f"pedidos Fulfillment entre los cruzados: {len(ped_full)}")
 inv_all = sorted({i for os_ in ord_por_oc.values() for o in os_ for i in o["invoice_ids"]})
 bol_por_id = {}
 for i in range(0, len(inv_all), 800):
@@ -199,6 +219,18 @@ for i in range(0, len(bol_ids), 800):
 LIM_PLAZO = str(HOY - datetime.timedelta(days=90))
 print(f"pedidos: {sum(len(v) for v in ord_por_oc.values())} | boletas: {len(bol_por_id)} | con NC previa: {len(nc_por_bol)}")
 
+def monto_oc(bol, cs):
+    """Monto estimado de la NC de una OC: precio de la boleta × unidades del ticket."""
+    por_prod = {l["product_id"][0]: l for l in lin_por_bol.get(bol["id"], []) if l["product_id"]}
+    m = 0
+    for c in cs:
+        pid = c["prod"][0] if isinstance(c["prod"], (list, tuple)) else c["prod"]
+        if pid in por_prod:
+            m += por_prod[pid]["price_unit"] * min(c["qty"] or 0, por_prod[pid]["quantity"])
+    return m
+
+
+ctx_oc = {}     # oc -> (boleta, monto estimado, pedido), solo para el Excel de validación / pulso
 acciones = []   # (boleta, [tickets], lineas {product_id: qty}, total_flag, fecha)
 for oc, cs in por_oc.items():
     tids = [c["t"]["id"] for c in cs]
@@ -207,6 +239,10 @@ for oc, cs in por_oc.items():
         marcas["revisar"] += [(i, f"pedido {'no encontrado' if not ords else 'ambiguo'} para OC {oc}") for i in tids]
         continue
     boletas = [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
+    if ords[0]["id"] in ped_full:
+        marcas["revisar" if boletas else "sin_boleta"] += [
+            (i, f"OC {oc} Fulfillment: se descuenta en la liquidación, no lleva NC") for i in tids]
+        continue
     if not boletas:
         marcas["sin_boleta"] += [(i, f"OC {oc} sin boleta posteada") for i in tids]
         continue
@@ -214,6 +250,7 @@ for oc, cs in por_oc.items():
         marcas["revisar"] += [(i, f"OC {oc} con {len(boletas)} boletas") for i in tids]
         continue
     bol = boletas[0]
+    ctx_oc[oc] = (bol, monto_oc(bol, cs), ords[0]["name"])
     ncs = nc_por_bol.get(bol["id"], [])
     # Un BORRADOR propio (de una corrida que falló al postear) NO debe contar como
     # "NC ya existe": si no, el ticket queda marcado con_nc y se salta para siempre
@@ -260,7 +297,7 @@ for oc, cs in por_oc.items():
         fecha_nc = str(frecep)[:10]
     else:
         fecha_nc = str(HOY)
-    acciones.append({"bol": bol, "tids": tids, "trefs": [c["t"]["ticket_ref"] for c in cs],
+    acciones.append({"bol": bol, "pedido": ords[0]["name"], "tids": tids, "trefs": [c["t"]["ticket_ref"] for c in cs],
                      "lineas": lineas, "total": total_flag, "fecha": fecha_nc, "oc": oc,
                      "monto_est": sum(por_prod[p]["price_unit"] * q for p, q in lineas.items())})
 
@@ -268,6 +305,7 @@ for oc, cs in por_oc.items():
 # boletas, se emiten SOLO esas; el resto queda retenido (sin marcar) hasta validarlo.
 # Vacía = sin restricción.
 AUTORIZADAS = {b.strip() for b in os.environ.get("AGENTE_NC_BOLETAS_AUTORIZADAS", "").split(",") if b.strip()}
+retenidas = []
 if AUTORIZADAS:
     retenidas = [a for a in acciones if a["bol"]["name"] not in AUTORIZADAS]
     acciones = [a for a in acciones if a["bol"]["name"] in AUTORIZADAS]
@@ -291,6 +329,8 @@ def estado_manual(oc, cs):
     ords = ord_por_oc.get(oc, [])
     if len(ords) != 1:
         return f"pedido {'no encontrado' if not ords else 'ambiguo'}", None, 0
+    if ords[0]["id"] in ped_full:
+        return "Fulfillment (no lleva NC)", None, 0
     boletas = [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
     if not boletas:
         return "sin boleta", None, 0
@@ -300,28 +340,24 @@ def estado_manual(oc, cs):
     if nc_por_bol.get(bol["id"]) or str(bol.get("l10n_latam_document_number") or "") in nc_ref_folios:
         return "ya tiene NC", bol, 0
     if fecha_bol.get(bol["id"], "9999") < LIM_PLAZO:
-        return "fuera de plazo (3 meses)", bol, 0
-    por_prod = {l["product_id"][0]: l for l in lin_por_bol.get(bol["id"], []) if l["product_id"]}
-    monto = 0
-    for c in cs:
-        pid = c["prod"][0] if isinstance(c["prod"], (list, tuple)) else c["prod"]
-        if pid in por_prod:
-            monto += por_prod[pid]["price_unit"] * min(c["qty"] or 0, por_prod[pid]["quantity"])
-    return "PENDIENTE NC", bol, monto
+        return "fuera de plazo (3 meses)", bol, monto_oc(bol, cs)
+    return "PENDIENTE NC", bol, monto_oc(bol, cs)
 
 
 filas_man = []
 for oc, cs in man_por_oc.items():
     est, bol, monto = estado_manual(oc, cs)
+    ords = ord_por_oc.get(oc, [])
     for c in cs:
         filas_man.append({"grupo": c["detalle"], "canal": c["canal"], "ticket": c["t"]["ticket_ref"],
-                          "titulo": c["t"]["name"], "oc": oc, "estado NC": est,
+                          "titulo": c["t"]["name"], "oc": oc, "pedido": ords[0]["name"] if len(ords) == 1 else "",
+                          "estado NC": est,
                           "boleta": bol["name"] if bol else "", "fecha boleta": fecha_bol.get(bol["id"]) if bol else "",
                           "monto estimado OC": round(monto)})
 for c in manuales:
     if not c["oc"]:
         filas_man.append({"grupo": c["detalle"], "canal": c["canal"], "ticket": c["t"]["ticket_ref"],
-                          "titulo": c["t"]["name"], "oc": "", "estado NC": "sin Nº de orden",
+                          "titulo": c["t"]["name"], "oc": "", "pedido": "", "estado NC": "sin Nº de orden",
                           "boleta": "", "fecha boleta": "", "monto estimado OC": 0})
 cm = collections.Counter((f["grupo"], f["estado NC"]) for f in filas_man)
 print("\nmanuales por grupo y estado NC:", dict(cm))
@@ -337,15 +373,29 @@ if EXCEL and not LIVE:
                 "resolución": R.texto(t, "Resolución"), "estado producto": c["estado"],
                 "oc": c["oc"], "creado": str(t.get("create_date") or "")[:10], "detalle": c["detalle"]}
 
+    oc_de_tid = {c["t"]["id"]: c["oc"] for c in cand}
+
+    def filas_nc(lst):
+        return pd.DataFrame([{
+            "boleta": a["bol"]["name"], "pedido": a["pedido"], "oc": a["oc"], "tickets": ", ".join("#" + str(r) for r in a["trefs"]),
+            "canal": ", ".join(sorted({R.canal_canonico(R.texto(nombre_t[i], "Canal")) for i in a["tids"]})),
+            "tipo": "total" if a["total"] else "parcial", "fecha NC": a["fecha"],
+            "monto estimado": round(a["monto_est"])} for a in lst],
+            columns=["boleta", "pedido", "oc", "tickets", "canal", "tipo", "fecha NC", "monto estimado"])
+
+    def fila_marca(est, tid, m):
+        oc = oc_de_tid.get(tid, "")
+        bol, monto, pedido = ctx_oc.get(oc, (None, 0, ""))
+        return {"estado": est, "ticket": nombre_t[tid]["ticket_ref"], "titulo": nombre_t[tid]["name"],
+                "canal": R.canal_canonico(R.texto(nombre_t[tid], "Canal")), "motivo": m, "oc": oc, "pedido": pedido,
+                "boleta": bol["name"] if bol else "", "fecha boleta": fecha_bol.get(bol["id"], "") if bol else "",
+                "monto estimado OC": round(monto)}
+
     hojas = {}
-    hojas["1 Emitiría el agente"] = pd.DataFrame([{
-        "boleta": a["bol"]["name"], "oc": a["oc"], "tickets": ", ".join("#" + str(r) for r in a["trefs"]),
-        "canal": ", ".join(sorted({R.texto(nombre_t[i], "Canal") for i in a["tids"]})),
-        "tipo": "total" if a["total"] else "parcial", "fecha NC": a["fecha"],
-        "monto estimado": round(a["monto_est"])} for a in acciones])
-    hojas["2 Agente - revisar"] = pd.DataFrame([{
-        "estado": est, "ticket": nombre_t[tid]["ticket_ref"], "titulo": nombre_t[tid]["name"],
-        "canal": R.texto(nombre_t[tid], "Canal"), "motivo": m} for est, lst in marcas.items() for tid, m in lst])
+    hojas["1 Emitiría el agente"] = filas_nc(acciones)
+    # Cumplen las reglas pero no están en la lista autorizada: esperan validación de Max.
+    hojas["1b Retenidas"] = filas_nc(retenidas)
+    hojas["2 Agente - revisar"] = pd.DataFrame([fila_marca(est, tid, m) for est, lst in marcas.items() for tid, m in lst])
     hojas["3 Manuales"] = pd.DataFrame(filas_man)
     hace7 = str(datetime.date.today() - datetime.timedelta(days=7))
     camb = [fila_ticket(c) for c in otros if c["bucket"] == R.CAMBIO]
@@ -356,6 +406,7 @@ if EXCEL and not LIVE:
     hojas["8 No recepcionado"] = pd.DataFrame([fila_ticket(c) for c in otros if c["bucket"] == R.NO_RECEPCIONADO])
     resumen = [("Clasificación", k, v, None) for k, v in conteo.most_common()]
     resumen += [("Agente", "emitiría NC", len(acciones), round(sum(a["monto_est"] for a in acciones)))]
+    resumen += [("Agente", "retenida (lista autorizada)", len(retenidas), round(sum(a["monto_est"] for a in retenidas)))]
     resumen += [("Agente", f"marca {k}", len(v), None) for k, v in marcas.items()]
     resumen += [("Manual", f"{g} · {e}", n, None) for (g, e), n in sorted(cm.items())]
     with pd.ExcelWriter(EXCEL) as w:

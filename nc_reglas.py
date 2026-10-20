@@ -9,8 +9,9 @@ Reglas (Max, correo 17-sep-2026, confirmadas 22-sep; complemento de Andrés 05-o
      «Cambio» mientras Max no los confirma; al confirmarse pasan a «Devolución» y
      quedan disponibles para emitir la NC.
   2. Resolución vacía → ticket creado automáticamente que nadie revisó → fuera.
-  3. Se emiten a mano (no los toca el agente): Fidelización, Distribución, páginas
-     propias (UnionX, Lhotse, Simplit y UnionX B2B) y Kitchen Center.
+  3. Se emiten a mano (no los toca el agente): Fidelización, Distribución, UnionX B2B
+     y Kitchen Center. Max, 19-oct: las 3 webs (UnionX, Simplit y Lhotse) pasan a la
+     corrida automática con la misma lógica; sus «Cambio» siguen fuera (regla 1).
   4. «PV» + número de orden de compra en el título → proceso manual de Postventa
      (transitorio: va a desaparecer a medida que Retorna y los canales se automaticen).
   5. Se mantiene del flujo anterior: el producto tiene que estar recepcionado
@@ -24,6 +25,7 @@ Reglas (Max, correo 17-sep-2026, confirmadas 22-sep; complemento de Andrés 05-o
 import re
 
 CANALES_AUTOMATICOS = {"Falabella", "Mercado Libre", "Paris", "Ripley", "Walmart"}
+CANALES_WEB_AUTOMATICOS = {"UnionX web", "Simplit web", "Lhotse web"}   # Max, 19-oct
 EQUIPOS_PAGINA_PROPIA = {"Página propia", "Página propia Simplit"}
 CANALES_PAGINAS_PROPIAS = {"UnionX web", "Lhotse web", "Simplit web", "UnionX b2b"}
 # clientes del equipo Fidelización (algunos tickets entran por Customer Care)
@@ -32,6 +34,8 @@ CANALES_FIDELIZACION = {"Travel Duty", "Celmedia", "Global Reward", "Sawa", "Ban
 CANALES_DISTRIBUCION = {"Falabella tienda", "Paris tienda", "Lokal"}
 CANAL_KITCHEN = "Kitchen Center"
 ESTADOS_RECEPCIONADO = {"Nuevo", "Outlet", "Merma"}
+_CANON = {c.lower(): c for c in (CANALES_AUTOMATICOS | CANALES_WEB_AUTOMATICOS | CANALES_PAGINAS_PROPIAS
+                                  | CANALES_FIDELIZACION | CANALES_DISTRIBUCION | {CANAL_KITCHEN})}
 RE_PV_TITULO = re.compile(r"\bPV\s*[#\-_]?\s*\d{3,}", re.I)
 
 # Buckets de clasificación de un ticket
@@ -62,12 +66,20 @@ def texto(t, nombre):
     return "" if v in (None, False) else str(v).strip()
 
 
+def canal_canonico(c):
+    """Nombre único del canal: «Lhotse Web» y «Lhotse web» son el mismo (Max, 19-oct)."""
+    c = str(c or "").strip()
+    return _CANON.get(c.lower(), c)
+
+
 def grupo_manual(t):
     """Grupo de gestión manual del ticket, o None si es de un canal automático."""
-    canal = texto(t, "Canal")
+    canal = canal_canonico(texto(t, "Canal"))
     equipo = str((t.get("team_id") or [0, ""])[1] or "").strip()
     if canal == CANAL_KITCHEN:
         return "Kitchen Center"
+    if canal in CANALES_WEB_AUTOMATICOS:
+        return None
     if canal in CANALES_PAGINAS_PROPIAS or equipo in EQUIPOS_PAGINA_PROPIA:
         return "Página propia"
     if equipo == "Fidelización" or canal in CANALES_FIDELIZACION:

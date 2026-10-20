@@ -11,12 +11,17 @@ Ahora el pulso mide EL MISMO universo sobre el que actúa el agente y separa por
 QUIÉN TIENE QUE ACTUAR:
 
   0. EMITIDAS por el agente la semana pasada  -> nadie, es la foto de lo hecho
-  1. DEVOLUCIÓN (agente `agente_tickets_nc.py`)
-       EN COLA        -> nadie: sale sola en la próxima corrida horaria
-       FUERA DE PLAZO -> Víctor: decidir si se regulariza por otra vía
-       BLOQUEADA      -> Max / Facturación / Bodega según la causa
-       MANUAL         -> Kitchen Center (excluido del agente por regla de Max)
-       EXCLUIDA       -> Fulfillment (se descuenta en la liquidación, no lleva NC)
+  1. DEVOLUCIÓN (agente `agente_tickets_nc.py`, corrido en DRY-RUN por este script)
+       EN COLA          -> nadie: sale sola en la próxima corrida horaria
+       RETENIDAS        -> Max: cumplen las reglas pero no están en la lista autorizada
+       MANUAL           -> Facturación: canales que se emiten a mano (nc_reglas.py)
+       OC POR CORREGIR  -> Max: la OC del ticket no calza con un pedido de Odoo
+       POR REVISAR      -> Max: producto/cantidad del ticket no calza con la boleta
+       FUERA DE PLAZO   -> solo en el Excel, no en el correo (Andrés 20-10: 708 de las
+                           915 OC tenían la boleta pagada)
+       EXCLUIDA         -> Fulfillment (se descuenta en la liquidación, no lleva NC)
+     Hasta el 19-10 esta sección leía las planillas SAC (agente_nc.py), que ya no se
+     actualizan: mostraba las mismas cifras semana tras semana (Max, 19-10).
   2. CANCELACIÓN — SIN AGENTE, y así se mantiene (decisión Andrés 07-09).
        El pulso solo informa y presiona; nadie emite NC de cancelación en
        automático. Quien valida con el marketplace es FACTURACIÓN.
@@ -69,8 +74,8 @@ DRAFT_TO = ["victor@grupoeter.cl"]; DRAFT_CC = ["andres@unionx.cl"]
 
 # Plazo legal para emitir una NC, contado desde la fecha de la boleta.
 PLAZO_NC_MESES = 3
-# Canales que el agente NO toca por regla de Max (mail 26-08): gestión manual.
-CANALES_MANUALES = {"Kitchen Center"}
+# Boletas anteriores a 2026 son legacy (BSALE, decisión 20-jul): no entran a "fuera de plazo".
+DESDE_BOLETA = "2026-01-01"
 # Marca que el agente deja en `ref` de las NC que emite.
 TAG_AGENTE = "AGENTE-PV"
 
@@ -79,12 +84,14 @@ def fmt(n): return "$" + "{:,.0f}".format(n).replace(",", ".")
 def miles(n): return "{:,.0f}".format(n).replace(",", ".")
 
 
-def tabla_html(df, index_name="mes"):
+def tabla_html(df, index_name="mes", conteos=()):
+    """`conteos`: columnas que son cantidades (se muestran sin signo $)."""
     cols = df.columns.tolist()
     head = "".join(f'<th style="padding:5px 10px;">{c}</th>' for c in [index_name] + cols)
     rows = ""
     for i, (idx, r) in enumerate(df.iterrows()):
-        tds = "".join(f'<td style="padding:5px 10px;text-align:right;">{fmt(v) if v else "—"}</td>' for v in r)
+        tds = "".join(f'<td style="padding:5px 10px;text-align:right;">'
+                      f'{(miles(v) if c in conteos else fmt(v)) if v else "—"}</td>' for c, v in r.items())
         rows += f'<tr style="background:{GR if i % 2 == 0 else "#fff"};"><td style="padding:5px 10px;">{idx}</td>{tds}</tr>'
     return (f'<table style="border-collapse:collapse;font-size:12px;margin:6px 0;">'
             f'<tr style="background:{AZ};color:#fff;text-align:left;">{head}</tr>{rows}</table>')
@@ -133,63 +140,26 @@ def _rpc_conn():
     return rpc
 
 
-def overlay_estado_vivo(df: pd.DataFrame) -> pd.DataFrame:
-    """Clasifica cada OC disponible según Odoo HOY: EMITIBLE (boleta posteada sin
-    NC) / FULFILLMENT (no emitir: liquidación) / SIN BOLETA / YA TIENE NC / SIN
-    PEDIDO MAPEADO. Regla Víctor 04-08."""
-    rpc = _rpc_conn()
-    peds = sorted(set(df["pedido"].dropna().astype(str)))
-    so = rpc("sale.order", "search_read", [[("name", "in", peds)]], {"fields": ["id", "name", "invoice_ids"]})
-    smap = {s["name"]: s for s in so}
-    inv_ids = sorted({i for s in so for i in s["invoice_ids"]})
-    invs = {}
-    for i in range(0, len(inv_ids), 300):
-        for v in rpc("account.move", "read", [inv_ids[i:i+300]],
-                     {"fields": ["move_type", "state", "invoice_date"]}):
-            invs[v["id"]] = v
-    bol_ids = [v["id"] for v in invs.values() if v["move_type"] == "out_invoice" and v["state"] == "posted"]
-    rev = set()
-    for i in range(0, len(bol_ids), 300):
-        for r in rpc("account.move", "search_read",
-                     [[("move_type", "=", "out_refund"), ("state", "=", "posted"),
-                       ("reversed_entry_id", "in", bol_ids[i:i+300])]], {"fields": ["reversed_entry_id"]}):
-            rev.add(r["reversed_entry_id"][0])
-    oids = [s["id"] for s in so]
-    ffset = set()
-    for i in range(0, len(oids), 200):
-        for p in rpc("stock.picking", "search_read", [[("sale_id", "in", oids[i:i+200])]],
-                     {"fields": ["sale_id", "location_id"]}):
-            if str(p["location_id"][1] if p["location_id"] else "").split("/")[0].startswith("BF"):
-                ffset.add(p["sale_id"][0])
-    def clasificar(r):
-        s = smap.get(str(r["pedido"]))
-        if not s:
-            return "SIN PEDIDO MAPEADO"
-        ivs = [invs[i] for i in s["invoice_ids"] if i in invs]
-        boletas = [v for v in ivs if v["move_type"] == "out_invoice" and v["state"] == "posted"]
-        ncs = [v for v in ivs if v["move_type"] == "out_refund" and v["state"] == "posted"]
-        if s["id"] in ffset:
-            return "FULFILLMENT — no emitir (liquidación)"
-        if ncs or any(b["id"] in rev for b in boletas):
-            return "YA TIENE NC"
-        if not boletas:
-            return "SIN BOLETA — no emitir"
-        return "EMITIBLE"
-    def fecha_bol(r):
-        """Fecha de la boleta: es el reloj del plazo legal de 3 meses."""
-        s = smap.get(str(r["pedido"]))
-        if not s:
-            return None
-        f = [invs[i].get("invoice_date") for i in s["invoice_ids"]
-             if i in invs and invs[i]["move_type"] == "out_invoice"
-             and invs[i]["state"] == "posted" and invs[i].get("invoice_date")]
-        return min(f) if f else None
+def devoluciones_agente(hoy):
+    """Corre el agente de tickets en DRY-RUN (no escribe nada en Odoo: ni NC ni campos) y
+    devuelve las hojas de su Excel de validación. Así el pulso mide exactamente el mismo
+    universo y las mismas reglas que el agente que emite (nc_reglas.py)."""
+    import subprocess
+    xls = OUT / f"NC_agente_dryrun_{hoy:%Y%m%d}.xlsx"
+    r = subprocess.run([sys.executable, str(ROOT / "agente_tickets_nc.py"), "--dry-run", "--excel", str(xls)],
+                       cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1800)
+    print(r.stdout[-1200:])
+    if r.returncode != 0 or not xls.exists():
+        raise RuntimeError(f"el agente en dry-run falló (exit {r.returncode}): {r.stderr[-600:]}")
+    return pd.read_excel(xls, sheet_name=None)
 
-    df = df.copy()
-    df["estado_vivo"] = df.apply(clasificar, axis=1)
-    df["fecha_boleta"] = pd.to_datetime(df.apply(fecha_bol, axis=1), errors="coerce")
-    print(f"[devoluciones-vivo] {df['estado_vivo'].value_counts().to_dict()}")
-    return df
+
+def oc_y_monto(d, col):
+    """(OC distintas, monto) — el monto viene repetido en cada ticket de la misma OC."""
+    if not len(d):
+        return 0, 0
+    u = d.drop_duplicates("oc")
+    return len(u), u[col].sum()
 
 
 def nc_emitidas_agente(desde, hasta):
@@ -274,30 +244,6 @@ def _jrpc(model, method, dominio, **kw):
     if "error" in r:
         raise RuntimeError(str(r["error"])[:200])
     return r["result"]
-
-
-def clasificar_pipeline(df, hoy):
-    """Separa las devoluciones según QUIÉN tiene que actuar. Replica las reglas
-    del agente para que ambos midan lo mismo."""
-    lim = pd.Timestamp(hoy) - pd.DateOffset(months=PLAZO_NC_MESES)
-    df = df.copy()
-    ref = df["fecha_boleta"].fillna(pd.to_datetime(df.get("fecha_compra"), errors="coerce"))
-    df["fecha_ref"] = ref
-    df["dias_para_vencer"] = (ref + pd.DateOffset(months=PLAZO_NC_MESES) - pd.Timestamp(hoy)).dt.days
-
-    def bucket(r):
-        if str(r["estado_vivo"]).startswith("FULFILLMENT"):
-            return "EXCLUIDA — Fulfillment"
-        if r["estado_vivo"] != "EMITIBLE":
-            return "BLOQUEADA — " + str(r["estado_vivo"]).title()
-        if str(r.get("canal")) in CANALES_MANUALES:
-            return "MANUAL — Kitchen Center"
-        if pd.notna(r["fecha_ref"]) and r["fecha_ref"] < lim:
-            return "FUERA DE PLAZO"
-        return "EN COLA"
-
-    df["bucket"] = df.apply(bucket, axis=1)
-    return df
 
 
 def recompute_cancelados() -> pd.DataFrame:
@@ -398,21 +344,31 @@ def main():
     hoy = datetime.date.today()
     semana = hoy.isocalendar()[1]
 
-    # --- sección 1: devoluciones. El agente escribe la hoja "N NC a emitir";
-    # el overlay de estado vivo (boleta posteada / fulfillment / ya-NC) se
-    # calcula AQUÍ en cada corrida (el agente pisa el archivo al regenerar).
-    F = OUT / "NC_2026_DISPONIBLES_emitir.xlsx"
-    xl = pd.ExcelFile(F)
-    hoja_emitir = [s for s in xl.sheet_names if "emitir" in s.lower()][0]
-    disp = xl.parse(hoja_emitir)
-    disp = overlay_estado_vivo(disp)
-    disp = clasificar_pipeline(disp, hoy)
-    em = disp[disp["bucket"] == "EN COLA"]
-    plazo = disp[disp["bucket"] == "FUERA DE PLAZO"]
-    manual = disp[disp["bucket"] == "MANUAL — Kitchen Center"]
-    bloq = disp[disp["bucket"].str.startswith("BLOQUEADA")]
-    ff = disp[disp["bucket"] == "EXCLUIDA — Fulfillment"]
-    piv_dev = None   # el desglose por canal va solo en el Excel (Andrés 07-09)
+    # --- sección 1: devoluciones, desde los tickets de postventa con las reglas del
+    # agente (corrida en dry-run). Desglose por canal solo en el Excel (Andrés 07-09).
+    H = devoluciones_agente(hoy)
+
+    def hoja(nombre, cols):
+        # una hoja vacía viene sin columnas: se completan para que los filtros no fallen
+        d = H.get(nombre, pd.DataFrame())
+        return d.reindex(columns=list(dict.fromkeys(list(d.columns) + cols)))
+    em = hoja("1 Emitiría el agente", ["oc", "pedido", "monto estimado"])
+    ret = hoja("1b Retenidas", ["oc", "pedido", "monto estimado"])
+    rev = hoja("2 Agente - revisar", ["estado", "motivo", "oc", "pedido", "fecha boleta", "monto estimado OC"])
+    man = hoja("3 Manuales", ["grupo", "estado NC", "oc", "pedido", "fecha boleta", "monto estimado OC"])
+    mot = rev["motivo"].astype(str)
+    es_rev = rev["estado"] == "revisar"
+    ff = rev[mot.str.contains("Fulfillment")]
+    oc_mal = rev[es_rev & mot.str.contains("pedido no encontrado|pedido ambiguo|sin Nº de orden")]
+    plazo = pd.concat([rev[mot.str.contains("fuera de plazo")],
+                       man[man["estado NC"] == "fuera de plazo (3 meses)"]], ignore_index=True)
+    plazo = plazo[plazo["fecha boleta"].astype(str) >= DESDE_BOLETA]
+    dif = rev[es_rev & ~mot.str.contains("Fulfillment|fuera de plazo|pedido no encontrado|pedido ambiguo|sin Nº de orden")]
+    manual = man[man["estado NC"] == "PENDIENTE NC"]
+    n_plazo, m_plazo = oc_y_monto(plazo, "monto estimado OC")
+    n_man, m_man = oc_y_monto(manual, "monto estimado OC")
+    n_ff = ff["oc"].nunique()
+    ped_dev = {str(p) for d in (em, ret, rev, man) if "pedido" in d for p in d["pedido"].dropna() if str(p)}
 
     # --- sección 0: lo que el agente YA emitió en los últimos 7 días
     lunes_ant = hoy - datetime.timedelta(days=7)
@@ -444,8 +400,11 @@ def main():
         C = pd.read_excel(OUT / "NC_cancelados_AUDITADO_v4_20260805.xlsx")
     barridas = C[C["origen"] != "Cancelación orgánica"]
     C = C[C["origen"] == "Cancelación orgánica"]
-    # dedupe contra la sección devoluciones (un pedido no puede estar en ambas)
-    C = C[~C["pedido"].astype(str).isin(set(disp["pedido"].astype(str)))]
+    # dedupe contra la sección devoluciones (un pedido no puede estar en ambas): los
+    # cancelados con ticket de devolución se informan arriba, donde el agente los emite.
+    en_dev = C["pedido"].astype(str).isin(ped_dev)
+    C_dev = C[en_dev]
+    C = C[~en_dev]
     # El reloj de los 3 meses corre desde la BOLETA, no desde `dia_cancel` (que es
     # cuándo se registró la cancelación en Odoo y hacía ver todo como reciente).
     C = C.copy()
@@ -463,7 +422,7 @@ def main():
 
     def semaforo(df):
         b = pd.cut(df["dias_para_vencer"], [-10**6, 0, 15, 30, 10**6],
-                   labels=["ya vencido", "vence en <15 días", "15-30 días", "más de 30 días"])
+                   labels=["ya vencido", "vence en menos de 15 días", "vence en 15 a 30 días", "más de 30 días"])
         r = df.groupby(b, observed=False).agg(pedidos=("pedido", "size"), monto=("monto", "sum"))
         return r[r["pedidos"] > 0]
 
@@ -473,26 +432,38 @@ def main():
         if len(emitidas):
             emitidas.to_excel(w, sheet_name=f"0 EMITIDAS agente ({len(emitidas)})", index=False)
         em.to_excel(w, sheet_name=f"1 En cola ({len(em)})", index=False)
-        plazo.to_excel(w, sheet_name=f"2 Fuera de plazo ({len(plazo)})", index=False)
-        bloq.to_excel(w, sheet_name=f"3 Bloqueadas ({len(bloq)})", index=False)
-        manual.to_excel(w, sheet_name=f"4 Kitchen Center manual ({len(manual)})", index=False)
-        ff.to_excel(w, sheet_name=f"5 Fulfillment excluidas ({len(ff)})", index=False)
+        ret.to_excel(w, sheet_name=f"1b Retenidas ({len(ret)})", index=False)
+        manual.to_excel(w, sheet_name=f"2 Manual por emitir ({n_man})", index=False)
+        oc_mal.to_excel(w, sheet_name=f"3 OC por corregir ({len(oc_mal)})", index=False)
+        dif.to_excel(w, sheet_name=f"3b Por revisar ({len(dif)})", index=False)
+        plazo.to_excel(w, sheet_name=f"4 Fuera de plazo ({n_plazo})", index=False)
+        ff.to_excel(w, sheet_name=f"5 Fulfillment excluidas ({n_ff})", index=False)
         nucleo.to_excel(w, sheet_name=f"6 Cancel emitibles ({len(nucleo)})", index=False)
         pagados.to_excel(w, sheet_name=f"7 Cancel valida seller ({len(pagados)})", index=False)
         vencidas.to_excel(w, sheet_name=f"8 Cancel vencidas ({len(vencidas)})", index=False)
         if len(cff):
             cff.to_excel(w, sheet_name=f"9 Cancel fulfillment ({len(cff)})", index=False)
+        if len(C_dev):
+            C_dev.to_excel(w, sheet_name=f"10 Cancel con devolucion ({len(C_dev)})", index=False)
 
     aviso_borrador = ("" if not a.draft else
         f'<div style="padding:8px 12px;background:{AMB};border-left:4px solid #B8860B;font-size:13px;margin:8px 0;">'
         f'<b>BORRADOR para aprobación de formato.</b></div>')
 
     m_emit = emitidas["amount_total"].sum() if len(emitidas) else 0
-    bloq_txt = ""
-    if len(bloq):
-        det = bloq.groupby("bucket").agg(n=("oc", "size"), m=("monto_NC", "sum"))
-        bloq_txt = " · ".join(f'{k.replace("BLOQUEADA — ","")}: {miles(r.n)} ({fmt(r.m)})'
-                              for k, r in det.iterrows())
+    m_em = em["monto estimado"].sum() if len(em) else 0
+    m_ret = ret["monto estimado"].sum() if len(ret) else 0
+    man_txt = ""
+    if n_man:
+        g = manual.drop_duplicates("oc")["grupo"].value_counts()
+        man_txt = " (" + ", ".join(f"{k} {miles(v)}" for k, v in g.items()) + ")"
+    li_ret = ("" if not len(ret) else
+              f"<li><b>RETENIDAS — {miles(len(ret))} NC · {fmt(m_ret)}</b>: cumplen todas las reglas, pero hoy el "
+              f"agente emite solo la lista autorizada del 05-10. <b>→ Max</b>: validarlas para liberarlas.</li>")
+    nota_dev = ("" if not len(C_dev) else
+                f"Los {miles(len(C_dev))} pedidos cancelados que tienen ticket de devolución "
+                f"({fmt(C_dev['monto'].sum())}) se cuentan arriba, en devolución. ")
+    txt_ret = f"retenidas {fmt(m_ret)} · " if len(ret) else ""
 
     sec0 = "" if not len(emitidas) else f"""
 <h3 style="color:{AZ};margin:16px 0 2px;">0. YA EMITIDAS por el agente — {miles(len(emitidas))} NC · {fmt(m_emit)}</h3>
@@ -503,29 +474,30 @@ venta anterior, y eso es lo que explica el volumen. Detalle NC por NC en la hoja
 
     html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:780px;line-height:1.5;">
 <h2 style="color:{AZ};margin-bottom:2px;">🧾 Pulso NC</h2>
-<div style="color:#64748b;font-size:12px;">Semana {semana} · {hoy.strftime('%d/%m/%Y')} · fuente: planillas SAC + Odoo en vivo · este pulso informa, nunca crea NC</div>
+<div style="color:#64748b;font-size:12px;">Semana {semana} · {hoy.strftime('%d/%m/%Y')} · fuente: tickets de postventa + Odoo en vivo · este pulso informa, nunca crea NC</div>
 {aviso_borrador}
 {sec0}
 
-<h3 style="color:{AZ};margin:16px 0 2px;">1. DEVOLUCIÓN — estado del pipeline</h3>
-<div style="font-size:12px;color:#475569;">El agente <b>emite solo</b> lo que está EN COLA, en su corrida horaria. El resto necesita
-que alguien decida. Mismo criterio que usa el agente, para que ambos midan lo mismo. Desglose por canal en el Excel.</div>
+<h3 style="color:{AZ};margin:16px 0 2px;">1. DEVOLUCIÓN — tickets de postventa</h3>
+<div style="font-size:12px;color:#475569;">Mismos tickets y mismas reglas que usa el agente (simulación de hoy, sin emitir nada).
+El agente <b>emite solo</b> lo que está EN COLA, en su corrida horaria; el resto necesita que alguien decida. Montos netos
+estimados: precio de la boleta por las unidades del ticket. Desglose caso a caso y por canal en el Excel.</div>
 <ul style="font-size:13px;margin:6px 0 12px 18px;padding:0;">
-<li><b>EN COLA — {miles(len(em))} OC · {fmt(em['monto_NC'].sum())}</b>: sale sola. <i>Nadie tiene que actuar.</i></li>
-<li><b>FUERA DE PLAZO — {miles(len(plazo))} OC · {fmt(plazo['monto_NC'].sum())}</b>: boleta con más de {PLAZO_NC_MESES} meses,
-ya no admite NC. <b>→ Víctor</b>: definir si se regulariza por otra vía.</li>
-<li><b>MANUAL — {miles(len(manual))} OC · {fmt(manual['monto_NC'].sum())}</b>: Kitchen Center, excluido del agente por regla.
-<b>→ Facturación</b>: emitir a mano.</li>
-{'<li><b>BLOQUEADAS</b>: ' + bloq_txt + ' <b>→ Max / Facturación</b>: revisar caso a caso.</li>' if bloq_txt else ''}
-<li><b>EXCLUIDA — {miles(len(ff))} OC · {fmt(ff['monto_NC'].sum())}</b>: Fulfillment, se descuenta en la liquidación del
-marketplace y no lleva NC.</li>
+<li><b>EN COLA — {miles(len(em))} NC · {fmt(m_em)}</b>: sale sola. <i>Nadie tiene que actuar.</i></li>
+{li_ret}
+<li><b>MANUAL — {miles(n_man)} OC · {fmt(m_man)}</b>{man_txt}: canales que se emiten a mano. <b>→ Facturación</b>: emitir.</li>
+<li><b>OC POR CORREGIR — {miles(len(oc_mal))} tickets</b>: la OC del ticket no calza con ningún pedido de Odoo, calza con más
+de uno o viene vacía. <b>→ Max</b>: corregir la OC en el ticket (número de pedido real).</li>
+<li><b>POR REVISAR — {miles(len(dif))} tickets</b>: el producto o la cantidad del ticket no calza con la boleta, o la OC tiene
+más de una boleta. <b>→ Max</b>: revisar el ticket.</li>
+<li><b>EXCLUIDA — {miles(n_ff)} OC</b>: Fulfillment, se descuenta en la liquidación del marketplace y no lleva NC.</li>
 </ul>
 
 <h3 style="color:{AZ};margin:16px 0 2px;">2. CANCELACIÓN — {miles(len(nucleo) + len(pagados))} pedidos · {fmt(nucleo['monto'].sum() + pagados['monto'].sum())}</h3>
 <div style="font-size:12px;color:#475569;"><b>Acá no hay agente y no va a haberlo</b>: ninguna NC de cancelación se emite en
 automático. Este bloque solo informa y hace seguimiento. Igual que en devolución, el <b>Fulfillment queda excluido</b>
 ({miles(len(cff))} pedidos · {fmt(cff['monto'].sum() if len(cff) else 0)}): el marketplace lo descuenta en la liquidación y no
-lleva NC. Desglose por canal y mes en el Excel.</div>
+lleva NC. {nota_dev}Desglose por canal y mes en el Excel.</div>
 <ul style="font-size:13px;margin:6px 0 12px 18px;padding:0;">
 <li><b>Por emitir — {miles(len(nucleo))} pedidos · {fmt(nucleo['monto'].sum())}</b>: cancelado + boleta posteada + SIN despacho
 (criterio Víctor). <b>→ Facturación</b>: emitir la NC.</li>
@@ -538,7 +510,7 @@ de definir si corresponde NC.</li>
 
 <div style="padding:8px 12px;background:{AMB};border-left:4px solid #B8860B;font-size:13px;margin:10px 0;">
 <b>⏳ Reloj de vencimiento de la cancelación</b> — la NC tiene {PLAZO_NC_MESES} meses desde la boleta:
-{tabla_html(semaforo(C), index_name="plazo restante")}</div>
+{tabla_html(semaforo(C), index_name="plazo restante", conteos=("pedidos",))}</div>
 
 <div style="font-size:12px;color:#475569;margin:8px 0;">Nota: quedaron FUERA de este pulso {miles(len(barridas))} pedidos
 cancelados en barridas del conector (16-jun y fines de julio) por {fmt(barridas['monto'].sum())} — resoluciones de marketplace
@@ -548,7 +520,8 @@ en aclaración con facturación (ruteo enviado a Yohana 05-08). No corresponden 
 </div>"""
 
     asunto = (f"{'[BORRADOR] ' if a.draft else ''}🧾 Pulso NC · Semana {semana} · "
-              f"emitidas {fmt(m_emit)} · en cola {fmt(em['monto_NC'].sum())} · "
+              f"emitidas {fmt(m_emit)} · en cola {fmt(m_em)} · "
+              f"{txt_ret}"
               f"cancelación {fmt(nucleo['monto'].sum())}")
     if a.no_enviar:
         prev = OUT / f"Pulso_NC_semana_{semana}_{hoy:%Y%m%d}_PREVIEW.html"
@@ -562,15 +535,16 @@ en aclaración con facturación (ruteo enviado a Yohana 05-08). No corresponden 
         print(f"  Preview : {prev}")
         print(f"  asunto seria: {asunto}")
         print(f"\n  0 EMITIDAS agente : {len(emitidas):>4} · {fmt(m_emit)}")
-        for nom, d_, col in [("1 EN COLA", em, "monto_NC"),
-                             ("2 FUERA DE PLAZO", plazo, "monto_NC"),
-                             ("3 BLOQUEADAS", bloq, "monto_NC"),
-                             ("4 KITCHEN CENTER", manual, "monto_NC"),
-                             ("5 FULFILLMENT", ff, "monto_NC"),
-                             ("6 CANCEL por emitir", nucleo, "monto"),
-                             ("7 CANCEL valida seller", pagados, "monto"),
-                             ("8 CANCEL vencidas", vencidas, "monto")]:
-            print(f"  {nom:22}: {len(d_):>4} · {fmt(d_[col].sum())}")
+        print(f"  1 EN COLA              : {len(em):>4} NC · {fmt(m_em)}")
+        print(f"  1b RETENIDAS           : {len(ret):>4} NC · {fmt(m_ret)}")
+        print(f"  2 MANUAL               : {n_man:>4} OC · {fmt(m_man)}")
+        print(f"  3 OC POR CORREGIR      : {len(oc_mal):>4} tickets")
+        print(f"  3b POR REVISAR         : {len(dif):>4} tickets")
+        print(f"  4 FUERA DE PLAZO       : {n_plazo:>4} OC · {fmt(m_plazo)}")
+        print(f"  5 FULFILLMENT          : {n_ff:>4} OC")
+        for nom, d_ in [("6 CANCEL por emitir", nucleo), ("7 CANCEL valida seller", pagados),
+                        ("8 CANCEL vencidas", vencidas), ("10 CANCEL con devolución", C_dev)]:
+            print(f"  {nom:23}: {len(d_):>4} · {fmt(d_['monto'].sum())}")
         return 0
     to = DRAFT_TO if a.draft else TO_PROD
     cc = DRAFT_CC if a.draft else CC_PROD
