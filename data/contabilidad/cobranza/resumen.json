@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-20T15:58:29.667497",
+  "generado_en": "2026-10-20T20:58:49.201247",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17589,
-  "total_monto_pendiente_clp": 1119364696.0,
+  "total_documentos_pendientes": 17630,
+  "total_monto_pendiente_clp": 1118925886.0,
   "monto_por_aging": {
     "+90 días": 113156861.0,
-    "1-30 días": 473750743.0,
-    "31-60 días": 210856924.0,
+    "1-30 días": 452152939.0,
+    "31-60 días": 210507179.0,
     "61-90 días": 90373274.0,
-    "Vigente": 231226894.0
+    "Vigente": 252735633.0
   },
   "monto_por_tipo": {
-    "BOLETA": 928984684.0,
+    "BOLETA": 928545874.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 174981505.0
+      "monto": 175913365.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 75639368.0
+      "monto": 75849568.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -46,27 +46,27 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 31974754.0
+      "monto": 32002734.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 29480915.0
+      "monto": 29601865.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28818234.0
+      "monto": 28632264.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 25416920.0
+      "monto": 25569433.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 24864781.0
+      "monto": 24991761.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23399072.0
+      "monto": 23456012.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -97,6 +97,6 @@
       "monto": 9571586.0
     }
   ],
-  "notas_credito_count": 902,
+  "notas_credito_count": 901,
   "pedidos_venta_count": 10000
 }
