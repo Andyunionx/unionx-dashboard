@@ -1,18 +1,18 @@
 {
-  "generado_en": "2026-10-20T00:07:50.171928",
+  "generado_en": "2026-10-20T08:13:37.220836",
   "total_skus": 1773,
   "total_quants": 4513,
   "total_locations": 1431,
   "kpis": {
     "n_skus": 1773,
-    "valor_total": 993810904.64,
-    "unidades_total": 168536.0,
-    "costo_promedio_sku": 560525.04,
+    "valor_total": 993553098.64,
+    "unidades_total": 168509.0,
+    "costo_promedio_sku": 560379.64,
     "n_quiebre_critico": 135,
     "n_bajo": 172,
-    "n_optimo": 143,
+    "n_optimo": 144,
     "n_sobrestock": 243,
-    "n_sin_venta": 1080,
+    "n_sin_venta": 1079,
     "rot_30d_promedio": 1.4,
     "rot_90d_promedio": 5.43
   },
@@ -573,8 +573,8 @@
       {
         "Posicion": "101D12",
         "Ubicacion": "CA1/Stock/101D12",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "101D13",
@@ -6112,7 +6112,7 @@
         "Posicion": "301E21",
         "Ubicacion": "CA1/Stock/301E21",
         "Estado": "Ocupada",
-        "SKUs": 2
+        "SKUs": 1
       },
       {
         "Posicion": "301E22",
@@ -7587,14 +7587,14 @@
       {
         "Posicion": "401E23",
         "Ubicacion": "CA1/Stock/401E23",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "401E24",
         "Ubicacion": "CA1/Stock/401E24",
-        "Estado": "Ocupada",
-        "SKUs": 1
+        "Estado": "Vacia",
+        "SKUs": 0
       },
       {
         "Posicion": "401E25",
@@ -8264,14 +8264,14 @@
       }
     ],
     "total": 1374,
-    "occupied": 790,
-    "empty": 584,
-    "pct": 57.5
+    "occupied": 787,
+    "empty": 587,
+    "pct": 57.3
   },
   "semaforo": [
     {
       "Categoria": "SIN VENTA",
-      "SKUs": 1080
+      "SKUs": 1079
     },
     {
       "Categoria": "SOBRESTOCK",
@@ -8283,7 +8283,7 @@
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 143
+      "SKUs": 144
     },
     {
       "Categoria": "CRITICO",
@@ -8293,25 +8293,25 @@
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 803301703.12,
+      "Valor": 803301702.12,
       "Unidades": 149186.0,
       "SKUs": 1166
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 45180055.74,
-      "Unidades": 5077.0,
+      "Valor": 45013043.74,
+      "Unidades": 5055.0,
       "SKUs": 408
     },
     {
       "Bodega": "BFFa/Stock",
-      "Valor": 28439558.05,
-      "Unidades": 1962.0,
+      "Valor": 28374040.05,
+      "Unidades": 1958.0,
       "SKUs": 273
     },
     {
       "Bodega": "CA1/Output",
-      "Valor": 16739790.56,
+      "Valor": 16739791.56,
       "Unidades": 1363.0,
       "SKUs": 364
     },
@@ -8329,8 +8329,8 @@
     },
     {
       "Bodega": "BFW/Stock",
-      "Valor": 11093996.0,
-      "Unidades": 707.0,
+      "Valor": 11068720.0,
+      "Unidades": 706.0,
       "SKUs": 93
     },
     {
@@ -8341,7 +8341,7 @@
     },
     {
       "Bodega": "Bo/Stock",
-      "Valor": 10208436.0,
+      "Valor": 10208435.0,
       "Unidades": 845.0,
       "SKUs": 282
     },
@@ -8377,7 +8377,7 @@
     },
     {
       "Bodega": "BPV/Stock",
-      "Valor": 4179212.0,
+      "Valor": 4179213.0,
       "Unidades": 2404.0,
       "SKUs": 231
     },
