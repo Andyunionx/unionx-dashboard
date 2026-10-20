@@ -1,28 +1,28 @@
 {
-  "generado_en": "2026-10-20T10:33:33.974612",
+  "generado_en": "2026-10-20T15:58:29.667497",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17502,
-  "total_monto_pendiente_clp": 1114190561.0,
+  "total_documentos_pendientes": 17589,
+  "total_monto_pendiente_clp": 1119364696.0,
   "monto_por_aging": {
     "+90 días": 113156861.0,
-    "1-30 días": 470298260.0,
+    "1-30 días": 473750743.0,
     "31-60 días": 210856924.0,
     "61-90 días": 90373274.0,
-    "Vigente": 229505242.0
+    "Vigente": 231226894.0
   },
   "monto_por_tipo": {
-    "BOLETA": 923810549.0,
+    "BOLETA": 928984684.0,
     "FACTURA": 190380012.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 174079685.0
+      "monto": 174981505.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 121146258.0
+      "monto": 121647677.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 75496468.0
+      "monto": 75639368.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 51186211.0
+      "monto": 51801920.0
     },
     {
       "partner": "Cliente Walmart",
@@ -50,27 +50,27 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 29440445.0
+      "monto": 29480915.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28769254.0
+      "monto": 28818234.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 25204117.0
+      "monto": 25416920.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 24848411.0
+      "monto": 24864781.0
+    },
+    {
+      "partner": "Cliente Paris",
+      "monto": 23399072.0
     },
     {
       "partner": "Shopping LATAM Pass",
       "monto": 23378141.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 23355118.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -82,11 +82,11 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 15535383.0
+      "monto": 16084441.0
     },
     {
       "partner": "abc S.A.",
-      "monto": 11363609.0
+      "monto": 11612544.0
     },
     {
       "partner": "Status Spa",
@@ -94,9 +94,9 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 9263636.0
+      "monto": 9571586.0
     }
   ],
-  "notas_credito_count": 900,
+  "notas_credito_count": 902,
   "pedidos_venta_count": 10000
 }
