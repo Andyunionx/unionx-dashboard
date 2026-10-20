@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-10-19T20:25:15.797187",
+  "generado_en": "2026-10-20T08:16:33.770474",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.049457746109917745,
-      "total_pickings": 19087,
-      "on_time": 944,
-      "on_time_pct": 0.049457746109917745,
-      "in_full": 19084,
-      "in_full_pct": 0.9998428249593965,
-      "both": 944,
+      "valor": 0.049385941991115755,
+      "total_pickings": 19135,
+      "on_time": 945,
+      "on_time_pct": 0.049385941991115755,
+      "in_full": 19132,
+      "in_full_pct": 0.9998432192317742,
+      "both": 945,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,15 +23,15 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998396922090413,
-      "ok": 24948,
-      "total": 24952,
+      "valor": 0.999840006399744,
+      "ok": 24997,
+      "total": 25001,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 15.399360269360269,
-      "n_recepciones": 264,
+      "valor": 15.801332244008714,
+      "n_recepciones": 255,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9699963410171972,
-      "total_so": 19137,
-      "total_con_pickings": 19131,
-      "cumplidos": 18557,
-      "parciales": 18,
-      "sin_iniciar": 556,
+      "valor": 0.9653421286843621,
+      "total_so": 19107,
+      "total_con_pickings": 19101,
+      "cumplidos": 18439,
+      "parciales": 17,
+      "sin_iniciar": 645,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.8521165342349,
-      "n_orders": 19423,
+      "valor": 45.739153556000666,
+      "n_orders": 19471,
       "min_h": 0.005277777777777778,
       "max_h": 671.365,
-      "mediana_h": 27.20638888888889,
+      "mediana_h": 27.11861111111111,
       "detalle": [
         {
           "so": "S280705",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 19407,
+      "lineas": 19455,
       "mes": "2026-10",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 232,
-      "outgoing": 29377,
-      "internal": 20391,
+      "incoming": 225,
+      "outgoing": 29435,
+      "internal": 20340,
       "total": 50000,
       "error": null
     },
@@ -625,8 +625,8 @@
           "n_quiebres": 27,
           "n_medidos": 6765,
           "ns_empresa_pct": 0.9798965262379896,
-          "ns_courier_pct": 0.9466134279798876,
-          "otif_total_pct": 0.9347826086956522,
+          "ns_courier_pct": 0.9463335304553518,
+          "otif_total_pct": 0.9345062093435836,
           "n_empresa_ok": 6629,
           "n_courier_ok": 6401,
           "n_otif_ok": 6321
@@ -2739,7 +2739,7 @@
         {
           "CURIER": "BLUEXPRESS",
           "n_pedidos": 1724,
-          "ns_courier_pct": 87.0,
+          "ns_courier_pct": 86.9,
           "ns_empresa_pct": 97.6,
           "otif_total_pct": 86.3
         },
@@ -4332,9 +4332,9 @@
         "emp_ok": 6074,
         "cou_ok": 5863,
         "tot_ok": 5784,
-        "n_med_cou": 6231,
+        "n_med_cou": 6233,
         "otif_empresa": 0.974334295797241,
-        "otif_courier": 0.9409404589953458,
+        "otif_courier": 0.9406385368201509,
         "otif_total": 0.9278152069297402,
         "otif_empresa_pct": 97.4,
         "otif_courier_pct": 94.1,
@@ -4376,8 +4376,8 @@
         "n_pedidos": 6450,
         "n_medidos": 6234,
         "otif_empresa_pct": 0.974334295797241,
-        "otif_courier_pct": 0.9409404589953458,
-        "otif_total_pct": 0.928261916225325,
+        "otif_courier_pct": 0.9406385368201509,
+        "otif_total_pct": 0.9279640622493182,
         "n_empresa_ok": 6074,
         "n_courier_ok": 5863,
         "n_otif_ok": 5784,
@@ -8804,13 +8804,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.049457746109917745,
-      "total_pickings": 19087,
-      "on_time": 944,
-      "on_time_pct": 0.049457746109917745,
-      "in_full": 19084,
-      "in_full_pct": 0.9998428249593965,
-      "both": 944,
+      "valor": 0.049385941991115755,
+      "total_pickings": 19135,
+      "on_time": 945,
+      "on_time_pct": 0.049385941991115755,
+      "in_full": 19132,
+      "in_full_pct": 0.9998432192317742,
+      "both": 945,
       "error": null
     },
     "b2b_30d": {
@@ -8826,17 +8826,17 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998396922090413,
-      "ok": 24948,
-      "total": 24952,
+      "valor": 0.999840006399744,
+      "ok": 24997,
+      "total": 25001,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 15.399360269360269,
-      "n_recepciones": 264,
+      "valor": 15.801332244008714,
+      "n_recepciones": 255,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
