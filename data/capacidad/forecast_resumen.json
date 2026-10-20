@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-20T02:32:53.360306",
+  "generado_en": "2026-10-20T08:00:54.470088",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1374,
   "capacidad_bodega_m3": 2473.2,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1374,
-    "posiciones_ocupadas_hoy": 790,
-    "posiciones_libres_hoy": 584,
-    "pct_ocupacion_hoy": 57.5,
-    "m3_stock_calculado": 782.7
+    "posiciones_ocupadas_hoy": 787,
+    "posiciones_libres_hoy": 587,
+    "pct_ocupacion_hoy": 57.3,
+    "m3_stock_calculado": 782.6
   },
   "pico_proyectado": {
     "fecha": "2026-10-20",
-    "posiciones_ocupadas": 779.7,
-    "pct_ocupacion": 56.7
+    "posiciones_ocupadas": 776.7,
+    "pct_ocupacion": 56.5
   },
   "minimo_proyectado": {
     "fecha": "2026-12-18",
-    "posiciones_ocupadas": 611.9,
-    "pct_ocupacion": 44.5
+    "posiciones_ocupadas": 608.9,
+    "pct_ocupacion": 44.3
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -81,8 +81,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18912.0,
-    "demanda_cumplida_unidades": 12926.0,
-    "demanda_no_cubierta_unidades_total": 5986.0,
+    "demanda_cumplida_unidades": 12925.0,
+    "demanda_no_cubierta_unidades_total": 5987.0,
     "pct_demanda_cumplida": 68.3,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
