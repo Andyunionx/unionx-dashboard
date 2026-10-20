@@ -249,9 +249,9 @@ def _jrpc(model, method, dominio, **kw):
 def recompute_cancelados() -> pd.DataFrame:
     """Recalcula EN VIVO el universo de cancelados 2026 con boleta y sin NC.
     Filtros de auditoría (04/05-08): sin NC por reversa directa, sin fulfillment,
-    flag despachado (criterio Víctor), y detección de BARRIDAS del conector
-    (>50 cancelaciones con la misma fecha de modificación → resolución masiva de
-    marketplace, se excluyen y se informan aparte)."""
+    flag despachado (criterio Víctor), y BARRIDAS del conector (los 972 pedidos que
+    canceló en masa el 16-jun y a fines de julio, lista fija en data/nc_barridas_972.csv:
+    se excluyen y se informan aparte)."""
     import xmlrpc.client, time as _t
     cfg = json.load(open(ROOT / "odoo/odoo_config.json"))["produccion"]
     pw = os.environ.get("ANDRES_ODOO_PASSWORD", "") or (ROOT / "odoo/.odoo_pass").read_text().strip()
@@ -324,11 +324,13 @@ def recompute_cancelados() -> pd.DataFrame:
         C = pd.DataFrame(columns=["pedido", "canal", "mes", "boleta", "monto", "pago_boleta",
                                   "despachado", "dia_cancel", "origen"])
         return C
-    # barridas: >50 cancelados con la misma fecha de modificación
-    masivos = C["dia_cancel"].value_counts()
-    dias_barrida = set(masivos[masivos > 50].index)
-    C["origen"] = C["dia_cancel"].map(lambda d: "Barrida conector" if d in dias_barrida else "Cancelación orgánica")
-    print(f"[cancelados-vivo] {len(C)} casos | barridas detectadas: {sorted(dias_barrida)}")
+    # Barridas: lista FIJA de los 972 pedidos clasificados por Yohana (ago-2026). Hasta el
+    # 20-10 se detectaban como «día con más de 50 cancelados por fecha de modificación»,
+    # pero cualquier edición masiva posterior los confundía (el 19-10, 101 pedidos
+    # cancelados normales quedaron escondidos como barrida).
+    barr = set(pd.read_csv(ROOT / "data" / "nc_barridas_972.csv", dtype=str)["pedido"])
+    C["origen"] = C["pedido"].astype(str).map(lambda p: "Barrida conector" if p in barr else "Cancelación orgánica")
+    print(f"[cancelados-vivo] {len(C)} casos | en la lista de barridas: {(C['origen'] != 'Cancelación orgánica').sum()}")
     return C
 
 
@@ -391,14 +393,14 @@ def main():
 
     # --- sección 2: cancelaciones EN VIVO. CRITERIO VÍCTOR (05-08): NC directa =
     # cancelado + boleta + SIN despacho. Con despacho = validar estado seller.
-    # Barridas del conector fuera (detección automática >50/día).
+    # Barridas del conector fuera (lista fija de 972 pedidos).
     try:
         C = recompute_cancelados()
         C.to_excel(OUT / f"NC_cancelados_vivo_{hoy:%Y%m%d}.xlsx", index=False)
     except Exception as e:
         print(f"[cancelados-vivo][WARN] {type(e).__name__}: {e} -> archivo auditado estático")
         C = pd.read_excel(OUT / "NC_cancelados_AUDITADO_v4_20260805.xlsx")
-    barridas = C[C["origen"] != "Cancelación orgánica"]
+    barridas = C[(C["origen"] != "Cancelación orgánica") & ~C["pedido"].astype(str).isin(ped_dev)]
     C = C[C["origen"] == "Cancelación orgánica"]
     # dedupe contra la sección devoluciones (un pedido no puede estar en ambas): los
     # cancelados con ticket de devolución se informan arriba, donde el agente los emite.
@@ -513,8 +515,9 @@ de definir si corresponde NC.</li>
 {tabla_html(semaforo(C), index_name="plazo restante", conteos=("pedidos",))}</div>
 
 <div style="font-size:12px;color:#475569;margin:8px 0;">Nota: quedaron FUERA de este pulso {miles(len(barridas))} pedidos
-cancelados en barridas del conector (16-jun y fines de julio) por {fmt(barridas['monto'].sum())} — resoluciones de marketplace
-en aclaración con facturación (ruteo enviado a Yohana 05-08). No corresponden a NC automática.</div>
+cancelados en barridas del conector (16-jun y fines de julio) por {fmt(barridas['monto'].sum())}: Yohana ya los clasificó;
+falta la definición de Víctor sobre las mediaciones de Mercado Libre y las canceladas por el marketplace. No corresponden a NC
+automática.</div>
 
 <div style="font-size:13px;margin:12px 0;">📎 <b>Excel adjunto:</b> una hoja por bloque, con el detalle caso a caso.</div>
 </div>"""
