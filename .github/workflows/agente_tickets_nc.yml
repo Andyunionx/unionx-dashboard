@@ -9,6 +9,8 @@ name: Agente Tickets NC (postventa)
 # Deshabilitar con vars.AGENTE_TICKETS_NC_ENABLED='false'.
 # vars.AGENTE_NC_BOLETAS_AUTORIZADAS (lista separada por comas): si tiene boletas,
 # emite solo esas (reactivación controlada 05-oct); vacía = sin restricción.
+# vars.AGENTE_NC_FULL_INVENTARIO='true': ventas Fulfillment recibidas por Postventa vuelven en Odoo
+# a su bodega Full y pasan a BPV, sin NC (Andrés 21-oct).
 
 on:
   schedule:
@@ -42,6 +44,7 @@ jobs:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
           AGENTE_NC_BOLETAS_AUTORIZADAS: ${{ vars.AGENTE_NC_BOLETAS_AUTORIZADAS }}
+          AGENTE_NC_FULL_INVENTARIO: ${{ vars.AGENTE_NC_FULL_INVENTARIO }}
           PYTHONIOENCODING: utf-8
         run: |
           if [ "${{ github.event.inputs.full }}" = "true" ]; then
