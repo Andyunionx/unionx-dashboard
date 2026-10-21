@@ -44,7 +44,7 @@ jobs:
     needs: guard
     if: needs.guard.outputs.seguir == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45      # el cierre lee además las liquidaciones por pedido (control de gestión, 21-oct)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

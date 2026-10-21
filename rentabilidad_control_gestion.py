@@ -9,6 +9,12 @@ brecha en $/mes contra el mejor mes de la ventana (o el monto completo si es un 
 recuperable: mezcla cambios de precio y de mix con errores de cobro (Gabriela 16-oct). Los cargos fijos mensuales (mismo
 monto todos los meses, p. ej. Asesoría Comercial de ML) no entran: su % sube solo porque baja la venta.
 
+Criterio por pedido (Andrés y Gabriela 21-oct): la macro sigue por mes calendario, pero acá las comisiones y envíos se
+miden por pedido: cobro de la liquidación / venta neta de esos mismos pedidos (sin cancelados; reembolsos aparte). Así no
+depende del corte de facturación de cada canal (Falabella 21→20, Walmart quincenal, Ripley semanal). Aplica a la glosa
+cuando al menos COB_MIN de su cobro se amarra a un pedido del RAW; si no (cargos a la cuenta, canales sin número de
+pedido), sigue contra el mes calendario. La publicidad se mide contra su meta en el mes de consumo (PUBLICIDAD).
+
 Sale con el reporte de cierre (rentabilidad_reporte_semanal.py --enviar, modo cierre): correo que se sostiene solo
 + HTML adjunto con el detalle por canal.
 
@@ -34,6 +40,11 @@ import macro_rentabilidad_drive as D  # noqa: E402
 CENTROS = ['Comisión venta', 'Comisión envío', 'Marketing']
 EVITABLE = re.compile(r'penalid|multa|cancelaci|retiro de stock|stock antiguo|sobrepasar|diferencias en las medidas|retiro stock')
 UMBRAL_OP = 50_000
+COB_MIN = 0.8              # parte del cobro de la glosa que debe amarrarse a un pedido para medirla por pedido
+# Publicidad que se factura después del consumo: canal → (glosa, meses de desfase de la factura, meta % de la venta con
+# IVA). Falabella: un mes de desfase y meta 3% sobre la venta con IVA (Gabriela 20 y 21-oct, dato de la KAM).
+PUBLICIDAD = {'Falabella': (re.compile(r'productos patrocinados'), 1, 3.0)}
+ALIAS_CANAL = {'simplit home': 'simplit web', 'lhotse': 'lhotse web'}     # nombre en la liquidación del courier → macro
 LARGO = {1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto', 9: 'septiembre',
          10: 'octubre', 11: 'noviembre', 12: 'diciembre'}
 
@@ -102,9 +113,79 @@ def pedidos(meses):
         return pd.DataFrame(columns=['Mes', 'Canal', 'Modalidad', 'pedidos'])
 
 
-def construir(m1=None, sh=None, pendientes=None):
+def _clave(s):
+    """Número de pedido comparable entre liquidación y RAW ('' si no hay)."""
+    s = pd.Series(s, dtype='object').astype(str).str.strip().str.upper().str.replace(r'\.0$', '', regex=True)
+    return s.where(~s.isin(['', 'NAN', 'NONE', '0', '<NA>']), '')
+
+
+def por_pedido(meses, canales_base):
+    """Líneas de comisión de venta y de envío de las liquidaciones de los meses, cada una con la venta neta de su pedido
+    en el RAW (sin cancelados ni líneas de despacho), buscado por número del marketplace, de Odoo o pack de Yuju.
+    Los archivos se leen en una carpeta temporal, igual que la macro."""
+    import time
+    import rentabilidad_liquidaciones as RL
+    import rentabilidad_reporte_semanal as R
+    canal_de = {c.lower(): c for c in canales_base}
+    drv, arbol = R.drive_carpeta()
+    partes = []
+    for m in meses:
+        for intento in range(3):
+            try:
+                with tempfile.TemporaryDirectory() as td:
+                    R.bajar_mes(drv, arbol, int(m[5:7]), Path(td))
+                    d = RL.leer_carpeta(Path(td))
+                break
+            except Exception as e:                       # Drive devuelve 503 transitorios
+                if intento == 2:
+                    raise
+                print(f'   [WARN] liquidaciones {m}: {type(e).__name__}, reintento')
+                time.sleep(20 * (intento + 1))
+        d = d[d['centro_costo'].isin(['Comisión venta', 'Comisión envío'])]
+        c = d['canal'].astype(str).str.strip().str.lower()
+        partes.append(pd.DataFrame({'Canal': [canal_de.get(ALIAS_CANAL.get(x, x), x) for x in c],
+                                    'centro': d['centro_costo'].values, 'gk': d['glosa'].map(norm).values,
+                                    'k': _clave(d['pedido']).values, 'monto': d['monto_neto'].astype(float).values, 'Mes': m}))
+    L = pd.concat(partes, ignore_index=True)
+    desde = meses[0]
+    for _ in range(3):                                   # la liquidación cobra pedidos de hasta ~3 meses antes
+        desde = PA.mes_anterior(desde)
+    cols = ['pedido', 'pedido_marketplace', 'yuju_pack_id', 'venta_neta', 'tipo_movimiento', 'es_despacho', 'estado_pedido',
+            'fecha_venta']
+    raw = pd.concat([pd.read_parquet(p, columns=cols) for p in (ROOT / 'data/historico/ventas_historico.parquet',
+                                                                ROOT / 'data/historico/ventas_mes_actual.parquet') if p.exists()],
+                    ignore_index=True)
+    raw = raw[pd.to_datetime(raw['fecha_venta'], errors='coerce') >= pd.Timestamp(desde + '-01')]
+    v = raw[(raw['tipo_movimiento'].astype(str) == 'Venta') & ~raw['es_despacho'].fillna(False).astype(bool)
+            & ~raw['estado_pedido'].astype(str).str.lower().str.contains('cancel')]
+    venta = pd.Series(dtype=float)
+    for col in ('pedido_marketplace', 'pedido', 'yuju_pack_id'):  # prioridad: marketplace, Odoo, pack
+        s = v.groupby(_clave(v[col]).values)['venta_neta'].sum()
+        venta = venta.combine_first(s[s.index != ''])
+    L['venta'] = L['k'].map(venta)
+    return L
+
+
+def medir(x):
+    """Tasa por pedido de un grupo de líneas: cobros amarrados a un pedido con venta / venta de esos pedidos.
+    calce = parte del cobro que se amarró; reemb = reembolsos y anulaciones (abonos, negativos), aparte."""
+    cob = float(x.loc[x['monto'] > 0, 'monto'].sum())
+    if cob <= 0:
+        return None
+    y = x[(x['monto'] > 0) & (x['venta'] > 0)]
+    vp = float(y.drop_duplicates('k')['venta'].sum())
+    return dict(t=float(y['monto'].sum()) / vp * 100 if vp else None, calce=float(y['monto'].sum()) / cob, vp=vp,
+                reemb=float(x.loc[x['monto'] < 0, 'monto'].sum()))
+
+
+def tasa_ok(r):
+    return bool(r) and r['t'] is not None and r['calce'] >= COB_MIN
+
+
+def construir(m1=None, sh=None, pendientes=None, pp=None):
     """Arma el informe del mes cerrado m1 (por defecto, el mes cerrado del plan de acción). Devuelve
-    dict(asunto, body, doc, resumen). pendientes = lista de textos de carga faltante (se avisa arriba)."""
+    dict(asunto, body, doc, resumen). pendientes = lista de textos de carga faltante (se avisa arriba).
+    pp = líneas de por_pedido() ya leídas (pruebas); si no, se leen del Drive."""
     sh = sh or D._abrir(D._cli(), crear_si_falta=False)[0]
     vb = sh.worksheet(D.H_BASE).get_all_values(value_render_option='UNFORMATTED_VALUE')
     b = pd.DataFrame(vb[1:], columns=vb[0])
@@ -130,6 +211,31 @@ def construir(m1=None, sh=None, pendientes=None):
     MG = b.groupby(['Canal', 'Mes'])['Monto'].sum()
     g_prev_mes = PA.mes_de_col(rol['gestion_prev']) if rol['gestion_prev'] else M0
     g_prev = LARGO[int(g_prev_mes[5:7])] if g_prev_mes else ''
+    pendientes = list(pendientes or [])
+    PP = pp
+    if PP is None:
+        try:
+            PP = por_pedido(MESES, sorted(b['Canal'].unique()))
+        except Exception as e:
+            print(f'   [WARN] medición por pedido: {type(e).__name__}: {e}')
+            pendientes.append('no se pudieron leer las liquidaciones por pedido; comisiones y envíos van contra la venta '
+                              'del mes calendario')
+
+    def pp_de(c, cc, gks=None):
+        """Tasa por pedido de cada mes (dict mes → medir) de un canal y centro; gks = glosas (normalizadas) a incluir."""
+        if PP is None or not len(PP):
+            return {}
+        x = PP[(PP['Canal'] == c) & (PP['centro'] == cc)]
+        if gks is not None:
+            x = x[x['gk'].isin(gks)]
+        return {m: medir(x[x['Mes'] == m]) for m in MESES} if len(x) else {}
+
+    PP_CC = {}
+
+    def pp_centro(c, cc):
+        if (c, cc) not in PP_CC:
+            PP_CC[(c, cc)] = pp_de(c, cc)
+        return PP_CC[(c, cc)]
 
     # ───────────── glosas, oportunidades, modalidades, plan ─────────────
     def glosas_canal(c):
@@ -145,6 +251,12 @@ def construir(m1=None, sh=None, pendientes=None):
                 i = float(ING.get((c, m), 0))
                 f[m] = float(r[m])
                 f['p' + m] = float(r[m]) / i * 100 if i else None
+            # por pedido: la glosa de Gabriela puede venir combinada ("A / B") → se buscan también sus partes
+            f['pp'] = (pp_de(c, cc, {gk} | {p.strip() for p in gk.split(' / ') if p.strip()})
+                       if cc in ('Comisión venta', 'Comisión envío') else {})
+            f['xpp'] = tasa_ok(f['pp'].get(M1))       # la brecha de esta glosa se mide por pedido
+            for m in MESES:                             # q = la medida que usa la brecha (por pedido o mes calendario)
+                f['q' + m] = f['pp'][m]['t'] if f['xpp'] and tasa_ok(f['pp'].get(m)) else (None if f['xpp'] else f['p' + m])
             filas.append(f)
         return filas
 
@@ -154,6 +266,29 @@ def construir(m1=None, sh=None, pendientes=None):
             return None, ''
         if EVITABLE.search(f['gk']):
             return f[M1], 'cargo evitable → $0'
+        if f.get('xpp'):
+            # por pedido: la tasa de M1 contra la mejor tasa de la ventana, sobre la venta de los pedidos cobrados en M1
+            pp = f['pp']
+            ok = [m for m in MESES if tasa_ok(pp.get(m))]
+            m_best = min(ok, key=lambda m: pp[m]['t'])
+            if m_best == M1:
+                return None, f'por pedido: {pct(pp[M1]["t"])}, su mejor mes'
+            op = (pp[M1]['t'] - pp[m_best]['t']) / 100 * pp[M1]['vp']
+            ref = f'por pedido: {pct(pp[M1]["t"])} vs mejor mes ({NOM[m_best]}: {pct(pp[m_best]["t"])})'
+            return (op, ref) if op > 0 else (None, ref)
+        pub = PUBLICIDAD.get(c)
+        if f['centro'] == 'Marketing' and pub and pub[0].search(f['gk']):
+            # publicidad facturada después del consumo: la factura de M1 contra la venta con IVA del mes de consumo
+            m_cons = M1
+            for _ in range(pub[1]):
+                m_cons = PA.mes_anterior(m_cons)
+            base = float(ING.get((c, m_cons), 0)) * 1.19
+            if not base:
+                return None, ''
+            ref = (f'consumo de {LARGO[int(m_cons[5:7])]}: {pct(f[M1] / base * 100)} de la venta con IVA '
+                   f'(meta {pct(pub[2])})')
+            op = f[M1] - pub[2] / 100 * base
+            return (op, ref) if op > 0 else (None, ref)
         # Cargo fijo mensual: mismo monto (±5%) todos los meses → su % de la venta sube o baja solo por la venta; no es
         # brecha (Asesoría Comercial ML $1,74 M/mes, Gabriela 20-oct). Se decide renegociando el plan, no operando distinto.
         vals = [f[m] for m in MESES]
@@ -222,6 +357,12 @@ def construir(m1=None, sh=None, pendientes=None):
         cls = 'up' if d > 0.05 else 'dn' if d < -0.05 else ''
         return f'<td class="r {cls}">{"+" if d > 0 else ""}{n(d)}</td>'
 
+    def tres_pp(pp):
+        """'15,6 · 16,0 · 16,1%' (— en el mes que no se puede medir) o '' si ningún mes se mide por pedido."""
+        if not any(tasa_ok(pp.get(m)) for m in MESES):
+            return ''
+        return ' · '.join(n(pp[m]['t']) if tasa_ok(pp.get(m)) else '—' for m in MESES) + '%'
+
     def tabla_glosas(c, gl):
         filas = []
         nombre = {'Comisión venta': 'Comisión de venta', 'Comisión envío': 'Comisión de envío', 'Marketing': 'Marketing',
@@ -233,8 +374,10 @@ def construir(m1=None, sh=None, pendientes=None):
             if cc in CENTROS:
                 tot = {m: sum(f[m] for f in g) for m in MESES}
                 tp = {m: (tot[m] / ING.get((c, m), 0) * 100 if ING.get((c, m), 0) else None) for m in MESES}
+                ppc = tres_pp(pp_centro(c, cc)) if cc in ('Comisión venta', 'Comisión envío') else ''
                 filas.append(f'<tr class="cc"><td>{nombre[cc]}</td>' + ''.join(f'<td class="r">{clp(tot[m])}</td>' for m in MESES)
-                             + ''.join(f'<td class="r">{pct(tp[m])}</td>' for m in MESES) + dpp(tp[M0], tp[M1]) + '<td></td><td></td></tr>')
+                             + ''.join(f'<td class="r">{pct(tp[m])}</td>' for m in MESES) + dpp(tp[M0], tp[M1])
+                             + f'<td class="r">{ppc}</td><td></td><td></td></tr>')
             for f in sorted(g, key=lambda f: -f[M1]):
                 envped = clp(f[M1] / PED.get((c, M1))) if (cc == 'Comisión envío' and PED.get((c, M1), 0)) else ''
                 opc = f'<td class="r op">{clp(f["op"])}' if f.get('op') else '<td class="r">—'
@@ -242,10 +385,12 @@ def construir(m1=None, sh=None, pendientes=None):
                 filas.append(f'<tr><td>{"&nbsp;&nbsp;" if cc in CENTROS else ""}{H.escape(f["glosa"])}</td>'
                              + ''.join(f'<td class="r">{clp(f[m])}</td>' for m in MESES)
                              + ''.join(f'<td class="r">{pct(f["p" + m])}</td>' for m in MESES) + dpp(f['p' + M0], f['p' + M1])
+                             + f'<td class="r">{tres_pp(f.get("pp") or {})}</td>'
                              + f'<td class="r">{envped}</td>{opc}{ref}</td></tr>')
         hdr = ('<tr><th>Glosa</th>' + ''.join(f'<th class="r">$ {NOM[m]}</th>' for m in MESES)
                + ''.join(f'<th class="r">% venta {NOM[m]}</th>' for m in MESES)
-               + f'<th class="r">Δ p.p. {NOM[M1]} vs {NOM[M0]}</th><th class="r">$/pedido del canal {NOM[M1]}</th><th class="r">Brecha vs mejor mes $/mes</th></tr>')
+               + f'<th class="r">Δ p.p. {NOM[M1]} vs {NOM[M0]}</th><th class="r">Por pedido {" · ".join(NOM[m] for m in MESES)}</th>'
+               f'<th class="r">$/pedido del canal {NOM[M1]}</th><th class="r">Brecha vs mejor mes $/mes</th></tr>')
         return f'<div class="tw"><table>{hdr}{"".join(filas)}</table></div>'
 
     def tabla_mods(mods):
@@ -293,10 +438,10 @@ def construir(m1=None, sh=None, pendientes=None):
 
     def filas_top(lista):
         return ''.join(f'<tr><td class="r">{k + 1}</td><td>{H.escape(o["canal"])}</td><td>{H.escape(o["glosa"])}</td><td>{H.escape(o["centro"])}</td>'
-                       + ''.join(f'<td class="r">{pct(o["p" + m])}</td>' for m in MESES)
+                       + ''.join(f'<td class="r">{pct(o["q" + m])}</td>' for m in MESES)
                        + f'<td>{H.escape(o["ref"])}</td><td class="r op">{clp(o["op"])}</td></tr>' for k, o in enumerate(lista))
 
-    th_top = ('<tr><th class="r">#</th><th>Canal</th><th>Glosa</th><th>Centro</th>' + ''.join(f'<th class="r">% venta {NOM[m]}</th>' for m in MESES)
+    th_top = ('<tr><th class="r">#</th><th>Canal</th><th>Glosa</th><th>Centro</th>' + ''.join(f'<th class="r">% {NOM[m]}</th>' for m in MESES)
               + '<th>Referencia</th><th class="r">Brecha vs mejor mes $/mes</th></tr>')
     aviso = (f'<div class="pre"><b>Carga pendiente:</b> {H.escape("; ".join(pendientes))}.</div>') if pendientes else ''
     periodo = f'{LG[Mi].capitalize()} a {LG[M1]} {M1[:4]}'
@@ -309,6 +454,7 @@ def construir(m1=None, sh=None, pendientes=None):
 <p class="how">Para qué sirve: encontrar dónde podemos ser más rentables. Cada canal se abre glosa por glosa, con su peso sobre la venta y, en logística, por pedido; se compara mes contra mes y por modalidad de envío, y se cruza con lo que se gestionó en el plan de acción. De aquí salen las acciones nuevas.</p>
 <h2>1. Resumen: dónde está la plata</h2>
 <p class="how">Brecha vs mejor mes = cuánto más costó la glosa en {LG[M1]} que en su mejor mes de {LG[Mi]} a {LG[M1]} (como % de la venta de {LG[M1]}), o su monto completo si es un cargo evitable (penalidades, multas, retiro o stock antiguo en bodega del marketplace). <b>No es plata recuperable</b>: mezcla cambios de precio y de mix con errores de cobro, y hay que revisar cada glosa para saber qué parte se puede gestionar. Los cargos fijos mensuales (mismo monto todos los meses) no entran. Solo glosas de costo y devoluciones; desde {clp(UMBRAL_OP)}.</p>
+<p class="how"><b>Comisiones y envíos se miden por pedido</b> cuando al menos el {n(COB_MIN * 100, 0)}% del cobro de la glosa se amarra a un pedido del RAW: el % es el cobro de la liquidación dividido por la venta neta de esos mismos pedidos, sin cancelados y con los reembolsos aparte, así que no depende del corte de facturación del canal. El resto (cargos a la cuenta, canales que no informan el pedido) va contra la venta del mes calendario. La publicidad de Falabella se compara con su meta: {n(PUBLICIDAD['Falabella'][2])}% de la venta con IVA del mes de consumo (la factura llega un mes después).</p>
 <div class="kpis"><div class="k"><span>Tarifas y cargos</span><b>{clp(tot_cost)} /mes</b></div><div class="k"><span>Devoluciones</span><b>{clp(tot_dev)} /mes</b></div><div class="k"><span>Glosas con brecha</span><b>{len(ops)}</b></div></div>
 <h3>Tarifas, cargos y servicios (top 15)</h3><p class="how">Lo que se negocia con el canal o se deja de pagar operando distinto.</p>
 <div class="tw"><table>{th_top}{filas_top(ops_cost[:15])}</table></div>
@@ -317,7 +463,8 @@ def construir(m1=None, sh=None, pendientes=None):
 <h2>2. Detalle por canal</h2><p class="how">{indice}</p>
 {''.join(secciones)}
 <h2>3. Cómo leerlo</h2>
-<ul class="how"><li>% venta = la glosa sobre la venta neta del canal en el mes. Δ p.p. en rojo = esa glosa pesa más que el mes anterior (resta margen); en verde = pesa menos.</li>
+<ul class="how"><li>% venta = la glosa sobre la venta neta del canal en el mes (como la macro). Δ p.p. en rojo = esa glosa pesa más que el mes anterior (resta margen); en verde = pesa menos.</li>
+<li>Por pedido = cobro de la liquidación dividido por la venta neta de esos mismos pedidos (sin cancelados; reembolsos y anulaciones aparte). Es la tasa que de verdad cobra el canal y no se mueve por el corte de facturación; con ella se calcula la brecha de la glosa. "—" = ese mes menos del {n(COB_MIN * 100, 0)}% del cobro se amarra a un pedido.</li>
 <li>$/pedido = costo de la glosa dividido por los pedidos del canal en el mes (solo comisión de envío), para separar tarifa de volumen. En la tabla por modalidad, el envío por pedido es el de cada modalidad.</li>
 <li>Las devoluciones se registran en el mes de la nota de crédito y pueden ser de ventas de meses anteriores.</li>
 <li>Los cargos que el marketplace informa sin modalidad se reparten entre modalidades según su venta.</li>
@@ -338,13 +485,19 @@ def construir(m1=None, sh=None, pendientes=None):
         return x / i * 100 if i else None
 
     def celda_d(c, cc):
-        a, z = cc_pct(c, cc, M0), cc_pct(c, cc, M1)
+        # comisión y envío: tasa por pedido si M1 se puede medir así (ᵖ); si no, % de la venta del mes calendario
+        pp = pp_centro(c, cc) if cc in ('Comisión venta', 'Comisión envío') else {}
+        if tasa_ok(pp.get(M1)):
+            z, marca = pp[M1]['t'], 'ᵖ'
+            a = pp[M0]['t'] if tasa_ok(pp.get(M0)) else None
+        else:
+            a, z, marca = cc_pct(c, cc, M0), cc_pct(c, cc, M1), ''
         if z is None or (abs(z) < 0.05 and (a is None or abs(a) < 0.05)):
             return f'<td {tdr}>—</td>'
         if a is None:
-            return f'<td {tdr}>{n(z)}%</td>'
+            return f'<td {tdr}>{n(z)}%{marca}</td>'
         color = '#b42318' if z - a > 0.5 else '#1e7a45' if z - a < -0.5 else '#64748b'
-        return f'<td {tdr}>{n(z)}% <span style="color:{color}">({"+" if z - a > 0 else ""}{n(z - a)})</span></td>'
+        return f'<td {tdr}>{n(z)}%{marca} <span style="color:{color}">({"+" if z - a > 0 else ""}{n(z - a)})</span></td>'
 
     def mg_pct(c, m):
         i = float(ING.get((c, m), 0))
@@ -365,7 +518,7 @@ def construir(m1=None, sh=None, pendientes=None):
 
     top_rows = ''.join(f'<tr><td {td}>{H.escape(o["canal"])}</td><td {td}>{H.escape(o["glosa"])}<br>'
                        f'<span style="color:#64748b;font-size:11.5px">{H.escape(o["centro"])}</span></td>'
-                       + ''.join(f'<td {tdr}>{pct(o["p" + m])}</td>' for m in MESES)
+                       + ''.join(f'<td {tdr}>{pct(o["q" + m])}</td>' for m in MESES)
                        + f'<td {tdr}>{clp(o[M1])}</td><td {tdr}>{pedido_de(o)}</td><td {td}>{H.escape(o["ref"])}</td>'
                        f'<td {tdr}><b>{clp(o["op"])}</b></td></tr>' for o in ops_cost[:10])
     dev_rows = ''.join(f'<tr><td {td}>{H.escape(o["canal"])}</td>' + ''.join(f'<td {tdr}>{pct(o["p" + m])}</td>' for m in MESES)
@@ -392,9 +545,10 @@ def construir(m1=None, sh=None, pendientes=None):
         o = ops_cost[0]
         sig = (' Le siguen ' + ' y '.join(f'{H.escape(x["glosa"])} ({H.escape(x["canal"])}, {clp(x["op"])})' for x in ops_cost[1:3]) + '.'
                if len(ops_cost) > 2 else '')
+        medida = 'por pedido' if o.get('xpp') else 'de la venta'
         bul.append(f'<b>Tarifas y cargos: {clp(tot_cost)}/mes de brecha contra su mejor mes</b> (no es plata recuperable: mezcla '
                    f'precio, mix y errores de cobro). La más grande es {H.escape(o["glosa"])} ({H.escape(o["canal"])}): '
-                   f'{pct(o["p" + Mi])} de la venta en {LG[Mi]}, {pct(o["p" + M0])} en {LG[M0]} y {pct(o["p" + M1])} en {LG[M1]}; '
+                   f'{pct(o["q" + Mi])} {medida} en {LG[Mi]}, {pct(o["q" + M0])} en {LG[M0]} y {pct(o["q" + M1])} en {LG[M1]}; '
                    f'volver a su mejor mes son {clp(o["op"])}/mes.{sig}')
     if ops_dev:
         bul.append(f'<b>Devoluciones: {clp(tot_dev)}/mes de brecha contra su mejor mes.</b> Las más altas en {LG[M1]}: '
@@ -418,10 +572,10 @@ def construir(m1=None, sh=None, pendientes=None):
 <h3 {h3}>Lo principal</h3><ul style="margin:0 0 6px 18px;padding:0">{''.join(f'<li style="margin-bottom:6px">{x}</li>' for x in bul)}</ul>
 <h3 {h3}>1. Resumen por canal</h3>
 <table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {thr}>Venta {NOM[M1]}</th>{''.join(f'<th {thr}>Margen {NOM[m]}</th>' for m in MESES)}<th {thr}>Com. venta</th><th {thr}>Com. envío</th><th {thr}>Marketing</th><th {thr}>Devoluciones</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{res_rows}</table>
-<p {nota}>Centros de costo como % de la venta de {LG[M1]}; entre paréntesis, la variación en puntos contra {LG[M0]} (rojo = pesa más, verde = pesa menos).</p>
+<p {nota}>Centros de costo como % de la venta de {LG[M1]}; entre paréntesis, la variación en puntos contra {LG[M0]} (rojo = pesa más, verde = pesa menos). ᵖ = comisión o envío medido por pedido: cobro de la liquidación dividido por la venta de esos mismos pedidos, sin cancelados y con los reembolsos aparte (no depende del corte de facturación del canal).</p>
 <h3 {h3}>2. Tarifas, cargos y servicios: dónde está la plata (top 10)</h3>
-<table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {th}>Glosa</th>{''.join(f'<th {thr}>% venta {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>$/pedido</th><th {th}>Referencia</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{top_rows}</table>
-<p {nota}>Brecha vs mejor mes = diferencia contra el mejor mes de {LG[Mi]} a {LG[M1]} (o el monto completo si es un cargo evitable: penalidades, multas, retiro o stock antiguo). No es plata recuperable: mezcla cambios de precio y de mix con errores de cobro. Los cargos fijos mensuales no entran. $/pedido solo en comisión de envío.</p>
+<table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {th}>Glosa</th>{''.join(f'<th {thr}>% {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>$/pedido</th><th {th}>Referencia</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{top_rows}</table>
+<p {nota}>Brecha vs mejor mes = diferencia contra el mejor mes de {LG[Mi]} a {LG[M1]} (o el monto completo si es un cargo evitable: penalidades, multas, retiro o stock antiguo). No es plata recuperable: mezcla cambios de precio y de mix con errores de cobro. Los cargos fijos mensuales no entran. % = tasa por pedido en las glosas que dicen "por pedido" en la referencia, y % de la venta del mes en el resto. La publicidad de Falabella va contra su meta en el mes de consumo. $/pedido solo en comisión de envío.</p>
 <h3 {h3}>3. Devoluciones</h3>
 <table style="border-collapse:collapse"><tr><th {th}>Canal</th>{''.join(f'<th {thr}>% venta {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{dev_rows}</table>
 <h3 {h3}>4. Compromisos de {g_prev} → resultado en {LG[M1]}</h3>
