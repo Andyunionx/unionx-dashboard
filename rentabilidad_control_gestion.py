@@ -5,7 +5,9 @@ Segundo informe del cierre de rentabilidad (el primero, rentabilidad_reporte_sem
 para comercial). Este es para control de gestión (Gabriela): dónde podemos ser más rentables. Baja a glosa, modalidad
 de envío y relación con la venta (% de la venta y $/pedido), mes contra mes en los tres últimos meses cerrados, y
 cruza cada canal con la historia de su plan de acción (lo comprometido el mes anterior y el resultado). Resumen =
-oportunidades en $/mes: la glosa vuelve a su mejor mes de la ventana, o a $0 si es un cargo evitable.
+brecha en $/mes contra el mejor mes de la ventana (o el monto completo si es un cargo evitable). La brecha NO es plata
+recuperable: mezcla cambios de precio y de mix con errores de cobro (Gabriela 16-oct). Los cargos fijos mensuales (mismo
+monto todos los meses, p. ej. Asesoría Comercial de ML) no entran: su % sube solo porque baja la venta.
 
 Sale con el reporte de cierre (rentabilidad_reporte_semanal.py --enviar, modo cierre): correo que se sostiene solo
 + HTML adjunto con el detalle por canal.
@@ -152,6 +154,11 @@ def construir(m1=None, sh=None, pendientes=None):
             return None, ''
         if EVITABLE.search(f['gk']):
             return f[M1], 'cargo evitable → $0'
+        # Cargo fijo mensual: mismo monto (±5%) todos los meses → su % de la venta sube o baja solo por la venta; no es
+        # brecha (Asesoría Comercial ML $1,74 M/mes, Gabriela 20-oct). Se decide renegociando el plan, no operando distinto.
+        vals = [f[m] for m in MESES]
+        if f['centro'] in CENTROS and min(vals) > 0 and (max(vals) - min(vals)) <= 0.05 * sum(vals) / len(vals):
+            return None, f'cargo fijo mensual (~{clp(sum(vals) / len(vals))}): no depende de la venta'
         meses_con = [m for m in MESES if f[m] > 0 and f['p' + m] is not None]
         if len(meses_con) < 2:
             return None, ''
@@ -238,7 +245,7 @@ def construir(m1=None, sh=None, pendientes=None):
                              + f'<td class="r">{envped}</td>{opc}{ref}</td></tr>')
         hdr = ('<tr><th>Glosa</th>' + ''.join(f'<th class="r">$ {NOM[m]}</th>' for m in MESES)
                + ''.join(f'<th class="r">% venta {NOM[m]}</th>' for m in MESES)
-               + f'<th class="r">Δ p.p. {NOM[M1]} vs {NOM[M0]}</th><th class="r">$/pedido del canal {NOM[M1]}</th><th class="r">Oportunidad $/mes</th></tr>')
+               + f'<th class="r">Δ p.p. {NOM[M1]} vs {NOM[M0]}</th><th class="r">$/pedido del canal {NOM[M1]}</th><th class="r">Brecha vs mejor mes $/mes</th></tr>')
         return f'<div class="tw"><table>{hdr}{"".join(filas)}</table></div>'
 
     def tabla_mods(mods):
@@ -279,7 +286,7 @@ def construir(m1=None, sh=None, pendientes=None):
               f'<div class="k"><span>Pedidos {meses_t}</span><b>{" · ".join(n(pe[m], 0) for m in MESES)}</b></div>'
               f'<div class="k"><span>Ticket promedio {NOM[M1]}</span><b>{clp(i[M1] / pe[M1]) if pe[M1] else "—"}</b></div>'
               f'<div class="k"><span>Margen {meses_t}</span><b>{" · ".join(pct(mg[m]) for m in MESES)}</b></div>'
-              f'<div class="k"><span>Oportunidad identificada</span><b>{clp(op_c) if op_c else "—"} /mes</b></div></div>')
+              f'<div class="k"><span>Brecha vs mejor mes</span><b>{clp(op_c) if op_c else "—"} /mes</b></div></div>')
         secciones.append(f'<h3 id="c{len(secciones)}">{H.escape(c)}</h3>{kp}{bloque_plan(d["plan"])}'
                          f'<div class="sub" style="margin-top:10px">Glosa por glosa (costo positivo, abono negativo)</div>{tabla_glosas(c, d["glosas"])}'
                          f'<details><summary>Por modalidad de envío</summary>{tabla_mods(d["mods"])}</details>')
@@ -290,7 +297,7 @@ def construir(m1=None, sh=None, pendientes=None):
                        + f'<td>{H.escape(o["ref"])}</td><td class="r op">{clp(o["op"])}</td></tr>' for k, o in enumerate(lista))
 
     th_top = ('<tr><th class="r">#</th><th>Canal</th><th>Glosa</th><th>Centro</th>' + ''.join(f'<th class="r">% venta {NOM[m]}</th>' for m in MESES)
-              + '<th>Referencia</th><th class="r">Oportunidad $/mes</th></tr>')
+              + '<th>Referencia</th><th class="r">Brecha vs mejor mes $/mes</th></tr>')
     aviso = (f'<div class="pre"><b>Carga pendiente:</b> {H.escape("; ".join(pendientes))}.</div>') if pendientes else ''
     periodo = f'{LG[Mi].capitalize()} a {LG[M1]} {M1[:4]}'
     indice = ' · '.join(f'<a href="#c{k}">{H.escape(d["canal"])}</a>' for k, d in enumerate(detalle))
@@ -301,8 +308,8 @@ def construir(m1=None, sh=None, pendientes=None):
 {aviso}
 <p class="how">Para qué sirve: encontrar dónde podemos ser más rentables. Cada canal se abre glosa por glosa, con su peso sobre la venta y, en logística, por pedido; se compara mes contra mes y por modalidad de envío, y se cruza con lo que se gestionó en el plan de acción. De aquí salen las acciones nuevas.</p>
 <h2>1. Resumen: dónde está la plata</h2>
-<p class="how">Oportunidad = cuánto margen al mes se recupera si la glosa vuelve a su mejor mes de {LG[Mi]} a {LG[M1]} (como % de la venta de {LG[M1]}), o a $0 si es un cargo evitable (penalidades, multas, retiro o stock antiguo en bodega del marketplace). Solo glosas de costo y devoluciones; desde {clp(UMBRAL_OP)}.</p>
-<div class="kpis"><div class="k"><span>Tarifas y cargos</span><b>{clp(tot_cost)} /mes</b></div><div class="k"><span>Devoluciones</span><b>{clp(tot_dev)} /mes</b></div><div class="k"><span>Glosas con oportunidad</span><b>{len(ops)}</b></div></div>
+<p class="how">Brecha vs mejor mes = cuánto más costó la glosa en {LG[M1]} que en su mejor mes de {LG[Mi]} a {LG[M1]} (como % de la venta de {LG[M1]}), o su monto completo si es un cargo evitable (penalidades, multas, retiro o stock antiguo en bodega del marketplace). <b>No es plata recuperable</b>: mezcla cambios de precio y de mix con errores de cobro, y hay que revisar cada glosa para saber qué parte se puede gestionar. Los cargos fijos mensuales (mismo monto todos los meses) no entran. Solo glosas de costo y devoluciones; desde {clp(UMBRAL_OP)}.</p>
+<div class="kpis"><div class="k"><span>Tarifas y cargos</span><b>{clp(tot_cost)} /mes</b></div><div class="k"><span>Devoluciones</span><b>{clp(tot_dev)} /mes</b></div><div class="k"><span>Glosas con brecha</span><b>{len(ops)}</b></div></div>
 <h3>Tarifas, cargos y servicios (top 15)</h3><p class="how">Lo que se negocia con el canal o se deja de pagar operando distinto.</p>
 <div class="tw"><table>{th_top}{filas_top(ops_cost[:15])}</table></div>
 <h3>Devoluciones</h3><p class="how">Se registran en el mes de la nota de crédito, así que un salto puede incluir ventas de meses anteriores. Igual muestran dónde mirar primero (entregas fallidas, producto, cliente).</p>
@@ -385,11 +392,12 @@ def construir(m1=None, sh=None, pendientes=None):
         o = ops_cost[0]
         sig = (' Le siguen ' + ' y '.join(f'{H.escape(x["glosa"])} ({H.escape(x["canal"])}, {clp(x["op"])})' for x in ops_cost[1:3]) + '.'
                if len(ops_cost) > 2 else '')
-        bul.append(f'<b>Tarifas y cargos: {clp(tot_cost)}/mes recuperables.</b> La más grande es {H.escape(o["glosa"])} ({H.escape(o["canal"])}): '
+        bul.append(f'<b>Tarifas y cargos: {clp(tot_cost)}/mes de brecha contra su mejor mes</b> (no es plata recuperable: mezcla '
+                   f'precio, mix y errores de cobro). La más grande es {H.escape(o["glosa"])} ({H.escape(o["canal"])}): '
                    f'{pct(o["p" + Mi])} de la venta en {LG[Mi]}, {pct(o["p" + M0])} en {LG[M0]} y {pct(o["p" + M1])} en {LG[M1]}; '
                    f'volver a su mejor mes son {clp(o["op"])}/mes.{sig}')
     if ops_dev:
-        bul.append(f'<b>Devoluciones: {clp(tot_dev)}/mes.</b> Las más altas en {LG[M1]}: '
+        bul.append(f'<b>Devoluciones: {clp(tot_dev)}/mes de brecha contra su mejor mes.</b> Las más altas en {LG[M1]}: '
                    + ', '.join(f'{H.escape(o["canal"])} ({pct(o["p" + M1])} de la venta, contra {pct(o["p" + M0])} en {LG[M0]})' for o in ops_dev[:3])
                    + '. Se registran en el mes de la nota de crédito, así que parte puede ser de ventas anteriores.')
     if comp_rows:
@@ -409,13 +417,13 @@ def construir(m1=None, sh=None, pendientes=None):
 {aviso_mail}<p style="margin:0 0 8px">Dónde podemos ser más rentables, canal por canal: qué glosas pesan más sobre la venta que antes, cuánto vale volverlas a su mejor mes y qué pasó con lo que se gestionó en {g_prev}. El HTML adjunto trae cada canal glosa por glosa, por modalidad de envío y por pedido.</p>
 <h3 {h3}>Lo principal</h3><ul style="margin:0 0 6px 18px;padding:0">{''.join(f'<li style="margin-bottom:6px">{x}</li>' for x in bul)}</ul>
 <h3 {h3}>1. Resumen por canal</h3>
-<table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {thr}>Venta {NOM[M1]}</th>{''.join(f'<th {thr}>Margen {NOM[m]}</th>' for m in MESES)}<th {thr}>Com. venta</th><th {thr}>Com. envío</th><th {thr}>Marketing</th><th {thr}>Devoluciones</th><th {thr}>Oportunidad $/mes</th></tr>{res_rows}</table>
+<table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {thr}>Venta {NOM[M1]}</th>{''.join(f'<th {thr}>Margen {NOM[m]}</th>' for m in MESES)}<th {thr}>Com. venta</th><th {thr}>Com. envío</th><th {thr}>Marketing</th><th {thr}>Devoluciones</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{res_rows}</table>
 <p {nota}>Centros de costo como % de la venta de {LG[M1]}; entre paréntesis, la variación en puntos contra {LG[M0]} (rojo = pesa más, verde = pesa menos).</p>
 <h3 {h3}>2. Tarifas, cargos y servicios: dónde está la plata (top 10)</h3>
-<table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {th}>Glosa</th>{''.join(f'<th {thr}>% venta {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>$/pedido</th><th {th}>Referencia</th><th {thr}>Oportunidad $/mes</th></tr>{top_rows}</table>
-<p {nota}>Oportunidad = volver al mejor mes de {LG[Mi]} a {LG[M1]} (o a $0 si es un cargo evitable: penalidades, multas, retiro o stock antiguo). $/pedido solo en comisión de envío.</p>
+<table style="border-collapse:collapse"><tr><th {th}>Canal</th><th {th}>Glosa</th>{''.join(f'<th {thr}>% venta {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>$/pedido</th><th {th}>Referencia</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{top_rows}</table>
+<p {nota}>Brecha vs mejor mes = diferencia contra el mejor mes de {LG[Mi]} a {LG[M1]} (o el monto completo si es un cargo evitable: penalidades, multas, retiro o stock antiguo). No es plata recuperable: mezcla cambios de precio y de mix con errores de cobro. Los cargos fijos mensuales no entran. $/pedido solo en comisión de envío.</p>
 <h3 {h3}>3. Devoluciones</h3>
-<table style="border-collapse:collapse"><tr><th {th}>Canal</th>{''.join(f'<th {thr}>% venta {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>Oportunidad $/mes</th></tr>{dev_rows}</table>
+<table style="border-collapse:collapse"><tr><th {th}>Canal</th>{''.join(f'<th {thr}>% venta {NOM[m]}</th>' for m in MESES)}<th {thr}>$ {NOM[M1]}</th><th {thr}>Brecha vs mejor mes $/mes</th></tr>{dev_rows}</table>
 <h3 {h3}>4. Compromisos de {g_prev} → resultado en {LG[M1]}</h3>
 {tabla_comp}
 <p {nota}>Sin gestión registrada: {", ".join(sin_comp) if sin_comp else "ninguna"}. La gestión de {LG[M1]} se anota en la pestaña 8 de la planilla.</p>
