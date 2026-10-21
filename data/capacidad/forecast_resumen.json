@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-21T19:01:55.642097",
+  "generado_en": "2026-10-21T23:47:52.072097",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1375,
   "capacidad_bodega_m3": 2474.9999999999995,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1375,
-    "posiciones_ocupadas_hoy": 772,
-    "posiciones_libres_hoy": 603,
-    "pct_ocupacion_hoy": 56.1,
-    "m3_stock_calculado": 773.2
+    "posiciones_ocupadas_hoy": 789,
+    "posiciones_libres_hoy": 586,
+    "pct_ocupacion_hoy": 57.4,
+    "m3_stock_calculado": 812.0
   },
   "pico_proyectado": {
     "fecha": "2026-10-21",
-    "posiciones_ocupadas": 772.0,
-    "pct_ocupacion": 56.1
+    "posiciones_ocupadas": 789.0,
+    "pct_ocupacion": 57.4
   },
   "minimo_proyectado": {
     "fecha": "2026-12-20",
-    "posiciones_ocupadas": 598.8,
-    "pct_ocupacion": 43.6
+    "posiciones_ocupadas": 615.9,
+    "pct_ocupacion": 44.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -55,14 +55,6 @@
       "transporte": ""
     },
     {
-      "pi": "26TP0826PI",
-      "fecha_eta": "2026-09-24",
-      "pallets": 32.8,
-      "m3": 39.38,
-      "unidades": 4331.0,
-      "transporte": ""
-    },
-    {
       "pi": "26TP0909PI",
       "fecha_eta": "2026-10-07",
       "pallets": 44.8,
@@ -71,9 +63,9 @@
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 126.7,
-  "pallets_total_salientes_horizonte": 173.2,
-  "m3_total_entrante_horizonte": 152.0,
+  "pallets_total_entrantes_horizonte": 93.9,
+  "pallets_total_salientes_horizonte": 173.1,
+  "m3_total_entrante_horizonte": 112.6,
   "m3_total_saliente_horizonte": 207.8,
   "salidas_debug": {
     "horizonte_dias": 90,
@@ -81,8 +73,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18153.0,
-    "demanda_cumplida_unidades": 12787.0,
-    "demanda_no_cubierta_unidades_total": 5366.0,
+    "demanda_cumplida_unidades": 12782.0,
+    "demanda_no_cubierta_unidades_total": 5371.0,
     "pct_demanda_cumplida": 70.4,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
