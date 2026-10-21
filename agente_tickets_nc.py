@@ -27,8 +27,8 @@ devolución de stock, en este orden:
   2) NC: toma el costo de esa devolución y la 111009 queda en cero;
   3) traslado CA1/Output → BPV/Entrada «devuelto por recepcionar», que valida el
      agente. Odoo crea solo el BPV/STOR (Entrada → Stock), que valida bodega.
-Solo para productos recibidos desde el 14-oct (CORTE_BPV): hasta el 13-oct Postventa
-los ingresaba a BPV con recepción sin OC y devolverlos de nuevo duplicaría el stock.
+Solo para productos recibidos desde el 07-oct (CORTE_BPV): hasta el 06-oct Postventa
+los ingresaba a BPV (recepción sin OC y conteo del 06-oct) y devolverlos duplicaría el stock.
 Sin despacho único desde CA1/Output, o con una devolución que no hizo el agente, sale
 solo la NC (como antes del 20-oct).
 
@@ -56,7 +56,10 @@ FECHA_INICIO = datetime.date(2026, 8, 31)
 VENTANA_H = 8
 MAX_NC_POR_CORRIDA = 40
 TAG = "[AGENTE-PV"
-CORTE_BPV = "2026-10-14"   # desde aquí Postventa ya no recibe en BPV sin OC
+# BPV/Stock quedó igual al conteo físico de Francisca del 06-oct (ajuste del 14-oct) y desde
+# el 03-oct Postventa casi no registró recepciones sin OC (5 unidades entre el 5 y el 13-oct):
+# lo recibido desde el 07-oct no está en Odoo (cruce con la lista de Max del 20-oct).
+CORTE_BPV = "2026-10-07"
 CA1_OUTPUT, BPV_ENTRADA, T_BPV_INT = 11, 3327, 165
 EXCEL =sys.argv[sys.argv.index("--excel") + 1] if "--excel" in sys.argv else None
 
@@ -385,7 +388,7 @@ def planificar_inventario(lst):
         prev = devs.get(out["id"], [])
         ajenas = [r for r in prev if TAG not in str(r.get("origin") or "")]
         if not a["frecep"] or str(a["frecep"])[:10] < CORTE_BPV:
-            a["inv_motivo"] = ("solo NC: recibido antes del 14-oct (ya entró a BPV)" if a["frecep"]
+            a["inv_motivo"] = ("solo NC: recibido antes del 07-oct (ya está en BPV)" if a["frecep"]
                                else "solo NC: ticket sin F. recepción PV")
         elif out["location_id"][0] != CA1_OUTPUT:
             a["inv_motivo"] = f"solo NC: despachado desde {out['location_id'][1]}"
