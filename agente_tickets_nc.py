@@ -294,20 +294,28 @@ for oc, cs in por_oc.items():
         marcas["revisar"] += [(i, f"boleta {bol['name']} de {fecha_bol.get(bol['id'])} — fuera de plazo NC 3 meses, decisión manual") for i in tids]
         continue
     por_prod = {l["product_id"][0]: l for l in lin_por_bol.get(bol["id"], []) if l["product_id"]}
+    # Unidades facturadas por producto SUMANDO sus líneas: una boleta puede traer el mismo
+    # producto en varias líneas (1 + 1). Comparando contra una sola línea, un ticket de 1
+    # unidad parecía devolución total y la NC acreditaba la boleta completa (22 NC con
+    # $631.456 neto de más, sep-oct 2026).
+    cant_bol = collections.Counter()
+    for l in lin_por_bol.get(bol["id"], []):
+        if l["product_id"]:
+            cant_bol[l["product_id"][0]] += l["quantity"]
     lineas, problema = {}, None
     for c in cs:
         pid = c["prod"][0] if isinstance(c["prod"], (list, tuple)) else c["prod"]
         if pid not in por_prod:
             problema = f"producto {c['prod'][1] if isinstance(c['prod'],(list,tuple)) else pid} no está en boleta {bol['name']}"
             break
-        if c["qty"] > por_prod[pid]["quantity"]:
-            problema = f"cantidad ticket ({c['qty']}) > facturada ({por_prod[pid]['quantity']:g})"
+        if lineas.get(pid, 0) + c["qty"] > cant_bol[pid]:
+            problema = f"cantidad ticket ({lineas.get(pid, 0) + c['qty']}) > facturada ({cant_bol[pid]:g})"
             break
         lineas[pid] = lineas.get(pid, 0) + c["qty"]
     if problema:
         marcas["revisar"] += [(i, problema) for i in tids]
         continue
-    total_flag = (set(lineas) == set(por_prod)) and all(lineas[p] == por_prod[p]["quantity"] for p in lineas)
+    total_flag = (set(lineas) == set(cant_bol)) and all(lineas[p] == cant_bol[p] for p in lineas)
     frecep = min((c["frecep"] for c in cs if c["frecep"]), default=None)
     if frecep and str(frecep)[:7] == f"{HOY:%Y-%m}":
         fecha_nc = str(frecep)[:10]
