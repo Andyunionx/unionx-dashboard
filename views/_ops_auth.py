@@ -45,27 +45,34 @@ COOKIE_NAME = "ops_session"
 
 
 def _get_secret() -> str:
-    """Secret HMAC para firmar tokens. Estable entre re-deploys."""
+    """Llave HMAC para firmar tokens. Estable entre re-deploys. Sin llave → "" y nadie entra.
+    Antes, sin OPS_AUTH_SECRET ni LIBSQL_AUTH_TOKEN (Turso ya no se usa) la llave salía de un texto fijo del repo
+    público y se podía fabricar una sesión (21-oct-2026)."""
     s = os.environ.get("OPS_AUTH_SECRET", "").strip()
     if s:
         return s
-    # Fallback: derivar de LIBSQL_AUTH_TOKEN (siempre presente, no se rota)
-    seed = os.environ.get("LIBSQL_AUTH_TOKEN", "") + "|ops_auth_v1"
-    return hashlib.sha256(seed.encode()).hexdigest()
+    for nombre in ("OPS_ODOO_PASSWORD", "LIBSQL_AUTH_TOKEN"):
+        base = os.environ.get(nombre, "").strip()
+        if base:
+            return hmac.new(base.encode(), b"unionx-ops-session-v2", hashlib.sha256).hexdigest()
+    return ""
 
 
 def _make_token(email: str, ttl_hours: int = SESSION_TTL_HOURS) -> str:
     """Token HMAC: email|expires|signature."""
     expires = int(time.time()) + ttl_hours * 3600
     msg = f"{email}|{expires}"
-    sig = hmac.new(_get_secret().encode(), msg.encode(),
+    secreto = _get_secret()
+    if not secreto:
+        raise RuntimeError("sin llave de sesión")
+    sig = hmac.new(secreto.encode(), msg.encode(),
                    hashlib.sha256).hexdigest()
     return f"{msg}|{sig}"
 
 
 def _verify_token(token: str) -> str | None:
     """Devuelve email si token es válido y no expirado, None si no."""
-    if not token:
+    if not token or not _get_secret():
         return None
     try:
         email, expires_str, sig = token.rsplit("|", 2)
@@ -226,6 +233,11 @@ def require_login_ops(app_name: str = "Operaciones", icon: str = "🚢"):
     Si está autenticado: muestra info en sidebar y deja seguir.
     Si no: muestra form de login y st.stop().
     """
+    if not _get_secret():
+        st.error("La app no tiene llave de sesión: falta OPS_AUTH_SECRET u OPS_ODOO_PASSWORD en los Secrets de "
+                 "Streamlit Cloud. Nadie puede entrar hasta configurarla.")
+        st.stop()
+
     # 1. ¿Ya autenticado en esta sesión Streamlit?
     if st.session_state.get("ops_authenticated"):
         with st.sidebar:

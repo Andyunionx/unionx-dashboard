@@ -29,18 +29,34 @@ COOKIE_NAME = "unionx_cont_session"
 COOKIE_MAX_AGE_HOURS = 8
 
 
-def _cookie_secret() -> str:
+def _secreto(nombre: str) -> str:
     try:
-        val = st.secrets.get("CONT_COOKIE_SECRET")
+        val = st.secrets.get(nombre)
         if val:
-            return str(val)
+            return str(val).strip()
     except Exception:
         pass
-    return os.environ.get("CONT_COOKIE_SECRET", "unionx-contabilidad-change-me")
+    return os.environ.get(nombre, "").strip()
+
+
+def _cookie_secret() -> str:
+    """Llave HMAC de la sesión. CONT_COOKIE_SECRET quedó publicado en el repo (público) y ya no se usa (21-oct-2026).
+    CONT_SESSION_KEY si existe; si no, derivada de la contraseña Odoo de servicio (nunca estuvo en el repo). Sin ninguna, "" → nadie entra."""
+    propia = _secreto("CONT_SESSION_KEY")
+    if propia:
+        return propia
+    for nombre in ("OPS_ODOO_PASSWORD", "ANDRES_ODOO_PASSWORD"):
+        base = _secreto(nombre)
+        if base:
+            return hmac.new(base.encode(), b"unionx-cont-session-v2", hashlib.sha256).hexdigest()
+    return ""
 
 
 def _firmar(payload: str) -> str:
-    return hmac.new(_cookie_secret().encode(), payload.encode(),
+    secreto = _cookie_secret()
+    if not secreto:
+        raise RuntimeError("sin llave de sesión")
+    return hmac.new(secreto.encode(), payload.encode(),
                      hashlib.sha256).hexdigest()
 
 
@@ -166,6 +182,10 @@ def _login_form():
 
 
 def require_login_cont():
+    if not _cookie_secret():
+        st.error("La app no tiene llave de sesión: falta CONT_SESSION_KEY u OPS_ODOO_PASSWORD en los Secrets de "
+                 "Streamlit Cloud. Nadie puede entrar hasta configurarla.")
+        st.stop()
     if st.session_state.get("cont_user"):
         return
     cookie = _leer_cookie()

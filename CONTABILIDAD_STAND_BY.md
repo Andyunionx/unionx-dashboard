@@ -41,8 +41,7 @@ data/contabilidad/                 → outputs + carpetas para uploads
 5. Implementar botón "Aplicar a Odoo" con preview + confirmación
 6. Configurar deploy: `unionx-contabilidad.streamlit.app`
 
-🔑 **Secret generado para deploy:**
-`CONT_COOKIE_SECRET = "X0tMywwjYtPVNaF07Yr0Wry9gVZGdP1pIDav8rG_AwyKesU35l4pkB8cx3RSWXT3"`
+🔑 **Llave de sesión:** `CONT_COOKIE_SECRET` quedó publicado en este archivo y ya no se usa (21-oct-2026). La llave es `CONT_SESSION_KEY` si existe en los Secrets de Streamlit Cloud; si no, se deriva de `OPS_ODOO_PASSWORD`. Nunca escribir secretos en este repo: es público.
 
 ---
 
@@ -99,7 +98,7 @@ Igual que Finanzas, **Create app**:
 - Secrets:
 ```toml
 CONT_ALLOWED_EMAILS = "andres@grupoeter.cl,andres@unionx.cl,contabilidad@grupoeter.cl,facturacion@melollevo.cl"
-CONT_COOKIE_SECRET = "X0tMywwjYtPVNaF07Yr0Wry9gVZGdP1pIDav8rG_AwyKesU35l4pkB8cx3RSWXT3"
+# CONT_SESSION_KEY = "<opcional; generar uno nuevo y no escribirlo aquí>"
 ODOO_URL = "https://unionxb2b.odoo.com"
 ODOO_DB = "bmya-innovatek-sh-prd-6981800"
 OPS_ODOO_USER = "<el mismo de Ops>"

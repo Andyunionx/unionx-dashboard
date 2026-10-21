@@ -45,8 +45,7 @@ data/finanzas/                             ← parquets generados
 5. Sumar al snapshot el campo "cobertura volumen" del Sheet
 6. (Si necesario) ajustar layout/filtros tras feedback de Andrés
 
-🔑 **Secret generado para deploy:**
-`FIN_COOKIE_SECRET = "fCRxsWIND8bHF58SpOA7cU95jIlMyQjujIx1YLasB67AmtVw-d2ZXmYadi5qUAiS"`
+🔑 **Llave de sesión:** `FIN_COOKIE_SECRET` quedó publicado en este archivo y ya no se usa (21-oct-2026). La llave es `FIN_SESSION_KEY` si existe en los Secrets de Streamlit Cloud; si no, se deriva de `OPS_ODOO_PASSWORD`. Nunca escribir secretos en este repo: es público.
 
 🔑 **Sheet Drive integrado:** `1NfIL-k00pUbF5ogsVnadP2wMAVc7oUKkOA7UMLOT-j0`
 Compartido con `union-x-revenue-bot@union-x-revenue.iam.gserviceaccount.com`
@@ -112,7 +111,7 @@ views/fin_forecast_cierre.py       ← Cierre proyectado año
 - Secrets:
 ```toml
 FIN_ALLOWED_EMAILS = "andres@grupoeter.cl,andres@unionx.cl,facturacion@melollevo.cl,contabilidad@grupoeter.cl"
-FIN_COOKIE_SECRET = "fCRxsWIND8bHF58SpOA7cU95jIlMyQjujIx1YLasB67AmtVw-d2ZXmYadi5qUAiS"
+# FIN_SESSION_KEY = "<opcional; generar uno nuevo y no escribirlo aquí>"
 ODOO_URL = "https://unionxb2b.odoo.com"
 ODOO_DB = "bmya-innovatek-sh-prd-6981800"
 OPS_ODOO_USER = "<el mismo de Ops>"
