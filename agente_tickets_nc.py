@@ -21,6 +21,17 @@ Formato NC = wizard account.move.reversal (igual que facturación): tipo 61,
 código referencia SII 1 (devolución total) / 3 (parcial). El envío al SII lo
 hace el cron 26 estándar.
 
+Inventario (Andrés 20-oct, probado en test3): cada NC por devolución va con su
+devolución de stock, en este orden:
+  1) devolución del despacho original (solo las unidades del ticket) a CA1/Output;
+  2) NC: toma el costo de esa devolución y la 111009 queda en cero;
+  3) traslado CA1/Output → BPV/Entrada «devuelto por recepcionar», que valida el
+     agente. Odoo crea solo el BPV/STOR (Entrada → Stock), que valida bodega.
+Solo para productos recibidos desde el 14-oct (CORTE_BPV): hasta el 13-oct Postventa
+los ingresaba a BPV con recepción sin OC y devolverlos de nuevo duplicaría el stock.
+Sin despacho único desde CA1/Output, o con una devolución que no hizo el agente, sale
+solo la NC (como antes del 20-oct).
+
 Campo helpdesk.ticket.x_estado_nc: con_nc / nc_creada / sin_nc / sin_boleta /
 nc_previa / revisar / no_aplica.
 
@@ -45,7 +56,9 @@ FECHA_INICIO = datetime.date(2026, 8, 31)
 VENTANA_H = 8
 MAX_NC_POR_CORRIDA = 40
 TAG = "[AGENTE-PV"
-EXCEL = sys.argv[sys.argv.index("--excel") + 1] if "--excel" in sys.argv else None
+CORTE_BPV = "2026-10-14"   # desde aquí Postventa ya no recibe en BPV sin OC
+CA1_OUTPUT, BPV_ENTRADA, T_BPV_INT = 11, 3327, 165
+EXCEL =sys.argv[sys.argv.index("--excel") + 1] if "--excel" in sys.argv else None
 
 cfg = json.load(open(ROOT / "odoo/odoo_config.json"))["produccion"]
 PW = os.environ.get("ANDRES_ODOO_PASSWORD", "")
@@ -297,9 +310,97 @@ for oc, cs in por_oc.items():
         fecha_nc = str(frecep)[:10]
     else:
         fecha_nc = str(HOY)
-    acciones.append({"bol": bol, "pedido": ords[0]["name"], "tids": tids, "trefs": [c["t"]["ticket_ref"] for c in cs],
-                     "lineas": lineas, "total": total_flag, "fecha": fecha_nc, "oc": oc,
+    acciones.append({"bol": bol, "pedido": ords[0]["name"], "so_id": ords[0]["id"], "tids": tids,
+                     "trefs": [c["t"]["ticket_ref"] for c in cs], "lineas": lineas, "total": total_flag,
+                     "fecha": fecha_nc, "oc": oc, "frecep": frecep,
+                     "estados": ", ".join(sorted({str(c["estado"]) for c in cs if c["estado"]})),
                      "monto_est": sum(por_prod[p]["price_unit"] * q for p, q in lineas.items())})
+
+
+def planificar_inventario(lst):
+    """Decide, para cada NC, si va con devolución de inventario (ver docstring). Solo lee.
+    Deja en cada acción: inv (despacho, unidades por movimiento, devolución a retomar) o None,
+    inv_motivo (texto para el Excel y el ticket) y costo_dev (costo de las unidades del ticket)."""
+    so_ids = sorted({a["so_id"] for a in lst})
+    outs = collections.defaultdict(list)
+    for i in range(0, len(so_ids), 400):
+        for p in ex("stock.picking", "search_read", [("sale_id", "in", so_ids[i:i+400]), ("state", "=", "done"),
+                                                     ("location_dest_id.usage", "=", "customer")],
+                    fields=["id", "name", "sale_id", "location_id"], limit=5000):
+            outs[p["sale_id"][0]].append(p)
+    out_ids = [p["id"] for ps in outs.values() for p in ps]
+    devs, movs = collections.defaultdict(list), collections.defaultdict(list)
+    for i in range(0, len(out_ids), 400):
+        ch = out_ids[i:i+400]
+        for r in ex("stock.picking", "search_read", [("return_id", "in", ch), ("state", "!=", "cancel")],
+                    fields=["id", "name", "state", "origin", "return_id"], limit=5000):
+            devs[r["return_id"][0]].append(r)
+        for m in ex("stock.move", "search_read", [("picking_id", "in", ch), ("state", "=", "done")],
+                    fields=["id", "picking_id", "product_id", "quantity", "bom_line_id", "sale_line_id"], limit=20000):
+            movs[m["picking_id"][0]].append(m)
+    mids = [m["id"] for ms in movs.values() for m in ms]
+    val = collections.defaultdict(lambda: [0.0, 0.0])
+    for i in range(0, len(mids), 800):
+        for l in ex("stock.valuation.layer", "search_read", [("stock_move_id", "in", mids[i:i+800])],
+                    fields=["stock_move_id", "value", "quantity"], limit=20000):
+            val[l["stock_move_id"][0]][0] += l["value"]
+            val[l["stock_move_id"][0]][1] += l["quantity"]
+    costo_u = {k: abs(v / q) if q else 0 for k, (v, q) in val.items()}
+    slids = sorted({m["sale_line_id"][0] for ms in movs.values() for m in ms if m["sale_line_id"]})
+    sl = {}
+    for i in range(0, len(slids), 800):
+        for l in ex("sale.order.line", "read", slids[i:i+800], fields=["product_id", "product_uom_qty"]):
+            sl[l["id"]] = l
+    # Kits NO inventariables (47 al 20-oct): Odoo no les pone línea de costo ni en la boleta ni
+    # en la NC, así que la devolución dejaría la 111009 descuadrada (test3). Solo NC hasta
+    # marcarlos como inventariables, como los otros 464.
+    pids = sorted({p for a in lst for p in a["lineas"]})
+    kit_no_inv = set()
+    for i in range(0, len(pids), 800):
+        kit_no_inv |= {p["id"] for p in ex("product.product", "read", pids[i:i+800], fields=["is_kits", "is_storable"])
+                       if p["is_kits"] and not p["is_storable"]}
+    for a in lst:
+        a["inv"], a["costo_dev"] = None, 0
+        os_ = outs.get(a["so_id"], [])
+        if len(os_) != 1:
+            a["inv_motivo"] = f"solo NC: pedido {'sin despacho' if not os_ else f'con {len(os_)} despachos'}"
+            continue
+        out = os_[0]
+        # Unidades a devolver por movimiento del despacho. Un kit se vende en una línea y se
+        # despacha por componentes: se devuelve la proporción del kit que trae el ticket.
+        pend, cant = dict(a["lineas"]), {}
+        for m in movs.get(out["id"], []):
+            l = sl.get(m["sale_line_id"][0]) if m["sale_line_id"] else None
+            p = l["product_id"][0] if l else m["product_id"][0]
+            if p not in pend:
+                continue
+            if m["bom_line_id"] and l and l["product_uom_qty"]:
+                q = round(m["quantity"] * min(1, a["lineas"][p] / l["product_uom_qty"]), 4)
+            else:
+                q = min(m["quantity"], pend[p])
+                pend[p] -= q
+            if q > 0:
+                cant[m["id"]] = q
+        a["costo_dev"] = sum(q * costo_u.get(mid, 0) for mid, q in cant.items())
+        prev = devs.get(out["id"], [])
+        ajenas = [r for r in prev if TAG not in str(r.get("origin") or "")]
+        if not a["frecep"] or str(a["frecep"])[:10] < CORTE_BPV:
+            a["inv_motivo"] = ("solo NC: recibido antes del 14-oct (ya entró a BPV)" if a["frecep"]
+                               else "solo NC: ticket sin F. recepción PV")
+        elif out["location_id"][0] != CA1_OUTPUT:
+            a["inv_motivo"] = f"solo NC: despachado desde {out['location_id'][1]}"
+        elif ajenas:
+            a["inv_motivo"] = f"solo NC: el despacho ya tiene la devolución {ajenas[0]['name']}"
+        elif not cant:
+            a["inv_motivo"] = "solo NC: el producto del ticket no está en el despacho"
+        elif kit_no_inv & set(a["lineas"]):
+            a["inv_motivo"] = "solo NC: kit no inventariable en Odoo"
+        else:
+            a["inv"] = {"out": out, "cant": cant, "ret": prev[0]["id"] if prev else None}
+            a["inv_motivo"] = "devolución a CA1/Output y traslado a BPV" + (f" (retoma {prev[0]['name']})" if prev else "")
+
+
+planificar_inventario(acciones)
 
 # Lista de boletas autorizadas (Andrés 05-oct, opción 2): mientras la variable tenga
 # boletas, se emiten SOLO esas; el resto queda retenido (sin marcar) hasta validarlo.
@@ -318,6 +419,11 @@ for a in acciones[:15]:
     print(f"  {'TOTAL ' if a['total'] else 'PARCIAL'} boleta {a['bol']['name']} OC {a['oc']} fecha {a['fecha']} ~${a['monto_est']:,.0f} tickets {a['trefs']}")
 if len(acciones) > 15:
     print(f"  ... y {len(acciones)-15} más")
+for nombre_l, lst_ in (("a emitir", acciones), ("retenidas", retenidas)):
+    inv_c = collections.Counter(a["inv_motivo"].split(" (retoma")[0] for a in lst_)
+    if inv_c:
+        print(f"inventario de las NC {nombre_l}: {dict(inv_c)} · costo devuelto "
+              f"${sum(a['costo_dev'] for a in lst_ if a['inv']):,.0f}")
 for est, lst in marcas.items():
     print(f"\n{est}: {len(lst)}")
     for tid, m in lst[:6]:
@@ -380,8 +486,11 @@ if EXCEL and not LIVE:
             "boleta": a["bol"]["name"], "pedido": a["pedido"], "oc": a["oc"], "tickets": ", ".join("#" + str(r) for r in a["trefs"]),
             "canal": ", ".join(sorted({R.canal_canonico(R.texto(nombre_t[i], "Canal")) for i in a["tids"]})),
             "tipo": "total" if a["total"] else "parcial", "fecha NC": a["fecha"],
-            "monto estimado": round(a["monto_est"])} for a in lst],
-            columns=["boleta", "pedido", "oc", "tickets", "canal", "tipo", "fecha NC", "monto estimado"])
+            "monto estimado": round(a["monto_est"]), "recepción PV": str(a["frecep"] or "")[:10],
+            "estado producto": a["estados"], "inventario": a["inv_motivo"],
+            "costo unidades": round(a["costo_dev"])} for a in lst],
+            columns=["boleta", "pedido", "oc", "tickets", "canal", "tipo", "fecha NC", "monto estimado",
+                     "recepción PV", "estado producto", "inventario", "costo unidades"])
 
     def fila_marca(est, tid, m):
         oc = oc_de_tid.get(tid, "")
@@ -407,6 +516,9 @@ if EXCEL and not LIVE:
     resumen = [("Clasificación", k, v, None) for k, v in conteo.most_common()]
     resumen += [("Agente", "emitiría NC", len(acciones), round(sum(a["monto_est"] for a in acciones)))]
     resumen += [("Agente", "retenida (lista autorizada)", len(retenidas), round(sum(a["monto_est"] for a in retenidas)))]
+    for nombre_l, lst_ in (("emitiría", acciones), ("retenida", retenidas)):
+        for mot, n in collections.Counter(a["inv_motivo"].split(" (retoma")[0] for a in lst_).most_common():
+            resumen += [(f"Inventario ({nombre_l})", mot, n, round(sum(a["costo_dev"] for a in lst_ if a["inv_motivo"].startswith(mot))))]
     resumen += [("Agente", f"marca {k}", len(v), None) for k, v in marcas.items()]
     resumen += [("Manual", f"{g} · {e}", n, None) for (g, e), n in sorted(cm.items())]
     with pd.ExcelWriter(EXCEL) as w:
@@ -428,6 +540,77 @@ def marcar(tids, estado, nota):
         except Exception:
             pass
 
+def validar_picking(pid, dest):
+    """Reserva, completa las cantidades y valida (mismo procedimiento probado en test3). Se
+    completa aunque no se pueda reservar: CA1/Output tiene productos en negativo y el producto
+    ya está físicamente en Postventa."""
+    ex("stock.picking", "action_assign", [pid])
+    mv = ex("stock.move", "search_read", [("picking_id", "=", pid)], fields=["id", "product_uom_qty", "quantity"])
+    for m in mv:
+        if m["quantity"] < m["product_uom_qty"]:
+            ex("stock.move", "write", [m["id"]], {"quantity": m["product_uom_qty"]})
+    ex("stock.move.line", "write", ex("stock.move.line", "search", [("picking_id", "=", pid)]), {"location_dest_id": dest})
+    ex("stock.move", "write", [m["id"] for m in mv], {"picked": True})
+    ex("stock.picking", "button_validate", [pid], context={"skip_sms": True, "skip_backorder": True})
+    p = ex("stock.picking", "read", [pid], fields=["name", "state"])[0]
+    if p["state"] != "done":
+        raise Exception(f"{p['name']} quedó en estado {p['state']}")
+    return p["name"]
+
+
+def devolver(a):
+    """Paso 1: devolución del despacho original a CA1/Output, solo con las unidades del ticket y
+    «a reembolsar». Si una corrida anterior la dejó hecha, se retoma."""
+    inv, out = a["inv"], a["inv"]["out"]
+    if inv["ret"]:
+        r = ex("stock.picking", "read", [inv["ret"]], fields=["name", "state"])[0]
+        return inv["ret"], (r["name"] if r["state"] == "done" else validar_picking(inv["ret"], CA1_OUTPUT))
+    ctx = {"active_model": "stock.picking", "active_id": out["id"], "active_ids": [out["id"]]}
+    w = ex("stock.return.picking", "create", {"picking_id": out["id"]}, context=ctx)
+    for l in ex("stock.return.picking.line", "search_read", [("wizard_id", "=", w)], fields=["id", "move_id"]):
+        ex("stock.return.picking.line", "write", [l["id"]],
+           {"quantity": inv["cant"].get(l["move_id"][0], 0), "to_refund": True})
+    ex("stock.return.picking", "action_create_returns", [w], context=ctx)
+    ret_id = ex("stock.picking", "search", [("return_id", "=", out["id"]), ("state", "!=", "cancel")], order="id desc", limit=1)[0]
+    ex("stock.picking", "write", [ret_id], {
+        "location_dest_id": CA1_OUTPUT,
+        "origin": f"{out['name']} {TAG} {','.join('#' + str(r) for r in a['trefs'])}]"})
+    try:
+        return ret_id, validar_picking(ret_id, CA1_OUTPUT)
+    except Exception:
+        ex("stock.picking", "action_cancel", [ret_id])
+        raise
+
+
+def trasladar(ret_id, ret_name, nota):
+    """Paso 3: CA1/Output → BPV/Entrada «devuelto por recepcionar», validado por el agente.
+    Odoo crea solo el BPV/STOR (Entrada → Stock) que valida bodega. No duplica: si la
+    devolución ya tiene traslado, no hace nada."""
+    if ex("stock.picking", "search_count", [("picking_type_id", "=", T_BPV_INT), ("origin", "=like", f"{ret_name} ·%"),
+                                            ("state", "!=", "cancel")]):
+        return None
+    mv = ex("stock.move", "search_read", [("picking_id", "=", ret_id), ("state", "=", "done")],
+            fields=["product_id", "quantity", "product_uom"])
+    pid = ex("stock.picking", "create", {
+        "picking_type_id": T_BPV_INT, "location_id": CA1_OUTPUT, "location_dest_id": BPV_ENTRADA,
+        "origin": f"{ret_name} · {nota} · devuelto por recepcionar",
+        "move_ids": [(0, 0, {"name": m["product_id"][1][:60], "product_id": m["product_id"][0],
+                             "product_uom_qty": m["quantity"], "product_uom": m["product_uom"][0],
+                             "location_id": CA1_OUTPUT, "location_dest_id": BPV_ENTRADA}) for m in mv if m["quantity"]]})
+    ex("stock.picking", "action_confirm", [pid])
+    return validar_picking(pid, BPV_ENTRADA)
+
+
+# Devoluciones del agente que quedaron en CA1/Output sin traslado (corrida cortada entre pasos).
+for r in ex("stock.picking", "search_read", [("origin", "ilike", TAG), ("state", "=", "done"), ("return_id", "!=", False),
+                                             ("location_dest_id", "=", CA1_OUTPUT)], fields=["id", "name", "origin"], limit=500):
+    try:
+        tr = trasladar(r["id"], r["name"], r["origin"].split(TAG)[-1].strip(" ]"))
+        if tr:
+            print(f"  ↪ traslado pendiente completado: {r['name']} → {tr}")
+    except Exception as e:
+        print(f"  ⚠ traslado pendiente de {r['name']} falló: {str(e)[:150]}")
+
 actual = {t["id"]: t.get("x_estado_nc") for t in tickets}
 for est, lst in marcas.items():
     ids = [i for i, _ in lst if actual.get(i) != est]   # solo las que cambian
@@ -435,10 +618,21 @@ for est, lst in marcas.items():
         ex("helpdesk.ticket", "write", ids, {"x_estado_nc": est})
 print("campos marcados (no emisores)")
 
-emitidas, errores = 0, []
+emitidas, errores, sin_inv = 0, [], []
 for a in acciones[:MAX_NC_POR_CORRIDA]:
     try:
         bol = a["bol"]
+        # 1) Primero la devolución: así la NC toma el costo del despacho original. Si emitiera
+        # antes, tomaría el costo promedio de hoy y la 111009 quedaría con diferencia (test3).
+        ret, nota_inv = None, f" Inventario: {a['inv_motivo']}."
+        if a["inv"]:
+            try:
+                ret = devolver(a)
+            except Exception as e:
+                # No se frena la NC (es del cliente): sale como antes del 20-oct y queda avisado.
+                nota_inv = f" Devolución de inventario NO hecha ({str(e)[:120]}): revisar con bodega."
+                sin_inv.append((a["oc"], f"devolución: {str(e)[:150]}"))
+                print(f"  ⚠ OC {a['oc']}: la devolución de inventario falló, sale solo la NC: {str(e)[:120]}")
         wiz = ex("account.move.reversal", "create", {
             "move_ids": [(6, 0, [bol["id"]])], "date": a["fecha"],
             "reason": f"Devolución postventa tickets {','.join('#'+str(r) for r in a['trefs'])}",
@@ -480,9 +674,19 @@ for a in acciones[:MAX_NC_POR_CORRIDA]:
         if chk["amount_total"] <= 0:
             raise Exception("NC quedó en $0 tras la poda — no se postea")
         ex("account.move", "action_post", [nc["id"]])
-        marcar(a["tids"], "nc_creada", f"NC emitida por boleta {bol['name']} (${chk['amount_total']:,.0f})")
+        nc_name = ex("account.move", "read", [nc["id"]], fields=["name"])[0]["name"]
+        if ret:
+            # 3) Traslado a BPV/Entrada; si falla, la próxima corrida lo completa (barrido de arriba).
+            try:
+                tr = trasladar(ret[0], ret[1], f"{nc_name} ({a['estados'] or 'sin estado'})")
+                nota_inv = f" Producto devuelto ({ret[1]}) y trasladado a BPV/Entrada ({tr}); bodega valida el BPV/STOR."
+            except Exception as e:
+                nota_inv = f" Producto devuelto ({ret[1]}); el traslado a BPV queda para la próxima corrida ({str(e)[:100]})."
+                sin_inv.append((a["oc"], f"traslado: {str(e)[:150]}"))
+        marcar(a["tids"], "nc_creada", f"NC emitida por boleta {bol['name']} (${chk['amount_total']:,.0f}).{nota_inv}")
         emitidas += 1
-        print(f"  ✔ NC posteada boleta {bol['name']} ${chk['amount_total']:,.0f} tickets {a['trefs']}")
+        print(f"  ✔ NC posteada boleta {bol['name']} ${chk['amount_total']:,.0f} tickets {a['trefs']}"
+              + (f" · {ret[1]} → BPV" if ret else f" · {a['inv_motivo']}"))
     except Exception as e:
         errores.append((a["oc"], str(e)[:200]))
         try:
@@ -492,6 +696,8 @@ for a in acciones[:MAX_NC_POR_CORRIDA]:
         print(f"  ✘ ERROR OC {a['oc']}: {str(e)[:160]}")
 
 print(f"\nEMITIDAS: {emitidas} | errores: {len(errores)} | pendientes próxima corrida: {max(0, len(acciones)-MAX_NC_POR_CORRIDA)}")
+if sin_inv:
+    print(f"inventario con problema ({len(sin_inv)}): {sin_inv[:10]}")
 
 # ---- 4) reporte semanal a Max (lunes, SOLO la primera corrida del día) ----
 # Fix 15-sep: (a) antes salía en CADA corrida horaria del lunes (3+ mails/día);
