@@ -130,14 +130,18 @@
       "2026-09-24 12:22:04Z · correo ya enviado con estos pendientes → no re-envío",
       "2026-09-24 12:22:05Z · ESCALADO (lleva 17 días esperando) → felipe@unionx.cl, sguzman@grupoeter.cl, bodega@grupoeter.cl cc andres@unionx.cl (1a0d35da64d2d9ab)",
       "2026-09-24 12:22:05Z · pendientes (0 por crear + 2 sin código) → re-chequea Odoo mañana",
-      "2026-09-28 19:01:27Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00736) → COMPLETADO"
+      "2026-09-28 19:01:27Z · fase 3 (COSTEO_Y_SKUS) → 9 (COMPLETADO) PO ya existente en Odoo (P00736) → COMPLETADO",
+      "2026-10-22 19:41:19Z · TP103 (sin código en el PI) = SIMHIECHAR: 504 u agregadas a mano a P00736 a $10.109,26 (OK Andrés 22-oct); recepción CA1/IN/01099"
     ],
     "productos_sin_sku": [
       "TP033E",
       "TP103"
     ],
     "correo_firma": "[]|['TP033E', 'TP103']",
-    "escalado_ts": "2026-09-24 12:22:05"
+    "escalado_ts": "2026-09-24 12:22:05",
+    "sku_alias": {
+      "TP103": "SIMHIECHAR"
+    }
   },
   "26TP0806": {
     "embarque": "26TP0806",

@@ -4,7 +4,8 @@ Con PI+PL (fase 1) y flete final (fase 2), esta fase:
 1. Construye las Tarifas (flete del estado + gastos Chile ESTÁNDAR + TC + ETA).
 2. Corre el motor de costeo (reusa _REACTIVAR_NUEVO_PC/costear_embarque.py, con fix CBM).
 3. Genera el Pre-costeo + compara con la Maestra.
-4. Chequea en Odoo qué SKU existen (por default_code) → lista de FALTANTES.
+4. Ítems SIN código en el PI → SKU por el historial del modelo en la Maestra (si es inequívoco).
+   Chequea en Odoo qué SKU existen (por default_code) → lista de FALTANTES.
 5. Envía el correo de costeo a Felipe/Seba/bodega (una vez por cada cambio de pendientes).
 6. Gate: sin pendientes → fase 4. Solo ítems SIN código → PO parcial (no bloquean).
    SKU por crear → se queda y re-chequea Odoo cada día.
@@ -41,6 +42,15 @@ DEST = ["felipe@unionx.cl", "sguzman@grupoeter.cl", "bodega@grupoeter.cl"]  # Ge
 
 PUERTOS = {"SZ": "Shenzhen", "NB": "Ningbo", "XI": "Xiamen"}
 
+# Maestra viva (historial modelo → SKU): local en el PC de Andrés; en la nube se baja de Drive (como vigia_maestra)
+MAESTRA_VIVA_LOCAL = Path("G:/Mi unidad/TRABAJO/RESPALDO/OPERACIONES/COMEX/Planificaciones/Maestra Importaciones.xlsx")
+MIN_EMB_AUTO = 3           # embarques con el mismo SKU para cargarlo solo a la PO
+TOL_AUTO = 0.10            # precio PI vs último precio histórico (automático)
+TOL_SUGERIDO = 0.35        # ídem para solo sugerirlo en el correo
+MIN_QTY = 10               # menos = muestra; no se asigna
+RX_NO_PRODUCTO = re.compile(r"exhibidor|muestra|dummy|display", re.I)
+_HISTORIAL = None          # cache por corrida
+
 
 def resolver_archivos(reg) -> tuple[Path | None, Path | None]:
     """Devuelve (pi_path, pl_path): path del estado → repo → re-descarga de Gmail on-demand."""
@@ -73,6 +83,7 @@ def aplicar_alias(productos, reg):
     Clave = SKU mal escrito, o MODELO si el ítem viene sin código (ej. {"HD4 Khaki": "..."}).
     Ej. 26TP0720: SIMOREXBAS-35 → SIMOREXOSL-WD (confirmado por Andrés 24-sep)."""
     alias = {k.strip().upper(): v for k, v in (reg.get("sku_alias") or {}).items()}
+    hist = {k.strip().upper(): v["sku"] for k, v in (reg.get("sku_historial") or {}).items()}
     for p in productos:
         s = (p.sku or "").strip().upper()
         m = str(p.model or "").strip().upper()
@@ -80,7 +91,125 @@ def aplicar_alias(productos, reg):
             p.sku = alias[s]
         elif not s and m in alias:      # ítem SIN código en el PI → se mapea por MODELO
             p.sku = alias[m]
+        elif not s and m in hist:       # sin alias confirmado → el SKU que dio el historial (sku_por_historial)
+            p.sku = hist[m]
     return productos
+
+
+def _norm_modelo(s) -> str:
+    return re.sub(r"[\s\-_]", "", str(s or "")).upper()
+
+
+def historial_maestra() -> dict:
+    """{MODELO normalizado: [(embarque, sku, precio_usd), ...]} desde la hoja 'Maestra'
+    (A = N° Embarque, C = Model, D = SKU, G = Cost Unit). Si no se puede leer → {} (el agente sigue como antes)."""
+    global _HISTORIAL
+    if _HISTORIAL is not None:
+        return _HISTORIAL
+    _HISTORIAL = {}
+    try:
+        import tempfile
+        import openpyxl
+        with tempfile.TemporaryDirectory() as tmp:
+            path = MAESTRA_VIVA_LOCAL
+            if not path.exists():
+                import vigia_maestra
+                import drive_user_helpers as D
+                path = Path(tmp) / "maestra.xlsx"
+                D.descargar_archivo(vigia_maestra.MAESTRA_ID, path)
+            wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+            for r in wb["Maestra"].iter_rows(min_row=2, max_col=7, values_only=True):
+                emb, modelo, sku, precio = r[0], r[2], r[3], r[6]
+                sku = str(int(sku) if isinstance(sku, float) else sku or "").strip()
+                if emb and modelo and sku:
+                    _HISTORIAL.setdefault(_norm_modelo(modelo), []).append((str(emb).strip(), sku, precio))
+            wb.close()
+        print(f"  Historial Maestra: {len(_HISTORIAL)} modelos")
+    except Exception as e:
+        print(f"  (historial Maestra no disponible: {type(e).__name__}: {e})")
+    return _HISTORIAL
+
+
+def sku_por_historial(productos, reg, emb_num) -> dict:
+    """Ítems SIN código en el PI → SKU por el historial del MODELO en la Maestra.
+    Caso 26TP0826: TP103 venía sin código, nadie respondió el correo y la PO salió sin las 504 hieleras,
+    aunque el modelo siempre fue SIMHIECHAR (24TP1114, 24TP1216, 25TP0901).
+    Steven REUSA modelos (0604: TP48 fue decantador en 2 embarques y esta vez era el filtro VINFILTOXIG; 0423:
+    USB-C-1 negro y el historial solo tenía el blanco), así que hay dos niveles:
+      - AUTOMÁTICO (va a la PO): mismo SKU en >= MIN_EMB_AUTO embarques y precio a ±TOL_AUTO del último;
+      - SUGERIDO (solo en el correo y el resumen, para confirmar): SKU único en el historial y precio a ±TOL_SUGERIDO.
+    Ambos descartan: < MIN_QTY u (muestras), precio 0 (cajas), modelo que ya trae SKU en otra línea del PI
+    (0826: TP033E "Package box" ≠ telón LVTELELE-100), color del PI distinto al del SKU, exhibidores/muestras
+    y SKU que no exista en Odoo. Backtest PIs 2024-2026: ver commit.
+    reg['sku_historial'] = automáticos (aplicar_alias los reaplica en fase 4); reg['sku_sugerido'] = por confirmar."""
+    sin = [p for p in productos if not (p.sku or "").strip()]
+    hist = historial_maestra() if sin else {}
+    if not hist:
+        return {}
+    con_sku = {_norm_modelo(p.model) for p in productos if (p.sku or "").strip()}
+    candidatos = {}
+    for p in sin:
+        m = _norm_modelo(p.model)
+        filas = sorted((f for f in hist.get(m, []) if f[0].upper() != emb_num.upper()), key=lambda f: f[0])
+        skus = {f[1] for f in filas}
+        if not m or m in con_sku or len(skus) != 1 or float(p.qty or 0) < MIN_QTY:
+            continue
+        precio = float(p.price or 0)
+        ref = next((float(f[2]) for f in reversed(filas) if isinstance(f[2], (int, float)) and f[2] > 0), None)
+        if precio <= 0 or not ref or abs(precio / ref - 1) > TOL_SUGERIDO:
+            continue
+        embs = sorted({f[0] for f in filas})
+        auto = len(embs) >= MIN_EMB_AUTO and abs(precio / ref - 1) <= TOL_AUTO
+        candidatos[str(p.model).strip()] = {"sku": next(iter(skus)), "embarques": embs, "precio_hist": ref,
+                                           "auto": auto, "desc": str(p.descripcion or "")}
+    nombres = _odoo_nombres([c["sku"] for c in candidatos.values()]) if candidatos else {}
+    for k in list(candidatos):
+        c = candidatos[k]
+        nombre = nombres.get(c["sku"])
+        if not nombre or RX_NO_PRODUCTO.search(nombre) or _choca_color(c["desc"], c["sku"], nombre):
+            del candidatos[k]
+            continue
+        c["nombre"] = nombre[:60]
+        del c["desc"]
+    auto = {k: v for k, v in candidatos.items() if v.pop("auto")}
+    sugeridos = {k: v for k, v in candidatos.items() if k not in auto}
+    if auto:
+        reg["sku_historial"] = {**(reg.get("sku_historial") or {}), **auto}
+        aplicar_alias(productos, reg)
+        for k, v in auto.items():
+            st.log(reg, f"{k} sin código en el PI → {v['sku']} por historial Maestra ({', '.join(v['embarques'][-3:])})")
+    if sugeridos:
+        reg["sku_sugerido"] = sugeridos
+    else:
+        reg.pop("sku_sugerido", None)
+    return auto
+
+
+COLORES = {"negro": (r"negr[oa]|black", "BK"), "blanco": (r"blanc[oa]|white", "WH"), "rosado": (r"rosad[oa]|pink", "PK"),
+           "rojo": (r"roj[oa]|red", "RD"), "azul": (r"azul|blue", None), "verde": (r"verde|green", None),
+           "gris": (r"gris|grey|gray", None)}
+
+
+def _colores(texto: str, sku: str = "") -> set:
+    return {c for c, (rx, suf) in COLORES.items()
+            if re.search(rf"\b(?:{rx})\b", texto, re.I) or (suf and sku.upper().endswith(f"-{suf}"))}
+
+
+def _choca_color(desc_pi: str, sku: str, nombre_odoo: str) -> bool:
+    """El PI dice un color y el SKU/producto de Odoo dice otro (0423: cable USB-C negro → LVCABTC-WH)."""
+    pi, odoo = _colores(desc_pi), _colores(nombre_odoo, sku)
+    return bool(pi and odoo and not pi & odoo)
+
+
+def _odoo_nombres(skus) -> dict:
+    """{default_code: nombre} de los SKU que existen (activos) en Odoo."""
+    pwd = os.environ.get("ANDRES_ODOO_PASSWORD")
+    url = "https://unionxb2b.odoo.com"; db = "bmya-innovatek-sh-prd-6981800"
+    uid = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common").authenticate(db, "andres@grupoeter.cl", pwd, {})
+    models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
+    return {r["default_code"]: r["name"] for r in models.execute_kw(
+        db, uid, pwd, "product.product", "search_read", [[["default_code", "in", sorted(set(skus))]]],
+        {"fields": ["default_code", "name"]})}
 
 
 def construir_tarifas(reg, puerto: str) -> ce.Tarifas:
@@ -133,6 +262,7 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
     productos, inland, numero, puerto = ce.leer_pi(pi_path)
     ce.leer_pl(pl_path, productos)
     aplicar_alias(productos, reg)
+    sku_por_historial(productos, reg, emb_num)
     tar = construir_tarifas(reg, puerto)
     embq = ce.Embarque(numero=numero or emb_num, puerto=puerto,
                        puerto_nombre=PUERTOS.get(puerto, puerto),
@@ -156,9 +286,11 @@ def procesar_embarque(emb_num: str, reg: dict, dry_run: bool = True):
                 f"internado {embq.total_internado_clp:,.0f} CLP · SKU por crear: {len(faltantes)} · sin SKU: {len(sin_sku)}")
     print(f"  SKU existentes: {len(existentes)} | POR CREAR: {faltantes or '—'} | SIN SKU en PI: {sin_sku or '—'}")
 
+    sugeridos = reg.get("sku_sugerido") or {}
     reg["pendientes_detalle"] = [
         {"model": p.model, "sku": (p.sku or "").strip() or "(sin código)", "qty": int(p.qty),
-         "desc": str(p.descripcion).splitlines()[0][:60] if p.descripcion else ""}
+         "desc": str(p.descripcion).splitlines()[0][:60] if p.descripcion else "",
+         **({"sugerido": sugeridos[str(p.model).strip()]["sku"]} if str(p.model).strip() in sugeridos else {})}
         for p in productos
         if (p.sku or "").strip() in faltantes or not (p.sku or "").strip()]
 
@@ -197,6 +329,19 @@ def _enviar_correo(embq, reg, out_dir, faltantes, sin_sku=None):
         html += ("<div style='background:#fdecea;border-left:4px solid #e74c3c;padding:12px;margin:16px 0'>"
                  f"<b>⚠️ Productos del PI SIN SKU ({len(sin_sku)}) — no van en la PO (se carga parcial con el resto):</b> "
                  f"{', '.join(sin_sku)}</div>")
+    def _filas(d):
+        return "<br>".join(f"{m} → <b>{v['sku']}</b> {v.get('nombre', '')} (mismo modelo en "
+                           f"{', '.join(v['embarques'][-3:])}; último US${v['precio_hist']:g})" for m, v in d.items())
+    hist = reg.get("sku_historial") or {}
+    if hist:
+        html += ("<div style='background:#eaf2fb;border-left:4px solid #2e86c1;padding:12px;margin:16px 0'>"
+                 f"<b>🔎 Venían SIN código en el PI y se asignaron por el historial de la Maestra ({len(hist)}) — "
+                 f"van en la PO; si alguno no corresponde, avisar:</b><br>{_filas(hist)}</div>")
+    sug = reg.get("sku_sugerido") or {}
+    if sug:
+        html += ("<div style='background:#f4f6f7;border-left:4px solid #7f8c8d;padding:12px;margin:16px 0'>"
+                 f"<b>❓ SKU probable según el historial ({len(sug)}) — NO van en la PO hasta que alguien lo "
+                 f"confirme (el mismo modelo ya se usó para otros productos):</b><br>{_filas(sug)}</div>")
     subj = f"[{embq.numero}] Costeo importación — {embq.puerto_nombre} — {embq.sobrecosto_pct:.1f}%"
     pend = len(faltantes) + len(sin_sku)
     if pend:
@@ -247,7 +392,8 @@ def resumen_lunes(estado: dict, dry_run: bool = True):
     for dias, emb, eta, urg, r in filas:
         det = r.get("pendientes_detalle")
         if det:
-            items = "<br>".join(f"{d['sku']} · {d['model']} · {d['qty']} u · {d['desc']}" for d in det)
+            items = "<br>".join(f"{d['sku']} · {d['model']} · {d['qty']} u · {d['desc']}"
+                                + (f" → ¿<b>{d['sugerido']}</b>?" if d.get("sugerido") else "") for d in det)
         else:  # registro previo al detalle: solo códigos
             items = "<br>".join([*(r.get("skus_faltantes") or []),
                                  *[f"{m} (sin código)" for m in (r.get("productos_sin_sku") or [])]]) or "—"
