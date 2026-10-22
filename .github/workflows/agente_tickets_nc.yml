@@ -11,6 +11,8 @@ name: Agente Tickets NC (postventa)
 # emite solo esas (reactivación controlada 05-oct); vacía = sin restricción.
 # vars.AGENTE_NC_FULL_INVENTARIO='true': ventas Fulfillment recibidas por Postventa vuelven en Odoo
 # a su bodega Full y pasan a BPV, sin NC (Andrés 21-oct).
+# vars.AGENTE_NC_CAMBIO_INVENTARIO='true': el producto recibido de un cambio vuelve del despacho
+# original sin reembolso y pasa a BPV (Andrés 21-oct); vars.AGENTE_NC_CAMBIO_EXCLUIR = tickets en espera.
 
 on:
   schedule:
@@ -45,6 +47,8 @@ jobs:
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
           AGENTE_NC_BOLETAS_AUTORIZADAS: ${{ vars.AGENTE_NC_BOLETAS_AUTORIZADAS }}
           AGENTE_NC_FULL_INVENTARIO: ${{ vars.AGENTE_NC_FULL_INVENTARIO }}
+          AGENTE_NC_CAMBIO_INVENTARIO: ${{ vars.AGENTE_NC_CAMBIO_INVENTARIO }}
+          AGENTE_NC_CAMBIO_EXCLUIR: ${{ vars.AGENTE_NC_CAMBIO_EXCLUIR }}
           PYTHONIOENCODING: utf-8
         run: |
           if [ "${{ github.event.inputs.full }}" = "true" ]; then
