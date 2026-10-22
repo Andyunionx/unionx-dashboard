@@ -1,36 +1,36 @@
 {
-  "generado_en": "2026-10-22T16:13:18.621123",
+  "generado_en": "2026-10-22T20:57:36.491381",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17975,
-  "total_monto_pendiente_clp": 1032981427.0,
+  "total_documentos_pendientes": 17231,
+  "total_monto_pendiente_clp": 994983638.0,
   "monto_por_aging": {
-    "+90 días": 114943558.0,
-    "1-30 días": 424787081.0,
-    "31-60 días": 178817859.0,
-    "61-90 días": 65953683.0,
-    "Vigente": 248479246.0
+    "+90 días": 88554743.0,
+    "1-30 días": 428052678.0,
+    "31-60 días": 172940089.0,
+    "61-90 días": 56948890.0,
+    "Vigente": 248487238.0
   },
   "monto_por_tipo": {
-    "BOLETA": 931308179.0,
+    "BOLETA": 893310390.0,
     "FACTURA": 101673248.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 180424256.0
-    },
-    {
-      "partner": "Cliente Kitchen Center",
-      "monto": 122865842.0
+      "monto": 181137536.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
       "monto": 116496240.0
     },
     {
+      "partner": "Cliente Kitchen Center",
+      "monto": 101713501.0
+    },
+    {
       "partner": "Cliente Falabella Fcom",
-      "monto": 78385703.0
+      "monto": 79873510.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -38,31 +38,27 @@
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 53918852.0
-    },
-    {
-      "partner": "Cliente Walmart",
-      "monto": 32505984.0
+      "monto": 53926844.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 29797070.0
+      "monto": 29970827.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 29124506.0
+      "monto": 29090593.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 25902671.0
+      "monto": 26062587.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 24962731.0
+      "monto": 25033611.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 24197390.0
+      "monto": 24544320.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -81,6 +77,14 @@
       "monto": 16717488.0
     },
     {
+      "partner": "STATUS SPA",
+      "monto": 15504967.0
+    },
+    {
+      "partner": "Cliente Walmart",
+      "monto": 12617417.0
+    },
+    {
       "partner": "Celmedia Fidelizacion SPA",
       "monto": 12430995.0
     },
@@ -89,14 +93,10 @@
       "monto": 11660536.0
     },
     {
-      "partner": "Status Spa",
-      "monto": 10837211.0
-    },
-    {
       "partner": "Global Reward Solutions",
       "monto": 10546972.0
     }
   ],
-  "notas_credito_count": 949,
+  "notas_credito_count": 953,
   "pedidos_venta_count": 10000
 }
