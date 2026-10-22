@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-22T08:05:58.375089",
+  "generado_en": "2026-10-22T14:12:54.719157",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1375,
   "capacidad_bodega_m3": 2474.9999999999995,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 789,
     "posiciones_libres_hoy": 586,
     "pct_ocupacion_hoy": 57.4,
-    "m3_stock_calculado": 811.8
+    "m3_stock_calculado": 809.3
   },
   "pico_proyectado": {
     "fecha": "2026-10-22",
@@ -23,8 +23,8 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-12-20",
-    "posiciones_ocupadas": 615.9,
-    "pct_ocupacion": 44.8
+    "posiciones_ocupadas": 617.4,
+    "pct_ocupacion": 44.9
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -64,23 +64,23 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 93.9,
-  "pallets_total_salientes_horizonte": 173.1,
+  "pallets_total_salientes_horizonte": 171.6,
   "m3_total_entrante_horizonte": 112.6,
-  "m3_total_saliente_horizonte": 207.8,
+  "m3_total_saliente_horizonte": 205.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 782,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18153.0,
-    "demanda_cumplida_unidades": 12781.0,
-    "demanda_no_cubierta_unidades_total": 5372.0,
-    "pct_demanda_cumplida": 70.4,
+    "demanda_cumplida_unidades": 12759.0,
+    "demanda_no_cubierta_unidades_total": 5394.0,
+    "pct_demanda_cumplida": 70.3,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 558.0,
+        "unid_no_cubiertas": 570.0,
         "sin_match_stock": true
       },
       {
@@ -99,12 +99,12 @@
         "sin_match_stock": true
       },
       {
-        "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 276.0,
+        "sku": "DYNTALSPER",
+        "unid_no_cubiertas": 277.0,
         "sin_match_stock": true
       },
       {
-        "sku": "DYNTALSPER",
+        "sku": "SIMCUVER-CR",
         "unid_no_cubiertas": 276.0,
         "sin_match_stock": true
       },
@@ -115,7 +115,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 221.0,
+        "unid_no_cubiertas": 222.0,
         "sin_match_stock": true
       },
       {
@@ -144,13 +144,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "1635956574926",
-        "unid_no_cubiertas": 159.0,
+        "sku": "LHCAMACXPL",
+        "unid_no_cubiertas": 162.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 158.0,
+        "sku": "1635956574926",
+        "unid_no_cubiertas": 159.0,
         "sin_match_stock": true
       },
       {
