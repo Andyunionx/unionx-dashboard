@@ -41,9 +41,11 @@ CENTROS = ['Comisión venta', 'Comisión envío', 'Marketing']
 EVITABLE = re.compile(r'penalid|multa|cancelaci|retiro de stock|stock antiguo|sobrepasar|diferencias en las medidas|retiro stock')
 UMBRAL_OP = 50_000
 COB_MIN = 0.8              # parte del cobro de la glosa que debe amarrarse a un pedido para medirla por pedido
-# Publicidad que se factura después del consumo: canal → (glosa, meses de desfase de la factura, meta % de la venta con
-# IVA). Falabella: un mes de desfase y meta 3% sobre la venta con IVA (Gabriela 20 y 21-oct, dato de la KAM).
-PUBLICIDAD = {'Falabella': (re.compile(r'productos patrocinados'), 1, 3.0)}
+# Publicidad contra su meta en el mes de consumo: canal → (glosa, meses de desfase de la factura, tope % de la venta con
+# IVA, piso del rango o None). Falabella: un mes de desfase y meta 3% (Gabriela 20 y 21-oct, dato de la KAM). Mercado
+# Libre: se factura el consumo del mismo mes y la meta es 3% a 4%; la brecha corre solo sobre el 4% (Gabriela 22-oct).
+PUBLICIDAD = {'Falabella': (re.compile(r'productos patrocinados'), 1, 3.0, None),
+              'Mercado Libre': (re.compile(r'cargo por campana de publicidad'), 0, 4.0, 3.0)}
 ALIAS_CANAL = {'simplit home': 'simplit web', 'lhotse': 'lhotse web'}     # nombre en la liquidación del courier → macro
 LARGO = {1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril', 5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto', 9: 'septiembre',
          10: 'octubre', 11: 'noviembre', 12: 'diciembre'}
@@ -278,7 +280,7 @@ def construir(m1=None, sh=None, pendientes=None, pp=None):
             return (op, ref) if op > 0 else (None, ref)
         pub = PUBLICIDAD.get(c)
         if f['centro'] == 'Marketing' and pub and pub[0].search(f['gk']):
-            # publicidad facturada después del consumo: la factura de M1 contra la venta con IVA del mes de consumo
+            # publicidad: la factura de M1 contra la venta con IVA del mes de consumo (M1 menos el desfase)
             m_cons = M1
             for _ in range(pub[1]):
                 m_cons = PA.mes_anterior(m_cons)
@@ -286,7 +288,7 @@ def construir(m1=None, sh=None, pendientes=None, pp=None):
             if not base:
                 return None, ''
             ref = (f'consumo de {LARGO[int(m_cons[5:7])]}: {pct(f[M1] / base * 100)} de la venta con IVA '
-                   f'(meta {pct(pub[2])})')
+                   f'(meta {pct(pub[3]) + " a " if pub[3] else ""}{pct(pub[2])})')
             op = f[M1] - pub[2] / 100 * base
             return (op, ref) if op > 0 else (None, ref)
         # Cargo fijo mensual: mismo monto (±5%) todos los meses → su % de la venta sube o baja solo por la venta; no es
@@ -446,6 +448,12 @@ def construir(m1=None, sh=None, pendientes=None, pp=None):
     aviso = (f'<div class="pre"><b>Carga pendiente:</b> {H.escape("; ".join(pendientes))}.</div>') if pendientes else ''
     periodo = f'{LG[Mi].capitalize()} a {LG[M1]} {M1[:4]}'
     indice = ' · '.join(f'<a href="#c{k}">{H.escape(d["canal"])}</a>' for k, d in enumerate(detalle))
+    partes_pub = []
+    for c, p in PUBLICIDAD.items():
+        cuando = ('se factura el mismo mes' if not p[1] else 'la factura llega un mes después' if p[1] == 1
+                  else f'la factura llega {p[1]} meses después')
+        partes_pub.append(f'{c} {(pct(p[3]) + " a ") if p[3] else ""}{pct(p[2])} ({cuando})')
+    txt_pub = '; '.join(partes_pub)
     doc = f"""<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Rentabilidad: control de gestión</title><style>{CSS}</style></head><body><div class="wrap">
 <h1>Rentabilidad por canal — control de gestión · cierre de {LG[M1]}</h1>
@@ -454,7 +462,7 @@ def construir(m1=None, sh=None, pendientes=None, pp=None):
 <p class="how">Para qué sirve: encontrar dónde podemos ser más rentables. Cada canal se abre glosa por glosa, con su peso sobre la venta y, en logística, por pedido; se compara mes contra mes y por modalidad de envío, y se cruza con lo que se gestionó en el plan de acción. De aquí salen las acciones nuevas.</p>
 <h2>1. Resumen: dónde está la plata</h2>
 <p class="how">Brecha vs mejor mes = cuánto más costó la glosa en {LG[M1]} que en su mejor mes de {LG[Mi]} a {LG[M1]} (como % de la venta de {LG[M1]}), o su monto completo si es un cargo evitable (penalidades, multas, retiro o stock antiguo en bodega del marketplace). <b>No es plata recuperable</b>: mezcla cambios de precio y de mix con errores de cobro, y hay que revisar cada glosa para saber qué parte se puede gestionar. Los cargos fijos mensuales (mismo monto todos los meses) no entran. Solo glosas de costo y devoluciones; desde {clp(UMBRAL_OP)}.</p>
-<p class="how"><b>Comisiones y envíos se miden por pedido</b> cuando al menos el {n(COB_MIN * 100, 0)}% del cobro de la glosa se amarra a un pedido del RAW: el % es el cobro de la liquidación dividido por la venta neta de esos mismos pedidos, sin cancelados y con los reembolsos aparte, así que no depende del corte de facturación del canal. El resto (cargos a la cuenta, canales que no informan el pedido) va contra la venta del mes calendario. La publicidad de Falabella se compara con su meta: {n(PUBLICIDAD['Falabella'][2])}% de la venta con IVA del mes de consumo (la factura llega un mes después).</p>
+<p class="how"><b>Comisiones y envíos se miden por pedido</b> cuando al menos el {n(COB_MIN * 100, 0)}% del cobro de la glosa se amarra a un pedido del RAW: el % es el cobro de la liquidación dividido por la venta neta de esos mismos pedidos, sin cancelados y con los reembolsos aparte, así que no depende del corte de facturación del canal. El resto (cargos a la cuenta, canales que no informan el pedido) va contra la venta del mes calendario. La publicidad se compara con su meta sobre la venta con IVA del mes de consumo, y la brecha cuenta solo lo que pasa del tope: {txt_pub}.</p>
 <div class="kpis"><div class="k"><span>Tarifas y cargos</span><b>{clp(tot_cost)} /mes</b></div><div class="k"><span>Devoluciones</span><b>{clp(tot_dev)} /mes</b></div><div class="k"><span>Glosas con brecha</span><b>{len(ops)}</b></div></div>
 <h3>Tarifas, cargos y servicios (top 15)</h3><p class="how">Lo que se negocia con el canal o se deja de pagar operando distinto.</p>
 <div class="tw"><table>{th_top}{filas_top(ops_cost[:15])}</table></div>
