@@ -169,7 +169,6 @@ sku,categoria_padre,categoria_hijo
 1660857914743,Cristalería y Bar,Vasos
 1660858025311,Menaje de Cocina,Utensilios de cocina
 1660858101318,Menaje de Cocina,Mantequilleros
-1660858118518,Menaje de Cocina,Mantequilleros
 1660858235219,Mundo Café,Termos líquidos
 1660858266475,Mundo Café,Termos líquidos
 1660858341796,Organización,Secadores de platos
@@ -1097,6 +1096,7 @@ LVMOMA-BK,Mochilas y Fundas,Mochilas
 LVMOMA-GR,Mochilas y Fundas,Mochilas
 LVMONEXV-15,Pantallas,Monitores
 LVMONPOR-15,Pantallas,Monitores
+LVMONPVS-15,Pantallas,Monitores
 LVMOPRL-BK,Mochilas y Fundas,Mochilas
 LVMOVEL-BK,Mochilas y Fundas,Mochilas
 LVMOVITR-BK,Mochilas y Fundas,Mochilas
@@ -1149,27 +1149,30 @@ MTBOHWMON420,Hidratación,Botellas Plasticas
 MTBOHWRA450,Hidratación,Botellas Termicas
 MTBOHWRAC420,Hidratación,Botellas Plasticas
 MTBOHWTR450,Hidratación,Botellas Termicas
-MTBOTBARCL-500,Hidratación,Botellas Termicas
-MTBOTBARDR-500,Hidratación,Botellas Termicas
-MTBOTBARINS-500,Hidratación,Botellas Termicas
-MTBOTCLBARDAPR-750,Hidratación,Botellas Termicas
-MTBOTCLBARINS-750,Hidratación,Botellas Termicas
-MTBOTCLBARLIN-750,Hidratación,Botellas Termicas
-MTBOTCLBARLIPR-750,Hidratación,Botellas Termicas
-MTBOTFIBARDAPR-750,Hidratación,Botellas Termicas
-MTBOTFIBARFL-750,Hidratación,Botellas Termicas
-MTBOTFIBARLIPR-750,Hidratación,Botellas Termicas
-MTBOTFIBARSAF-750,Hidratación,Botellas Termicas
-MTHWLGBT590-AM,Hidratación,Botellas Termicas
-MTHWLGBT590-BK,Hidratación,Botellas Termicas
-MTHWLGBT750-BK,Hidratación,Botellas Termicas
-MTHWLGBT750-BY,Hidratación,Botellas Termicas
-MTHWLGBT750-YW,Hidratación,Botellas Termicas
-MTHWLGVT590-BG,Hidratación,Botellas Termicas
-MTHWLGVT590-BK,Hidratación,Botellas Termicas
-MTHWLGVT590-YW,Hidratación,Botellas Termicas
-MTSHBARDAPR-500,Hidratación,Botellas Termicas
-MTSHBARLIPR-500,Hidratación,Botellas Termicas
+MTBOTBARCL-500,Hidratación,Botellas Plasticas
+MTBOTBARDR-500,Hidratación,Botellas Plasticas
+MTBOTBARINS-500,Hidratación,Botellas Plasticas
+MTBOTCLBARDAPR-750,Hidratación,Botellas Plasticas
+MTBOTCLBARINS-750,Hidratación,Botellas Plasticas
+MTBOTCLBARLIN-750,Hidratación,Botellas Plasticas
+MTBOTCLBARLIPR-750,Hidratación,Botellas Plasticas
+MTBOTFIBARDAPR-750,Hidratación,Botellas Plasticas
+MTBOTFIBARDAPR-900,Hidratación,Botellas Termicas
+MTBOTFIBARFL-750,Hidratación,Botellas Plasticas
+MTBOTFIBARFL-900,Hidratación,Botellas Termicas
+MTBOTFIBARLIPR-750,Hidratación,Botellas Plasticas
+MTBOTFIBARLIPR-900,Hidratación,Botellas Termicas
+MTBOTFIBARSAF-750,Hidratación,Botellas Plasticas
+MTHWLGBT590-AM,Hidratación,Botellas Plasticas
+MTHWLGBT590-BK,Hidratación,Botellas Plasticas
+MTHWLGBT750-BK,Hidratación,Botellas Plasticas
+MTHWLGBT750-BY,Hidratación,Botellas Plasticas
+MTHWLGBT750-YW,Hidratación,Botellas Plasticas
+MTHWLGVT590-BG,Hidratación,Botellas Plasticas
+MTHWLGVT590-BK,Hidratación,Botellas Plasticas
+MTHWLGVT590-YW,Hidratación,Botellas Plasticas
+MTSHBARDAPR-500,Hidratación,Botellas Plasticas
+MTSHBARLIPR-500,Hidratación,Botellas Plasticas
 MTTCBFRI450,Termos,Termos de comida
 MTTCBFUN450,Termos,Termos de comida
 MTTCHWCLA330,Termos,Termos de comida
@@ -1331,6 +1334,7 @@ Pack496,Belleza,Cosmetica
 Pack497,Hidratación,Botellas Termicas
 Pack498,Hidratación,Botellas Termicas
 Pack499,Menaje de Cocina,Cuchilleria
+Pack505,Hidratación,Botellas Termicas
 Pack70,Mundo Café,Cafeteras
 Pack71,Cristalería y Bar,Vasos
 Pack73,Mundo Café,Cafeteras
@@ -1414,6 +1418,7 @@ SIMJULZSAN-30,Vajilla,Juego de Loza
 SIMJULZSIE-30,Vajilla,Juego de Loza
 SIMJULZTOS-12,Vajilla,Juego de Loza
 SIMMANCC-BK,Menaje de Cocina,Mantequilleros
+SIMMANCC-WH,Menaje de Cocina,Mantequilleros
 SIMMANTL-BG,Mesa,Mantelería
 SIMMANTL-GR,Mesa,Mantelería
 SIMMANTL-GREY,Mesa,Mantelería
@@ -1455,6 +1460,7 @@ SMBATOXBK,Menaje de Cocina,Baterías de cocina
 SMBATOXCR,Menaje de Cocina,Baterías de cocina
 SMBATPMGR,Menaje de Cocina,Baterías de cocina
 SMBATSAV9-CR,Menaje de Cocina,Baterías de cocina
+SMBATVIC-GR,Menaje de Cocina,Baterías de cocina
 SMCFIT12LC-GR,Mundo Café,Cafeteras
 SMCFIT12SV-WH,Mundo Café,Cafeteras
 SMCFIT4LC-GR,Mundo Café,Cafeteras
@@ -1472,7 +1478,7 @@ XRBARRUNXC-120,Accesorios de Instalacion,Barras y Portaequipajes
 XRBARRUNXC-127,Accesorios de Instalacion,Barras y Portaequipajes
 XRBARRUNXC-137,Accesorios de Instalacion,Barras y Portaequipajes
 XRBOLBL-410,Accesorios de Instalacion,Barras y Portaequipajes
-XRBOLBL-430,Accesorios de Instalacion,Barras y Portaequipajes
+XRBOLTECBLD-YL,Accesorios de Instalacion,Barras y Portaequipajes
 XRCADCANRR,Accesorios de Automovil,Seguridad
 XRCARINF34-CL,Accesorios de Viaje,Accesorios de Camping
 XRCARRTRACT-CL,Accesorios de Viaje,Accesorios de Camping
