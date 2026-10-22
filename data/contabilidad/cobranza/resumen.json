@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-21T20:59:28.266727",
+  "generado_en": "2026-10-22T02:15:52.786201",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17794,
-  "total_monto_pendiente_clp": 1087291396.0,
+  "total_documentos_pendientes": 17859,
+  "total_monto_pendiente_clp": 1025081363.0,
   "monto_por_aging": {
-    "+90 días": 114727739.0,
-    "1-30 días": 436652899.0,
-    "31-60 días": 197559787.0,
-    "61-90 días": 90473624.0,
-    "Vigente": 247877347.0
+    "+90 días": 114943558.0,
+    "1-30 días": 419839864.0,
+    "31-60 días": 178794702.0,
+    "61-90 días": 65953683.0,
+    "Vigente": 245549556.0
   },
   "monto_por_tipo": {
-    "BOLETA": 920727664.0,
-    "FACTURA": 166563732.0
+    "BOLETA": 923408115.0,
+    "FACTURA": 101673248.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 178431052.0
+      "monto": 179268102.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -29,48 +29,48 @@
       "monto": 116496240.0
     },
     {
-      "partner": "Mercadolibre Chile Limitada",
-      "monto": 111592632.0
+      "partner": "Cliente Falabella Fcom",
+      "monto": 78028003.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 77215917.0
+      "partner": "Mercadolibre Chile Limitada",
+      "monto": 58370766.0
     },
     {
       "partner": "Duty Free T C S A",
       "monto": 51801920.0
     },
     {
-      "partner": "FALABELLA.COM",
-      "monto": 33708723.0
-    },
-    {
       "partner": "Cliente Walmart",
-      "monto": 32284574.0
+      "monto": 32481504.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 29537660.0
+      "monto": 29619131.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 28671574.0
+      "monto": 29011514.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 25699717.0
+      "monto": 25794099.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 24841781.0
+      "monto": 24935751.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23701750.0
+      "monto": 24017510.0
     },
     {
       "partner": "Shopping LATAM Pass",
       "monto": 23378141.0
+    },
+    {
+      "partner": "FALABELLA.COM",
+      "monto": 22040105.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -97,6 +97,6 @@
       "monto": 10288007.0
     }
   ],
-  "notas_credito_count": 943,
+  "notas_credito_count": 948,
   "pedidos_venta_count": 10000
 }
