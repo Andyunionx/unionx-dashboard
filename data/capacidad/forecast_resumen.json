@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-23T08:04:04.407197",
+  "generado_en": "2026-10-23T13:55:48.143458",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1376,
   "capacidad_bodega_m3": 2476.7999999999997,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1376,
-    "posiciones_ocupadas_hoy": 794,
-    "posiciones_libres_hoy": 582,
-    "pct_ocupacion_hoy": 57.7,
-    "m3_stock_calculado": 802.0
+    "posiciones_ocupadas_hoy": 801,
+    "posiciones_libres_hoy": 575,
+    "pct_ocupacion_hoy": 58.2,
+    "m3_stock_calculado": 806.9
   },
   "pico_proyectado": {
     "fecha": "2026-10-23",
-    "posiciones_ocupadas": 787.6,
-    "pct_ocupacion": 57.2
+    "posiciones_ocupadas": 794.6,
+    "pct_ocupacion": 57.7
   },
   "minimo_proyectado": {
     "fecha": "2026-12-21",
-    "posiciones_ocupadas": 619.1,
-    "pct_ocupacion": 45.0
+    "posiciones_ocupadas": 630.2,
+    "pct_ocupacion": 45.8
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -55,14 +55,6 @@
       "transporte": ""
     },
     {
-      "pi": "26TP0826PI",
-      "fecha_eta": "2026-09-24",
-      "pallets": 37.3,
-      "m3": 44.77,
-      "unidades": 4835.0,
-      "transporte": ""
-    },
-    {
       "pi": "26TP0909PI",
       "fecha_eta": "2026-10-07",
       "pallets": 44.8,
@@ -71,19 +63,19 @@
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 131.2,
-  "pallets_total_salientes_horizonte": 174.9,
-  "m3_total_entrante_horizonte": 157.4,
-  "m3_total_saliente_horizonte": 209.9,
+  "pallets_total_entrantes_horizonte": 93.9,
+  "pallets_total_salientes_horizonte": 170.8,
+  "m3_total_entrante_horizonte": 112.6,
+  "m3_total_saliente_horizonte": 205.0,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 782,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18499.0,
-    "demanda_cumplida_unidades": 12901.0,
-    "demanda_no_cubierta_unidades_total": 5598.0,
-    "pct_demanda_cumplida": 69.7,
+    "demanda_cumplida_unidades": 12817.0,
+    "demanda_no_cubierta_unidades_total": 5682.0,
+    "pct_demanda_cumplida": 69.3,
     "sku_sin_match_stock_count": 41,
     "top_no_cubiertos": [
       {
@@ -97,8 +89,13 @@
         "sin_match_stock": true
       },
       {
+        "sku": "LVSILLERGO-BL",
+        "unid_no_cubiertas": 295.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "1659991971809",
-        "unid_no_cubiertas": 285.0,
+        "unid_no_cubiertas": 286.0,
         "sin_match_stock": true
       },
       {
@@ -112,23 +109,18 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 269.0,
-        "sin_match_stock": true
-      },
-      {
         "sku": "SMBATCOPBK",
         "unid_no_cubiertas": 245.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LVPRONOV",
-        "unid_no_cubiertas": 230.0,
+        "sku": "SMBATSAV9-CR",
+        "unid_no_cubiertas": 231.0,
         "sin_match_stock": true
       },
       {
-        "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 229.0,
+        "sku": "LVPRONOV",
+        "unid_no_cubiertas": 230.0,
         "sin_match_stock": true
       },
       {
