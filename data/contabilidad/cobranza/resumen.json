@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-23T16:03:31.412965",
+  "generado_en": "2026-10-23T20:45:23.546463",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 17410,
-  "total_monto_pendiente_clp": 986425002.0,
+  "total_documentos_pendientes": 17076,
+  "total_monto_pendiente_clp": 976523246.0,
   "monto_por_aging": {
     "+90 días": 85387711.0,
-    "1-30 días": 541292237.0,
+    "1-30 días": 531404473.0,
     "31-60 días": 176660951.0,
     "61-90 días": 47192716.0,
-    "Vigente": 135891387.0
+    "Vigente": 135877395.0
   },
   "monto_por_tipo": {
-    "BOLETA": 898338604.0,
+    "BOLETA": 888436848.0,
     "FACTURA": 88086398.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 184105685.0
+      "monto": 184271725.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 80726476.0
+      "monto": 80805426.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -42,27 +42,23 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 29886155.0
+      "monto": 29539647.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 29273595.0
-    },
-    {
-      "partner": "Lhotse Store",
-      "monto": 26338075.0
+      "monto": 28496992.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 25398611.0
-    },
-    {
-      "partner": "Cliente Paris",
-      "monto": 24597290.0
+      "monto": 25582031.0
     },
     {
       "partner": "Shopping LATAM Pass",
       "monto": 23378141.0
+    },
+    {
+      "partner": "Lhotse Store",
+      "monto": 22366433.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -73,12 +69,16 @@
       "monto": 21393780.0
     },
     {
+      "partner": "Cliente Paris",
+      "monto": 19337658.0
+    },
+    {
       "partner": "STATUS SPA",
       "monto": 15504967.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 12644377.0
+      "monto": 12655367.0
     },
     {
       "partner": "abc S.A.",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 11131132.0
+      "monto": 11117140.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -97,6 +97,6 @@
       "monto": 7041951.0
     }
   ],
-  "notas_credito_count": 950,
+  "notas_credito_count": 952,
   "pedidos_venta_count": 10000
 }
