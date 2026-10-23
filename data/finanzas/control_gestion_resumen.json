@@ -1,10 +1,9 @@
 {
-  "generado_en": "2026-10-23T14:07:55.030233",
+  "generado_en": "2026-10-23T12:17:18.347553",
   "fuente": "Drive Sheet 1NfIL-k00pUbF5ogsVnadP2wMAVc7oUKkOA7UMLOT-j0",
   "sheet_titulo": "P&L 2025-2026",
-  "filas_procesadas": 4824,
+  "filas_procesadas": 169,
   "anios": [
-    2025,
     2026
   ],
   "lineas_negocio": [
@@ -12,82 +11,34 @@
     "UNIONX"
   ],
   "canales": [
-    "",
-    "COMERCIAL",
     "CONTABILIDAD",
-    "CORPORATIVO",
     "DISTRIBUCIÓN",
     "E-COMMERCE",
-    "FIDELIZACIÓN",
-    "FINANZAS Y ADMINISTRACIÓN",
     "GRUPO ETER",
     "LOGISTICA",
-    "MARKETING",
-    "MARKETPLACE",
-    "OPERACIONES",
-    "OTROS",
-    "P. WEB",
     "PAGINAS WEB",
     "POSTVENTA",
-    "PRODUCTOS",
-    "TIENDAS",
-    "TIENDAS PROPIAS",
-    "UNION X",
     "UNIONX"
   ],
   "areas": [
-    "",
-    "(-) ASESORIAS GRUPO ETER",
     "COMERCIAL",
     "FINANZAS Y ADMINISTRACIÓN",
     "GRUPO ETER",
-    "LEGALES Y NOTARIALES",
-    "MARKETING",
     "OPERACIONES",
-    "OTRAS ÁREAS",
-    "TIENDA",
-    "UNION X",
     "UNIONX"
   ],
-  "centros_costo_count": 34,
+  "centros_costo_count": 1,
   "centros_costo_top20": {
-    "SUSCRIPCIÓN Y PUBLICACIONES": 676,
-    "GASTOS OFICINA Y SERVICIOS": 582,
-    "REPRESENTACIÓN Y VIATICOS": 432,
-    "": 384,
-    "REMUNERACIONES": 295,
-    "ARRIENDOS": 289,
-    "MOVILIZACIÓN TRANSPORTE Y COLACIÓN": 261,
-    "SEGUROS": 238,
-    "COMISION GC": 213,
-    "HONORARIOS": 202,
-    "INSUMOS": 169,
-    "PRODUCTOS": 149,
-    "MARKETING": 140,
-    "MANTENCIÓN ACTIVOS": 116,
-    "ASESORIAS": 107,
-    "BENEFICIOS PERSONAL": 107,
-    "ENVIOS GRANDESCUENTAS": 99,
-    "MARKETING DIGITAL": 62,
-    "AJUSTE SENCILLO": 49,
-    "FLETES Y GASTOS DE ENVIO": 48
+    "REMUNERACIONES": 169
   },
   "totales_por_escenario_kpi": {
-    "FCST_CONTRIB": 3892342.0,
-    "FCST_COSTO": -1213751.0,
-    "FCST_GASTO": -3176191.0,
-    "FCST_VENTA": 13592223.0,
-    "PPTO_CONTRIB": 2089105.0,
-    "PPTO_COSTO": -13400.0,
-    "PPTO_GASTO": -1641669.0,
-    "PPTO_VENTA": 7510446.0
+    "FCST_GASTO": -372790.0
   },
   "totales_por_linea_negocio": {
-    "GRUPO ETER": -2898727.0,
-    "UNIONX": 23937832.0
+    "GRUPO ETER": -204818.0,
+    "UNIONX": -167973.0
   },
   "totales_por_year": {
-    "2025": 6472209.0,
-    "2026": 14566896.0
+    "2026": -372790.0
   }
 }
