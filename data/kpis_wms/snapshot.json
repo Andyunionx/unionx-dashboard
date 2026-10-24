@@ -1,40 +1,75 @@
 {
-  "generado_en": "2026-10-23T18:54:49.894682",
+  "generado_en": "2026-10-24T07:57:13.896737",
   "mes_actual": "2026-10",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.051881146901181244,
-      "total_pickings": 19217,
-      "on_time": 997,
-      "on_time_pct": 0.051881146901181244,
-      "in_full": 19213,
-      "in_full_pct": 0.9997918509652911,
-      "both": 997,
+      "valor": 0.05105917868110134,
+      "total_pickings": 19213,
+      "on_time": 981,
+      "on_time_pct": 0.05105917868110134,
+      "in_full": 19209,
+      "in_full_pct": 0.9997918076302503,
+      "both": 981,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.0693950177935943,
-      "total_pickings": 562,
-      "on_time": 40,
-      "on_time_pct": 0.0711743772241993,
-      "in_full": 553,
-      "in_full_pct": 0.9839857651245552,
-      "both": 39,
+      "valor": 0.06797853309481217,
+      "total_pickings": 559,
+      "on_time": 39,
+      "on_time_pct": 0.06976744186046512,
+      "in_full": 551,
+      "in_full_pct": 0.9856887298747764,
+      "both": 38,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998412257373079,
-      "ok": 25189,
-      "total": 25193,
+      "valor": 0.9998410490760977,
+      "ok": 25161,
+      "total": 25165,
       "errores": 4,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 11.064405826558264,
-      "n_recepciones": 410,
+      "valor": 10.931105756358768,
+      "n_recepciones": 415,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFFa/RET/00053",
+          "proveedor": "Cliente Falabella Fcom, Cristian Moyano",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:58",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "CA1/RET/01341",
+          "proveedor": "Lhotse Store, ALEX HUERTA ARMIJO",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:59",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "CA1/RET/01342",
+          "proveedor": "Lhotse Store, Libny Hevia",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:59",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "CA1/RET/01343",
+          "proveedor": "Comercializadora tys",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:59",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "BFFa/RET/00052",
+          "proveedor": "Cliente Falabella Fcom, Pamela Romero martinez",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:58",
+          "done": "2026-10-23 19:58"
+        },
         {
           "picking": "BFFa/RET/00049",
           "proveedor": "Cliente Falabella Fcom, camila Herrera",
@@ -139,60 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-10-22 19:01",
           "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "BFFa/RET/00045",
-          "proveedor": "Cliente Falabella Fcom, amanda González",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "BFFa/RET/00046",
-          "proveedor": "Cliente Falabella Fcom, Mirian Zabalaga Peña",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "BFFa/RET/00047",
-          "proveedor": "Cliente Falabella Fcom, Cecilia Castro",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "CA1/RET/01328",
-          "proveedor": "Lhotse Store, Carolina Delgado",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "CA1/RET/01329",
-          "proveedor": "Lhotse Store, Magdalena Castaño",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9757321742730001,
-      "total_so": 19341,
-      "total_con_pickings": 19326,
-      "cumplidos": 18857,
+      "valor": 0.9724727348993288,
+      "total_so": 19087,
+      "total_con_pickings": 19072,
+      "cumplidos": 18547,
       "parciales": 16,
-      "sin_iniciar": 453,
+      "sin_iniciar": 509,
       "error": null
     },
     "oct_30d": {
-      "valor": 45.28680135325452,
-      "n_orders": 19566,
+      "valor": 45.25130250227221,
+      "n_orders": 19560,
       "min_h": 0.0175,
       "max_h": 714.7769444444444,
-      "mediana_h": 26.294722222222223,
+      "mediana_h": 26.290555555555557,
       "detalle": [
         {
           "so": "S290463",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 21587,
+      "lineas": 21647,
       "mes": "2026-10",
       "error": null
     },
@@ -375,6 +375,12 @@
           "cliente": "Global Reward Solutions",
           "total": 156,
           "tarde": 156,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Sawa SPA",
+          "total": 146,
+          "tarde": 146,
           "on_time_pct": 0.0
         },
         {
@@ -414,16 +420,10 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "Sawa SPA",
-          "total": 147,
-          "tarde": 146,
-          "on_time_pct": 0.006802721088435374
-        },
-        {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 33,
-          "tarde": 30,
-          "on_time_pct": 0.09090909090909091
+          "total": 32,
+          "tarde": 29,
+          "on_time_pct": 0.09375
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -8818,42 +8818,77 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.051881146901181244,
-      "total_pickings": 19217,
-      "on_time": 997,
-      "on_time_pct": 0.051881146901181244,
-      "in_full": 19213,
-      "in_full_pct": 0.9997918509652911,
-      "both": 997,
+      "valor": 0.05105917868110134,
+      "total_pickings": 19213,
+      "on_time": 981,
+      "on_time_pct": 0.05105917868110134,
+      "in_full": 19209,
+      "in_full_pct": 0.9997918076302503,
+      "both": 981,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.0693950177935943,
-      "total_pickings": 562,
-      "on_time": 40,
-      "on_time_pct": 0.0711743772241993,
-      "in_full": 553,
-      "in_full_pct": 0.9839857651245552,
-      "both": 39,
+      "valor": 0.06797853309481217,
+      "total_pickings": 559,
+      "on_time": 39,
+      "on_time_pct": 0.06976744186046512,
+      "in_full": 551,
+      "in_full_pct": 0.9856887298747764,
+      "both": 38,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998412257373079,
-      "ok": 25189,
-      "total": 25193,
+      "valor": 0.9998410490760977,
+      "ok": 25161,
+      "total": 25165,
       "errores": 4,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 11.064405826558264,
-      "n_recepciones": 410,
+      "valor": 10.931105756358768,
+      "n_recepciones": 415,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFFa/RET/00053",
+          "proveedor": "Cliente Falabella Fcom, Cristian Moyano",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:58",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "CA1/RET/01341",
+          "proveedor": "Lhotse Store, ALEX HUERTA ARMIJO",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:59",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "CA1/RET/01342",
+          "proveedor": "Lhotse Store, Libny Hevia",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:59",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "CA1/RET/01343",
+          "proveedor": "Comercializadora tys",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:59",
+          "done": "2026-10-23 19:59"
+        },
+        {
+          "picking": "BFFa/RET/00052",
+          "proveedor": "Cliente Falabella Fcom, Pamela Romero martinez",
+          "horas": 0.0,
+          "scheduled": "2026-10-23 19:58",
+          "done": "2026-10-23 19:58"
+        },
         {
           "picking": "BFFa/RET/00049",
           "proveedor": "Cliente Falabella Fcom, camila Herrera",
@@ -8955,41 +8990,6 @@
         {
           "picking": "BFML/RET/00002",
           "proveedor": "Cliente Mercado Libre, Daniela jasna Núñez soto",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "BFFa/RET/00045",
-          "proveedor": "Cliente Falabella Fcom, amanda González",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "BFFa/RET/00046",
-          "proveedor": "Cliente Falabella Fcom, Mirian Zabalaga Peña",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "BFFa/RET/00047",
-          "proveedor": "Cliente Falabella Fcom, Cecilia Castro",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "CA1/RET/01328",
-          "proveedor": "Lhotse Store, Carolina Delgado",
-          "horas": 0.0,
-          "scheduled": "2026-10-22 19:01",
-          "done": "2026-10-22 19:01"
-        },
-        {
-          "picking": "CA1/RET/01329",
-          "proveedor": "Lhotse Store, Magdalena Castaño",
           "horas": 0.0,
           "scheduled": "2026-10-22 19:01",
           "done": "2026-10-22 19:01"
