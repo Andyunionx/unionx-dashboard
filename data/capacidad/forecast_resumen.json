@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-26T08:15:39.033812",
+  "generado_en": "2026-10-26T15:36:50.153953",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1377,
-    "posiciones_ocupadas_hoy": 817,
-    "posiciones_libres_hoy": 560,
-    "pct_ocupacion_hoy": 59.3,
-    "m3_stock_calculado": 801.3
+    "posiciones_ocupadas_hoy": 809,
+    "posiciones_libres_hoy": 568,
+    "pct_ocupacion_hoy": 58.8,
+    "m3_stock_calculado": 802.7
   },
   "pico_proyectado": {
     "fecha": "2026-10-26",
-    "posiciones_ocupadas": 810.0,
-    "pct_ocupacion": 58.8
+    "posiciones_ocupadas": 801.8,
+    "pct_ocupacion": 58.2
   },
   "minimo_proyectado": {
     "fecha": "2026-12-23",
-    "posiciones_ocupadas": 645.4,
-    "pct_ocupacion": 46.9
+    "posiciones_ocupadas": 636.7,
+    "pct_ocupacion": 46.2
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -49,8 +49,8 @@
     {
       "pi": "26TP0806PI",
       "fecha_eta": "2026-09-24",
-      "pallets": 49.1,
-      "m3": 58.93,
+      "pallets": 49.9,
+      "m3": 59.93,
       "unidades": 4191.0,
       "transporte": ""
     },
@@ -63,19 +63,19 @@
       "transporte": ""
     }
   ],
-  "pallets_total_entrantes_horizonte": 93.9,
-  "pallets_total_salientes_horizonte": 171.6,
-  "m3_total_entrante_horizonte": 112.6,
-  "m3_total_saliente_horizonte": 206.0,
+  "pallets_total_entrantes_horizonte": 94.7,
+  "pallets_total_salientes_horizonte": 172.3,
+  "m3_total_entrante_horizonte": 113.6,
+  "m3_total_saliente_horizonte": 206.7,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 782,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18731.0,
-    "demanda_cumplida_unidades": 13189.0,
-    "demanda_no_cubierta_unidades_total": 5542.0,
-    "pct_demanda_cumplida": 70.4,
+    "demanda_cumplida_unidades": 13131.0,
+    "demanda_no_cubierta_unidades_total": 5600.0,
+    "pct_demanda_cumplida": 70.1,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
       {
@@ -85,7 +85,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 339.0,
+        "unid_no_cubiertas": 343.0,
         "sin_match_stock": true
       },
       {
@@ -95,7 +95,7 @@
       },
       {
         "sku": "1659991971809",
-        "unid_no_cubiertas": 304.0,
+        "unid_no_cubiertas": 308.0,
         "sin_match_stock": true
       },
       {
@@ -105,7 +105,7 @@
       },
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 255.0,
+        "unid_no_cubiertas": 256.0,
         "sin_match_stock": true
       },
       {
@@ -115,12 +115,12 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 221.0,
+        "unid_no_cubiertas": 226.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 212.0,
+        "unid_no_cubiertas": 214.0,
         "sin_match_stock": true
       },
       {
@@ -139,6 +139,11 @@
         "sin_match_stock": true
       },
       {
+        "sku": "LVMPADXXL-BK",
+        "unid_no_cubiertas": 171.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "SMBATCOPBK",
         "unid_no_cubiertas": 161.0,
         "sin_match_stock": true
@@ -146,11 +151,6 @@
       {
         "sku": "1659990828178",
         "unid_no_cubiertas": 160.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "LVMPADXXL-BK",
-        "unid_no_cubiertas": 157.0,
         "sin_match_stock": true
       },
       {
