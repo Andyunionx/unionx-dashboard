@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-25T22:55:26.733175",
+  "generado_en": "2026-10-26T02:13:20.852721",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,12 +14,12 @@
     "posiciones_ocupadas_hoy": 817,
     "posiciones_libres_hoy": 560,
     "pct_ocupacion_hoy": 59.3,
-    "m3_stock_calculado": 801.6
+    "m3_stock_calculado": 801.4
   },
   "pico_proyectado": {
-    "fecha": "2026-10-25",
-    "posiciones_ocupadas": 817.0,
-    "pct_ocupacion": 59.3
+    "fecha": "2026-10-26",
+    "posiciones_ocupadas": 810.0,
+    "pct_ocupacion": 58.8
   },
   "minimo_proyectado": {
     "fecha": "2026-12-23",
@@ -73,8 +73,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 18731.0,
-    "demanda_cumplida_unidades": 13194.0,
-    "demanda_no_cubierta_unidades_total": 5537.0,
+    "demanda_cumplida_unidades": 13191.0,
+    "demanda_no_cubierta_unidades_total": 5540.0,
     "pct_demanda_cumplida": 70.4,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
@@ -115,7 +115,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 220.0,
+        "unid_no_cubiertas": 221.0,
         "sin_match_stock": true
       },
       {
@@ -150,7 +150,7 @@
       },
       {
         "sku": "LVMPADXXL-BK",
-        "unid_no_cubiertas": 155.0,
+        "unid_no_cubiertas": 156.0,
         "sin_match_stock": true
       },
       {
