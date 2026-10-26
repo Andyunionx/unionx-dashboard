@@ -61,6 +61,17 @@ def _alias_sku(df, col="sku"):
     df = df.copy()
     df[col] = df[col].astype(str).str.strip().replace(ALIAS_SKU)
     return df
+
+
+def mapa_canonico(*fuentes):
+    """Una sola escritura por SKU sin distinguir mayúsculas: {SKU en mayúsculas: escritura}.
+    Las fuentes van en orden de prioridad; la primera escritura que aparece manda."""
+    canon = {}
+    for serie in fuentes:
+        for s in pd.Series(serie).dropna().astype(str).str.strip():
+            if s and s.lower() != "nan":
+                canon.setdefault(s.upper(), s)
+    return canon
 SEM_EVENTO = {23, 41}
 AZUL = "4884FC"
 
@@ -558,13 +569,45 @@ def construir(no_download=False, no_live=False) -> Path:
     prod, comp = cargar_pricing()
     venta = cargar_venta_digital(sem)
     full, fuente_live, cruce = stock_full_live(no_live)
-    full_map = {(r.canal, r.sku): r.qty for r in full.itertuples(index=False)}
 
     det = pd.read_parquet(DETALLE)
     # CA1 disponible = solo CA1/Stock: lo que está en CA1/Output ya está pickeado (envíos a Full
     # o pedidos por despachar) y no se puede volver a mandar (Trini, 19-oct).
     ca1 = det[det["Bodega"].astype(str).str.startswith("CA1/Stock")]
     stock_ca1 = ca1.groupby(ca1["SKU"].astype(str).str.strip())["Disponible"].sum()
+
+    # Un mismo SKU llega escrito distinto según la fuente: Odoo "Pack478", la hoja Pricing y el
+    # feed "PACK478". Sin esto el pulso lo mostraba dos veces, con el stock del Full en una fila y
+    # la venta en la otra (Trini, 26-oct; 20 packs). Manda la escritura de Odoo (RAW), después la
+    # de la base, y se aplica a todas las fuentes.
+    raw_skus = pd.concat([pd.read_parquet(p, columns=["sku"])["sku"] for p in (HIST, MES)], ignore_index=True)
+    canon = mapa_canonico(raw_skus.astype(str).str.strip().replace(ALIAS_SKU), prod["Sku"])
+
+    def K(s):
+        s = str(s).strip()
+        s = ALIAS_SKU.get(s, s)
+        return canon.get(s.upper(), s)
+
+    def _k_dict(d, clave):
+        out = {}
+        for k, v in d.items():
+            k2 = clave(k)
+            if k2 not in out or pd.isna(out[k2]):
+                out[k2] = v
+        return out
+
+    prod = prod.assign(Sku=prod["Sku"].map(K)).drop_duplicates("Sku")
+    venta = venta.assign(sku=venta["sku"].map(K))
+    full = full.assign(sku=full["sku"].map(K)).groupby(["canal", "sku"], as_index=False)["qty"].sum()
+    comp = (comp.assign(Pack=comp["Pack"].map(K), SKU=comp["SKU"].map(K))
+            .groupby(["Pack", "SKU"], as_index=False)["qty"].max())
+    stock_ca1 = stock_ca1.groupby(stock_ca1.index.map(K)).sum()
+    manual_map = _k_dict(manual_map, lambda k: (K(k[0]), k[1]))
+    blset = {(c, K(s)) for c, s in blset}
+    lgset = {(c, K(s)) for c, s in lgset}
+    dim_m3 = _k_dict(dim_m3, K)
+    dim_kg = _k_dict(dim_kg, K)
+    full_map = {(r.canal, r.sku): r.qty for r in full.itertuples(index=False)}
 
     # Complementar la base con productos que no están en Pricing/Maestra pero tienen venta
     # digital o stock en algún Full. Ya NO se agregan los que solo tienen stock en CA1: la
@@ -598,6 +641,10 @@ def construir(no_download=False, no_live=False) -> Path:
         tr_fulls = {k: v for k, v in tr_fulls.items() if k[0] != "Falabella"}
         tr_fulls.update(fala_tr)
         print(f"[transito] Falabella desde FBF: {sum(fala_tr.values()):,.0f} uds en {len(fala_tr)} SKU")
+    _tr = {}
+    for (c, s), v in tr_fulls.items():
+        _tr[(c, K(s))] = _tr.get((c, K(s)), 0) + v
+    tr_fulls = _tr
 
     # venta semanal por sku x canal (para UME) y demanda digital total con packs
     v_canal = venta.groupby(["sku", "canal"])["cantidad"].sum() / len(sem)

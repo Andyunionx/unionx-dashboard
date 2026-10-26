@@ -57,6 +57,23 @@ def _fuentes_transito(hoy):
     return avisos
 
 
+def _html_aviso_sin_sku(ruta=Path("data/stock/fulfillment_live_sin_sku.parquet")):
+    """Filas del feed de stock en Full que llegan sin SKU interno: no se pueden cruzar y el pulso
+    las cuenta como 0, así que puede sugerir de más (fulfillment_live.SKU_POR_PRODUCTO las asigna
+    a mano mientras se corrige el feed)."""
+    try:
+        s = pd.read_parquet(ruta)
+    except Exception:
+        return ""
+    if not len(s):
+        return ""
+    filas = "".join(f"<li><b>{r.canal}</b>: {r.producto} ({miles(r.qty)} uds)</li>" for r in s.itertuples(index=False))
+    return (f'<div style="font-size:13px;margin:10px 0;padding:8px 12px;background:#FDECEA;'
+            f'border-left:4px solid {ROJO};"><b>⚠ Stock en Full sin SKU interno</b> — estas publicaciones llegan '
+            f'sin SKU en el feed, el pulso las cuenta como 0 y puede sugerir de más:'
+            f'<ul style="margin:6px 0 0 18px;padding:0;">{filas}</ul></div>')
+
+
 def _html_aviso_transito(avisos):
     if not avisos:
         return ""
@@ -184,6 +201,7 @@ def main():
 <div style="color:#64748b;font-size:12px;">Semana {semana} · {hoy.strftime('%d/%m/%Y')} · v1 en marcha blanca</div>
 {correccion_html}
 {_html_aviso_transito(avisos_fuentes)}
+{_html_aviso_sin_sku()}
 
 <div style="font-size:14px;margin:12px 0;"><b>Sugerido de la semana:</b> {miles(tot_uds)} unidades ·
 {miles(tot_skus)} SKU-canal · {tot_m3:.1f} m³ · envío estimado {clp(tot_costo)}</div>

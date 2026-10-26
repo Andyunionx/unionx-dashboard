@@ -35,6 +35,13 @@ BOD2CANAL = {"BFML": "Mercado Libre", "BFFa": "Falabella", "BFP": "Paris",
 CANAL2BOD = {"Mercado Libre": "Fulfillment ML", "Falabella": "Fulfillment Fala",
              "Paris": "Fulfillment Paris", "Ripley": "Fulfillment Ripley",
              "Walmart": "Fulfillment Walmart"}
+# Filas del feed que llegan sin "SKU interno": se asignan por (canal, nombre del producto). El neceser
+# Khumbu negro del Full de ML llega así (32 uds; Trini 14 y 26-oct) y el pulso lo veía en 0.
+# Las que no estén aquí quedan en SIN_SKU_PARQUET y el pulso las avisa en el correo.
+SKU_POR_PRODUCTO = {
+    ("Mercado Libre", "neceser viaje waterproof 5l khumbu lhotse negro liso"): "LHNECKHUM-BK",
+}
+SIN_SKU_PARQUET = PROJECT_ROOT / "data/stock/fulfillment_live_sin_sku.parquet"
 
 
 # ---------------------------------------------------------------- Gmail
@@ -90,9 +97,15 @@ def parse_sabana(xlsx_path: Path) -> pd.DataFrame:
     df["canal"] = df["Canal"].map(CANAL_MAP).fillna(df["Canal"])
     df["sku"] = df["sku"].astype(str).str.strip()
     df["qty"] = pd.to_numeric(df["qty"], errors="coerce").fillna(0)
-    df = df[df["sku"].str.lower().ne("nan") & (df["sku"] != "")]
-    return df.groupby(["canal", "sku"], as_index=False).agg(
+    vacio = df["sku"].str.lower().eq("nan") | (df["sku"] == "")
+    nombre = df["producto"].astype(str).str.lower().str.split().str.join(" ")
+    por_nombre = pd.Series([SKU_POR_PRODUCTO.get((c, n), "") for c, n in zip(df["canal"], nombre)], index=df.index)
+    df.loc[vacio, "sku"] = por_nombre[vacio]
+    vacio = df["sku"] == ""
+    out = df[~vacio].groupby(["canal", "sku"], as_index=False).agg(
         producto=("producto", "first"), qty=("qty", "sum"))
+    out.attrs["sin_sku"] = df.loc[vacio & (df["qty"] > 0), ["canal", "producto", "qty"]].reset_index(drop=True)
+    return out
 
 
 def cargar_live(file: Path | None = None, guardar: bool = True) -> pd.DataFrame:
@@ -104,7 +117,10 @@ def cargar_live(file: Path | None = None, guardar: bool = True) -> pd.DataFrame:
     live = parse_sabana(file)
     if guardar:
         LIVE_PARQUET.parent.mkdir(parents=True, exist_ok=True)
+        sin = live.attrs.get("sin_sku", pd.DataFrame(columns=["canal", "producto", "qty"]))
+        live.attrs = {}
         live.to_parquet(LIVE_PARQUET, index=False)
+        sin.to_parquet(SIN_SKU_PARQUET, index=False)
     return live
 
 
