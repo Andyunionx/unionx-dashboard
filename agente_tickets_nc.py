@@ -41,6 +41,13 @@ original SIN reembolso y pasa a BPV; el reemplazo sale como hoy (salida «PV»+O
 y la 111009 queda en cero con el par. El ticket no se marca: si el cambio termina en
 devolución, la NC reutiliza esa misma devolución. vars.AGENTE_NC_CAMBIO_EXCLUIR deja en
 espera los tickets que se listen ahí.
+Reglas de Max del 22-oct (ver nc_reglas.py): «Aplica Reembolso» = No deja la devolución sin
+NC; un Cambio con «Sí» lleva NC por la diferencia, que se emite a mano (va a la hoja de
+manuales del pulso). Error de despacho (el ticket trae «SKU recibido»): la NC es por lo
+comprado, pero a BPV entra lo que llegó. Con vars.AGENTE_NC_ERROR_DESPACHO_INVENTARIO=true
+lo comprado vuelve del despacho a CA1/Stock (en realidad nunca salió) y lo que llegó pasa de
+CA1/Stock a BPV/Entrada; sin la variable, esos casos salen solo con la NC (antes entraba a
+BPV el SKU comprado).
 
 Campo helpdesk.ticket.x_estado_nc: con_nc / nc_creada / sin_nc / sin_boleta /
 nc_previa / revisar / no_aplica.
@@ -70,9 +77,10 @@ TAG = "[AGENTE-PV"
 # el 03-oct Postventa casi no registró recepciones sin OC (5 unidades entre el 5 y el 13-oct):
 # lo recibido desde el 07-oct no está en Odoo (cruce con la lista de Max del 20-oct).
 CORTE_BPV = "2026-10-07"
-CA1_OUTPUT, BPV_ENTRADA, T_BPV_INT = 11, 3327, 165
+CA1_STOCK, CA1_OUTPUT, BPV_ENTRADA, T_BPV_INT = 8, 11, 3327, 165
 FULL_INV = os.environ.get("AGENTE_NC_FULL_INVENTARIO", "").strip().lower() == "true"
 CAMBIO_INV = os.environ.get("AGENTE_NC_CAMBIO_INVENTARIO", "").strip().lower() == "true"
+ERROR_INV = os.environ.get("AGENTE_NC_ERROR_DESPACHO_INVENTARIO", "").strip().lower() == "true"
 # Cambios en espera (tickets separados por comas): no se devuelven mientras estén en la variable.
 CAMBIO_EXCLUIR = {t.strip().lstrip("#") for t in os.environ.get("AGENTE_NC_CAMBIO_EXCLUIR", "").split(",") if t.strip()}
 EXCEL =sys.argv[sys.argv.index("--excel") + 1] if "--excel" in sys.argv else None
@@ -139,7 +147,26 @@ def ficha(t, bucket, detalle):
         oc = norm_oc(t["name"].split("-", 1)[1])
     return {"t": t, "canal": R.canal_canonico(R.texto(t, "Canal")), "estado": R.texto(t, "Estado"), "oc": oc,
             "prod": prop(t, "Producto Comprado"), "qty": prop(t, "Cantidad") or 0,
-            "frecep": prop(t, "F. recepción PV"), "bucket": bucket, "detalle": detalle}
+            "frecep": prop(t, "F. recepción PV"), "bucket": bucket, "detalle": detalle,
+            "motivo": R.texto(t, "Motivo"), "reembolso": R.texto(t, "Aplica Reembolso"),
+            "sku_rec": prop(t, "SKU recibido si fue error de despacho"),
+            "qty_rec": prop(t, "Cantidad recibida si fue error de despacho") or 0}
+
+def pid_de(v):
+    return v[0] if isinstance(v, (list, tuple)) else v
+
+def recibido(cs):
+    """Error de despacho (Max, 22-oct): {SKU que llegó: unidades} de los tickets de una OC, y si la
+    OC mezcla tickets con y sin error. Un «SKU recibido» igual a lo comprado no es error."""
+    rec, con, sin = collections.Counter(), 0, 0
+    for c in cs:
+        r = pid_de(c["sku_rec"])
+        if r and r != pid_de(c["prod"]):
+            rec[r] += c["qty_rec"] or c["qty"]
+            con += 1
+        else:
+            sin += 1
+    return dict(rec), bool(con and sin)
 
 # Clasificación con las reglas de Max (nc_reglas.py). Solo CANDIDATO entra al agente;
 # MANUAL se revisa contra Odoo únicamente para informar (nunca se emite desde acá).
@@ -181,13 +208,14 @@ for c in manuales:
     if c["oc"]:
         man_por_oc[c["oc"]].append(c)
 # Cambios con producto recibido, de canales automáticos (en los manuales «Cambio» es un
-# estado de espera hasta que Max confirma). Fuera: error de despacho (llegó otro SKU).
+# estado de espera hasta que Max confirma). Los de error de despacho entran con su propio
+# tratamiento de inventario (planificar_inventario).
 cam_por_oc = collections.defaultdict(list)
 for c in otros:
     t = c["t"]
     if (c["bucket"] == R.CAMBIO and c["detalle"] == "canal automático" and c["oc"] and c["prod"] and c["qty"]
             and R.texto(t, "Resolución") and c["estado"] in R.ESTADOS_RECEPCIONADO
-            and not R.RE_PV_TITULO.search(t.get("name") or "") and not prop(t, "SKU recibido si fue error de despacho")):
+            and not R.RE_PV_TITULO.search(t.get("name") or "")):
         cam_por_oc[c["oc"]].append(c)
 ocs = sorted(set(por_oc) | set(man_por_oc) | set(cam_por_oc))
 ocs_set = set(ocs)
@@ -286,8 +314,10 @@ for oc, cs in por_oc.items():
         lin_f = collections.Counter()
         for c in cs:
             lin_f[c["prod"][0] if isinstance(c["prod"], (list, tuple)) else c["prod"]] += c["qty"]
+        rec, mixto = recibido(cs)
         inv_full.append({"bol": None, "pedido": ords[0]["name"], "so_id": ords[0]["id"], "tids": tids,
                          "trefs": [c["t"]["ticket_ref"] for c in cs], "lineas": dict(lin_f), "oc": oc,
+                         "rec": rec, "mixto": mixto,
                          "frecep": min((c["frecep"] for c in cs if c["frecep"]), default=None), "con_boleta": bool(boletas),
                          "estados": ", ".join(sorted({str(c["estado"]) for c in cs if c["estado"]}))})
         continue
@@ -353,9 +383,10 @@ for oc, cs in por_oc.items():
         fecha_nc = str(frecep)[:10]
     else:
         fecha_nc = str(HOY)
+    rec, mixto = recibido(cs)
     acciones.append({"bol": bol, "pedido": ords[0]["name"], "so_id": ords[0]["id"], "tids": tids,
                      "trefs": [c["t"]["ticket_ref"] for c in cs], "lineas": lineas, "total": total_flag,
-                     "fecha": fecha_nc, "oc": oc, "frecep": frecep,
+                     "fecha": fecha_nc, "oc": oc, "frecep": frecep, "rec": rec, "mixto": mixto,
                      "estados": ", ".join(sorted({str(c["estado"]) for c in cs if c["estado"]})),
                      "monto_est": sum(por_prod[p]["price_unit"] * q for p, q in lineas.items())})
 
@@ -402,6 +433,15 @@ def planificar_inventario(lst):
     for i in range(0, len(pids), 800):
         kit_no_inv |= {p["id"] for p in ex("product.product", "read", pids[i:i+800], fields=["is_kits", "is_storable"])
                        if p["is_kits"] and not p["is_storable"]}
+    # Error de despacho: lo que llegó pasa de CA1/Stock a BPV, así que en Odoo tiene que estar en
+    # CA1/Stock y no ser un kit (un kit no se traslada, solo sus componentes).
+    rec_pids = sorted({p for a in lst for p in a.get("rec") or {}})
+    disp_ca1, rec_kit = collections.Counter(), set()
+    if rec_pids:
+        for q in ex("stock.quant", "search_read", [("product_id", "in", rec_pids), ("location_id", "child_of", CA1_STOCK)],
+                    fields=["product_id", "quantity"], limit=10000):
+            disp_ca1[q["product_id"][0]] += q["quantity"]
+        rec_kit = {p["id"] for p in ex("product.product", "read", rec_pids, fields=["is_kits"]) if p["is_kits"]}
     for a in lst:
         a["inv"], a["costo_dev"] = None, 0
         os_ = outs.get(a["so_id"], [])
@@ -438,6 +478,24 @@ def planificar_inventario(lst):
             a["inv_motivo"] = "solo NC: el producto del ticket no está en el despacho"
         elif kit_no_inv & set(a["lineas"]):
             a["inv_motivo"] = "solo NC: kit no inventariable en Odoo"
+        elif a.get("rec"):
+            # Si una corrida anterior ya hizo la devolución, el traslado puede estar hecho y el
+            # stock de lo que llegó ya descontado: no se vuelve a exigir.
+            falta = [] if prev else [p for p, q in a["rec"].items() if p in rec_kit or disp_ca1[p] < q]
+            if not ERROR_INV:
+                a["inv_motivo"] = "solo NC: error de despacho (inventario a mano; AGENTE_NC_ERROR_DESPACHO_INVENTARIO)"
+            elif a["mixto"]:
+                a["inv_motivo"] = "solo NC: error de despacho mezclado con otros tickets de la OC (inventario a mano)"
+            elif out["location_id"][0] != CA1_OUTPUT:
+                a["inv_motivo"] = f"solo NC: error de despacho desde {out['location_id'][1]} (inventario a mano)"
+            elif falta:
+                a["inv_motivo"] = "solo NC: error de despacho, lo que llegó es kit o no tiene stock en CA1/Stock (inventario a mano)"
+            else:
+                for p, q in a["rec"].items():
+                    disp_ca1[p] -= q
+                a["inv"] = {"out": out, "cant": cant, "ret": prev[0]["id"] if prev else None, "rec": a["rec"]}
+                a["inv_motivo"] = ("error de despacho: lo comprado vuelve a CA1/Stock y lo que llegó pasa a BPV"
+                                   + (f" (retoma {prev[0]['name']})" if prev else ""))
         else:
             a["inv"] = {"out": out, "cant": cant, "ret": prev[0]["id"] if prev else None}
             a["inv_motivo"] = (f"devolución a {out['location_id'][1]} y traslado a BPV"
@@ -451,6 +509,17 @@ def origen_ok(nombre):
     return nombre == "CA1/Output" or raiz.startswith("BF") or raiz in ("BKC1", "OOB")
 
 
+# Lo que sale en un cambio es el pick con documento origen «PV» + OC; si no existe, el cambio no
+# se ha despachado (Max, 22-oct).
+pv_por_oc = collections.defaultdict(list)
+oc_c = sorted(cam_por_oc)
+for i in range(0, len(oc_c), 400):
+    ch = oc_c[i:i+400]
+    for p in ex("stock.picking", "search_read", [("origin", "in", [f"PV{o}" for o in ch] + [f"PV#{o}" for o in ch]),
+                                                 ("state", "!=", "cancel")],
+                fields=["name", "origin", "state", "location_id"], limit=5000):
+        pv_por_oc[norm_oc(p["origin"])].append(p)
+
 inv_cambio = []   # cambios: solo inventario, sin NC ni reembolso
 for oc, cs in cam_por_oc.items():
     ords = ord_por_oc.get(oc, [])
@@ -459,9 +528,26 @@ for oc, cs in cam_por_oc.items():
     lin_c = collections.Counter()
     for c in cs:
         lin_c[c["prod"][0] if isinstance(c["prod"], (list, tuple)) else c["prod"]] += c["qty"]
+    rec, mixto = recibido(cs)
+    frecep = min((c["frecep"] for c in cs if c["frecep"]), default=None)
+    pvs = pv_por_oc.get(oc, [])
+    obs = []
+    if any(c["reembolso"] == "Sí" for c in cs):
+        obs.append("Aplica Reembolso = Sí: NC por la diferencia, a mano")
+    if frecep and str(frecep)[:10] >= CORTE_BPV:
+        if not pvs:
+            obs.append("sin pick PV: el cambio no se ha despachado")
+        elif any(c["motivo"] == "Reenvío" for c in cs) and any(p["location_id"][1].startswith("CA1/") for p in pvs):
+            # La unidad que vuelve al cliente está en BPV: si el pick sale de CA1, BPV queda
+            # con una unidad fantasma y CA1 con una de menos.
+            obs.append("reenvío: el pick PV sale de CA1 y la unidad está en BPV (debería salir de BPV)")
     inv_cambio.append({"bol": None, "pedido": ords[0]["name"], "so_id": ords[0]["id"], "tids": [c["t"]["id"] for c in cs],
                        "trefs": [c["t"]["ticket_ref"] for c in cs], "lineas": dict(lin_c), "oc": oc, "cambio": True,
-                       "frecep": min((c["frecep"] for c in cs if c["frecep"]), default=None),
+                       "frecep": frecep, "rec": rec, "mixto": mixto,
+                       "motivo": ", ".join(sorted({c["motivo"] for c in cs})),
+                       "reembolso": ", ".join(sorted({c["reembolso"] for c in cs if c["reembolso"]})),
+                       "pv": ", ".join(f"{p['name']} ({p['state']}, {p['location_id'][1]})" for p in pvs),
+                       "obs": "; ".join(obs),
                        "estados": ", ".join(sorted({str(c["estado"]) for c in cs if c["estado"]}))})
 planificar_inventario(acciones + inv_full + inv_cambio)
 
@@ -488,6 +574,9 @@ for nombre_l, lst_ in (("a emitir", acciones), ("retenidas", retenidas), ("Fulfi
     if inv_c:
         print(f"inventario de las NC {nombre_l}: {dict(inv_c)} · costo devuelto "
               f"${sum(a['costo_dev'] for a in lst_ if a['inv']):,.0f}")
+obs_c = collections.Counter(o for a in inv_cambio for o in a["obs"].split("; ") if o)
+if obs_c:
+    print(f"cambios, observaciones: {dict(obs_c)}")
 for est, lst in marcas.items():
     print(f"\n{est}: {len(lst)}")
     for tid, m in lst[:6]:
@@ -529,6 +618,20 @@ for c in manuales:
         filas_man.append({"grupo": c["detalle"], "canal": c["canal"], "ticket": c["t"]["ticket_ref"],
                           "titulo": c["t"]["name"], "oc": "", "pedido": "", "estado NC": "sin Nº de orden",
                           "boleta": "", "fecha boleta": "", "monto estimado OC": 0})
+# Cambio con «Aplica Reembolso» = Sí (Max, 22-oct): NC por la diferencia entre lo devuelto y lo que
+# salió con el pick PV. El pick no tiene precio en Odoo, así que la emite Facturación; el monto
+# de la hoja es el precio en boleta de lo devuelto (el tope de esa NC).
+for oc, cs in cam_por_oc.items():
+    if not any(c["reembolso"] == "Sí" for c in cs):
+        continue
+    est, bol, monto = estado_manual(oc, cs)
+    ords = ord_por_oc.get(oc, [])
+    for c in cs:
+        filas_man.append({"grupo": "Cambio con reembolso (NC por la diferencia)", "canal": c["canal"],
+                          "ticket": c["t"]["ticket_ref"], "titulo": c["t"]["name"], "oc": oc,
+                          "pedido": ords[0]["name"] if len(ords) == 1 else "", "estado NC": est,
+                          "boleta": bol["name"] if bol else "", "fecha boleta": fecha_bol.get(bol["id"]) if bol else "",
+                          "monto estimado OC": round(monto)})
 cm = collections.Counter((f["grupo"], f["estado NC"]) for f in filas_man)
 print("\nmanuales por grupo y estado NC:", dict(cm))
 
@@ -577,8 +680,9 @@ if EXCEL and not LIVE:
         "pedido": a["pedido"], "oc": a["oc"], "tickets": ", ".join("#" + str(r) for r in a["trefs"]),
         "canal": ", ".join(sorted({R.canal_canonico(R.texto(nombre_t[i], "Canal")) for i in a["tids"]})),
         "recepción PV": str(a["frecep"] or "")[:10], "estado producto": a["estados"],
+        "motivo": a["motivo"], "aplica reembolso": a["reembolso"],
         "inventario": ("ya devuelto por el agente" if a["inv"] and a["inv"]["ret"] else a["inv_motivo"].replace("solo NC: ", "sin devolución: ")),
-        "costo unidades": round(a["costo_dev"]),
+        "costo unidades": round(a["costo_dev"]), "pick PV": a["pv"], "observación": a["obs"],
         "activo": ("en espera (AGENTE_NC_CAMBIO_EXCLUIR)" if CAMBIO_EXCLUIR & {str(r) for r in a["trefs"]} else "sí")
                   if CAMBIO_INV else "no (AGENTE_NC_CAMBIO_INVENTARIO)"} for a in inv_cambio])
     hojas["2 Agente - revisar"] = pd.DataFrame([fila_marca(est, tid, m) for est, lst in marcas.items() for tid, m in lst])
@@ -590,6 +694,7 @@ if EXCEL and not LIVE:
     hojas["6 Sin revisar"] = pd.DataFrame([fila_ticket(c) for c in otros if c["bucket"] == R.SIN_REVISAR])
     hojas["7 PV en titulo"] = pd.DataFrame([fila_ticket(c) for c in otros if c["bucket"] == R.PV_TITULO])
     hojas["8 No recepcionado"] = pd.DataFrame([fila_ticket(c) for c in otros if c["bucket"] == R.NO_RECEPCIONADO])
+    hojas["9 Sin reembolso"] = pd.DataFrame([fila_ticket(c) for c in otros if c["bucket"] == R.SIN_REEMBOLSO])
     resumen = [("Clasificación", k, v, None) for k, v in conteo.most_common()]
     resumen += [("Agente", "emitiría NC", len(acciones), round(sum(a["monto_est"] for a in acciones)))]
     resumen += [("Agente", "retenida (lista autorizada)", len(retenidas), round(sum(a["monto_est"] for a in retenidas)))]
@@ -637,10 +742,10 @@ def validar_picking(pid, dest):
 
 def devolver(a):
     """Paso 1: devolución del despacho original a la bodega de donde salió (CA1/Output, Full u
-    OOB), solo con las unidades del ticket y «a reembolsar». Si una corrida anterior la dejó
-    hecha, se retoma."""
+    OOB), solo con las unidades del ticket y «a reembolsar». En un error de despacho lo comprado
+    vuelve a CA1/Stock: en realidad nunca salió. Si una corrida anterior la dejó hecha, se retoma."""
     inv, out = a["inv"], a["inv"]["out"]
-    dest = out["location_id"][0]
+    dest = CA1_STOCK if inv.get("rec") else out["location_id"][0]
     if inv["ret"]:
         r = ex("stock.picking", "read", [inv["ret"]], fields=["name", "state"])[0]
         return inv["ret"], (r["name"] if r["state"] == "done" else validar_picking(inv["ret"], dest))
@@ -661,10 +766,12 @@ def devolver(a):
         raise
 
 
-def trasladar(ret_id, ret_name, nota):
+def trasladar(ret_id, ret_name, nota, recibido=None):
     """Paso 3: de la bodega donde quedó la devolución a BPV/Entrada «devuelto por recepcionar»,
     validado por el agente. Odoo crea solo el BPV/STOR (Entrada → Stock) que valida bodega.
-    No duplica: si la devolución ya tiene traslado, no hace nada."""
+    En un error de despacho (recibido = {producto: unidades}) pasa a BPV lo que llegó, desde
+    CA1/Stock, donde Odoo todavía lo tiene. No duplica: si la devolución ya tiene traslado, no
+    hace nada."""
     prev = ex("stock.picking", "search_read", [("picking_type_id", "=", T_BPV_INT), ("origin", "=like", f"{ret_name} ·%"),
                                                ("state", "!=", "cancel")], fields=["id", "state"], limit=1)
     if prev:
@@ -674,23 +781,31 @@ def trasladar(ret_id, ret_name, nota):
         if prev[0]["state"] == "draft":
             ex("stock.picking", "action_confirm", [prev[0]["id"]])
         return validar_picking(prev[0]["id"], BPV_ENTRADA)
-    origen = ex("stock.picking", "read", [ret_id], fields=["location_dest_id"])[0]["location_dest_id"][0]
-    mv = ex("stock.move", "search_read", [("picking_id", "=", ret_id), ("state", "=", "done")],
-            fields=["product_id", "quantity", "product_uom"])
+    if recibido:
+        origen = CA1_STOCK
+        lineas = [(p["id"], p["display_name"], recibido[p["id"]], p["uom_id"][0])
+                  for p in ex("product.product", "read", list(recibido), fields=["display_name", "uom_id"])]
+    else:
+        origen = ex("stock.picking", "read", [ret_id], fields=["location_dest_id"])[0]["location_dest_id"][0]
+        lineas = [(m["product_id"][0], m["product_id"][1], m["quantity"], m["product_uom"][0])
+                  for m in ex("stock.move", "search_read", [("picking_id", "=", ret_id), ("state", "=", "done")],
+                              fields=["product_id", "quantity", "product_uom"]) if m["quantity"]]
     pid = ex("stock.picking", "create", {
         "picking_type_id": T_BPV_INT, "location_id": origen, "location_dest_id": BPV_ENTRADA,
         "origin": f"{ret_name} · {nota} · devuelto por recepcionar",
-        "move_ids": [(0, 0, {"name": m["product_id"][1][:60], "product_id": m["product_id"][0],
-                             "product_uom_qty": m["quantity"], "product_uom": m["product_uom"][0],
-                             "location_id": origen, "location_dest_id": BPV_ENTRADA}) for m in mv if m["quantity"]]})
+        "move_ids": [(0, 0, {"name": n[:60], "product_id": p, "product_uom_qty": q, "product_uom": u,
+                             "location_id": origen, "location_dest_id": BPV_ENTRADA}) for p, n, q, u in lineas]})
     ex("stock.picking", "action_confirm", [pid])
     return validar_picking(pid, BPV_ENTRADA)
 
 
 # Devoluciones del agente (últimos 30 días) que quedaron sin traslado a BPV (corrida cortada entre pasos).
+# Fuera las de error de despacho (vuelven a CA1/Stock): ahí lo que pasa a BPV es otro producto,
+# que solo conoce el ticket; si quedaron sin traslado, se avisa para completarlo a mano.
 hace30 = (datetime.datetime.utcnow() - datetime.timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
 for r in ex("stock.picking", "search_read", [("origin", "ilike", TAG), ("state", "=", "done"), ("return_id", "!=", False),
-                                             ("create_date", ">=", hace30), ("location_dest_id.usage", "=", "internal")],
+                                             ("create_date", ">=", hace30), ("location_dest_id.usage", "=", "internal"),
+                                             ("location_dest_id", "!=", CA1_STOCK)],
             fields=["id", "name", "origin"], limit=500):
     try:
         tr = trasladar(r["id"], r["name"], r["origin"].split(TAG)[-1].strip(" ]"))
@@ -698,6 +813,12 @@ for r in ex("stock.picking", "search_read", [("origin", "ilike", TAG), ("state",
             print(f"  ↪ traslado pendiente completado: {r['name']} → {tr}")
     except Exception as e:
         print(f"  ⚠ traslado pendiente de {r['name']} falló: {str(e)[:150]}")
+for r in ex("stock.picking", "search_read", [("origin", "ilike", TAG), ("state", "=", "done"), ("return_id", "!=", False),
+                                             ("create_date", ">=", hace30), ("location_dest_id", "=", CA1_STOCK)],
+            fields=["id", "name", "origin"], limit=500):
+    if not ex("stock.picking", "search_count", [("picking_type_id", "=", T_BPV_INT), ("origin", "=like", f"{r['name']} ·%"),
+                                                ("state", "=", "done")]):
+        print(f"  ⚠ error de despacho {r['name']} ({r['origin']}): lo que llegó no pasó a BPV, completar a mano")
 
 actual = {t["id"]: t.get("x_estado_nc") for t in tickets}
 for est, lst in marcas.items():
@@ -765,11 +886,16 @@ for a in acciones[:MAX_NC_POR_CORRIDA]:
         nc_name = ex("account.move", "read", [nc["id"]], fields=["name"])[0]["name"]
         if ret:
             # 3) Traslado a BPV/Entrada; si falla, la próxima corrida lo completa (barrido de arriba).
+            rec = a["inv"].get("rec")
             try:
-                tr = trasladar(ret[0], ret[1], f"{nc_name} ({a['estados'] or 'sin estado'})")
-                nota_inv = f" Producto devuelto ({ret[1]}) y trasladado a BPV/Entrada ({tr}); bodega valida el BPV/STOR."
+                tr = trasladar(ret[0], ret[1], f"{nc_name} ({a['estados'] or 'sin estado'})", rec)
+                nota_inv = (f" Error de despacho: lo comprado volvió a CA1/Stock ({ret[1]}) y lo que llegó pasó a "
+                            f"BPV/Entrada ({tr}); bodega valida el BPV/STOR." if rec else
+                            f" Producto devuelto ({ret[1]}) y trasladado a BPV/Entrada ({tr}); bodega valida el BPV/STOR.")
             except Exception as e:
-                nota_inv = f" Producto devuelto ({ret[1]}); el traslado a BPV queda para la próxima corrida ({str(e)[:100]})."
+                nota_inv = (f" Error de despacho: lo comprado volvió a CA1/Stock ({ret[1]}); lo que llegó NO pasó a BPV, "
+                            f"completar a mano ({str(e)[:100]})." if rec else
+                            f" Producto devuelto ({ret[1]}); el traslado a BPV queda para la próxima corrida ({str(e)[:100]}).")
                 sin_inv.append((a["oc"], f"traslado: {str(e)[:150]}"))
         marcar(a["tids"], "nc_creada", f"NC emitida por boleta {bol['name']} (${chk['amount_total']:,.0f}).{nota_inv}")
         emitidas += 1
@@ -814,8 +940,12 @@ if CAMBIO_INV:
     for a in pend_c[:MAX_NC_POR_CORRIDA]:
         try:
             ret = devolver(a)
-            tr = trasladar(ret[0], ret[1], f"Cambio sin NC ({a['estados'] or 'sin estado'})")
-            nota = (f"[Agente NC] Cambio (sin NC): producto devuelto a {a['inv']['out']['location_id'][1]} ({ret[1]}, "
+            rec = a["inv"].get("rec")
+            tr = trasladar(ret[0], ret[1], f"Cambio sin NC ({a['estados'] or 'sin estado'})", rec)
+            nota = (f"[Agente NC] Cambio por error de despacho (sin NC): lo comprado volvió a CA1/Stock ({ret[1]}, sin "
+                    f"reembolso) y lo que llegó pasó a BPV/Entrada ({tr or 'ya trasladado'}); el reemplazo sale con la salida PV de bodega."
+                    if rec else
+                    f"[Agente NC] Cambio (sin NC): producto devuelto a {a['inv']['out']['location_id'][1]} ({ret[1]}, "
                     f"sin reembolso) y trasladado a BPV/Entrada ({tr or 'ya trasladado'}); el reemplazo sale con la salida PV de bodega.")
             for tid in a["tids"]:
                 ex("helpdesk.ticket", "message_post", [tid], body=nota)

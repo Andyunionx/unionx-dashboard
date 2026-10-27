@@ -13,6 +13,8 @@ name: Agente Tickets NC (postventa)
 # a su bodega Full y pasan a BPV, sin NC (Andrés 21-oct).
 # vars.AGENTE_NC_CAMBIO_INVENTARIO='true': el producto recibido de un cambio vuelve del despacho
 # original sin reembolso y pasa a BPV (Andrés 21-oct); vars.AGENTE_NC_CAMBIO_EXCLUIR = tickets en espera.
+# vars.AGENTE_NC_ERROR_DESPACHO_INVENTARIO='true': en un error de despacho lo comprado vuelve a CA1/Stock
+# y lo que llegó pasa a BPV (Max, 22-oct); sin la variable esos casos salen solo con la NC.
 
 on:
   schedule:
@@ -49,6 +51,7 @@ jobs:
           AGENTE_NC_FULL_INVENTARIO: ${{ vars.AGENTE_NC_FULL_INVENTARIO }}
           AGENTE_NC_CAMBIO_INVENTARIO: ${{ vars.AGENTE_NC_CAMBIO_INVENTARIO }}
           AGENTE_NC_CAMBIO_EXCLUIR: ${{ vars.AGENTE_NC_CAMBIO_EXCLUIR }}
+          AGENTE_NC_ERROR_DESPACHO_INVENTARIO: ${{ vars.AGENTE_NC_ERROR_DESPACHO_INVENTARIO }}
           PYTHONIOENCODING: utf-8
         run: |
           if [ "${{ github.event.inputs.full }}" = "true" ]; then

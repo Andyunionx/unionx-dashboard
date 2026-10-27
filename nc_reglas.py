@@ -21,6 +21,13 @@ Reglas (Max, correo 17-sep-2026, confirmadas 22-sep; complemento de Andrés 05-o
   todas las resoluciones no vacías, incluidas las «Ver …».
   Con la OC del ticket se verifica si ya tiene NC; varios tickets de una misma OC
   dan una sola NC, por los productos de cada ticket.
+  Max, 22-oct: si va NC lo dice «Aplica Reembolso». «No» = sin NC (la Devolución queda
+  fuera y se lista). «Sí» en una Devolución = NC por el total; en un Cambio por otro
+  producto = NC por la diferencia, que se emite a mano (el pick PV no tiene precio en
+  Odoo). Vacío en una Devolución = NC por el total, como antes: los marketplaces todavía
+  no lo llenan (2 de 86 tickets del 23 al 26-oct, solo webs). «Reenvío» es un Cambio
+  donde sale la misma unidad. Error de despacho: el ticket trae lo comprado y el
+  «SKU recibido»; a BPV entra el que llegó.
 """
 import re
 
@@ -34,6 +41,7 @@ CANALES_FIDELIZACION = {"Travel Duty", "Celmedia", "Global Reward", "Sawa", "Ban
 CANALES_DISTRIBUCION = {"Falabella tienda", "Paris tienda", "Lokal"}
 CANAL_KITCHEN = "Kitchen Center"
 ESTADOS_RECEPCIONADO = {"Nuevo", "Outlet", "Merma"}
+MOTIVOS_CAMBIO = {"Cambio", "Reenvío"}   # Max, 22-oct: un reenvío es un cambio por la misma unidad
 _CANON = {c.lower(): c for c in (CANALES_AUTOMATICOS | CANALES_WEB_AUTOMATICOS | CANALES_PAGINAS_PROPIAS
                                   | CANALES_FIDELIZACION | CANALES_DISTRIBUCION | {CANAL_KITCHEN})}
 RE_PV_TITULO = re.compile(r"\bPV\s*[#\-_]?\s*\d{3,}", re.I)
@@ -46,6 +54,7 @@ SIN_REVISAR = "SIN_REVISAR"        # resolución vacía
 MANUAL = "MANUAL"                  # canal que se emite a mano
 PV_TITULO = "PV_TITULO"            # «PV» + OC en el título
 NO_RECEPCIONADO = "NO_RECEPCIONADO"
+SIN_REEMBOLSO = "SIN_REEMBOLSO"    # Devolución con «Aplica Reembolso» = No
 
 
 def prop(t, nombre):
@@ -94,7 +103,7 @@ def grupo_manual(t):
 def clasificar(t):
     """→ (bucket, detalle) según las reglas de Max, en el orden de su correo."""
     motivo = texto(t, "Motivo")
-    if motivo == "Cambio":
+    if motivo in MOTIVOS_CAMBIO:
         return CAMBIO, grupo_manual(t) or "canal automático"
     if motivo != "Devolución":
         return OTRO_MOTIVO, motivo or "(sin motivo)"
@@ -108,4 +117,6 @@ def clasificar(t):
     estado = texto(t, "Estado")
     if estado not in ESTADOS_RECEPCIONADO:
         return NO_RECEPCIONADO, estado or "(vacío)"
+    if texto(t, "Aplica Reembolso") == "No":
+        return SIN_REEMBOLSO, "Aplica Reembolso = No"
     return CANDIDATO, estado
