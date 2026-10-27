@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-27T16:59:29.772901",
+  "generado_en": "2026-10-27T21:33:47.339248",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 16767,
-  "total_monto_pendiente_clp": 970677967.0,
+  "total_documentos_pendientes": 15481,
+  "total_monto_pendiente_clp": 899934436.0,
   "monto_por_aging": {
     "+90 días": 83786310.0,
-    "1-30 días": 503331736.0,
-    "31-60 días": 183777060.0,
+    "1-30 días": 448266556.0,
+    "31-60 días": 168934316.0,
     "61-90 días": 58106116.0,
-    "Vigente": 141676745.0
+    "Vigente": 140841138.0
   },
   "monto_por_tipo": {
-    "BOLETA": 882653529.0,
+    "BOLETA": 811909998.0,
     "FACTURA": 88024438.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 168870340.0
+      "monto": 170406000.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 85671012.0
+      "monto": 85749092.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -39,18 +39,6 @@
     {
       "partner": "Mercadolibre Chile Limitada",
       "monto": 58370766.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 30626667.0
-    },
-    {
-      "partner": "Cliente Shopify",
-      "monto": 24689440.0
-    },
-    {
-      "partner": "Lhotse Store",
-      "monto": 23622607.0
     },
     {
       "partner": "Shopping LATAM Pass",
@@ -66,15 +54,19 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 20647405.0
+      "monto": 20840325.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 16300157.0
+      "monto": 16344117.0
     },
     {
       "partner": "STATUS SPA",
       "monto": 15504967.0
+    },
+    {
+      "partner": "Cliente Shopify",
+      "monto": 13380223.0
     },
     {
       "partner": "Cliente Walmart",
@@ -95,8 +87,16 @@
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 7041951.0
+    },
+    {
+      "partner": "Cliente Simplit Home",
+      "monto": 5729637.0
+    },
+    {
+      "partner": "Lhotse Store",
+      "monto": 5589166.0
     }
   ],
-  "notas_credito_count": 944,
+  "notas_credito_count": 945,
   "pedidos_venta_count": 10000
 }
