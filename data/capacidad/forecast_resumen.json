@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-26T22:03:57.924700",
+  "generado_en": "2026-10-27T02:50:03.311064",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,12 +14,12 @@
     "posiciones_ocupadas_hoy": 815,
     "posiciones_libres_hoy": 562,
     "pct_ocupacion_hoy": 59.2,
-    "m3_stock_calculado": 793.5
+    "m3_stock_calculado": 793.1
   },
   "pico_proyectado": {
-    "fecha": "2026-10-26",
-    "posiciones_ocupadas": 815.0,
-    "pct_ocupacion": 59.2
+    "fecha": "2026-10-27",
+    "posiciones_ocupadas": 805.8,
+    "pct_ocupacion": 58.5
   },
   "minimo_proyectado": {
     "fecha": "2026-12-25",
@@ -66,15 +66,15 @@
   "pallets_total_entrantes_horizonte": 94.7,
   "pallets_total_salientes_horizonte": 176.2,
   "m3_total_entrante_horizonte": 113.6,
-  "m3_total_saliente_horizonte": 211.5,
+  "m3_total_saliente_horizonte": 211.4,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 779,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 19090.0,
-    "demanda_cumplida_unidades": 13188.0,
-    "demanda_no_cubierta_unidades_total": 5902.0,
+    "demanda_cumplida_unidades": 13185.0,
+    "demanda_no_cubierta_unidades_total": 5905.0,
     "pct_demanda_cumplida": 69.1,
     "sku_sin_match_stock_count": 41,
     "top_no_cubiertos": [
@@ -120,7 +120,7 @@
       },
       {
         "sku": "LVMPADXXL-BK",
-        "unid_no_cubiertas": 225.0,
+        "unid_no_cubiertas": 226.0,
         "sin_match_stock": true
       },
       {
