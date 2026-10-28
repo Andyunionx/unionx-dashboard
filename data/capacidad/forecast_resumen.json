@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-28T09:07:23.827777",
+  "generado_en": "2026-10-28T17:36:18.857588",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 804,
     "posiciones_libres_hoy": 573,
     "pct_ocupacion_hoy": 58.4,
-    "m3_stock_calculado": 785.9
+    "m3_stock_calculado": 781.4
   },
   "pico_proyectado": {
     "fecha": "2026-10-28",
@@ -23,8 +23,8 @@
   },
   "minimo_proyectado": {
     "fecha": "2026-12-25",
-    "posiciones_ocupadas": 639.2,
-    "pct_ocupacion": 46.4
+    "posiciones_ocupadas": 640.3,
+    "pct_ocupacion": 46.5
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -64,18 +64,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 94.7,
-  "pallets_total_salientes_horizonte": 174.0,
+  "pallets_total_salientes_horizonte": 172.9,
   "m3_total_entrante_horizonte": 113.6,
-  "m3_total_saliente_horizonte": 208.8,
+  "m3_total_saliente_horizonte": 207.5,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 779,
+    "sku_con_vol_odoo": 777,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 19090.0,
-    "demanda_cumplida_unidades": 13100.0,
-    "demanda_no_cubierta_unidades_total": 5990.0,
-    "pct_demanda_cumplida": 68.6,
+    "demanda_cumplida_unidades": 13049.0,
+    "demanda_no_cubierta_unidades_total": 6041.0,
+    "pct_demanda_cumplida": 68.4,
     "sku_sin_match_stock_count": 41,
     "top_no_cubiertos": [
       {
@@ -84,13 +84,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 332.0,
+        "sku": "1659991971809",
+        "unid_no_cubiertas": 335.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1659991971809",
-        "unid_no_cubiertas": 329.0,
+        "sku": "LVSILLERGO-BL",
+        "unid_no_cubiertas": 332.0,
         "sin_match_stock": true
       },
       {
@@ -105,27 +105,27 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 271.0,
+        "unid_no_cubiertas": 272.0,
         "sin_match_stock": true
       },
       {
         "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 253.0,
+        "unid_no_cubiertas": 255.0,
         "sin_match_stock": true
       },
       {
         "sku": "68540048936286",
-        "unid_no_cubiertas": 251.0,
+        "unid_no_cubiertas": 254.0,
         "sin_match_stock": true
       },
       {
         "sku": "LVMPADXXL-BK",
-        "unid_no_cubiertas": 239.0,
+        "unid_no_cubiertas": 240.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 214.0,
+        "unid_no_cubiertas": 216.0,
         "sin_match_stock": true
       },
       {
@@ -139,13 +139,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "1479750635184",
-        "unid_no_cubiertas": 187.0,
+        "sku": "LHCAMACXPL",
+        "unid_no_cubiertas": 188.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 186.0,
+        "sku": "1479750635184",
+        "unid_no_cubiertas": 187.0,
         "sin_match_stock": true
       },
       {
@@ -155,7 +155,7 @@
       },
       {
         "sku": "68540051413139",
-        "unid_no_cubiertas": 134.0,
+        "unid_no_cubiertas": 148.0,
         "sin_match_stock": true
       },
       {
@@ -170,7 +170,7 @@
       },
       {
         "sku": "67933857637909",
-        "unid_no_cubiertas": 120.0,
+        "unid_no_cubiertas": 125.0,
         "sin_match_stock": true
       },
       {
