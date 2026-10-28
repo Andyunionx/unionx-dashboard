@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-28T17:33:46.064303",
+  "generado_en": "2026-10-28T21:58:56.071463",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 15624,
-  "total_monto_pendiente_clp": 908654956.0,
+  "total_documentos_pendientes": 15667,
+  "total_monto_pendiente_clp": 910331094.0,
   "monto_por_aging": {
     "+90 días": 84714227.0,
-    "1-30 días": 441333297.0,
+    "1-30 días": 442950901.0,
     "31-60 días": 181460863.0,
     "61-90 días": 59621048.0,
-    "Vigente": 141525521.0
+    "Vigente": 141584055.0
   },
   "monto_por_tipo": {
-    "BOLETA": 820630518.0,
+    "BOLETA": 822306656.0,
     "FACTURA": 88024438.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 172884333.0
+      "monto": 173345333.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 86546349.0
+      "monto": 86922129.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -49,16 +49,16 @@
       "monto": 22040105.0
     },
     {
+      "partner": "Cliente Paris",
+      "monto": 21646375.0
+    },
+    {
       "partner": "GOPOINTS CHILE SPA",
       "monto": 21393780.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 21362495.0
-    },
-    {
       "partner": "Cliente Ripley",
-      "monto": 16353097.0
+      "monto": 16380057.0
     },
     {
       "partner": "STATUS SPA",
@@ -66,11 +66,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 13504204.0
+      "monto": 13682572.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 12826371.0
+      "monto": 12896361.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -90,13 +90,13 @@
     },
     {
       "partner": "Lhotse Store",
-      "monto": 5992772.0
+      "monto": 6193918.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 5711110.0
+      "monto": 5731590.0
     }
   ],
-  "notas_credito_count": 945,
+  "notas_credito_count": 946,
   "pedidos_venta_count": 10000
 }
