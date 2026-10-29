@@ -1,9 +1,16 @@
 {
   "errores_seguidos": 0,
-  "ultimo_chequeo": "2026-10-26",
-  "maestra_modificada": "2026-10-23T12:44:59.837Z",
+  "ultimo_chequeo": "2026-10-29",
+  "maestra_modificada": "2026-10-27T20:34:04.377Z",
   "embarques_en_maestra": 148,
-  "faltan": [],
+  "faltan": [
+    {
+      "embarque": "26TP0928",
+      "po": "P00741,P00740",
+      "desde": "2026-10-29",
+      "dias": 0
+    }
+  ],
   "atrasados": [],
   "error": null,
   "alertados": {}
