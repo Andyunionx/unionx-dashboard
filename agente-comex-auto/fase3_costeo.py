@@ -329,6 +329,12 @@ def _enviar_correo(embq, reg, out_dir, faltantes, sin_sku=None):
         html += ("<div style='background:#fdecea;border-left:4px solid #e74c3c;padding:12px;margin:16px 0'>"
                  f"<b>⚠️ Productos del PI SIN SKU ({len(sin_sku)}) — no van en la PO (se carga parcial con el resto):</b> "
                  f"{', '.join(sin_sku)}</div>")
+    otros = embq.inland_china.no_reconocidos
+    if otros:
+        lista = "<br>".join(f"{str(o['descripcion']).splitlines()[0][:60]}: US${o['amount']:,.2f}" for o in otros)
+        html += ("<div style='background:#f4f6f7;border-left:4px solid #7f8c8d;padding:12px;margin:16px 0'>"
+                 f"<b>Cargos de la PI que no son productos ni gastos conocidos ({len(otros)}) — incluidos en el costo "
+                 f"como gasto en China; revisar si alguno es un producto:</b><br>{lista}</div>")
     def _filas(d):
         return "<br>".join(f"{m} → <b>{v['sku']}</b> {v.get('nombre', '')} (mismo modelo en "
                            f"{', '.join(v['embarques'][-3:])}; último US${v['precio_hist']:g})" for m, v in d.items())

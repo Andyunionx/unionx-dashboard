@@ -31,14 +31,15 @@ def _pi_code(embarque: str) -> str:
 
 
 def _match_operacion(ops: list, embarque: str) -> dict | None:
-    """Busca la operación cuya referencia contenga el PI del embarque (ej. 'PI0716')."""
-    code = _pi_code(embarque).upper()
-    digits = code[2:]
+    """Busca la operación cuya referencia contenga el PI del embarque: 'PI0716' o al revés '0927PI'
+    (así nombró Seimex 549-26 y 550-26; el agente no las encontró del 26 al 29-oct)."""
+    digits = _pi_code(embarque).upper()[2:]
+    rx = re.compile(rf"PI{digits}(?![0-9])|(?<![0-9]){digits}PI")
     cands = []
     for o in ops:
         ref = str(o.get("reference_number", "")).upper().replace(" ", "")
         prod = str(o.get("product", "")).upper().replace(" ", "")
-        if code in ref or code in prod or re.search(rf"PI{digits}", ref + prod):
+        if rx.search(ref) or rx.search(prod):
             cands.append(o)
     if not cands:
         return None
@@ -70,7 +71,14 @@ def procesar(dry_run: bool = True) -> dict:
         reg = estado[emb]
         op = _match_operacion(ops, emb)
         if not op:
-            st.log(reg, f"aún no aparece en Seimex (busqué {_pi_code(emb)}) → reintenta mañana")
+            # Aéreos (DyD, DHL) nunca aparecen en Seimex: si ya tiene OC en Odoo, se da por completado.
+            import fase3_costeo as f3
+            pos = f3.po_manual_existente(emb)
+            if pos:
+                reg["po_name"] = ",".join(pos)
+                st.set_fase(reg, 9, f"no está en Seimex pero ya tiene OC en Odoo ({', '.join(pos)}) → COMPLETADO")
+            else:
+                st.log(reg, f"aún no aparece en Seimex (busqué {_pi_code(emb)} / {_pi_code(emb)[2:]}PI) → reintenta mañana")
             continue
         r = SeimexAPI.resumen_operacion(op)
         flete = r.get("quoted_freight_value")

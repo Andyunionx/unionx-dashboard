@@ -84,17 +84,11 @@ def _matches_concepto_inland(texto_busqueda: str) -> tuple[str | None, str | Non
     """
     for key, patterns in CONCEPTOS_INLAND_CHINA_KNOWN.items():
         for p in patterns:
-            # \b en re.search: borde de palabra. 'ff' NO matchea 'duffel'.
-            # Para "3%" el % no es \w, así que el \b al final no aplica bien;
-            # caemos a substring solo para patterns que no son alfanuméricos.
-            if re.search(r'\W', p):
-                # Pattern con caracteres no-palabra (%, espacio + dígito, etc):
-                # substring directo es seguro porque el pattern ya es específico
-                if p in texto_busqueda:
-                    return key, p
-            else:
-                if re.search(rf'\b{re.escape(p)}\b', texto_busqueda):
-                    return key, p
+            # Bordes por lookaround (no \b): sirve también para patrones con espacio o
+            # puntuación. Antes esos iban por substring y 'f f' calzaba dentro de
+            # 'golF Frisbee' (26TP0819: 8 frisbees leídos como Form F).
+            if re.search(rf'(?<![a-z0-9]){re.escape(p)}(?![a-z0-9])', texto_busqueda):
+                return key, p
     return None, None
 
 PCT_AGENTE_ADUANA = 0.0016  # 0.16% sobre CIF en USD (segun skill)
@@ -141,6 +135,7 @@ class GastosInlandChina:
     local_charge: float = 0.0
     long_vehicle: float = 0.0
     comision_steven: float = 0.0  # se recalcula
+    otros_pi: float = 0.0         # cargos de la PI no reconocidos (version/plate fee, cajas...): van al costo
     detectados: dict = field(default_factory=dict)
     no_reconocidos: list = field(default_factory=list)
 
@@ -311,8 +306,12 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
         # ('monitor', 'loading', etc.) hagan desaparecer un producto legítimo cuya
         # descripción las contenga (ej. "Soporte Brazo Doble Monitor" en 26TP0608).
         _sku_row = str(row[headers.get("sku", -1)] or "").strip() if "sku" in headers else ""
+        # Fila con código de modelo (con dígitos, ej. TP819) y qty > 1 = producto aunque venga sin SKU.
+        # Los gastos traen qty 1, o 1 por contenedor ("local charge" × 3 en 26TP0616) y sin código.
+        _qty_row = _to_float(row[headers["qty"]]) if "qty" in headers else 0.0
+        _es_producto = _qty_row > 1 and bool(re.search(r"[0-9]", model))
         concepto_inland, _pat_match = (
-            (None, None) if _sku_row else _matches_concepto_inland(texto_busqueda))
+            (None, None) if _sku_row or _es_producto else _matches_concepto_inland(texto_busqueda))
 
         if concepto_inland:
             if concepto_inland == "form_f":
@@ -328,7 +327,7 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
             continue
 
         # 2) Detectar delivery cost (también busca en model)
-        if "delivery" in texto_busqueda:
+        if "delivery" in texto_busqueda or "delivey" in texto_busqueda:
             productos_raw.append({"_tipo": "delivery", "amount": amount, "row": row_idx})
             continue
 
@@ -365,8 +364,10 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
             }
             productos_raw.append(producto)
         else:
-            # Item raro - no lo conocemos
-            if amount > 0 and descripcion and "total" not in descripcion:
+            # Cargo que no conocemos (version/plate-making fee, cajas, agency fee...): Steven lo cobra en
+            # la PI, así que va al costo (otros_pi, prorrateado como Inland China) y queda listado.
+            if amount > 0 and descripcion and not re.search(r"total|deposit|paid|balance|anticipo|advance", descripcion):
+                inland.otros_pi += amount
                 inland.no_reconocidos.append({"row": row_idx, "descripcion": str(descripcion_raw).strip(), "amount": amount})
 
     # Marcar grupos de delivery: cada "delivery cost" en el PI aplica a TODOS
@@ -423,7 +424,7 @@ def leer_pi(path: Path) -> tuple[list[Producto], GastosInlandChina, str, str]:
             ))
 
     print(f"  {len(productos)} productos extraidos.")
-    print(f"  Inland China detectado: form_f={inland.form_f:.2f}  local={inland.local_charge:.2f}  long_veh={inland.long_vehicle:.2f}  steven_pi={inland.comision_steven:.2f}")
+    print(f"  Inland China detectado: form_f={inland.form_f:.2f}  local={inland.local_charge:.2f}  long_veh={inland.long_vehicle:.2f}  otros={inland.otros_pi:.2f}  steven_pi={inland.comision_steven:.2f}")
     if inland.no_reconocidos:
         print(f"  [!] {len(inland.no_reconocidos)} concepto(s) no reconocidos en PI.")
 
@@ -653,6 +654,7 @@ def calcular_costeo(emb: Embarque):
         + emb.inland_china.local_charge
         + emb.inland_china.long_vehicle
         + emb.inland_china.form_f
+        + emb.inland_china.otros_pi
     )
 
     # 3) CC3: Flete (total)
@@ -813,6 +815,7 @@ def generar_precosteo_xlsx(emb: Embarque, out_dir: Path) -> Path:
     ws3.append(["Form F", emb.inland_china.form_f])
     ws3.append(["Local Charge", emb.inland_china.local_charge])
     ws3.append(["Long Vehicle", emb.inland_china.long_vehicle])
+    ws3.append(["Otros cargos PI (no reconocidos)", emb.inland_china.otros_pi])
     ws3.append(["Comision Steven (3% recalc)", emb.inland_china.comision_steven])
     ws3.append(["TOTAL INLAND CHINA", emb.cc_inland_china])
     ws3.append([])
