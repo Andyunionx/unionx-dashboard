@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-10-29T17:48:51.731298",
+  "generado_en": "2026-10-29T22:11:51.894509",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 51,
-  "sku_match_odoo": 50,
-  "sku_con_peso": 36,
-  "sku_con_volumen": 35,
-  "sku_volumen_anomalo": 4,
+  "sku_input": 82,
+  "sku_match_odoo": 81,
+  "sku_con_peso": 61,
+  "sku_con_volumen": 60,
+  "sku_volumen_anomalo": 13,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 70.6,
-  "cobertura_volumen_pct": 68.6,
-  "cobertura_volumen_confiable_pct": 60.8,
-  "unidades_totales": 8448.0,
-  "peso_total_kg": 36575.3,
-  "volumen_total_m3": 113.63,
-  "volumen_total_m3_raw": 5523863.63,
-  "pallets_totales_estim": 94.7,
+  "cobertura_peso_pct": 74.4,
+  "cobertura_volumen_pct": 73.2,
+  "cobertura_volumen_confiable_pct": 57.3,
+  "unidades_totales": 19760.0,
+  "peso_total_kg": 51220.3,
+  "volumen_total_m3": 160.75,
+  "volumen_total_m3_raw": 56525523.0,
+  "pallets_totales_estim": 134.0,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -101,6 +101,46 @@
       "skus_volumen_anomalo": 4,
       "cobertura_peso_pct": 62.1,
       "cobertura_volumen_pct": 62.1
+    },
+    {
+      "pi": "26TP0819PI",
+      "transporte": "",
+      "fecha_embarque": "2026-10-14",
+      "fecha_eta_bodega": "2026-10-14",
+      "skus_distintos": 16,
+      "unidades_totales": 2292.0,
+      "peso_total_kg": 6205.1,
+      "volumen_total_m3": 17.75,
+      "volumen_total_m3_raw": 42608702.75,
+      "pallets_estim": 14.8,
+      "containers_20_estim": 0.63,
+      "containers_40hc_estim": 0.26,
+      "skus_con_match_odoo": 16,
+      "skus_con_peso": 12,
+      "skus_con_volumen": 12,
+      "skus_volumen_anomalo": 4,
+      "cobertura_peso_pct": 75.0,
+      "cobertura_volumen_pct": 75.0
+    },
+    {
+      "pi": "26TP0927PI",
+      "transporte": "",
+      "fecha_embarque": "2026-10-29",
+      "fecha_eta_bodega": "2026-10-29",
+      "skus_distintos": 23,
+      "unidades_totales": 9020.0,
+      "peso_total_kg": 8439.9,
+      "volumen_total_m3": 29.36,
+      "volumen_total_m3_raw": 8392956.61,
+      "pallets_estim": 24.5,
+      "containers_20_estim": 1.05,
+      "containers_40hc_estim": 0.44,
+      "skus_con_match_odoo": 23,
+      "skus_con_peso": 14,
+      "skus_con_volumen": 14,
+      "skus_volumen_anomalo": 5,
+      "cobertura_peso_pct": 60.9,
+      "cobertura_volumen_pct": 60.9
     }
   ],
   "skus_sin_match": [
@@ -108,9 +148,29 @@
   ],
   "skus_volumen_anomalo_top": [
     {
+      "sku": "LHMALFRONT-L",
+      "producto": "Maleta Grande Viaje 23kg Expandible (L) 110L Frontier Lhotse",
+      "volumen_unit_m3": 133518.0
+    },
+    {
+      "sku": "BDPKMESILL",
+      "producto": "Set Mesa y 2 Sillas Infantil Madera con Cajones Bandú",
+      "volumen_unit_m3": 108949.5
+    },
+    {
+      "sku": "LHMALFRONT-M",
+      "producto": "Maleta Mediana Viaje 18kg Expandible (M) 75L Frontier Lhotse",
+      "volumen_unit_m3": 90450.0
+    },
+    {
       "sku": "BDSILLEVREG",
       "producto": "Silla de Comer Evolutiva de Madera Regulable Bebé Bandú",
       "volumen_unit_m3": 70125.0
+    },
+    {
+      "sku": "LHMALFRONT-S",
+      "producto": "Maleta Cabina Viaje 10kg Expandible (S) 41L Frontier Lhotse",
+      "volumen_unit_m3": 60021.0
     },
     {
       "sku": "BDTORRAPR",
@@ -118,14 +178,39 @@
       "volumen_unit_m3": 56700.0
     },
     {
+      "sku": "BDCASMUÑEC-WD",
+      "producto": "Casa de Muñecas Madera 3 Pisos con Muebles y Muñecos Bandú",
+      "volumen_unit_m3": 31438.125
+    },
+    {
+      "sku": "BDSETLIMP",
+      "producto": "Juguete Set de Aseo y Limpieza Madera Niños Soporte Bandú",
+      "volumen_unit_m3": 23040.0
+    },
+    {
+      "sku": "BDPZMG2E1",
+      "producto": "Pizarra Infantil Madera 2 en 1 Magnética Doble Cara Bandú",
+      "volumen_unit_m3": 11000.0
+    },
+    {
       "sku": "LVMOPRL-BK",
       "producto": "Mochila Notebook Ejecutiva Prime Lite Impermeable 18L LEVO",
       "volumen_unit_m3": 6300.0
     },
     {
+      "sku": "BDGMNMVBB",
+      "producto": "Gimnasio Madera Bebé Montessori Juguetes Colgantes Bandú",
+      "volumen_unit_m3": 4414.41
+    },
+    {
       "sku": "SMCONTCAFMI",
       "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
       "volumen_unit_m3": 2535.0
+    },
+    {
+      "sku": "XRCOOLPOR50-BK",
+      "producto": "Cooler Portátil 50L con Ruedas Negro Xroad",
+      "volumen_unit_m3": 51.675
     }
   ]
 }
