@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-30T03:25:27.866827",
+  "generado_en": "2026-10-30T11:50:36.000917",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 795,
     "posiciones_libres_hoy": 582,
     "pct_ocupacion_hoy": 57.7,
-    "m3_stock_calculado": 773.5
+    "m3_stock_calculado": 772.2
   },
   "pico_proyectado": {
     "fecha": "2026-10-30",
@@ -89,8 +89,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 19090.0,
-    "demanda_cumplida_unidades": 13191.0,
-    "demanda_no_cubierta_unidades_total": 5899.0,
+    "demanda_cumplida_unidades": 13189.0,
+    "demanda_no_cubierta_unidades_total": 5901.0,
     "pct_demanda_cumplida": 69.1,
     "sku_sin_match_stock_count": 40,
     "top_no_cubiertos": [
@@ -130,13 +130,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "DYNTALSPER",
-        "unid_no_cubiertas": 256.0,
+        "sku": "LVMPADXXL-BK",
+        "unid_no_cubiertas": 257.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LVMPADXXL-BK",
-        "unid_no_cubiertas": 255.0,
+        "sku": "DYNTALSPER",
+        "unid_no_cubiertas": 256.0,
         "sin_match_stock": true
       },
       {
