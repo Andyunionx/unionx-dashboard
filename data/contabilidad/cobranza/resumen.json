@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-10-30T17:23:48.566266",
+  "generado_en": "2026-10-30T21:46:18.672016",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 15391,
-  "total_monto_pendiente_clp": 896530374.0,
+  "total_documentos_pendientes": 15412,
+  "total_monto_pendiente_clp": 897509941.0,
   "monto_por_aging": {
     "+90 días": 88920353.0,
-    "1-30 días": 453046431.0,
-    "31-60 días": 178777748.0,
+    "1-30 días": 454198968.0,
+    "31-60 días": 178604778.0,
     "61-90 días": 40692896.0,
     "Vigente": 135092946.0
   },
   "monto_por_tipo": {
-    "BOLETA": 808505936.0,
+    "BOLETA": 809485503.0,
     "FACTURA": 88024438.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 178077168.0
+      "monto": 178301468.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 89991800.0
+      "monto": 89792967.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -42,7 +42,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22118065.0
+      "monto": 22275045.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -54,7 +54,7 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 17296817.0
+      "monto": 17009877.0
     },
     {
       "partner": "STATUS SPA",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14289910.0
+      "monto": 14563113.0
     },
     {
       "partner": "Cliente Walmart",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 7150839.0
+      "monto": 7314623.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -90,13 +90,13 @@
     },
     {
       "partner": "Lhotse Store",
-      "monto": 6640650.0
+      "monto": 6906892.0
     },
     {
       "partner": "ZZ-DUPLICADO NO USAR (usar id 16) - Cliente Mercado Libre",
       "monto": 5182009.0
     }
   ],
-  "notas_credito_count": 1017,
+  "notas_credito_count": 1026,
   "pedidos_venta_count": 10000
 }
