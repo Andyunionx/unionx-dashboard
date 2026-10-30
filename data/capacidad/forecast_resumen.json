@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-10-29T22:11:58.430680",
+  "generado_en": "2026-10-30T03:25:27.866827",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -17,24 +17,18 @@
     "m3_stock_calculado": 773.5
   },
   "pico_proyectado": {
-    "fecha": "2026-10-29",
-    "posiciones_ocupadas": 813.5,
-    "pct_ocupacion": 59.1
+    "fecha": "2026-10-30",
+    "posiciones_ocupadas": 789.1,
+    "pct_ocupacion": 57.3
   },
   "minimo_proyectado": {
     "fecha": "2026-12-25",
-    "posiciones_ocupadas": 660.7,
-    "pct_ocupacion": 48.0
+    "posiciones_ocupadas": 642.1,
+    "pct_ocupacion": 46.6
   },
   "primer_critico": null,
   "primer_atencion": null,
-  "dias_con_entrada_transito": [
-    {
-      "fecha": "2026-10-29",
-      "pallets": 25.0,
-      "m3": 30.0
-    }
-  ],
+  "dias_con_entrada_transito": [],
   "pis_entrantes": [
     {
       "pi": "26TP0704PI",
@@ -86,18 +80,18 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 134.0,
-  "pallets_total_salientes_horizonte": 176.5,
+  "pallets_total_salientes_horizonte": 176.6,
   "m3_total_entrante_horizonte": 160.8,
-  "m3_total_saliente_horizonte": 211.8,
+  "m3_total_saliente_horizonte": 212.0,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 780,
+    "sku_con_vol_odoo": 781,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 19090.0,
-    "demanda_cumplida_unidades": 13181.0,
-    "demanda_no_cubierta_unidades_total": 5909.0,
-    "pct_demanda_cumplida": 69.0,
+    "demanda_cumplida_unidades": 13191.0,
+    "demanda_no_cubierta_unidades_total": 5899.0,
+    "pct_demanda_cumplida": 69.1,
     "sku_sin_match_stock_count": 40,
     "top_no_cubiertos": [
       {
@@ -122,12 +116,12 @@
       },
       {
         "sku": "SIMCUVER-CR",
-        "unid_no_cubiertas": 294.0,
+        "unid_no_cubiertas": 293.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 271.0,
+        "unid_no_cubiertas": 272.0,
         "sin_match_stock": true
       },
       {
@@ -157,7 +151,7 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 193.0,
+        "unid_no_cubiertas": 192.0,
         "sin_match_stock": true
       },
       {
@@ -196,8 +190,8 @@
         "sin_match_stock": true
       },
       {
-        "sku": "1650301031879",
-        "unid_no_cubiertas": 117.0,
+        "sku": "1634845754276",
+        "unid_no_cubiertas": 116.0,
         "sin_match_stock": true
       }
     ],
