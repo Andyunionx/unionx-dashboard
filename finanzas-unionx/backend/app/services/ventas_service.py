@@ -493,6 +493,12 @@ class VentasService(BaseOdooService):
             ncs = []
 
 
+        # NC [GOPOINTS] (LATAM Pass, emitidas el 29-oct-2026): anulan boletas de canjes que en
+        # contabilidad quedaron duplicadas con la factura mensual a GoPoints. El RAW cuenta LATAM
+        # por pedido y NO incluye las facturas a GoPoints, así que tampoco estas NC (Andrés
+        # 02-nov-2026). Se reconocen por la marca [GOPOINTS] en la referencia.
+        ncs = [nc for nc in ncs if '[GOPOINTS]' not in str(nc.get('ref') or '').upper()]
+
         # Mapeo de NC por factura original + Extraer facturas originales referenciadas por NC
         nc_por_factura = {}
         factura_orig_ids = []
