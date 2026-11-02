@@ -1,40 +1,138 @@
 {
-  "generado_en": "2026-11-02T10:40:45.073480",
+  "generado_en": "2026-11-02T23:00:37.104241",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.043548387096774194,
-      "total_pickings": 18600,
-      "on_time": 810,
-      "on_time_pct": 0.043548387096774194,
-      "in_full": 18596,
-      "in_full_pct": 0.9997849462365591,
-      "both": 810,
+      "valor": 0.044549076421586384,
+      "total_pickings": 19327,
+      "on_time": 861,
+      "on_time_pct": 0.044549076421586384,
+      "in_full": 19323,
+      "in_full_pct": 0.9997930356496093,
+      "both": 861,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.05042016806722689,
-      "total_pickings": 476,
-      "on_time": 25,
-      "on_time_pct": 0.052521008403361345,
-      "in_full": 470,
-      "in_full_pct": 0.9873949579831933,
-      "both": 24,
+      "valor": 0.05091649694501019,
+      "total_pickings": 491,
+      "on_time": 26,
+      "on_time_pct": 0.05295315682281059,
+      "in_full": 485,
+      "in_full_pct": 0.9877800407331976,
+      "both": 25,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997913275739744,
-      "ok": 23956,
-      "total": 23961,
+      "valor": 0.9997987927565393,
+      "ok": 24845,
+      "total": 24850,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 8.105423399162179,
-      "n_recepciones": 557,
+      "valor": 8.084214827787507,
+      "n_recepciones": 571,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFFa/RET/00076",
+          "proveedor": "Cliente Falabella Fcom, Andrea Guerrero Frisanch",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:51"
+        },
+        {
+          "picking": "BFP/RET/00017",
+          "proveedor": "Cliente Paris, Pamela Pincheira",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:51",
+          "done": "2026-11-02 20:51"
+        },
+        {
+          "picking": "CA1/RET/01514",
+          "proveedor": "Cliente Falabella Fcom, Danitza Valdés Pérez",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01515",
+          "proveedor": "Lhotse Store, VICENTE LUCO TORRES",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01516",
+          "proveedor": "Cliente Falabella Fcom, Daniela Garca León",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01517",
+          "proveedor": "Cliente Falabella Fcom, Maria Javiera Martinez Madrid",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01518",
+          "proveedor": "Cliente Paris, Andres Rodriguez",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01510",
+          "proveedor": "Cliente Falabella Fcom, Marisol Perez michea",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01511",
+          "proveedor": "Cliente Ripley, Jordan Santander",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01512",
+          "proveedor": "Cliente Falabella Fcom, Marlene San Martin Toro",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01513",
+          "proveedor": "Cliente Ripley, Roberto Molina Severino",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01509",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:05",
+          "done": "2026-11-02 20:05"
+        },
+        {
+          "picking": "CA1/RET/01508",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:02",
+          "done": "2026-11-02 20:02"
+        },
+        {
+          "picking": "CA1/IN/01109",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 101.4,
+          "scheduled": "2026-10-29 12:00",
+          "done": "2026-11-02 17:21"
+        },
         {
           "picking": "CA1/RET/01502",
           "proveedor": "Cliente Ripley, Jan Garin",
@@ -76,123 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-10-31 16:09",
           "done": "2026-10-31 16:09"
-        },
-        {
-          "picking": "CA1/RET/01501",
-          "proveedor": "Cliente Simplit Home, Carolina Castillo herrera",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 16:09",
-          "done": "2026-10-31 16:09"
-        },
-        {
-          "picking": "CA1/RET/01494",
-          "proveedor": "Cliente Ripley, Noemi Ester Venegas Belmar",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01495",
-          "proveedor": "Cliente Mercado Libre, Alexander Homero Cortés Barahona",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01496",
-          "proveedor": "Cliente Falabella Fcom, carolina llanos Ojeda",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01497",
-          "proveedor": "Cliente Falabella Fcom, Barbara Orellana Rodriguez",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01498",
-          "proveedor": "Cliente Falabella Fcom, ALEJANDRA CACERES MONDACA",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01488",
-          "proveedor": "Cliente Paris, Sofia Casanova",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01489",
-          "proveedor": "Cliente Paris, Carmen Araya",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01490",
-          "proveedor": "Cliente Paris, Paula Vlasich",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01491",
-          "proveedor": "Cliente Paris, MAURICIO ISAAC PENa",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01492",
-          "proveedor": "Cliente Paris, Patricio Massardo",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01493",
-          "proveedor": "Cliente Ripley, Alfredo Hernan",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01482",
-          "proveedor": "Cliente Falabella Fcom, jose diaz",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:42",
-          "done": "2026-10-31 01:42"
-        },
-        {
-          "picking": "CA1/RET/01483",
-          "proveedor": "Cliente Falabella Fcom, jacqueline Aguilera Carcamo",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:42",
-          "done": "2026-10-31 01:42"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9554399699715802,
-      "total_so": 18667,
-      "total_con_pickings": 18649,
-      "cumplidos": 17818,
+      "valor": 0.9742929239827568,
+      "total_so": 19041,
+      "total_con_pickings": 19022,
+      "cumplidos": 18533,
       "parciales": 15,
-      "sin_iniciar": 816,
+      "sin_iniciar": 474,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.18060604728581,
-      "n_orders": 18958,
+      "valor": 46.365302466000784,
+      "n_orders": 19690,
       "min_h": 0.0175,
       "max_h": 714.7769444444444,
-      "mediana_h": 25.366944444444446,
+      "mediana_h": 25.41138888888889,
       "detalle": [
         {
           "so": "S290463",
@@ -221,6 +221,20 @@
           "horas": 617.0,
           "fecha_orden": "2026-09-30 23:13",
           "fecha_despacho": "2026-10-26 16:11"
+        },
+        {
+          "so": "S302588",
+          "cliente": "Cliente Mercado Libre, MARCELO CREO DIAZ",
+          "horas": 601.3,
+          "fecha_orden": "2026-10-08 12:30",
+          "fecha_despacho": "2026-11-02 13:46"
+        },
+        {
+          "so": "S303221",
+          "cliente": "Cliente Shopify, Rodrigo Cárdenas",
+          "horas": 588.5,
+          "fecha_orden": "2026-10-09 01:19",
+          "fecha_despacho": "2026-11-02 13:48"
         },
         {
           "so": "S294200",
@@ -256,6 +270,13 @@
           "horas": 572.5,
           "fecha_orden": "2026-10-06 17:47",
           "fecha_despacho": "2026-10-30 14:18"
+        },
+        {
+          "so": "S303742",
+          "cliente": "Cliente Mercado Libre, Zlatica Vrsalovic",
+          "horas": 568.3,
+          "fecha_orden": "2026-10-09 21:27",
+          "fecha_despacho": "2026-11-02 13:46"
         },
         {
           "so": "S298756",
@@ -312,27 +333,6 @@
           "horas": 561.2,
           "fecha_orden": "2026-10-07 03:59",
           "fecha_despacho": "2026-10-30 13:13"
-        },
-        {
-          "so": "S299872",
-          "cliente": "Cliente Falabella Fcom, Marcelo isaias Roman Leon",
-          "horas": 557.7,
-          "fecha_orden": "2026-10-07 07:32",
-          "fecha_despacho": "2026-10-30 13:13"
-        },
-        {
-          "so": "S300055",
-          "cliente": "Cliente Falabella Fcom, diego navarro",
-          "horas": 552.7,
-          "fecha_orden": "2026-10-07 12:29",
-          "fecha_despacho": "2026-10-30 13:13"
-        },
-        {
-          "so": "S292717",
-          "cliente": "INSTALACION Y ASESORIA E.R.N.C. CHRISTIAN QUINTANA E.I.R.L.",
-          "horas": 551.2,
-          "fecha_orden": "2026-09-30 16:09",
-          "fecha_despacho": "2026-10-23 15:18"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 136,
+      "lineas": 1024,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 187,
-      "outgoing": 30016,
-      "internal": 19797,
+      "outgoing": 30019,
+      "internal": 19794,
       "total": 50000,
       "error": null
     },
@@ -367,8 +367,8 @@
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 119,
-          "tarde": 119,
+          "total": 128,
+          "tarde": 128,
           "on_time_pct": 0.0
         },
         {
@@ -403,9 +403,15 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 27,
-          "tarde": 25,
-          "on_time_pct": 0.07407407407407407
+          "total": 28,
+          "tarde": 26,
+          "on_time_pct": 0.07142857142857142
+        },
+        {
+          "cliente": "Cencosud Retail S.A",
+          "total": 3,
+          "tarde": 1,
+          "on_time_pct": 0.6666666666666666
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -8131,42 +8137,140 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.043548387096774194,
-      "total_pickings": 18600,
-      "on_time": 810,
-      "on_time_pct": 0.043548387096774194,
-      "in_full": 18596,
-      "in_full_pct": 0.9997849462365591,
-      "both": 810,
+      "valor": 0.044549076421586384,
+      "total_pickings": 19327,
+      "on_time": 861,
+      "on_time_pct": 0.044549076421586384,
+      "in_full": 19323,
+      "in_full_pct": 0.9997930356496093,
+      "both": 861,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.05042016806722689,
-      "total_pickings": 476,
-      "on_time": 25,
-      "on_time_pct": 0.052521008403361345,
-      "in_full": 470,
-      "in_full_pct": 0.9873949579831933,
-      "both": 24,
+      "valor": 0.05091649694501019,
+      "total_pickings": 491,
+      "on_time": 26,
+      "on_time_pct": 0.05295315682281059,
+      "in_full": 485,
+      "in_full_pct": 0.9877800407331976,
+      "both": 25,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997913275739744,
-      "ok": 23956,
-      "total": 23961,
+      "valor": 0.9997987927565393,
+      "ok": 24845,
+      "total": 24850,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 8.105423399162179,
-      "n_recepciones": 557,
+      "valor": 8.084214827787507,
+      "n_recepciones": 571,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFFa/RET/00076",
+          "proveedor": "Cliente Falabella Fcom, Andrea Guerrero Frisanch",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:51"
+        },
+        {
+          "picking": "BFP/RET/00017",
+          "proveedor": "Cliente Paris, Pamela Pincheira",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:51",
+          "done": "2026-11-02 20:51"
+        },
+        {
+          "picking": "CA1/RET/01514",
+          "proveedor": "Cliente Falabella Fcom, Danitza Valdés Pérez",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01515",
+          "proveedor": "Lhotse Store, VICENTE LUCO TORRES",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01516",
+          "proveedor": "Cliente Falabella Fcom, Daniela Garca León",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01517",
+          "proveedor": "Cliente Falabella Fcom, Maria Javiera Martinez Madrid",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01518",
+          "proveedor": "Cliente Paris, Andres Rodriguez",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:50",
+          "done": "2026-11-02 20:50"
+        },
+        {
+          "picking": "CA1/RET/01510",
+          "proveedor": "Cliente Falabella Fcom, Marisol Perez michea",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01511",
+          "proveedor": "Cliente Ripley, Jordan Santander",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01512",
+          "proveedor": "Cliente Falabella Fcom, Marlene San Martin Toro",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01513",
+          "proveedor": "Cliente Ripley, Roberto Molina Severino",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:49",
+          "done": "2026-11-02 20:49"
+        },
+        {
+          "picking": "CA1/RET/01509",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:05",
+          "done": "2026-11-02 20:05"
+        },
+        {
+          "picking": "CA1/RET/01508",
+          "proveedor": "WALMART CHILE COM. LTDA",
+          "horas": 0.0,
+          "scheduled": "2026-11-02 20:02",
+          "done": "2026-11-02 20:02"
+        },
+        {
+          "picking": "CA1/IN/01109",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 101.4,
+          "scheduled": "2026-10-29 12:00",
+          "done": "2026-11-02 17:21"
+        },
         {
           "picking": "CA1/RET/01502",
           "proveedor": "Cliente Ripley, Jan Garin",
@@ -8208,104 +8312,6 @@
           "horas": 0.0,
           "scheduled": "2026-10-31 16:09",
           "done": "2026-10-31 16:09"
-        },
-        {
-          "picking": "CA1/RET/01501",
-          "proveedor": "Cliente Simplit Home, Carolina Castillo herrera",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 16:09",
-          "done": "2026-10-31 16:09"
-        },
-        {
-          "picking": "CA1/RET/01494",
-          "proveedor": "Cliente Ripley, Noemi Ester Venegas Belmar",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01495",
-          "proveedor": "Cliente Mercado Libre, Alexander Homero Cortés Barahona",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01496",
-          "proveedor": "Cliente Falabella Fcom, carolina llanos Ojeda",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01497",
-          "proveedor": "Cliente Falabella Fcom, Barbara Orellana Rodriguez",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01498",
-          "proveedor": "Cliente Falabella Fcom, ALEJANDRA CACERES MONDACA",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:44",
-          "done": "2026-10-31 01:44"
-        },
-        {
-          "picking": "CA1/RET/01488",
-          "proveedor": "Cliente Paris, Sofia Casanova",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01489",
-          "proveedor": "Cliente Paris, Carmen Araya",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01490",
-          "proveedor": "Cliente Paris, Paula Vlasich",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01491",
-          "proveedor": "Cliente Paris, MAURICIO ISAAC PENa",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01492",
-          "proveedor": "Cliente Paris, Patricio Massardo",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01493",
-          "proveedor": "Cliente Ripley, Alfredo Hernan",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:43",
-          "done": "2026-10-31 01:43"
-        },
-        {
-          "picking": "CA1/RET/01482",
-          "proveedor": "Cliente Falabella Fcom, jose diaz",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:42",
-          "done": "2026-10-31 01:42"
-        },
-        {
-          "picking": "CA1/RET/01483",
-          "proveedor": "Cliente Falabella Fcom, jacqueline Aguilera Carcamo",
-          "horas": 0.0,
-          "scheduled": "2026-10-31 01:42",
-          "done": "2026-10-31 01:42"
         }
       ],
       "error": null
