@@ -1,6 +1,6 @@
 {
   "errores_seguidos": 0,
-  "ultimo_chequeo": "2026-11-01",
+  "ultimo_chequeo": "2026-11-02",
   "maestra_modificada": "2026-10-27T20:34:04.377Z",
   "embarques_en_maestra": 148,
   "faltan": [
@@ -8,13 +8,13 @@
       "embarque": "26TP0927",
       "po": "P00746",
       "desde": "2026-10-29",
-      "dias": 3
+      "dias": 4
     },
     {
       "embarque": "26TP0928",
       "po": "P00741,P00740",
       "desde": "2026-10-29",
-      "dias": 3
+      "dias": 4
     }
   ],
   "atrasados": [
@@ -22,18 +22,19 @@
       "embarque": "26TP0927",
       "po": "P00746",
       "desde": "2026-10-29",
-      "dias": 3
+      "dias": 4
     },
     {
       "embarque": "26TP0928",
       "po": "P00741,P00740",
       "desde": "2026-10-29",
-      "dias": 3
+      "dias": 4
     }
   ],
   "error": null,
   "alertados": {
     "26TP0927": "2026-11-01",
     "26TP0928": "2026-11-01"
-  }
+  },
+  "ultimo_recordatorio": "2026-11-02"
 }
