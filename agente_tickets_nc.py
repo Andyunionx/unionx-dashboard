@@ -725,7 +725,11 @@ def marcar(tids, estado, nota):
 def validar_picking(pid, dest):
     """Reserva, completa las cantidades y valida (mismo procedimiento probado en test3). Se
     completa aunque no se pueda reservar: CA1/Output tiene productos en negativo y el producto
-    ya está físicamente en Postventa."""
+    ya está físicamente en Postventa.
+    Fija la razón de la transferencia (tipo de traslado SII), que Odoo deja en 1 (venta): 7 en la
+    devolución del cliente; 5 en el traslado a BPV y en el BPV/STOR que Odoo crea al validarlo."""
+    es_dev = ex("stock.picking", "read", [pid], fields=["return_id"])[0]["return_id"]
+    ex("stock.picking", "write", [pid], {"l10n_cl_delivery_guide_reason": "7" if es_dev else "5"})
     ex("stock.picking", "action_assign", [pid])
     mv = ex("stock.move", "search_read", [("picking_id", "=", pid)], fields=["id", "product_uom_qty", "quantity"])
     for m in mv:
@@ -737,6 +741,9 @@ def validar_picking(pid, dest):
     p = ex("stock.picking", "read", [pid], fields=["name", "state"])[0]
     if p["state"] != "done":
         raise Exception(f"{p['name']} quedó en estado {p['state']}")
+    sig = ex("stock.picking", "search", [("move_ids.move_orig_ids.picking_id", "=", pid), ("l10n_cl_delivery_guide_reason", "!=", "5")])
+    if sig:
+        ex("stock.picking", "write", sig, {"l10n_cl_delivery_guide_reason": "5"})
     return p["name"]
 
 
