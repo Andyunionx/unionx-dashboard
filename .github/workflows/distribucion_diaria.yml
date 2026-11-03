@@ -62,7 +62,23 @@ jobs:
         run: |
           git checkout agente-odoo/src/actions/distribucion/ \
                        agente-odoo/src/actions/compras/ \
-                       agente-odoo/scripts/run_distribucion.py 2>/dev/null || true
+                       agente-odoo/src/actions/glosas/ \
+                       agente-odoo/scripts/run_distribucion.py \
+                       agente-odoo/scripts/run_corrector_glosas.py 2>/dev/null || true
+
+      # Antes de distribuir: repone la glosa del XML en borradores donde la importación
+      # DTE de Odoo pegó un producto por nombre parcial (caso Walmart FAC 601152).
+      # La cuenta sale del historial del proveedor; sin precedente queda la que puso
+      # Odoo (regla de Víctor, 3-nov-2026). En test_mode solo muestra lo que haría.
+      # Si falla, la distribución sigue igual.
+      - name: Corregir glosas (XML vs Odoo)
+        continue-on-error: true
+        env:
+          PYTHONIOENCODING: utf-8
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+        run: |
+          FLAG=$([ "${{ github.event.inputs.test_mode }}" = "true" ] && echo "" || echo "--aplicar")
+          python -X utf8 agente-odoo/scripts/run_corrector_glosas.py $FLAG
 
       - name: Ejecutar distribución diaria
         env:
