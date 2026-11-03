@@ -59,7 +59,10 @@ SIGNO = {'Ingreso venta': 1, 'Otros ingresos': 1,
 MOD_GABRIELA = {'colecta': 'Colecta', 'fulfillment': 'Fulfillment',
                 'flex': 'Envío directo', 'flex (flota propia)': 'Envío directo',
                 'envío directo': 'Envío directo', 'envio directo': 'Envío directo',
-                'venta directa': 'Venta directa', 'consignación': 'Consignación'}
+                'venta directa': 'Venta directa', 'consignación': 'Consignación',
+                # ML: líneas sin n° de envío. En Odoo son fbm (jul-oct 26: 20 de 20) y su venta
+                # ya está en Colecta; sin esto se prorrateaban hasta Fulfillment (Gabriela 2-nov).
+                'acuerdo con el comprador': 'Colecta'}
 
 # --- taxonomía de modalidad, unificada entre canales -----------------------
 # El objetivo es comparar rentabilidad ENTRE canales, así que la modalidad tiene
