@@ -29,6 +29,13 @@ def _pedido_limpio(name):
     s = str(name or '').strip()
     if re.fullmatch(r'S\d+', s):          # SO interno de Odoo → mantener
         return s
+    # Prefijo + número con sufijo ('KITCHEN CENTER 918501-1' → '918501-1'). Sin esto, la
+    # regex de abajo se queda con lo que va después del último guion ('1'): ago-2026,
+    # 429 líneas de KC con pedido '1'/'2' (Gabriela 3-nov). Desde el 25-ago KC ya viene
+    # sin prefijo ('920179-1') y no pasa por acá.
+    m = re.match(r'^[A-Za-z][A-Za-z0-9 ]*?[\s\-]+(\d{5,}-\d+)$', s)
+    if m:
+        return m.group(1)
     m = re.match(r'^[A-Za-z][A-Za-z0-9 ]*?[\s\-]+(\d+)$', s)  # prefijo + número
     return m.group(1) if m else s
 
@@ -102,6 +109,27 @@ class VentasService(BaseOdooService):
         facturas, totales_netos, ncs, nc_lineas = self._extraer_facturas_y_nc(invoice_ids_all, periodo_inicio, periodo_fin, ordenes=ordenes)
         facturas_dict = {f['id']: f for f in facturas}
         print(f"  [OK] {len(facturas):,} facturas")
+
+        # PASO 4a: órdenes re-confirmadas. Confirmar una orden en Odoo le pone date_order = ese
+        # día, y este extract filtra por date_order: el 21-ago-2026 se re-confirmaron 25 órdenes
+        # de enero y agosto las contó con sus boletas de enero, que ya estaban en el RAW de enero
+        # (Gabriela 3-nov, 56 líneas, $810.431). Si la orden se creó antes del mes anterior al
+        # período y TODAS sus facturas posted también son de antes, la orden ya entró en su mes:
+        # se descarta entera (si solo se sacaran las boletas saldría como fila "pendiente de
+        # facturar"). El mes anterior se tolera por el cruce normal boleta 30-jun / orden 1-jul.
+        corte_docs = (pd.Timestamp(periodo_inicio[:10]).replace(day=1)
+                      - pd.DateOffset(months=1)).strftime('%Y-%m-%d')
+        reconfirmadas = set()
+        for o in ordenes:
+            fs = [facturas_dict.get(i) for i in (o.get('invoice_ids') or [])]
+            fs = [f for f in fs if f and f.get('state') == 'posted' and f.get('move_type') == 'out_invoice']
+            if (fs and str(o.get('create_date') or '')[:10] < corte_docs
+                    and all(str(f.get('invoice_date') or '') < corte_docs for f in fs)):
+                reconfirmadas.add(o['id'])
+        if reconfirmadas:
+            lineas = [l for l in lineas if not (l.get('order_id') and l['order_id'][0] in reconfirmadas)]
+            print(f"  [INFO] {len(reconfirmadas)} órdenes re-confirmadas (creadas y facturadas antes de "
+                  f"{corte_docs}): fuera del período, ya están en su mes")
 
         # PASO 4b: Enriquecer productos y sale.order.line con refs de NC (cross-month)
         # Productos referenciados por NC que no estén en productos_dict (NC revierte pedidos
@@ -301,7 +329,7 @@ class VentasService(BaseOdooService):
         d1 = datetime.strptime(periodo_fin, fmt)
 
         fields = [
-            'id', 'name', 'date_order', 'partner_id', 'user_id', 'amount_total',
+            'id', 'name', 'date_order', 'create_date', 'partner_id', 'user_id', 'amount_total',
             'margin', 'state', 'fulfillment', 'channel', 'channel_order_reference',
             'client_order_ref', 'invoice_ids', 'warehouse_id', 'yuju_pack_id',
             'website_id', 'partner_shipping_id',   # comuna destino → envío tarifario
