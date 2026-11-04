@@ -1,40 +1,117 @@
 {
-  "generado_en": "2026-11-03T20:49:08.440508",
+  "generado_en": "2026-11-04T10:35:52.312223",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.04462969552178112,
-      "total_pickings": 19673,
-      "on_time": 878,
-      "on_time_pct": 0.04462969552178112,
-      "in_full": 19669,
-      "in_full_pct": 0.9997966756468256,
-      "both": 878,
+      "valor": 0.04554361065508659,
+      "total_pickings": 18883,
+      "on_time": 860,
+      "on_time_pct": 0.04554361065508659,
+      "in_full": 18879,
+      "in_full_pct": 0.999788169252767,
+      "both": 860,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.05113636363636364,
-      "total_pickings": 528,
+      "valor": 0.051233396584440226,
+      "total_pickings": 527,
       "on_time": 28,
-      "on_time_pct": 0.05303030303030303,
-      "in_full": 522,
-      "in_full_pct": 0.9886363636363636,
+      "on_time_pct": 0.05313092979127135,
+      "in_full": 521,
+      "in_full_pct": 0.9886148007590133,
       "both": 27,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9998024183987987,
-      "ok": 25301,
-      "total": 25306,
+      "valor": 0.999795048368585,
+      "ok": 24391,
+      "total": 24396,
       "errores": 5,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.719249814195466,
-      "n_recepciones": 598,
+      "valor": 7.629567033976124,
+      "n_recepciones": 605,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFML/RET/00004",
+          "proveedor": "Cliente Mercado Libre, Carlos Santorsola",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:03"
+        },
+        {
+          "picking": "BFP/RET/00019",
+          "proveedor": "Cliente Paris, ROSSANA ZATTERA",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:03",
+          "done": "2026-11-04 00:03"
+        },
+        {
+          "picking": "CA1/RET/01550",
+          "proveedor": "Cliente Mercado Libre, anthony thielen",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01551",
+          "proveedor": "Cliente Mercado Libre, ignacio González",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01552",
+          "proveedor": "Cliente Paris, Fernanda Herrera",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01553",
+          "proveedor": "Cliente Mercado Libre, Pilar Machado Uslar",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01554",
+          "proveedor": "Cliente Simplit Home, Javiera Vargas Jana",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01546",
+          "proveedor": "Cliente Mercado Libre, viviana terraza",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
+        {
+          "picking": "CA1/RET/01547",
+          "proveedor": "Cliente Mercado Libre, Alejandro garay",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
+        {
+          "picking": "CA1/RET/01548",
+          "proveedor": "Cliente Mercado Libre, Cecilia Lucia Arellano Cabrera",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
+        {
+          "picking": "CA1/RET/01549",
+          "proveedor": "Cliente Ripley, Sinay Moslaga",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
         {
           "picking": "CA1/RET/01545",
           "proveedor": "Lhotse Store, ENRIQUE NUÑEZ",
@@ -97,102 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-11-03 18:31",
           "done": "2026-11-03 18:31"
-        },
-        {
-          "picking": "CA1/RET/01541",
-          "proveedor": "Cliente Paris, Maria Farias",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:31",
-          "done": "2026-11-03 18:31"
-        },
-        {
-          "picking": "CA1/RET/01542",
-          "proveedor": "Cliente Ripley, Eric Mondaca",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:31",
-          "done": "2026-11-03 18:31"
-        },
-        {
-          "picking": "CA1/RET/01535",
-          "proveedor": "Cliente Mercado Libre, Pablo Gutierrez",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:30",
-          "done": "2026-11-03 18:30"
-        },
-        {
-          "picking": "CA1/RET/01536",
-          "proveedor": "Cliente Mercado Libre, Bruno Prambs",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:30",
-          "done": "2026-11-03 18:30"
-        },
-        {
-          "picking": "CA1/RET/01537",
-          "proveedor": "Cliente Walmart, javiera valencia valderrama",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:30",
-          "done": "2026-11-03 18:30"
-        },
-        {
-          "picking": "CA1/RET/01534",
-          "proveedor": "Lhotse Store, Alejandro Barrientos Barria",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:24",
-          "done": "2026-11-03 17:24"
-        },
-        {
-          "picking": "CA1/RET/01531",
-          "proveedor": "Cliente Paris, Trinidad Uribe",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:22",
-          "done": "2026-11-03 17:23"
-        },
-        {
-          "picking": "CA1/RET/01532",
-          "proveedor": "Shopping LATAM Pass, alonso andres gamberini campos",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:23",
-          "done": "2026-11-03 17:23"
-        },
-        {
-          "picking": "CA1/RET/01533",
-          "proveedor": "Cliente Paris, nicole rubilar",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:23",
-          "done": "2026-11-03 17:23"
-        },
-        {
-          "picking": "CA1/RET/01530",
-          "proveedor": "Cliente Paris, Kamila Seura",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:22",
-          "done": "2026-11-03 17:22"
-        },
-        {
-          "picking": "CA1/RET/01528",
-          "proveedor": "Cliente Simplit Home, Veronica Hennicke",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:21",
-          "done": "2026-11-03 17:21"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9797325752790061,
-      "total_so": 19015,
-      "total_con_pickings": 18996,
-      "cumplidos": 18611,
+      "valor": 0.9737473987514007,
+      "total_so": 18760,
+      "total_con_pickings": 18741,
+      "cumplidos": 18249,
       "parciales": 14,
-      "sin_iniciar": 371,
+      "sin_iniciar": 478,
       "error": null
     },
     "oct_30d": {
-      "valor": 46.425062725810136,
-      "n_orders": 19959,
+      "valor": 45.968268074719596,
+      "n_orders": 19278,
       "min_h": 0.0175,
       "max_h": 714.7769444444444,
-      "mediana_h": 25.087777777777777,
+      "mediana_h": 24.633055555555554,
       "detalle": [
         {
           "so": "S290463",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 1607,
+      "lineas": 1644,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 188,
-      "outgoing": 29226,
-      "internal": 20586,
+      "incoming": 185,
+      "outgoing": 29245,
+      "internal": 20570,
       "total": 50000,
       "error": null
     },
@@ -8143,42 +8143,119 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.04462969552178112,
-      "total_pickings": 19673,
-      "on_time": 878,
-      "on_time_pct": 0.04462969552178112,
-      "in_full": 19669,
-      "in_full_pct": 0.9997966756468256,
-      "both": 878,
+      "valor": 0.04554361065508659,
+      "total_pickings": 18883,
+      "on_time": 860,
+      "on_time_pct": 0.04554361065508659,
+      "in_full": 18879,
+      "in_full_pct": 0.999788169252767,
+      "both": 860,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.05113636363636364,
-      "total_pickings": 528,
+      "valor": 0.051233396584440226,
+      "total_pickings": 527,
       "on_time": 28,
-      "on_time_pct": 0.05303030303030303,
-      "in_full": 522,
-      "in_full_pct": 0.9886363636363636,
+      "on_time_pct": 0.05313092979127135,
+      "in_full": 521,
+      "in_full_pct": 0.9886148007590133,
       "both": 27,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9998024183987987,
-      "ok": 25301,
-      "total": 25306,
+      "valor": 0.999795048368585,
+      "ok": 24391,
+      "total": 24396,
       "errores": 5,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.719249814195466,
-      "n_recepciones": 598,
+      "valor": 7.629567033976124,
+      "n_recepciones": 605,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFML/RET/00004",
+          "proveedor": "Cliente Mercado Libre, Carlos Santorsola",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:03"
+        },
+        {
+          "picking": "BFP/RET/00019",
+          "proveedor": "Cliente Paris, ROSSANA ZATTERA",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:03",
+          "done": "2026-11-04 00:03"
+        },
+        {
+          "picking": "CA1/RET/01550",
+          "proveedor": "Cliente Mercado Libre, anthony thielen",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01551",
+          "proveedor": "Cliente Mercado Libre, ignacio González",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01552",
+          "proveedor": "Cliente Paris, Fernanda Herrera",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01553",
+          "proveedor": "Cliente Mercado Libre, Pilar Machado Uslar",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01554",
+          "proveedor": "Cliente Simplit Home, Javiera Vargas Jana",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:02",
+          "done": "2026-11-04 00:02"
+        },
+        {
+          "picking": "CA1/RET/01546",
+          "proveedor": "Cliente Mercado Libre, viviana terraza",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
+        {
+          "picking": "CA1/RET/01547",
+          "proveedor": "Cliente Mercado Libre, Alejandro garay",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
+        {
+          "picking": "CA1/RET/01548",
+          "proveedor": "Cliente Mercado Libre, Cecilia Lucia Arellano Cabrera",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
+        {
+          "picking": "CA1/RET/01549",
+          "proveedor": "Cliente Ripley, Sinay Moslaga",
+          "horas": 0.0,
+          "scheduled": "2026-11-04 00:01",
+          "done": "2026-11-04 00:01"
+        },
         {
           "picking": "CA1/RET/01545",
           "proveedor": "Lhotse Store, ENRIQUE NUÑEZ",
@@ -8241,83 +8318,6 @@
           "horas": 0.0,
           "scheduled": "2026-11-03 18:31",
           "done": "2026-11-03 18:31"
-        },
-        {
-          "picking": "CA1/RET/01541",
-          "proveedor": "Cliente Paris, Maria Farias",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:31",
-          "done": "2026-11-03 18:31"
-        },
-        {
-          "picking": "CA1/RET/01542",
-          "proveedor": "Cliente Ripley, Eric Mondaca",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:31",
-          "done": "2026-11-03 18:31"
-        },
-        {
-          "picking": "CA1/RET/01535",
-          "proveedor": "Cliente Mercado Libre, Pablo Gutierrez",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:30",
-          "done": "2026-11-03 18:30"
-        },
-        {
-          "picking": "CA1/RET/01536",
-          "proveedor": "Cliente Mercado Libre, Bruno Prambs",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:30",
-          "done": "2026-11-03 18:30"
-        },
-        {
-          "picking": "CA1/RET/01537",
-          "proveedor": "Cliente Walmart, javiera valencia valderrama",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 18:30",
-          "done": "2026-11-03 18:30"
-        },
-        {
-          "picking": "CA1/RET/01534",
-          "proveedor": "Lhotse Store, Alejandro Barrientos Barria",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:24",
-          "done": "2026-11-03 17:24"
-        },
-        {
-          "picking": "CA1/RET/01531",
-          "proveedor": "Cliente Paris, Trinidad Uribe",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:22",
-          "done": "2026-11-03 17:23"
-        },
-        {
-          "picking": "CA1/RET/01532",
-          "proveedor": "Shopping LATAM Pass, alonso andres gamberini campos",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:23",
-          "done": "2026-11-03 17:23"
-        },
-        {
-          "picking": "CA1/RET/01533",
-          "proveedor": "Cliente Paris, nicole rubilar",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:23",
-          "done": "2026-11-03 17:23"
-        },
-        {
-          "picking": "CA1/RET/01530",
-          "proveedor": "Cliente Paris, Kamila Seura",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:22",
-          "done": "2026-11-03 17:22"
-        },
-        {
-          "picking": "CA1/RET/01528",
-          "proveedor": "Cliente Simplit Home, Veronica Hennicke",
-          "horas": 0.0,
-          "scheduled": "2026-11-03 17:21",
-          "done": "2026-11-03 17:21"
         }
       ],
       "error": null
