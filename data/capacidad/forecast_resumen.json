@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-04T20:15:41.401266",
+  "generado_en": "2026-11-05T01:09:28.869229",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,12 +14,12 @@
     "posiciones_ocupadas_hoy": 750,
     "posiciones_libres_hoy": 627,
     "pct_ocupacion_hoy": 54.5,
-    "m3_stock_calculado": 743.1
+    "m3_stock_calculado": 742.9
   },
   "pico_proyectado": {
-    "fecha": "2026-11-04",
-    "posiciones_ocupadas": 750.0,
-    "pct_ocupacion": 54.5
+    "fecha": "2026-11-05",
+    "posiciones_ocupadas": 743.7,
+    "pct_ocupacion": 54.0
   },
   "minimo_proyectado": {
     "fecha": "2027-01-03",
@@ -81,8 +81,8 @@
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 71775.0,
-    "demanda_cumplida_unidades": 17785.0,
-    "demanda_no_cubierta_unidades_total": 53990.0,
+    "demanda_cumplida_unidades": 17784.0,
+    "demanda_no_cubierta_unidades_total": 53991.0,
     "pct_demanda_cumplida": 24.8,
     "sku_sin_match_stock_count": 44,
     "top_no_cubiertos": [
@@ -183,7 +183,7 @@
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 118.0,
+        "unid_no_cubiertas": 119.0,
         "sin_match_stock": true
       }
     ],
