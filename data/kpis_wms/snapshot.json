@@ -1,14 +1,14 @@
 {
-  "generado_en": "2026-11-07T09:42:47.443683",
+  "generado_en": "2026-11-07T19:16:57.077303",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.052204990746059096,
-      "total_pickings": 15669,
+      "valor": 0.051966202909599135,
+      "total_pickings": 15741,
       "on_time": 819,
-      "on_time_pct": 0.05226881102814474,
-      "in_full": 15664,
-      "in_full_pct": 0.9996808985895718,
+      "on_time_pct": 0.05202973127501429,
+      "in_full": 15736,
+      "in_full_pct": 0.9996823581729242,
       "both": 818,
       "error": null
     },
@@ -23,18 +23,32 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997012249775918,
-      "ok": 20076,
-      "total": 20082,
+      "valor": 0.999702366188799,
+      "ok": 20153,
+      "total": 20159,
       "errores": 6,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.133002747724541,
-      "n_recepciones": 647,
+      "valor": 7.111022085259373,
+      "n_recepciones": 649,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFE/IN/00003",
+          "proveedor": "Sonja Roth",
+          "horas": 0.0,
+          "scheduled": "2026-11-07 17:21",
+          "done": "2026-11-07 17:21"
+        },
+        {
+          "picking": "BFE/IN/00002",
+          "proveedor": "Josè Luis Assadi",
+          "horas": 0.0,
+          "scheduled": "2026-11-07 17:20",
+          "done": "2026-11-07 17:20"
+        },
         {
           "picking": "BFE/IN/00001",
           "proveedor": "Cliente Marketing",
@@ -160,39 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-11-06 12:56",
           "done": "2026-11-06 12:56"
-        },
-        {
-          "picking": "CA1/RET/01578",
-          "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
-          "horas": 0.0,
-          "scheduled": "2026-11-06 12:55",
-          "done": "2026-11-06 12:55"
-        },
-        {
-          "picking": "CA1/RET/01577",
-          "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
-          "horas": 0.0,
-          "scheduled": "2026-11-06 12:54",
-          "done": "2026-11-06 12:54"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9691629955947136,
-      "total_so": 12276,
-      "total_con_pickings": 12258,
-      "cumplidos": 11880,
-      "parciales": 14,
-      "sin_iniciar": 364,
+      "valor": 0.9653361344537815,
+      "total_so": 12394,
+      "total_con_pickings": 12376,
+      "cumplidos": 11947,
+      "parciales": 15,
+      "sin_iniciar": 414,
       "error": null
     },
     "oct_30d": {
-      "valor": 50.225807035050515,
-      "n_orders": 16034,
-      "min_h": 0.006111111111111111,
+      "valor": 50.001352066862594,
+      "n_orders": 16106,
+      "min_h": 0.0002777777777777778,
       "max_h": 714.7769444444444,
-      "mediana_h": 24.585,
+      "mediana_h": 24.463333333333335,
       "detalle": [
         {
           "so": "S290463",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 3107,
+      "lineas": 3185,
       "mes": "2026-11",
       "error": null
     },
@@ -8254,12 +8254,12 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.052204990746059096,
-      "total_pickings": 15669,
+      "valor": 0.051966202909599135,
+      "total_pickings": 15741,
       "on_time": 819,
-      "on_time_pct": 0.05226881102814474,
-      "in_full": 15664,
-      "in_full_pct": 0.9996808985895718,
+      "on_time_pct": 0.05202973127501429,
+      "in_full": 15736,
+      "in_full_pct": 0.9996823581729242,
       "both": 818,
       "error": null
     },
@@ -8276,20 +8276,34 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997012249775918,
-      "ok": 20076,
-      "total": 20082,
+      "valor": 0.999702366188799,
+      "ok": 20153,
+      "total": 20159,
       "errores": 6,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.133002747724541,
-      "n_recepciones": 647,
+      "valor": 7.111022085259373,
+      "n_recepciones": 649,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFE/IN/00003",
+          "proveedor": "Sonja Roth",
+          "horas": 0.0,
+          "scheduled": "2026-11-07 17:21",
+          "done": "2026-11-07 17:21"
+        },
+        {
+          "picking": "BFE/IN/00002",
+          "proveedor": "Josè Luis Assadi",
+          "horas": 0.0,
+          "scheduled": "2026-11-07 17:20",
+          "done": "2026-11-07 17:20"
+        },
         {
           "picking": "BFE/IN/00001",
           "proveedor": "Cliente Marketing",
@@ -8415,20 +8429,6 @@
           "horas": 0.0,
           "scheduled": "2026-11-06 12:56",
           "done": "2026-11-06 12:56"
-        },
-        {
-          "picking": "CA1/RET/01578",
-          "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
-          "horas": 0.0,
-          "scheduled": "2026-11-06 12:55",
-          "done": "2026-11-06 12:55"
-        },
-        {
-          "picking": "CA1/RET/01577",
-          "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
-          "horas": 0.0,
-          "scheduled": "2026-11-06 12:54",
-          "done": "2026-11-06 12:54"
         }
       ],
       "error": null
