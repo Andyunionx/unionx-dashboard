@@ -1,40 +1,47 @@
 {
-  "generado_en": "2026-11-06T20:43:21.174569",
+  "generado_en": "2026-11-07T09:42:47.443683",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0479347271800102,
-      "total_pickings": 17649,
-      "on_time": 847,
-      "on_time_pct": 0.04799138761402912,
-      "in_full": 17644,
-      "in_full_pct": 0.9997166978299054,
-      "both": 846,
+      "valor": 0.052204990746059096,
+      "total_pickings": 15669,
+      "on_time": 819,
+      "on_time_pct": 0.05226881102814474,
+      "in_full": 15664,
+      "in_full_pct": 0.9996808985895718,
+      "both": 818,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.05555555555555555,
-      "total_pickings": 522,
+      "valor": 0.056530214424951264,
+      "total_pickings": 513,
       "on_time": 30,
-      "on_time_pct": 0.05747126436781609,
-      "in_full": 515,
-      "in_full_pct": 0.9865900383141762,
+      "on_time_pct": 0.05847953216374269,
+      "in_full": 506,
+      "in_full_pct": 0.98635477582846,
       "both": 29,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997345719973457,
-      "ok": 22599,
-      "total": 22605,
+      "valor": 0.9997012249775918,
+      "ok": 20076,
+      "total": 20082,
       "errores": 6,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 7.144043687650499,
-      "n_recepciones": 646,
+      "valor": 7.133002747724541,
+      "n_recepciones": 647,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFE/IN/00001",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-11-06 23:50",
+          "done": "2026-11-06 23:51"
+        },
         {
           "picking": "BFFa/RET/00089",
           "proveedor": "Cliente Falabella Fcom, juan salvo montoya",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-11-06 12:54",
           "done": "2026-11-06 12:54"
-        },
-        {
-          "picking": "CA1/RET/01576",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-11-06 12:47",
-          "done": "2026-11-06 12:47"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9773344191096635,
-      "total_so": 14755,
-      "total_con_pickings": 14736,
-      "cumplidos": 14402,
-      "parciales": 16,
-      "sin_iniciar": 318,
+      "valor": 0.9691629955947136,
+      "total_so": 12276,
+      "total_con_pickings": 12258,
+      "cumplidos": 11880,
+      "parciales": 14,
+      "sin_iniciar": 364,
       "error": null
     },
     "oct_30d": {
-      "valor": 47.563659770773995,
-      "n_orders": 18022,
+      "valor": 50.225807035050515,
+      "n_orders": 16034,
       "min_h": 0.006111111111111111,
       "max_h": 714.7769444444444,
-      "mediana_h": 24.698055555555555,
+      "mediana_h": 24.585,
       "detalle": [
         {
           "so": "S290463",
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 3041,
+      "lineas": 3107,
       "mes": "2026-11",
       "error": null
     },
@@ -360,12 +360,6 @@
     "top_clientes_otif_30d": {
       "valor": [
         {
-          "cliente": "Global Reward Solutions",
-          "total": 142,
-          "tarde": 142,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "abc S.A.",
           "total": 104,
           "tarde": 104,
@@ -375,6 +369,12 @@
           "cliente": "Sawa SPA",
           "total": 119,
           "tarde": 119,
+          "on_time_pct": 0.0
+        },
+        {
+          "cliente": "Global Reward Solutions",
+          "total": 136,
+          "tarde": 136,
           "on_time_pct": 0.0
         },
         {
@@ -415,9 +415,9 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 31,
-          "tarde": 29,
-          "on_time_pct": 0.06451612903225806
+          "total": 30,
+          "tarde": 28,
+          "on_time_pct": 0.06666666666666667
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -4405,9 +4405,9 @@
         "emp_ok": 10430,
         "cou_ok": 9499,
         "tot_ok": 9080,
-        "n_med_cou": 10878,
+        "n_med_cou": 10883,
         "otif_empresa": 0.9580233305777532,
-        "otif_courier": 0.8732303732303732,
+        "otif_courier": 0.8728291831296517,
         "otif_total": 0.8340222283457335,
         "otif_empresa_pct": 95.8,
         "otif_courier_pct": 87.3,
@@ -4463,8 +4463,8 @@
         "n_pedidos": 11276,
         "n_medidos": 10887,
         "otif_empresa_pct": 0.9580233305777532,
-        "otif_courier_pct": 0.8732303732303732,
-        "otif_total_pct": 0.8347122632836919,
+        "otif_courier_pct": 0.8728291831296517,
+        "otif_total_pct": 0.8343287696407241,
         "n_empresa_ok": 10430,
         "n_courier_ok": 9499,
         "n_otif_ok": 9080,
@@ -8254,42 +8254,49 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0479347271800102,
-      "total_pickings": 17649,
-      "on_time": 847,
-      "on_time_pct": 0.04799138761402912,
-      "in_full": 17644,
-      "in_full_pct": 0.9997166978299054,
-      "both": 846,
+      "valor": 0.052204990746059096,
+      "total_pickings": 15669,
+      "on_time": 819,
+      "on_time_pct": 0.05226881102814474,
+      "in_full": 15664,
+      "in_full_pct": 0.9996808985895718,
+      "both": 818,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.05555555555555555,
-      "total_pickings": 522,
+      "valor": 0.056530214424951264,
+      "total_pickings": 513,
       "on_time": 30,
-      "on_time_pct": 0.05747126436781609,
-      "in_full": 515,
-      "in_full_pct": 0.9865900383141762,
+      "on_time_pct": 0.05847953216374269,
+      "in_full": 506,
+      "in_full_pct": 0.98635477582846,
       "both": 29,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997345719973457,
-      "ok": 22599,
-      "total": 22605,
+      "valor": 0.9997012249775918,
+      "ok": 20076,
+      "total": 20082,
       "errores": 6,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 7.144043687650499,
-      "n_recepciones": 646,
+      "valor": 7.133002747724541,
+      "n_recepciones": 647,
       "min": -23.392777777777777,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFE/IN/00001",
+          "proveedor": "Cliente Marketing",
+          "horas": 0.0,
+          "scheduled": "2026-11-06 23:50",
+          "done": "2026-11-06 23:51"
+        },
         {
           "picking": "BFFa/RET/00089",
           "proveedor": "Cliente Falabella Fcom, juan salvo montoya",
@@ -8422,13 +8429,6 @@
           "horas": 0.0,
           "scheduled": "2026-11-06 12:54",
           "done": "2026-11-06 12:54"
-        },
-        {
-          "picking": "CA1/RET/01576",
-          "proveedor": "Falabella Retail",
-          "horas": 0.0,
-          "scheduled": "2026-11-06 12:47",
-          "done": "2026-11-06 12:47"
         }
       ],
       "error": null
