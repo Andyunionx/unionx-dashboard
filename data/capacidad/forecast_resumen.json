@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-06T18:40:00.566617",
+  "generado_en": "2026-11-07T00:29:58.229584",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,17 +14,17 @@
     "posiciones_ocupadas_hoy": 735,
     "posiciones_libres_hoy": 642,
     "pct_ocupacion_hoy": 53.4,
-    "m3_stock_calculado": 733.6
+    "m3_stock_calculado": 733.0
   },
   "pico_proyectado": {
-    "fecha": "2026-11-06",
-    "posiciones_ocupadas": 729.1,
-    "pct_ocupacion": 53.0
+    "fecha": "2026-11-07",
+    "posiciones_ocupadas": 730.6,
+    "pct_ocupacion": 53.1
   },
   "minimo_proyectado": {
     "fecha": "2027-01-04",
-    "posiciones_ocupadas": 573.8,
-    "pct_ocupacion": 41.7
+    "posiciones_ocupadas": 579.7,
+    "pct_ocupacion": 42.1
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -69,10 +69,18 @@
       "m3": 29.36,
       "unidades": 9020.0,
       "transporte": ""
+    },
+    {
+      "pi": "26TP1024PI",
+      "fecha_eta": "2026-11-06",
+      "pallets": 0,
+      "m3": 0.0,
+      "unidades": 27.0,
+      "transporte": ""
     }
   ],
   "pallets_total_entrantes_horizonte": 119.2,
-  "pallets_total_salientes_horizonte": 161.2,
+  "pallets_total_salientes_horizonte": 161.1,
   "m3_total_entrante_horizonte": 143.0,
   "m3_total_saliente_horizonte": 193.4,
   "salidas_debug": {
@@ -81,8 +89,8 @@
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 72476.0,
-    "demanda_cumplida_unidades": 17627.0,
-    "demanda_no_cubierta_unidades_total": 54849.0,
+    "demanda_cumplida_unidades": 17620.0,
+    "demanda_no_cubierta_unidades_total": 54856.0,
     "pct_demanda_cumplida": 24.3,
     "sku_sin_match_stock_count": 45,
     "top_no_cubiertos": [
@@ -93,7 +101,7 @@
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 18027.0,
+        "unid_no_cubiertas": 18028.0,
         "sin_match_stock": true
       },
       {
@@ -143,7 +151,7 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 206.0,
+        "unid_no_cubiertas": 207.0,
         "sin_match_stock": true
       },
       {
@@ -183,7 +191,7 @@
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 129.0,
+        "unid_no_cubiertas": 130.0,
         "sin_match_stock": true
       }
     ],
