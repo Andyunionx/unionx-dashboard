@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-07T18:03:50.380645",
+  "generado_en": "2026-11-07T21:13:27.169964",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 735,
     "posiciones_libres_hoy": 642,
     "pct_ocupacion_hoy": 53.4,
-    "m3_stock_calculado": 732.1
+    "m3_stock_calculado": 731.8
   },
   "pico_proyectado": {
     "fecha": "2026-11-07",
@@ -23,7 +23,7 @@
   },
   "minimo_proyectado": {
     "fecha": "2027-01-05",
-    "posiciones_ocupadas": 574.2,
+    "posiciones_ocupadas": 574.3,
     "pct_ocupacion": 41.7
   },
   "primer_critico": null,
@@ -80,17 +80,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 119.2,
-  "pallets_total_salientes_horizonte": 160.8,
+  "pallets_total_salientes_horizonte": 160.7,
   "m3_total_entrante_horizonte": 143.0,
-  "m3_total_saliente_horizonte": 193.0,
+  "m3_total_saliente_horizonte": 192.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 776,
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 71765.0,
-    "demanda_cumplida_unidades": 17451.0,
-    "demanda_no_cubierta_unidades_total": 54314.0,
+    "demanda_cumplida_unidades": 17449.0,
+    "demanda_no_cubierta_unidades_total": 54316.0,
     "pct_demanda_cumplida": 24.3,
     "sku_sin_match_stock_count": 44,
     "top_no_cubiertos": [
@@ -116,7 +116,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 441.0,
+        "unid_no_cubiertas": 442.0,
         "sin_match_stock": true
       },
       {
