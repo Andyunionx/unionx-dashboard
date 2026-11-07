@@ -1,17 +1,17 @@
 {
-  "generado_en": "2026-11-07T00:38:57.145538",
+  "generado_en": "2026-11-07T09:39:51.811989",
   "total_skus": 1764,
-  "total_quants": 4784,
+  "total_quants": 4781,
   "total_locations": 1434,
   "kpis": {
     "n_skus": 1764,
-    "valor_total": 940044996.89,
-    "unidades_total": 162471.0,
-    "costo_promedio_sku": 532905.33,
-    "n_quiebre_critico": 94,
+    "valor_total": 939639711.89,
+    "unidades_total": 162435.0,
+    "costo_promedio_sku": 532675.57,
+    "n_quiebre_critico": 95,
     "n_bajo": 168,
-    "n_optimo": 126,
-    "n_sobrestock": 261,
+    "n_optimo": 127,
+    "n_sobrestock": 259,
     "n_sin_venta": 1115,
     "rot_30d_promedio": 0.81,
     "rot_90d_promedio": 5.09
@@ -8293,7 +8293,7 @@
     },
     {
       "Categoria": "SOBRESTOCK",
-      "SKUs": 261
+      "SKUs": 259
     },
     {
       "Categoria": "BAJO",
@@ -8301,17 +8301,17 @@
     },
     {
       "Categoria": "OPTIMO",
-      "SKUs": 126
+      "SKUs": 127
     },
     {
       "Categoria": "CRITICO",
-      "SKUs": 94
+      "SKUs": 95
     }
   ],
   "valor_bodega": [
     {
       "Bodega": "CA1/Stock",
-      "Valor": 711287671.03,
+      "Valor": 711287674.03,
       "Unidades": 140312.0,
       "SKUs": 1125
     },
@@ -8323,14 +8323,14 @@
     },
     {
       "Bodega": "BFFa/Stock",
-      "Valor": 39399238.05,
-      "Unidades": 2875.0,
-      "SKUs": 361
+      "Valor": 39262958.05,
+      "Unidades": 2868.0,
+      "SKUs": 358
     },
     {
       "Bodega": "BFML/Stock",
-      "Valor": 35664328.74,
-      "Unidades": 3504.0,
+      "Valor": 35398983.74,
+      "Unidades": 3476.0,
       "SKUs": 393
     },
     {
@@ -8371,8 +8371,8 @@
     },
     {
       "Bodega": "BFP/Stock",
-      "Valor": 7799199.0,
-      "Unidades": 423.0,
+      "Valor": 7795535.0,
+      "Unidades": 422.0,
       "SKUs": 108
     },
     {
@@ -8383,7 +8383,7 @@
     },
     {
       "Bodega": "BRSt/Stock",
-      "Valor": 5512840.31,
+      "Valor": 5512841.31,
       "Unidades": 272.0,
       "SKUs": 10
     },
