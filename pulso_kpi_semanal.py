@@ -61,6 +61,11 @@ def _wlbl(p): return f"{p.start_time:%d}-{p.end_time:%d} {p.end_time:%b}"
 wms = pd.read_parquet(ROOT / "data/operaciones/volumen_inventario_hist.parquet")
 wms["fecha_done"] = pd.to_datetime(wms["fecha_done"])
 wms["sem"] = wms["fecha_done"].dt.to_period("W-SUN")
+# Traslados masivos de stock de terceros/relacionadas: no son trabajo normal del equipo y
+# distorsionan volumen, productividad y COP (Andrés 2-nov-2026: Dinasty, como La Vinoteca).
+# Ej.: CA1/OUT/299530 a Dinasty, 34.012 u el 22-oct → octubre pasaba de ~30,9 mil a 67,7 mil u.
+EXCLUIR_PARTNERS = ("dinasty partners", "la vinoteca")
+wms = wms[~wms["partner_name"].fillna("").str.strip().str.lower().str.startswith(EXCLUIR_PARTNERS)]
 # Clasificación por categoria_wms (extract_volumen_inventario.py, taxonomía
 # 13-jul-2026): pick equipo = pick_ca1 + pick_reserva; entregas equipo =
 # entrega_ca1 + reposicion_fulfillment (a bodegas marketplace, la PREPARA el
@@ -215,7 +220,7 @@ html = f"""<div style="font-family:Arial,sans-serif;color:#222;max-width:740px;l
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Eficiencia (vs {MES_REF_LBL} mes)</h3>
 {ef_tbl}
 <div style="font-size:11px;color:{GR2};">Productividad = uds pickeadas / horas reales de la semana (bench {BENCH} uds/h).
-COP = costo op prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ <b>unidades MOVIDAS por la bodega</b> (WMS, no venta — la venta del mes en curso lagea). Comparación consistente vs {MES_REF_LBL} (mismo denominador operacional).
+COP = costo op prorrateado ({clp(costo_mes)}/mes ÷ 4,33 = {clp(costo_sem)}/sem) ÷ <b>unidades MOVIDAS por la bodega</b> (WMS, no venta — la venta del mes en curso lagea; sin traslados masivos de Dinasty y La Vinoteca). Comparación consistente vs {MES_REF_LBL} (mismo denominador operacional).
 % Costo/venta se reporta <b>solo mensual</b> ({MES_REF_LBL} {pctv_may:.1f}%): la venta del mes en curso no cierra, no es confiable semanal. COP acum no se muestra (Cyber lo distorsiona).</div>
 
 <h3 style="color:{AZ};border-bottom:2px solid {GR};padding-bottom:3px;margin-top:16px;">Servicio &amp; Stock</h3>

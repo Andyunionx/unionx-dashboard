@@ -30,6 +30,7 @@ PROJECT_ROOT = Path(__file__).parent
 SHEET_ID = "1NfIL-k00pUbF5ogsVnadP2wMAVc7oUKkOA7UMLOT-j0"
 CREDENTIALS = PROJECT_ROOT / "credentials.json"
 
+PESTANA = "BASE"  # pestaña con la tabla AÑO..TIPO del P&L
 OUT_DIR = PROJECT_ROOT / "data" / "finanzas"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 OUT_PARQUET = OUT_DIR / "control_gestion.parquet"
@@ -224,7 +225,10 @@ def main():
     gc = _conectar_sheets()
     sh = gc.open_by_key(SHEET_ID)
     print(f"    Sheet: {sh.title}", flush=True)
-    ws = sh.sheet1
+    # La tabla del P&L está en la pestaña «BASE». No usar sheet1: el 23-oct-2026 se agregó
+    # «SUELDOS FCST» como primera pestaña y el extract cargó solo sueldos sep-dic (costo de
+    # Operaciones de octubre $17,3 MM en vez de $37,2 MM) sin que nada fallara.
+    ws = sh.worksheet(PESTANA)
     raw = ws.get_all_values()
     print(f"    {len(raw)} filas raw", flush=True)
 
@@ -345,6 +349,14 @@ def main():
                 "cuenta_analitica", "cuenta_analitica_persona",
                 "escenario", "kpi", "valor", "tipo_raw"]
     df_out = df[[c for c in cols_out if c in df.columns]].copy()
+    # Guarda: si la fuente viene incompleta (otra pestaña, filtro, tabla cortada) no se pisa el
+    # parquet bueno. El P&L trae siempre el año en curso completo (enero a diciembre).
+    anio = int(df_out["year"].max())
+    meses = set(df_out.loc[df_out["year"] == anio, "month"].dropna().astype(int))
+    if len(df_out) < 1000 or not set(range(1, 13)) <= meses:
+        print(f"[ERROR] P&L incompleto: {len(df_out):,} filas y meses {sorted(meses)} de {anio}. "
+              f"No se escribe {OUT_PARQUET.name}. Revisa la pestaña «{PESTANA}» del Sheet.", flush=True)
+        return 1
     verificar(df_out, OUT_PARQUET.name)
     df_out.to_parquet(OUT_PARQUET, index=False)
     print(f"\n[3] Parquet guardado: {OUT_PARQUET.relative_to(PROJECT_ROOT)}", flush=True)

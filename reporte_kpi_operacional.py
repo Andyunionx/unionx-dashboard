@@ -94,6 +94,10 @@ def ksp(): return '<td style="width:1%;"></td>'
 # ── Carga WMS (parquet con categoria_wms) ───────────────────────────────────
 wms = pd.read_parquet(ROOT / "data/operaciones/volumen_inventario_hist.parquet")
 wms["fecha_done"] = pd.to_datetime(wms["fecha_done"])
+# Traslados masivos de stock de terceros/relacionadas (Dinasty, La Vinoteca): fuera del
+# volumen, la productividad y el COP (Andrés 2-nov-2026). Misma regla que pulso_kpi_semanal.py.
+EXCLUIR_PARTNERS = ("dinasty partners", "la vinoteca")
+wms = wms[~wms["partner_name"].fillna("").str.strip().str.lower().str.startswith(EXCLUIR_PARTNERS)]
 _tiene_cat = "categoria_wms" in wms.columns
 wmes = wms[(wms["fecha_done"] >= INI) & (wms["fecha_done"] <= FIN)].copy()
 if _tiene_cat:
