@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-08T19:14:35.867949",
+  "generado_en": "2026-11-09T00:17:35.979402",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,16 +14,16 @@
     "posiciones_ocupadas_hoy": 735,
     "posiciones_libres_hoy": 642,
     "pct_ocupacion_hoy": 53.4,
-    "m3_stock_calculado": 730.7
+    "m3_stock_calculado": 730.1
   },
   "pico_proyectado": {
-    "fecha": "2026-11-08",
-    "posiciones_ocupadas": 735.0,
-    "pct_ocupacion": 53.4
+    "fecha": "2026-11-09",
+    "posiciones_ocupadas": 727.8,
+    "pct_ocupacion": 52.9
   },
   "minimo_proyectado": {
     "fecha": "2027-01-06",
-    "posiciones_ocupadas": 574.1,
+    "posiciones_ocupadas": 574.2,
     "pct_ocupacion": 41.7
   },
   "primer_critico": null,
@@ -80,17 +80,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 119.2,
-  "pallets_total_salientes_horizonte": 160.9,
+  "pallets_total_salientes_horizonte": 160.8,
   "m3_total_entrante_horizonte": 143.0,
-  "m3_total_saliente_horizonte": 193.1,
+  "m3_total_saliente_horizonte": 192.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 776,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 71394.0,
-    "demanda_cumplida_unidades": 17335.0,
-    "demanda_no_cubierta_unidades_total": 54059.0,
+    "demanda_cumplida_unidades": 17330.0,
+    "demanda_no_cubierta_unidades_total": 54064.0,
     "pct_demanda_cumplida": 24.3,
     "sku_sin_match_stock_count": 44,
     "top_no_cubiertos": [
@@ -111,7 +111,7 @@
       },
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 572.0,
+        "unid_no_cubiertas": 573.0,
         "sin_match_stock": true
       },
       {
@@ -146,7 +146,7 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 192.0,
+        "unid_no_cubiertas": 193.0,
         "sin_match_stock": true
       },
       {
@@ -171,7 +171,7 @@
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 144.0,
+        "unid_no_cubiertas": 145.0,
         "sin_match_stock": true
       },
       {
