@@ -1,0 +1,53 @@
+name: Agente Factura ML (NC a la boleta + factura 33)
+
+# Ventas de Mercado Libre en que el comprador pidió factura (pulso diario de Maite, 09:00).
+# «Revertir y crear factura» sobre la boleta: N/C 61 (código 1) + FAC 33 al RUT del comprador,
+# ligadas al mismo pedido. El envío al SII lo hace el cron 26. No cancela el pedido.
+# Corre cada hora de 10:40 a 18:40 CLT aprox., lun-vie: reintenta las boletas que el SII aún
+# no acepta. Idempotente: si el pedido ya tiene factura 33 o la boleta tiene NC, lo salta.
+# Se activa con vars.AGENTE_FACTURA_ML_ENABLED='true' (apagado por defecto: el piloto S312755 del
+# 10-nov espera la validación de Facturación antes de correr solo).
+
+on:
+  schedule:
+    - cron: '40 13-21 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      solo:
+        description: "Solo estas ventas o pedidos (coma), p. ej. S312755"
+        type: string
+        default: ""
+
+concurrency:
+  group: agente-factura-ml
+  cancel-in-progress: false
+
+jobs:
+  agente:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ vars.AGENTE_FACTURA_ML_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: pip install --quiet requests google-api-python-client google-auth google-auth-oauthlib
+      - name: Correr agente
+        env:
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          FACTURA_ML_OUT: ${{ runner.temp }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ -n "${{ github.event.inputs.solo }}" ]; then
+            python agente_factura_ml.py --prod --ejecutar --max 10 --solo "${{ github.event.inputs.solo }}"
+          else
+            python agente_factura_ml.py --prod --ejecutar --max 10
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factura-ml-${{ github.run_id }}
+          path: ${{ runner.temp }}/factura_ml_*.json
