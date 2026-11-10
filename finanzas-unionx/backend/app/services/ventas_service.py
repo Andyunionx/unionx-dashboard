@@ -333,6 +333,7 @@ class VentasService(BaseOdooService):
             'margin', 'state', 'fulfillment', 'channel', 'channel_order_reference',
             'client_order_ref', 'invoice_ids', 'warehouse_id', 'yuju_pack_id',
             'website_id', 'partner_shipping_id',   # comuna destino → envío tarifario
+            'pricelist_id',   # ferias con lista propia (Bazar ED) → canal de la feria
             # Comisión + envío por marketplace (Fase 1 margen final directo, ago-2026+).
             # Viven a nivel orden → se prorratean por SKU.
             'x_meli_sale_fee', 'x_meli_shipping_fee',
@@ -941,11 +942,19 @@ class VentasService(BaseOdooService):
             }
             return normaliza.get(cn.lower(), cn)
 
+        # Ferias con lista de precios propia → canal de la feria (prefijo del nombre de la
+        # lista, en minúsculas). Bazar ED nov-2026 (lista 117 «Bazar ED 2026»): sus pedidos
+        # no traen canal y los clientes son personas → caían en el fallback y se repartían
+        # entre «UnionX web» (Cliente Bazar ED) y «UnionX B2B» (boletas con nombre).
+        # Mismo nombre de canal que el Bazar ED 2025 para comparar año contra año.
+        CANAL_POR_LISTA = {'bazar ed': 'BazarED Feria'}
+
         def _resolver_canal(partner_name: str, channel_raw: str, channel_ref: str,
-                            website_name: str = '') -> str:
+                            website_name: str = '', pricelist_name: str = '') -> str:
             """
             Resuelve el canal estandarizado:
               0. website_id == 'UnionX B2b' (o similar) → 'UnionX B2B' (override)
+              0b. Lista de precios de feria (CANAL_POR_LISTA) → canal de la feria
               1. Lookup cliente (partner_id.name) en Maestra Canales
               2. Si el resultado (o el channel_raw) es 'Web', subdividir por channel_ref
                  (LH→Lhotse web, SH→Simplit web, otro→UnionX web)
@@ -954,6 +963,12 @@ class VentasService(BaseOdooService):
             # 0. Override B2B
             if website_name and 'b2b' in str(website_name).lower():
                 return 'UnionX B2B'
+            # 0b. Feria con lista de precios propia
+            if pricelist_name:
+                pl = str(pricelist_name).strip().lower()
+                for prefijo, canal_feria in CANAL_POR_LISTA.items():
+                    if pl.startswith(prefijo):
+                        return canal_feria
 
             canal = ''
             if partner_name:
@@ -1333,7 +1348,9 @@ class VentasService(BaseOdooService):
             if orden.get('website_id'):
                 w = orden['website_id']
                 website_name = w[1] if isinstance(w, (list, tuple)) and len(w) > 1 else str(w)
-            canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name)
+            pl = orden.get('pricelist_id')
+            pricelist_name = pl[1] if isinstance(pl, (list, tuple)) and len(pl) > 1 else ''
+            canal_raw = _resolver_canal(partner_name, channel_raw_odoo, channel_ref_odoo, website_name, pricelist_name)
 
             # Excluir clientes duplicados marcados en Odoo ("ZZ-DUPLICADO NO USAR (usar id N)")
             if partner_name and ('zz-duplicado' in partner_name.lower() or 'no usar' in partner_name.lower()):
@@ -1617,10 +1634,13 @@ class VentasService(BaseOdooService):
                             partner_nc = nc['partner_id'][1] if isinstance(nc['partner_id'], (list, tuple)) else ''
                         if not partner_nc and factura_orig and factura_orig.get('partner_id'):
                             partner_nc = factura_orig['partner_id'][1] if isinstance(factura_orig['partner_id'], (list, tuple)) else ''
+                        _pl_nc = orden_orig.get('pricelist_id') if orden_orig else None
                         canal_nc = _resolver_canal(
                             partner_nc,
                             (orden_orig.get('channel') if orden_orig else '') or '',
-                            (orden_orig.get('channel_order_reference') if orden_orig else '') or ''
+                            (orden_orig.get('channel_order_reference') if orden_orig else '') or '',
+                            '',
+                            _pl_nc[1] if isinstance(_pl_nc, (list, tuple)) and len(_pl_nc) > 1 else ''
                         )
 
                         # Fallback por tipo de documento contable (FAC vs BEL).
