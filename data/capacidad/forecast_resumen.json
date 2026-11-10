@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-09T22:55:15.145544",
+  "generado_en": "2026-11-10T05:07:37.473634",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -11,19 +11,19 @@
   },
   "estado_actual": {
     "posiciones_total": 1377,
-    "posiciones_ocupadas_hoy": 720,
-    "posiciones_libres_hoy": 657,
-    "pct_ocupacion_hoy": 52.3,
-    "m3_stock_calculado": 718.5
+    "posiciones_ocupadas_hoy": 719,
+    "posiciones_libres_hoy": 658,
+    "pct_ocupacion_hoy": 52.2,
+    "m3_stock_calculado": 718.2
   },
   "pico_proyectado": {
-    "fecha": "2026-11-09",
-    "posiciones_ocupadas": 720.0,
-    "pct_ocupacion": 52.3
+    "fecha": "2026-11-10",
+    "posiciones_ocupadas": 709.5,
+    "pct_ocupacion": 51.5
   },
   "minimo_proyectado": {
     "fecha": "2027-01-08",
-    "posiciones_ocupadas": 560.9,
+    "posiciones_ocupadas": 560.0,
     "pct_ocupacion": 40.7
   },
   "primer_critico": null,
@@ -72,17 +72,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 119.2,
-  "pallets_total_salientes_horizonte": 159.1,
+  "pallets_total_salientes_horizonte": 159.0,
   "m3_total_entrante_horizonte": 143.0,
-  "m3_total_saliente_horizonte": 190.9,
+  "m3_total_saliente_horizonte": 190.8,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 773,
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 73729.0,
-    "demanda_cumplida_unidades": 18853.0,
-    "demanda_no_cubierta_unidades_total": 54876.0,
+    "demanda_cumplida_unidades": 18845.0,
+    "demanda_no_cubierta_unidades_total": 54884.0,
     "pct_demanda_cumplida": 25.6,
     "sku_sin_match_stock_count": 47,
     "top_no_cubiertos": [
@@ -103,7 +103,7 @@
       },
       {
         "sku": "LHSWVIBBK",
-        "unid_no_cubiertas": 793.0,
+        "unid_no_cubiertas": 794.0,
         "sin_match_stock": true
       },
       {
@@ -113,7 +113,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 280.0,
+        "unid_no_cubiertas": 281.0,
         "sin_match_stock": true
       },
       {
@@ -138,7 +138,7 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 200.0,
+        "unid_no_cubiertas": 201.0,
         "sin_match_stock": true
       },
       {
@@ -152,12 +152,12 @@
         "sin_match_stock": true
       },
       {
-        "sku": "LVPRONOV",
-        "unid_no_cubiertas": 152.0,
+        "sku": "LHSHNUCO-PK",
+        "unid_no_cubiertas": 153.0,
         "sin_match_stock": true
       },
       {
-        "sku": "LHSHNUCO-PK",
+        "sku": "LVPRONOV",
         "unid_no_cubiertas": 152.0,
         "sin_match_stock": true
       },
