@@ -37,16 +37,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          HOY=$(date -u +%Y-%m-%d)
+          # «Hoy» es el día de Chile, no el UTC: desde las 21:00 CLT (verano) en UTC ya es
+          # el día siguiente. El 9-nov-2026 un cron atrasado 9 h por un incidente de GitHub
+          # corrió a las 21:18 CLT, no encontró pulso del «10-nov» UTC y lo reenvió a todos.
+          # DESDE = medianoche de Chile expresada en UTC (03:00 o 04:00 según horario).
+          HOY=$(TZ=America/Santiago date +%Y-%m-%d)
+          DESDE=$(date -u -d "TZ=\"America/Santiago\" $HOY 00:00" +%Y-%m-%dT%H:%M:%SZ)
+          if ! [[ "$DESDE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T0[34]:00:00Z$ ]]; then
+            echo "::error::No pude calcular la medianoche de Chile ($DESDE); por seguridad no envío el pulso."
+            exit 1
+          fi
+          echo "Día de Chile $HOY · corridas desde $DESDE"
           N=$(gh api "repos/${{ github.repository }}/actions/workflows/email_diario.yml/runs?per_page=30" \
-                --jq "[.workflow_runs[] | select(.created_at | startswith(\"$HOY\")) | select(.conclusion == \"success\" or .status == \"in_progress\")] | length")
+                --jq "[.workflow_runs[] | select(.created_at >= \"$DESDE\") | select(.conclusion == \"success\" or .status == \"in_progress\")] | length")
           echo "Corridas del Pulso Diario hoy ($HOY): $N"
           # Cuando ESTE watchdog dispara el pulso, lo hace con workflow_call: corre
           # como job anidado y NO aparece en las corridas de email_diario.yml. Sin
           # esta segunda revisión, el watchdog de las 12:23 no vería lo que hizo el
           # de las 09:17 y mandaría el pulso por segunda vez.
           for R in $(gh api "repos/${{ github.repository }}/actions/workflows/watchdog_pulso.yml/runs?per_page=20" \
-                       --jq "[.workflow_runs[] | select(.created_at | startswith(\"$HOY\")) | select(.id < ${{ github.run_id }}) | .id] | .[]"); do
+                       --jq "[.workflow_runs[] | select(.created_at >= \"$DESDE\") | select(.id < ${{ github.run_id }}) | .id] | .[]"); do
             J=$(gh api "repos/${{ github.repository }}/actions/runs/$R/jobs" \
                   --jq "[.jobs[] | select(.name | startswith(\"pulso\")) | select(.conclusion != \"skipped\")] | length")
             if [ "$J" -gt 0 ]; then
