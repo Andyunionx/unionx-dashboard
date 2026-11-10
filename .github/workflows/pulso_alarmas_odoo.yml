@@ -1,9 +1,12 @@
 name: Pulso Alarmas Odoo
 
 on:
-  # Sin schedule propio: corre L-V 07:30 CLT dentro de email_diario.yml
-  # (mismo trigger Cloudflare que el Pulso de Ventas). Esto queda solo
-  # como respaldo manual.
+  schedule:
+    # Gatillo propio repuesto el 10-nov-2026. El 20-ago se movio al pulso diario
+    # (email_diario.yml) y el 8-sep ese paso se borro: el vigia quedo sin gatillo
+    # y con 0 corridas. Vuelve a su cron original, independiente del pulso.
+    # 10:52 UTC = 07:52 de Chile en horario de verano; GitHub puede atrasarlo.
+    - cron: '52 10 * * *'
   workflow_dispatch: {}
 
 jobs:
@@ -21,4 +24,7 @@ jobs:
         env:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
+          # Solo Andres hasta que el amplie destinatarios (el default del script
+          # incluye a terceros).
+          ALARMAS_EMAIL_TO: andres@unionx.cl
         run: python pulso_alarmas_odoo.py
