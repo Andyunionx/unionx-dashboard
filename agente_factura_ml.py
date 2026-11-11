@@ -22,10 +22,20 @@ Se salta (y se informa) si: pedido no encontrado/ambiguo/cancelado, RUT distinto
 nota del conector, monto distinto, boleta no aceptada por el SII, boleta con NC o con pago
 conciliado, o el pedido ya tiene factura 33.
 
+Respuesta a Maite (Andrés, 11-nov): al terminar, el agente responde en el hilo de cada pulso con lo
+que emitió y con lo que no pudo emitir por un motivo que pide revisión (la boleta aún no aceptada
+por el SII no se informa: se reintenta en la corrida siguiente). Cada factura se informa una sola
+vez: antes de responder lee el hilo y omite lo que ya mencionó. Solo en PROD con --ejecutar; los
+pulsos anteriores al 11-nov se respondieron a mano.
+
 Uso: python agente_factura_ml.py --test|--prod [--ejecutar] [--solo VENTA,VENTA|S123,…] [--max N] [--dias N]
-  sin --ejecutar = plan (solo lectura).
+                                 [--sin-respuesta]
+  sin --ejecutar = plan (solo lectura; muestra la respuesta a Maite sin enviarla).
 """
 import sys, os, re, json, html, base64, datetime, unicodedata
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import getaddresses
 from pathlib import Path
 import requests
 sys.stdout.reconfigure(encoding="utf-8")
@@ -35,6 +45,9 @@ MAX_POR_CORRIDA = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.a
 DIAS = int(sys.argv[sys.argv.index("--dias") + 1]) if "--dias" in sys.argv else 7
 SOLO = set(sys.argv[sys.argv.index("--solo") + 1].split(",")) if "--solo" in sys.argv else None
 LIVE = "--ejecutar" in sys.argv
+RESPONDER = "--sin-respuesta" not in sys.argv
+RESPONDER_DESDE = "2026-11-11"
+TRANSITORIO = "aún no aceptada por el SII"
 DTE_EMAIL_DEFAULT = "dte@grupoeter.cl"
 RAZON_NC = "Reemision como factura: el cliente la pidio en Mercado Libre"
 REMITENTE, ASUNTO = "notificaciones@unionx.cl", "Facturas por emitir en Mercado Libre"
@@ -159,19 +172,39 @@ def parsear_pulso(h):
     return ventas
 
 
-def leer_pulsos():
-    g = gmail()
+def leer_pulsos(g):
     q = f'from:{REMITENTE} subject:("{ASUNTO}") newer_than:{DIAS}d'
     msgs = g.users().messages().list(userId="me", q=q, maxResults=30).execute().get("messages", [])
-    ventas = {}
+    ventas, pulsos = {}, {}
     for m in reversed(msgs):   # del más antiguo al más reciente: el último pulso manda
         full = g.users().messages().get(userId="me", id=m["id"], format="full").execute()
+        hd = {x["name"].lower(): x["value"] for x in full["payload"].get("headers", [])}
+        pulsos[m["id"]] = {"thread": full["threadId"], "ms": int(full["internalDate"]), "message_id": hd.get("message-id", ""),
+                           "subject": hd.get("subject", ""), "from": hd.get("from", ""), "to": hd.get("to", ""),
+                           "cc": hd.get("cc", "")}
         h = _html_de(full["payload"]) or ""
         for vid, v in parsear_pulso(h).items():
             v["mail_id"] = m["id"]
             ventas[vid] = v
     print(f"pulsos leídos: {len(msgs)} (últimos {DIAS} días) · ventas: {len(ventas)}")
-    return ventas
+    return ventas, pulsos
+
+
+def _texto_de(payload):
+    """Texto de un mensaje: text/plain o, si no hay, el html sin etiquetas."""
+    def buscar(p, tipo):
+        if p.get("mimeType") == tipo and p.get("body", {}).get("data"):
+            return base64.urlsafe_b64decode(p["body"]["data"]).decode("utf-8", errors="replace")
+        for q in p.get("parts", []) or []:
+            r = buscar(q, tipo)
+            if r:
+                return r
+        return ""
+    return buscar(payload, "text/plain") or html.unescape(re.sub("<[^>]+>", " ", buscar(payload, "text/html")))
+
+
+def pesos(n):
+    return "$" + f"{n:,.0f}".replace(",", ".")
 
 
 # ── 2. Odoo: pedido, boleta, cliente ─────────────────────────────────────────
@@ -259,10 +292,12 @@ def evaluar(v):
         return "SALTAR", f"{so['name']}: RUT del pulso {v['rut']} ≠ nota del conector {rut_nota}", ctx
     movs = ex("account.move", "read", so["invoice_ids"], fields=[
         "name", "state", "move_type", "l10n_latam_document_type_id", "amount_total", "payment_state",
-        "l10n_cl_dte_status", "journal_id", "reversal_move_ids", "partner_id"]) if so["invoice_ids"] else []
+        "l10n_cl_dte_status", "journal_id", "reversal_move_ids", "partner_id", "ref", "create_date",
+        "reversed_entry_id"]) if so["invoice_ids"] else []
     fac = [m for m in movs if m["move_type"] == "out_invoice" and m["state"] == "posted"
            and m["l10n_latam_document_type_id"] and m["l10n_latam_document_type_id"][0] == DOC["33"]]
     if fac:
+        ctx.update(fac=fac[-1], movs=movs)
         return "YA_FACTURADA", f"{so['name']}: {', '.join(m['name'] for m in fac)}", ctx
     bols = [m for m in movs if m["move_type"] == "out_invoice" and m["state"] == "posted"
             and m["l10n_latam_document_type_id"] and m["l10n_latam_document_type_id"][0] == DOC["39"]]
@@ -331,15 +366,114 @@ def emitir(v, ctx, part):
             "boleta_estado": b2["payment_state"], "ok": ok}
 
 
-# ── 3. Corrida ───────────────────────────────────────────────────────────────
+# ── 3. Respuesta a Maite ─────────────────────────────────────────────────────
+def informe(ventas, resultados, hechos):
+    """Qué contar por pulso: facturas emitidas por el agente y ventas saltadas que piden revisión."""
+    ahora = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    por_venta = {h["venta"]: h for h in hechos}
+    inf = []
+    for vid, (est, det, ctx) in resultados.items():
+        v, ctx = ventas[vid], ctx or {}
+        if vid in por_venta:
+            h = por_venta[vid]
+            inf.append({"mail_id": v["mail_id"], "tipo": "emitida", "clave": h["factura"], "creada": ahora,
+                        "linea": f"Venta {vid} · {h['pedido']} · {h['cliente']} · {h['boleta']} anulada con {h['nc']} · "
+                                 f"{h['factura']} · {pesos(h['total'])}"})
+        elif est == "YA_FACTURADA" and TAG in str(ctx["fac"]["ref"] or ""):
+            f, movs = ctx["fac"], ctx["movs"]
+
+            def nc_de(doc_id):
+                return next((m for m in movs if m["move_type"] == "out_refund" and m["state"] == "posted"
+                             and m["reversed_entry_id"] and m["reversed_entry_id"][0] == doc_id), None)
+            b = next((m for m in movs if m["move_type"] == "out_invoice" and m["state"] == "posted"
+                      and m["l10n_latam_document_type_id"] and m["l10n_latam_document_type_id"][0] == DOC["39"]), None)
+            nc, anul = (nc_de(b["id"]) if b else None), nc_de(f["id"])
+            linea = (f"Venta {vid} · {ctx['so']['name']} · {f['partner_id'][1]} · {b['name'] if b else 'boleta'} anulada con "
+                     f"{nc['name'] if nc else 'N/C'} · {f['name']} · {pesos(f['amount_total'])}")
+            if anul:   # p. ej. S314002: Facturación anuló la factura porque el cliente canceló
+                motivo = str(anul["ref"] or "").split(",", 1)[-1].strip(" .")
+                linea += f" · después anulada con {anul['name']}" + (f" ({motivo})" if motivo else "")
+            inf.append({"mail_id": v["mail_id"], "tipo": "emitida", "clave": f["name"], "creada": f["create_date"], "linea": linea})
+        elif est == "SALTAR" and TRANSITORIO not in det:
+            inf.append({"mail_id": v["mail_id"], "tipo": "revisar", "clave": f"Venta {vid}", "creada": "9999",
+                        "linea": f"Venta {vid} · {v['razon']} · {det}"})
+    return inf
+
+
+def responder(g, pulsos, inf):
+    """Responde en el hilo de cada pulso (desde RESPONDER_DESDE) lo que aún no se informó en ese hilo."""
+    yo = g.users().getProfile(userId="me").execute()["emailAddress"].lower()
+    enviados = []
+    for mid, p in pulsos.items():
+        f_pulso = datetime.datetime.fromtimestamp(p["ms"] / 1000, datetime.timezone.utc)
+        if f_pulso.date().isoformat() < RESPONDER_DESDE:
+            continue
+        # Solo lo emitido después de este pulso (una venta repetida en el pulso siguiente no se vuelve a informar).
+        items = [x for x in inf if x["mail_id"] == mid and x["creada"] > f_pulso.strftime("%Y-%m-%d %H:%M:%S")]
+        if not items:
+            continue
+        th = g.users().threads().get(userId="me", id=p["thread"], format="full").execute()
+        previo = "\n".join(_texto_de(m["payload"]) for m in th.get("messages", [])
+                           if yo in next((h["value"] for h in m["payload"].get("headers", []) if h["name"].lower() == "from"), "").lower())
+        nuevos = [x for x in items if not re.search(rf"\b{re.escape(x['clave'])}\b", previo)]
+        if not nuevos:
+            continue
+        emit = [x for x in nuevos if x["tipo"] == "emitida"]
+        rev = [x for x in nuevos if x["tipo"] == "revisar"]
+        par = ["Hola Maite,"]
+        if emit:
+            par += [f"El agente emitió la factura de {len(emit)} venta{'s' if len(emit) > 1 else ''} de este pulso "
+                    "(N/C a la boleta + factura 33 al RUT del comprador):", "\n".join("- " + x["linea"] for x in emit)]
+        if rev:
+            par += [f"{'Estas no las emitió' if len(rev) > 1 else 'Esta no la emitió'}; quedan para revisión de Facturación:",
+                    "\n".join("- " + x["linea"] for x in rev)]
+        if emit:
+            par.append("El envío al SII lo hace Odoo durante el día.")
+        de = p["from"]
+        cc = [a for _, a in getaddresses([p["to"], p["cc"]]) if a and a.lower() != yo and a.lower() not in de.lower()]
+        asunto = p["subject"] if p["subject"].lower().startswith("re:") else "Re: " + p["subject"]
+        txt = "\n\n".join(par) + "\n\nBest Regards / Saludos,\n"
+        if not (LIVE and AMB == "PROD" and RESPONDER):
+            print(f"  RESPUESTA (no enviada: {'plan' if not LIVE else AMB if AMB != 'PROD' else '--sin-respuesta'}) "
+                  f"a {de} cc {', '.join(cc)} · {asunto}\n" + "\n".join("    " + l for l in txt.splitlines()))
+            continue
+        try:
+            firma = g.users().settings().sendAs().get(userId="me", sendAsEmail=yo).execute().get("signature", "")
+        except Exception:
+            firma = ""
+
+        def p2h(t):
+            ls = t.split("\n")
+            if all(l.startswith("- ") for l in ls):
+                return "<ul>" + "".join(f"<li>{html.escape(l[2:])}</li>" for l in ls) + "</ul>"
+            return "<p>" + "<br>".join(html.escape(l) for l in ls) + "</p>"
+        msg = MIMEMultipart("alternative")
+        msg["To"], msg["Subject"] = de, asunto
+        if cc:
+            msg["Cc"] = ", ".join(cc)
+        if p["message_id"]:
+            msg["In-Reply-To"] = msg["References"] = p["message_id"]
+        msg.attach(MIMEText(txt, "plain", "utf-8"))
+        msg.attach(MIMEText("".join(p2h(t) for t in par) + (f"<div>{firma}</div>" if firma else "<p>Best Regards / Saludos,</p>"),
+                            "html", "utf-8"))
+        r = g.users().messages().send(userId="me", body={"raw": base64.urlsafe_b64encode(msg.as_bytes()).decode(),
+                                                         "threadId": p["thread"]}).execute()
+        enviados.append({"pulso": mid, "respuesta": r["id"], "emitidas": len(emit), "revisar": len(rev)})
+        print(f"  ✉ respuesta a Maite en el hilo del pulso {mid}: {len(emit)} emitidas · {len(rev)} para revisar (msg {r['id']})")
+    return enviados
+
+
+# ── 4. Corrida ───────────────────────────────────────────────────────────────
 def main():
     print(f"[{HOY}] ambiente={AMB} modo={'EJECUTAR' if LIVE else 'PLAN'} máx={MAX_POR_CORRIDA}")
-    ventas = leer_pulsos()
-    plan, hechos, errores = [], [], []
+    g = gmail()
+    ventas, pulsos = leer_pulsos(g)
+    plan, hechos, errores, resultados = [], [], [], {}
     for vid, v in ventas.items():
         est, det, ctx = evaluar(v)
         if est is None:
             continue
+        resultados[vid] = (est, det, ctx)
         part = elegir_partner(v) if est == "EMITIR" else None
         plan.append({"venta": vid, "estado": est, "detalle": det, "rut": v["rut"], "razon": v["razon"],
                      "cliente": part and (f"{part['accion']} «{part['nombre']}»"
@@ -361,9 +495,18 @@ def main():
                 errores.append({"venta": vid, "error": str(e)[:400]})
                 print(f"    ✗ ERROR: {str(e)[:300]}")
     out = {"fecha": HOY, "ambiente": AMB, "live": LIVE, "plan": plan, "hechos": hechos, "errores": errores}
+    fallo_respuesta = None
+    try:
+        out["respuestas"] = responder(g, pulsos, informe(ventas, resultados, hechos))
+    except Exception as e:   # lo emitido ya quedó; la próxima corrida vuelve a intentar la respuesta
+        fallo_respuesta = str(e)[:400]
+        out["error_respuesta"] = fallo_respuesta
+        print(f"  ✗ ERROR al responder a Maite: {fallo_respuesta}")
     nombre = f"factura_ml_{AMB.lower()}_{datetime.datetime.now():%Y%m%d_%H%M}.json"
     Path(os.environ.get("FACTURA_ML_OUT", ".")).joinpath(nombre).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"emitir: {sum(p['estado'] == 'EMITIR' for p in plan)} · hechas: {len(hechos)} · errores: {len(errores)} → {nombre}")
+    if fallo_respuesta:
+        raise SystemExit(1)   # corrida en rojo en GitHub: que se vea
     return out
 
 
