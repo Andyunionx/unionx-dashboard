@@ -73,3 +73,14 @@ jobs:
           DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
           PYTHONIOENCODING: utf-8
         run: python -u macro_plan_accion.py
+
+      # Control de Aportes: la planilla de Andrés (data/planillas, sincronizada a
+      # su Drive) se sube como nueva versión de la copia de Gabriela en
+      # LIQUIDACIONES MKP/APORTES si cambió. Si Gabriela editó su copia, no la
+      # pisa y el paso queda en rojo para revisarlo a mano. Pedido Andrés 11-nov.
+      - name: Control de Aportes → carpeta de Gabriela
+        continue-on-error: true
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        run: python -u sync_aportes_gabriela.py
