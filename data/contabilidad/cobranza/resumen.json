@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-11-10T22:38:37.848502",
+  "generado_en": "2026-11-11T03:34:09.865198",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12645,
-  "total_monto_pendiente_clp": 875106087.0,
+  "total_documentos_pendientes": 12682,
+  "total_monto_pendiente_clp": 876778732.0,
   "monto_por_aging": {
-    "+90 días": 101824683.0,
-    "1-30 días": 459969430.0,
-    "31-60 días": 130641857.0,
-    "61-90 días": 49857578.0,
+    "+90 días": 102925755.0,
+    "1-30 días": 459803201.0,
+    "31-60 días": 131841096.0,
+    "61-90 días": 49396141.0,
     "Vigente": 132812539.0
   },
   "monto_por_tipo": {
-    "BOLETA": 707670249.0,
+    "BOLETA": 709342894.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 123163025.0
+      "monto": 124197417.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -34,7 +34,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 68602004.0
+      "monto": 68722964.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 22844504.0
+      "monto": 23110394.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -66,11 +66,11 @@
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 13982996.0
+      "monto": 14068976.0
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 13970677.0
+      "monto": 13981657.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -86,7 +86,7 @@
     },
     {
       "partner": "Lhotse Store",
-      "monto": 8205760.0
+      "monto": 8341101.0
     },
     {
       "partner": "STATUS SPA",
@@ -97,6 +97,6 @@
       "monto": 7365446.0
     }
   ],
-  "notas_credito_count": 1092,
+  "notas_credito_count": 1091,
   "pedidos_venta_count": 10000
 }
