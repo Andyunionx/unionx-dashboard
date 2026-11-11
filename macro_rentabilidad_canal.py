@@ -111,12 +111,17 @@ def modalidad_odoo(pedidos):
     rpc = _odoo()
     out = {}
     campos = ['name', 'channel', 'fulfillment', 'x_meli_logistic_type',
-              'x_fala_ship_type', 'x_fala_shipping_cost']
+              'x_fala_ship_type', 'x_fala_shipping_cost', 'x_ripley_ship_type']
     for i in range(0, len(pedidos), 300):
         for s in rpc('sale.order', 'search_read', [['name', 'in', pedidos[i:i+300]]],
                      fields=campos):
             ch = str(s.get('channel') or '')
             m = MOD_BASE.get(str(s.get('fulfillment') or ''))
+            # Ripley flota propia la despachamos nosotros. Desde oct-26 Odoo la marca fbm
+            # (oct: 215 de 215 pedidos), y su venta caía en Colecta mientras los cargos de
+            # flota propia de Gabriela («Flex (Flota Propia)») caían en Envío directo.
+            if 'flota propia' in str(s.get('x_ripley_ship_type') or '').lower():
+                m = 'Envío directo'
             if not m and 'Falabella' in ch:
                 # respaldo por si Falabella no trae `fulfillment`: x_fala_ship_type
                 # separa FBF del resto, y dentro del resto manda el signo del cobro
@@ -128,6 +133,23 @@ def modalidad_odoo(pedidos):
             if m:
                 out[s['name']] = m
     return out
+
+
+def docs_flota_propia():
+    """Documentos del cofinanciamiento de flota propia de Ripley (FAC/N-C «Despacho Flota
+    Propia FP<corte>»). Ripley paga por los pedidos que despachamos con flota propia; se
+    factura el mes siguiente al corte y el extract lo deja como venta de «Ripley tienda»
+    o «UnionX B2B». Ese ingreso entra DEVENGADO (mes del corte) en la carga de Gabriela
+    como «Abono por uso de flota propia» (Comisión envío, Flex (Flota Propia)): si además
+    queda en el RAW, se cuenta dos veces y en el mes equivocado (Gabriela 10-nov-2026)."""
+    rpc = _odoo()
+    ls = rpc('account.move.line', 'search_read',
+             ['|', ['product_id.name', 'ilike', 'flota propia'], ['name', 'ilike', 'flota propia'],
+              ['display_type', '=', 'product'], ['move_id.move_type', 'in', ['out_invoice', 'out_refund']]],
+             fields=['move_id'])
+    # move_id[1] es el display_name: en las N/C trae «(Reversión de: …)»; el RAW guarda solo `name`
+    ids = sorted({l['move_id'][0] for l in ls})
+    return {m['name'] for m in rpc('account.move', 'read', ids, fields=['name'])} if ids else set()
 
 
 def cargar_raw(desde, hasta):
@@ -148,6 +170,11 @@ def cargar_raw(desde, hasta):
 def construir(desde, hasta):
     v = cargar_raw(desde, hasta)
     print(f'[raw] {len(v):,} filas · {desde} a {hasta}', flush=True)
+    fp = v['documento'].astype(str).isin(docs_flota_propia())
+    if fp.any():
+        print(f'[flota propia] {int(fp.sum())} filas fuera del RAW (neto ${v.loc[fp, "venta_neta"].sum():,.0f}): '
+              'el ingreso va devengado en la carga de Gabriela', flush=True)
+        v = v[~fp]
 
     peds = sorted({p for p in v['pedido'].astype(str) if p.startswith('S')})
     print(f'[odoo] resolviendo modalidad de {len(peds):,} pedidos...', flush=True)
