@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-11T03:41:51.892683",
+  "generado_en": "2026-11-11T13:10:17.047739",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 710,
     "posiciones_libres_hoy": 667,
     "pct_ocupacion_hoy": 51.6,
-    "m3_stock_calculado": 712.9
+    "m3_stock_calculado": 712.4
   },
   "pico_proyectado": {
     "fecha": "2026-11-11",
@@ -81,19 +81,19 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 73275.0,
-    "demanda_cumplida_unidades": 18571.0,
-    "demanda_no_cubierta_unidades_total": 54704.0,
+    "demanda_cumplida_unidades": 18534.0,
+    "demanda_no_cubierta_unidades_total": 54741.0,
     "pct_demanda_cumplida": 25.3,
     "sku_sin_match_stock_count": 45,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
-        "unid_no_cubiertas": 30346.0,
+        "unid_no_cubiertas": 30373.0,
         "sin_match_stock": true
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 18032.0,
+        "unid_no_cubiertas": 18038.0,
         "sin_match_stock": true
       },
       {
@@ -103,7 +103,7 @@
       },
       {
         "sku": "LHSWVIBBK",
-        "unid_no_cubiertas": 778.0,
+        "unid_no_cubiertas": 779.0,
         "sin_match_stock": true
       },
       {
@@ -143,7 +143,7 @@
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 191.0,
+        "unid_no_cubiertas": 192.0,
         "sin_match_stock": true
       },
       {
