@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-11-11T21:46:39.485282",
+  "generado_en": "2026-11-12T10:44:32.806544",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.056539617270283095,
-      "total_pickings": 12646,
-      "on_time": 717,
-      "on_time_pct": 0.05669777004586431,
-      "in_full": 12640,
-      "in_full_pct": 0.9995255416732564,
-      "both": 715,
+      "valor": 0.05640535372848948,
+      "total_pickings": 12552,
+      "on_time": 710,
+      "on_time_pct": 0.05656469088591459,
+      "in_full": 12546,
+      "in_full_pct": 0.9995219885277247,
+      "both": 708,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,18 +23,25 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9996362534101243,
-      "ok": 16489,
-      "total": 16495,
+      "valor": 0.9996339454578732,
+      "ok": 16385,
+      "total": 16391,
       "errores": 6,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 5.4680699109962685,
-      "n_recepciones": 774,
-      "min": -23.392777777777777,
+      "valor": 5.434233679204496,
+      "n_recepciones": 771,
+      "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFW/IN/00005",
+          "proveedor": "Cliente Walmart, Katty elizabeth rosi Badilla Alarcon",
+          "horas": 0.0,
+          "scheduled": "2026-11-11 22:44",
+          "done": "2026-11-11 22:44"
+        },
         {
           "picking": "CA1/RET/01628",
           "proveedor": "Cliente Paris, Jonnathan Montero Gutierrez",
@@ -167,32 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-11-11 12:25",
           "done": "2026-11-11 12:26"
-        },
-        {
-          "picking": "CA1/RET/01615",
-          "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
-          "horas": 0.0,
-          "scheduled": "2026-11-11 12:26",
-          "done": "2026-11-11 12:26"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9743565024583052,
-      "total_so": 10388,
-      "total_con_pickings": 10373,
-      "cumplidos": 10107,
+      "valor": 0.9659146882080584,
+      "total_so": 10166,
+      "total_con_pickings": 10151,
+      "cumplidos": 9805,
       "parciales": 13,
-      "sin_iniciar": 253,
+      "sin_iniciar": 333,
       "error": null
     },
     "oct_30d": {
-      "valor": 47.19832750702584,
-      "n_orders": 12968,
+      "valor": 47.54275350404778,
+      "n_orders": 12874,
       "min_h": 0.0002777777777777778,
       "max_h": 714.7769444444444,
-      "mediana_h": 19.71472222222222,
+      "mediana_h": 19.88,
       "detalle": [
         {
           "so": "S290463",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 5261,
+      "lineas": 5314,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 165,
-      "outgoing": 29308,
-      "internal": 20527,
+      "incoming": 164,
+      "outgoing": 29380,
+      "internal": 20456,
       "total": 50000,
       "error": null
     },
@@ -621,10 +621,10 @@
           "quiebre_clp": 607970.519919,
           "n_canceladas": 347,
           "n_quiebres": 33,
-          "n_medidos": 10851,
-          "ns_empresa_pct": 0.9572389641507695,
-          "ns_courier_pct": 0.871809049857156,
-          "otif_total_pct": 0.8334715694406045,
+          "n_medidos": 10853,
+          "ns_empresa_pct": 0.9570625633465402,
+          "ns_courier_pct": 0.8716483921496361,
+          "otif_total_pct": 0.8333179765963328,
           "n_empresa_ok": 10387,
           "n_courier_ok": 9460,
           "n_otif_ok": 9044
@@ -2807,9 +2807,9 @@
         {
           "CURIER": "HOME DELIVERY CORP",
           "n_pedidos": 1412,
-          "ns_courier_pct": 99.6,
-          "ns_empresa_pct": 99.9,
-          "otif_total_pct": 99.6
+          "ns_courier_pct": 99.5,
+          "ns_empresa_pct": 99.8,
+          "otif_total_pct": 99.4
         },
         {
           "CURIER": "COLECTA",
@@ -4401,14 +4401,14 @@
       {
         "MES": "2026-10",
         "n_pedidos": 11276,
-        "n_medidos": 10887,
+        "n_medidos": 10889,
         "emp_ok": 10430,
         "cou_ok": 9499,
         "tot_ok": 9080,
-        "n_med_cou": 10885,
-        "otif_empresa": 0.9580233305777532,
-        "otif_courier": 0.872668810289389,
-        "otif_total": 0.8340222283457335,
+        "n_med_cou": 10887,
+        "otif_empresa": 0.9578473689043989,
+        "otif_courier": 0.8725084963718196,
+        "otif_total": 0.8338690421526311,
         "otif_empresa_pct": 95.8,
         "otif_courier_pct": 87.3,
         "otif_total_pct": 83.4
@@ -4461,10 +4461,10 @@
       },
       "2026-10": {
         "n_pedidos": 11276,
-        "n_medidos": 10887,
-        "otif_empresa_pct": 0.9580233305777532,
-        "otif_courier_pct": 0.872668810289389,
-        "otif_total_pct": 0.8341754708314194,
+        "n_medidos": 10889,
+        "otif_empresa_pct": 0.9578473689043989,
+        "otif_courier_pct": 0.8725084963718196,
+        "otif_total_pct": 0.8340222283457335,
         "n_empresa_ok": 10430,
         "n_courier_ok": 9499,
         "n_otif_ok": 9080,
@@ -4579,16 +4579,16 @@
         {
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 1458,
-          "n_medidos": 1379,
+          "n_medidos": 1381,
           "emp_ok": 1379,
           "cou_ok": 1356,
           "tot_ok": 1356,
-          "otif_empresa": 1.0,
-          "otif_courier": 0.9833212472806382,
-          "otif_total": 0.9833212472806382,
-          "otif_empresa_pct": 100.0,
-          "otif_courier_pct": 98.3,
-          "otif_total_pct": 98.3
+          "otif_empresa": 0.998551774076756,
+          "otif_courier": 0.9818971759594497,
+          "otif_total": 0.9818971759594497,
+          "otif_empresa_pct": 99.9,
+          "otif_courier_pct": 98.2,
+          "otif_total_pct": 98.2
         },
         {
           "CLIENTE": "KITCHEN",
@@ -8254,13 +8254,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.056539617270283095,
-      "total_pickings": 12646,
-      "on_time": 717,
-      "on_time_pct": 0.05669777004586431,
-      "in_full": 12640,
-      "in_full_pct": 0.9995255416732564,
-      "both": 715,
+      "valor": 0.05640535372848948,
+      "total_pickings": 12552,
+      "on_time": 710,
+      "on_time_pct": 0.05656469088591459,
+      "in_full": 12546,
+      "in_full_pct": 0.9995219885277247,
+      "both": 708,
       "error": null
     },
     "b2b_30d": {
@@ -8276,20 +8276,27 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9996362534101243,
-      "ok": 16489,
-      "total": 16495,
+      "valor": 0.9996339454578732,
+      "ok": 16385,
+      "total": 16391,
       "errores": 6,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 5.4680699109962685,
-      "n_recepciones": 774,
-      "min": -23.392777777777777,
+      "valor": 5.434233679204496,
+      "n_recepciones": 771,
+      "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "BFW/IN/00005",
+          "proveedor": "Cliente Walmart, Katty elizabeth rosi Badilla Alarcon",
+          "horas": 0.0,
+          "scheduled": "2026-11-11 22:44",
+          "done": "2026-11-11 22:44"
+        },
         {
           "picking": "CA1/RET/01628",
           "proveedor": "Cliente Paris, Jonnathan Montero Gutierrez",
@@ -8421,13 +8428,6 @@
           "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
           "horas": 0.0,
           "scheduled": "2026-11-11 12:25",
-          "done": "2026-11-11 12:26"
-        },
-        {
-          "picking": "CA1/RET/01615",
-          "proveedor": "Falabella Retail, Falabella Full · Unidades (B) · Lo Espejo",
-          "horas": 0.0,
-          "scheduled": "2026-11-11 12:26",
           "done": "2026-11-11 12:26"
         }
       ],
