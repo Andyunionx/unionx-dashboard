@@ -185,7 +185,7 @@ for t in tickets:
         cand.append(ficha(t, bucket, detalle))
     elif bucket == R.MANUAL:
         manuales.append(ficha(t, bucket, detalle))
-    elif bucket != R.OTRO_MOTIVO:
+    elif bucket not in (R.OTRO_MOTIVO, R.EXCLUIDO):
         otros.append(ficha(t, bucket, detalle))
 print(f"clasificación: {dict(conteo)}")
 print(f"candidatos (reglas Max): {len(cand)} · manuales: {len(manuales)}")
@@ -298,14 +298,51 @@ def monto_oc(bol, cs):
     return m
 
 
+def resolver_ambigua(oc, ords, cs):
+    """OC que calza con 2+ pedidos porque Yuju recreó la orden (Max, 9-nov). Misma lógica del agente:
+    la NC va contra la BOLETA que trae el producto devuelto. Entre las boletas de la OC con algún
+    producto de los tickets: una sola sin NC → ese pedido; todas con NC → resuelta; si no, revisar.
+    OJO (auditoría 12-nov): «si algún pedido ya tiene NC, listo» fallaba en 20 de 34 casos: la NC
+    anulaba la boleta del pedido duplicado y la boleta del pedido vivo (la del producto devuelto)
+    seguía sin NC. → ("nc_previa", None, detalle) / ("uno", pedido, None) / ("ambiguo", None, detalle)"""
+    prods = {pid_de(c["prod"]) for c in cs if c["prod"]}
+    con_prod = []   # (pedido, boleta, tiene_nc)
+    for o in ords:
+        for i in o["invoice_ids"]:
+            b = bol_por_id.get(i)
+            if not b or not prods & {l["product_id"][0] for l in lin_por_bol.get(i, []) if l["product_id"]}:
+                continue
+            nc = [n for n in nc_por_bol.get(i, []) if n["state"] == "posted"]
+            con_prod.append((o, b, nc[0]["name"] if nc else
+                             ("NC por referencia SII" if str(b.get("l10n_latam_document_number") or "") in nc_ref_folios else None)))
+    abiertas = [(o, b) for o, b, nc in con_prod if not nc]
+    if len(abiertas) == 1:
+        return "uno", abiertas[0][0], None
+    if con_prod and not abiertas:
+        return "nc_previa", None, (f"OC {oc} con {len(ords)} pedidos (orden recreada): toda boleta con el producto ya tiene NC ("
+                                   + ", ".join(f"{b['name']}: {nc}" for _, b, nc in con_prod) + ")")
+    if not con_prod:
+        return "ambiguo", None, f"pedido ambiguo para OC {oc}: {len(ords)} pedidos y ninguna boleta trae el producto del ticket"
+    return "ambiguo", None, f"pedido ambiguo para OC {oc}: {len(abiertas)} boletas sin NC con el producto (" + ", ".join(b["name"] for _, b in abiertas) + ")"
+
+
 ctx_oc = {}     # oc -> (boleta, monto estimado, pedido), solo para el Excel de validación / pulso
 acciones = []   # (boleta, [tickets], lineas {product_id: qty}, total_flag, fecha)
 inv_full = []   # ventas Fulfillment recibidas: solo inventario, sin NC
 for oc, cs in por_oc.items():
     tids = [c["t"]["id"] for c in cs]
     ords = ord_por_oc.get(oc, [])
-    if len(ords) != 1:
-        marcas["revisar"] += [(i, f"pedido {'no encontrado' if not ords else 'ambiguo'} para OC {oc}") for i in tids]
+    if len(ords) > 1:
+        res, ped, det = resolver_ambigua(oc, ords, cs)
+        if res == "nc_previa":
+            marcas["nc_previa"] += [(i, det) for i in tids]
+            continue
+        if res == "ambiguo":
+            marcas["revisar"] += [(i, det) for i in tids]
+            continue
+        ords = [ped]
+    if not ords:
+        marcas["revisar"] += [(i, f"pedido no encontrado para OC {oc}") for i in tids]
         continue
     boletas = [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
     if ords[0]["id"] in ped_full:
@@ -549,6 +586,64 @@ for oc, cs in cam_por_oc.items():
                        "pv": ", ".join(f"{p['name']} ({p['state']}, {p['location_id'][1]})" for p in pvs),
                        "obs": "; ".join(obs),
                        "estados": ", ".join(sorted({str(c["estado"]) for c in cs if c["estado"]}))})
+def salidas_sin_pedido_posteriores(items):
+    """Caso S300123 (12-nov): Recíbelo devolvió un pedido, el ticket se cargó como Devolución y bodega
+    reenvió las unidades con un despacho manual SIN pedido. Si después del despacho del pedido salió al
+    mismo cliente (o con el pedido/OC en el origen o la nota), sin pedido, alguno de los productos del
+    ticket, la venta se volvió a entregar: ni NC ni devolución hasta que bodega/Postventa lo aclaren.
+    items: [(clave, so_id, pedido, oc, {product_id})] → {clave: "CA1/OUT/… del AAAA-MM-DD"}."""
+    so_ids = sorted({i[1] for i in items})
+    pids = sorted({p for i in items for p in i[4]})
+    if not so_ids or not pids:
+        return {}
+    desp = collections.defaultdict(list)   # so_id -> [(fecha despacho, cliente del despacho)]
+    for i in range(0, len(so_ids), 400):
+        for p in ex("stock.picking", "search_read", [("sale_id", "in", so_ids[i:i+400]), ("state", "=", "done"),
+                                                     ("location_dest_id.usage", "=", "customer")],
+                    fields=["sale_id", "date_done", "partner_id"], limit=10000):
+            desp[p["sale_id"][0]].append((p["date_done"], p["partner_id"][0] if p["partner_id"] else None))
+    desde = min((d for v in desp.values() for d, _ in v if d), default=None)
+    if not desde:
+        return {}
+    sueltos = ex("stock.move", "search_read", [("product_id", "in", pids), ("state", "=", "done"), ("date", ">", desde),
+                                               ("location_dest_id.usage", "=", "customer"), ("picking_id.sale_id", "=", False)],
+                 fields=["picking_id", "product_id", "date"], limit=20000)
+    # Cliente genérico (p. ej. «Duty Free T C S A, Cliente Travel Duty», 20.461 pedidos): el mismo cliente no
+    # dice nada, solo vale el pedido/OC en el origen o la nota (falso positivo 12-nov: CA1/OUT/300577 era el
+    # cambio de otra OC de Travel Duty). Marketplace y B2B despachan a un contacto por comprador.
+    clientes_esp = {c for c in {c for v in desp.values() for _, c in v if c}
+                    if ex("sale.order", "search_count", [("partner_shipping_id", "=", c)]) <= 20}
+    pk = {}
+    pk_ids = sorted({m["picking_id"][0] for m in sueltos if m["picking_id"]})
+    for i in range(0, len(pk_ids), 400):
+        for p in ex("stock.picking", "read", pk_ids[i:i+400], fields=["name", "partner_id", "origin", "note"]):
+            pk[p["id"]] = p
+    out = {}
+    for clave, so_id, pedido, oc, prods in items:
+        ds = [x for x in desp.get(so_id, []) if x[0]]
+        if not ds:
+            continue
+        f0, clientes = min(d for d, _ in ds), {c for _, c in ds if c in clientes_esp}
+        for m in sorted(sueltos, key=lambda x: x["date"]):
+            if m["product_id"][0] not in prods or m["date"] <= f0 or not m["picking_id"]:
+                continue
+            p = pk[m["picking_id"][0]]
+            txt = f"{p.get('origin') or ''} {re.sub(r'<[^>]+>', ' ', p.get('note') or '')}"
+            if (p["partner_id"] and p["partner_id"][0] in clientes) or pedido in txt or (oc and len(oc) >= 5 and oc in txt):
+                out[clave] = f"{p['name']} del {m['date'][:10]}"
+                break
+    return out
+
+
+reenv = salidas_sin_pedido_posteriores([(id(a), a["so_id"], a["pedido"], a["oc"], set(a["lineas"])) for a in acciones])
+if reenv:
+    for a in acciones:
+        if id(a) in reenv:
+            marcas["revisar"] += [(i, f"posible reenvío: {reenv[id(a)]} salió sin pedido al mismo cliente con el producto del ticket "
+                                      "(confirmar con bodega antes de la NC)") for i in a["tids"]]
+    acciones = [a for a in acciones if id(a) not in reenv]
+    print(f"NC retenidas por posible reenvío sin pedido: {len(reenv)}")
+
 planificar_inventario(acciones + inv_full + inv_cambio)
 
 # Lista de boletas autorizadas (Andrés 05-oct, opción 2): mientras la variable tenga
@@ -586,8 +681,15 @@ for est, lst in marcas.items():
 def estado_manual(oc, cs):
     """Estado NC de una OC de canal manual, con las mismas consultas del agente. Solo informa."""
     ords = ord_por_oc.get(oc, [])
-    if len(ords) != 1:
-        return f"pedido {'no encontrado' if not ords else 'ambiguo'}", None, 0
+    if len(ords) > 1:
+        res, ped, _ = resolver_ambigua(oc, ords, cs)
+        if res == "nc_previa":
+            return "ya tiene NC", None, 0
+        if res == "ambiguo":
+            return "pedido ambiguo", None, 0
+        ords = [ped]
+    if not ords:
+        return "pedido no encontrado", None, 0
     if ords[0]["id"] in ped_full:
         return "Fulfillment (no lleva NC)", None, 0
     boletas = [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
@@ -596,6 +698,7 @@ def estado_manual(oc, cs):
     if len(boletas) > 1:
         return f"{len(boletas)} boletas", None, 0
     bol = boletas[0]
+    ped_manual[oc] = ords[0]
     if nc_por_bol.get(bol["id"]) or str(bol.get("l10n_latam_document_number") or "") in nc_ref_folios:
         return "ya tiene NC", bol, 0
     if fecha_bol.get(bol["id"], "9999") < LIM_PLAZO:
@@ -604,20 +707,30 @@ def estado_manual(oc, cs):
 
 
 filas_man = []
+ped_manual = {}   # oc -> pedido elegido (también cuando la OC era ambigua)
 for oc, cs in man_por_oc.items():
     est, bol, monto = estado_manual(oc, cs)
     ords = ord_por_oc.get(oc, [])
     for c in cs:
         filas_man.append({"grupo": c["detalle"], "canal": c["canal"], "ticket": c["t"]["ticket_ref"],
-                          "titulo": c["t"]["name"], "oc": oc, "pedido": ords[0]["name"] if len(ords) == 1 else "",
+                          "titulo": c["t"]["name"], "oc": oc,
+                          "pedido": ped_manual[oc]["name"] if oc in ped_manual else (ords[0]["name"] if len(ords) == 1 else ""),
                           "estado NC": est,
                           "boleta": bol["name"] if bol else "", "fecha boleta": fecha_bol.get(bol["id"]) if bol else "",
-                          "monto estimado OC": round(monto)})
+                          "monto estimado OC": round(monto), "creado": str(c["t"].get("create_date") or "")[:10]})
+# Manuales con NC pendiente: el mismo resguardo de reenvío (S300123 estaba en esta lista, $198.252 ×3).
+pend_man = {f["oc"] for f in filas_man if f["estado NC"] == "PENDIENTE NC" and f["oc"] in ped_manual}
+reenv_man = salidas_sin_pedido_posteriores([(oc, ped_manual[oc]["id"], ped_manual[oc]["name"], oc,
+                                             {pid_de(c["prod"]) for c in man_por_oc[oc] if c["prod"]}) for oc in pend_man])
+for f in filas_man:
+    if f["estado NC"] == "PENDIENTE NC" and f["oc"] in reenv_man:
+        f["estado NC"] = f"PENDIENTE NC · posible reenvío: {reenv_man[f['oc']]} salió sin pedido (confirmar antes de emitir)"
 for c in manuales:
     if not c["oc"]:
         filas_man.append({"grupo": c["detalle"], "canal": c["canal"], "ticket": c["t"]["ticket_ref"],
                           "titulo": c["t"]["name"], "oc": "", "pedido": "", "estado NC": "sin Nº de orden",
-                          "boleta": "", "fecha boleta": "", "monto estimado OC": 0})
+                          "boleta": "", "fecha boleta": "", "monto estimado OC": 0,
+                          "creado": str(c["t"].get("create_date") or "")[:10]})
 # Cambio con «Aplica Reembolso» = Sí (Max, 22-oct): NC por la diferencia entre lo devuelto y lo que
 # salió con el pick PV. El pick no tiene precio en Odoo, así que la emite Facturación; el monto
 # de la hoja es el precio en boleta de lo devuelto (el tope de esa NC).

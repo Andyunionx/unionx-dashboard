@@ -28,6 +28,9 @@ Reglas (Max, correo 17-sep-2026, confirmadas 22-sep; complemento de Andrés 05-o
   no lo llenan (2 de 86 tickets del 23 al 26-oct, solo webs). «Reenvío» es un Cambio
   donde sale la misma unidad. Error de despacho: el ticket trae lo comprado y el
   «SKU recibido»; a BPV entra el que llegó.
+  Max, 9-nov (pulso 46): fuera del agente de forma permanente los tickets creados en 2025 (la
+  boleta venció hace rato) y las devoluciones masivas de Paris («-Masivo» en el título: se
+  ingresan por registro, sin OC).
 """
 import re
 
@@ -45,6 +48,8 @@ MOTIVOS_CAMBIO = {"Cambio", "Reenvío"}   # Max, 22-oct: un reenvío es un cambi
 _CANON = {c.lower(): c for c in (CANALES_AUTOMATICOS | CANALES_WEB_AUTOMATICOS | CANALES_PAGINAS_PROPIAS
                                   | CANALES_FIDELIZACION | CANALES_DISTRIBUCION | {CANAL_KITCHEN})}
 RE_PV_TITULO = re.compile(r"\bPV\s*[#\-_]?\s*\d{3,}", re.I)
+TICKETS_DESDE = "2026-01-01"                      # Max, 9-nov: los de 2025 quedan fuera
+RE_MASIVO = re.compile(r"-\s*masivo\b", re.I)     # Max, 9-nov: devoluciones masivas Paris, sin OC
 
 # Buckets de clasificación de un ticket
 CANDIDATO = "CANDIDATO"            # entra al agente
@@ -55,6 +60,7 @@ MANUAL = "MANUAL"                  # canal que se emite a mano
 PV_TITULO = "PV_TITULO"            # «PV» + OC en el título
 NO_RECEPCIONADO = "NO_RECEPCIONADO"
 SIN_REEMBOLSO = "SIN_REEMBOLSO"    # Devolución con «Aplica Reembolso» = No
+EXCLUIDO = "EXCLUIDO"              # fuera del agente para siempre (ticket de 2025, «-Masivo»)
 
 
 def prop(t, nombre):
@@ -102,6 +108,10 @@ def grupo_manual(t):
 
 def clasificar(t):
     """→ (bucket, detalle) según las reglas de Max, en el orden de su correo."""
+    if str(t.get("create_date") or "9999")[:10] < TICKETS_DESDE:
+        return EXCLUIDO, "ticket de 2025 (boleta vencida)"
+    if RE_MASIVO.search(t.get("name") or ""):
+        return EXCLUIDO, "devolución masiva (sin OC)"
     motivo = texto(t, "Motivo")
     if motivo in MOTIVOS_CAMBIO:
         return CAMBIO, grupo_manual(t) or "canal automático"

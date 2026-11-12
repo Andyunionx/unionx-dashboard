@@ -246,6 +246,42 @@ def _jrpc(model, method, dominio, **kw):
     return r["result"]
 
 
+def salidas_sin_pedido(hoy) -> pd.DataFrame:
+    """Caso S300123 (12-nov): despachos a cliente SIN pedido de los últimos 7 días. Un reenvío hecho así
+    deja el pedido y el inventario descuadrados (las unidades devueltas quedan en BPV y salen de CA1).
+    Fuera: envíos a Full (OUT a cliente + devolución a la bodega Full, casi siempre el mismo día)."""
+    desde = str(hoy - datetime.timedelta(days=7))
+    ps = _jrpc("stock.picking", "search_read", [("picking_type_code", "=", "outgoing"), ("state", "=", "done"),
+               ("sale_id", "=", False), ("date_done", ">=", desde), ("location_dest_id.usage", "=", "customer")],
+               fields=["id", "name", "origin", "partner_id", "date_done", "location_id", "create_uid", "note", "return_ids", "move_ids"])
+    if not ps:
+        return pd.DataFrame()
+    ret_ids = [r for p in ps for r in p["return_ids"]]
+    ret = {r["id"]: r for r in _jrpc("stock.picking", "read", ret_ids, fields=["location_dest_id", "state"])} if ret_ids else {}
+    mv_ids = [m for p in ps for m in p["move_ids"]]
+    mv = _jrpc("stock.move", "read", mv_ids, fields=["picking_id", "product_id", "quantity"]) if mv_ids else []
+    costo = {}
+    for l in (_jrpc("stock.valuation.layer", "search_read", [("stock_move_id", "in", mv_ids)], fields=["stock_move_id", "value"]) if mv_ids else []):
+        costo[l["stock_move_id"][0]] = costo.get(l["stock_move_id"][0], 0) + abs(l["value"])
+    filas = []
+    for p in ps:
+        if any(str((ret.get(r) or {}).get("location_dest_id", [0, ""])[1]).split("/")[0].startswith(("BF", "BKC1"))
+               and ret[r]["state"] != "cancel" for r in p["return_ids"]):
+            continue   # envío a Full
+        ms = [m for m in mv if m["picking_id"] and m["picking_id"][0] == p["id"]]
+        o = str(p["origin"] or "").strip()
+        tipo = ("Postventa (pick PV: cambio o reenvío)" if o.upper().startswith("PV") else
+                "reenvío web" if o.startswith("#") or o.upper().endswith("RE") else
+                "sin origen" if not o else "otro")
+        filas.append({"despacho": p["name"], "fecha": str(p["date_done"])[:10], "tipo": tipo, "origen": o,
+                      "cliente": p["partner_id"][1] if p["partner_id"] else "", "desde": p["location_id"][1],
+                      "creado por": p["create_uid"][1] if p["create_uid"] else "",
+                      "nota": re.sub(r"<[^>]+>|\s+", " ", p["note"] or "").strip()[:150],
+                      "productos": ", ".join(f"{m['product_id'][1][:40]} ×{m['quantity']:g}" for m in ms),
+                      "unidades": sum(m["quantity"] for m in ms), "costo": round(sum(costo.get(m["id"], 0) for m in ms))})
+    return pd.DataFrame(filas).sort_values(["tipo", "fecha"]) if filas else pd.DataFrame()
+
+
 def recompute_cancelados() -> pd.DataFrame:
     """Recalcula EN VIVO el universo de cancelados 2026 con boleta y sin NC.
     Filtros de auditoría (04/05-08): sin NC por reversa directa, sin fulfillment,
@@ -357,19 +393,37 @@ def main():
     em = hoja("1 Emitiría el agente", ["oc", "pedido", "monto estimado"])
     ret = hoja("1b Retenidas", ["oc", "pedido", "monto estimado"])
     rev = hoja("2 Agente - revisar", ["estado", "motivo", "oc", "pedido", "fecha boleta", "monto estimado OC"])
-    man = hoja("3 Manuales", ["grupo", "estado NC", "oc", "pedido", "fecha boleta", "monto estimado OC"])
+    man = hoja("3 Manuales", ["grupo", "estado NC", "oc", "pedido", "fecha boleta", "monto estimado OC", "creado"])
     mot = rev["motivo"].astype(str)
     es_rev = rev["estado"] == "revisar"
     ff = rev[mot.str.contains("Fulfillment")]
     oc_mal = rev[es_rev & mot.str.contains("pedido no encontrado|pedido ambiguo|sin Nº de orden")]
+    # Max, 9-nov: los tickets de canales manuales (Kitchen, Fidelización…) cuya OC no calza con un
+    # pedido desaparecían del pulso (la hoja de manuales solo muestra los que tienen NC pendiente).
+    # Van en una línea aparte, solo los de los últimos 90 días (después la NC ya no se puede emitir).
+    man_mal = man[man["estado NC"].astype(str).str.contains("pedido no encontrado|pedido ambiguo|sin Nº de orden")
+                  & (man.get("creado", pd.Series("", index=man.index)).astype(str) >= str(hoy - datetime.timedelta(days=90)))]
     plazo = pd.concat([rev[mot.str.contains("fuera de plazo")],
                        man[man["estado NC"] == "fuera de plazo (3 meses)"]], ignore_index=True)
     plazo = plazo[plazo["fecha boleta"].astype(str) >= DESDE_BOLETA]
     dif = rev[es_rev & ~mot.str.contains("Fulfillment|fuera de plazo|pedido no encontrado|pedido ambiguo|sin Nº de orden")]
-    manual = man[man["estado NC"] == "PENDIENTE NC"]
+    manual = man[man["estado NC"].astype(str).str.startswith("PENDIENTE NC")]
+    n_reenv_man = manual[manual["estado NC"].astype(str).str.contains("posible reenvío")]["oc"].nunique()
     n_plazo, m_plazo = oc_y_monto(plazo, "monto estimado OC")
     n_man, m_man = oc_y_monto(manual, "monto estimado OC")
     n_ff = ff["oc"].nunique()
+    try:
+        sal_sp = salidas_sin_pedido(hoy)
+    except Exception as e:
+        print(f"[salidas-sin-pedido][WARN] {type(e).__name__}: {e}")
+        sal_sp = pd.DataFrame()
+    sal_np = sal_sp[~sal_sp["tipo"].str.startswith("Postventa")] if len(sal_sp) else sal_sp
+    n_sal_np = len(sal_np)
+    li_sal = ("" if not n_sal_np else
+              f"<li><b>SALIDAS A CLIENTE SIN PEDIDO — {miles(n_sal_np)} despachos · {fmt(sal_np['costo'].sum())} a costo</b> "
+              f"(últimos 7 días, sin contar {miles(len(sal_sp) - n_sal_np)} picks PV de Postventa): reenvíos o salidas manuales "
+              f"que no quedan ligados a la venta; si fue un reenvío, el pedido y el inventario quedan descuadrados. "
+              f"<b>→ Max y bodega</b>: ligarlas al pedido o explicarlas.</li>")
     ped_dev = {str(p) for d in (em, ret, rev, man) if "pedido" in d for p in d["pedido"].dropna() if str(p)}
 
     # --- sección 0: lo que el agente YA emitió en los últimos 7 días
@@ -438,6 +492,8 @@ def main():
         manual.to_excel(w, sheet_name=f"2 Manual por emitir ({n_man})", index=False)
         oc_mal.to_excel(w, sheet_name=f"3 OC por corregir ({len(oc_mal)})", index=False)
         dif.to_excel(w, sheet_name=f"3b Por revisar ({len(dif)})", index=False)
+        man_mal.to_excel(w, sheet_name=f"3c Manuales sin pedido ({len(man_mal)})", index=False)
+        sal_sp.to_excel(w, sheet_name=f"3d Salidas sin pedido ({len(sal_sp)})", index=False)
         plazo.to_excel(w, sheet_name=f"4 Fuera de plazo ({n_plazo})", index=False)
         ff.to_excel(w, sheet_name=f"5 Fulfillment excluidas ({n_ff})", index=False)
         nucleo.to_excel(w, sheet_name=f"6 Cancel emitibles ({len(nucleo)})", index=False)
@@ -459,6 +515,9 @@ def main():
     if n_man:
         g = manual.drop_duplicates("oc")["grupo"].value_counts()
         man_txt = " (" + ", ".join(f"{k} {miles(v)}" for k, v in g.items()) + ")"
+        if n_reenv_man:
+            man_txt += (f"; <b>{miles(n_reenv_man)} con posible reenvío</b>: salió al mismo cliente un despacho sin pedido "
+                        "con el producto, confirmar antes de emitir")
     li_ret = ("" if not len(ret) else
               f"<li><b>RETENIDAS — {miles(len(ret))} NC · {fmt(m_ret)}</b>: cumplen todas las reglas, pero hoy el "
               f"agente emite solo la lista autorizada del 05-10. <b>→ Max</b>: validarlas para liberarlas.</li>")
@@ -492,6 +551,9 @@ estimados: precio de la boleta por las unidades del ticket. Desglose caso a caso
 de uno o viene vacía. <b>→ Max</b>: corregir la OC en el ticket (número de pedido real).</li>
 <li><b>POR REVISAR — {miles(len(dif))} tickets</b>: el producto o la cantidad del ticket no calza con la boleta, o la OC tiene
 más de una boleta. <b>→ Max</b>: revisar el ticket.</li>
+<li><b>MANUALES SIN PEDIDO — {miles(len(man_mal))} tickets</b> (últimos 90 días): canales manuales (Kitchen Center, Fidelización,
+Distribución…) cuya OC no calza con un pedido de Odoo, así que Facturación no puede emitir la NC. <b>→ Max</b>: corregir la OC.</li>
+{li_sal}
 <li><b>EXCLUIDA — {miles(n_ff)} OC</b>: Fulfillment, se descuenta en la liquidación del marketplace y no lleva NC.</li>
 </ul>
 
@@ -543,6 +605,8 @@ automática.</div>
         print(f"  2 MANUAL               : {n_man:>4} OC · {fmt(m_man)}")
         print(f"  3 OC POR CORREGIR      : {len(oc_mal):>4} tickets")
         print(f"  3b POR REVISAR         : {len(dif):>4} tickets")
+        print(f"  3c MANUALES SIN PEDIDO : {len(man_mal):>4} tickets")
+        print(f"  3d SALIDAS SIN PEDIDO  : {len(sal_sp):>4} despachos ({n_sal_np} sin pick PV)")
         print(f"  4 FUERA DE PLAZO       : {n_plazo:>4} OC · {fmt(m_plazo)}")
         print(f"  5 FULFILLMENT          : {n_ff:>4} OC")
         for nom, d_ in [("6 CANCEL por emitir", nucleo), ("7 CANCEL valida seller", pagados),
