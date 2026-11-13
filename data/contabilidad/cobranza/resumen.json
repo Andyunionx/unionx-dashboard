@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-11-13T03:55:29.675331",
+  "generado_en": "2026-11-13T13:33:57.676105",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12583,
-  "total_monto_pendiente_clp": 876303188.0,
+  "total_documentos_pendientes": 12612,
+  "total_monto_pendiente_clp": 879085988.0,
   "monto_por_aging": {
     "+90 días": 104180910.0,
-    "1-30 días": 463429224.0,
+    "1-30 días": 466135046.0,
     "31-60 días": 135726641.0,
     "61-90 días": 48202216.0,
-    "Vigente": 124764197.0
+    "Vigente": 124841175.0
   },
   "monto_por_tipo": {
-    "BOLETA": 708867350.0,
+    "BOLETA": 711650150.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 128225939.0
+      "monto": 128534779.0
     },
     {
       "partner": "WALMART CHILE COM. LTDA",
@@ -26,7 +26,7 @@
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 112232938.0
+      "monto": 112136018.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -34,11 +34,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 50724029.0
+      "monto": 51044459.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 41642878.0
+      "monto": 41842862.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23586742.0
+      "monto": 23624732.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -74,19 +74,19 @@
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 14205788.0
+      "monto": 14268774.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 12740955.0
+      "monto": 12754947.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 9162543.0
+      "monto": 9236395.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 9066091.0
+      "monto": 9123262.0
     },
     {
       "partner": "STATUS SPA",
@@ -97,6 +97,6 @@
       "monto": 7649331.0
     }
   ],
-  "notas_credito_count": 1113,
+  "notas_credito_count": 1114,
   "pedidos_venta_count": 10000
 }
