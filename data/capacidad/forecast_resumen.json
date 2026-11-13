@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-13T04:00:21.946182",
+  "generado_en": "2026-11-13T13:36:40.219646",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1377,
-    "posiciones_ocupadas_hoy": 684,
-    "posiciones_libres_hoy": 693,
-    "pct_ocupacion_hoy": 49.7,
-    "m3_stock_calculado": 705.9
+    "posiciones_ocupadas_hoy": 678,
+    "posiciones_libres_hoy": 699,
+    "pct_ocupacion_hoy": 49.2,
+    "m3_stock_calculado": 704.5
   },
   "pico_proyectado": {
     "fecha": "2026-11-13",
-    "posiciones_ocupadas": 677.7,
-    "pct_ocupacion": 49.2
+    "posiciones_ocupadas": 671.7,
+    "pct_ocupacion": 48.8
   },
   "minimo_proyectado": {
     "fecha": "2027-01-09",
-    "posiciones_ocupadas": 544.6,
-    "pct_ocupacion": 39.5
+    "posiciones_ocupadas": 538.9,
+    "pct_ocupacion": 39.1
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -72,23 +72,23 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 119.2,
-  "pallets_total_salientes_horizonte": 153.9,
+  "pallets_total_salientes_horizonte": 153.5,
   "m3_total_entrante_horizonte": 143.0,
-  "m3_total_saliente_horizonte": 184.6,
+  "m3_total_saliente_horizonte": 184.2,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 772,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 73275.0,
-    "demanda_cumplida_unidades": 18472.0,
-    "demanda_no_cubierta_unidades_total": 54803.0,
+    "demanda_cumplida_unidades": 18457.0,
+    "demanda_no_cubierta_unidades_total": 54818.0,
     "pct_demanda_cumplida": 25.2,
-    "sku_sin_match_stock_count": 45,
+    "sku_sin_match_stock_count": 46,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
-        "unid_no_cubiertas": 30381.0,
+        "unid_no_cubiertas": 30385.0,
         "sin_match_stock": true
       },
       {
@@ -103,7 +103,7 @@
       },
       {
         "sku": "LHSWVIBBK",
-        "unid_no_cubiertas": 780.0,
+        "unid_no_cubiertas": 781.0,
         "sin_match_stock": true
       },
       {
@@ -128,7 +128,7 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 208.0,
+        "unid_no_cubiertas": 210.0,
         "sin_match_stock": true
       },
       {
