@@ -662,6 +662,26 @@ def _lin_oct26_ponderado() -> float:
     return min(acum, 1.0)
 
 
+def _lin_nov26_ponderado() -> float:
+    """Nov-2026: pulso comercial con tramos de peso distinto.
+    Días 1-22 → 50.8%; días 23-26 → +9.2%; días 27-29 → +30%; día 30 → +10%."""
+    dia_corte = max(0, _TODAY.day - 1)
+    if dia_corte == 0:
+        return 0.0
+    TRAMOS = [
+        (range(1,  23), 0.508 / 22),   # días 1-22  → 50.8%
+        (range(23, 27), 0.092 /  4),   # días 23-26 → +9.2%
+        (range(27, 30), 0.300 /  3),   # días 27-29 → +30%
+        (range(30, 31), 0.100 /  1),   # día 30     → +10%
+    ]
+    acum = 0.0
+    for rango, peso_dia in TRAMOS:
+        for d in rango:
+            if d <= dia_corte:
+                acum += peso_dia
+    return min(acum, 1.0)
+
+
 def _lin_for_mes(mes_str: str) -> float:
     """Linealidad 0→1 for a given month string 'YYYY-MM'.
     Uses yesterday (day-1) because sales data closes at end of the prior day."""
@@ -672,6 +692,8 @@ def _lin_for_mes(mes_str: str) -> float:
         return 1.0
     if mes_str == '2026-10':
         return _lin_oct26_ponderado()
+    if mes_str == '2026-11':
+        return _lin_nov26_ponderado()
     ts   = pd.Timestamp(mes_str + '-01')
     dias = (ts + pd.DateOffset(months=1) - pd.Timedelta(days=1)).day
     return max(0, _TODAY.day - 1) / dias
