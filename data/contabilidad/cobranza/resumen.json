@@ -1,28 +1,24 @@
 {
-  "generado_en": "2026-11-16T14:10:58.254722",
+  "generado_en": "2026-11-17T01:14:52.413943",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12904,
-  "total_monto_pendiente_clp": 890979061.0,
+  "total_documentos_pendientes": 12777,
+  "total_monto_pendiente_clp": 769663272.0,
   "monto_por_aging": {
-    "+90 días": 106423856.0,
-    "1-30 días": 459973417.0,
-    "31-60 días": 152854974.0,
-    "61-90 días": 49711722.0,
-    "Vigente": 122015092.0
+    "+90 días": 107604657.0,
+    "1-30 días": 336238124.0,
+    "31-60 días": 154376324.0,
+    "61-90 días": 48875751.0,
+    "Vigente": 122568416.0
   },
   "monto_por_tipo": {
-    "BOLETA": 723543223.0,
+    "BOLETA": 602227434.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 134567635.0
-    },
-    {
-      "partner": "WALMART CHILE COM. LTDA",
-      "monto": 116496240.0
+      "monto": 135627150.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -34,11 +30,11 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 53297457.0
+      "monto": 52750550.0
     },
     {
       "partner": "Duty Free T C S A",
-      "monto": 42218838.0
+      "monto": 43827671.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -50,7 +46,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 24498708.0
+      "monto": 24828498.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -66,35 +62,39 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14971910.0
-    },
-    {
-      "partner": "Global Reward Solutions",
-      "monto": 14204782.0
-    },
-    {
-      "partner": "Celmedia Fidelizacion SPA",
-      "monto": 13456278.0
+      "monto": 14187294.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 12269430.0
+      "monto": 12380270.0
+    },
+    {
+      "partner": "Celmedia Fidelizacion SPA",
+      "monto": 10780055.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 10662544.0
-    },
-    {
-      "partner": "Lhotse Store",
-      "monto": 9717964.0
+      "monto": 9561877.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 8742954.0
+      "monto": 8864723.0
+    },
+    {
+      "partner": "Global Reward Solutions",
+      "monto": 8227625.0
     },
     {
       "partner": "STATUS SPA",
       "monto": 8171089.0
+    },
+    {
+      "partner": "Lhotse Store",
+      "monto": 8155798.0
+    },
+    {
+      "partner": "WALMART CHILE COM. LTDA",
+      "monto": 5725774.0
     }
   ],
   "notas_credito_count": 1110,
