@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-11-17T05:39:32.538169",
+  "generado_en": "2026-11-17T15:07:02.164554",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 67,
-  "sku_match_odoo": 66,
-  "sku_con_peso": 50,
-  "sku_con_volumen": 49,
-  "sku_volumen_anomalo": 9,
+  "sku_input": 110,
+  "sku_match_odoo": 109,
+  "sku_con_peso": 88,
+  "sku_con_volumen": 86,
+  "sku_volumen_anomalo": 13,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 74.6,
-  "cobertura_volumen_pct": 73.1,
-  "cobertura_volumen_confiable_pct": 59.7,
-  "unidades_totales": 17468.0,
-  "peso_total_kg": 45015.2,
-  "volumen_total_m3": 143.0,
-  "volumen_total_m3_raw": 13916820.25,
-  "pallets_totales_estim": 119.2,
+  "cobertura_peso_pct": 80.0,
+  "cobertura_volumen_pct": 78.2,
+  "cobertura_volumen_confiable_pct": 66.4,
+  "unidades_totales": 34449.0,
+  "peso_total_kg": 70513.5,
+  "volumen_total_m3": 237.86,
+  "volumen_total_m3_raw": 18198154.87,
+  "pallets_totales_estim": 198.2,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -121,12 +121,97 @@
       "skus_volumen_anomalo": 5,
       "cobertura_peso_pct": 60.9,
       "cobertura_volumen_pct": 60.9
+    },
+    {
+      "pi": "26TP0917PI",
+      "transporte": "",
+      "fecha_embarque": "2026-11-17",
+      "fecha_eta_bodega": "2026-11-17",
+      "skus_distintos": 9,
+      "unidades_totales": 3632.0,
+      "peso_total_kg": 6480.8,
+      "volumen_total_m3": 40.11,
+      "volumen_total_m3_raw": 2199944.67,
+      "pallets_estim": 33.4,
+      "containers_20_estim": 1.43,
+      "containers_40hc_estim": 0.6,
+      "skus_con_match_odoo": 10,
+      "skus_con_peso": 5,
+      "skus_con_volumen": 5,
+      "skus_volumen_anomalo": 1,
+      "cobertura_peso_pct": 55.6,
+      "cobertura_volumen_pct": 55.6
+    },
+    {
+      "pi": "26TP0930PI",
+      "transporte": "",
+      "fecha_embarque": "2026-11-17",
+      "fecha_eta_bodega": "2026-11-17",
+      "skus_distintos": 35,
+      "unidades_totales": 7049.0,
+      "peso_total_kg": 19017.6,
+      "volumen_total_m3": 54.74,
+      "volumen_total_m3_raw": 2081389.94,
+      "pallets_estim": 45.6,
+      "containers_20_estim": 1.96,
+      "containers_40hc_estim": 0.82,
+      "skus_con_match_odoo": 35,
+      "skus_con_peso": 35,
+      "skus_con_volumen": 34,
+      "skus_volumen_anomalo": 3,
+      "cobertura_peso_pct": 100.0,
+      "cobertura_volumen_pct": 97.1
+    },
+    {
+      "pi": "26TP1029PI",
+      "transporte": "",
+      "fecha_embarque": "2026-11-17",
+      "fecha_eta_bodega": "2026-11-17",
+      "skus_distintos": 1,
+      "unidades_totales": 3150.0,
+      "peso_total_kg": 0.0,
+      "volumen_total_m3": 0.0,
+      "volumen_total_m3_raw": 0.0,
+      "pallets_estim": 0,
+      "containers_20_estim": 0,
+      "containers_40hc_estim": 0,
+      "skus_con_match_odoo": 1,
+      "skus_con_peso": 0,
+      "skus_con_volumen": 0,
+      "skus_volumen_anomalo": 0,
+      "cobertura_peso_pct": 0.0,
+      "cobertura_volumen_pct": 0.0
+    },
+    {
+      "pi": "26TP1030PI",
+      "transporte": "",
+      "fecha_embarque": "2026-11-17",
+      "fecha_eta_bodega": "2026-11-17",
+      "skus_distintos": 1,
+      "unidades_totales": 3150.0,
+      "peso_total_kg": 0.0,
+      "volumen_total_m3": 0.0,
+      "volumen_total_m3_raw": 0.0,
+      "pallets_estim": 0,
+      "containers_20_estim": 0,
+      "containers_40hc_estim": 0,
+      "skus_con_match_odoo": 1,
+      "skus_con_peso": 0,
+      "skus_con_volumen": 0,
+      "skus_volumen_anomalo": 0,
+      "cobertura_peso_pct": 0.0,
+      "cobertura_volumen_pct": 0.0
     }
   ],
   "skus_sin_match": [
     ""
   ],
   "skus_volumen_anomalo_top": [
+    {
+      "sku": "XRCOOLPORTF40-GR",
+      "producto": "Cooler Freezer Eléctrico Portátil 40L -20°C 12V-220V Gris Xroad",
+      "volumen_unit_m3": 133585.2
+    },
     {
       "sku": "BDPKMESILL",
       "producto": "Set Mesa y 2 Sillas Infantil Madera con Cajones Bandú",
@@ -153,9 +238,19 @@
       "volumen_unit_m3": 23040.0
     },
     {
+      "sku": "XRCOBSUV-BS",
+      "producto": "Carpa Funda Cubre SUV Impermeable Premium con Felpa Xroad",
+      "volumen_unit_m3": 17010.0
+    },
+    {
       "sku": "BDPZMG2E1",
       "producto": "Pizarra Infantil Madera 2 en 1 Magnética Doble Cara Bandú",
       "volumen_unit_m3": 11000.0
+    },
+    {
+      "sku": "LVMOVEL-BK",
+      "producto": "Mochila Notebook Ejecutiva Velar Lite Impermeable 18L LEVO",
+      "volumen_unit_m3": 6720.0
     },
     {
       "sku": "LVMOPRL-BK",
@@ -166,6 +261,11 @@
       "sku": "BDGMNMVBB",
       "producto": "Gimnasio Madera Bebé Montessori Juguetes Colgantes Bandú",
       "volumen_unit_m3": 4414.41
+    },
+    {
+      "sku": "TCALSCAEGL-PP",
+      "producto": "Alisador y Secador de Pelo 2 en 1 AeraCare T-Care",
+      "volumen_unit_m3": 4382.28
     },
     {
       "sku": "SMCONTCAFMI",

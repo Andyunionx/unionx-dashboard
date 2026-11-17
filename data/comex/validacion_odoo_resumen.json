@@ -1,9 +1,9 @@
 {
-  "generado_en": "2026-11-17T05:39:30.524908",
-  "total_pis": 5,
+  "generado_en": "2026-11-17T15:07:00.395760",
+  "total_pis": 9,
   "pis_ingresados": 0,
   "pis_parciales": 2,
-  "pis_pendientes": 3,
+  "pis_pendientes": 7,
   "sku_no_match_odoo": 1,
   "por_pi": [
     {
@@ -59,6 +59,19 @@
       "status_pi": "\ud83d\udfe1 INICIANDO"
     },
     {
+      "pi": "26TP0917PI",
+      "fecha_embarque": "2026-11-17",
+      "skus_total": 10,
+      "skus_ingresados": 0,
+      "skus_parciales": 1,
+      "skus_pendientes": 9,
+      "skus_sin_info": 0,
+      "unidades_esperadas": 3632.0,
+      "unidades_recibidas": 140.0,
+      "ratio_pi": 0.039,
+      "status_pi": "\ud83d\udd34 PENDIENTE"
+    },
+    {
       "pi": "26TP0927PI",
       "fecha_embarque": "2026-10-29",
       "skus_total": 23,
@@ -69,6 +82,45 @@
       "unidades_esperadas": 9020.0,
       "unidades_recibidas": 25.0,
       "ratio_pi": 0.003,
+      "status_pi": "\ud83d\udd34 PENDIENTE"
+    },
+    {
+      "pi": "26TP0930PI",
+      "fecha_embarque": "2026-11-17",
+      "skus_total": 35,
+      "skus_ingresados": 1,
+      "skus_parciales": 0,
+      "skus_pendientes": 34,
+      "skus_sin_info": 0,
+      "unidades_esperadas": 7049.0,
+      "unidades_recibidas": 274.0,
+      "ratio_pi": 0.039,
+      "status_pi": "\ud83d\udd34 PENDIENTE"
+    },
+    {
+      "pi": "26TP1029PI",
+      "fecha_embarque": "2026-11-17",
+      "skus_total": 1,
+      "skus_ingresados": 0,
+      "skus_parciales": 0,
+      "skus_pendientes": 1,
+      "skus_sin_info": 0,
+      "unidades_esperadas": 3150.0,
+      "unidades_recibidas": 1.0,
+      "ratio_pi": 0.0,
+      "status_pi": "\ud83d\udd34 PENDIENTE"
+    },
+    {
+      "pi": "26TP1030PI",
+      "fecha_embarque": "2026-11-17",
+      "skus_total": 1,
+      "skus_ingresados": 0,
+      "skus_parciales": 0,
+      "skus_pendientes": 1,
+      "skus_sin_info": 0,
+      "unidades_esperadas": 3150.0,
+      "unidades_recibidas": 0.0,
+      "ratio_pi": 0.0,
       "status_pi": "\ud83d\udd34 PENDIENTE"
     }
   ]
