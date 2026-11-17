@@ -1,28 +1,28 @@
 {
-  "generado_en": "2026-11-17T01:14:52.413943",
+  "generado_en": "2026-11-17T15:04:23.566382",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12777,
-  "total_monto_pendiente_clp": 769663272.0,
+  "total_documentos_pendientes": 12856,
+  "total_monto_pendiente_clp": 769500971.0,
   "monto_por_aging": {
     "+90 días": 107604657.0,
-    "1-30 días": 336238124.0,
+    "1-30 días": 338939885.0,
     "31-60 días": 154376324.0,
     "61-90 días": 48875751.0,
-    "Vigente": 122568416.0
+    "Vigente": 119704354.0
   },
   "monto_por_tipo": {
-    "BOLETA": 602227434.0,
+    "BOLETA": 602065133.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 135627150.0
+      "monto": 135882093.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 113857496.0
+      "monto": 114426036.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 52750550.0
+      "monto": 52778540.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -42,11 +42,11 @@
     },
     {
       "partner": "GOPOINTS CHILE SPA",
-      "monto": 28661181.0
+      "monto": 25764639.0
     },
     {
       "partner": "Cliente Paris",
-      "monto": 24828498.0
+      "monto": 25074378.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -62,11 +62,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14187294.0
+      "monto": 14374690.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 12380270.0
+      "monto": 12580060.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -74,11 +74,15 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 9561877.0
+      "monto": 9775927.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 8864723.0
+      "monto": 9175669.0
+    },
+    {
+      "partner": "Lhotse Store",
+      "monto": 8250857.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -89,14 +93,10 @@
       "monto": 8171089.0
     },
     {
-      "partner": "Lhotse Store",
-      "monto": 8155798.0
-    },
-    {
       "partner": "WALMART CHILE COM. LTDA",
       "monto": 5725774.0
     }
   ],
-  "notas_credito_count": 1110,
+  "notas_credito_count": 1113,
   "pedidos_venta_count": 10000
 }
