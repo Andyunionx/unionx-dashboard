@@ -1,15 +1,15 @@
 {
-  "generado_en": "2026-11-16T23:46:19.340574",
+  "generado_en": "2026-11-17T11:33:44.146625",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.06804222648752399,
-      "total_pickings": 10420,
-      "on_time": 711,
-      "on_time_pct": 0.0682341650671785,
-      "in_full": 10414,
-      "in_full_pct": 0.9994241842610365,
-      "both": 709,
+      "valor": 0.06913198802742107,
+      "total_pickings": 10357,
+      "on_time": 718,
+      "on_time_pct": 0.0693250941392295,
+      "in_full": 10351,
+      "in_full_pct": 0.9994206816645747,
+      "both": 716,
       "error": null
     },
     "otif_b2b_30d": {
@@ -23,15 +23,15 @@
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997770676971093,
-      "ok": 13454,
-      "total": 13457,
+      "valor": 0.9997760023893079,
+      "ok": 13390,
+      "total": 13393,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 5.286753998316499,
-      "n_recepciones": 792,
+      "valor": 5.3270854537743855,
+      "n_recepciones": 786,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9768110197205431,
-      "total_so": 10109,
-      "total_con_pickings": 10091,
-      "cumplidos": 9857,
-      "parciales": 13,
-      "sin_iniciar": 221,
+      "valor": 0.9721691952175223,
+      "total_so": 9971,
+      "total_con_pickings": 9953,
+      "cumplidos": 9676,
+      "parciales": 14,
+      "sin_iniciar": 263,
       "error": null
     },
     "oct_30d": {
-      "valor": 34.564891843137254,
-      "n_orders": 10625,
+      "valor": 34.86593102413444,
+      "n_orders": 10552,
       "min_h": 0.0002777777777777778,
       "max_h": 714.7769444444444,
-      "mediana_h": 13.464722222222223,
+      "mediana_h": 13.76361111111111,
       "detalle": [
         {
           "so": "S290463",
@@ -207,6 +207,13 @@
           "horas": 691.1,
           "fecha_orden": "2026-09-23 23:55",
           "fecha_despacho": "2026-10-22 18:58"
+        },
+        {
+          "so": "S307227",
+          "cliente": "Cliente Mercado Libre, HERNAN RODRIGUEZ",
+          "horas": 655.5,
+          "fecha_orden": "2026-10-20 16:18",
+          "fecha_despacho": "2026-11-16 23:49"
         },
         {
           "so": "S291453",
@@ -326,13 +333,6 @@
           "horas": 578.8,
           "fecha_orden": "2026-10-05 13:54",
           "fecha_despacho": "2026-10-29 16:43"
-        },
-        {
-          "so": "S295510",
-          "cliente": "Cliente Shopify, Ashley Gatica",
-          "horas": 578.4,
-          "fecha_orden": "2026-10-05 14:15",
-          "fecha_despacho": "2026-10-29 16:41"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 7177,
+      "lineas": 7211,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 154,
-      "outgoing": 29592,
-      "internal": 20254,
+      "incoming": 150,
+      "outgoing": 29434,
+      "internal": 20416,
       "total": 50000,
       "error": null
     },
@@ -621,10 +621,10 @@
           "quiebre_clp": 607970.519919,
           "n_canceladas": 347,
           "n_quiebres": 33,
-          "n_medidos": 10853,
-          "ns_empresa_pct": 0.9570625633465402,
-          "ns_courier_pct": 0.8716483921496361,
-          "otif_total_pct": 0.8333179765963328,
+          "n_medidos": 10854,
+          "ns_empresa_pct": 0.9569743873226461,
+          "ns_courier_pct": 0.8715680854984338,
+          "otif_total_pct": 0.8332412014004054,
           "n_empresa_ok": 10387,
           "n_courier_ok": 9460,
           "n_otif_ok": 9044
@@ -2807,9 +2807,9 @@
         {
           "CURIER": "HOME DELIVERY CORP",
           "n_pedidos": 1412,
-          "ns_courier_pct": 99.5,
-          "ns_empresa_pct": 99.8,
-          "otif_total_pct": 99.4
+          "ns_courier_pct": 99.4,
+          "ns_empresa_pct": 99.7,
+          "otif_total_pct": 99.3
         },
         {
           "CURIER": "COLECTA",
@@ -4401,14 +4401,14 @@
       {
         "MES": "2026-10",
         "n_pedidos": 11276,
-        "n_medidos": 10889,
+        "n_medidos": 10890,
         "emp_ok": 10430,
         "cou_ok": 9499,
         "tot_ok": 9080,
-        "n_med_cou": 10888,
-        "otif_empresa": 0.9578473689043989,
-        "otif_courier": 0.8724283614988979,
-        "otif_total": 0.8338690421526311,
+        "n_med_cou": 10890,
+        "otif_empresa": 0.9577594123048668,
+        "otif_courier": 0.8722681359044996,
+        "otif_total": 0.8337924701561065,
         "otif_empresa_pct": 95.8,
         "otif_courier_pct": 87.2,
         "otif_total_pct": 83.4
@@ -4461,10 +4461,10 @@
       },
       "2026-10": {
         "n_pedidos": 11276,
-        "n_medidos": 10889,
-        "otif_empresa_pct": 0.9578473689043989,
-        "otif_courier_pct": 0.8724283614988979,
-        "otif_total_pct": 0.8339456282145481,
+        "n_medidos": 10890,
+        "otif_empresa_pct": 0.9577594123048668,
+        "otif_courier_pct": 0.8722681359044996,
+        "otif_total_pct": 0.8337924701561065,
         "n_empresa_ok": 10430,
         "n_courier_ok": 9499,
         "n_otif_ok": 9080,
@@ -4579,16 +4579,16 @@
         {
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 1458,
-          "n_medidos": 1381,
+          "n_medidos": 1382,
           "emp_ok": 1379,
           "cou_ok": 1356,
           "tot_ok": 1356,
-          "otif_empresa": 0.998551774076756,
-          "otif_courier": 0.9818971759594497,
-          "otif_total": 0.9818971759594497,
-          "otif_empresa_pct": 99.9,
-          "otif_courier_pct": 98.2,
-          "otif_total_pct": 98.2
+          "otif_empresa": 0.9978292329956585,
+          "otif_courier": 0.9811866859623734,
+          "otif_total": 0.9811866859623734,
+          "otif_empresa_pct": 99.8,
+          "otif_courier_pct": 98.1,
+          "otif_total_pct": 98.1
         },
         {
           "CLIENTE": "KITCHEN",
@@ -8254,13 +8254,13 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.06804222648752399,
-      "total_pickings": 10420,
-      "on_time": 711,
-      "on_time_pct": 0.0682341650671785,
-      "in_full": 10414,
-      "in_full_pct": 0.9994241842610365,
-      "both": 709,
+      "valor": 0.06913198802742107,
+      "total_pickings": 10357,
+      "on_time": 718,
+      "on_time_pct": 0.0693250941392295,
+      "in_full": 10351,
+      "in_full_pct": 0.9994206816645747,
+      "both": 716,
       "error": null
     },
     "b2b_30d": {
@@ -8276,17 +8276,17 @@
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997770676971093,
-      "ok": 13454,
-      "total": 13457,
+      "valor": 0.9997760023893079,
+      "ok": 13390,
+      "total": 13393,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 5.286753998316499,
-      "n_recepciones": 792,
+      "valor": 5.3270854537743855,
+      "n_recepciones": 786,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
