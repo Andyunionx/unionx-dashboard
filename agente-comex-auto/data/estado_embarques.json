@@ -2444,10 +2444,10 @@
       "XRBOLBL-430",
       "XRCOOLPOR45-GR"
     ],
-    "po_id": null,
-    "po_name": null,
+    "po_id": 1924,
+    "po_name": "P00751",
     "ts_creado": "2026-09-30 17:20:11Z",
-    "ts_actualizado": "2026-11-16 21:29:11Z",
+    "ts_actualizado": "2026-11-17 14:37:28Z",
     "log": [
       "2026-09-30 17:20:11Z · PI detectado: 26TP0930PI SZ 40HQ .xlsx · descargado",
       "2026-09-30 17:20:12Z · PL detectado: 26TP0930PI PL.xlsx · descargado",
@@ -2597,7 +2597,8 @@
       "2026-11-15 18:19:05Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
       "2026-11-16 21:29:11Z · costeado · 37 prod · sobrecosto 22.1% · internado 97,634,816 CLP · SKU por crear: 2 · sin SKU: 0",
       "2026-11-16 21:29:11Z · correo ya enviado con estos pendientes → no re-envío",
-      "2026-11-16 21:29:11Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana"
+      "2026-11-16 21:29:11Z · pendientes (2 por crear + 0 sin código) → re-chequea Odoo mañana",
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: OC PARCIAL P00751 (35 líneas, $94.746.067) creada a mano; faltan XRBOLBL-430 (99) y XRCOOLPOR45-GR (1 muestra). OJO leer_pl: TP-S30-C/AC263/TP832 del PL no calzan con el PI → CBM 0 en 3 líneas; CBM corregido a mano en la OC. Correo a Felipe/Seba enviado (1a1e9f0bbe4e85ad)"
     ],
     "productos_sin_sku": [],
     "pendientes_detalle": [
@@ -2614,11 +2615,12 @@
         "desc": "Portable Cooler 45L Gray Xroad"
       }
     ],
-    "correo_firma": "['XRBOLBL-430', 'XRCOOLPOR45-GR']|[]"
+    "correo_firma": "['XRBOLBL-430', 'XRCOOLPOR45-GR']|[]",
+    "po_parcial": true
   },
   "26TP0917": {
     "embarque": "26TP0917",
-    "fase": 1,
+    "fase": 9,
     "pi": {
       "msg_id": "1a110b57dc46b3ba",
       "filename": "26TP0917PI NB 40HQ .xlsx",
@@ -2647,12 +2649,13 @@
     "costeo_path": null,
     "skus": [],
     "skus_faltantes": null,
-    "po_id": null,
-    "po_name": null,
+    "po_id": 1923,
+    "po_name": "P00750",
     "ts_creado": "2026-10-06 17:40:10Z",
-    "ts_actualizado": "2026-10-06 17:40:11Z",
+    "ts_actualizado": "2026-11-17 14:37:28Z",
     "log": [
-      "2026-10-06 17:40:11Z · PI detectado: 26TP0917PI NB 40HQ .xlsx · descargado"
+      "2026-10-06 17:40:11Z · PI detectado: 26TP0917PI NB 40HQ .xlsx · descargado",
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: OC P00750 creada y confirmada a mano (PL de aduana PDF del hilo Seimex; flete final 7.140; CBM 57,926; $69.872.970) → COMPLETADO"
     ]
   },
   "26TP1009": {
@@ -2810,7 +2813,7 @@
   },
   "26TP1024": {
     "embarque": "26TP1024",
-    "fase": 1,
+    "fase": 9,
     "pi": {
       "msg_id": "1a1729a9af6d883f",
       "filename": "26TP1024PI DHL.xlsx",
@@ -2848,17 +2851,18 @@
     "skus": [],
     "skus_faltantes": null,
     "po_id": null,
-    "po_name": null,
+    "po_name": "P00748",
     "ts_creado": "2026-10-25 15:20:06Z",
-    "ts_actualizado": "2026-10-25 15:20:07Z",
+    "ts_actualizado": "2026-11-17 14:37:28Z",
     "log": [
       "2026-10-25 15:20:07Z · PI detectado: 26TP1024PI DHL.xlsx · descargado",
-      "2026-10-25 15:20:07Z · PI detectado: 26TP1024PI IV .xlsx · descargado"
+      "2026-10-25 15:20:07Z · PI detectado: 26TP1024PI IV .xlsx · descargado",
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: muestras DHL ya cargadas por Seba en P00748 (6-nov) → COMPLETADO"
     ]
   },
   "26TP1029": {
     "embarque": "26TP1029",
-    "fase": 2,
+    "fase": 9,
     "pi": {
       "msg_id": "1a1c04b1048d78cc",
       "filename": "26TP1029PI Air .xlsx",
@@ -2911,10 +2915,10 @@
     "costeo_path": null,
     "skus": [],
     "skus_faltantes": null,
-    "po_id": null,
-    "po_name": null,
+    "po_id": 1925,
+    "po_name": "P00752",
     "ts_creado": "2026-10-30 17:31:43Z",
-    "ts_actualizado": "2026-11-16 21:28:24Z",
+    "ts_actualizado": "2026-11-17 14:37:28Z",
     "log": [
       "2026-10-30 17:31:43Z · PL detectado: 26TP1029PI PL.xlsx · descargado",
       "2026-10-30 17:31:44Z · PI detectado: 26TP1029PI HAWB.xlsx · descargado",
@@ -2937,12 +2941,13 @@
       "2026-11-13 19:00:01Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
       "2026-11-14 17:30:31Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
       "2026-11-15 18:18:15Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
-      "2026-11-16 21:28:24Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana"
+      "2026-11-16 21:28:24Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: aéreo DyD (HAWB RAE26110013), nunca en Seimex. OC P00752 LHBOHYCO-BK 3.150 u a $11.644,73 → COMPLETADO"
     ]
   },
   "26TP1030": {
     "embarque": "26TP1030",
-    "fase": 2,
+    "fase": 9,
     "pi": {
       "msg_id": "1a1c04b1048d78cc",
       "filename": "26TP1030PI Air .xlsx",
@@ -2995,10 +3000,10 @@
     "costeo_path": null,
     "skus": [],
     "skus_faltantes": null,
-    "po_id": null,
-    "po_name": null,
+    "po_id": 1926,
+    "po_name": "P00753",
     "ts_creado": "2026-10-30 17:31:43Z",
-    "ts_actualizado": "2026-11-16 21:28:25Z",
+    "ts_actualizado": "2026-11-17 14:37:28Z",
     "log": [
       "2026-10-30 17:31:43Z · PI detectado: 26TP1030PI HAWB.xlsx · descargado",
       "2026-10-30 17:31:43Z · PL detectado: 26TP1030PI PL.xlsx · descargado",
@@ -3021,7 +3026,8 @@
       "2026-11-13 19:00:02Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
       "2026-11-14 17:30:32Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
       "2026-11-15 18:18:16Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
-      "2026-11-16 21:28:25Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana"
+      "2026-11-16 21:28:25Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: aéreo DyD (HAWB RAE26100453), nunca en Seimex. OC P00753 LHBOHYCO-NY 3.150 u a $11.644,73 → COMPLETADO"
     ]
   },
   "26TP1110": {
