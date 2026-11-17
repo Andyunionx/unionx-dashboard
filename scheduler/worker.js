@@ -18,7 +18,10 @@ export default {
   async scheduled(event, env, ctx) {
     const owner = env.GH_OWNER || 'Andyunionx';
     const repo = env.GH_REPO || 'unionx-dashboard';
-    const workflow = env.GH_WORKFLOW || 'cyber_pulso.yml';
+    // Un cron de wrangler.toml = un workflow. El cron que no esté en este mapa dispara el pulso (GH_WORKFLOW).
+    // 10:52 UTC = 07:52 de Chile en horario de verano: vigía de alarmas de Odoo (crons, cola SII, Yuju, negativos).
+    const WORKFLOW_POR_CRON = { '52 10 * * *': 'pulso_alarmas_odoo.yml' };
+    const workflow = WORKFLOW_POR_CRON[event.cron] || env.GH_WORKFLOW || 'cyber_pulso.yml';
     const ref = env.GH_REF || 'main';
 
     const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`;
@@ -37,11 +40,11 @@ export default {
 
     if (!resp.ok) {
       const txt = await resp.text();
-      console.log(`[pulso-scheduler] DISPATCH FALLÓ ${resp.status}: ${txt.slice(0, 300)}`);
+      console.log(`[pulso-scheduler] DISPATCH de ${workflow} FALLÓ ${resp.status}: ${txt.slice(0, 300)}`);
       // 422 suele ser ref/branch inválido; 401/403 token; 404 repo/workflow.
       throw new Error(`dispatch ${resp.status}`);
     }
-    console.log(`[pulso-scheduler] pulso disparado OK @ ${new Date().toISOString()} (cron ${event.cron})`);
+    console.log(`[pulso-scheduler] ${workflow} disparado OK @ ${new Date().toISOString()} (cron ${event.cron})`);
   },
 
   // Endpoint manual opcional: GET /trigger?k=<TRIGGER_KEY> dispara el pulso.

@@ -19,16 +19,54 @@ Chequeos:
      ADVERTENCIA si la config o el módulo cambiaron en 24 h (quién y qué), o si hay
      endpoints raros (≠1 activo de stock, o id_shop=0).
 
+  8. STOCK NEGATIVO (rediseño aprobado por Andrés el 15-nov-2026). Del 10 al 15-nov la crítica salió igual todos
+     los días (14 a 16 casos en CA1/Output que vienen desde septiembre) y dejó de leerse. Ahora:
+     CRÍTICO solo si hay negativos NUEVOS o que EMPEORARON en Entrada/Salida desde la corrida anterior, con el
+     picking y el usuario que los generó. El acumulado pasa a ADVERTENCIA con su tendencia.
+     El módulo madkting avisa solo si CAMBIA de versión (antes avisaba por cualquier reinstalación).
+
+Estado entre corridas: VIGIA_ESTADO (por defecto .estado_vigia/estado.json; en CI lo conserva actions/cache).
+Guarda las cantidades negativas y la versión de madkting de la corrida anterior. Sin estado previo, "nuevo" =
+quant negativo modificado en las últimas VENTANA_NEG_H horas, y madkting no avisa.
+
 Envío: Gmail API (token agente-comex local o GMAIL_TOKEN_JSON en CI).
-Destinatario: andres@unionx.cl (edición inicial; ampliar destinatarios con OK).
+Destinatarios: el pulso completo va a ALARMAS_EMAIL_TO (por defecto solo andres@unionx.cl). Si hay negativos
+nuevos en Entrada/Salida sale además un correo corto, solo con esos casos, a NEGATIVOS_EMAIL_TO (por defecto
+gerardo@unionx.cl, con copia a Andrés; aprobado el 15-nov). NEGATIVOS_EMAIL_TO vacío lo desactiva.
 """
 import sys, json, os, time, base64, datetime
+from html import escape
 from pathlib import Path
 import xmlrpc.client
 
 sys.stdout.reconfigure(encoding='utf-8')
 ROOT = Path(__file__).parent
 HOY = datetime.datetime.utcnow()
+
+# Hora de Chile real (antes se restaban 4 h fijas; con horario de verano son 3).
+try:
+    from zoneinfo import ZoneInfo
+    _TZ_CL = ZoneInfo("America/Santiago")
+except Exception:  # sin base de zonas horarias (Windows sin tzdata): horario de verano
+    _TZ_CL = datetime.timezone(datetime.timedelta(hours=-3))
+
+
+def hora_chile(dt_utc=None):
+    """Datetime naive en UTC → hora de Chile."""
+    return (dt_utc or HOY).replace(tzinfo=datetime.timezone.utc).astimezone(_TZ_CL)
+
+
+# Estado entre corridas (negativos y versión de madkting de la corrida anterior).
+ESTADO_PATH = Path(os.environ.get("VIGIA_ESTADO") or (ROOT / ".estado_vigia" / "estado.json"))
+try:
+    estado_prev = json.loads(ESTADO_PATH.read_text(encoding="utf-8"))
+    if not isinstance(estado_prev, dict):
+        estado_prev = {}
+except Exception:
+    estado_prev = {}
+estado_nuevo = {"corrida_utc": HOY.strftime("%Y-%m-%d %H:%M:%S")}
+VENTANA_NEG_H = 30          # sin estado previo: 24 h + margen por el atraso del gatillo
+MAX_ORIGEN_NEG = 15         # a cuántos negativos nuevos se les busca picking y usuario
 
 # ---- Odoo ----
 cfg = json.load(open(ROOT / "odoo/odoo_config.json"))["produccion"]
@@ -140,33 +178,104 @@ if n_obj > UMBRAL_OBJETADOS:
     advertencias.append(f"DTEs aceptados con reparos últimas 48 h: {n_obj} (umbral {UMBRAL_OBJETADOS}).")
 
 # 6) stock NEGATIVO en ubicaciones internas (firma de recepciones/correcciones a medias:
-#    casos cajas Vinoteca, decantador -599, Celiv 07-sep). Input/Output = crítico
-#    (físicamente imposible); resto = advertencia si es material.
+#    casos cajas Vinoteca, decantador -599, Celiv 07-sep).
+#    Rediseño 15-nov-2026: CRÍTICO solo lo NUEVO o lo que EMPEORÓ en Entrada/Salida desde la corrida anterior,
+#    con el picking y el usuario que lo generó. El acumulado es ADVERTENCIA con tendencia.
+neg_nuevos = []                                   # también alimenta el correo a bodega
+ref_prev = estado_prev.get("corrida_utc") if isinstance(estado_prev.get("negativos"), dict) else None
+
+
+def _es_io(loc):
+    return any(x in loc for x in ("/Input", "/Output", "/Entrada", "/Salida"))
+
+
+def _tendencia(ahora, antes):
+    if antes is None:
+        return "sin corrida anterior para comparar"
+    d = ahora - antes
+    return "igual que la corrida anterior" if d == 0 else f"{d:+d} vs la corrida anterior ({antes})"
+
+
+def _origen_negativo(pid, loc_id, desde):
+    """Último movimiento hecho que sacó ese producto de esa ubicación: (picking, usuario, fecha Chile)."""
+    campos = ["date", "reference", "picking_id", "location_id", "write_uid", "create_uid"]
+    for dom_loc in ([("location_id", "=", loc_id)],
+                    ["|", ("location_id", "=", loc_id), ("location_dest_id", "=", loc_id)]):
+        ml = rpc("stock.move.line", "search_read",
+                 [[("product_id", "=", pid), ("state", "=", "done"), ("date", ">=", desde)] + dom_loc],
+                 {"fields": campos, "order": "date desc", "limit": 1})
+        if ml:
+            m = ml[0]
+            pick = (m["picking_id"][1] if m.get("picking_id") else None) or m.get("reference") or "sin picking"
+            quien = (m.get("write_uid") or m.get("create_uid") or [0, "?"])[1]
+            cuando = hora_chile(datetime.datetime.fromisoformat(m["date"])).strftime("%d-%m %H:%M")
+            return pick, quien, cuando
+    return "sin movimiento en la ventana", "?", ""
+
+
 try:
     negs = rpc("stock.quant", "search_read",
                [[("location_id.usage", "=", "internal"), ("quantity", "<", 0)]],
-               {"fields": ["product_id", "location_id", "quantity"], "limit": 500})
-    if negs:
-        prods = list({q["product_id"][0] for q in negs if q["product_id"]})
-        std = {}
-        for i in range(0, len(prods), 300):
-            for p in rpc("product.product", "read", [prods[i:i+300]],
-                         {"fields": ["standard_price"], "context": {"active_test": False}}):
-                std[p["id"]] = p["standard_price"] or 0
-        io_negs, otros_val = [], 0.0
-        for q in negs:
-            loc = q["location_id"][1]
-            val = abs(q["quantity"]) * std.get(q["product_id"][0] if q["product_id"] else 0, 0)
-            if any(x in loc for x in ("/Input", "/Output", "/Entrada", "/Salida")):
-                io_negs.append((q["product_id"][1][:40] if q["product_id"] else "?", loc, q["quantity"], val))
-            else:
-                otros_val += val
-        if io_negs:
-            top = sorted(io_negs, key=lambda x: -x[3])[:8]
-            det = "; ".join(f"{n} en {l} ({c:g}u ~${v:,.0f})" for n, l, c, v in top)
-            criticas.append(f"STOCK NEGATIVO EN ZONA ENTRADA/SALIDA ({len(io_negs)} casos — recepción o corrección a medias): {det}")
-        if otros_val > 500000:
-            advertencias.append(f"Stock negativo en bodegas internas: {len(negs)-len(io_negs)} quants por ~${otros_val:,.0f} a costo (revisar ajustes pendientes).")
+               {"fields": ["product_id", "location_id", "quantity", "write_date"], "limit": 1000})
+    prev_q = estado_prev.get("negativos") if ref_prev else {}
+    estado_nuevo["negativos"] = {}
+    std = {}
+    prods = list({q["product_id"][0] for q in negs if q["product_id"]})
+    for i in range(0, len(prods), 300):
+        for p in rpc("product.product", "read", [prods[i:i+300]],
+                     {"fields": ["standard_price"], "context": {"active_test": False}}):
+            std[p["id"]] = p["standard_price"] or 0
+    io_n, io_val, otros_n, otros_val = 0, 0.0, 0, 0.0
+    for q in negs:
+        pid = q["product_id"][0] if q["product_id"] else 0
+        loc_id, loc = q["location_id"][0], q["location_id"][1]
+        clave = f"{pid}|{loc_id}"
+        estado_nuevo["negativos"][clave] = q["quantity"]
+        val = abs(q["quantity"]) * std.get(pid, 0)
+        if not _es_io(loc):
+            otros_n += 1
+            otros_val += val
+            continue
+        io_n += 1
+        io_val += val
+        antes = prev_q.get(clave)
+        if ref_prev:                                   # con estado: nuevo o más negativo que la corrida anterior
+            es_nuevo = antes is None or q["quantity"] < antes - 1e-9
+        else:                                          # sin estado: modificado dentro de la ventana
+            e_q = edad(q["write_date"])
+            es_nuevo = e_q is not None and e_q <= VENTANA_NEG_H * 3600
+        if es_nuevo:
+            neg_nuevos.append({"pid": pid, "loc_id": loc_id, "producto": q["product_id"][1] if q["product_id"] else "?",
+                               "ubicacion": loc, "cantidad": q["quantity"], "antes": antes, "valor": val})
+    estado_nuevo["resumen_neg"] = {"io_n": io_n, "io_val": round(io_val), "otros_n": otros_n, "otros_val": round(otros_val)}
+    rprev = estado_prev.get("resumen_neg") if ref_prev else None
+    if neg_nuevos:
+        desde_dt = (datetime.datetime.fromisoformat(ref_prev) - datetime.timedelta(hours=1)) if ref_prev \
+            else HOY - datetime.timedelta(hours=VENTANA_NEG_H)
+        desde = desde_dt.strftime("%Y-%m-%d %H:%M:%S")
+        neg_nuevos.sort(key=lambda x: -x["valor"])
+        for x in neg_nuevos[:MAX_ORIGEN_NEG]:
+            try:
+                x["picking"], x["usuario"], x["cuando"] = _origen_negativo(x["pid"], x["loc_id"], desde)
+            except Exception as e:  # noqa: BLE001
+                x["picking"], x["usuario"], x["cuando"] = f"no se pudo leer ({str(e)[:40]})", "?", ""
+        ref_txt = (f"desde la corrida anterior ({hora_chile(datetime.datetime.fromisoformat(ref_prev)):%d-%m %H:%M})"
+                   if ref_prev else f"en las últimas {VENTANA_NEG_H} h")
+        det = "; ".join(
+            f"{x['producto'][:40]} en {x['ubicacion']}: {x['cantidad']:g} u"
+            + (f" (antes {x['antes']:g})" if x["antes"] is not None else " (nuevo)")
+            + (f" · {x['picking']} · {x['usuario']}" + (f" · {x['cuando']}" if x.get("cuando") else "")
+               if x.get("picking") else "")
+            for x in neg_nuevos[:8])
+        criticas.append(f"STOCK NEGATIVO NUEVO EN ENTRADA/SALIDA: {len(neg_nuevos)} caso(s) {ref_txt} "
+                        f"(recepción o corrección a medias) → {det}" + (" …" if len(neg_nuevos) > 8 else ""))
+    if io_n:
+        advertencias.append(f"Negativos acumulados en Entrada/Salida: {io_n} casos por ~${io_val:,.0f} a costo "
+                            f"({_tendencia(io_n, rprev.get('io_n') if rprev else None)}). No son de hoy: se resuelven "
+                            f"con la limpieza previa al inventario.")
+    if otros_val > 500000:
+        advertencias.append(f"Stock negativo en bodegas internas: {otros_n} quants por ~${otros_val:,.0f} a costo "
+                            f"({_tendencia(otros_n, rprev.get('otros_n') if rprev else None)}; revisar ajustes pendientes).")
 except Exception as e:
     advertencias.append(f"Chequeo de negativos falló: {str(e)[:80]}")
 
@@ -230,16 +339,21 @@ try:
     # versión / reinstalación del módulo
     mod = rpc("ir.module.module", "search_read", [[("name", "=", "madkting")]],
               {"fields": ["installed_version", "state", "write_date"]})
-    if mod and edad(mod[0]["write_date"]) is not None and edad(mod[0]["write_date"]) < 86400:
-        advertencias.append(f"YUJU: el módulo madkting fue actualizado/reinstalado {fmt_edad(edad(mod[0]['write_date']))} "
-                            f"(versión {mod[0]['installed_version']}, estado {mod[0]['state']}). Un upgrade puede recrear la "
-                            f"config con valores por defecto (flag de stock en False) o crear endpoints fantasma: revisar hoy.")
+    # Solo si CAMBIA la versión instalada (antes avisaba por write_date: cada rebuild de Odoo.sh lo "reinstalaba"
+    # con la misma versión 2.8.6 y la advertencia salía sin que hubiera cambiado nada).
+    if mod:
+        ver, ver_prev = mod[0]["installed_version"], estado_prev.get("madkting_version")
+        estado_nuevo["madkting_version"] = ver
+        if ver_prev and ver and ver != ver_prev:
+            advertencias.append(f"YUJU: el módulo madkting CAMBIÓ DE VERSIÓN: {ver_prev} → {ver} (estado {mod[0]['state']}, "
+                                f"modificado {fmt_edad(edad(mod[0]['write_date']))}). Un upgrade puede recrear la config con "
+                                f"valores por defecto (flag de stock en False) o crear endpoints fantasma: revisar hoy.")
 except Exception as e:
     advertencias.append(f"Chequeo Yuju falló: {str(e)[:100]}")
 
 # ---- armar correo ----
 estado_gral = "🔴" if criticas else ("🟡" if advertencias else "✅")
-fecha = (HOY - datetime.timedelta(hours=4)).strftime("%d-%m-%Y %H:%M")  # CLT
+fecha = hora_chile().strftime("%d-%m-%Y %H:%M")  # hora de Chile (zona America/Santiago)
 filas = "".join(
     f"<tr><td style='padding:4px 8px'>{cid}</td><td style='padding:4px 8px'>{nom}</td>"
     f"<td style='padding:4px 8px'>{desc}</td>"
@@ -255,7 +369,7 @@ def bloque(titulo, items, color):
             f"<b>{titulo}</b><ul style='margin:6px 0 0;padding-left:18px'>{lis}</ul></div>")
 
 html = f"""<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#1e293b;max-width:860px'>
-<h2 style='margin:0 0 4px'>{estado_gral} Pulso Alarmas Odoo · {fecha} CLT</h2>
+<h2 style='margin:0 0 4px'>{estado_gral} Pulso Alarmas Odoo · {fecha} (hora de Chile)</h2>
 <p style='margin:0 0 14px;color:#64748b'>Salud de crons, cola DTE y Yuju · {len(crons)} crons ({sum(1 for c in crons if c['active'])} activos) · cola SII: {n_pend:,} sin enviar · rechazados 48h: {n_rej} · reparos 48h: {n_obj}<br>{yuju_resumen}</p>
 {bloque('🔴 CRÍTICAS — requieren acción hoy', criticas, '#fee2e2')}
 {bloque('🟡 Advertencias', advertencias, '#fef9c3')}
@@ -269,6 +383,26 @@ html = f"""<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;colo
 print(f"[{estado_gral}] críticas: {len(criticas)} | advertencias: {len(advertencias)} | cola SII: {n_pend} | {yuju_resumen}")
 for x in criticas: print("  CRIT:", x)
 for x in advertencias: print("  ADV :", x)
+
+for x in neg_nuevos:
+    print(f"  NEG NUEVO: {x['producto'][:40]} | {x['ubicacion']} | {x['cantidad']:g} (antes {x['antes']}) | "
+          f"{x.get('picking', '-')} | {x.get('usuario', '-')} | {x.get('cuando', '')}")
+
+# El estado se guarda siempre que la corrida llegó hasta aquí (también con --no-enviar): es la referencia de mañana.
+if "--sin-estado" not in sys.argv:
+    try:
+        if "negativos" not in estado_nuevo and isinstance(estado_prev.get("negativos"), dict):
+            for k in ("negativos", "resumen_neg"):          # el chequeo falló hoy: se conserva la referencia anterior
+                if k in estado_prev:
+                    estado_nuevo[k] = estado_prev[k]
+        if "madkting_version" not in estado_nuevo and estado_prev.get("madkting_version"):
+            estado_nuevo["madkting_version"] = estado_prev["madkting_version"]
+        ESTADO_PATH.parent.mkdir(parents=True, exist_ok=True)
+        ESTADO_PATH.write_text(json.dumps(estado_nuevo, ensure_ascii=False), encoding="utf-8")
+        print(f"(estado guardado: {len(estado_nuevo.get('negativos', {}))} negativos, madkting "
+              f"{estado_nuevo.get('madkting_version', 's/d')}; referencia anterior: {ref_prev or 'ninguna'})")
+    except Exception as e:  # noqa: BLE001
+        print(f"(no se pudo guardar el estado: {str(e)[:80]})")
 
 if "--no-enviar" in sys.argv:
     print("(--no-enviar: no se manda correo)")
@@ -289,11 +423,41 @@ if not creds.valid:
     creds.refresh(Request())
 svc = build("gmail", "v1", credentials=creds)
 msg = EmailMessage()
-msg["To"] = os.environ.get("ALARMAS_EMAIL_TO", "andres@unionx.cl, gerardo@unionx.cl, operaciones@unionx.cl")
+msg["To"] = os.environ.get("ALARMAS_EMAIL_TO") or "andres@unionx.cl"
 msg["From"] = "andres@unionx.cl"
-msg["Subject"] = f"{estado_gral} Pulso Alarmas Odoo · {(HOY - datetime.timedelta(hours=4)).strftime('%d-%b')} · {len(criticas)} críticas"
+msg["Subject"] = f"{estado_gral} Pulso Alarmas Odoo · {hora_chile().strftime('%d-%b')} · {len(criticas)} críticas"
 msg.set_content("Pulso Alarmas Odoo (ver versión HTML).")
 msg.add_alternative(html, subtype="html")
 raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
 r = svc.users().messages().send(userId="me", body={"raw": raw}).execute()
 print(f"Enviado: {r['id']}")
+
+# Correo corto a bodega: SOLO los negativos nuevos en Entrada/Salida (aprobado por Andrés el 15-nov-2026).
+neg_to = os.environ.get("NEGATIVOS_EMAIL_TO", "gerardo@unionx.cl").strip()
+if neg_nuevos and neg_to:
+    td = "padding:4px 8px;border-bottom:1px solid #e2e8f0"
+    filas_n = "".join(
+        f"<tr><td style='{td}'>{escape(x['producto'][:60])}</td><td style='{td}'>{escape(x['ubicacion'])}</td>"
+        f"<td style='{td};text-align:right'>{x['cantidad']:g}</td>"
+        f"<td style='{td};text-align:right'>{'nuevo' if x['antes'] is None else format(x['antes'], 'g')}</td>"
+        f"<td style='{td}'>{escape(str(x.get('picking', '')))}</td><td style='{td}'>{escape(str(x.get('usuario', '')))}</td>"
+        f"<td style='{td}'>{escape(str(x.get('cuando', '')))}</td></tr>" for x in neg_nuevos[:40])
+    html_n = f"""<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#1e293b;max-width:860px'>
+<p style='margin:0 0 10px'><b>{len(neg_nuevos)} caso(s) de stock negativo nuevo en zona de Entrada/Salida</b> detectados el
+{fecha} (hora de Chile). Un negativo ahí significa que salió o se corrigió algo que el sistema no tenía: recepción
+sin validar, picking validado antes de la entrada o corrección a medias. Revisar el picking indicado.</p>
+<table cellspacing='0' style='border-collapse:collapse;font-size:13px'>
+<tr style='background:#f1f5f9;font-weight:600'><td style='padding:4px 8px'>Producto</td><td style='padding:4px 8px'>Ubicación</td>
+<td style='padding:4px 8px'>Cantidad</td><td style='padding:4px 8px'>Antes</td><td style='padding:4px 8px'>Picking</td>
+<td style='padding:4px 8px'>Usuario</td><td style='padding:4px 8px'>Movimiento</td></tr>{filas_n}</table>
+<p style='margin:12px 0 0;color:#94a3b8;font-size:12px'>Aviso automático del Pulso Alarmas Odoo. Solo incluye casos nuevos o que
+empeoraron desde la corrida anterior; el acumulado histórico se trata aparte.</p></div>"""
+    m2 = EmailMessage()
+    m2["To"] = neg_to
+    m2["Cc"] = "andres@unionx.cl"
+    m2["From"] = "andres@unionx.cl"
+    m2["Subject"] = f"🔴 Stock negativo nuevo en Entrada/Salida · {hora_chile().strftime('%d-%m')} · {len(neg_nuevos)} caso(s)"
+    m2.set_content("Stock negativo nuevo en Entrada/Salida (ver versión HTML).")
+    m2.add_alternative(html_n, subtype="html")
+    r2 = svc.users().messages().send(userId="me", body={"raw": base64.urlsafe_b64encode(m2.as_bytes()).decode()}).execute()
+    print(f"Enviado a bodega ({neg_to}): {r2['id']}")

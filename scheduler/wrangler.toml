@@ -12,7 +12,9 @@ compatibility_date = "2026-06-03"
 # activo. Recomendado: deshabilitar el cron del workflow YAML y dejar SOLO
 # este Worker como trigger.
 [triggers]
-crons = ["30 11 * * 1-5"]
+# Segundo cron (rediseño del vigía, 15-nov-2026): 10:52 UTC = 07:52 de Chile en horario de verano, todos los
+# días. worker.js lo mapea a pulso_alarmas_odoo.yml. El texto del cron debe ser IDÉNTICO al de WORKFLOW_POR_CRON.
+crons = ["30 11 * * 1-5", "52 10 * * *"]
 
 # Variables NO secretas (el token va por `wrangler secret put GH_TOKEN`).
 [vars]

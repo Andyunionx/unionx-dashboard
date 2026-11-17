@@ -2,29 +2,70 @@ name: Pulso Alarmas Odoo
 
 on:
   schedule:
-    # Gatillo propio repuesto el 10-nov-2026. El 20-ago se movio al pulso diario
-    # (email_diario.yml) y el 8-sep ese paso se borro: el vigia quedo sin gatillo
-    # y con 0 corridas. Vuelve a su cron original, independiente del pulso.
-    # 10:52 UTC = 07:52 de Chile en horario de verano; GitHub puede atrasarlo.
+    # RESPALDO. El gatillo principal es el Worker de Cloudflare (scheduler/worker.js), que dispara este workflow
+    # a las 10:52 UTC = 07:52 de Chile en horario de verano. GitHub atrasa sus crons 6 a 7 horas en este repo, así
+    # que este cron llega después: si el Worker ya corrió hoy con éxito, el paso "ya corrió hoy" lo salta.
+    # Historia: el 20-ago se movió al pulso diario, el 8-sep ese paso se borró (0 corridas) y el 10-nov-2026 se
+    # repuso el gatillo propio.
     - cron: '52 10 * * *'
   workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pulso-alarmas-odoo
+  cancel-in-progress: false
 
 jobs:
   pulso-alarmas:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Ya corrió hoy (solo para el cron de respaldo)
+        id: hoy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENTO: ${{ github.event_name }}
+        run: |
+          n=0
+          if [ "$EVENTO" = "schedule" ]; then
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow pulso_alarmas_odoo.yml --status success \
+                 --created "$(date -u +%Y-%m-%d)" --json databaseId -q 'length' || echo 0)
+          fi
+          echo "previas=${n:-0}" >> "$GITHUB_OUTPUT"
+          echo "Corridas exitosas de hoy (UTC): ${n:-0} · evento: $EVENTO"
       - uses: actions/checkout@v4
+        if: steps.hoy.outputs.previas == '0'
       - uses: actions/setup-python@v5
+        if: steps.hoy.outputs.previas == '0'
         with:
           python-version: '3.12'
       - name: Instalar dependencias
+        if: steps.hoy.outputs.previas == '0'
         run: pip install --quiet google-api-python-client google-auth google-auth-oauthlib
+      # Estado de la corrida anterior (negativos y versión de madkting): permite decir qué es NUEVO y la tendencia.
+      - name: Recuperar el estado de la corrida anterior
+        if: steps.hoy.outputs.previas == '0'
+        uses: actions/cache/restore@v4
+        with:
+          path: .estado_vigia
+          key: vigia-estado-${{ github.run_id }}
+          restore-keys: vigia-estado-
       - name: Correr pulso
+        if: steps.hoy.outputs.previas == '0'
         env:
           ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
           GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
-          # Solo Andres hasta que el amplie destinatarios (el default del script
-          # incluye a terceros).
+          # El pulso completo va solo a Andrés hasta que él amplíe destinatarios.
           ALARMAS_EMAIL_TO: andres@unionx.cl
+          # Correo corto, solo con los negativos NUEVOS de Entrada/Salida (aprobado por Andrés el 15-nov-2026).
+          NEGATIVOS_EMAIL_TO: gerardo@unionx.cl
         run: python pulso_alarmas_odoo.py
+      - name: Guardar el estado para la próxima corrida
+        if: steps.hoy.outputs.previas == '0' && success()
+        uses: actions/cache/save@v4
+        with:
+          path: .estado_vigia
+          key: vigia-estado-${{ github.run_id }}
