@@ -14,7 +14,8 @@ Venta
   - Marketplace, Fidelización, Páginas Web y canal UnionX B2B: curva del año anterior alineada
     por día de semana (−364 días: Cyber y Black Friday calzan; backtest ene-sep 2026: error medio
     12% al día 4 → 3% al día 10). Las operaciones puntuales ≥ $5M no se extrapolan: van tal cual.
-  - Distribución y Corporativo: se asume que cumplen el FCST (o lo real, si ya lo supera).
+  - Distribución y Corporativo: lo facturado a la fecha más lo respaldado (cierre_mes_ajustes.json →
+    b2b_respaldado); lo que falta para el FCST se informa aparte, no se da por cumplido (Andrés 18-nov-2026).
 
 Margen
   - Margen directo (venta − costo): real a la fecha + resto del mes al % del flujo normal.
@@ -226,12 +227,18 @@ def _contrib_seguimiento(anio: int, mes: int, incluir_mes: bool = False) -> dict
         if cache.exists():
             datos = json.loads(cache.read_text(encoding="utf-8")).get("meses", {})
     # último mes cerrado anterior al mes en curso (o el propio mes, en el cierre)
+    hallados = []
     for m_ in range(mes if incluir_mes else mes - 1, 0, -1):
         d = datos.get(str(m_))
         if d:
-            return {"mes": f"{MESES[m_ - 1]}-{str(anio)[2:]}", "num": m_,
-                    "pct": {k: x["contri"] / x["venta"] for k, x in d.items() if x["venta"]}}
-    return {"mes": "—", "num": None, "pct": {}}
+            hallados.append({"mes": f"{MESES[m_ - 1]}-{str(anio)[2:]}", "num": m_,
+                             "pct": {k: x["contri"] / x["venta"] for k, x in d.items() if x["venta"]}})
+            if len(hallados) == 2:
+                break
+    if hallados:
+        # "prev" = el mes cerrado anterior al mes base: sirve para decir cuánto mueve el cambio de base
+        return {**hallados[0], "prev": hallados[1] if len(hallados) > 1 else None}
+    return {"mes": "—", "num": None, "pct": {}, "prev": None}
 
 
 def _estacionalidad_margen(hist: pd.DataFrame, anio: int, mes: int, mes_base: int | None) -> dict:
@@ -267,6 +274,24 @@ def _fcst_gasto_mes(anio: int, mes: int) -> dict:
     g = pd.read_parquet(path)
     g = g[(g.year == anio) & (g.month == mes)].set_index("centro_costo").valor / 1e6
     return {"GAV": float(g.get("GAV", 0.0)), "DA": float(g.get("DEPRECIACIÓN", 0.0))}
+
+
+def _planilla_meta() -> dict:
+    """Versión de la planilla de finanzas que alimentó los parquets de esta corrida (la deja
+    bajar_planilla_finanzas.py). El 17 y 18-nov-2026 el dashboard salió con una planilla anterior a
+    los cambios de Andrés: Drive no sube el archivo mientras Excel lo tiene abierto."""
+    path = ROOT / "data/planillas/planilla_finanzas_meta.json"
+    en_ci = bool(os.environ.get("GITHUB_ACTIONS"))
+    if not path.exists():
+        return {"modificada": None, "dias": None, "en_ci": en_ci}
+    try:
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        mod = datetime.fromisoformat(json.loads(path.read_text(encoding="utf-8"))["modificada"].replace("Z", "+00:00"))
+        mod = mod.astimezone(ZoneInfo("America/Santiago"))
+        return {"modificada": mod, "dias": (datetime.now(ZoneInfo("America/Santiago")) - mod).days, "en_ci": en_ci}
+    except Exception:
+        return {"modificada": None, "dias": None, "en_ci": en_ci}
 
 
 def _ajustes() -> dict:
@@ -371,6 +396,7 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     # operaciones puntuales grandes: se aíslan con su margen propio (override caso a caso)
     aj = _ajustes()
     overrides = {o["documento"]: o for o in aj.get("margen_override", [])}
+    respaldo = (aj.get("b2b_respaldado") or {}).get(f"{anio}-{mes:02d}", {})
     docs = (cur[cur["documento"].fillna("").str.strip() != ""]
             .groupby(["documento", "canal", "linea", "tn"])
             .agg(v=("venta_neta", "sum"), c=("costo_total", "sum")).reset_index())
@@ -421,12 +447,19 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         rec_norm = rec_acum - punt_rec
         f_lin = fcst.get(lin, {"venta": 0.0, "contribucion": 0.0})
         p_lin = ppto.get(lin, {"venta": 0.0, "contribucion": 0.0})
+        sin_resp = 0.0
         if cerrado:
             proy, regla = acum, "real (mes cerrado)"
         elif lin in ("Distribución", "Corporativo"):
+            # Andrés 18-nov-2026: no se da el FCST por cumplido. Va lo facturado más lo que tenga
+            # respaldo (orden de compra o factura comprometida, cargado a mano en cierre_mes_ajustes.json
+            # → b2b_respaldado → "AAAA-MM" → línea, en MM). Lo que falta para el FCST se informa aparte.
             base = no_rec + punt_rec + rec_norm / share
-            proy = max(base, f_lin["venta"])
-            regla = "FCST (se asume cumplido)" if f_lin["venta"] > base else "real (ya supera el FCST)"
+            resp = max(float(respaldo.get(lin, 0.0) or 0.0), 0.0)
+            proy = base + resp
+            sin_resp = max(f_lin["venta"] - proy, 0.0)
+            regla = ("facturado" + (" + curva del canal UnionX B2B" if rec_norm > 0 and share < 1 else "")
+                     + (" + respaldado" if resp else "")) if sin_resp > 0 else "real (ya supera el FCST)"
         elif lin == "Otros":
             proy, regla = acum, "real"
         else:
@@ -465,6 +498,7 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
                        "meta_venta": f_lin["venta"], "meta_mc": f_lin["contribucion"] * factor_cont,
                        "fcst_venta": f_lin["venta"], "ppto_venta": p_lin["venta"],
                        "base_pct": bp, "mc_senal": mc_senal, "puntual_venta": punt_v, "puntual_mc": punt_mc,
+                       "normal_proy": normal_proy, "sin_respaldo": sin_resp,
                        "mc_proy": mc_proy_l, "mc_acum": mc_acum_l,
                        "mc_pct": mc_proy_l / proy if proy else 0.0})
 
@@ -478,6 +512,18 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
     # proyección del gasto = resultado vigente del Fcst EERR (GAV y depreciación del mes)
     gav_proy, da_proy = fe["GAV"], fe["DA"]
     ebitda_proy = mc_proy - gav_proy + da_proy
+    # (2) lo que falta para que Distribución y Corporativo cumplan el FCST, y el EBITDA si lo cumplen
+    b2b_falta = [(l["linea"], l["sin_respaldo"]) for l in lineas if l["sin_respaldo"] >= 0.05]
+    ebitda_si_fcst = ebitda_proy + sum(l["sin_respaldo"] * (l["base_pct"] - INSUMOS_PCT) for l in lineas)
+    # (3) el mismo cierre con el mes base anterior del margen (el salto del 16 al 17-nov-2026 fue ese cambio)
+    prev = seg.get("prev")
+    ebitda_base_prev = None
+    if prev and not cerrado:
+        est_prev = _estacionalidad_margen(hist, anio, mes, prev["num"])
+        mc_prev_base = sum(
+            l["normal_proy"] * ((prev["pct"][l["linea"]] + est_prev.get(l["linea"], 0.0)) if l["linea"] in prev["pct"] else l["base_pct"])
+            + l["puntual_mc"] - INSUMOS_PCT * l["proy"] for l in lineas)
+        ebitda_base_prev = mc_prev_base - gav_proy + da_proy
     md_proy = sum(l["md_proy"] for l in lineas)
     md_acum = sum(l["md_acum"] for l in lineas)
     fcst_venta, fcst_mc = fe["Venta"], fe["Contribución"]
@@ -525,6 +571,8 @@ def proyectar_cierre(hoy: date | None = None) -> dict:
         "md_prev_pct": (fe_prev["MD"] / fe_prev["Venta"]) if fe_prev["Venta"] else None,
         "mc_prev_pct": (fe_prev["Contribución"] / fe_prev["Venta"]) if fe_prev["Venta"] else None,
         "seguimiento": seg, "estacionalidad": est,
+        "b2b_falta": b2b_falta, "ebitda_si_fcst": ebitda_si_fcst, "respaldo": respaldo,
+        "ebitda_base_prev": ebitda_base_prev, "planilla": _planilla_meta(),
         "meta": meta, "fcst": {"Venta": fcst_venta, "Contribución": fcst_mc}, "ppto": ppto_mes,
         "da": da_proy, "operaciones": operaciones, "factor_cont": factor_cont,
         "pct_venta": venta_proy / meta["Venta"] if meta["Venta"] else None,

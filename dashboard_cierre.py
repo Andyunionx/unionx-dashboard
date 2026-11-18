@@ -333,9 +333,7 @@ def render(D) -> str:
                        f"{p['excluidos'][0]['motivo']}. Cuando entre la factura reemitida hay que excluirla (si no, la venta se duplica).")
     if p["fuente"] != "producción":
         alertas.append(f"Fuente: {p['fuente']} — el dato puede estar desfasado.")
-    asum = [l["linea"] for l in p["lineas"] if l["regla"].startswith("FCST")]
-    if asum:
-        alertas.append(f"Se asume que cumple el FCST: {', '.join(asum)}.")
+    alertas = notas_metodo(p) + alertas
     html_alertas = "".join(f"<li>{a}</li>" for a in alertas)
 
     ahora = datetime.now().strftime("%d-%m-%Y %H:%M")
@@ -439,7 +437,7 @@ footer{{color:var(--mut);font-size:11px;line-height:1.5;margin-top:6px}}
 </div>
 
 <footer>
-<b>Cómo se calcula.</b> Venta: Marketplace, Fidelización, Páginas Web y el canal UnionX B2B se proyectan con la curva del mismo mes del año anterior (backtest ene–ago 2026 al día 21: error medio −1,4%, ±5%); Distribución y Corporativo se asume que cumplen el FCST, salvo que lo real ya lo supere.
+<b>Cómo se calcula.</b> Venta: Marketplace, Fidelización, Páginas Web y el canal UnionX B2B se proyectan con la curva del mismo mes del año anterior (backtest ene–ago 2026 al día 21: error medio −1,4%, ±5%); Distribución y Corporativo van con lo facturado a la fecha más lo respaldado (orden de compra o factura comprometida informada a Finanzas); lo que falta para el FCST se informa aparte y no se da por cumplido.
 Margen directo (venta − costo): real a la fecha del RAW (el costo llega a tiempo) + resto del mes al % del flujo normal. Margen de contribución: el flujo normal de Marketplace, Fidelización y Páginas Web usa el resultado del mes anterior ({p['seguimiento']['mes']}) del Drive de Seguimiento de contribución; Distribución y Corporativo el % del FCST VENTAS; las operaciones puntuales ≥ $5M van con su margen propio (RAW: margen directo − comisión y logística + ajuste contable de {p['calibracion']['mes']}), corregible caso a caso. Al margen de contribución de cada línea se le descuentan los insumos (0,3% de la venta); los medios de pago van en la comisión de venta y los fletes en la logística.
 Comparación: venta, margen directo y de contribución contra el Fcst EERR; GAV contra el FCST GASTO 2026 (la proyección del GAV es el resultado vigente del Fcst EERR); el PPTO queda como referencia. EBITDA = margen − GAV + depreciación (igual que la planilla).
 Fuente de venta: {p['fuente']}. Tendencia y acumulado año: Fcst EERR. Meses de inventario: último balance cargado. Generado {ahora}.
@@ -485,6 +483,37 @@ mk('c_eb',{{xAxis:ax({{type:'category',data:{J(t_lbl)},splitLine:{{show:false}},
   series:[{{name:'EBITDA (MM)',type:'bar',data:{J(t_eb)},barWidth:'55%',itemStyle:{{borderRadius:[3,3,0,0]}}}},
           {{name:'Margen EBITDA %',type:'line',yAxisIndex:1,data:{J(t_mg)},symbol:'circle',symbolSize:5,lineStyle:{{color:'#22C55E',width:2}},itemStyle:{{color:'#22C55E'}}}}]}});
 </script>"""
+
+
+
+def notas_metodo(p: dict) -> list[str]:
+    """Tres avisos que van en el correo y en el dashboard (Andrés 18-nov-2026): qué planilla se usó,
+    qué falta en Distribución y Corporativo para el FCST y con qué mes base se calcula el margen."""
+    notas = []
+    pl = p.get("planilla") or {}
+    if pl.get("modificada"):
+        txt = f"<b>Planilla de finanzas usada:</b> la guardada el {pl['modificada'].strftime('%d-%m a las %H:%M')}."
+        if (pl.get("dias") or 0) >= 3:
+            txt += f" <b style='color:#DC2626'>Tiene {pl['dias']} días: si la cambiaste después, ciérrala en Excel para que suba a Drive.</b>"
+        else:
+            txt += " Si la cambiaste después de esa hora, este correo no lo refleja (Drive no la sube mientras está abierta en Excel)."
+        notas.append(txt)
+    elif pl.get("en_ci"):
+        notas.append("<b style='color:#DC2626'>Planilla de finanzas:</b> no se pudo bajar de Drive; el FCST y el GAV son los de la última versión publicada.")
+    if p.get("b2b_falta") and not p["cerrado"]:
+        det = " · ".join(f"{n} {mm(v)}" for n, v in p["b2b_falta"])
+        notas.append(f"<b>Distribución y Corporativo:</b> van con lo facturado{' más lo respaldado' if sum(float(v or 0) for v in (p.get('respaldo') or {}).values()) > 0 else ''} (el canal UnionX B2B, con su curva), no con el FCST cumplido. "
+                     f"Falta para el FCST: {det}. Si se cumple, el EBITDA sería {mm(p['ebitda_si_fcst'])}.")
+    seg = p.get("seguimiento") or {}
+    m = p["meta"]
+    if seg.get("num") and not p["cerrado"]:
+        fc = (m["Contribución"] / m["Venta"] * 100) if m["Venta"] else 0
+        txt = (f"<b>Margen de contribución:</b> {es(p['mc_pct'] * 100)}% con base en el resultado {seg['mes']} más estacionalidad; "
+               f"el FCST usa {es(fc)}%. Cada punto de margen son {mm(p['venta_proy'] / 100)} de EBITDA.")
+        if p.get("ebitda_base_prev") is not None and seg.get("prev"):
+            txt += f" Con la base anterior ({seg['prev']['mes']}) el EBITDA sería {mm(p['ebitda_base_prev'])}."
+        notas.append(txt)
+    return notas
 
 
 def cuerpo_mail(p: dict) -> str:
@@ -545,6 +574,7 @@ def cuerpo_mail(p: dict) -> str:
 <table style="border-collapse:collapse;font-size:13px;margin-top:10px">
 <tr style="color:#64748B;font-size:11px"><td></td><td style="text-align:right;padding:2px 8px">{col_proy}</td><td style="text-align:right;padding:2px 8px">FCST</td><td style="text-align:right;padding:2px 8px">Diferencia</td></tr>
 {kpis}</table>
+{''.join(f'<p style="font-size:12.5px;margin:8px 0 0;color:#334155">{n}</p>' for n in notas_metodo(p))}
 <h3 style="font-size:14px;margin:16px 0 4px;color:#1F3864">Venta por línea de negocio</h3>
 <table style="border-collapse:collapse;font-size:13px">
 <tr style="color:#64748B;font-size:11px"><td></td>{'' if cerr else '<td style="text-align:right;padding:2px 8px">Real</td>'}<td style="text-align:right;padding:2px 8px">{col_proy}</td><td style="text-align:right;padding:2px 8px">FCST</td><td style="text-align:right;padding:2px 8px">vs FCST</td></tr>
