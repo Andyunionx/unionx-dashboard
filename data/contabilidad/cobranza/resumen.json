@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-11-18T14:44:02.020403",
+  "generado_en": "2026-11-18T23:41:00.446581",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12519,
-  "total_monto_pendiente_clp": 755272039.0,
+  "total_documentos_pendientes": 12610,
+  "total_monto_pendiente_clp": 760330343.0,
   "monto_por_aging": {
     "+90 días": 95040003.0,
-    "1-30 días": 334368006.0,
-    "31-60 días": 164736458.0,
+    "1-30 días": 339655040.0,
+    "31-60 días": 164338786.0,
     "61-90 días": 43036981.0,
-    "Vigente": 118090591.0
+    "Vigente": 118259533.0
   },
   "monto_por_tipo": {
-    "BOLETA": 587836201.0,
+    "BOLETA": 592894505.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 137416187.0
+      "monto": 138526625.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 52845950.0
+      "monto": 53422170.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -46,7 +46,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 25622128.0
+      "monto": 25259436.0
     },
     {
       "partner": "Walmart Serv. Generales Ltda.",
@@ -62,11 +62,11 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14627132.0
+      "monto": 14567111.0
     },
     {
       "partner": "Cliente Ripley",
-      "monto": 12672950.0
+      "monto": 12695300.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -74,15 +74,15 @@
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 10085241.0
+      "monto": 10275634.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 9559878.0
+      "monto": 9880312.0
     },
     {
       "partner": "Lhotse Store",
-      "monto": 8403487.0
+      "monto": 8558725.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -97,6 +97,6 @@
       "monto": 5775769.0
     }
   ],
-  "notas_credito_count": 1114,
+  "notas_credito_count": 1123,
   "pedidos_venta_count": 10000
 }
