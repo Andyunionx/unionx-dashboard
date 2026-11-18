@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-11-17T15:07:02.164554",
+  "generado_en": "2026-11-18T00:10:56.180566",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 110,
-  "sku_match_odoo": 109,
-  "sku_con_peso": 88,
-  "sku_con_volumen": 86,
-  "sku_volumen_anomalo": 13,
+  "sku_input": 83,
+  "sku_match_odoo": 82,
+  "sku_con_peso": 68,
+  "sku_con_volumen": 66,
+  "sku_volumen_anomalo": 8,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 80.0,
-  "cobertura_volumen_pct": 78.2,
-  "cobertura_volumen_confiable_pct": 66.4,
-  "unidades_totales": 34449.0,
-  "peso_total_kg": 70513.5,
-  "volumen_total_m3": 237.86,
-  "volumen_total_m3_raw": 18198154.87,
-  "pallets_totales_estim": 198.2,
+  "cobertura_peso_pct": 81.9,
+  "cobertura_volumen_pct": 79.5,
+  "cobertura_volumen_confiable_pct": 69.9,
+  "unidades_totales": 26590.0,
+  "peso_total_kg": 46474.3,
+  "volumen_total_m3": 144.04,
+  "volumen_total_m3_raw": 10474406.49,
+  "pallets_totales_estim": 120.0,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -83,26 +83,6 @@
       "cobertura_volumen_pct": 95.2
     },
     {
-      "pi": "26TP0909PI",
-      "transporte": "",
-      "fecha_embarque": "2026-10-07",
-      "fecha_eta_bodega": "2026-10-07",
-      "skus_distintos": 29,
-      "unidades_totales": 4227.0,
-      "peso_total_kg": 17558.5,
-      "volumen_total_m3": 53.7,
-      "volumen_total_m3_raw": 5523803.7,
-      "pallets_estim": 44.8,
-      "containers_20_estim": 1.92,
-      "containers_40hc_estim": 0.8,
-      "skus_con_match_odoo": 29,
-      "skus_con_peso": 18,
-      "skus_con_volumen": 18,
-      "skus_volumen_anomalo": 4,
-      "cobertura_peso_pct": 62.1,
-      "cobertura_volumen_pct": 62.1
-    },
-    {
       "pi": "26TP0927PI",
       "transporte": "",
       "fecha_embarque": "2026-10-29",
@@ -121,26 +101,6 @@
       "skus_volumen_anomalo": 5,
       "cobertura_peso_pct": 60.9,
       "cobertura_volumen_pct": 60.9
-    },
-    {
-      "pi": "26TP0917PI",
-      "transporte": "",
-      "fecha_embarque": "2026-11-17",
-      "fecha_eta_bodega": "2026-11-17",
-      "skus_distintos": 9,
-      "unidades_totales": 3632.0,
-      "peso_total_kg": 6480.8,
-      "volumen_total_m3": 40.11,
-      "volumen_total_m3_raw": 2199944.67,
-      "pallets_estim": 33.4,
-      "containers_20_estim": 1.43,
-      "containers_40hc_estim": 0.6,
-      "skus_con_match_odoo": 10,
-      "skus_con_peso": 5,
-      "skus_con_volumen": 5,
-      "skus_volumen_anomalo": 1,
-      "cobertura_peso_pct": 55.6,
-      "cobertura_volumen_pct": 55.6
     },
     {
       "pi": "26TP0930PI",
@@ -218,16 +178,6 @@
       "volumen_unit_m3": 108949.5
     },
     {
-      "sku": "BDSILLEVREG",
-      "producto": "Silla de Comer Evolutiva de Madera Regulable Bebé Bandú",
-      "volumen_unit_m3": 70125.0
-    },
-    {
-      "sku": "BDTORRAPR",
-      "producto": "Torre Aprendizaje Montessori Madera Plegable 3 Niveles Bandú",
-      "volumen_unit_m3": 56700.0
-    },
-    {
       "sku": "BDCASMUÑEC-WD",
       "producto": "Casa de Muñecas Madera 3 Pisos con Muebles y Muñecos Bandú",
       "volumen_unit_m3": 31438.125
@@ -253,24 +203,9 @@
       "volumen_unit_m3": 6720.0
     },
     {
-      "sku": "LVMOPRL-BK",
-      "producto": "Mochila Notebook Ejecutiva Prime Lite Impermeable 18L LEVO",
-      "volumen_unit_m3": 6300.0
-    },
-    {
       "sku": "BDGMNMVBB",
       "producto": "Gimnasio Madera Bebé Montessori Juguetes Colgantes Bandú",
       "volumen_unit_m3": 4414.41
-    },
-    {
-      "sku": "TCALSCAEGL-PP",
-      "producto": "Alisador y Secador de Pelo 2 en 1 AeraCare T-Care",
-      "volumen_unit_m3": 4382.28
-    },
-    {
-      "sku": "SMCONTCAFMI",
-      "producto": "Contenedor Hermético De Café 1,5 Lts Acero Inoxidable Milán Simplit",
-      "volumen_unit_m3": 2535.0
     }
   ]
 }

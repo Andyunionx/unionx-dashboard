@@ -1,9 +1,9 @@
 {
-  "generado_en": "2026-11-17T15:07:00.395760",
-  "total_pis": 9,
+  "generado_en": "2026-11-18T00:10:53.953007",
+  "total_pis": 7,
   "pis_ingresados": 0,
   "pis_parciales": 2,
-  "pis_pendientes": 7,
+  "pis_pendientes": 5,
   "sku_no_match_odoo": 1,
   "por_pi": [
     {
@@ -23,13 +23,13 @@
       "pi": "26TP0806PI",
       "fecha_embarque": "2026-09-24",
       "skus_total": 21,
-      "skus_ingresados": 4,
+      "skus_ingresados": 6,
       "skus_parciales": 3,
-      "skus_pendientes": 14,
+      "skus_pendientes": 12,
       "skus_sin_info": 0,
       "unidades_esperadas": 4191.0,
-      "unidades_recibidas": 1618.0,
-      "ratio_pi": 0.386,
+      "unidades_recibidas": 2268.0,
+      "ratio_pi": 0.541,
       "status_pi": "\ud83d\udfe1 PARCIAL"
     },
     {
@@ -46,32 +46,6 @@
       "status_pi": "\ud83d\udd34 PENDIENTE"
     },
     {
-      "pi": "26TP0909PI",
-      "fecha_embarque": "2026-10-07",
-      "skus_total": 29,
-      "skus_ingresados": 1,
-      "skus_parciales": 2,
-      "skus_pendientes": 26,
-      "skus_sin_info": 0,
-      "unidades_esperadas": 4227.0,
-      "unidades_recibidas": 1074.0,
-      "ratio_pi": 0.254,
-      "status_pi": "\ud83d\udfe1 INICIANDO"
-    },
-    {
-      "pi": "26TP0917PI",
-      "fecha_embarque": "2026-11-17",
-      "skus_total": 10,
-      "skus_ingresados": 0,
-      "skus_parciales": 1,
-      "skus_pendientes": 9,
-      "skus_sin_info": 0,
-      "unidades_esperadas": 3632.0,
-      "unidades_recibidas": 140.0,
-      "ratio_pi": 0.039,
-      "status_pi": "\ud83d\udd34 PENDIENTE"
-    },
-    {
       "pi": "26TP0927PI",
       "fecha_embarque": "2026-10-29",
       "skus_total": 23,
@@ -80,8 +54,8 @@
       "skus_pendientes": 23,
       "skus_sin_info": 0,
       "unidades_esperadas": 9020.0,
-      "unidades_recibidas": 25.0,
-      "ratio_pi": 0.003,
+      "unidades_recibidas": 53.0,
+      "ratio_pi": 0.006,
       "status_pi": "\ud83d\udd34 PENDIENTE"
     },
     {
@@ -93,7 +67,7 @@
       "skus_pendientes": 34,
       "skus_sin_info": 0,
       "unidades_esperadas": 7049.0,
-      "unidades_recibidas": 274.0,
+      "unidades_recibidas": 276.0,
       "ratio_pi": 0.039,
       "status_pi": "\ud83d\udd34 PENDIENTE"
     },
@@ -119,9 +93,9 @@
       "skus_pendientes": 1,
       "skus_sin_info": 0,
       "unidades_esperadas": 3150.0,
-      "unidades_recibidas": 0.0,
-      "ratio_pi": 0.0,
-      "status_pi": "\ud83d\udd34 PENDIENTE"
+      "unidades_recibidas": 500.0,
+      "ratio_pi": 0.159,
+      "status_pi": "\ud83d\udfe1 INICIANDO"
     }
   ]
 }
