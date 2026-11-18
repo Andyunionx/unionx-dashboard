@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-17T21:36:31.217059",
+  "generado_en": "2026-11-18T21:08:00.338771",
   "baseline_online_mes": 312000000,
   "share_online": 0.61,
   "anclas": [
@@ -9,8 +9,8 @@
       "fecha_fin": "2026-06-04",
       "multiplicador": 1.0,
       "ancla_total_M": 511.4754098360656,
-      "prophet_ventana_M": 363.375879,
-      "factor_aplicado": 1.4075656624309552,
+      "prophet_ventana_M": 363.999584,
+      "factor_aplicado": 1.4051538307144482,
       "dias": 4
     },
     {
@@ -19,8 +19,8 @@
       "fecha_fin": "2026-10-09",
       "multiplicador": 1.0,
       "ancla_total_M": 511.4754098360656,
-      "prophet_ventana_M": 248.495553,
-      "factor_aplicado": 2.0582879800511584,
+      "prophet_ventana_M": 318.401623,
+      "factor_aplicado": 1.6063844305092176,
       "dias": 4
     },
     {
@@ -29,8 +29,8 @@
       "fecha_fin": "2026-11-30",
       "multiplicador": 0.5,
       "ancla_total_M": 255.7377049180328,
-      "prophet_ventana_M": 309.413599,
-      "factor_aplicado": 0.8265238042043291,
+      "prophet_ventana_M": 318.732453,
+      "factor_aplicado": 0.8023585377358257,
       "dias": 5
     },
     {
@@ -39,8 +39,8 @@
       "fecha_fin": "2026-12-25",
       "multiplicador": 2.0,
       "ancla_total_M": 1022.9508196721312,
-      "prophet_ventana_M": 256.220558,
-      "factor_aplicado": 3.9924619150666714,
+      "prophet_ventana_M": 286.858538,
+      "factor_aplicado": 3.566046270765457,
       "dias": 21
     }
   ],
