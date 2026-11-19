@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-11-18T23:41:00.446581",
+  "generado_en": "2026-11-19T04:52:19.802494",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12610,
-  "total_monto_pendiente_clp": 760330343.0,
+  "total_documentos_pendientes": 12640,
+  "total_monto_pendiente_clp": 761809278.0,
   "monto_por_aging": {
-    "+90 días": 95040003.0,
-    "1-30 días": 339655040.0,
-    "31-60 días": 164338786.0,
-    "61-90 días": 43036981.0,
-    "Vigente": 118259533.0
+    "+90 días": 96069315.0,
+    "1-30 días": 335992159.0,
+    "31-60 días": 170889460.0,
+    "61-90 días": 42007669.0,
+    "Vigente": 116850675.0
   },
   "monto_por_tipo": {
-    "BOLETA": 592894505.0,
+    "BOLETA": 594373440.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 138526625.0
+      "monto": 139649905.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 53422170.0
+      "monto": 53549100.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -62,7 +62,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14567111.0
+      "monto": 14672990.0
     },
     {
       "partner": "Cliente Ripley",
@@ -78,7 +78,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 9880312.0
+      "monto": 9951216.0
     },
     {
       "partner": "Lhotse Store",
@@ -97,6 +97,6 @@
       "monto": 5775769.0
     }
   ],
-  "notas_credito_count": 1123,
+  "notas_credito_count": 1122,
   "pedidos_venta_count": 10000
 }
