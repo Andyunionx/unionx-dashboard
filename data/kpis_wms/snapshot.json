@@ -1,40 +1,61 @@
 {
-  "generado_en": "2026-11-18T22:30:01.803623",
+  "generado_en": "2026-11-19T11:15:38.676014",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.07110368513877285,
-      "total_pickings": 10773,
-      "on_time": 768,
-      "on_time_pct": 0.07128933444722918,
-      "in_full": 10767,
-      "in_full_pct": 0.999443052074631,
-      "both": 766,
+      "valor": 0.06916033508669395,
+      "total_pickings": 10266,
+      "on_time": 712,
+      "on_time_pct": 0.06935515293200857,
+      "in_full": 10260,
+      "in_full_pct": 0.9994155464640561,
+      "both": 710,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.06282722513089005,
-      "total_pickings": 382,
-      "on_time": 24,
-      "on_time_pct": 0.06282722513089005,
-      "in_full": 377,
-      "in_full_pct": 0.9869109947643979,
-      "both": 24,
+      "valor": 0.06149732620320856,
+      "total_pickings": 374,
+      "on_time": 23,
+      "on_time_pct": 0.06149732620320856,
+      "in_full": 369,
+      "in_full_pct": 0.9866310160427807,
+      "both": 23,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997854384208268,
-      "ok": 13979,
-      "total": 13982,
+      "valor": 0.999775734469612,
+      "ok": 13374,
+      "total": 13377,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 5.108091758018676,
-      "n_recepciones": 821,
+      "valor": 4.536608937788644,
+      "n_recepciones": 818,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01118",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 0.4,
+          "scheduled": "2026-11-18 23:28",
+          "done": "2026-11-18 23:50"
+        },
+        {
+          "picking": "CA1/RET/01679",
+          "proveedor": "Cliente Mercado Libre, Gastón Ramírez",
+          "horas": 0.0,
+          "scheduled": "2026-11-18 23:06",
+          "done": "2026-11-18 23:07"
+        },
+        {
+          "picking": "CA1/RET/01680",
+          "proveedor": "Cliente Mercado Libre, Ariel Guerrero",
+          "horas": 0.0,
+          "scheduled": "2026-11-18 23:07",
+          "done": "2026-11-18 23:07"
+        },
         {
           "picking": "BFP/RET/00023",
           "proveedor": "Cliente Paris, Carolina Reinoso Guerra",
@@ -153,46 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-11-17 21:12",
           "done": "2026-11-17 21:12"
-        },
-        {
-          "picking": "BFFa/RET/00138",
-          "proveedor": "Cliente Falabella Fcom, Manuel Alejandro Guerrero Mena Mena",
-          "horas": 0.0,
-          "scheduled": "2026-11-17 21:12",
-          "done": "2026-11-17 21:12"
-        },
-        {
-          "picking": "BFFa/RET/00137",
-          "proveedor": "Cliente Falabella Fcom, Daniela Soto",
-          "horas": 0.0,
-          "scheduled": "2026-11-17 20:13",
-          "done": "2026-11-17 20:13"
-        },
-        {
-          "picking": "BFFa/RET/00136",
-          "proveedor": "Cliente Falabella Fcom, Mariela Caro Cruz",
-          "horas": 0.0,
-          "scheduled": "2026-11-17 19:55",
-          "done": "2026-11-17 19:55"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.961832800542478,
-      "total_so": 10341,
-      "total_con_pickings": 10323,
-      "cumplidos": 9929,
-      "parciales": 14,
-      "sin_iniciar": 380,
+      "valor": 0.9707146426786607,
+      "total_so": 10023,
+      "total_con_pickings": 10005,
+      "cumplidos": 9712,
+      "parciales": 15,
+      "sin_iniciar": 278,
       "error": null
     },
     "oct_30d": {
-      "valor": 34.13277803080909,
-      "n_orders": 10978,
+      "valor": 31.712434883819583,
+      "n_orders": 10477,
       "min_h": 0.0002777777777777778,
       "max_h": 714.7769444444444,
-      "mediana_h": 13.6025,
+      "mediana_h": 12.844166666666666,
       "detalle": [
         {
           "so": "S290463",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 7904,
+      "lineas": 8144,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 152,
-      "outgoing": 29466,
-      "internal": 20382,
+      "incoming": 147,
+      "outgoing": 29583,
+      "internal": 20270,
       "total": 50000,
       "error": null
     },
@@ -366,18 +366,6 @@
           "on_time_pct": 0.0
         },
         {
-          "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
-          "total": 4,
-          "tarde": 4,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Gluky Group SPA",
-          "total": 3,
-          "tarde": 3,
-          "on_time_pct": 0.0
-        },
-        {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
           "total": 8,
           "tarde": 8,
@@ -385,14 +373,8 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 72,
-          "tarde": 72,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Global Reward Solutions",
-          "total": 108,
-          "tarde": 108,
+          "total": 71,
+          "tarde": 71,
           "on_time_pct": 0.0
         },
         {
@@ -403,8 +385,8 @@
         },
         {
           "cliente": "abc S.A.",
-          "total": 41,
-          "tarde": 41,
+          "total": 44,
+          "tarde": 44,
           "on_time_pct": 0.0
         },
         {
@@ -414,22 +396,34 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "Global Reward Solutions",
+          "total": 102,
+          "tarde": 102,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Yohana Alejandra Grisman Colmenares",
           "total": 5,
           "tarde": 5,
           "on_time_pct": 0.0
         },
         {
+          "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
+          "total": 3,
+          "tarde": 3,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 26,
-          "tarde": 24,
-          "on_time_pct": 0.07692307692307693
+          "total": 25,
+          "tarde": 23,
+          "on_time_pct": 0.08
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 29,
-          "tarde": 20,
-          "on_time_pct": 0.3103448275862069
+          "total": 28,
+          "tarde": 21,
+          "on_time_pct": 0.25
         },
         {
           "cliente": "Cencosud Retail S.A",
@@ -621,10 +615,10 @@
           "quiebre_clp": 607970.519919,
           "n_canceladas": 347,
           "n_quiebres": 33,
-          "n_medidos": 10855,
-          "ns_empresa_pct": 0.9568862275449102,
-          "ns_courier_pct": 0.8714877936434823,
-          "otif_total_pct": 0.8331644403500691,
+          "n_medidos": 10857,
+          "ns_empresa_pct": 0.9567099567099567,
+          "ns_courier_pct": 0.8713272543059777,
+          "otif_total_pct": 0.8330109606705351,
           "n_empresa_ok": 10387,
           "n_courier_ok": 9460,
           "n_otif_ok": 9044
@@ -2807,9 +2801,9 @@
         {
           "CURIER": "HOME DELIVERY CORP",
           "n_pedidos": 1412,
-          "ns_courier_pct": 99.3,
-          "ns_empresa_pct": 99.6,
-          "otif_total_pct": 99.3
+          "ns_courier_pct": 99.2,
+          "ns_empresa_pct": 99.5,
+          "otif_total_pct": 99.1
         },
         {
           "CURIER": "COLECTA",
@@ -4401,15 +4395,15 @@
       {
         "MES": "2026-10",
         "n_pedidos": 11276,
-        "n_medidos": 10891,
+        "n_medidos": 10893,
         "emp_ok": 10430,
         "cou_ok": 9499,
         "tot_ok": 9080,
-        "n_med_cou": 10891,
-        "otif_empresa": 0.957671471857497,
-        "otif_courier": 0.8721880451749151,
-        "otif_total": 0.8337159122211,
-        "otif_empresa_pct": 95.8,
+        "n_med_cou": 10893,
+        "otif_empresa": 0.9574956394014504,
+        "otif_courier": 0.8720279078307169,
+        "otif_total": 0.8335628385201506,
+        "otif_empresa_pct": 95.7,
         "otif_courier_pct": 87.2,
         "otif_total_pct": 83.4
       },
@@ -4461,10 +4455,10 @@
       },
       "2026-10": {
         "n_pedidos": 11276,
-        "n_medidos": 10891,
-        "otif_empresa_pct": 0.957671471857497,
-        "otif_courier_pct": 0.8721880451749151,
-        "otif_total_pct": 0.8337159122211,
+        "n_medidos": 10893,
+        "otif_empresa_pct": 0.9574956394014504,
+        "otif_courier_pct": 0.8720279078307169,
+        "otif_total_pct": 0.8335628385201506,
         "n_empresa_ok": 10430,
         "n_courier_ok": 9499,
         "n_otif_ok": 9080,
@@ -4579,16 +4573,16 @@
         {
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 1458,
-          "n_medidos": 1383,
+          "n_medidos": 1385,
           "emp_ok": 1379,
           "cou_ok": 1356,
           "tot_ok": 1356,
-          "otif_empresa": 0.9971077368040492,
-          "otif_courier": 0.9804772234273319,
-          "otif_total": 0.9804772234273319,
-          "otif_empresa_pct": 99.7,
-          "otif_courier_pct": 98.0,
-          "otif_total_pct": 98.0
+          "otif_empresa": 0.9956678700361011,
+          "otif_courier": 0.9790613718411553,
+          "otif_total": 0.9790613718411553,
+          "otif_empresa_pct": 99.6,
+          "otif_courier_pct": 97.9,
+          "otif_total_pct": 97.9
         },
         {
           "CLIENTE": "KITCHEN",
@@ -8254,42 +8248,63 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.07110368513877285,
-      "total_pickings": 10773,
-      "on_time": 768,
-      "on_time_pct": 0.07128933444722918,
-      "in_full": 10767,
-      "in_full_pct": 0.999443052074631,
-      "both": 766,
+      "valor": 0.06916033508669395,
+      "total_pickings": 10266,
+      "on_time": 712,
+      "on_time_pct": 0.06935515293200857,
+      "in_full": 10260,
+      "in_full_pct": 0.9994155464640561,
+      "both": 710,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.06282722513089005,
-      "total_pickings": 382,
-      "on_time": 24,
-      "on_time_pct": 0.06282722513089005,
-      "in_full": 377,
-      "in_full_pct": 0.9869109947643979,
-      "both": 24,
+      "valor": 0.06149732620320856,
+      "total_pickings": 374,
+      "on_time": 23,
+      "on_time_pct": 0.06149732620320856,
+      "in_full": 369,
+      "in_full_pct": 0.9866310160427807,
+      "both": 23,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997854384208268,
-      "ok": 13979,
-      "total": 13982,
+      "valor": 0.999775734469612,
+      "ok": 13374,
+      "total": 13377,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 5.108091758018676,
-      "n_recepciones": 821,
+      "valor": 4.536608937788644,
+      "n_recepciones": 818,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/IN/01118",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 0.4,
+          "scheduled": "2026-11-18 23:28",
+          "done": "2026-11-18 23:50"
+        },
+        {
+          "picking": "CA1/RET/01679",
+          "proveedor": "Cliente Mercado Libre, Gastón Ramírez",
+          "horas": 0.0,
+          "scheduled": "2026-11-18 23:06",
+          "done": "2026-11-18 23:07"
+        },
+        {
+          "picking": "CA1/RET/01680",
+          "proveedor": "Cliente Mercado Libre, Ariel Guerrero",
+          "horas": 0.0,
+          "scheduled": "2026-11-18 23:07",
+          "done": "2026-11-18 23:07"
+        },
         {
           "picking": "BFP/RET/00023",
           "proveedor": "Cliente Paris, Carolina Reinoso Guerra",
@@ -8408,27 +8423,6 @@
           "horas": 0.0,
           "scheduled": "2026-11-17 21:12",
           "done": "2026-11-17 21:12"
-        },
-        {
-          "picking": "BFFa/RET/00138",
-          "proveedor": "Cliente Falabella Fcom, Manuel Alejandro Guerrero Mena Mena",
-          "horas": 0.0,
-          "scheduled": "2026-11-17 21:12",
-          "done": "2026-11-17 21:12"
-        },
-        {
-          "picking": "BFFa/RET/00137",
-          "proveedor": "Cliente Falabella Fcom, Daniela Soto",
-          "horas": 0.0,
-          "scheduled": "2026-11-17 20:13",
-          "done": "2026-11-17 20:13"
-        },
-        {
-          "picking": "BFFa/RET/00136",
-          "proveedor": "Cliente Falabella Fcom, Mariela Caro Cruz",
-          "horas": 0.0,
-          "scheduled": "2026-11-17 19:55",
-          "done": "2026-11-17 19:55"
         }
       ],
       "error": null
