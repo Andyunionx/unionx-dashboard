@@ -228,7 +228,7 @@ for i in range(0, len(ocs), B):
     for o in ex("sale.order", "search_read",
                 ["|", "|", ("channel_order_reference", "in", variantes), ("name", "in", ch),
                  ("yuju_pack_id", "in", ch)],
-                fields=["id", "name", "channel_order_reference", "yuju_pack_id", "invoice_ids"], limit=5000):
+                fields=["id", "name", "state", "channel_order_reference", "yuju_pack_id", "invoice_ids"], limit=5000):
         key = norm_oc(o.get("channel_order_reference") or "") or o["name"]
         pack = norm_oc(o.get("yuju_pack_id") or "")
         if key in ocs_set:
@@ -253,7 +253,7 @@ bol_por_id = {}
 for i in range(0, len(inv_all), 800):
     for b in ex("account.move", "search_read",
                 [("id", "in", inv_all[i:i+800]), ("move_type", "=", "out_invoice"), ("state", "=", "posted")],
-                fields=["id", "name", "journal_id", "l10n_latam_document_number", "ref"], limit=1000):
+                fields=["id", "name", "journal_id", "l10n_latam_document_number", "ref", "amount_total"], limit=1000):
         bol_por_id[b["id"]] = b
 bol_ids = list(bol_por_id.keys())
 nc_por_bol = collections.defaultdict(list)
@@ -261,7 +261,7 @@ for i in range(0, len(bol_ids), 800):
     for n in ex("account.move", "search_read",
                 [("move_type", "=", "out_refund"), ("reversed_entry_id", "in", bol_ids[i:i+800]),
                  ("state", "in", ["draft", "posted"])],
-                fields=["id", "name", "ref", "state", "reversed_entry_id"], limit=2000):
+                fields=["id", "name", "ref", "state", "reversed_entry_id", "amount_total"], limit=2000):
         nc_por_bol[n["reversed_entry_id"][0]].append(n)
 lin_por_bol = collections.defaultdict(list)
 for i in range(0, len(bol_ids), 400):
@@ -298,32 +298,75 @@ def monto_oc(bol, cs):
     return m
 
 
-def resolver_ambigua(oc, ords, cs):
-    """OC que calza con 2+ pedidos porque Yuju recreó la orden (Max, 9-nov). Misma lógica del agente:
-    la NC va contra la BOLETA que trae el producto devuelto. Entre las boletas de la OC con algún
-    producto de los tickets: una sola sin NC → ese pedido; todas con NC → resuelta; si no, revisar.
-    OJO (auditoría 12-nov): «si algún pedido ya tiene NC, listo» fallaba en 20 de 34 casos: la NC
-    anulaba la boleta del pedido duplicado y la boleta del pedido vivo (la del producto devuelto)
-    seguía sin NC. → ("nc_previa", None, detalle) / ("uno", pedido, None) / ("ambiguo", None, detalle)"""
+def anulado(b):
+    """Documento anulado por completo: sus NC posteadas suman su total (p. ej. la boleta que se anuló
+    para emitir la factura 33 que pidió el cliente)."""
+    nc = sum(n.get("amount_total") or 0 for n in nc_por_bol.get(b["id"], []) if n["state"] == "posted")
+    return nc > 0 and nc >= (b.get("amount_total") or 0) - 1
+
+
+def elegir_documento(oc, ords, cs):
+    """Elige el documento de venta (boleta o factura) que acredita la NC cuando la OC tiene más de uno.
+    Dos casos con la misma lógica: la OC calza con 2+ pedidos porque Yuju recreó la orden (Max, 9-nov),
+    o un solo pedido tiene varios documentos (Max, 17-nov: la boleta se anuló para emitir factura, el
+    pedido quedó duplicado o se despachó en partes). Regla: la NC va contra el documento VIGENTE que trae
+    el producto devuelto.
+    - Entre los documentos con algún producto de los tickets: uno solo sin NC → ese; más de uno → revisar.
+    - Si todos los que traen el producto ya tienen NC, el caso está cerrado, siempre que no quede otro
+      documento vigente sin NC (de un pedido vigente, si son varios pedidos). OJO (16-nov, #80926 y
+      #78556): al recrear la orden, Yuju cambió el SKU; el ticket trae el SKU del pedido cancelado, cuya
+      boleta anuló su propia NC, y la boleta del pedido vigente seguía sin NC → revisar para corregir el
+      producto del ticket. (12-nov: «si algún pedido ya tiene NC, listo» fallaba en 20 de 34 casos.)
+    - Si ningún documento trae el producto pero TODOS están anulados por completo, también está cerrado
+      (no queda venta que acreditar; ej. componente de un pack con boleta y factura anuladas).
+    → ("uno", pedido, documento, None) / ("nc_previa", None, None, detalle) / ("ambiguo", None, None, detalle)"""
     prods = {pid_de(c["prod"]) for c in cs if c["prod"]}
-    con_prod = []   # (pedido, boleta, tiene_nc)
-    for o in ords:
-        for i in o["invoice_ids"]:
-            b = bol_por_id.get(i)
-            if not b or not prods & {l["product_id"][0] for l in lin_por_bol.get(i, []) if l["product_id"]}:
-                continue
-            nc = [n for n in nc_por_bol.get(i, []) if n["state"] == "posted"]
-            con_prod.append((o, b, nc[0]["name"] if nc else
-                             ("NC por referencia SII" if str(b.get("l10n_latam_document_number") or "") in nc_ref_folios else None)))
+    varios = len(ords) > 1
+    que = f"OC {oc} con {len(ords)} pedidos (orden recreada)" if varios else f"pedido {ords[0]['name']} con varios documentos"
+
+    def nc_de(i, b):
+        nc = [n for n in nc_por_bol.get(i, []) if n["state"] == "posted"]
+        return nc[0]["name"] if nc else ("NC por referencia SII" if str(b.get("l10n_latam_document_number") or "") in nc_ref_folios else None)
+    docs = [(o, bol_por_id[i]) for o in ords for i in o["invoice_ids"] if i in bol_por_id]
+    con_prod, abiertas_vig = [], []   # (pedido, doc, nc) con el producto / (pedido, doc) vigentes sin NC
+    for o, b in docs:
+        nc = nc_de(b["id"], b)
+        if prods & {l["product_id"][0] for l in lin_por_bol.get(b["id"], []) if l["product_id"]}:
+            con_prod.append((o, b, nc))
+        # Con un solo pedido no se mira su estado: Yuju lo deja «cancel» aunque la factura siga vigente.
+        if not nc and (not varios or o.get("state") != "cancel"):
+            abiertas_vig.append((o, b))
     abiertas = [(o, b) for o, b, nc in con_prod if not nc]
+    # Textos: con varios pedidos se mantienen los de siempre, porque el pulso manda «pedido ambiguo» al
+    # bloque «OC por corregir» (Max corrige la OC); con un pedido la OC está bien y va a «Por revisar».
     if len(abiertas) == 1:
-        return "uno", abiertas[0][0], None
-    if con_prod and not abiertas:
-        return "nc_previa", None, (f"OC {oc} con {len(ords)} pedidos (orden recreada): toda boleta con el producto ya tiene NC ("
-                                   + ", ".join(f"{b['name']}: {nc}" for _, b, nc in con_prod) + ")")
-    if not con_prod:
-        return "ambiguo", None, f"pedido ambiguo para OC {oc}: {len(ords)} pedidos y ninguna boleta trae el producto del ticket"
-    return "ambiguo", None, f"pedido ambiguo para OC {oc}: {len(abiertas)} boletas sin NC con el producto (" + ", ".join(b["name"] for _, b in abiertas) + ")"
+        return "uno", abiertas[0][0], abiertas[0][1], None
+    if len(abiertas) > 1:
+        docs_txt = ", ".join(b["name"] for _, b in abiertas)
+        return "ambiguo", None, None, (f"pedido ambiguo para OC {oc}: {len(abiertas)} boletas sin NC con el producto ({docs_txt})" if varios
+                                       else f"{que}: {len(abiertas)} documentos sin NC con el producto ({docs_txt}); elegir cuál acreditar")
+    if abiertas_vig:
+        if varios:
+            con_nc = ", ".join(f"{o['name']} ({b['name']}: {nc})" for o, b, nc in con_prod)
+            return "ambiguo", None, None, (f"{que}: " + (f"el producto del ticket solo está en {con_nc}" if con_nc
+                                                         else "ninguna boleta trae el producto del ticket") + "; "
+                                           f"el pedido vigente " + ", ".join(f"{o['name']} ({b['name']})" for o, b in abiertas_vig)
+                                           + " no tiene NC y trae otro producto: corregir el producto del ticket")
+        donde = ("el producto del ticket solo está en " + ", ".join(f"{b['name']} (ya tiene {nc})" for _, b, nc in con_prod)
+                 if con_prod else "ningún documento trae el producto del ticket")
+        return "ambiguo", None, None, (f"{que}: {donde}; el documento vigente " + ", ".join(b["name"] for _, b in abiertas_vig)
+                                       + " no tiene NC y no trae ese producto: corregir el producto del ticket")
+    if con_prod:
+        if varios:
+            return "nc_previa", None, None, (f"{que}: toda boleta con el producto ya tiene NC ("
+                                             + ", ".join(f"{b['name']}: {nc}" for _, b, nc in con_prod) + ") y no hay boletas abiertas en pedidos vigentes")
+        return "nc_previa", None, None, (f"{que}: todo documento con el producto ya tiene NC ("
+                                         + ", ".join(f"{b['name']}: {nc}" for _, b, nc in con_prod) + ")")
+    if docs and all(anulado(b) for _, b in docs):
+        return "nc_previa", None, None, (f"{que}: todos sus documentos están anulados con NC ("
+                                         + ", ".join(f"{b['name']}: {nc_de(b['id'], b)}" for _, b in docs) + ")")
+    return "ambiguo", None, None, (f"pedido ambiguo para OC {oc}: {len(ords)} pedidos y ninguna boleta trae el producto del ticket" if varios
+                                   else f"{que}: ningún documento trae el producto del ticket")
 
 
 ctx_oc = {}     # oc -> (boleta, monto estimado, pedido), solo para el Excel de validación / pulso
@@ -332,8 +375,9 @@ inv_full = []   # ventas Fulfillment recibidas: solo inventario, sin NC
 for oc, cs in por_oc.items():
     tids = [c["t"]["id"] for c in cs]
     ords = ord_por_oc.get(oc, [])
+    elegida = None
     if len(ords) > 1:
-        res, ped, det = resolver_ambigua(oc, ords, cs)
+        res, ped, elegida, det = elegir_documento(oc, ords, cs)
         if res == "nc_previa":
             marcas["nc_previa"] += [(i, det) for i in tids]
             continue
@@ -344,7 +388,7 @@ for oc, cs in por_oc.items():
     if not ords:
         marcas["revisar"] += [(i, f"pedido no encontrado para OC {oc}") for i in tids]
         continue
-    boletas = [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
+    boletas = [elegida] if elegida else [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
     if ords[0]["id"] in ped_full:
         marcas["revisar" if boletas else "sin_boleta"] += [
             (i, f"OC {oc} Fulfillment: se descuenta en la liquidación, no lleva NC") for i in tids]
@@ -362,8 +406,15 @@ for oc, cs in por_oc.items():
         marcas["sin_boleta"] += [(i, f"OC {oc} sin boleta posteada") for i in tids]
         continue
     if len(boletas) > 1:
-        marcas["revisar"] += [(i, f"OC {oc} con {len(boletas)} boletas") for i in tids]
-        continue
+        # Varios documentos en el mismo pedido (Max, 17-nov): se acredita el vigente que trae el producto.
+        res, _, elegida, det = elegir_documento(oc, ords, cs)
+        if res == "nc_previa":
+            marcas["nc_previa"] += [(i, det) for i in tids]
+            continue
+        if res == "ambiguo":
+            marcas["revisar"] += [(i, det) for i in tids]
+            continue
+        boletas = [elegida]
     bol = boletas[0]
     ctx_oc[oc] = (bol, monto_oc(bol, cs), ords[0]["name"])
     ncs = nc_por_bol.get(bol["id"], [])
@@ -681,8 +732,9 @@ for est, lst in marcas.items():
 def estado_manual(oc, cs):
     """Estado NC de una OC de canal manual, con las mismas consultas del agente. Solo informa."""
     ords = ord_por_oc.get(oc, [])
+    elegida = None
     if len(ords) > 1:
-        res, ped, _ = resolver_ambigua(oc, ords, cs)
+        res, ped, elegida, _ = elegir_documento(oc, ords, cs)
         if res == "nc_previa":
             return "ya tiene NC", None, 0
         if res == "ambiguo":
@@ -692,11 +744,16 @@ def estado_manual(oc, cs):
         return "pedido no encontrado", None, 0
     if ords[0]["id"] in ped_full:
         return "Fulfillment (no lleva NC)", None, 0
-    boletas = [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
+    boletas = [elegida] if elegida else [bol_por_id[i] for i in ords[0]["invoice_ids"] if i in bol_por_id]
     if not boletas:
         return "sin boleta", None, 0
     if len(boletas) > 1:
-        return f"{len(boletas)} boletas", None, 0
+        res, _, elegida, _ = elegir_documento(oc, ords, cs)
+        if res == "nc_previa":
+            return "ya tiene NC", None, 0
+        if res == "ambiguo":
+            return f"{len(boletas)} boletas", None, 0
+        boletas = [elegida]
     bol = boletas[0]
     ped_manual[oc] = ords[0]
     if nc_por_bol.get(bol["id"]) or str(bol.get("l10n_latam_document_number") or "") in nc_ref_folios:
