@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-11-19T10:53:55.902679",
+  "generado_en": "2026-11-19T19:44:07.094699",
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "sku_input": 83,
-  "sku_match_odoo": 82,
-  "sku_con_peso": 68,
-  "sku_con_volumen": 66,
-  "sku_volumen_anomalo": 8,
+  "sku_input": 58,
+  "sku_match_odoo": 57,
+  "sku_con_peso": 54,
+  "sku_con_volumen": 52,
+  "sku_volumen_anomalo": 3,
   "sku_con_maestra_manual": 0,
-  "cobertura_peso_pct": 81.9,
-  "cobertura_volumen_pct": 79.5,
-  "cobertura_volumen_confiable_pct": 69.9,
-  "unidades_totales": 26590.0,
-  "peso_total_kg": 46474.3,
-  "volumen_total_m3": 144.04,
-  "volumen_total_m3_raw": 10474406.49,
-  "pallets_totales_estim": 120.0,
+  "cobertura_peso_pct": 93.1,
+  "cobertura_volumen_pct": 89.7,
+  "cobertura_volumen_confiable_pct": 84.5,
+  "unidades_totales": 11270.0,
+  "peso_total_kg": 38034.4,
+  "volumen_total_m3": 114.67,
+  "volumen_total_m3_raw": 2081449.87,
+  "pallets_totales_estim": 95.6,
   "asunciones": {
     "m3_por_pallet": 1.2,
     "m3_container_20": 28,
@@ -83,26 +83,6 @@
       "cobertura_volumen_pct": 95.2
     },
     {
-      "pi": "26TP0927PI",
-      "transporte": "",
-      "fecha_embarque": "2026-10-29",
-      "fecha_eta_bodega": "2026-10-29",
-      "skus_distintos": 23,
-      "unidades_totales": 9020.0,
-      "peso_total_kg": 8439.9,
-      "volumen_total_m3": 29.36,
-      "volumen_total_m3_raw": 8392956.61,
-      "pallets_estim": 24.5,
-      "containers_20_estim": 1.05,
-      "containers_40hc_estim": 0.44,
-      "skus_con_match_odoo": 23,
-      "skus_con_peso": 14,
-      "skus_con_volumen": 14,
-      "skus_volumen_anomalo": 5,
-      "cobertura_peso_pct": 60.9,
-      "cobertura_volumen_pct": 60.9
-    },
-    {
       "pi": "26TP0930PI",
       "transporte": "",
       "fecha_embarque": "2026-11-17",
@@ -121,46 +101,6 @@
       "skus_volumen_anomalo": 3,
       "cobertura_peso_pct": 100.0,
       "cobertura_volumen_pct": 97.1
-    },
-    {
-      "pi": "26TP1029PI",
-      "transporte": "",
-      "fecha_embarque": "2026-11-17",
-      "fecha_eta_bodega": "2026-11-17",
-      "skus_distintos": 1,
-      "unidades_totales": 3150.0,
-      "peso_total_kg": 0.0,
-      "volumen_total_m3": 0.0,
-      "volumen_total_m3_raw": 0.0,
-      "pallets_estim": 0,
-      "containers_20_estim": 0,
-      "containers_40hc_estim": 0,
-      "skus_con_match_odoo": 1,
-      "skus_con_peso": 0,
-      "skus_con_volumen": 0,
-      "skus_volumen_anomalo": 0,
-      "cobertura_peso_pct": 0.0,
-      "cobertura_volumen_pct": 0.0
-    },
-    {
-      "pi": "26TP1030PI",
-      "transporte": "",
-      "fecha_embarque": "2026-11-17",
-      "fecha_eta_bodega": "2026-11-17",
-      "skus_distintos": 1,
-      "unidades_totales": 3150.0,
-      "peso_total_kg": 0.0,
-      "volumen_total_m3": 0.0,
-      "volumen_total_m3_raw": 0.0,
-      "pallets_estim": 0,
-      "containers_20_estim": 0,
-      "containers_40hc_estim": 0,
-      "skus_con_match_odoo": 1,
-      "skus_con_peso": 0,
-      "skus_con_volumen": 0,
-      "skus_volumen_anomalo": 0,
-      "cobertura_peso_pct": 0.0,
-      "cobertura_volumen_pct": 0.0
     }
   ],
   "skus_sin_match": [
@@ -173,39 +113,14 @@
       "volumen_unit_m3": 133585.2
     },
     {
-      "sku": "BDPKMESILL",
-      "producto": "Set Mesa y 2 Sillas Infantil Madera con Cajones Bandú",
-      "volumen_unit_m3": 108949.5
-    },
-    {
-      "sku": "BDCASMUÑEC-WD",
-      "producto": "Casa de Muñecas Madera 3 Pisos con Muebles y Muñecos Bandú",
-      "volumen_unit_m3": 31438.125
-    },
-    {
-      "sku": "BDSETLIMP",
-      "producto": "Juguete Set de Aseo y Limpieza Madera Niños Soporte Bandú",
-      "volumen_unit_m3": 23040.0
-    },
-    {
       "sku": "XRCOBSUV-BS",
       "producto": "Carpa Funda Cubre SUV Impermeable Premium con Felpa Xroad",
       "volumen_unit_m3": 17010.0
     },
     {
-      "sku": "BDPZMG2E1",
-      "producto": "Pizarra Infantil Madera 2 en 1 Magnética Doble Cara Bandú",
-      "volumen_unit_m3": 11000.0
-    },
-    {
       "sku": "LVMOVEL-BK",
       "producto": "Mochila Notebook Ejecutiva Velar Lite Impermeable 18L LEVO",
       "volumen_unit_m3": 6720.0
-    },
-    {
-      "sku": "BDGMNMVBB",
-      "producto": "Gimnasio Madera Bebé Montessori Juguetes Colgantes Bandú",
-      "volumen_unit_m3": 4414.41
     }
   ]
 }
