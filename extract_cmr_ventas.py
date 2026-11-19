@@ -105,6 +105,16 @@ def _parse_num_cl(s):
         return None
 
 
+def _n(x) -> float:
+    """Monto del Sheet a float: None, '' y NaN valen 0. `float(x or 0)` NO sirve: NaN es truthy y se propaga
+    (nov-2026: canjes cargados sin monto quedaron con venta NaN y su costo salió del margen)."""
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return 0.0
+    return 0.0 if pd.isna(v) else v
+
+
 def _parse_fecha_dmy(s):
     if not s or pd.isna(s):
         return None
@@ -225,8 +235,8 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
                 cand_ref[(ref, sku_i)].append(i)
 
     def _aplicar(i, cmr):
-        costo = float(pd.to_numeric(df.at[i, 'costo_total'], errors='coerce') or 0)
-        neta = float(cmr['venta_neta'] or 0); bruta = float(cmr['venta_bruta'] or 0)
+        costo = _n(pd.to_numeric(df.at[i, 'costo_total'], errors='coerce'))
+        neta = _n(cmr['venta_neta']); bruta = _n(cmr['venta_bruta'])
         df.at[i, 'canal'] = 'CMR'; df.at[i, 'tipo_negocio'] = 'Fidelización'
         df.at[i, 'venta_bruta'] = bruta; df.at[i, 'venta_neta'] = neta
         df.at[i, 'margen_front'] = neta - costo; df.at[i, 'margen_final'] = neta - costo
@@ -245,6 +255,11 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
             n_ref += origen == 'ref'; n_fs += origen == 'fs'
             break
     print(f"   [CMR] {n} filas enriquecidas (por ref #: {n_ref}, por fecha+sku: {n_fs}), venta bruta +${total:,.0f}", flush=True)
+    sin_monto = df_cmr['venta_bruta'].apply(_n).eq(0)
+    if sin_monto.any():
+        _m = df_cmr.loc[sin_monto, 'fecha'].apply(lambda d: d.strftime('%Y-%m') if hasattr(d, 'strftime') else '?').value_counts().to_dict()
+        print(f"   [CMR][WARN] {int(sin_monto.sum())} canjes del Sheet SIN 'Venta CMR Bruto' {_m}: entran al canal CMR "
+              f"con venta $0 hasta que se complete el monto en la Base CMR 2026", flush=True)
 
     # INGRESO POR ENVÍO CMR (decisión Andrés 29-jul-2026): el 'Envío CMR' del Sheet es
     # INGRESO, no costo. El match de producto lo descartaba (logistica=0). Se agrega como
@@ -257,8 +272,8 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
         df = df[~es_env_cmr_prev].copy()
     NUMc = set(c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]))
     env_rows = []
-    for _, cmr in df_cmr.iterrows():
-        env = float(cmr.get('envio_cmr') or 0)
+    for _ix, cmr in df_cmr.iterrows():
+        env = _n(cmr.get('envio_cmr'))
         f = cmr['fecha']
         if env == 0 or f is None or f.strftime('%Y-%m') not in meses_df:
             continue
@@ -268,6 +283,9 @@ def enriquecer_cmr_df(df: pd.DataFrame) -> pd.DataFrame:
             'sku': 'Delivery_007', 'producto': 'Envíos', 'categoria_macro': 'Envíos',
             'tipo_compra': 'Envío', 'estado_pedido': 'sale',
             'pedido_marketplace': str(cmr.get('cmr_name', '')).strip(),
+            # id transitorio propio: el extract deduplica las ventas por _line_id y lo borra antes de guardar. Sin él, el
+            # dedup por contenido juntaba todos los envíos del mismo día en una fila (19-nov-2026: 71 → 15).
+            '_line_id': f"CMR-ENV-{str(cmr.get('cmr_name', '')).strip()}-{_ix}",
             'fecha_venta': f.isoformat(), 'fecha_documento': f.isoformat(),
             'anio_venta': f.year, 'mes_venta': f.month, 'semana_venta': f.isocalendar()[1],
             'dia_semana': f.weekday(), 'cantidad': 1.0,
@@ -332,8 +350,8 @@ def reconstruir_cmr_desde_drive(df_mes):
     for _, c in cmr.iterrows():
         f = c['fecha']; name = str(c['cmr_name']).strip(); sku = str(c['sku']).strip()
         a = attr.get((name, sku))
-        neta = float(c['venta_neta'] or 0); bruta = float(c['venta_bruta'] or 0)
-        costo = float(pd.to_numeric(a['costo_total'], errors='coerce') or 0) if a is not None else 0.0
+        neta = _n(c['venta_neta']); bruta = _n(c['venta_bruta'])
+        costo = _n(pd.to_numeric(a['costo_total'], errors='coerce')) if a is not None else 0.0
         row = {col: (0 if col in NUM else '') for col in cols}
         row.update({
             'tipo_movimiento': 'Venta', 'canal': 'CMR', 'tipo_negocio': 'Fidelización',
@@ -344,7 +362,7 @@ def reconstruir_cmr_desde_drive(df_mes):
             'cantidad': float(c.get('cantidad') or 1), 'venta_bruta': bruta, 'venta_neta': neta,
             'costo_unitario': (float(pd.to_numeric(a['costo_unitario'], errors='coerce') or 0) if a is not None else 0),
             'costo_total': costo, 'margen_front': neta - costo, 'margen_final': neta - costo,
-            'comision': float(c.get('comision') or 0), 'comision_pct': float(c.get('comision_pct') or 0),
+            'comision': _n(c.get('comision')), 'comision_pct': _n(c.get('comision_pct')),
             'logistica': 0, 'marketing': 0,  # el Envío CMR va como INGRESO aparte (abajo), no como logística
         })
         if a is not None:
@@ -353,7 +371,7 @@ def reconstruir_cmr_desde_drive(df_mes):
                     row[col] = a[col]
         filas.append(row)
         # INGRESO POR ENVÍO CMR (decisión Andrés 29-jul-2026): fila de ingreso separada.
-        env = float(c.get('envio_cmr') or 0)
+        env = _n(c.get('envio_cmr'))
         if env:
             erow = {col: (0 if col in NUM else '') for col in cols}
             erow.update({
