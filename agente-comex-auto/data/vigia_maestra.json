@@ -1,6 +1,6 @@
 {
   "errores_seguidos": 0,
-  "ultimo_chequeo": "2026-11-19",
+  "ultimo_chequeo": "2026-11-20",
   "maestra_modificada": "2026-11-18T23:04:40.122Z",
   "embarques_en_maestra": 148,
   "faltan": [
@@ -8,43 +8,43 @@
       "embarque": "26TP0927",
       "po": "P00746",
       "desde": "2026-10-29",
-      "dias": 21
+      "dias": 22
     },
     {
       "embarque": "26TP0928",
       "po": "P00741,P00740",
       "desde": "2026-10-29",
-      "dias": 21
+      "dias": 22
     },
     {
       "embarque": "26TP0930",
       "po": "P00751",
-      "desde": "2026-11-18",
+      "desde": "2026-11-19",
       "dias": 1
     },
     {
       "embarque": "26TP0917",
       "po": "P00750",
       "desde": "2026-11-17",
-      "dias": 2
+      "dias": 3
     },
     {
       "embarque": "26TP1024",
       "po": "P00748",
       "desde": "2026-11-17",
-      "dias": 2
+      "dias": 3
     },
     {
       "embarque": "26TP1029",
       "po": "P00752",
       "desde": "2026-11-17",
-      "dias": 2
+      "dias": 3
     },
     {
       "embarque": "26TP1030",
       "po": "P00753",
       "desde": "2026-11-17",
-      "dias": 2
+      "dias": 3
     }
   ],
   "atrasados": [
@@ -52,19 +52,47 @@
       "embarque": "26TP0927",
       "po": "P00746",
       "desde": "2026-10-29",
-      "dias": 21
+      "dias": 22
     },
     {
       "embarque": "26TP0928",
       "po": "P00741,P00740",
       "desde": "2026-10-29",
-      "dias": 21
+      "dias": 22
+    },
+    {
+      "embarque": "26TP0917",
+      "po": "P00750",
+      "desde": "2026-11-17",
+      "dias": 3
+    },
+    {
+      "embarque": "26TP1024",
+      "po": "P00748",
+      "desde": "2026-11-17",
+      "dias": 3
+    },
+    {
+      "embarque": "26TP1029",
+      "po": "P00752",
+      "desde": "2026-11-17",
+      "dias": 3
+    },
+    {
+      "embarque": "26TP1030",
+      "po": "P00753",
+      "desde": "2026-11-17",
+      "dias": 3
     }
   ],
   "error": null,
   "alertados": {
     "26TP0927": "2026-11-01",
-    "26TP0928": "2026-11-01"
+    "26TP0928": "2026-11-01",
+    "26TP0917": "2026-11-20",
+    "26TP1024": "2026-11-20",
+    "26TP1029": "2026-11-20",
+    "26TP1030": "2026-11-20"
   },
   "ultimo_recordatorio": "2026-11-16"
 }
