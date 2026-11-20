@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-20T01:57:40.082807",
+  "generado_en": "2026-11-20T10:43:23.124363",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 708,
     "posiciones_libres_hoy": 669,
     "pct_ocupacion_hoy": 51.4,
-    "m3_stock_calculado": 783.1
+    "m3_stock_calculado": 783.0
   },
   "pico_proyectado": {
     "fecha": "2026-11-20",
@@ -66,15 +66,15 @@
   "pallets_total_entrantes_horizonte": 95.6,
   "pallets_total_salientes_horizonte": 157.5,
   "m3_total_entrante_horizonte": 114.7,
-  "m3_total_saliente_horizonte": 189.0,
+  "m3_total_saliente_horizonte": 188.9,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 773,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 63142.0,
-    "demanda_cumplida_unidades": 16242.0,
-    "demanda_no_cubierta_unidades_total": 46900.0,
+    "demanda_cumplida_unidades": 16236.0,
+    "demanda_no_cubierta_unidades_total": 46906.0,
     "pct_demanda_cumplida": 25.7,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -85,7 +85,7 @@
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 15119.0,
+        "unid_no_cubiertas": 15120.0,
         "sin_match_stock": true
       },
       {
@@ -105,7 +105,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 320.0,
+        "unid_no_cubiertas": 321.0,
         "sin_match_stock": true
       },
       {
