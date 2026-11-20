@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-20T10:43:23.124363",
+  "generado_en": "2026-11-20T19:24:08.080832",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1377,
-    "posiciones_ocupadas_hoy": 708,
-    "posiciones_libres_hoy": 669,
-    "pct_ocupacion_hoy": 51.4,
-    "m3_stock_calculado": 783.0
+    "posiciones_ocupadas_hoy": 713,
+    "posiciones_libres_hoy": 664,
+    "pct_ocupacion_hoy": 51.8,
+    "m3_stock_calculado": 781.0
   },
   "pico_proyectado": {
     "fecha": "2026-11-20",
-    "posiciones_ocupadas": 701.1,
-    "pct_ocupacion": 50.9
+    "posiciones_ocupadas": 706.1,
+    "pct_ocupacion": 51.3
   },
   "minimo_proyectado": {
     "fecha": "2027-01-18",
-    "posiciones_ocupadas": 550.5,
-    "pct_ocupacion": 40.0
+    "posiciones_ocupadas": 556.7,
+    "pct_ocupacion": 40.4
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -64,17 +64,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 95.6,
-  "pallets_total_salientes_horizonte": 157.5,
+  "pallets_total_salientes_horizonte": 156.3,
   "m3_total_entrante_horizonte": 114.7,
-  "m3_total_saliente_horizonte": 188.9,
+  "m3_total_saliente_horizonte": 187.6,
   "salidas_debug": {
     "horizonte_dias": 90,
-    "sku_con_vol_odoo": 773,
+    "sku_con_vol_odoo": 776,
     "sku_fallback": 5,
-    "fallback_vol_m3": 0.00575,
+    "fallback_vol_m3": 0.00577,
     "demanda_total_unidades_horizonte": 63142.0,
-    "demanda_cumplida_unidades": 16236.0,
-    "demanda_no_cubierta_unidades_total": 46906.0,
+    "demanda_cumplida_unidades": 16196.0,
+    "demanda_no_cubierta_unidades_total": 46946.0,
     "pct_demanda_cumplida": 25.7,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -85,12 +85,12 @@
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 15120.0,
+        "unid_no_cubiertas": 15121.0,
         "sin_match_stock": true
       },
       {
         "sku": "67898087132855",
-        "unid_no_cubiertas": 934.0,
+        "unid_no_cubiertas": 935.0,
         "sin_match_stock": true
       },
       {
@@ -100,17 +100,17 @@
       },
       {
         "sku": "LHSWVIBBK",
-        "unid_no_cubiertas": 378.0,
+        "unid_no_cubiertas": 379.0,
         "sin_match_stock": true
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 321.0,
+        "unid_no_cubiertas": 324.0,
         "sin_match_stock": true
       },
       {
         "sku": "1659991971809",
-        "unid_no_cubiertas": 283.0,
+        "unid_no_cubiertas": 291.0,
         "sin_match_stock": true
       },
       {
@@ -120,12 +120,12 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 219.0,
+        "unid_no_cubiertas": 220.0,
         "sin_match_stock": true
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 184.0,
+        "unid_no_cubiertas": 185.0,
         "sin_match_stock": true
       },
       {
@@ -150,7 +150,7 @@
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 92.0,
+        "unid_no_cubiertas": 94.0,
         "sin_match_stock": true
       },
       {
@@ -165,7 +165,7 @@
       },
       {
         "sku": "SIMBACOHA-55",
-        "unid_no_cubiertas": 82.0,
+        "unid_no_cubiertas": 86.0,
         "sin_match_stock": true
       },
       {
