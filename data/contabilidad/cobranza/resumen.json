@@ -1,36 +1,32 @@
 {
-  "generado_en": "2026-11-20T05:44:25.984470",
+  "generado_en": "2026-11-20T14:31:59.248850",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12374,
-  "total_monto_pendiente_clp": 828796948.0,
+  "total_documentos_pendientes": 12126,
+  "total_monto_pendiente_clp": 740802696.0,
   "monto_por_aging": {
-    "+90 días": 96235251.0,
-    "1-30 días": 310722465.0,
-    "31-60 días": 174506532.0,
-    "61-90 días": 41850699.0,
-    "Vigente": 205482001.0
+    "+90 días": 94617391.0,
+    "1-30 días": 266006451.0,
+    "31-60 días": 138502163.0,
+    "61-90 días": 34150150.0,
+    "Vigente": 207526541.0
   },
   "monto_por_tipo": {
-    "BOLETA": 661361110.0,
-    "FACTURA": 167435838.0
+    "BOLETA": 653055003.0,
+    "FACTURA": 87747693.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 141560395.0
+      "monto": 141944425.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 94251825.0
-    },
-    {
-      "partner": "FALABELLA.COM",
-      "monto": 89316962.0
+      "monto": 94797522.0
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 54407745.0
+      "monto": 44562896.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -45,10 +41,6 @@
       "monto": 34627628.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 26630076.0
-    },
-    {
       "partner": "All In Marketing Spa",
       "monto": 26542384.0
     },
@@ -57,12 +49,16 @@
       "monto": 25764639.0
     },
     {
-      "partner": "Comercial ECCSA S A",
-      "monto": 19325008.0
+      "partner": "Cliente Paris",
+      "monto": 24004488.0
     },
     {
-      "partner": "Walmart Serv. Generales Ltda.",
-      "monto": 17654986.0
+      "partner": "FALABELLA.COM",
+      "monto": 22626894.0
+    },
+    {
+      "partner": "Comercial ECCSA S A",
+      "monto": 19325008.0
     },
     {
       "partner": "Cencosud Retail S.A",
@@ -74,19 +70,19 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 13805014.0
+      "monto": 13875229.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
-      "monto": 11114269.0
-    },
-    {
-      "partner": "Cliente Walmart",
-      "monto": 10494779.0
+      "monto": 11435320.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 10061442.0
+      "monto": 9963490.0
+    },
+    {
+      "partner": "Cliente Walmart",
+      "monto": 8905822.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -95,8 +91,12 @@
     {
       "partner": "STATUS SPA",
       "monto": 8171089.0
+    },
+    {
+      "partner": "Lhotse Store",
+      "monto": 7545419.0
     }
   ],
-  "notas_credito_count": 1126,
+  "notas_credito_count": 858,
   "pedidos_venta_count": 10000
 }
