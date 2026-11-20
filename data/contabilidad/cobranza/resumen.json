@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-11-19T23:59:25.892642",
+  "generado_en": "2026-11-20T05:44:25.984470",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12341,
-  "total_monto_pendiente_clp": 827113614.0,
+  "total_documentos_pendientes": 12374,
+  "total_monto_pendiente_clp": 828796948.0,
   "monto_por_aging": {
-    "+90 días": 96069315.0,
-    "1-30 días": 312475879.0,
-    "31-60 días": 169919385.0,
-    "61-90 días": 42007669.0,
-    "Vigente": 206641366.0
+    "+90 días": 96235251.0,
+    "1-30 días": 310722465.0,
+    "31-60 días": 174506532.0,
+    "61-90 días": 41850699.0,
+    "Vigente": 205482001.0
   },
   "monto_por_tipo": {
-    "BOLETA": 659677776.0,
+    "BOLETA": 661361110.0,
     "FACTURA": 167435838.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 140378695.0
+      "monto": 141560395.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -30,7 +30,7 @@
     },
     {
       "partner": "Cliente Falabella Fcom",
-      "monto": 54286619.0
+      "monto": 54407745.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
@@ -45,12 +45,12 @@
       "monto": 34627628.0
     },
     {
-      "partner": "All In Marketing Spa",
-      "monto": 26542384.0
+      "partner": "Cliente Paris",
+      "monto": 26630076.0
     },
     {
-      "partner": "Cliente Paris",
-      "monto": 26508126.0
+      "partner": "All In Marketing Spa",
+      "monto": 26542384.0
     },
     {
       "partner": "GOPOINTS CHILE SPA",
@@ -74,7 +74,7 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 13790422.0
+      "monto": 13805014.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 10353749.0
+      "monto": 10494779.0
     },
     {
       "partner": "Cliente Simplit Home",
@@ -97,6 +97,6 @@
       "monto": 8171089.0
     }
   ],
-  "notas_credito_count": 1127,
+  "notas_credito_count": 1126,
   "pedidos_venta_count": 10000
 }
