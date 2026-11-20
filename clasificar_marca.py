@@ -71,7 +71,9 @@ def es_marca_propia(marca) -> bool:
 
 
 def clasificar_tipo_marca(marca) -> str:
-    """Devuelve 'Propia' u 'Otras marcas' segun la marca."""
+    """Devuelve 'Propia', 'Otras marcas' o 'Sin marca' (SKU sin marca en Odoo ni en la Pricing, ver marcas_sku.py)."""
+    if _norm(marca) == 'sinmarca':
+        return 'Sin marca'
     return 'Propia' if es_marca_propia(marca) else 'Otras marcas'
 
 

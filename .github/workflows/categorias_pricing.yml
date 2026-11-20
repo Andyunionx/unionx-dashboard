@@ -38,15 +38,27 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python sync_categorias_pricing.py
 
+      # Marca verificada por SKU (Andrés 20-nov-2026): Odoo → Pricing → componentes / Open Box → corporativos ITEK →
+      # Matriz → «SIN MARCA». Deja data/planillas/marcas_sku.csv.
+      # La aplica el extract del RAW (mejoras_raw_overlay.py, P1f). Solo lee Odoo y Drive.
+      - name: Marca verificada por SKU
+        continue-on-error: true   # si Odoo no responde, las categorías igual se guardan y el RAW usa el CSV anterior
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          ANDRES_ODOO_PASSWORD: ${{ secrets.ANDRES_ODOO_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: python marcas_sku.py
+
       - name: Guardar si cambió
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions Categorías Pricing"
           git add data/planillas/categorias_pricing.csv
+          if [ -f data/planillas/marcas_sku.csv ]; then git add data/planillas/marcas_sku.csv; fi
           if git diff --staged --quiet; then
-            echo "Sin cambios en las categorías"
+            echo "Sin cambios en categorías ni marcas"
           else
-            git commit -m "Categorías Pricing: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git commit -m "Categorías y marcas (Pricing + Odoo): $(date -u +'%Y-%m-%d %H:%M UTC')"
             git pull --rebase origin main
             git push
           fi

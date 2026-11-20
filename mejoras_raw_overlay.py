@@ -14,6 +14,7 @@ backfill one-shot vía CLI.
 Uso CLI:  python mejoras_raw_overlay.py [--apply] [--parquet <ruta>]
 """
 import argparse
+import os
 import unicodedata
 from pathlib import Path
 
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parent
 MATRIZ = ROOT / "data" / "planillas" / "Matriz productos.xlsx"
 NC_DET = ROOT / "data" / "contabilidad" / "nc_detalle_h1.parquet"
 PRICING_CAT = ROOT / "data" / "planillas" / "categorias_pricing.csv"   # sync_categorias_pricing.py
+MARCAS_SKU = ROOT / "data" / "planillas" / "marcas_sku.csv"   # marcas_sku.py (marca verificada por SKU)
 
 MATRIZ_MAP = {
     "Producto": "producto", "Categoría macro": "categoria_macro",
@@ -127,6 +129,44 @@ def heal_marca(df, verbose=True):
     return df
 
 
+def marca_verificada(df, verbose=True):
+    """P1f (Andrés 20-nov-2026): la marca del RAW se verifica en Odoo o en la Maestra Pricing.
+
+    Pisa `marca` en toda fila cuyo SKU esté en data/planillas/marcas_sku.csv (lo genera marcas_sku.py: Odoo →
+    Pricing → componentes del pack / SKU original del Open Box → Dinasty y corporativos = ITEK → Matriz solo como
+    respaldo histórico → «SIN MARCA»).
+    Así la marca ya no depende de que el SKU esté en la Matriz ni de inferirla por el nombre (heal_marca). Los SKU que
+    no son productos (despachos, servicios, sin SKU) no están en el CSV y quedan como venían. Avisa en el log, y como
+    advertencia de GitHub Actions, cada SKU que queda «SIN MARCA»."""
+    log = print if verbose else (lambda *a, **k: None)
+    if "marca" not in df.columns or "sku" not in df.columns:
+        return df
+    if not MARCAS_SKU.exists():
+        log("  [P1f][WARN] falta data/planillas/marcas_sku.csv: la marca queda como venía (Matriz + inferencia)")
+        return df
+    ms = pd.read_csv(MARCAS_SKU, dtype=str, keep_default_na=False)
+    mp = dict(zip(ms["sku_norm"], ms["marca"]))
+    fu = dict(zip(ms["sku_norm"], ms["fuente"]))
+    k = df["sku"].astype(str).map(_norm)
+    hit = k.isin(mp.keys())
+    antes = df["marca"].astype(str).str.strip()
+    df.loc[hit, "marca"] = k[hit].map(mp).values
+    fuente = k[hit].map(fu)
+    cambio = hit & antes.ne(df["marca"].astype(str))
+    log(f"  [P1f] marca verificada en {int(hit.sum()):,} filas ("
+        + ", ".join(f"{a} {b:,}" for a, b in fuente.value_counts().items())
+        + f"); cambió en {int(cambio.sum()):,}")
+    sin = hit & df["marca"].eq("SIN MARCA")
+    if sin.any():
+        skus = df.loc[sin, ["sku", "producto"]].drop_duplicates("sku")
+        lista = "; ".join(f"{s} ({str(p)[:40]})" for s, p in skus.head(15).itertuples(index=False, name=None))
+        log(f"  [P1f][WARN] {len(skus)} SKU sin marca en Odoo ni en la Pricing: {lista}")
+        if os.environ.get("GITHUB_ACTIONS"):
+            print(f"::warning title=SKU sin marca::{len(skus)} SKU vendidos sin marca en Odoo ni en la Pricing: "
+                  + ", ".join(skus["sku"].astype(str).head(10)))
+    return df
+
+
 def unificar_descripcion_por_sku(df, verbose=True):
     """P1d — un solo `producto` por SKU en TODAS las filas del RAW.
 
@@ -217,6 +257,10 @@ def aplicar_mejoras(df, con_nc_backfill=True, verbose=True):
 
     # P1b — self-heal de marca vacía (mismo SKU + prefijo)
     df = heal_marca(df, verbose=verbose)
+
+    # P1f — marca verificada en Odoo o en la Maestra Pricing (Andrés 20-nov-2026). Va después de P1/P1b y los pisa:
+    # la Matriz y la inferencia por nombre quedan solo para lo que no es producto.
+    df = marca_verificada(df, verbose=verbose)
 
     # P1d — descripción única por SKU (evita que un pivote por nombre se parta
     # cuando com/log/mkt traen otro texto para el mismo SKU). Nicole 12-ago.
