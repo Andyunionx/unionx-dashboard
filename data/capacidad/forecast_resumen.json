@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-19T21:13:01.164438",
+  "generado_en": "2026-11-20T01:57:40.082807",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,12 +14,12 @@
     "posiciones_ocupadas_hoy": 708,
     "posiciones_libres_hoy": 669,
     "pct_ocupacion_hoy": 51.4,
-    "m3_stock_calculado": 783.4
+    "m3_stock_calculado": 783.1
   },
   "pico_proyectado": {
-    "fecha": "2026-11-19",
-    "posiciones_ocupadas": 708.0,
-    "pct_ocupacion": 51.4
+    "fecha": "2026-11-20",
+    "posiciones_ocupadas": 701.1,
+    "pct_ocupacion": 50.9
   },
   "minimo_proyectado": {
     "fecha": "2027-01-18",
@@ -73,8 +73,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00575,
     "demanda_total_unidades_horizonte": 63142.0,
-    "demanda_cumplida_unidades": 16245.0,
-    "demanda_no_cubierta_unidades_total": 46897.0,
+    "demanda_cumplida_unidades": 16242.0,
+    "demanda_no_cubierta_unidades_total": 46900.0,
     "pct_demanda_cumplida": 25.7,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -149,12 +149,12 @@
         "sin_match_stock": true
       },
       {
-        "sku": "Pack261",
-        "unid_no_cubiertas": 91.0,
+        "sku": "1650301031879",
+        "unid_no_cubiertas": 92.0,
         "sin_match_stock": true
       },
       {
-        "sku": "1650301031879",
+        "sku": "Pack261",
         "unid_no_cubiertas": 91.0,
         "sin_match_stock": true
       },
