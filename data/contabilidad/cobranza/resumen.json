@@ -1,24 +1,24 @@
 {
-  "generado_en": "2026-11-22T13:44:05.663942",
+  "generado_en": "2026-11-22T22:55:43.978756",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 11911,
-  "total_monto_pendiente_clp": 726130894.0,
+  "total_documentos_pendientes": 11994,
+  "total_monto_pendiente_clp": 729281177.0,
   "monto_por_aging": {
     "+90 días": 94310366.0,
-    "1-30 días": 253257178.0,
+    "1-30 días": 256407461.0,
     "31-60 días": 145067068.0,
     "61-90 días": 36663052.0,
     "Vigente": 196833230.0
   },
   "monto_por_tipo": {
-    "BOLETA": 638383201.0,
+    "BOLETA": 641533484.0,
     "FACTURA": 87747693.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 144918019.0
+      "monto": 145957229.0
     },
     {
       "partner": "Cliente Kitchen Center",
@@ -33,12 +33,12 @@
       "monto": 35965608.0
     },
     {
-      "partner": "Duty Free T C S A",
-      "monto": 34691613.0
+      "partner": "Cliente Falabella Fcom",
+      "monto": 34727145.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 34184013.0
+      "partner": "Duty Free T C S A",
+      "monto": 34691613.0
     },
     {
       "partner": "All In Marketing Spa",
@@ -50,7 +50,7 @@
     },
     {
       "partner": "Cliente Paris",
-      "monto": 23690818.0
+      "monto": 23907708.0
     },
     {
       "partner": "FALABELLA.COM",
@@ -66,15 +66,15 @@
     },
     {
       "partner": "Cliente Shopify",
-      "monto": 14221714.0
+      "monto": 14257674.0
+    },
+    {
+      "partner": "Cliente Simplit Home",
+      "monto": 12018313.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
       "monto": 11591909.0
-    },
-    {
-      "partner": "Cliente Simplit Home",
-      "monto": 11504818.0
     },
     {
       "partner": "Celmedia Fidelizacion SPA",
@@ -82,7 +82,7 @@
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 9539994.0
+      "monto": 9767965.0
     },
     {
       "partner": "Global Reward Solutions",
@@ -94,7 +94,7 @@
     },
     {
       "partner": "Lhotse Store",
-      "monto": 7617125.0
+      "monto": 7657536.0
     }
   ],
   "notas_credito_count": 863,
