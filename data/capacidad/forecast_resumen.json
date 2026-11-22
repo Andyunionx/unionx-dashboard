@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-22T00:47:53.698209",
+  "generado_en": "2026-11-22T10:29:32.744107",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 702,
     "posiciones_libres_hoy": 675,
     "pct_ocupacion_hoy": 51.0,
-    "m3_stock_calculado": 778.7
+    "m3_stock_calculado": 778.4
   },
   "pico_proyectado": {
     "fecha": "2026-11-22",
@@ -23,7 +23,7 @@
   },
   "minimo_proyectado": {
     "fecha": "2027-01-19",
-    "posiciones_ocupadas": 542.5,
+    "posiciones_ocupadas": 542.6,
     "pct_ocupacion": 39.4
   },
   "primer_critico": null,
@@ -64,7 +64,7 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 95.6,
-  "pallets_total_salientes_horizonte": 159.5,
+  "pallets_total_salientes_horizonte": 159.4,
   "m3_total_entrante_horizonte": 114.7,
   "m3_total_saliente_horizonte": 191.3,
   "salidas_debug": {
@@ -73,8 +73,8 @@
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00577,
     "demanda_total_unidades_horizonte": 62819.0,
-    "demanda_cumplida_unidades": 16080.0,
-    "demanda_no_cubierta_unidades_total": 46739.0,
+    "demanda_cumplida_unidades": 16076.0,
+    "demanda_no_cubierta_unidades_total": 46743.0,
     "pct_demanda_cumplida": 25.6,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -130,7 +130,7 @@
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 162.0,
+        "unid_no_cubiertas": 163.0,
         "sin_match_stock": true
       },
       {
