@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-11-21T20:48:36.878088",
+  "generado_en": "2026-11-22T10:50:54.227130",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.0714560492402385,
-      "total_pickings": 10398,
-      "on_time": 745,
-      "on_time_pct": 0.07164839392190805,
-      "in_full": 10390,
-      "in_full_pct": 0.9992306212733217,
-      "both": 743,
+      "valor": 0.07354577642893273,
+      "total_pickings": 9885,
+      "on_time": 728,
+      "on_time_pct": 0.07364693980778958,
+      "in_full": 9878,
+      "in_full_pct": 0.999291856348002,
+      "both": 727,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.057534246575342465,
-      "total_pickings": 365,
-      "on_time": 21,
-      "on_time_pct": 0.057534246575342465,
-      "in_full": 361,
-      "in_full_pct": 0.989041095890411,
-      "both": 21,
+      "valor": 0.06116207951070336,
+      "total_pickings": 327,
+      "on_time": 20,
+      "on_time_pct": 0.06116207951070336,
+      "in_full": 323,
+      "in_full_pct": 0.9877675840978594,
+      "both": 20,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997769350881106,
-      "ok": 13446,
-      "total": 13449,
+      "valor": 0.9997631267272009,
+      "ok": 12662,
+      "total": 12665,
       "errores": 3,
       "error": null
     },
@@ -179,35 +179,21 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.971773389188111,
-      "total_so": 10043,
-      "total_con_pickings": 10026,
-      "cumplidos": 9743,
+      "valor": 0.9668955621605001,
+      "total_so": 9769,
+      "total_con_pickings": 9757,
+      "cumplidos": 9434,
       "parciales": 14,
-      "sin_iniciar": 269,
+      "sin_iniciar": 309,
       "error": null
     },
     "oct_30d": {
-      "valor": 29.837277175052414,
-      "n_orders": 10600,
+      "valor": 28.362322953913388,
+      "n_orders": 10068,
       "min_h": 0.0002777777777777778,
-      "max_h": 714.7769444444444,
-      "mediana_h": 12.084444444444445,
+      "max_h": 659.6175,
+      "mediana_h": 10.145555555555555,
       "detalle": [
-        {
-          "so": "S290463",
-          "cliente": "Cliente Falabella Fcom, Maria Figueroa Poblete",
-          "horas": 714.8,
-          "fecha_orden": "2026-09-23 00:12",
-          "fecha_despacho": "2026-10-22 18:58"
-        },
-        {
-          "so": "S290912",
-          "cliente": "Cliente Falabella Fcom, Otto Leonidas Gonzalez Madrid",
-          "horas": 691.1,
-          "fecha_orden": "2026-09-23 23:55",
-          "fecha_despacho": "2026-10-22 18:58"
-        },
         {
           "so": "S308091",
           "cliente": "Cliente Walmart, Daniela Campos Campos",
@@ -221,13 +207,6 @@
           "horas": 655.5,
           "fecha_orden": "2026-10-20 16:18",
           "fecha_despacho": "2026-11-16 23:49"
-        },
-        {
-          "so": "S291453",
-          "cliente": "Cliente Falabella Fcom, lissette hidalgo hidalgo",
-          "horas": 647.6,
-          "fecha_orden": "2026-09-25 14:10",
-          "fecha_despacho": "2026-10-22 13:48"
         },
         {
           "so": "S301412",
@@ -333,6 +312,27 @@
           "horas": 579.6,
           "fecha_orden": "2026-10-03 16:43",
           "fecha_despacho": "2026-10-27 20:18"
+        },
+        {
+          "so": "S295475",
+          "cliente": "Cliente Shopify, Ashley Camila Gatica Raniqueo",
+          "horas": 578.8,
+          "fecha_orden": "2026-10-05 13:54",
+          "fecha_despacho": "2026-10-29 16:43"
+        },
+        {
+          "so": "S295510",
+          "cliente": "Cliente Shopify, Ashley Gatica",
+          "horas": 578.4,
+          "fecha_orden": "2026-10-05 14:15",
+          "fecha_despacho": "2026-10-29 16:41"
+        },
+        {
+          "so": "S298262",
+          "cliente": "Cliente Shopify, Joaquín Cofré Ríos",
+          "horas": 572.6,
+          "fecha_orden": "2026-10-06 17:41",
+          "fecha_despacho": "2026-10-30 14:18"
         }
       ],
       "error": null
@@ -346,7 +346,7 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9114,
+      "lineas": 9189,
       "mes": "2026-11",
       "error": null
     },
@@ -373,32 +373,20 @@
         },
         {
           "cliente": "Sawa SPA",
-          "total": 73,
-          "tarde": 73,
+          "total": 69,
+          "tarde": 69,
           "on_time_pct": 0.0
         },
         {
-          "cliente": "abc S.A.",
-          "total": 44,
-          "tarde": 44,
+          "cliente": "Celmedia Fidelizacion SPA",
+          "total": 20,
+          "tarde": 20,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Global Reward Solutions",
-          "total": 95,
-          "tarde": 95,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Gluky Group SPA",
-          "total": 3,
-          "tarde": 3,
-          "on_time_pct": 0.0
-        },
-        {
-          "cliente": "Lokal SpA",
-          "total": 10,
-          "tarde": 10,
+          "total": 79,
+          "tarde": 79,
           "on_time_pct": 0.0
         },
         {
@@ -408,16 +396,22 @@
           "on_time_pct": 0.0
         },
         {
+          "cliente": "abc S.A.",
+          "total": 35,
+          "tarde": 35,
+          "on_time_pct": 0.0
+        },
+        {
           "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
           "total": 3,
           "tarde": 3,
           "on_time_pct": 0.0
         },
         {
-          "cliente": "Celmedia Fidelizacion SPA",
-          "total": 23,
-          "tarde": 22,
-          "on_time_pct": 0.043478260869565216
+          "cliente": "Lokal SpA",
+          "total": 8,
+          "tarde": 8,
+          "on_time_pct": 0.0
         },
         {
           "cliente": "Cliente Mercado Libre",
@@ -8248,31 +8242,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.0714560492402385,
-      "total_pickings": 10398,
-      "on_time": 745,
-      "on_time_pct": 0.07164839392190805,
-      "in_full": 10390,
-      "in_full_pct": 0.9992306212733217,
-      "both": 743,
+      "valor": 0.07354577642893273,
+      "total_pickings": 9885,
+      "on_time": 728,
+      "on_time_pct": 0.07364693980778958,
+      "in_full": 9878,
+      "in_full_pct": 0.999291856348002,
+      "both": 727,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.057534246575342465,
-      "total_pickings": 365,
-      "on_time": 21,
-      "on_time_pct": 0.057534246575342465,
-      "in_full": 361,
-      "in_full_pct": 0.989041095890411,
-      "both": 21,
+      "valor": 0.06116207951070336,
+      "total_pickings": 327,
+      "on_time": 20,
+      "on_time_pct": 0.06116207951070336,
+      "in_full": 323,
+      "in_full_pct": 0.9877675840978594,
+      "both": 20,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997769350881106,
-      "ok": 13446,
-      "total": 13449,
+      "valor": 0.9997631267272009,
+      "ok": 12662,
+      "total": 12665,
       "errores": 3,
       "error": null
     }
