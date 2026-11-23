@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-22T20:08:35.165889",
+  "generado_en": "2026-11-23T01:14:23.161375",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,16 +14,16 @@
     "posiciones_ocupadas_hoy": 702,
     "posiciones_libres_hoy": 675,
     "pct_ocupacion_hoy": 51.0,
-    "m3_stock_calculado": 777.8
+    "m3_stock_calculado": 777.4
   },
   "pico_proyectado": {
-    "fecha": "2026-11-22",
-    "posiciones_ocupadas": 702.0,
-    "pct_ocupacion": 51.0
+    "fecha": "2026-11-23",
+    "posiciones_ocupadas": 693.5,
+    "pct_ocupacion": 50.4
   },
   "minimo_proyectado": {
     "fecha": "2027-01-20",
-    "posiciones_ocupadas": 542.9,
+    "posiciones_ocupadas": 543.1,
     "pct_ocupacion": 39.4
   },
   "primer_critico": null,
@@ -64,17 +64,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 95.6,
-  "pallets_total_salientes_horizonte": 159.1,
+  "pallets_total_salientes_horizonte": 158.9,
   "m3_total_entrante_horizonte": 114.7,
-  "m3_total_saliente_horizonte": 190.9,
+  "m3_total_saliente_horizonte": 190.7,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 776,
     "sku_fallback": 5,
     "fallback_vol_m3": 0.00577,
     "demanda_total_unidades_horizonte": 62711.0,
-    "demanda_cumplida_unidades": 16080.0,
-    "demanda_no_cubierta_unidades_total": 46631.0,
+    "demanda_cumplida_unidades": 16075.0,
+    "demanda_no_cubierta_unidades_total": 46636.0,
     "pct_demanda_cumplida": 25.6,
     "sku_sin_match_stock_count": 36,
     "top_no_cubiertos": [
@@ -100,7 +100,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 357.0,
+        "unid_no_cubiertas": 358.0,
         "sin_match_stock": true
       },
       {
@@ -160,7 +160,7 @@
       },
       {
         "sku": "SIMBACOHA-55",
-        "unid_no_cubiertas": 81.0,
+        "unid_no_cubiertas": 82.0,
         "sin_match_stock": true
       },
       {
@@ -170,7 +170,7 @@
       },
       {
         "sku": "67933831843970",
-        "unid_no_cubiertas": 69.0,
+        "unid_no_cubiertas": 70.0,
         "sin_match_stock": true
       },
       {
