@@ -1,37 +1,37 @@
 {
-  "generado_en": "2026-11-22T20:57:16.194543",
+  "generado_en": "2026-11-23T11:57:17.437392",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.07426389307607276,
-      "total_pickings": 9951,
-      "on_time": 740,
-      "on_time_pct": 0.07436438548889558,
-      "in_full": 9944,
-      "in_full_pct": 0.9992965531102401,
-      "both": 739,
+      "valor": 0.07381443298969072,
+      "total_pickings": 9700,
+      "on_time": 717,
+      "on_time_pct": 0.07391752577319588,
+      "in_full": 9694,
+      "in_full_pct": 0.999381443298969,
+      "both": 716,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.06116207951070336,
-      "total_pickings": 327,
+      "valor": 0.06134969325153374,
+      "total_pickings": 326,
       "on_time": 20,
-      "on_time_pct": 0.06116207951070336,
-      "in_full": 323,
-      "in_full_pct": 0.9877675840978594,
+      "on_time_pct": 0.06134969325153374,
+      "in_full": 322,
+      "in_full_pct": 0.9877300613496932,
       "both": 20,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997643917380036,
-      "ok": 12730,
-      "total": 12733,
+      "valor": 0.9997581425346662,
+      "ok": 12401,
+      "total": 12404,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 4.758995650454725,
-      "n_recepciones": 843,
+      "valor": 4.02412812333865,
+      "n_recepciones": 836,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9585183689947517,
-      "total_so": 9920,
-      "total_con_pickings": 9908,
-      "cumplidos": 9497,
+      "valor": 0.9497425334706489,
+      "total_so": 9720,
+      "total_con_pickings": 9710,
+      "cumplidos": 9222,
       "parciales": 14,
-      "sin_iniciar": 397,
+      "sin_iniciar": 474,
       "error": null
     },
     "oct_30d": {
-      "valor": 28.17781639914041,
-      "n_orders": 10134,
+      "valor": 27.99095388158634,
+      "n_orders": 9890,
       "min_h": 0.0002777777777777778,
       "max_h": 659.6175,
-      "mediana_h": 9.549444444444445,
+      "mediana_h": 8.390277777777778,
       "detalle": [
         {
           "so": "S308091",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9258,
+      "lineas": 9365,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 140,
-      "outgoing": 29707,
-      "internal": 20153,
+      "incoming": 133,
+      "outgoing": 29797,
+      "internal": 20070,
       "total": 50000,
       "error": null
     },
@@ -8242,39 +8242,39 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.07426389307607276,
-      "total_pickings": 9951,
-      "on_time": 740,
-      "on_time_pct": 0.07436438548889558,
-      "in_full": 9944,
-      "in_full_pct": 0.9992965531102401,
-      "both": 739,
+      "valor": 0.07381443298969072,
+      "total_pickings": 9700,
+      "on_time": 717,
+      "on_time_pct": 0.07391752577319588,
+      "in_full": 9694,
+      "in_full_pct": 0.999381443298969,
+      "both": 716,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.06116207951070336,
-      "total_pickings": 327,
+      "valor": 0.06134969325153374,
+      "total_pickings": 326,
       "on_time": 20,
-      "on_time_pct": 0.06116207951070336,
-      "in_full": 323,
-      "in_full_pct": 0.9877675840978594,
+      "on_time_pct": 0.06134969325153374,
+      "in_full": 322,
+      "in_full_pct": 0.9877300613496932,
       "both": 20,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997643917380036,
-      "ok": 12730,
-      "total": 12733,
+      "valor": 0.9997581425346662,
+      "ok": 12401,
+      "total": 12404,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 4.758995650454725,
-      "n_recepciones": 843,
+      "valor": 4.02412812333865,
+      "n_recepciones": 836,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
