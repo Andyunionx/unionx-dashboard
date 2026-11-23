@@ -2987,10 +2987,10 @@
     "costeo_path": null,
     "skus": [],
     "skus_faltantes": null,
-    "po_id": 1925,
-    "po_name": "P00752",
+    "po_id": 1928,
+    "po_name": "P00755",
     "ts_creado": "2026-10-30 17:31:43Z",
-    "ts_actualizado": "2026-11-17 14:37:28Z",
+    "ts_actualizado": "2026-11-23 18:31:20Z",
     "log": [
       "2026-10-30 17:31:43Z · PL detectado: 26TP1029PI PL.xlsx · descargado",
       "2026-10-30 17:31:44Z · PI detectado: 26TP1029PI HAWB.xlsx · descargado",
@@ -3014,7 +3014,8 @@
       "2026-11-14 17:30:31Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
       "2026-11-15 18:18:15Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
       "2026-11-16 21:28:24Z · aún no aparece en Seimex (busqué PI1029 / 1029PI) → reintenta mañana",
-      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: aéreo DyD (HAWB RAE26110013), nunca en Seimex. OC P00752 LHBOHYCO-BK 3.150 u a $11.644,73 → COMPLETADO"
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: aéreo DyD (HAWB RAE26110013), nunca en Seimex. OC P00752 LHBOHYCO-BK 3.150 u a $11.644,73 → COMPLETADO",
+      "2026-11-23 18:31:20Z · Vicente 23-nov (OK Andrés): OC correcta = P00755 (Andrés, 18-nov, SKU LHBOTHYDANGLO-BK/BL 3.150+3.150 a $12.619,85). P00752 (SKU retail LHBOHYCO) duplicaba las botellas: recepción devuelta al proveedor por DanielOdoo; P00752 queda abierta hasta que bodega resuelva 4 BK"
     ]
   },
   "26TP1030": {
@@ -3072,10 +3073,10 @@
     "costeo_path": null,
     "skus": [],
     "skus_faltantes": null,
-    "po_id": 1926,
-    "po_name": "P00753",
+    "po_id": 1928,
+    "po_name": "P00755",
     "ts_creado": "2026-10-30 17:31:43Z",
-    "ts_actualizado": "2026-11-17 14:37:28Z",
+    "ts_actualizado": "2026-11-23 18:31:20Z",
     "log": [
       "2026-10-30 17:31:43Z · PI detectado: 26TP1030PI HAWB.xlsx · descargado",
       "2026-10-30 17:31:43Z · PL detectado: 26TP1030PI PL.xlsx · descargado",
@@ -3099,7 +3100,8 @@
       "2026-11-14 17:30:32Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
       "2026-11-15 18:18:16Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
       "2026-11-16 21:28:25Z · aún no aparece en Seimex (busqué PI1030 / 1030PI) → reintenta mañana",
-      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: aéreo DyD (HAWB RAE26100453), nunca en Seimex. OC P00753 LHBOHYCO-NY 3.150 u a $11.644,73 → COMPLETADO"
+      "2026-11-17 14:37:28Z · Steven (agente) 17-nov: aéreo DyD (HAWB RAE26100453), nunca en Seimex. OC P00753 LHBOHYCO-NY 3.150 u a $11.644,73 → COMPLETADO",
+      "2026-11-23 18:31:20Z · Vicente 23-nov (OK Andrés): OC correcta = P00755 (Andrés, 18-nov, SKU LHBOTHYDANGLO-BK/BL 3.150+3.150 a $12.619,85). P00753 (SKU retail LHBOHYCO) duplicaba las botellas: recepción devuelta al proveedor por DanielOdoo; P00753 bloqueada (Odoo no deja cancelar con recepciones hechas)"
     ]
   },
   "26TP1110": {
