@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-24T19:47:46.413677",
+  "generado_en": "2026-11-24T23:01:56.612075",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 717,
     "posiciones_libres_hoy": 660,
     "pct_ocupacion_hoy": 52.1,
-    "m3_stock_calculado": 743.8
+    "m3_stock_calculado": 743.7
   },
   "pico_proyectado": {
     "fecha": "2026-11-24",
@@ -22,9 +22,9 @@
     "pct_ocupacion": 52.1
   },
   "minimo_proyectado": {
-    "fecha": "2027-01-22",
-    "posiciones_ocupadas": 559.4,
-    "pct_ocupacion": 40.6
+    "fecha": "2027-01-23",
+    "posiciones_ocupadas": 560.2,
+    "pct_ocupacion": 40.7
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -64,19 +64,19 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 95.6,
-  "pallets_total_salientes_horizonte": 157.6,
+  "pallets_total_salientes_horizonte": 156.8,
   "m3_total_entrante_horizonte": 114.7,
-  "m3_total_saliente_horizonte": 189.1,
+  "m3_total_saliente_horizonte": 188.2,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 780,
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00576,
-    "demanda_total_unidades_horizonte": 67151.0,
-    "demanda_cumplida_unidades": 15882.0,
-    "demanda_no_cubierta_unidades_total": 51269.0,
-    "pct_demanda_cumplida": 23.7,
-    "sku_sin_match_stock_count": 37,
+    "demanda_total_unidades_horizonte": 66867.0,
+    "demanda_cumplida_unidades": 15354.0,
+    "demanda_no_cubierta_unidades_total": 51513.0,
+    "pct_demanda_cumplida": 23.0,
+    "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
@@ -100,7 +100,7 @@
       },
       {
         "sku": "LVSILLERGO-BL",
-        "unid_no_cubiertas": 401.0,
+        "unid_no_cubiertas": 400.0,
         "sin_match_stock": true
       },
       {
@@ -109,13 +109,13 @@
         "sin_match_stock": true
       },
       {
-        "sku": "1659991971809",
-        "unid_no_cubiertas": 302.0,
+        "sku": "SMBATSAV9-CR",
+        "unid_no_cubiertas": 358.0,
         "sin_match_stock": true
       },
       {
-        "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 302.0,
+        "sku": "1659991971809",
+        "unid_no_cubiertas": 289.0,
         "sin_match_stock": true
       },
       {
@@ -124,23 +124,23 @@
         "sin_match_stock": true
       },
       {
+        "sku": "67933857637909",
+        "unid_no_cubiertas": 212.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 201.0,
+        "unid_no_cubiertas": 193.0,
         "sin_match_stock": true
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 183.0,
+        "unid_no_cubiertas": 193.0,
         "sin_match_stock": true
       },
       {
         "sku": "68540048936286",
-        "unid_no_cubiertas": 140.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "68540051413139",
-        "unid_no_cubiertas": 124.0,
+        "unid_no_cubiertas": 129.0,
         "sin_match_stock": true
       },
       {
@@ -154,23 +154,23 @@
         "sin_match_stock": true
       },
       {
+        "sku": "68540051413139",
+        "unid_no_cubiertas": 110.0,
+        "sin_match_stock": true
+      },
+      {
         "sku": "1650302269777",
-        "unid_no_cubiertas": 97.0,
+        "unid_no_cubiertas": 99.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMBACOHA-55",
-        "unid_no_cubiertas": 82.0,
+        "unid_no_cubiertas": 92.0,
         "sin_match_stock": true
       },
       {
         "sku": "1650301031879",
         "unid_no_cubiertas": 81.0,
-        "sin_match_stock": true
-      },
-      {
-        "sku": "67933831843970",
-        "unid_no_cubiertas": 75.0,
         "sin_match_stock": true
       },
       {
