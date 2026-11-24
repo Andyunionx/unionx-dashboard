@@ -1,3 +1,7 @@
+# SOLO REFERENCIA. El Worker en producción es «patient-cloud-327e» y se administra desde el panel de
+# Cloudflare (código, triggers, variables y secreto). NO correr `wrangler deploy` desde aquí: este archivo tiene
+# otro nombre y crearía un Worker nuevo que, con el token puesto, dispararía el Pulso Diario por segunda vez.
+# Para instalar un cambio: panel → Edit code → pegar worker.js → Deploy; los crons van en Settings → Triggers.
 name = "unionx-pulso-scheduler"
 main = "worker.js"
 compatibility_date = "2026-06-03"
@@ -13,8 +17,9 @@ compatibility_date = "2026-06-03"
 # este Worker como trigger.
 [triggers]
 # Segundo cron (rediseño del vigía, 15-nov-2026): 10:52 UTC = 07:52 de Chile en horario de verano, todos los
-# días. worker.js lo mapea a pulso_alarmas_odoo.yml. El texto del cron debe ser IDÉNTICO al de WORKFLOW_POR_CRON.
-crons = ["30 11 * * 1-5", "52 10 * * *"]
+# días. worker.js decide por el MINUTO de la ejecución (:30 pulso, :52 vigía, :10 agentes), no por el texto del
+# cron; un minuto fuera de esa lista no dispara nada.
+crons =["30 11 * * 1-5", "52 10 * * *"]
 
 # Variables NO secretas (el token va por `wrangler secret put GH_TOKEN`).
 [vars]

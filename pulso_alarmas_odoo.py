@@ -31,8 +31,12 @@ quant negativo modificado en las últimas VENTANA_NEG_H horas, y madkting no avi
 
 Envío: Gmail API (token agente-comex local o GMAIL_TOKEN_JSON en CI).
 Destinatarios: el pulso completo va a ALARMAS_EMAIL_TO (por defecto solo andres@unionx.cl). Si hay negativos
-nuevos en Entrada/Salida sale además un correo corto, solo con esos casos, a NEGATIVOS_EMAIL_TO (por defecto
-gerardo@unionx.cl, con copia a Andrés; aprobado el 15-nov). NEGATIVOS_EMAIL_TO vacío lo desactiva.
+nuevos en Entrada/Salida sale además un correo corto, solo con esos casos, a NEGATIVOS_EMAIL_TO, con copia a
+Andrés (aprobado el 15-nov para gerardo@unionx.cl). Revisión del 24-nov: el script NO trae destinatario por
+defecto; el interruptor es una sola línea del workflow (NEGATIVOS_EMAIL_TO). Sin esa variable, o vacía, no sale.
+Tampoco sale cuando no hay estado de la corrida anterior: ahí "nuevo" es una aproximación por write_date.
+
+En GitHub Actions el log es público (el repo es público): los nombres de usuarios de Odoo no se imprimen ahí.
 """
 import sys, json, os, time, base64, datetime
 from html import escape
@@ -108,6 +112,17 @@ UMBRAL_OBJETADOS = 40
 DUR = {"minutes": 60, "hours": 3600, "days": 86400, "weeks": 604800, "months": 2592000}
 
 criticas, advertencias, tabla = [], [], []
+EN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
+nombres_personas = set()    # usuarios de Odoo citados en las alarmas: van en el correo, no en el log público
+
+
+def para_log(txt):
+    """En GitHub Actions el log lo puede leer cualquiera: se quitan los nombres de personas."""
+    if EN_CI:
+        for nom in sorted(nombres_personas, key=len, reverse=True):
+            if nom and nom != "?":
+                txt = txt.replace(nom, "(usuario: ver correo)")
+    return txt
 
 crons = rpc("ir.cron", "search_read", [[]],
             {"fields": ["id", "name", "active", "lastcall", "nextcall",
@@ -199,18 +214,20 @@ def _tendencia(ahora, antes):
 def _origen_negativo(pid, loc_id, desde):
     """Último movimiento hecho que sacó ese producto de esa ubicación: (picking, usuario, fecha Chile)."""
     campos = ["date", "reference", "picking_id", "location_id", "write_uid", "create_uid"]
-    for dom_loc in ([("location_id", "=", loc_id)],
-                    ["|", ("location_id", "=", loc_id), ("location_dest_id", "=", loc_id)]):
+    # 1.º dentro de la ventana; si no hay, la última salida que exista (se ve por la fecha que es anterior).
+    # Nunca una ENTRADA a la ubicación: no deja negativo y le cargaría el caso a quien no fue.
+    for dom_fecha in ([("date", ">=", desde)], []):
         ml = rpc("stock.move.line", "search_read",
-                 [[("product_id", "=", pid), ("state", "=", "done"), ("date", ">=", desde)] + dom_loc],
+                 [[("product_id", "=", pid), ("state", "=", "done"), ("location_id", "=", loc_id)] + dom_fecha],
                  {"fields": campos, "order": "date desc", "limit": 1})
         if ml:
             m = ml[0]
             pick = (m["picking_id"][1] if m.get("picking_id") else None) or m.get("reference") or "sin picking"
             quien = (m.get("write_uid") or m.get("create_uid") or [0, "?"])[1]
+            nombres_personas.add(quien)
             cuando = hora_chile(datetime.datetime.fromisoformat(m["date"])).strftime("%d-%m %H:%M")
             return pick, quien, cuando
-    return "sin movimiento en la ventana", "?", ""
+    return "sin movimiento de salida", "?", ""
 
 
 try:
@@ -226,11 +243,14 @@ try:
                      {"fields": ["standard_price"], "context": {"active_test": False}}):
             std[p["id"]] = p["standard_price"] or 0
     io_n, io_val, otros_n, otros_val = 0, 0.0, 0, 0.0
+    io_claves = {}                                     # producto|ubicación → suma de sus quants negativos
     for q in negs:
         pid = q["product_id"][0] if q["product_id"] else 0
         loc_id, loc = q["location_id"][0], q["location_id"][1]
         clave = f"{pid}|{loc_id}"
-        estado_nuevo["negativos"][clave] = q["quantity"]
+        # Un producto puede tener varios quants en la misma ubicación (lote, paquete o dueño de consignación):
+        # se SUMAN. Guardar solo el último pisaba a los otros y daba "empeoró" o lo escondía según el orden.
+        estado_nuevo["negativos"][clave] = estado_nuevo["negativos"].get(clave, 0) + q["quantity"]
         val = abs(q["quantity"]) * std.get(pid, 0)
         if not _es_io(loc):
             otros_n += 1
@@ -238,15 +258,21 @@ try:
             continue
         io_n += 1
         io_val += val
+        c = io_claves.setdefault(clave, {"pid": pid, "loc_id": loc_id, "ubicacion": loc, "cantidad": 0.0, "valor": 0.0,
+                                         "producto": q["product_id"][1] if q["product_id"] else "?", "write": None})
+        c["cantidad"] += q["quantity"]
+        c["valor"] += val
+        c["write"] = max(filter(None, (c["write"], q["write_date"])), default=None)
+    for clave, c in io_claves.items():
         antes = prev_q.get(clave)
         if ref_prev:                                   # con estado: nuevo o más negativo que la corrida anterior
-            es_nuevo = antes is None or q["quantity"] < antes - 1e-9
-        else:                                          # sin estado: modificado dentro de la ventana
-            e_q = edad(q["write_date"])
+            es_nuevo = antes is None or c["cantidad"] < antes - 1e-9
+        else:                                          # sin estado: modificado dentro de la ventana (aproximación)
+            e_q = edad(c["write"])
             es_nuevo = e_q is not None and e_q <= VENTANA_NEG_H * 3600
         if es_nuevo:
-            neg_nuevos.append({"pid": pid, "loc_id": loc_id, "producto": q["product_id"][1] if q["product_id"] else "?",
-                               "ubicacion": loc, "cantidad": q["quantity"], "antes": antes, "valor": val})
+            neg_nuevos.append({"pid": c["pid"], "loc_id": c["loc_id"], "producto": c["producto"],
+                               "ubicacion": c["ubicacion"], "cantidad": c["cantidad"], "antes": antes, "valor": c["valor"]})
     estado_nuevo["resumen_neg"] = {"io_n": io_n, "io_val": round(io_val), "otros_n": otros_n, "otros_val": round(otros_val)}
     rprev = estado_prev.get("resumen_neg") if ref_prev else None
     if neg_nuevos:
@@ -270,8 +296,10 @@ try:
         criticas.append(f"STOCK NEGATIVO NUEVO EN ENTRADA/SALIDA: {len(neg_nuevos)} caso(s) {ref_txt} "
                         f"(recepción o corrección a medias) → {det}" + (" …" if len(neg_nuevos) > 8 else ""))
     if io_n:
+        resto = (f"Incluye los {len(neg_nuevos)} nuevo(s) de arriba; el resto no es de hoy y se resuelve"
+                 if neg_nuevos else "No son de hoy: se resuelven")
         advertencias.append(f"Negativos acumulados en Entrada/Salida: {io_n} casos por ~${io_val:,.0f} a costo "
-                            f"({_tendencia(io_n, rprev.get('io_n') if rprev else None)}). No son de hoy: se resuelven "
+                            f"({_tendencia(io_n, rprev.get('io_n') if rprev else None)}). {resto} "
                             f"con la limpieza previa al inventario.")
     if otros_val > 500000:
         advertencias.append(f"Stock negativo en bodegas internas: {otros_n} quants por ~${otros_val:,.0f} a costo "
@@ -300,6 +328,7 @@ try:
                             "simple_stock_locations esté activo. Valor histórico que funcionaba: 8 (CA1/Stock).")
         if edad(yc["write_date"]) is not None and edad(yc["write_date"]) < 86400:
             quien = yc["write_uid"][1] if yc["write_uid"] else "?"
+            nombres_personas.add(quien)
             advertencias.append(
                 f"YUJU: la configuración madkting.config fue MODIFICADA {fmt_edad(edad(yc['write_date']))} por {quien}. "
                 f"Estado ahora → stock_enabled={yc['webhook_stock_enabled']} · src={yc['stock_source_multi']} · "
@@ -333,7 +362,16 @@ try:
                             f"de stock enviados → el stock en los marketplaces está congelado (último envío exitoso {ult_txt}). "
                             f"Riesgo de sobreventa y cancelaciones.")
         elif n_wh and n_wh_done < n_wh:
-            advertencias.append(f"YUJU: {n_wh - n_wh_done} de {n_wh} webhooks de stock de las últimas 24 h NO quedaron en estado done.")
+            # Un webhook recién creado pasa unos minutos en borrador (el envío va por lotes). Solo cuentan los que
+            # llevan más de 60 min sin terminar: el 24-nov había 75 "no done", todos de los últimos 2 minutos, y
+            # esta advertencia salía casi todos los días por los que iban en tránsito.
+            h1 = (HOY - datetime.timedelta(minutes=60)).strftime("%Y-%m-%d %H:%M:%S")
+            n_atras = rpc("yuju.webhook.record", "search_count",
+                          [[("date_webhook", ">=", d1), ("date_webhook", "<=", h1), ("event", "=", "stock_update"),
+                            ("state", "!=", "done")]])
+            if n_atras:
+                advertencias.append(f"YUJU: {n_atras} de {n_wh} webhooks de stock de las últimas 24 h llevan más de "
+                                    f"60 min sin quedar en estado done.")
         yuju_resumen = (f"Yuju 24h: {n_wh_done} webhooks / {n_prod_wh:,} productos · {n_moves:,} movs · "
                         f"flag {'ON' if yc['webhook_stock_enabled'] else 'OFF'} · último envío {ult_txt}")
     # versión / reinstalación del módulo
@@ -364,7 +402,7 @@ filas = "".join(
 def bloque(titulo, items, color):
     if not items:
         return ""
-    lis = "".join(f"<li style='margin:4px 0'>{x}</li>" for x in items)
+    lis = "".join(f"<li style='margin:4px 0'>{escape(x, quote=False)}</li>" for x in items)
     return (f"<div style='background:{color};border-radius:8px;padding:10px 14px;margin:0 0 14px'>"
             f"<b>{titulo}</b><ul style='margin:6px 0 0;padding-left:18px'>{lis}</ul></div>")
 
@@ -381,12 +419,12 @@ html = f"""<div style='font-family:Segoe UI,Arial,sans-serif;font-size:14px;colo
 </div>"""
 
 print(f"[{estado_gral}] críticas: {len(criticas)} | advertencias: {len(advertencias)} | cola SII: {n_pend} | {yuju_resumen}")
-for x in criticas: print("  CRIT:", x)
-for x in advertencias: print("  ADV :", x)
+for x in criticas: print("  CRIT:", para_log(x))
+for x in advertencias: print("  ADV :", para_log(x))
 
 for x in neg_nuevos:
-    print(f"  NEG NUEVO: {x['producto'][:40]} | {x['ubicacion']} | {x['cantidad']:g} (antes {x['antes']}) | "
-          f"{x.get('picking', '-')} | {x.get('usuario', '-')} | {x.get('cuando', '')}")
+    print(para_log(f"  NEG NUEVO: {x['producto'][:40]} | {x['ubicacion']} | {x['cantidad']:g} (antes {x['antes']}) | "
+                   f"{x.get('picking', '-')} | {x.get('usuario', '-')} | {x.get('cuando', '')}"))
 
 # El estado se guarda siempre que la corrida llegó hasta aquí (también con --no-enviar): es la referencia de mañana.
 if "--sin-estado" not in sys.argv:
@@ -433,8 +471,15 @@ r = svc.users().messages().send(userId="me", body={"raw": raw}).execute()
 print(f"Enviado: {r['id']}")
 
 # Correo corto a bodega: SOLO los negativos nuevos en Entrada/Salida (aprobado por Andrés el 15-nov-2026).
-neg_to = os.environ.get("NEGATIVOS_EMAIL_TO", "gerardo@unionx.cl").strip()
-if neg_nuevos and neg_to:
+# Interruptor: la variable NEGATIVOS_EMAIL_TO del workflow (una línea). Sin ella, o vacía, NO sale: el script no
+# trae destinatario por defecto, así una corrida local o un workflow sin esa línea nunca le escribe a un tercero.
+# Tampoco sale sin estado previo: ahí "nuevo" es una aproximación por write_date y a bodega solo van casos ciertos.
+neg_to = os.environ.get("NEGATIVOS_EMAIL_TO", "").strip()
+if neg_nuevos and neg_to and not ref_prev:
+    print("(correo a bodega omitido: sin estado de la corrida anterior, los casos nuevos son una aproximación)")
+elif neg_nuevos and not neg_to:
+    print("(correo a bodega apagado: NEGATIVOS_EMAIL_TO vacío)")
+if neg_nuevos and neg_to and ref_prev:
     td = "padding:4px 8px;border-bottom:1px solid #e2e8f0"
     filas_n = "".join(
         f"<tr><td style='{td}'>{escape(x['producto'][:60])}</td><td style='{td}'>{escape(x['ubicacion'])}</td>"
@@ -460,4 +505,4 @@ empeoraron desde la corrida anterior; el acumulado histórico se trata aparte.</
     m2.set_content("Stock negativo nuevo en Entrada/Salida (ver versión HTML).")
     m2.add_alternative(html_n, subtype="html")
     r2 = svc.users().messages().send(userId="me", body={"raw": base64.urlsafe_b64encode(m2.as_bytes()).decode()}).execute()
-    print(f"Enviado a bodega ({neg_to}): {r2['id']}")
+    print(f"Enviado a bodega: {r2['id']}")
