@@ -1,31 +1,31 @@
 {
-  "generado_en": "2026-11-24T02:01:53.752127",
+  "generado_en": "2026-11-24T13:23:00.567890",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.07482233502538072,
-      "total_pickings": 9850,
-      "on_time": 738,
-      "on_time_pct": 0.0749238578680203,
-      "in_full": 9844,
-      "in_full_pct": 0.9993908629441625,
-      "both": 737,
+      "valor": 0.07359561558034841,
+      "total_pickings": 10218,
+      "on_time": 753,
+      "on_time_pct": 0.07369348209042866,
+      "in_full": 10212,
+      "in_full_pct": 0.9994128009395185,
+      "both": 752,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.07507507507507508,
-      "total_pickings": 333,
-      "on_time": 25,
-      "on_time_pct": 0.07507507507507508,
-      "in_full": 329,
-      "in_full_pct": 0.987987987987988,
-      "both": 25,
+      "valor": 0.08430232558139535,
+      "total_pickings": 344,
+      "on_time": 29,
+      "on_time_pct": 0.08430232558139535,
+      "in_full": 340,
+      "in_full_pct": 0.9883720930232558,
+      "both": 29,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997627895943703,
-      "ok": 12644,
-      "total": 12647,
+      "valor": 0.999771845767739,
+      "ok": 13146,
+      "total": 13149,
       "errores": 3,
       "error": null
     },
@@ -179,20 +179,20 @@
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9358521062733609,
-      "total_so": 9911,
-      "total_con_pickings": 9899,
-      "cumplidos": 9264,
+      "valor": 0.9615653389238294,
+      "total_so": 10029,
+      "total_con_pickings": 10017,
+      "cumplidos": 9632,
       "parciales": 15,
-      "sin_iniciar": 620,
+      "sin_iniciar": 370,
       "error": null
     },
     "oct_30d": {
-      "valor": 27.868135308051627,
-      "n_orders": 10038,
+      "valor": 28.572601548575758,
+      "n_orders": 10411,
       "min_h": 0.0002777777777777778,
       "max_h": 659.6175,
-      "mediana_h": 7.888888888888889,
+      "mediana_h": 11.128055555555555,
       "detalle": [
         {
           "so": "S308091",
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9700,
+      "lineas": 10354,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
       "incoming": 123,
-      "outgoing": 29460,
-      "internal": 20417,
+      "outgoing": 29461,
+      "internal": 20416,
       "total": 50000,
       "error": null
     },
@@ -367,20 +367,20 @@
         },
         {
           "cliente": "Relacional Consultoría Estratégica LTDA.",
-          "total": 8,
-          "tarde": 8,
+          "total": 13,
+          "tarde": 13,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Sawa SPA",
-          "total": 69,
-          "tarde": 69,
+          "total": 74,
+          "tarde": 74,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 21,
-          "tarde": 21,
+          "total": 22,
+          "tarde": 22,
           "on_time_pct": 0.0
         },
         {
@@ -391,26 +391,26 @@
         },
         {
           "cliente": "Yohana Alejandra Grisman Colmenares",
-          "total": 5,
-          "tarde": 5,
+          "total": 7,
+          "tarde": 7,
           "on_time_pct": 0.0
         },
         {
           "cliente": "abc S.A.",
-          "total": 35,
-          "tarde": 35,
+          "total": 40,
+          "tarde": 40,
           "on_time_pct": 0.0
         },
         {
           "cliente": "SOCIEDAD DE MARKETING Y FIDELIZACION SPA",
-          "total": 3,
-          "tarde": 3,
+          "total": 4,
+          "tarde": 4,
           "on_time_pct": 0.0
         },
         {
           "cliente": "Lokal SpA",
-          "total": 8,
-          "tarde": 8,
+          "total": 9,
+          "tarde": 9,
           "on_time_pct": 0.0
         },
         {
@@ -427,6 +427,12 @@
         },
         {
           "cliente": "Shenzhen Topwill Electronic Co. Ltd",
+          "total": 3,
+          "tarde": 0,
+          "on_time_pct": 1.0
+        },
+        {
+          "cliente": "All In Marketing Spa",
           "total": 3,
           "tarde": 0,
           "on_time_pct": 1.0
@@ -610,18 +616,18 @@
           "key": "2026-10"
         },
         "resumen": {
-          "n_ordenes": 11238,
-          "cancelacion_clp": 2875144.150016,
-          "quiebre_clp": 607970.519919,
-          "n_canceladas": 349,
-          "n_quiebres": 33,
-          "n_medidos": 10856,
-          "ns_empresa_pct": 0.9575350036845984,
-          "ns_courier_pct": 0.8723286661753868,
-          "otif_total_pct": 0.8340088430361091,
-          "n_empresa_ok": 10395,
-          "n_courier_ok": 9470,
-          "n_otif_ok": 9054
+          "n_ordenes": 12231,
+          "cancelacion_clp": 2929649.1500159996,
+          "quiebre_clp": 1381009.519919,
+          "n_canceladas": 352,
+          "n_quiebres": 41,
+          "n_medidos": 11838,
+          "ns_empresa_pct": 0.9610576110829532,
+          "ns_courier_pct": 0.8829194120628484,
+          "otif_total_pct": 0.8477783409359689,
+          "n_empresa_ok": 11377,
+          "n_courier_ok": 10452,
+          "n_otif_ok": 10036
         },
         "por_cliente": [
           {
@@ -673,6 +679,16 @@
             "NS_EMP_PCT": 0.9598,
             "NS_COU_PCT": 0.9723,
             "OTIF_PCT": 0.958
+          },
+          {
+            "CLIENTE": "TRAVEL DUTY",
+            "ORDENES": 993,
+            "A_TPO_EMP": 982,
+            "A_TPO_COU": 982,
+            "OTIF": 982,
+            "NS_EMP_PCT": 0.9889,
+            "NS_COU_PCT": 0.9889,
+            "OTIF_PCT": 0.9889
           },
           {
             "CLIENTE": "PARIS",
@@ -756,141 +772,155 @@
           },
           {
             "CLIENTE": "TOTAL",
-            "ORDENES": 11238,
-            "A_TPO_EMP": 10395,
-            "NS_EMP_PCT": 0.9249866524292579,
-            "A_TPO_COU": 9470,
-            "NS_COU_PCT": 0.8426766328528208,
-            "OTIF": 9054,
-            "OTIF_PCT": 0.8056593699946609
+            "ORDENES": 12231,
+            "A_TPO_EMP": 11377,
+            "NS_EMP_PCT": 0.9301774180361377,
+            "A_TPO_COU": 10452,
+            "NS_COU_PCT": 0.8545499141525632,
+            "OTIF": 10036,
+            "OTIF_PCT": 0.8205379772708691
           }
         ],
         "pareto_quiebres": [
           {
+            "SKU": "Pack474",
+            "monto": 322662.0,
+            "n_ordenes": 2,
+            "pct": 0.23364212581164903,
+            "pct_acumulado": 0.23364212581164903
+          },
+          {
+            "SKU": "DYNTALPOW",
+            "monto": 302485.0,
+            "n_ordenes": 5,
+            "pct": 0.21903179930123987,
+            "pct_acumulado": 0.4526739251128889
+          },
+          {
+            "SKU": "LVPRONOV",
+            "monto": 261123.0757,
+            "n_ordenes": 4,
+            "pct": 0.18908130026164888,
+            "pct_acumulado": 0.6417552253745378
+          },
+          {
             "SKU": "Pack368",
             "monto": 151394.94979999997,
             "n_ordenes": 2,
-            "pct": 0.24901692572227083,
-            "pct_acumulado": 0.24901692572227083
+            "pct": 0.1096262897658227,
+            "pct_acumulado": 0.7513815151403604
           },
           {
             "SKU": "184924",
             "monto": 142848.7395,
             "n_ordenes": 1,
-            "pct": 0.2349599772025653,
-            "pct_acumulado": 0.48397690292483614
-          },
-          {
-            "SKU": "LVPRONOV",
-            "monto": 113231.0757,
-            "n_ordenes": 3,
-            "pct": 0.1862443523003152,
-            "pct_acumulado": 0.6702212552251513
+            "pct": 0.10343791077441557,
+            "pct_acumulado": 0.854819425914776
           },
           {
             "SKU": "67327559384453",
             "monto": 58015.94956,
             "n_ordenes": 4,
-            "pct": 0.09542559656959927,
-            "pct_acumulado": 0.7656468517947506
+            "pct": 0.0420098114627065,
+            "pct_acumulado": 0.8968292373774825
           },
           {
             "SKU": "OB-LVMONEXV-15",
             "monto": 49571.42857,
             "n_ordenes": 1,
-            "pct": 0.0815359083144433,
-            "pct_acumulado": 0.8471827601091939
+            "pct": 0.035895066511132744,
+            "pct_acumulado": 0.9327243038886153
           },
           {
             "SKU": "SIMCUVER-CR",
             "monto": 38557.14286,
             "n_ordenes": 1,
-            "pct": 0.06341942840441833,
-            "pct_acumulado": 0.9106021885136122
+            "pct": 0.02791953444481794,
+            "pct_acumulado": 0.9606438383334333
           },
           {
             "SKU": "OB-LVTEL-80",
             "monto": 27714.28571,
             "n_ordenes": 1,
-            "pct": 0.04558491703461606,
-            "pct_acumulado": 0.9561871055482283
+            "pct": 0.02006813516508237,
+            "pct_acumulado": 0.9807119734985156
           },
           {
             "SKU": "68321385498620",
             "monto": 19310.92437,
             "n_ordenes": 2,
-            "pct": 0.03176292885479513,
-            "pct_acumulado": 0.9879500344030234
+            "pct": 0.013983194244115451,
+            "pct_acumulado": 0.994695167742631
           },
           {
             "SKU": "SIMSECVALBK",
             "monto": 6554.621849,
             "n_ordenes": 1,
-            "pct": 0.010781150786510627,
-            "pct_acumulado": 0.9987311851895341
+            "pct": 0.004746253921105806,
+            "pct_acumulado": 0.9994414216637368
           },
           {
             "SKU": "1635956574926",
             "monto": 231.05,
             "n_ordenes": 5,
-            "pct": 0.0003800348741099863,
-            "pct_acumulado": 0.9991112200636441
+            "pct": 0.00016730514646528415,
+            "pct_acumulado": 0.9996087268102021
           },
           {
             "SKU": "SMBATOXBK",
             "monto": 169.847,
             "n_ordenes": 3,
-            "pct": 0.00027936716408984564,
-            "pct_acumulado": 0.9993905872277339
+            "pct": 0.000122987566378226,
+            "pct_acumulado": 0.9997317143765803
           },
           {
             "SKU": "1634845754276",
             "monto": 88.229,
             "n_ordenes": 1,
-            "pct": 0.00014512052329733813,
-            "pct_acumulado": 0.9995357077510312
+            "pct": 6.388732208390198e-05,
+            "pct_acumulado": 0.9997956016986642
           },
           {
             "SKU": "BDMESDIDAC",
             "monto": 84.016,
             "n_ordenes": 2,
-            "pct": 0.00013819091098560748,
-            "pct_acumulado": 0.9996738986620168
+            "pct": 6.0836655206350626e-05,
+            "pct_acumulado": 0.9998564383538706
           },
           {
             "SKU": "LVPROHAL",
             "monto": 67.218,
             "n_ordenes": 1,
-            "pct": 0.00011056128183477627,
-            "pct_acumulado": 0.9997844599438516
+            "pct": 4.867308952652443e-05,
+            "pct_acumulado": 0.9999051114433971
           },
           {
             "SKU": "SIMCUSTA-5",
             "monto": 55.446,
             "n_ordenes": 2,
-            "pct": 9.119850088683097e-05,
-            "pct_acumulado": 0.9998756584447384
+            "pct": 4.0148890503848276e-05,
+            "pct_acumulado": 0.999945260333901
           },
           {
             "SKU": "Pack404",
             "monto": 42.008,
             "n_ordenes": 1,
-            "pct": 6.909545549280374e-05,
-            "pct_acumulado": 0.9999447539002312
+            "pct": 3.0418327603175313e-05,
+            "pct_acumulado": 0.9999756786615042
           },
           {
             "SKU": "Pack215",
             "monto": 19.319,
             "n_ordenes": 1,
-            "pct": 3.1776211785028454e-05,
-            "pct_acumulado": 0.9999765301120163
+            "pct": 1.3989041872161108e-05,
+            "pct_acumulado": 0.9999896677033763
           },
           {
             "SKU": "SIMMANCC-BK",
             "monto": 14.269,
             "n_ordenes": 1,
-            "pct": 2.3469887983879653e-05,
-            "pct_acumulado": 1.0000000000000002
+            "pct": 1.0332296623731398e-05,
+            "pct_acumulado": 1.0
           }
         ],
         "opciones_filtros": {
@@ -918,6 +948,7 @@
             "PAGINAS",
             "PARIS",
             "RIPLEY",
+            "TRAVEL DUTY",
             "WALMART"
           ],
           "servicios": [
@@ -2813,6 +2844,13 @@
           "otif_total_pct": 84.2
         },
         {
+          "CURIER": "STARKEN",
+          "n_pedidos": 1091,
+          "ns_courier_pct": 99.9,
+          "ns_empresa_pct": 99.1,
+          "otif_total_pct": 99.1
+        },
+        {
           "CURIER": "WELIVERY",
           "n_pedidos": 856,
           "ns_courier_pct": 90.5,
@@ -2825,13 +2863,6 @@
           "ns_courier_pct": 100.0,
           "ns_empresa_pct": 100.0,
           "otif_total_pct": 100.0
-        },
-        {
-          "CURIER": "STARKEN",
-          "n_pedidos": 98,
-          "ns_courier_pct": 99.0,
-          "ns_empresa_pct": 89.8,
-          "otif_total_pct": 89.8
         }
       ],
       "2026-09": [
@@ -3401,13 +3432,13 @@
           "desde": "2025-12-26",
           "hasta": "2026-10-25"
         },
-        "n_ordenes": 80397,
-        "n_empresa_ok": 77040,
-        "n_courier_ok": 72837,
-        "n_otif_ok": 71920,
-        "ns_empresa_pct": 95.8,
-        "ns_courier_pct": 90.6,
-        "otif_total_pct": 89.5,
+        "n_ordenes": 81390,
+        "n_empresa_ok": 78022,
+        "n_courier_ok": 73819,
+        "n_otif_ok": 72902,
+        "ns_empresa_pct": 95.9,
+        "ns_courier_pct": 90.7,
+        "otif_total_pct": 89.6,
         "trend": [
           {
             "key": "2026-01",
@@ -3504,17 +3535,17 @@
             "mes": 10,
             "anio": 2026,
             "label_corto": "10/26",
-            "n_ordenes": 11238,
-            "ns_empresa_pct": 92.5,
-            "ns_courier_pct": 84.3,
-            "otif_total_pct": 80.6
+            "n_ordenes": 12231,
+            "ns_empresa_pct": 93.0,
+            "ns_courier_pct": 85.5,
+            "otif_total_pct": 82.1
           }
         ],
         "por_courier": [
           {
             "CURIER": "RECIBELO",
             "n_pedidos": 29390,
-            "pct_volumen": 36.6,
+            "pct_volumen": 36.1,
             "ns_courier_pct": 89.5,
             "otif_total_pct": 89.0,
             "ns_empresa_pct": 96.7
@@ -3522,7 +3553,7 @@
           {
             "CURIER": "BLUEXPRESS",
             "n_pedidos": 19136,
-            "pct_volumen": 23.8,
+            "pct_volumen": 23.5,
             "ns_courier_pct": 87.3,
             "otif_total_pct": 84.2,
             "ns_empresa_pct": 93.7
@@ -3530,7 +3561,7 @@
           {
             "CURIER": "HOME DELIVERY CORP",
             "n_pedidos": 13043,
-            "pct_volumen": 16.2,
+            "pct_volumen": 16.0,
             "ns_courier_pct": 95.5,
             "otif_total_pct": 95.5,
             "ns_empresa_pct": 95.5
@@ -3538,10 +3569,18 @@
           {
             "CURIER": "COLECTA",
             "n_pedidos": 9239,
-            "pct_volumen": 11.5,
+            "pct_volumen": 11.4,
             "ns_courier_pct": 93.5,
             "otif_total_pct": 93.4,
             "ns_empresa_pct": 96.6
+          },
+          {
+            "CURIER": "STARKEN",
+            "n_pedidos": 4689,
+            "pct_volumen": 5.8,
+            "ns_courier_pct": 99.4,
+            "otif_total_pct": 98.8,
+            "ns_empresa_pct": 98.8
           },
           {
             "CURIER": "WELIVERY",
@@ -3550,14 +3589,6 @@
             "ns_courier_pct": 93.9,
             "otif_total_pct": 91.9,
             "ns_empresa_pct": 97.0
-          },
-          {
-            "CURIER": "STARKEN",
-            "n_pedidos": 3696,
-            "pct_volumen": 4.6,
-            "ns_courier_pct": 99.5,
-            "otif_total_pct": 98.8,
-            "ns_empresa_pct": 98.8
           },
           {
             "CURIER": "RIPLEY",
@@ -3604,7 +3635,7 @@
           {
             "CANAL": "MERCADO LIBRE F",
             "n_pedidos": 17359,
-            "pct_volumen": 21.6,
+            "pct_volumen": 21.3,
             "ns_empresa_pct": 97.0,
             "ns_courier_pct": 92.8,
             "otif_total_pct": 92.6
@@ -3612,7 +3643,7 @@
           {
             "CANAL": "FALABELLA HDC",
             "n_pedidos": 13005,
-            "pct_volumen": 16.2,
+            "pct_volumen": 16.0,
             "ns_empresa_pct": 95.5,
             "ns_courier_pct": 95.5,
             "otif_total_pct": 95.4
@@ -3620,7 +3651,7 @@
           {
             "CANAL": "PAGINAS",
             "n_pedidos": 9956,
-            "pct_volumen": 12.4,
+            "pct_volumen": 12.2,
             "ns_empresa_pct": 95.6,
             "ns_courier_pct": 86.6,
             "otif_total_pct": 83.5
@@ -3628,7 +3659,7 @@
           {
             "CANAL": "MERCADO LIBRE C",
             "n_pedidos": 8940,
-            "pct_volumen": 11.1,
+            "pct_volumen": 11.0,
             "ns_empresa_pct": 96.5,
             "ns_courier_pct": 96.6,
             "otif_total_pct": 96.4
@@ -3636,7 +3667,7 @@
           {
             "CANAL": "PARIS",
             "n_pedidos": 5615,
-            "pct_volumen": 7.0,
+            "pct_volumen": 6.9,
             "ns_empresa_pct": 92.6,
             "ns_courier_pct": 90.2,
             "otif_total_pct": 87.2
@@ -3652,7 +3683,7 @@
           {
             "CANAL": "KITCHEN CENTER",
             "n_pedidos": 4635,
-            "pct_volumen": 5.8,
+            "pct_volumen": 5.7,
             "ns_empresa_pct": 98.0,
             "ns_courier_pct": 95.9,
             "otif_total_pct": 94.7
@@ -3660,7 +3691,7 @@
           {
             "CANAL": "RIPLEY",
             "n_pedidos": 4244,
-            "pct_volumen": 5.3,
+            "pct_volumen": 5.2,
             "ns_empresa_pct": 91.3,
             "ns_courier_pct": 48.9,
             "otif_total_pct": 47.6
@@ -3676,7 +3707,7 @@
           {
             "CANAL": "WALMART",
             "n_pedidos": 3506,
-            "pct_volumen": 4.4,
+            "pct_volumen": 4.3,
             "ns_empresa_pct": 96.5,
             "ns_courier_pct": 93.3,
             "otif_total_pct": 91.0
@@ -3684,7 +3715,7 @@
           {
             "CANAL": "KITCHEN",
             "n_pedidos": 1738,
-            "pct_volumen": 2.2,
+            "pct_volumen": 2.1,
             "ns_empresa_pct": 93.5,
             "ns_courier_pct": 92.0,
             "otif_total_pct": 86.7
@@ -3692,10 +3723,18 @@
           {
             "CANAL": "LATAM PASS",
             "n_pedidos": 1585,
-            "pct_volumen": 2.0,
+            "pct_volumen": 1.9,
             "ns_empresa_pct": 90.8,
             "ns_courier_pct": 88.7,
             "otif_total_pct": 86.9
+          },
+          {
+            "CANAL": "TRAVEL DUTY",
+            "n_pedidos": 993,
+            "pct_volumen": 1.2,
+            "ns_empresa_pct": 98.9,
+            "ns_courier_pct": 98.9,
+            "otif_total_pct": 98.9
           },
           {
             "CANAL": "GRS",
@@ -3753,6 +3792,7 @@
             "PAGINAS",
             "PARIS",
             "RIPLEY",
+            "TRAVEL DUTY",
             "WALMART"
           ]
         },
@@ -4394,18 +4434,18 @@
       },
       {
         "MES": "2026-10",
-        "n_pedidos": 11276,
-        "n_medidos": 10889,
-        "emp_ok": 10435,
-        "cou_ok": 9532,
-        "tot_ok": 9113,
-        "n_med_cou": 10889,
-        "otif_empresa": 0.9583065478923685,
-        "otif_courier": 0.8753788226650748,
-        "otif_total": 0.8368996234732299,
-        "otif_empresa_pct": 95.8,
-        "otif_courier_pct": 87.5,
-        "otif_total_pct": 83.7
+        "n_pedidos": 12394,
+        "n_medidos": 11993,
+        "emp_ok": 11539,
+        "cou_ok": 10636,
+        "tot_ok": 10217,
+        "n_med_cou": 11993,
+        "otif_empresa": 0.9621445843408655,
+        "otif_courier": 0.8868506628866839,
+        "otif_total": 0.8519136162761611,
+        "otif_empresa_pct": 96.2,
+        "otif_courier_pct": 88.7,
+        "otif_total_pct": 85.2
       },
       {
         "MES": "2026-11",
@@ -4454,16 +4494,16 @@
         "error": null
       },
       "2026-10": {
-        "n_pedidos": 11276,
-        "n_medidos": 10889,
-        "otif_empresa_pct": 0.9583065478923685,
-        "otif_courier_pct": 0.8753788226650748,
-        "otif_total_pct": 0.8368996234732299,
-        "n_empresa_ok": 10435,
-        "n_courier_ok": 9532,
-        "n_otif_ok": 9113,
-        "dias_empresa_promedio": -4.447791349067867,
-        "dias_courier_promedio": -77.39832843497429,
+        "n_pedidos": 12394,
+        "n_medidos": 11993,
+        "otif_empresa_pct": 0.9621445843408655,
+        "otif_courier_pct": 0.8868506628866839,
+        "otif_total_pct": 0.8519136162761611,
+        "n_empresa_ok": 11539,
+        "n_courier_ok": 10636,
+        "n_otif_ok": 10217,
+        "dias_empresa_promedio": -4.03835570749604,
+        "dias_courier_promedio": -70.27293195463642,
         "mes": "2026-10",
         "error": null
       },
@@ -4611,6 +4651,20 @@
           "otif_empresa_pct": 98.5,
           "otif_courier_pct": 99.8,
           "otif_total_pct": 98.4
+        },
+        {
+          "CLIENTE": "TRAVEL DUTY",
+          "n_pedidos": 1118,
+          "n_medidos": 1104,
+          "emp_ok": 1104,
+          "cou_ok": 1104,
+          "tot_ok": 1104,
+          "otif_empresa": 1.0,
+          "otif_courier": 1.0,
+          "otif_total": 1.0,
+          "otif_empresa_pct": 100.0,
+          "otif_courier_pct": 100.0,
+          "otif_total_pct": 100.0
         },
         {
           "CLIENTE": "PARIS",
@@ -5467,6 +5521,13 @@
           "otif_courier_pct": 83.1
         },
         {
+          "CURIER": "STARKEN",
+          "n_pedidos": 1134,
+          "otif_courier": 0.9867724867724867,
+          "dias_promedio": -0.0,
+          "otif_courier_pct": 98.7
+        },
+        {
           "CURIER": "WELIVERY",
           "n_pedidos": 858,
           "otif_courier": 0.8904428904428905,
@@ -5479,13 +5540,6 @@
           "otif_courier": 0.9855769230769231,
           "dias_promedio": 0.0,
           "otif_courier_pct": 98.6
-        },
-        {
-          "CURIER": "STARKEN",
-          "n_pedidos": 16,
-          "otif_courier": 0.9375,
-          "dias_promedio": -2.8,
-          "otif_courier_pct": 93.8
         },
         {
           "CURIER": "",
@@ -8248,31 +8302,31 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.07482233502538072,
-      "total_pickings": 9850,
-      "on_time": 738,
-      "on_time_pct": 0.0749238578680203,
-      "in_full": 9844,
-      "in_full_pct": 0.9993908629441625,
-      "both": 737,
+      "valor": 0.07359561558034841,
+      "total_pickings": 10218,
+      "on_time": 753,
+      "on_time_pct": 0.07369348209042866,
+      "in_full": 10212,
+      "in_full_pct": 0.9994128009395185,
+      "both": 752,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.07507507507507508,
-      "total_pickings": 333,
-      "on_time": 25,
-      "on_time_pct": 0.07507507507507508,
-      "in_full": 329,
-      "in_full_pct": 0.987987987987988,
-      "both": 25,
+      "valor": 0.08430232558139535,
+      "total_pickings": 344,
+      "on_time": 29,
+      "on_time_pct": 0.08430232558139535,
+      "in_full": 340,
+      "in_full_pct": 0.9883720930232558,
+      "both": 29,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997627895943703,
-      "ok": 12644,
-      "total": 12647,
+      "valor": 0.999771845767739,
+      "ok": 13146,
+      "total": 13149,
       "errores": 3,
       "error": null
     }
