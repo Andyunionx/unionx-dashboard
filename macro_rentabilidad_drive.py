@@ -104,17 +104,53 @@ def _fila_com(mes, canal, glosa, valor, cc='Comisión venta'):
             'Centro de costo': cc, 'Glosa': glosa, 'Valor': round(float(valor)), 'Fuente': 'Liquidación'}
 
 
+# Control de Aportes MAESTRO de Andrés (data/planillas, sincronizado a su Drive): se lee por id. Antes se buscaba
+# por nombre en la raíz de liquidaciones; el 10-nov Gabriela movió su copia a la subcarpeta APORTES y la macro quedó
+# sin aportes (Duty, ABC, tiendas) de julio a octubre sin ningún aviso. Andrés, 24-nov. Si el maestro no se puede
+# abrir, se busca por nombre en la raíz y en APORTES, y siempre se avisa en el log y en el resumen del run.
+APORTES_MAESTRO = '1f4qfs18k3QFVKHluz-ar_qSRe23YtukO'
+
+
+def _aviso_aportes(msg):
+    print(f'   [APORTES][WARN] {msg}')
+    if os.environ.get('GITHUB_ACTIONS'):
+        print(f'::warning title=Control de Aportes::{msg}')
+    resumen = os.environ.get('GITHUB_STEP_SUMMARY')
+    if resumen:
+        with open(resumen, 'a', encoding='utf-8') as fh:
+            fh.write(f'> **Control de Aportes:** {msg}\n\n')
+
+
+def _ubicar_aportes(drv):
+    import rentabilidad_reporte_semanal as R
+    try:
+        m = drv.files().get(fileId=APORTES_MAESTRO, fields='id,name,trashed', supportsAllDrives=True).execute()
+        if not m.get('trashed'):
+            return m
+        _aviso_aportes(f'el maestro {APORTES_MAESTRO} está en la papelera; se busca por nombre')
+    except Exception as e:
+        _aviso_aportes(f'no se pudo abrir el maestro {APORTES_MAESTRO} ({type(e).__name__}); se busca por nombre')
+    kw = dict(fields='files(id,name,modifiedTime)', supportsAllDrives=True, includeItemsFromAllDrives=True)
+    padres = [R.CARPETA_LIQ] + [f['id'] for f in drv.files().list(
+        q=f"'{R.CARPETA_LIQ}' in parents and name = 'APORTES' and "
+          "mimeType = 'application/vnd.google-apps.folder' and trashed=false", **kw).execute().get('files', [])]
+    fs = []
+    for pid in padres:
+        fs += drv.files().list(q=f"'{pid}' in parents and name contains 'Control Aportes' and trashed=false",
+                               **kw).execute().get('files', [])
+    fs = sorted([f for f in fs if not f['name'].startswith('~$')], key=lambda f: f['modifiedTime'])
+    return fs[-1] if fs else None
+
+
 def leer_aportes(drv, meses) -> pd.DataFrame:
     import io
     from googleapiclient.http import MediaIoBaseDownload
-    import rentabilidad_reporte_semanal as R
-    fs = drv.files().list(q=f"'{R.CARPETA_LIQ}' in parents and name contains 'Control Aportes' and trashed=false",
-                          fields='files(id,name,modifiedTime)', supportsAllDrives=True, includeItemsFromAllDrives=True).execute().get('files', [])
-    fs = sorted([f for f in fs if not f['name'].startswith('~$')], key=lambda f: f['modifiedTime'])
-    if not fs:
+    f = _ubicar_aportes(drv)
+    if not f:
+        _aviso_aportes('no se encontró el Control de Aportes: la macro queda SIN aportes (Duty, ABC, tiendas)')
         return pd.DataFrame(columns=COLS)
     b = io.BytesIO()
-    dl = MediaIoBaseDownload(b, drv.files().get_media(fileId=fs[-1]['id'], supportsAllDrives=True))
+    dl = MediaIoBaseDownload(b, drv.files().get_media(fileId=f['id'], supportsAllDrives=True))
     done = False
     while not done:
         _, done = dl.next_chunk()
@@ -126,6 +162,10 @@ def leer_aportes(drv, meses) -> pd.DataFrame:
     a['canal'] = a['Retail'].astype(str).str.strip().map(lambda r: CANAL_APORTES.get(r.lower(), r))
     a['v'] = pd.to_numeric(a['Provisión Neta'], errors='coerce').fillna(0)
     g = a.groupby(['mes', 'canal'], as_index=False)['v'].sum()
+    por_mes = g.groupby('mes')['v'].sum()
+    print(f"   [APORTES] {f['name']}: " + (' · '.join(f'{m} ${v:,.0f}' for m, v in por_mes.items()) or 'sin filas'))
+    if not g['v'].abs().sum():
+        _aviso_aportes(f"el Control de Aportes ({f['name']}) no trae provisión para {min(meses)} a {max(meses)}")
     return pd.DataFrame([_fila_com(r.mes, r.canal, 'Aporte comercial (provisión)', r.v) for r in g.itertuples() if r.v],
                         columns=COLS)
 
