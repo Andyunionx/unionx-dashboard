@@ -1,40 +1,131 @@
 {
-  "generado_en": "2026-11-23T11:57:17.437392",
+  "generado_en": "2026-11-24T02:01:53.752127",
   "mes_actual": "2026-11",
   "kpis": {
     "otif_b2c_30d": {
-      "valor": 0.07381443298969072,
-      "total_pickings": 9700,
-      "on_time": 717,
-      "on_time_pct": 0.07391752577319588,
-      "in_full": 9694,
-      "in_full_pct": 0.999381443298969,
-      "both": 716,
+      "valor": 0.07482233502538072,
+      "total_pickings": 9850,
+      "on_time": 738,
+      "on_time_pct": 0.0749238578680203,
+      "in_full": 9844,
+      "in_full_pct": 0.9993908629441625,
+      "both": 737,
       "error": null
     },
     "otif_b2b_30d": {
-      "valor": 0.06134969325153374,
-      "total_pickings": 326,
-      "on_time": 20,
-      "on_time_pct": 0.06134969325153374,
-      "in_full": 322,
-      "in_full_pct": 0.9877300613496932,
-      "both": 20,
+      "valor": 0.07507507507507508,
+      "total_pickings": 333,
+      "on_time": 25,
+      "on_time_pct": 0.07507507507507508,
+      "in_full": 329,
+      "in_full_pct": 0.987987987987988,
+      "both": 25,
       "error": null
     },
     "pick_accuracy_30d": {
-      "valor": 0.9997581425346662,
-      "ok": 12401,
-      "total": 12404,
+      "valor": 0.9997627895943703,
+      "ok": 12644,
+      "total": 12647,
       "errores": 3,
       "error": null
     },
     "tiempo_recepcion_90d": {
-      "valor": 4.02412812333865,
+      "valor": 3.6467454146730462,
       "n_recepciones": 836,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/RET/01712",
+          "proveedor": "Cliente Mercado Libre, Maria Victoria Martin Barquero",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 22:43",
+          "done": "2026-11-23 22:43"
+        },
+        {
+          "picking": "CA1/RET/01710",
+          "proveedor": "Cliente Mercado Libre, Esteban Alvarez Rivera",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 20:12",
+          "done": "2026-11-23 20:12"
+        },
+        {
+          "picking": "CA1/RET/01711",
+          "proveedor": "Cliente Mercado Libre, Diego Andrés Caro Vega",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 20:12",
+          "done": "2026-11-23 20:12"
+        },
+        {
+          "picking": "CA1/IN/01122",
+          "proveedor": "Celiv Spa",
+          "horas": 1.2,
+          "scheduled": "2026-11-23 18:08",
+          "done": "2026-11-23 19:18"
+        },
+        {
+          "picking": "BFFa/RET/00147",
+          "proveedor": "Cliente Falabella Fcom, Isaías Penchulef",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 16:12",
+          "done": "2026-11-23 16:12"
+        },
+        {
+          "picking": "CA1/RET/01708",
+          "proveedor": "Cliente Falabella Fcom, LUZMENIA DEL CARMEN BORDONES",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:12",
+          "done": "2026-11-23 15:13"
+        },
+        {
+          "picking": "CA1/RET/01709",
+          "proveedor": "Cliente Paris, Patricio Gonzalez",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:13",
+          "done": "2026-11-23 15:13"
+        },
+        {
+          "picking": "CA1/RET/01706",
+          "proveedor": "Cliente Falabella Fcom, Sonja Cárdenas Guzmán",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:12",
+          "done": "2026-11-23 15:12"
+        },
+        {
+          "picking": "CA1/RET/01707",
+          "proveedor": "Cliente Falabella Fcom, ingrid westhoff",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:12",
+          "done": "2026-11-23 15:12"
+        },
+        {
+          "picking": "CA1/IN/01121",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 0.3,
+          "scheduled": "2026-11-23 13:36",
+          "done": "2026-11-23 13:54"
+        },
+        {
+          "picking": "CA1/RET/01704",
+          "proveedor": "Cliente Falabella Fcom, Christopher Vergara Coronado",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 13:35",
+          "done": "2026-11-23 13:35"
+        },
+        {
+          "picking": "CA1/RET/01705",
+          "proveedor": "Cliente Falabella Fcom, David Millaquen Orellana",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 13:35",
+          "done": "2026-11-23 13:35"
+        },
+        {
+          "picking": "CA1/RET/01703",
+          "proveedor": "Cliente Simplit Home, PURÍSIMA URZUA",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 12:11",
+          "done": "2026-11-23 12:11"
+        },
         {
           "picking": "CA1/RET/01702",
           "proveedor": "Cliente Mercado Libre, Anais Fonseca",
@@ -83,116 +174,25 @@
           "horas": 0.0,
           "scheduled": "2026-11-20 15:30",
           "done": "2026-11-20 15:30"
-        },
-        {
-          "picking": "CA1/RET/01699",
-          "proveedor": "Cliente Ripley, Raul Andrades",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 15:29",
-          "done": "2026-11-20 15:29"
-        },
-        {
-          "picking": "CA1/RET/01698",
-          "proveedor": "Cliente Paris, Geovanna Rojas",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:30",
-          "done": "2026-11-20 14:30"
-        },
-        {
-          "picking": "BFFa/RET/00142",
-          "proveedor": "Cliente Falabella Fcom, Joaquín Leyton",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:30",
-          "done": "2026-11-20 14:30"
-        },
-        {
-          "picking": "BFW/IN/00008",
-          "proveedor": "Cliente Walmart, Yasmin Villalobos",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:30",
-          "done": "2026-11-20 14:30"
-        },
-        {
-          "picking": "CA1/RET/01697",
-          "proveedor": "Cliente Walmart, francisco Leon",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:29",
-          "done": "2026-11-20 14:29"
-        },
-        {
-          "picking": "CA1/RET/01696",
-          "proveedor": "Cliente Falabella Fcom, Polyana Palacios Nazel",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 13:30",
-          "done": "2026-11-20 13:30"
-        },
-        {
-          "picking": "CA1/RET/01695",
-          "proveedor": "Cliente Falabella Fcom, NIXZA MEDALI CONTRERAS RODRIGUEZ",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 13:29",
-          "done": "2026-11-20 13:29"
-        },
-        {
-          "picking": "CA1/IN/01120",
-          "proveedor": "Comercial Caramba Chile S.A",
-          "horas": 17.3,
-          "scheduled": "2026-11-19 18:07",
-          "done": "2026-11-20 11:26"
-        },
-        {
-          "picking": "CA1/RET/01693",
-          "proveedor": "Comercial ECCSA S A, Delivery Address",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 11:15",
-          "done": "2026-11-20 11:15"
-        },
-        {
-          "picking": "CA1/IN/01113",
-          "proveedor": "Celiv Spa",
-          "horas": 198.6,
-          "scheduled": "2026-11-11 13:43",
-          "done": "2026-11-19 20:19"
-        },
-        {
-          "picking": "CA1/RET/01692",
-          "proveedor": "Cliente Mercado Libre, Amira Michelle Elgue",
-          "horas": 0.0,
-          "scheduled": "2026-11-19 19:22",
-          "done": "2026-11-19 19:22"
-        },
-        {
-          "picking": "CA1/RET/01689",
-          "proveedor": "Cliente Falabella Fcom, Constanza Ahumada",
-          "horas": 0.0,
-          "scheduled": "2026-11-19 16:22",
-          "done": "2026-11-19 16:22"
-        },
-        {
-          "picking": "CA1/RET/01690",
-          "proveedor": "Cliente Paris, Yeniffer Gallardo",
-          "horas": 0.0,
-          "scheduled": "2026-11-19 16:22",
-          "done": "2026-11-19 16:22"
         }
       ],
       "error": null
     },
     "ofr_30d": {
-      "valor": 0.9497425334706489,
-      "total_so": 9720,
-      "total_con_pickings": 9710,
-      "cumplidos": 9222,
-      "parciales": 14,
-      "sin_iniciar": 474,
+      "valor": 0.9358521062733609,
+      "total_so": 9911,
+      "total_con_pickings": 9899,
+      "cumplidos": 9264,
+      "parciales": 15,
+      "sin_iniciar": 620,
       "error": null
     },
     "oct_30d": {
-      "valor": 27.99095388158634,
-      "n_orders": 9890,
+      "valor": 27.868135308051627,
+      "n_orders": 10038,
       "min_h": 0.0002777777777777778,
       "max_h": 659.6175,
-      "mediana_h": 8.390277777777778,
+      "mediana_h": 7.888888888888889,
       "detalle": [
         {
           "so": "S308091",
@@ -300,6 +300,13 @@
           "fecha_despacho": "2026-11-02 13:46"
         },
         {
+          "so": "S306892",
+          "cliente": "RETAIL  COMMUNICATION CHILE S.A.",
+          "horas": 599.1,
+          "fecha_orden": "2026-10-29 14:09",
+          "fecha_despacho": "2026-11-23 13:17"
+        },
+        {
           "so": "S303221",
           "cliente": "Cliente Shopify, Rodrigo Cárdenas",
           "horas": 588.5,
@@ -326,13 +333,6 @@
           "horas": 578.4,
           "fecha_orden": "2026-10-05 14:15",
           "fecha_despacho": "2026-10-29 16:41"
-        },
-        {
-          "so": "S298262",
-          "cliente": "Cliente Shopify, Joaquín Cofré Ríos",
-          "horas": 572.6,
-          "fecha_orden": "2026-10-06 17:41",
-          "fecha_despacho": "2026-10-30 14:18"
         }
       ],
       "error": null
@@ -346,14 +346,14 @@
       "error": "RuntimeError: Error después de 10 intentos en stock.move.search_read: <Fault 1: 'Traceback (most recent call last):\\n  File \"/home/odo"
     },
     "lineas_mes_actual": {
-      "lineas": 9365,
+      "lineas": 9700,
       "mes": "2026-11",
       "error": null
     },
     "volumen_movs_90d": {
-      "incoming": 133,
-      "outgoing": 29797,
-      "internal": 20070,
+      "incoming": 123,
+      "outgoing": 29460,
+      "internal": 20417,
       "total": 50000,
       "error": null
     },
@@ -379,8 +379,8 @@
         },
         {
           "cliente": "Celmedia Fidelizacion SPA",
-          "total": 20,
-          "tarde": 20,
+          "total": 21,
+          "tarde": 21,
           "on_time_pct": 0.0
         },
         {
@@ -415,15 +415,21 @@
         },
         {
           "cliente": "Cliente Mercado Libre",
-          "total": 28,
+          "total": 29,
           "tarde": 22,
-          "on_time_pct": 0.21428571428571427
+          "on_time_pct": 0.2413793103448276
         },
         {
           "cliente": "Cencosud Retail S.A",
           "total": 4,
           "tarde": 1,
           "on_time_pct": 0.75
+        },
+        {
+          "cliente": "Shenzhen Topwill Electronic Co. Ltd",
+          "total": 3,
+          "tarde": 0,
+          "on_time_pct": 1.0
         }
       ],
       "error": null
@@ -605,17 +611,17 @@
         },
         "resumen": {
           "n_ordenes": 11238,
-          "cancelacion_clp": 2814656.7550560003,
+          "cancelacion_clp": 2875144.150016,
           "quiebre_clp": 607970.519919,
-          "n_canceladas": 347,
+          "n_canceladas": 349,
           "n_quiebres": 33,
-          "n_medidos": 10858,
-          "ns_empresa_pct": 0.956621845643765,
-          "ns_courier_pct": 0.8712470068152515,
-          "otif_total_pct": 0.8329342420335236,
-          "n_empresa_ok": 10387,
-          "n_courier_ok": 9460,
-          "n_otif_ok": 9044
+          "n_medidos": 10856,
+          "ns_empresa_pct": 0.9575350036845984,
+          "ns_courier_pct": 0.8723286661753868,
+          "otif_total_pct": 0.8340088430361091,
+          "n_empresa_ok": 10395,
+          "n_courier_ok": 9470,
+          "n_otif_ok": 9054
         },
         "por_cliente": [
           {
@@ -641,12 +647,12 @@
           {
             "CLIENTE": "FALABELLA HDC",
             "ORDENES": 1412,
-            "A_TPO_EMP": 1333,
-            "A_TPO_COU": 1329,
-            "OTIF": 1328,
-            "NS_EMP_PCT": 0.9441,
-            "NS_COU_PCT": 0.9412,
-            "OTIF_PCT": 0.9405
+            "A_TPO_EMP": 1339,
+            "A_TPO_COU": 1335,
+            "OTIF": 1334,
+            "NS_EMP_PCT": 0.9483,
+            "NS_COU_PCT": 0.9455,
+            "OTIF_PCT": 0.9448
           },
           {
             "CLIENTE": "KITCHEN",
@@ -661,12 +667,12 @@
           {
             "CLIENTE": "MERCADO LIBRE C",
             "ORDENES": 1119,
-            "A_TPO_EMP": 1071,
-            "A_TPO_COU": 1084,
-            "OTIF": 1068,
-            "NS_EMP_PCT": 0.9571,
-            "NS_COU_PCT": 0.9687,
-            "OTIF_PCT": 0.9544
+            "A_TPO_EMP": 1074,
+            "A_TPO_COU": 1088,
+            "OTIF": 1072,
+            "NS_EMP_PCT": 0.9598,
+            "NS_COU_PCT": 0.9723,
+            "OTIF_PCT": 0.958
           },
           {
             "CLIENTE": "PARIS",
@@ -701,10 +707,10 @@
           {
             "CLIENTE": "RIPLEY",
             "ORDENES": 617,
-            "A_TPO_EMP": 568,
+            "A_TPO_EMP": 567,
             "A_TPO_COU": 339,
             "OTIF": 329,
-            "NS_EMP_PCT": 0.9206,
+            "NS_EMP_PCT": 0.919,
             "NS_COU_PCT": 0.5494,
             "OTIF_PCT": 0.5332
           },
@@ -751,12 +757,12 @@
           {
             "CLIENTE": "TOTAL",
             "ORDENES": 11238,
-            "A_TPO_EMP": 10387,
-            "NS_EMP_PCT": 0.9242747819896778,
-            "A_TPO_COU": 9460,
-            "NS_COU_PCT": 0.8417867948033458,
-            "OTIF": 9044,
-            "OTIF_PCT": 0.804769531945186
+            "A_TPO_EMP": 10395,
+            "NS_EMP_PCT": 0.9249866524292579,
+            "A_TPO_COU": 9470,
+            "NS_COU_PCT": 0.8426766328528208,
+            "OTIF": 9054,
+            "OTIF_PCT": 0.8056593699946609
           }
         ],
         "pareto_quiebres": [
@@ -2788,16 +2794,16 @@
         {
           "CURIER": "BLUEXPRESS",
           "n_pedidos": 3157,
-          "ns_courier_pct": 96.5,
-          "ns_empresa_pct": 88.7,
-          "otif_total_pct": 85.6
+          "ns_courier_pct": 96.6,
+          "ns_empresa_pct": 88.8,
+          "otif_total_pct": 85.7
         },
         {
           "CURIER": "HOME DELIVERY CORP",
           "n_pedidos": 1412,
-          "ns_courier_pct": 99.1,
-          "ns_empresa_pct": 99.4,
-          "otif_total_pct": 99.0
+          "ns_courier_pct": 99.6,
+          "ns_empresa_pct": 99.9,
+          "otif_total_pct": 99.6
         },
         {
           "CURIER": "COLECTA",
@@ -2823,9 +2829,9 @@
         {
           "CURIER": "STARKEN",
           "n_pedidos": 98,
-          "ns_courier_pct": 98.0,
+          "ns_courier_pct": 99.0,
           "ns_empresa_pct": 89.8,
-          "otif_total_pct": 88.8
+          "otif_total_pct": 89.8
         }
       ],
       "2026-09": [
@@ -3396,12 +3402,12 @@
           "hasta": "2026-10-25"
         },
         "n_ordenes": 80397,
-        "n_empresa_ok": 77032,
-        "n_courier_ok": 72827,
-        "n_otif_ok": 71910,
+        "n_empresa_ok": 77040,
+        "n_courier_ok": 72837,
+        "n_otif_ok": 71920,
         "ns_empresa_pct": 95.8,
         "ns_courier_pct": 90.6,
-        "otif_total_pct": 89.4,
+        "otif_total_pct": 89.5,
         "trend": [
           {
             "key": "2026-01",
@@ -3499,9 +3505,9 @@
             "anio": 2026,
             "label_corto": "10/26",
             "n_ordenes": 11238,
-            "ns_empresa_pct": 92.4,
-            "ns_courier_pct": 84.2,
-            "otif_total_pct": 80.5
+            "ns_empresa_pct": 92.5,
+            "ns_courier_pct": 84.3,
+            "otif_total_pct": 80.6
           }
         ],
         "por_courier": [
@@ -3525,8 +3531,8 @@
             "CURIER": "HOME DELIVERY CORP",
             "n_pedidos": 13043,
             "pct_volumen": 16.2,
-            "ns_courier_pct": 95.4,
-            "otif_total_pct": 95.4,
+            "ns_courier_pct": 95.5,
+            "otif_total_pct": 95.5,
             "ns_empresa_pct": 95.5
           },
           {
@@ -3550,7 +3556,7 @@
             "n_pedidos": 3696,
             "pct_volumen": 4.6,
             "ns_courier_pct": 99.5,
-            "otif_total_pct": 98.7,
+            "otif_total_pct": 98.8,
             "ns_empresa_pct": 98.8
           },
           {
@@ -3608,7 +3614,7 @@
             "n_pedidos": 13005,
             "pct_volumen": 16.2,
             "ns_empresa_pct": 95.5,
-            "ns_courier_pct": 95.4,
+            "ns_courier_pct": 95.5,
             "otif_total_pct": 95.4
           },
           {
@@ -3623,9 +3629,9 @@
             "CANAL": "MERCADO LIBRE C",
             "n_pedidos": 8940,
             "pct_volumen": 11.1,
-            "ns_empresa_pct": 96.4,
-            "ns_courier_pct": 96.5,
-            "otif_total_pct": 96.3
+            "ns_empresa_pct": 96.5,
+            "ns_courier_pct": 96.6,
+            "otif_total_pct": 96.4
           },
           {
             "CANAL": "PARIS",
@@ -3655,7 +3661,7 @@
             "CANAL": "RIPLEY",
             "n_pedidos": 4244,
             "pct_volumen": 5.3,
-            "ns_empresa_pct": 91.4,
+            "ns_empresa_pct": 91.3,
             "ns_courier_pct": 48.9,
             "otif_total_pct": 47.6
           },
@@ -4389,17 +4395,17 @@
       {
         "MES": "2026-10",
         "n_pedidos": 11276,
-        "n_medidos": 10894,
-        "emp_ok": 10430,
-        "cou_ok": 9499,
-        "tot_ok": 9080,
-        "n_med_cou": 10894,
-        "otif_empresa": 0.957407747383881,
-        "otif_courier": 0.8719478612080044,
-        "otif_total": 0.833486322746466,
-        "otif_empresa_pct": 95.7,
-        "otif_courier_pct": 87.2,
-        "otif_total_pct": 83.3
+        "n_medidos": 10889,
+        "emp_ok": 10435,
+        "cou_ok": 9532,
+        "tot_ok": 9113,
+        "n_med_cou": 10889,
+        "otif_empresa": 0.9583065478923685,
+        "otif_courier": 0.8753788226650748,
+        "otif_total": 0.8368996234732299,
+        "otif_empresa_pct": 95.8,
+        "otif_courier_pct": 87.5,
+        "otif_total_pct": 83.7
       },
       {
         "MES": "2026-11",
@@ -4449,15 +4455,15 @@
       },
       "2026-10": {
         "n_pedidos": 11276,
-        "n_medidos": 10894,
-        "otif_empresa_pct": 0.957407747383881,
-        "otif_courier_pct": 0.8719478612080044,
-        "otif_total_pct": 0.833486322746466,
-        "n_empresa_ok": 10430,
-        "n_courier_ok": 9499,
-        "n_otif_ok": 9080,
-        "dias_empresa_promedio": -51.230126675234075,
-        "dias_courier_promedio": -281.5265767006334,
+        "n_medidos": 10889,
+        "otif_empresa_pct": 0.9583065478923685,
+        "otif_courier_pct": 0.8753788226650748,
+        "otif_total_pct": 0.8368996234732299,
+        "n_empresa_ok": 10435,
+        "n_courier_ok": 9532,
+        "n_otif_ok": 9113,
+        "dias_empresa_promedio": -4.447791349067867,
+        "dias_courier_promedio": -77.39832843497429,
         "mes": "2026-10",
         "error": null
       },
@@ -4567,16 +4573,16 @@
         {
           "CLIENTE": "FALABELLA HDC",
           "n_pedidos": 1458,
-          "n_medidos": 1386,
-          "emp_ok": 1379,
-          "cou_ok": 1356,
-          "tot_ok": 1356,
-          "otif_empresa": 0.9949494949494949,
-          "otif_courier": 0.9783549783549783,
-          "otif_total": 0.9783549783549783,
-          "otif_empresa_pct": 99.5,
-          "otif_courier_pct": 97.8,
-          "otif_total_pct": 97.8
+          "n_medidos": 1383,
+          "emp_ok": 1383,
+          "cou_ok": 1381,
+          "tot_ok": 1381,
+          "otif_empresa": 1.0,
+          "otif_courier": 0.9985538684020245,
+          "otif_total": 0.9985538684020245,
+          "otif_empresa_pct": 100.0,
+          "otif_courier_pct": 99.9,
+          "otif_total_pct": 99.9
         },
         {
           "CLIENTE": "KITCHEN",
@@ -4596,43 +4602,43 @@
           "CLIENTE": "MERCADO LIBRE C",
           "n_pedidos": 1140,
           "n_medidos": 1110,
-          "emp_ok": 1090,
-          "cou_ok": 1104,
-          "tot_ok": 1088,
-          "otif_empresa": 0.9819819819819819,
-          "otif_courier": 0.9945945945945946,
-          "otif_total": 0.9801801801801802,
-          "otif_empresa_pct": 98.2,
-          "otif_courier_pct": 99.5,
-          "otif_total_pct": 98.0
+          "emp_ok": 1093,
+          "cou_ok": 1108,
+          "tot_ok": 1092,
+          "otif_empresa": 0.9846846846846847,
+          "otif_courier": 0.9981981981981982,
+          "otif_total": 0.9837837837837838,
+          "otif_empresa_pct": 98.5,
+          "otif_courier_pct": 99.8,
+          "otif_total_pct": 98.4
         },
         {
           "CLIENTE": "PARIS",
           "n_pedidos": 975,
-          "n_medidos": 928,
-          "emp_ok": 815,
-          "cou_ok": 907,
-          "tot_ok": 795,
-          "otif_empresa": 0.8782327586206896,
-          "otif_courier": 0.9773706896551724,
-          "otif_total": 0.8566810344827587,
+          "n_medidos": 927,
+          "emp_ok": 814,
+          "cou_ok": 908,
+          "tot_ok": 796,
+          "otif_empresa": 0.8781014023732471,
+          "otif_courier": 0.9795037756202805,
+          "otif_total": 0.8586839266450917,
           "otif_empresa_pct": 87.8,
-          "otif_courier_pct": 97.7,
-          "otif_total_pct": 85.7
+          "otif_courier_pct": 98.0,
+          "otif_total_pct": 85.9
         },
         {
           "CLIENTE": "LATAM PASS",
           "n_pedidos": 695,
           "n_medidos": 626,
           "emp_ok": 619,
-          "cou_ok": 601,
-          "tot_ok": 597,
+          "cou_ok": 602,
+          "tot_ok": 598,
           "otif_empresa": 0.9888178913738019,
-          "otif_courier": 0.9600638977635783,
-          "otif_total": 0.9536741214057508,
+          "otif_courier": 0.9616613418530351,
+          "otif_total": 0.9552715654952076,
           "otif_empresa_pct": 98.9,
-          "otif_courier_pct": 96.0,
-          "otif_total_pct": 95.4
+          "otif_courier_pct": 96.2,
+          "otif_total_pct": 95.5
         },
         {
           "CLIENTE": "FALABELLA F",
@@ -4651,16 +4657,16 @@
         {
           "CLIENTE": "RIPLEY",
           "n_pedidos": 612,
-          "n_medidos": 582,
-          "emp_ok": 564,
-          "cou_ok": 344,
-          "tot_ok": 333,
-          "otif_empresa": 0.9690721649484536,
-          "otif_courier": 0.5910652920962199,
-          "otif_total": 0.5721649484536082,
+          "n_medidos": 581,
+          "emp_ok": 563,
+          "cou_ok": 346,
+          "tot_ok": 335,
+          "otif_empresa": 0.9690189328743546,
+          "otif_courier": 0.5955249569707401,
+          "otif_total": 0.576592082616179,
           "otif_empresa_pct": 96.9,
-          "otif_courier_pct": 59.1,
-          "otif_total_pct": 57.2
+          "otif_courier_pct": 59.6,
+          "otif_total_pct": 57.7
         },
         {
           "CLIENTE": "WALMART",
@@ -5442,22 +5448,22 @@
         {
           "CURIER": "BLUEXPRESS",
           "n_pedidos": 3182,
-          "otif_courier": 0.931803896920176,
-          "dias_promedio": -229.4,
-          "otif_courier_pct": 93.2
+          "otif_courier": 0.9340037712130735,
+          "dias_promedio": -108.6,
+          "otif_courier_pct": 93.4
         },
         {
           "CURIER": "HDC",
           "n_pedidos": 1458,
-          "otif_courier": 0.9300411522633745,
-          "dias_promedio": -1002.9,
-          "otif_courier_pct": 93.0
+          "otif_courier": 0.9471879286694102,
+          "dias_promedio": -67.0,
+          "otif_courier_pct": 94.7
         },
         {
           "CURIER": "COLECTA",
           "n_pedidos": 1293,
           "otif_courier": 0.831399845320959,
-          "dias_promedio": -476.7,
+          "dias_promedio": -72.9,
           "otif_courier_pct": 83.1
         },
         {
@@ -5477,9 +5483,9 @@
         {
           "CURIER": "STARKEN",
           "n_pedidos": 16,
-          "otif_courier": 0.875,
-          "dias_promedio": -2898.3,
-          "otif_courier_pct": 87.5
+          "otif_courier": 0.9375,
+          "dias_promedio": -2.8,
+          "otif_courier_pct": 93.8
         },
         {
           "CURIER": "",
@@ -5750,6 +5756,16 @@
           "dias_courier": 46325.0
         },
         {
+          "FECHA": "2026-10-15",
+          "ORDEN": "25347302701-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "COLECTA",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": -1.0,
+          "dias_courier": 25.0
+        },
+        {
           "FECHA": "2026-10-02",
           "ORDEN": "926915",
           "CLIENTE": "KITCHEN",
@@ -5842,6 +5858,16 @@
         {
           "FECHA": "2026-10-05",
           "ORDEN": "25251784501-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "COLECTA",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 17.0
+        },
+        {
+          "FECHA": "2026-10-20",
+          "ORDEN": "25357110401-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "COLECTA",
           "Estado Empresa": "A Tiempo",
@@ -6040,6 +6066,16 @@
           "dias_courier": 9.0
         },
         {
+          "FECHA": "2026-10-30",
+          "ORDEN": "25375161201-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "COLECTA",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 9.0
+        },
+        {
           "FECHA": "2026-10-04",
           "ORDEN": "#22410",
           "CLIENTE": "PAGINAS",
@@ -6092,6 +6128,16 @@
         {
           "FECHA": "2026-10-08",
           "ORDEN": "25330639402-A",
+          "CLIENTE": "RIPLEY",
+          "CURIER": "COLECTA",
+          "Estado Empresa": "A Tiempo",
+          "CUMPLIMIENTO COURIER": "Demorado",
+          "dias_empresa": 0.0,
+          "dias_courier": 8.0
+        },
+        {
+          "FECHA": "2026-10-17",
+          "ORDEN": "25351189801-A",
           "CLIENTE": "RIPLEY",
           "CURIER": "COLECTA",
           "Estado Empresa": "A Tiempo",
@@ -6187,46 +6233,6 @@
           "Estado Empresa": "A Tiempo",
           "CUMPLIMIENTO COURIER": "Demorado",
           "dias_empresa": 0.0,
-          "dias_courier": 7.0
-        },
-        {
-          "FECHA": "2026-10-06",
-          "ORDEN": "25289504301-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "COLECTA",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 7.0
-        },
-        {
-          "FECHA": "2026-10-07",
-          "ORDEN": "25311707601-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "COLECTA",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 7.0
-        },
-        {
-          "FECHA": "2026-10-14",
-          "ORDEN": "25345927904-A",
-          "CLIENTE": "RIPLEY",
-          "CURIER": "COLECTA",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": 0.0,
-          "dias_courier": 7.0
-        },
-        {
-          "FECHA": "2026-10-05",
-          "ORDEN": "3254192532",
-          "CLIENTE": "FALABELLA F",
-          "CURIER": "RECIBELO",
-          "Estado Empresa": "A Tiempo",
-          "CUMPLIMIENTO COURIER": "Demorado",
-          "dias_empresa": -1.0,
           "dias_courier": 7.0
         }
       ],
@@ -8242,42 +8248,133 @@
   },
   "otif_ventanas": {
     "b2c_30d": {
-      "valor": 0.07381443298969072,
-      "total_pickings": 9700,
-      "on_time": 717,
-      "on_time_pct": 0.07391752577319588,
-      "in_full": 9694,
-      "in_full_pct": 0.999381443298969,
-      "both": 716,
+      "valor": 0.07482233502538072,
+      "total_pickings": 9850,
+      "on_time": 738,
+      "on_time_pct": 0.0749238578680203,
+      "in_full": 9844,
+      "in_full_pct": 0.9993908629441625,
+      "both": 737,
       "error": null
     },
     "b2b_30d": {
-      "valor": 0.06134969325153374,
-      "total_pickings": 326,
-      "on_time": 20,
-      "on_time_pct": 0.06134969325153374,
-      "in_full": 322,
-      "in_full_pct": 0.9877300613496932,
-      "both": 20,
+      "valor": 0.07507507507507508,
+      "total_pickings": 333,
+      "on_time": 25,
+      "on_time_pct": 0.07507507507507508,
+      "in_full": 329,
+      "in_full_pct": 0.987987987987988,
+      "both": 25,
       "error": null
     }
   },
   "pick_ventanas": {
     "30d": {
-      "valor": 0.9997581425346662,
-      "ok": 12401,
-      "total": 12404,
+      "valor": 0.9997627895943703,
+      "ok": 12644,
+      "total": 12647,
       "errores": 3,
       "error": null
     }
   },
   "recepcion_ventanas": {
     "90d": {
-      "valor": 4.02412812333865,
+      "valor": 3.6467454146730462,
       "n_recepciones": 836,
       "min": 0.0002777777777777778,
       "max": 690.62,
       "detalle": [
+        {
+          "picking": "CA1/RET/01712",
+          "proveedor": "Cliente Mercado Libre, Maria Victoria Martin Barquero",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 22:43",
+          "done": "2026-11-23 22:43"
+        },
+        {
+          "picking": "CA1/RET/01710",
+          "proveedor": "Cliente Mercado Libre, Esteban Alvarez Rivera",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 20:12",
+          "done": "2026-11-23 20:12"
+        },
+        {
+          "picking": "CA1/RET/01711",
+          "proveedor": "Cliente Mercado Libre, Diego Andrés Caro Vega",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 20:12",
+          "done": "2026-11-23 20:12"
+        },
+        {
+          "picking": "CA1/IN/01122",
+          "proveedor": "Celiv Spa",
+          "horas": 1.2,
+          "scheduled": "2026-11-23 18:08",
+          "done": "2026-11-23 19:18"
+        },
+        {
+          "picking": "BFFa/RET/00147",
+          "proveedor": "Cliente Falabella Fcom, Isaías Penchulef",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 16:12",
+          "done": "2026-11-23 16:12"
+        },
+        {
+          "picking": "CA1/RET/01708",
+          "proveedor": "Cliente Falabella Fcom, LUZMENIA DEL CARMEN BORDONES",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:12",
+          "done": "2026-11-23 15:13"
+        },
+        {
+          "picking": "CA1/RET/01709",
+          "proveedor": "Cliente Paris, Patricio Gonzalez",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:13",
+          "done": "2026-11-23 15:13"
+        },
+        {
+          "picking": "CA1/RET/01706",
+          "proveedor": "Cliente Falabella Fcom, Sonja Cárdenas Guzmán",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:12",
+          "done": "2026-11-23 15:12"
+        },
+        {
+          "picking": "CA1/RET/01707",
+          "proveedor": "Cliente Falabella Fcom, ingrid westhoff",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 15:12",
+          "done": "2026-11-23 15:12"
+        },
+        {
+          "picking": "CA1/IN/01121",
+          "proveedor": "Shenzhen Topwill Electronic Co. Ltd",
+          "horas": 0.3,
+          "scheduled": "2026-11-23 13:36",
+          "done": "2026-11-23 13:54"
+        },
+        {
+          "picking": "CA1/RET/01704",
+          "proveedor": "Cliente Falabella Fcom, Christopher Vergara Coronado",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 13:35",
+          "done": "2026-11-23 13:35"
+        },
+        {
+          "picking": "CA1/RET/01705",
+          "proveedor": "Cliente Falabella Fcom, David Millaquen Orellana",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 13:35",
+          "done": "2026-11-23 13:35"
+        },
+        {
+          "picking": "CA1/RET/01703",
+          "proveedor": "Cliente Simplit Home, PURÍSIMA URZUA",
+          "horas": 0.0,
+          "scheduled": "2026-11-23 12:11",
+          "done": "2026-11-23 12:11"
+        },
         {
           "picking": "CA1/RET/01702",
           "proveedor": "Cliente Mercado Libre, Anais Fonseca",
@@ -8326,97 +8423,6 @@
           "horas": 0.0,
           "scheduled": "2026-11-20 15:30",
           "done": "2026-11-20 15:30"
-        },
-        {
-          "picking": "CA1/RET/01699",
-          "proveedor": "Cliente Ripley, Raul Andrades",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 15:29",
-          "done": "2026-11-20 15:29"
-        },
-        {
-          "picking": "CA1/RET/01698",
-          "proveedor": "Cliente Paris, Geovanna Rojas",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:30",
-          "done": "2026-11-20 14:30"
-        },
-        {
-          "picking": "BFFa/RET/00142",
-          "proveedor": "Cliente Falabella Fcom, Joaquín Leyton",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:30",
-          "done": "2026-11-20 14:30"
-        },
-        {
-          "picking": "BFW/IN/00008",
-          "proveedor": "Cliente Walmart, Yasmin Villalobos",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:30",
-          "done": "2026-11-20 14:30"
-        },
-        {
-          "picking": "CA1/RET/01697",
-          "proveedor": "Cliente Walmart, francisco Leon",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 14:29",
-          "done": "2026-11-20 14:29"
-        },
-        {
-          "picking": "CA1/RET/01696",
-          "proveedor": "Cliente Falabella Fcom, Polyana Palacios Nazel",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 13:30",
-          "done": "2026-11-20 13:30"
-        },
-        {
-          "picking": "CA1/RET/01695",
-          "proveedor": "Cliente Falabella Fcom, NIXZA MEDALI CONTRERAS RODRIGUEZ",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 13:29",
-          "done": "2026-11-20 13:29"
-        },
-        {
-          "picking": "CA1/IN/01120",
-          "proveedor": "Comercial Caramba Chile S.A",
-          "horas": 17.3,
-          "scheduled": "2026-11-19 18:07",
-          "done": "2026-11-20 11:26"
-        },
-        {
-          "picking": "CA1/RET/01693",
-          "proveedor": "Comercial ECCSA S A, Delivery Address",
-          "horas": 0.0,
-          "scheduled": "2026-11-20 11:15",
-          "done": "2026-11-20 11:15"
-        },
-        {
-          "picking": "CA1/IN/01113",
-          "proveedor": "Celiv Spa",
-          "horas": 198.6,
-          "scheduled": "2026-11-11 13:43",
-          "done": "2026-11-19 20:19"
-        },
-        {
-          "picking": "CA1/RET/01692",
-          "proveedor": "Cliente Mercado Libre, Amira Michelle Elgue",
-          "horas": 0.0,
-          "scheduled": "2026-11-19 19:22",
-          "done": "2026-11-19 19:22"
-        },
-        {
-          "picking": "CA1/RET/01689",
-          "proveedor": "Cliente Falabella Fcom, Constanza Ahumada",
-          "horas": 0.0,
-          "scheduled": "2026-11-19 16:22",
-          "done": "2026-11-19 16:22"
-        },
-        {
-          "picking": "CA1/RET/01690",
-          "proveedor": "Cliente Paris, Yeniffer Gallardo",
-          "horas": 0.0,
-          "scheduled": "2026-11-19 16:22",
-          "done": "2026-11-19 16:22"
         }
       ],
       "error": null
