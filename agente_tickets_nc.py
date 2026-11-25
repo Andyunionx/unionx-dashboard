@@ -5,9 +5,11 @@ posteo automático, activo desde el LUNES 31-08-2026).
 Reglas: ver nc_reglas.py (Max, correo 17-sep-2026; complemento Andrés 05-oct). Resumen:
   - Gatillo: Motivo == "Devolución" + Resolución no vacía + producto recepcionado
     (Estado Nuevo / Outlet / Merma). Motivo "Cambio" = canal manual sin confirmar.
-  - Se emiten a mano (el agente no los toca): Fidelización, Distribución, UnionX B2B
-    y Kitchen Center (las 3 webs entran al automático desde el 19-oct). Fuera también
-    los tickets con "PV" + OC en el título.
+  - Se emiten a mano (el agente no los toca): Fidelización, Distribución y UnionX B2B
+    (las 3 webs entran al automático desde el 19-oct; las devoluciones de Kitchen Center
+    desde el 25-nov, Andrés). Fuera también los tickets con "PV" + OC en el título.
+  - Kitchen Center: el ticket trae la OC («927599») y Odoo nombra el pedido con sufijo
+    («927599-1», «927599-2»…): si la OC no calza directo, se busca por ese prefijo.
   - OC del canal en propiedad "Nº Orden de compra" (normalizar prefijo PV/espacios).
     Se busca como referencia del canal, nombre del pedido o pack de Yuju (las OC de
     Mercado Libre «2000013…» son el pack, no la orden: 19-oct).
@@ -237,6 +239,20 @@ for i in range(0, len(ocs), B):
             ord_por_oc[o["name"]].append(o)
         elif pack in ocs_set:
             ord_por_oc[pack].append(o)
+# Kitchen Center (Andrés, 25-nov): Odoo nombra el pedido con la OC + sufijo («927599-1»,
+# «927599-2»…, uno por despacho). Las OC de KC que no calzaron arriba se buscan por prefijo.
+kc_ocs = sorted({c["oc"] for c in cand if c["canal"] == R.CANAL_KITCHEN and c["oc"]
+                 and c["oc"] not in ord_por_oc and re.fullmatch(r"\d{5,8}", c["oc"])})
+for i in range(0, len(kc_ocs), 50):
+    ch = kc_ocs[i:i+50]
+    dom = ["|"] * (len(ch) - 1) + [("name", "=like", f"{o}-%") for o in ch]
+    for o in ex("sale.order", "search_read", dom,
+                fields=["id", "name", "state", "channel_order_reference", "yuju_pack_id", "invoice_ids"], limit=5000):
+        base_oc, _, suf = o["name"].rpartition("-")
+        if base_oc in ocs_set and suf.isdigit():
+            ord_por_oc[base_oc].append(o)
+if kc_ocs:
+    print(f"Kitchen Center: {len(kc_ocs)} OC buscadas con sufijo, {sum(1 for o in kc_ocs if o in ord_por_oc)} encontradas")
 # Pedidos despachados desde una bodega Full (BF*): no llevan NC. Casi nunca tienen
 # boleta (13.384 de 13.386 entre ago y oct-2026), pero los que sí la tienen no deben
 # salir por el agente.

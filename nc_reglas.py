@@ -31,6 +31,9 @@ Reglas (Max, correo 17-sep-2026, confirmadas 22-sep; complemento de Andrés 05-o
   Max, 9-nov (pulso 46): fuera del agente de forma permanente los tickets creados en 2025 (la
   boleta venció hace rato) y las devoluciones masivas de Paris («-Masivo» en el título: se
   ingresan por registro, sin OC).
+  Andrés, 25-nov: las DEVOLUCIONES de Kitchen Center pasan al agente (cada pedido tiene su
+  boleta, como un marketplace; a mano quedaban sin NC y sin devolución de inventario). Sus
+  «Cambio» siguen fuera (regla 1) hasta que Max confirme cómo los usa en ese canal.
 """
 import re
 
@@ -43,6 +46,8 @@ CANALES_FIDELIZACION = {"Travel Duty", "Celmedia", "Global Reward", "Sawa", "Ban
                         "You Market", "LATAM - GO POINT", "Friends"}
 CANALES_DISTRIBUCION = {"Falabella tienda", "Paris tienda", "Lokal"}
 CANAL_KITCHEN = "Kitchen Center"
+# Grupos manuales cuyas devoluciones ya emite el agente (Andrés, 25-nov: Kitchen Center).
+GRUPOS_AUTOMATIZADOS = {"Kitchen Center"}
 ESTADOS_RECEPCIONADO = {"Nuevo", "Outlet", "Merma"}
 MOTIVOS_CAMBIO = {"Cambio", "Reenvío"}   # Max, 22-oct: un reenvío es un cambio por la misma unidad
 _CANON = {c.lower(): c for c in (CANALES_AUTOMATICOS | CANALES_WEB_AUTOMATICOS | CANALES_PAGINAS_PROPIAS
@@ -120,7 +125,7 @@ def clasificar(t):
     if not texto(t, "Resolución"):
         return SIN_REVISAR, "resolución vacía"
     g = grupo_manual(t)
-    if g:
+    if g and g not in GRUPOS_AUTOMATIZADOS:
         return MANUAL, g
     if RE_PV_TITULO.search(t.get("name") or ""):
         return PV_TITULO, "PV + OC en el título: proceso manual de Postventa"
