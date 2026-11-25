@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-24T23:01:56.612075",
+  "generado_en": "2026-11-25T03:52:16.324311",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,12 +14,12 @@
     "posiciones_ocupadas_hoy": 717,
     "posiciones_libres_hoy": 660,
     "pct_ocupacion_hoy": 52.1,
-    "m3_stock_calculado": 743.7
+    "m3_stock_calculado": 743.4
   },
   "pico_proyectado": {
-    "fecha": "2026-11-24",
-    "posiciones_ocupadas": 717.0,
-    "pct_ocupacion": 52.1
+    "fecha": "2026-11-25",
+    "posiciones_ocupadas": 708.1,
+    "pct_ocupacion": 51.4
   },
   "minimo_proyectado": {
     "fecha": "2027-01-23",
@@ -66,15 +66,15 @@
   "pallets_total_entrantes_horizonte": 95.6,
   "pallets_total_salientes_horizonte": 156.8,
   "m3_total_entrante_horizonte": 114.7,
-  "m3_total_saliente_horizonte": 188.2,
+  "m3_total_saliente_horizonte": 188.1,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 780,
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 66867.0,
-    "demanda_cumplida_unidades": 15354.0,
-    "demanda_no_cubierta_unidades_total": 51513.0,
+    "demanda_cumplida_unidades": 15349.0,
+    "demanda_no_cubierta_unidades_total": 51518.0,
     "pct_demanda_cumplida": 23.0,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -110,7 +110,7 @@
       },
       {
         "sku": "SMBATSAV9-CR",
-        "unid_no_cubiertas": 358.0,
+        "unid_no_cubiertas": 359.0,
         "sin_match_stock": true
       },
       {
@@ -130,7 +130,7 @@
       },
       {
         "sku": "LHCAMACXPL",
-        "unid_no_cubiertas": 193.0,
+        "unid_no_cubiertas": 194.0,
         "sin_match_stock": true
       },
       {
@@ -170,7 +170,7 @@
       },
       {
         "sku": "1650301031879",
-        "unid_no_cubiertas": 81.0,
+        "unid_no_cubiertas": 82.0,
         "sin_match_stock": true
       },
       {
