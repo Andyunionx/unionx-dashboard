@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-26T20:41:28.736330",
+  "generado_en": "2026-11-26T22:11:05.005780",
   "horizonte_dias": 90,
   "ratios_equipo": {
     "uds_por_pedido": 3.5,
@@ -9,87 +9,87 @@
   },
   "capacidad_pedidos_dia": 525.0,
   "totales_horizonte": {
-    "pedidos_proyectados": 20689,
-    "lineas_proyectadas": 26896,
-    "unidades_demanda": 72414,
+    "pedidos_proyectados": 20653,
+    "lineas_proyectadas": 26852,
+    "unidades_demanda": 72291,
     "dias_sobrecarga": 10,
-    "dias_atencion": 8
+    "dias_atencion": 9
   },
   "pico": {
     "fecha": "2026-11-30",
-    "pedidos_a_procesar": 1647.0,
-    "lineas_a_procesar": 2141.0,
-    "pct_carga_equipo": 313.7,
+    "pedidos_a_procesar": 1674.0,
+    "lineas_a_procesar": 2176.0,
+    "pct_carga_equipo": 318.9,
     "alerta": "🔴 SOBRECARGA"
   },
   "primer_sobrecarga": {
     "fecha": "2026-11-27",
-    "pedidos_a_procesar": 766.0,
-    "pct_carga_equipo": 145.9,
+    "pedidos_a_procesar": 775.0,
+    "pct_carga_equipo": 147.6,
     "alerta": "🔴 SOBRECARGA"
   },
   "top_semanas_volumen": [
     {
       "semana": "2026-W51",
-      "pedidos": 3493,
-      "lineas": 4540,
-      "unidades": 12224,
+      "pedidos": 3551,
+      "lineas": 4617,
+      "unidades": 12428,
       "dias_sobrecarga": 2,
       "dias_atencion": 2
     },
     {
       "semana": "2026-W49",
-      "pedidos": 3473,
-      "lineas": 4516,
-      "unidades": 12156,
+      "pedidos": 3526,
+      "lineas": 4584,
+      "unidades": 12346,
       "dias_sobrecarga": 1,
-      "dias_atencion": 1
+      "dias_atencion": 2
     },
     {
       "semana": "2026-W52",
-      "pedidos": 3437,
-      "lineas": 4468,
-      "unidades": 12030,
+      "pedidos": 3495,
+      "lineas": 4544,
+      "unidades": 12230,
       "dias_sobrecarga": 2,
       "dias_atencion": 2
     },
     {
       "semana": "2026-W50",
-      "pedidos": 3355,
-      "lineas": 4361,
-      "unidades": 11740,
+      "pedidos": 3408,
+      "lineas": 4430,
+      "unidades": 11928,
       "dias_sobrecarga": 2,
       "dias_atencion": 2
     },
     {
       "semana": "2026-W53",
-      "pedidos": 2603,
-      "lineas": 3384,
-      "unidades": 9114,
+      "pedidos": 2648,
+      "lineas": 3441,
+      "unidades": 9266,
       "dias_sobrecarga": 1,
       "dias_atencion": 1
     },
     {
       "semana": "2027-W01",
-      "pedidos": 1298,
-      "lineas": 1687,
-      "unidades": 4542,
+      "pedidos": 1323,
+      "lineas": 1721,
+      "unidades": 4631,
       "dias_sobrecarga": 1,
       "dias_atencion": 0
     },
     {
       "semana": "2026-W48",
-      "pedidos": 1189,
-      "lineas": 1546,
-      "unidades": 4163,
+      "pedidos": 775,
+      "lineas": 1008,
+      "unidades": 2713,
       "dias_sobrecarga": 1,
       "dias_atencion": 0
     },
     {
       "semana": "2027-W02",
-      "pedidos": 673,
-      "lineas": 874,
-      "unidades": 2358,
+      "pedidos": 689,
+      "lineas": 896,
+      "unidades": 2417,
       "dias_sobrecarga": 0,
       "dias_atencion": 0
     }
