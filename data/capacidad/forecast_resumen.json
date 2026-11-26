@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-26T01:17:39.766942",
+  "generado_en": "2026-11-26T11:41:18.188327",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,7 +14,7 @@
     "posiciones_ocupadas_hoy": 712,
     "posiciones_libres_hoy": 665,
     "pct_ocupacion_hoy": 51.7,
-    "m3_stock_calculado": 738.7
+    "m3_stock_calculado": 738.0
   },
   "pico_proyectado": {
     "fecha": "2026-11-26",
@@ -73,14 +73,14 @@
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 72414.0,
-    "demanda_cumplida_unidades": 17259.0,
-    "demanda_no_cubierta_unidades_total": 55155.0,
+    "demanda_cumplida_unidades": 17252.0,
+    "demanda_no_cubierta_unidades_total": 55162.0,
     "pct_demanda_cumplida": 23.8,
     "sku_sin_match_stock_count": 39,
     "top_no_cubiertos": [
       {
         "sku": "1564150661249",
-        "unid_no_cubiertas": 26963.0,
+        "unid_no_cubiertas": 26965.0,
         "sin_match_stock": true
       },
       {
@@ -90,7 +90,7 @@
       },
       {
         "sku": "LHBOHYCO-BK",
-        "unid_no_cubiertas": 4845.0,
+        "unid_no_cubiertas": 4848.0,
         "sin_match_stock": true
       },
       {
