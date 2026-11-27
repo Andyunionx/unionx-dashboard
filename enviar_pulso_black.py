@@ -123,7 +123,9 @@ def corte():
 
 # ───────────────────────── datos ─────────────────────────
 COLS = ['fecha_venta', 'hora_venta', 'tipo_movimiento', 'canal', 'tipo_negocio', 'pedido', 'documento', 'sku',
-        'cantidad', 'venta_bruta', 'venta_neta', 'es_despacho']
+        'cantidad', 'venta_bruta', 'venta_neta', 'es_despacho', 'margen_front', 'comision', 'logistica', 'marketing',
+        'margen_final']
+MARGEN = ['margen_front', 'comision', 'logistica', 'marketing', 'margen_final']
 
 
 def cargar_ventas():
@@ -143,8 +145,8 @@ def cargar_ventas():
         m = partes[1]
         df = pd.concat([df, m[m['fv'] > df['fv'].max()]], ignore_index=True)
     df = df[df['fv'].isin(set(DIAS + LY))].copy()
-    for c in ('cantidad', 'venta_bruta', 'venta_neta'):
-        df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0.0)
+    for c in ('cantidad', 'venta_bruta', 'venta_neta', *MARGEN):
+        df[c] = pd.to_numeric(df[c], errors='coerce').fillna(0.0) if c in df.columns else 0.0
     t = df['hora_venta'].astype(str).str.strip()
     t = t.where(t.str.match(r'^\d{1,2}:\d{2}'), '00:00:00')
     df['tod'] = t.str.zfill(8).str[:8]
@@ -272,7 +274,7 @@ def full_ly_d_c(S, canal, d):
 
 
 # ───────────────────────── correo ─────────────────────────
-def render_html(S, plan, plan_fuente, fuente_txt):
+def render_html(S, plan, plan_fuente, fuente_txt, M=None):
     dia_s, idx, tod, a = corte()
     i_hoy = min(max(idx, 0), 3)
     cerrado = idx > 3 or tod >= '23:59'
@@ -365,6 +367,8 @@ def render_html(S, plan, plan_fuente, fuente_txt):
             f'<div style="font-family:Georgia,serif;font-size:22px;line-height:1.25;margin:6px 0 4px">{titular}</div>'
             f'<div style="font-size:13px;color:#C9D3E0">{subtitulo}</div>'
             f'<table style="width:100%;border-collapse:collapse;margin-top:10px"><tr>{k1}{k2}{k3}{k4}</tr></table></div>')
+    if M:
+        bullets.append(M['bullet'])
     principal = seccion('01', 'Lo principal', '<ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.5">'
                         + ''.join(f'<li style="margin:0 0 6px">{b}</li>' for b in bullets) + '</ul>')
 
@@ -500,13 +504,87 @@ def render_html(S, plan, plan_fuente, fuente_txt):
            f'line-height:1.5">{nota}</div>')
     html = (f'<html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#FFFFFF">'
             f'<div style="max-width:1000px;margin:0 auto;padding:12px;font-family:Arial,Helvetica,sans-serif;color:{TXT}">'
-            f'{head}<div style="padding:4px 4px 0">{principal}{sec_tramo}{sec_dia}{pie}</div></div></body></html>')
+            f'{head}<div style="padding:4px 4px 0">{principal}{sec_tramo}{sec_dia}{M['seccion'] if M else ''}{pie}</div></div></body></html>')
     resumen = {'dia': dia_s, 'idx': idx, 'tod': tod, 'b_ty': b_ty, 'b_ly': b_ly, 'var': v_tot, 'hoy_ty': hoy_ty, 'hoy_ly': hoy_ly,
                'plan_corte': plan_corte, 'plan_total': sum(plan_d), 'curva': curva, 'ped_ty': ped_ty, 'nuevos': nuevos,
                'nuevos_ty': nuevos_ty, 'var_sin_nuevos': v_sin_nuevos, 'lote_llegados': sorted(llegados), 'lote_pendientes': lote_pend,
                'ult_tramo': TRAMOS[t_ult], 'ult_ty': ult_ty, 'ult_ly': ult_ly, 'titular': titular, 'subtitulo': subtitulo,
                'delta_canal': {k: float(v) for k, v in delta.items()}}
     return html, resumen
+
+
+# ───────────────────────── margen (Andrés 27-nov: «Ok con tu propuesta») ─────────────────────────
+def margen(df, S):
+    """Margen directo y final del Black digital al corte, mismas definiciones del pulso Cyber de octubre: margen directo =
+    margen_front (venta neta − costo); margen final = margen_final del RAW (directo − comisión − logística − marketing);
+    % sobre la venta neta; todas las filas del RAW (venta y devoluciones). Mismo corte parejo que la venta (lotes por día
+    completo cuando llegó el de hoy). El margen final de 2025 NO se compara: el RAW de 2025 trae comisión y logística solo en
+    Mercado Libre (completa) y en parte en Falabella y Walmart; el resto tiene margen final = margen directo. Única comparación
+    válida de margen final: Mercado Libre."""
+    dia_s, idx, tod, _ = corte()
+    i = idx if idx <= 3 else 4
+    llegados = set(S['ty'].loc[(S['ty']['d'] == i) & S['ty']['canal'].isin(LOTE), 'canal'])
+    d = df[df['tipo_negocio'].isin(LINEAS)]
+    A = {}
+    for s_, fechas in (('ty', DIAS), ('ly', LY)):
+        x = d[d['fv'].isin(fechas)].copy()
+        x['d'] = x['fv'].map(dict(zip(fechas, range(4))))
+        lote = x['canal'].isin(LOTE)
+        hoy_lote = lote & (x['canal'].isin(llegados) if s_ == 'ly' else True)
+        A[s_] = x[(x['d'] < i) | ((x['d'] == i) & (hoy_lote | (~lote & (x['tod'] <= tod))))]
+    cols = ['venta_neta', 'margen_front', 'margen_final']
+    g = {s_: A[s_].groupby('canal')[cols].sum() for s_ in A}
+    tot = {s_: A[s_][cols].sum() for s_ in A}
+    pc = lambda n, m: (m / n * 100) if n else None  # noqa: E731
+    md, md25 = pc(tot['ty'].venta_neta, tot['ty'].margen_front), pc(tot['ly'].venta_neta, tot['ly'].margen_front)
+    mf = pc(tot['ty'].venta_neta, tot['ty'].margen_final)
+    ppx = lambda a, b: (f"{a - b:+.1f} pp".replace('.', ',')) if (a is not None and b is not None) else '—'  # noqa: E731
+    p0 = lambda v: pct_txt(v, 1, False) if v is not None else '—'  # noqa: E731
+    ml = 'Mercado Libre'
+    ml_ty = g['ty'].loc[ml] if ml in g['ty'].index else None
+    ml_ly = g['ly'].loc[ml] if ml in g['ly'].index else None
+    mf_ml = pc(ml_ty.venta_neta, ml_ty.margen_final) if ml_ty is not None else None
+    mf_ml25 = pc(ml_ly.venta_neta, ml_ly.margen_final) if ml_ly is not None else None
+    bullet = (f'<b>Margen</b>: directo {fmt_m(tot["ty"].margen_front)} ({p0(md)} de la venta neta) contra {p0(md25)} del Black 2025 a la '
+              f'misma hora ({ppx(md, md25)}); final {fmt_m(tot["ty"].margen_final)} ({p0(mf)}). El margen final no se compara con 2025 '
+              f'(el RAW de 2025 no trae comisión ni logística en la mayoría de los canales)'
+              + (f', salvo Mercado Libre: {p0(mf_ml)} contra {p0(mf_ml25)} ({ppx(mf_ml, mf_ml25)}).' if mf_ml is not None and mf_ml25 is not None else '.'))
+    # tabla por canal (orden por venta neta; los chicos en «Otros»)
+    t = g['ty'].join(g['ly'], rsuffix='_25', how='left').fillna(0).sort_values('venta_neta', ascending=False)
+    grandes = [c for c in t.index if t.loc[c, 'venta_neta'] >= 300_000]
+    otros = [c for c in t.index if c not in grandes]
+    filas = []
+
+    def fila(nombre, cs, bold=False, bg=None):
+        r = t.loc[cs].sum()
+        a, b, c25 = pc(r.venta_neta, r.margen_front), pc(r.venta_neta_25, r.margen_front_25), pc(r.venta_neta, r.margen_final)
+        dpp = (a - b) if (a is not None and b is not None) else None
+        if cs == [ml]:
+            f25 = pc(r.venta_neta_25, r.margen_final_25)
+            mf25_txt = td(p0(f25), gris=True, bg=bg)
+        else:
+            mf25_txt = td('—', gris=True, bg=bg)
+        return (f'<tr>{td(nombre, bold=bold, align="left", bg=bg)}{td(mm(r.venta_neta), bold=bold, bg=bg)}'
+                f'{td(mm(r.margen_front), bold=bold, bg=bg)}{td(p0(a), bold=bold, bg=bg, color=(NEG if (a or 0) < 0 else None))}'
+                f'{td(p0(b), gris=True, bg=bg)}'
+                + (td(ppx(a, b), bg=bg, color=(POS if dpp >= 0 else NEG)) if dpp is not None else td('—', gris=True, bg=bg))
+                + f'{td(mm(r.margen_final), bold=bold, bg=bg)}{td(p0(c25), bold=bold, bg=bg, color=(NEG if (c25 or 0) < 0 else None))}'
+                f'{mf25_txt}</tr>')
+
+    filas += [fila('&nbsp;&nbsp;' + c, [c]) for c in grandes]
+    if otros:
+        filas.append(fila('&nbsp;&nbsp;Otros', otros))
+    filas.append(fila('Total digital', list(t.index), bold=True, bg='#E8EEF6'))
+    cab = ['Margen · $ millones', 'Venta neta', 'M. directo', '%', '% 2025', 'Dif.', 'M. final', '%', '% 2025']
+    nota = ('Margen directo = venta neta − costo. Margen final = margen directo − comisión − logística − marketing, como el pulso del Cyber. '
+            '% sobre la venta neta, con todas las filas del RAW (incluye devoluciones). Mismo corte que la venta. «% 2025» del margen final '
+            'solo en Mercado Libre: es el único canal cuyo RAW de 2025 trae comisión y logística completas; en los demás el margen final de '
+            '2025 queda igual al directo y no sirve para comparar. Referencia, no meta: el Cyber de octubre usó 23,3% de margen final.'
+            + (f' «Otros»: {", ".join(otros)}.' if otros else ''))
+    sec = seccion('04', 'Margen directo y final por canal (acumulado Black)', tabla(cab, filas, nota))
+    cifras = {'neta': float(tot['ty'].venta_neta), 'md': float(tot['ty'].margen_front), 'md_pct': md, 'md_pct_25': md25,
+              'mf': float(tot['ty'].margen_final), 'mf_pct': mf, 'mf_ml': mf_ml, 'mf_ml_25': mf_ml25}
+    return {'bullet': bullet, 'seccion': sec, 'cifras': cifras}
 
 
 # ───────────────────────── envío y validación ─────────────────────────
@@ -620,7 +698,14 @@ def construir():
     fuente_txt = os.environ.get('BLACK_FUENTE_TXT') or f'RAW de ventas extraído de Odoo, corte {ahora():%d-%m %H:%M}'
     print(f"      {len(df):,} filas en {time.time() - t0:.1f}s · plan A {'cargado' if plan else 'sin JSON'}", flush=True)
     print('[2/3] Armando correo...', flush=True)
-    html, r = render_html(S, plan, plan_fuente, fuente_txt)
+    try:
+        M = margen(df, S)
+    except Exception as e:      # el margen nunca debe botar el pulso de venta
+        print(f'      [MARGEN][WARN] {type(e).__name__}: {e} — el pulso sale sin margen', flush=True)
+        M = None
+    html, r = render_html(S, plan, plan_fuente, fuente_txt, M)
+    if M:
+        r['margen'] = M['cifras']
     dia_df = df[(df['fv'] == corte()[0]) & (df['tipo_movimiento'] == 'Venta')]     # todos los canales: validación contra Odoo
     return html, r, dia_df
 
