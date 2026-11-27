@@ -1,40 +1,40 @@
 {
-  "generado_en": "2026-11-27T01:14:32.383229",
+  "generado_en": "2026-11-27T15:45:52.391647",
   "ventana_dias": 365,
   "fuente": "https://unionxb2b.odoo.com (bmya-innovatek-sh-prd-6981800)",
-  "total_documentos_pendientes": 12730,
-  "total_monto_pendiente_clp": 682539217.0,
+  "total_documentos_pendientes": 13077,
+  "total_monto_pendiente_clp": 685857929.0,
   "monto_por_aging": {
     "+90 días": 98249021.0,
-    "1-30 días": 256856975.0,
-    "31-60 días": 173558521.0,
+    "1-30 días": 272904041.0,
+    "31-60 días": 173571511.0,
     "61-90 días": 38100788.0,
-    "Vigente": 115773912.0
+    "Vigente": 103032568.0
   },
   "monto_por_tipo": {
-    "BOLETA": 610081888.0,
+    "BOLETA": 613400600.0,
     "FACTURA": 72457329.0
   },
   "top_20_deudores": [
     {
       "partner": "Cliente Mercado Libre",
-      "monto": 155997223.0
+      "monto": 160217937.0
     },
     {
       "partner": "Cliente Kitchen Center",
-      "monto": 98098642.0
+      "monto": 100325750.0
+    },
+    {
+      "partner": "Cliente Falabella Fcom",
+      "monto": 42986415.0
     },
     {
       "partner": "Mercadolibre Chile Limitada",
       "monto": 40690597.0
     },
     {
-      "partner": "Cliente Falabella Fcom",
-      "monto": 39690412.0
-    },
-    {
       "partner": "Cliente Paris",
-      "monto": 25895648.0
+      "monto": 26992428.0
     },
     {
       "partner": "Duty Free T C S A",
@@ -49,20 +49,16 @@
       "monto": 22626894.0
     },
     {
-      "partner": "Comercial ECCSA S A",
-      "monto": 19866677.0
-    },
-    {
       "partner": "Cliente Shopify",
-      "monto": 15270859.0
+      "monto": 15421112.0
     },
     {
       "partner": "Cliente Simplit Home",
-      "monto": 14134688.0
+      "monto": 14615423.0
     },
     {
       "partner": "Cliente Walmart",
-      "monto": 13260684.0
+      "monto": 13398536.0
     },
     {
       "partner": "JOSE RIVERO LLAMAZALES Y COMPANIA LIMITADA",
@@ -73,16 +69,20 @@
       "monto": 10444714.0
     },
     {
-      "partner": "Lhotse Store",
-      "monto": 9585081.0
+      "partner": "Cliente Ripley",
+      "monto": 9902705.0
     },
     {
-      "partner": "Cliente Ripley",
-      "monto": 8860525.0
+      "partner": "Lhotse Store",
+      "monto": 9869934.0
     },
     {
       "partner": "Global Reward Solutions",
-      "monto": 8402611.0
+      "monto": 8468596.0
+    },
+    {
+      "partner": "INVERSIONES BAUM LTDA.",
+      "monto": 7335385.0
     },
     {
       "partner": "abc S.A.",
@@ -97,6 +97,6 @@
       "monto": 5540689.0
     }
   ],
-  "notas_credito_count": 879,
+  "notas_credito_count": 875,
   "pedidos_venta_count": 10000
 }
