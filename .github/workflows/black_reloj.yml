@@ -1,0 +1,41 @@
+name: "Black Reloj (dispara el pulso Black a las 08, 12, 16 y 22 h)"
+
+# Mismo esquema que cyber_reloj.yml: el cron de GitHub se atrasa horas, así que acá solo arranca (o rearranca) el reloj;
+# black_reloj.py duerme dentro del job y dispara black_pulso.yml a las 08, 12, 16 y 22 h CLT entre el
+# vie 27-nov 12:00 y el lun 30-nov 22:00 CLT (= mar 1-dic 01:00 UTC). Turnos de ~5 h que se relevan solos.
+# concurrency: un solo reloj corriendo; lo que llegue mientras tanto queda en espera y toma el relevo si la cadena se corta.
+# Repo público → minutos de Actions sin costo.
+
+on:
+  schedule:
+    - cron: '*/30 * 27-30 11 *'
+    - cron: '*/30 0-1 1 12 *'
+  workflow_dispatch:
+    inputs:
+      prueba:
+        description: 'Disparar una vez el pulso en modo borrador (solo a Andrés)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: black-reloj
+  cancel-in-progress: false
+
+jobs:
+  reloj:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reloj
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_NO_UPDATE_NOTIFIER: '1'
+          GH_PROMPT_DISABLED: '1'
+        run: python -u black_reloj.py ${{ github.event.inputs.prueba == 'true' && '--prueba' || '' }}
