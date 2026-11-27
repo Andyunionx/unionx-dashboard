@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-26T22:11:04.500303",
+  "generado_en": "2026-11-27T03:22:21.726905",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -14,17 +14,17 @@
     "posiciones_ocupadas_hoy": 714,
     "posiciones_libres_hoy": 663,
     "pct_ocupacion_hoy": 51.9,
-    "m3_stock_calculado": 795.6
+    "m3_stock_calculado": 794.5
   },
   "pico_proyectado": {
-    "fecha": "2026-11-26",
-    "posiciones_ocupadas": 714.0,
-    "pct_ocupacion": 51.9
+    "fecha": "2026-11-27",
+    "posiciones_ocupadas": 702.5,
+    "pct_ocupacion": 51.0
   },
   "minimo_proyectado": {
     "fecha": "2027-01-25",
-    "posiciones_ocupadas": 562.5,
-    "pct_ocupacion": 40.8
+    "posiciones_ocupadas": 562.6,
+    "pct_ocupacion": 40.9
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -56,17 +56,17 @@
     }
   ],
   "pallets_total_entrantes_horizonte": 45.6,
-  "pallets_total_salientes_horizonte": 151.5,
+  "pallets_total_salientes_horizonte": 151.4,
   "m3_total_entrante_horizonte": 54.7,
-  "m3_total_saliente_horizonte": 181.8,
+  "m3_total_saliente_horizonte": 181.6,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 780,
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 72291.0,
-    "demanda_cumplida_unidades": 17431.0,
-    "demanda_no_cubierta_unidades_total": 54860.0,
+    "demanda_cumplida_unidades": 17418.0,
+    "demanda_no_cubierta_unidades_total": 54873.0,
     "pct_demanda_cumplida": 24.1,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -77,7 +77,7 @@
       },
       {
         "sku": "1564150627423",
-        "unid_no_cubiertas": 15031.0,
+        "unid_no_cubiertas": 15032.0,
         "sin_match_stock": true
       },
       {
@@ -147,12 +147,12 @@
       },
       {
         "sku": "67933831843970",
-        "unid_no_cubiertas": 110.0,
+        "unid_no_cubiertas": 111.0,
         "sin_match_stock": true
       },
       {
         "sku": "SIMBACOHA-55",
-        "unid_no_cubiertas": 105.0,
+        "unid_no_cubiertas": 106.0,
         "sin_match_stock": true
       },
       {
