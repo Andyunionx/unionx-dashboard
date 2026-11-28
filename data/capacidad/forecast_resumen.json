@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-28T00:50:00.266590",
+  "generado_en": "2026-11-28T11:05:04.753743",
   "horizonte_dias": 90,
   "capacidad_posiciones": 1377,
   "capacidad_bodega_m3": 2478.6,
@@ -11,20 +11,20 @@
   },
   "estado_actual": {
     "posiciones_total": 1377,
-    "posiciones_ocupadas_hoy": 742,
-    "posiciones_libres_hoy": 635,
-    "pct_ocupacion_hoy": 53.9,
-    "m3_stock_calculado": 788.4
+    "posiciones_ocupadas_hoy": 741,
+    "posiciones_libres_hoy": 636,
+    "pct_ocupacion_hoy": 53.8,
+    "m3_stock_calculado": 787.4
   },
   "pico_proyectado": {
     "fecha": "2026-11-28",
-    "posiciones_ocupadas": 733.5,
-    "pct_ocupacion": 53.3
+    "posiciones_ocupadas": 732.5,
+    "pct_ocupacion": 53.2
   },
   "minimo_proyectado": {
     "fecha": "2027-01-25",
-    "posiciones_ocupadas": 602.5,
-    "pct_ocupacion": 43.8
+    "posiciones_ocupadas": 601.6,
+    "pct_ocupacion": 43.7
   },
   "primer_critico": null,
   "primer_atencion": null,
@@ -58,15 +58,15 @@
   "pallets_total_entrantes_horizonte": 45.6,
   "pallets_total_salientes_horizonte": 151.0,
   "m3_total_entrante_horizonte": 54.7,
-  "m3_total_saliente_horizonte": 181.2,
+  "m3_total_saliente_horizonte": 181.1,
   "salidas_debug": {
     "horizonte_dias": 90,
     "sku_con_vol_odoo": 781,
     "sku_fallback": 6,
     "fallback_vol_m3": 0.00576,
     "demanda_total_unidades_horizonte": 72291.0,
-    "demanda_cumplida_unidades": 17342.0,
-    "demanda_no_cubierta_unidades_total": 54949.0,
+    "demanda_cumplida_unidades": 17330.0,
+    "demanda_no_cubierta_unidades_total": 54961.0,
     "pct_demanda_cumplida": 24.0,
     "sku_sin_match_stock_count": 38,
     "top_no_cubiertos": [
@@ -132,7 +132,7 @@
       },
       {
         "sku": "LHSHNUCO-PK",
-        "unid_no_cubiertas": 206.0,
+        "unid_no_cubiertas": 207.0,
         "sin_match_stock": true
       },
       {
@@ -147,7 +147,7 @@
       },
       {
         "sku": "67933831843970",
-        "unid_no_cubiertas": 123.0,
+        "unid_no_cubiertas": 129.0,
         "sin_match_stock": true
       },
       {
