@@ -499,7 +499,10 @@ def render_html(S, plan, plan_fuente, fuente_txt, M=None):
             + (f'«Otros» agrupa canales chicos: {otros_txt}. ' if otros_txt else '')
             + '<b>Venta</b> = venta bruta con IVA de lo vendido (filas «Venta» del RAW), como el Pulso Diario. Las devoluciones no se '
             'restan: las de 2025 ya están todas registradas y las de hoy todavía no. '
-            f'<b>Fuente</b>: {fuente_txt}.')
+            f'<b>Fuente</b>: {fuente_txt}.'
+            '<br>📊 <b>Reporte Ventas Empresa 2026 vs 2025</b> (pivot viva, se actualiza unos minutos después de cada pulso): '
+            '<a href="https://drive.google.com/file/d/1jcLmmLn4oHoen9FpL-UuWnYTxaYACQHL/view?usp=sharing">abrir en Drive</a>'
+            '<br>📎 Adjunto: Excel con la base RAW del día (todos los canales, sin dinámica).')
     pie = (f'<div style="margin-top:22px;padding:12px 14px;background:{CREMA};border-radius:6px;font-size:11.5px;color:{GRIS};'
            f'line-height:1.5">{nota}</div>')
     html = (f'<html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#FFFFFF">'
