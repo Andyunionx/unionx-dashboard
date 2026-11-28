@@ -588,9 +588,38 @@ def margen(df, S):
 
 
 # ───────────────────────── envío y validación ─────────────────────────
-def _gmail(asunto, html, to_list):
+# Base RAW del día adjunta (Andrés 28-nov «Agreguémoslo»: igual que el pulso Cyber de octubre). Mismas columnas que el
+# adjunto del Cyber, todos los canales y movimientos del día, sin las columnas auxiliares.
+RAW_COLS = ['fecha_venta', 'hora_venta', 'tipo_movimiento', 'canal', 'tipo_negocio', 'marca', 'categoria_hijo', 'pedido',
+            'documento', 'sku', 'producto', 'bodega', 'cantidad', 'venta_bruta', 'venta_neta', 'margen_front',
+            'comision', 'logistica', 'marketing', 'margen_final']
+
+
+def excel_raw_dia(dia_s):
+    """Excel con el RAW del día (mes en curso del parquet). Como el Cyber: sin venta_neta ni columnas auxiliares."""
+    import io
+    import pyarrow.parquet as pq
+    mp = Path(os.environ.get('BLACK_MES_PARQUET') or (PROJECT_ROOT / 'data' / 'historico' / 'ventas_mes_actual.parquet'))
+    if not mp.exists():
+        return None
+    cols = [c for c in RAW_COLS if c in pq.read_schema(mp).names]
+    x = pd.read_parquet(mp, columns=cols)
+    x = x[pd.to_datetime(x['fecha_venta'], errors='coerce').dt.strftime('%Y-%m-%d') == dia_s]
+    if not len(x):
+        return None
+    x = x.drop(columns=[c for c in ('venta_neta',) if c in x.columns])
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as w:
+        x.to_excel(w, index=False, sheet_name=f'Black {dia_s}')
+    return buf.getvalue()
+
+
+def _gmail(asunto, html, to_list, adjuntos=()):
+    """adjuntos: [(bytes, nombre.xlsx)]."""
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
+    from email.mime.base import MIMEBase
+    from email import encoders
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
@@ -608,6 +637,14 @@ def _gmail(asunto, html, to_list):
     msg['to'] = ','.join(to_list)
     msg['subject'] = asunto
     msg.attach(MIMEText(html, 'html', 'utf-8'))
+    for b, nombre in adjuntos:
+        if not b:
+            continue
+        part = MIMEBase('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        part.set_payload(b)
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment', filename=nombre)
+        msg.attach(part)
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
     return build('gmail', 'v1', credentials=creds).users().messages().send(userId='me', body={'raw': raw}).execute().get('id', '?')
 
@@ -622,11 +659,11 @@ def asunto_de(r):
     return f"{pre}Black digital UnionX · {dia} {cuando} · {fmt_m(r['b_ty'])} acumulado{vtxt}"
 
 
-def enviar(html, r):
+def enviar(html, r, adjuntos=()):
     asunto = asunto_de(r)
     print(f"[envío] {asunto} → {EMAIL_TO}", flush=True)
     try:
-        mid = _gmail(asunto, html, EMAIL_TO)
+        mid = _gmail(asunto, html, EMAIL_TO, adjuntos)
         if mid:
             print(f"      [OK] Gmail {mid}", flush=True)
             return True
@@ -635,7 +672,8 @@ def enviar(html, r):
     if not RESEND_API_KEY:
         print('[ERROR] sin Gmail ni Resend', flush=True)
         return False
-    rr = requests.post('https://api.resend.com/emails', json={'from': EMAIL_FROM, 'to': EMAIL_TO, 'subject': asunto, 'html': html},
+    rr = requests.post('https://api.resend.com/emails', json={'from': EMAIL_FROM, 'to': EMAIL_TO, 'subject': asunto, 'html': html,
+                             'attachments': [{'filename': n, 'content': base64.b64encode(b).decode()} for b, n in adjuntos if b]},
                        headers={'Authorization': f'Bearer {RESEND_API_KEY}', 'Content-Type': 'application/json'}, timeout=60)
     print(f"      Resend {rr.status_code}", flush=True)
     return rr.status_code < 300
@@ -729,10 +767,15 @@ def main():
         print(f"[SKIP email] {a.hour} h CLT — el correo sale a las {sorted(horas)} h.", flush=True)
         return 0
     html, r, dia_df = construir()
+    xlsx = excel_raw_dia(r['dia'])
+    adj = [(xlsx, f"Raw Black {r['dia']}.xlsx")] if xlsx else []
+    print(f"      adjunto RAW: {len(xlsx) / 1024:,.0f} KB" if xlsx else '      sin adjunto RAW (día sin filas)', flush=True)
     if solo:
         out = Path(args[args.index('--solo-archivos') + 1]) if len(args) > args.index('--solo-archivos') + 1 else Path('.')
         out.mkdir(parents=True, exist_ok=True)
         (out / 'pulso_black.html').write_text(html, encoding='utf-8')
+        for b, n in adj:
+            (out / n).write_bytes(b)
         (out / 'pulso_black_resumen.json').write_text(json.dumps(r, ensure_ascii=False, indent=1, default=float), encoding='utf-8')
         (out / 'pulso_black_asunto.txt').write_text(asunto_de(r), encoding='utf-8')
         print(f"[OK] archivos en {out} · {asunto_de(r)}", flush=True)
@@ -745,7 +788,9 @@ def main():
             return 0
         print(f"[VALIDA] {msg}", flush=True)
     print('[3/3] Enviando...', flush=True)
-    ok = enviar(html, r)
+    ok = enviar(html, r, adj)
+    if ok and not PREBORRADOR:   # marca para el workflow: tras un pulso enviado a la lista se regenera el Drive LIVE
+        (PROJECT_ROOT / '.black_pulso_enviado').write_text(datetime.now(TZ).isoformat(), encoding='utf-8')
     print('Listo.' if ok else 'FALLÓ', flush=True)
     return 0 if ok else 1
 

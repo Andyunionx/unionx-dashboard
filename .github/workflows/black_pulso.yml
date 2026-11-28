@@ -37,7 +37,7 @@ concurrency:
 jobs:
   pulso:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,3 +79,16 @@ jobs:
           BLACK_FORZAR_RANGO: ${{ github.event.inputs.forzar_rango == 'true' && '1' || '0' }}
           PYTHONIOENCODING: utf-8
         run: python enviar_pulso_black.py
+
+      - name: Regenerar Reporte Ventas Empresa LIVE (pivot viva en Drive) tras el pulso
+        # Andrés 28-nov («Agreguémoslo»): igual que el pulso Cyber de octubre. Solo si salió el correo a la lista
+        # (enviar_pulso_black.py deja .black_pulso_enviado; nunca en preborrador). Toma ~6,5 min, va después del envío
+        # y si falla no afecta el pulso. Lee el parquet extraído en este runner (no se commitea).
+        if: ${{ github.event.inputs.preborrador != 'true' }}
+        env:
+          DRIVE_OAUTH_TOKEN_JSON: ${{ secrets.DRIVE_OAUTH_TOKEN_JSON }}
+          PYTHONIOENCODING: utf-8
+        timeout-minutes: 35
+        run: |
+          if [ -f .black_pulso_enviado ]; then python actualizar_raw_diario.py; else echo "Sin pulso enviado a la lista: no se regenera el Drive"; fi
+        continue-on-error: true
